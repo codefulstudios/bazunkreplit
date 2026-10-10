@@ -106,8 +106,24 @@ router.get("/settings/category-visibility",async(_req,res)=>{
  catch(err){logger.error({err},"Public category visibility failed");res.status(503).json({error:"Category visibility unavailable"});}
 });
 
+const cashbackDefaults={enabled:false,payoutPolicy:"Cashback payouts are not yet enabled.",tiers:[{id:"bronze",name:"Bronze",rate:1,spendGbp:0,perks:["Monthly wallet payout"]},{id:"silver",name:"Silver",rate:1.5,spendGbp:250,perks:["Weekly wallet payout"]},{id:"gold",name:"Gold",rate:2,spendGbp:750,perks:["Payout on request"]},{id:"platinum",name:"Platinum",rate:3,spendGbp:2000,perks:["Priority support"]}]};
+async function readCashback(){const r=await db.execute(sql`SELECT value FROM site_settings WHERE key='cashback_program_settings'`);try{return JSON.parse(String(r.rows[0]?.value))||cashbackDefaults}catch{return cashbackDefaults}}
+router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
 
+router.get("/admin/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
+router.put("/admin/cashback/settings",async(req,res)=>{
+try{
+const {enabled,payoutPolicy,tiers}=req.body||{};
+if(typeof enabled!=="boolean"||typeof payoutPolicy!=="string"||payoutPolicy.length>1000||!Array.isArray(tiers)||tiers.length!==4){res.status(400).json({error:"Invalid settings"});return}
+const ids=["bronze","silver","gold","platinum"];
+const clean=tiers.map((t:any,i:number)=>({id:ids[i],name:String(t.name||"").slice(0,40),rate:Number(t.rate),spendGbp:Number(t.spendGbp),perks:Array.isArray(t.perks)?t.perks.map((p:any)=>String(p).slice(0,150)).slice(0,12):[]}));
+if(clean.some((t:any,i:number)=>!t.name||!Number.isFinite(t.rate)||t.rate<0||t.rate>20||!Number.isFinite(t.spendGbp)||t.spendGbp<0||(i>0&&t.spendGbp<=clean[i-1].spendGbp))){res.status(400).json({error:"Invalid rates or thresholds"});return}
+const next={enabled,payoutPolicy,tiers:clean};
+await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES('cashback_program_settings',${JSON.stringify(next)},NOW()) ON CONFLICT(key) DO UPDATE SET value=${JSON.stringify(next)},updated_at=NOW()`);
+res.json(next);
+}catch{res.status(500).json({error:"Save failed"})}
+});
 // ── Feature Flags ───────────────────────────────────────────────────────────
 router.get("/admin/feature-flags", async (_req,res)=>{
   const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'feature_%'`);
