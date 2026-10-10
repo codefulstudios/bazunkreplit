@@ -11,6 +11,7 @@ const NAV = [
   { label: "Imports",      href: "/admin/imports",      icon: ArrowDownToLine },
   { label: "Importer Control", href: "/admin/importer-control", icon: Activity },
   { label: "API Centre", href: "/admin/api-centre", icon: ServerCog },
+  { label: "Cashback", href: "/admin/cashback", icon: Gift },
   { label: "Classifieds",  href: "/admin/classifieds",  icon: FileText        },
   { label: "Orders",       href: "/admin/orders",       icon: ShoppingCart     },
   { label: "Payments",   href: "/admin/payments",   icon: CreditCard      },
