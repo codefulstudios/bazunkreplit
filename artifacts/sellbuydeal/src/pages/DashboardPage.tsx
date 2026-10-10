@@ -81,6 +81,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     id: "finance", label: "Finance", icon: CreditCard,
     gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-500",
     items: [
+      { id: "cashback",       label: "Cashback",       icon: Gift,      iconBg: "bg-emerald-500" },
       { id: "credits",        label: "Credits",        icon: Coins,     iconBg: "bg-emerald-500" },
       { id: "seller-payouts", label: "Seller Payouts", icon: Banknote,  iconBg: "bg-emerald-600" },
       { id: "payment-cards",  label: "Payment Cards",  icon: CreditCard,iconBg: "bg-[#4A5CE8]"   },
@@ -967,6 +968,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
           <a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4A5CE8]/10 hover:bg-[#4A5CE8]/20 transition-colors text-[#4A5CE8] border border-[#4A5CE8]/20 text-sm font-semibold" title="Open Bazunk Data Platform">
             <ExternalLink className="w-4 h-4" /> Bazunk Data Platform
           </a>
+          <Link href="/cashback" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-sm font-semibold"><Gift className="w-4 h-4" /> Cashback</Link>
           <Link href="/rewards" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F26B21]/10 hover:bg-[#F26B21]/20 transition-colors text-[#F26B21] border border-[#F26B21]/20 text-sm font-semibold">
             <Gift className="w-4 h-4" /> Rewards
           </Link>
@@ -5787,6 +5789,7 @@ export function DashboardPage() {
                               key={item.id}
                               onClick={() => {
                                 if (item.id === "my-store") { setMyStoreOpen(true); setSidebarOpen(false); setMobileExpandedCat(null); return; }
+                                if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 setActiveSection(item.id);
                                 setSidebarOpen(false);
