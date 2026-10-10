@@ -1744,7 +1744,7 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
 // Detail lookups are budgeted separately; never assume a missing quantity means one unit.
 function ebayDetailQuantity(payload:unknown):number|null {
   const root=payload as Record<string,unknown>;
-  const candidates=[root,root?.data,root?.product,root?.item,root?.productInfo,root?.product_info,root?.result];
+  const candidates=[root,root?.data,root?.product,root?.item,root?.productInfo,root?.product_info,root?.result,(root?.data as Record<string,unknown>|undefined)?.product,(root?.data as Record<string,unknown>|undefined)?.item,(root?.result as Record<string,unknown>|undefined)?.product];
   for(const candidate of candidates){
     if(!candidate||typeof candidate!=="object")continue;
     const item=candidate as Record<string,unknown>;
@@ -1757,7 +1757,7 @@ function ebayDetailQuantity(payload:unknown):number|null {
   return null;
 }
 async function ebayDetailStock(itemId:string,site:"uk"|"us",apiKey:string):Promise<number|null>{
-  if(!/^\\d{8,16}$/.test(itemId))return null;
+  if(!/^[0-9]{8,16}$/.test(itemId)||!apiKey)return null;
   const itemUrl=`https://www.ebay.${site==="uk"?"co.uk":"com"}/itm/${itemId}`;
   const reservation=await reserveEbayApiRequest("product-stock-"+site);
   let status=0;
