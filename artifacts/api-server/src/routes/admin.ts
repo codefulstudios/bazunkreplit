@@ -1741,6 +1741,34 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
  return null;
 }
 
+// Detail lookups are budgeted separately; never assume a missing quantity means one unit.
+function ebayDetailQuantity(payload:unknown):number|null {
+  const root=payload as Record<string,unknown>;
+  const candidates=[root,root?.data,root?.product,root?.item,root?.productInfo,root?.product_info,root?.result];
+  for(const candidate of candidates){
+    if(!candidate||typeof candidate!=="object")continue;
+    const item=candidate as Record<string,unknown>;
+    const stock=item.availability && typeof item.availability==="object"?item.availability as Record<string,unknown>:{};
+    const raw=stock.availableQuantity??stock.estimatedAvailableQuantity??item.availableQuantity??item.estimatedAvailableQuantity??item.quantityAvailable??item.available_quantity??item.stockQuantity??item.stock_quantity??item.quantity;
+    if(raw!==undefined&&raw!==null&&raw!==""&&Number.isSafeInteger(Number(raw))&&Number(raw)>=0)return Number(raw);
+    const status=String(stock.availabilityStatus??item.availabilityStatus??item.stockStatus??"").toUpperCase();
+    if(["OUT_OF_STOCK","SOLD_OUT","UNAVAILABLE"].includes(status))return 0;
+  }
+  return null;
+}
+async function ebayDetailStock(itemId:string,site:"uk"|"us",apiKey:string):Promise<number|null>{
+  if(!/^\\d{8,16}$/.test(itemId))return null;
+  const itemUrl=`https://www.ebay.${site==="uk"?"co.uk":"com"}/itm/${itemId}`;
+  const reservation=await reserveEbayApiRequest("product-stock-"+site);
+  let status=0;
+  try{
+    const response=await fetch("https://real-time-ebay-data.p.rapidapi.com/product_get.php?url="+encodeURIComponent(itemUrl),{headers:{"X-RapidAPI-Key":apiKey,"X-RapidAPI-Host":"real-time-ebay-data.p.rapidapi.com"},signal:AbortSignal.timeout(12000)});
+    status=response.status;
+    if(!response.ok)return null;
+    return ebayDetailQuantity(await response.json());
+  }finally{await finishEbayApiRequest(reservation,status);}
+}
+
 // ── eBay routes ──────────────────────────────────────────────────────────────
 
 const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0.10,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:7};
@@ -1921,6 +1949,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     ).then(r => r.rows.length > 0);
     if (exists) continue;
 
+    if(p.available_quantity==null){try{p.available_quantity=await ebayDetailStock(String(p.item_id),site,process.env.RAPIDAPI_KEY||'');}catch(err){logger.warn({err,itemId:p.item_id},'eBay detail stock check skipped');}}
     const landedCost = p.price + shippingAmt;
     const bazunkPrice = Math.round(Math.max(landedCost * (1 + markupPct / 100), landedCost + minProfit) * 100) / 100;
     const prefix      = site === "uk" ? "BZK-EBY-UK" : "BZK-EBY-US";
@@ -2023,7 +2052,8 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const priceObj     = (match.price as Record<string, unknown>) ?? {};
         const newEbayPrice = parseFloat(String(priceObj.value ?? "").replace(/[^0-9.]/g, ""));
         if (!newEbayPrice || newEbayPrice <= 0) { errors++; failures.push({listingId:row.id,reason:"Source price missing or invalid"}); return; }
-        const sourceQty=ebayStockFromSummary(match);
+        let sourceQty=ebayStockFromSummary(match);
+        if(sourceQty===null){try{sourceQty=await ebayDetailStock(itemId,site,apiKey);}catch(err){logger.warn({err,itemId},'eBay sync detail stock check skipped');}}
         if(sourceQty===null && specs.stock_quantity_verified!==true){
           await db.execute(sql`UPDATE listings SET status='paused', quantity=0, specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false})},updated_at=NOW() WHERE id=${row.id}`);
           stockUnknown++; unchanged++; return;
