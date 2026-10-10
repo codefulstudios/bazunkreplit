@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { importerBalance } from "../lib/importerBilling.js";
+import { importerBalance, importerPriceList } from "../lib/importerBilling.js";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { BAZUNK_API_EMAILS, encryptRapidKey, requestEmail, rapidKeyForRequest } from "../lib/userRapidApi.js";
@@ -14,6 +14,14 @@ router.get("/user/rapidapi",async(req,res)=>{const x=await rapidKeyForRequest(re
 router.put("/user/rapidapi",async(req,res)=>{const email=await requestEmail(req); if(!email){res.status(401).json({error:"Sign in required"});return;} if(BAZUNK_API_EMAILS.has(email)){res.status(400).json({error:"Bazunk accounts use the server credentials automatically"});return;} const key=String(req.body?.key||"").trim(); if(key.length<20){res.status(400).json({error:"Enter your X-RapidAPI-Key"});return;} const encrypted=encryptRapidKey(key); await db.execute(sql`INSERT INTO user_rapidapi_keys(email,encrypted_key,key_last4,updated_at) VALUES(${email},${encrypted},${key.slice(-4)},NOW()) ON CONFLICT(email) DO UPDATE SET encrypted_key=EXCLUDED.encrypted_key,key_last4=EXCLUDED.key_last4,updated_at=NOW()`); res.json({ok:true,masked:`••••••••${key.slice(-4)}`});});
 router.delete("/user/rapidapi",async(req,res)=>{const email=await requestEmail(req); if(!email){res.status(401).json({error:"Sign in required"});return;} if(BAZUNK_API_EMAILS.has(email)){res.status(400).json({error:"Bazunk server credentials cannot be removed here"});return;} await db.execute(sql`DELETE FROM user_rapidapi_keys WHERE email=${email}`);res.json({ok:true});});
 router.post("/user/rapidapi/test",async(req,res)=>{const x=await rapidKeyForRequest(req); if(!x.email){res.status(401).json({error:"Sign in required"});return;} if(!x.key){res.status(400).json({error:"Connect a RapidAPI key first"});return;} res.json({bazunk:x.bazunk,results:await check(x.key)});});
+router.get("/user/importer-prices",async(req,res)=>{
+ try{
+  const email=await requestEmail(req);
+  if(!email){res.status(401).json({error:"Sign in required"});return;}
+  res.setHeader("Cache-Control","private, no-store");
+  res.json({currency:"USD",prices:await importerPriceList()});
+ }catch{res.status(503).json({error:"Importer pricing unavailable"});}
+});
 // Paid importer wallet is separate from promotional credits. Read-only until Stripe funding is verified.
 router.get("/user/importer-wallet",async(req,res)=>{
  try{
