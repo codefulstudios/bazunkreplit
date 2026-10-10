@@ -55,12 +55,12 @@ export const CATEGORIES: Category[] = [
     slug: "baby-products",
     icon: "Baby",
     subcategories: [
-      { name: "Baby Clothing", slug: "baby-clothing" },
+      { name: "Baby Clothing (0–24 Months)", slug: "baby-clothing" },
       { name: "Feeding & Nursing", slug: "feeding" },
       { name: "Nursery Furniture", slug: "nursery" },
       { name: "Strollers & Travel", slug: "strollers" },
       { name: "Car Seats", slug: "car-seats" },
-      { name: "Baby Toys", slug: "baby-toys" },
+      { name: "Baby & Toddler Toys (0–3 Years)", slug: "baby-toys" },
     ],
   },
   {
@@ -94,10 +94,10 @@ export const CATEGORIES: Category[] = [
     slug: "cds-vinyl",
     icon: "Disc",
     subcategories: [
-      { name: "Pop & Rock", slug: "pop-rock" },
-      { name: "Hip-Hop & R&B", slug: "hip-hop" },
-      { name: "Classical & Jazz", slug: "classical" },
-      { name: "Country & Folk", slug: "country" },
+      { name: "CDs", slug: "cds" },
+      { name: "Cassettes", slug: "cassettes" },
+      { name: "Box Sets", slug: "music-box-sets" },
+      { name: "Other Music Formats", slug: "other-music-formats" },
       { name: "Vinyl Records", slug: "vinyl" },
     ],
   },
@@ -110,7 +110,7 @@ export const CATEGORIES: Category[] = [
       { name: "Cases & Covers", slug: "phone-cases" },
       { name: "Chargers & Cables", slug: "chargers" },
       { name: "Screen Protectors", slug: "screen-protectors" },
-      { name: "Earphones & Headsets", slug: "earphones" },
+      { name: "Phone Audio Adapters", slug: "phone-audio-adapters" },
       { name: "Smartwatches", slug: "smartwatches" },
     ],
   },
@@ -123,7 +123,7 @@ export const CATEGORIES: Category[] = [
       { name: "Women's Clothing", slug: "womens-clothing" },
       { name: "Kids' Clothing", slug: "kids-clothing" },
       { name: "Shoes & Boots", slug: "shoes" },
-      { name: "Jewelry & Watches", slug: "jewelry" },
+      { name: "Fashion Accessories", slug: "fashion-accessories" },
       { name: "Bags & Accessories", slug: "bags" },
     ],
   },
@@ -136,12 +136,12 @@ export const CATEGORIES: Category[] = [
       { name: "TVs & Home Theater", slug: "tvs" },
       { name: "Audio & Headphones", slug: "audio" },
       { name: "Cameras & Photography", slug: "cameras" },
-      { name: "Gaming Consoles", slug: "gaming-consoles" },
+      { name: "Computer Peripherals", slug: "computer-peripherals" },
       { name: "Smart Home Devices", slug: "smart-home" },
     ],
   },
   {
-    name: "Eco-Friendly Products",
+    name: "Sustainable Shopping",
     slug: "eco-friendly",
     icon: "Leaf",
     subcategories: [
@@ -273,10 +273,10 @@ export const CATEGORIES: Category[] = [
     subcategories: [
       { name: "Power Tools", slug: "power-tools" },
       { name: "Hand Tools", slug: "hand-tools" },
-      { name: "Electrical & Lighting", slug: "electrical-tools" },
+      { name: "Electrical Installation", slug: "electrical-installation" },
       { name: "Plumbing", slug: "plumbing" },
       { name: "Paint & Supplies", slug: "paint" },
-      { name: "Safety & PPE", slug: "safety-tools" },
+      { name: "Home Safety & Security", slug: "home-safety-security" },
     ],
   },
   {
@@ -305,7 +305,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Digital Products",
+    name: "Digital Products (Legacy)",
     slug: "digital-products",
     icon: "Download",
     subcategories: [
@@ -318,7 +318,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Digital",
+    name: "Digital Products",
     slug: "digital",
     icon: "MonitorSmartphone",
     subcategories: [
@@ -339,6 +339,14 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
+    name: "Jewellery & Watches", slug: "jewellery-watches", icon: "Gem", subcategories: [
+      { name: "Fine Jewellery", slug: "fine-jewellery" }, { name: "Fashion Jewellery", slug: "fashion-jewellery" },
+      { name: "Rings", slug: "rings" }, { name: "Necklaces", slug: "necklaces" },
+      { name: "Bracelets & Earrings", slug: "bracelets-earrings" }, { name: "Watches", slug: "watches" },
+      { name: "Watch Parts & Accessories", slug: "watch-parts" }, { name: "Gemstones", slug: "gemstones" },
+    ],
+  },
+  {
     name: "Adult",
     slug: "adult",
     icon: "ShieldAlert",
@@ -349,7 +357,7 @@ export const CATEGORIES: Category[] = [
       { name: "Adult Accessories", slug: "adult-accessories" },
       { name: "Adult Wellness", slug: "adult-wellness" },
       { name: "Adult Toys", slug: "adult-toys" },
-      { name: "Adult Digital", slug: "adult-digital" },
+      { name: "Adult Digital (Restricted)", slug: "adult-digital" },
       { name: "Adult Services", slug: "adult-services" },
       { name: "Vintage & Collectors", slug: "adult-vintage-collectors" },
       { name: "Other Adult", slug: "other-adult" },
