@@ -16,9 +16,7 @@ const router = Router();
 
 // Server-side visibility: missing setting means visible; parent OFF overrides children.
 async function categoryVisibility() {
- const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%' AND value='false'`);
- const hidden=(rows.rows as any[]).map(r=>String(r.key).slice(17));
- return hidden.length?sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key = 'category_visible_' || ${listingsTable.category} OR cv.key = 'category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`:sql`TRUE`;
+ return sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${listingsTable.category} OR cv.key='category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`;
 }
 
 function makePublicId(id: number): string {
