@@ -101,6 +101,12 @@ async function ping(api: string, url: string, host: string, key: string): Promis
       signal: ctrl.signal,
     });
     clearTimeout(timer);
+    if (host === "real-time-ebay-data.p.rapidapi.com") {
+      try {
+        await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+        await db.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES ('health-test',${resp.status})`);
+      } catch (err) { logger.warn({err}, "Could not record eBay health-test usage"); }
+    }
     if (resp.ok) return { api, ok: true, status: resp.status, message: "Working" };
     return { api, ok: false, status: resp.status, message: rapidApiErrorMessage(api, resp.status) };
   } catch (err) {
