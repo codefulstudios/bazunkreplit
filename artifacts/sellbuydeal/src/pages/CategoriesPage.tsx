@@ -116,7 +116,7 @@ export function CategoriesPage() {
   }
 
   function subCount(catSlug: string, subSlug: string) {
-    return counts.filter((l) => (l.category === catSlug || (catSlug === "digital" && l.category === "digital-products")) && (l.subcategory === subSlug || (catSlug === "digital" && subSlug === "software-apps" && l.subcategory === "software"))).reduce((sum, l) => sum + Number(l.count || 0), 0);
+    return counts.filter(l => { const resolved = resolveCategory(l.category, l.subcategory); return resolved.category === catSlug && resolved.subcategory === subSlug; }).reduce((sum, l) => sum + Number(l.count || 0), 0);
   }
 
   function themeFor(slug: string) {
