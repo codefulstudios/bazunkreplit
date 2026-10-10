@@ -101,7 +101,8 @@ router.get("/settings/public", async (_req, res) => {
 
 router.get("/settings/category-visibility",async(_req,res)=>{
  try {const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%' AND value='false'`);
- res.setHeader("Cache-Control","no-store");res.json({hidden:(rows.rows as any[]).map(x=>String(x.key).slice(17))});}
+ const states=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_display_%'`);
+ res.setHeader("Cache-Control","no-store");res.json({hidden:(rows.rows as any[]).map(x=>String(x.key).slice(17)),display:Object.fromEntries((states.rows as any[]).map(x=>[String(x.key).slice(17),String(x.value)]))});}
  catch(err){logger.error({err},"Public category visibility failed");res.status(503).json({error:"Category visibility unavailable"});}
 });
 
@@ -130,15 +131,19 @@ router.patch("/admin/feature-flags/:key", async(req,res)=>{
 router.get("/admin/category-visibility",async(_req,res)=>{
  try {const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%'`);
  const counts=await db.execute(sql`SELECT category,subcategory,COUNT(*)::int AS count FROM listings GROUP BY category,subcategory`);
- res.json({settings:Object.fromEntries((rows.rows as any[]).map(x=>[String(x.key).slice(17),String(x.value)!=="false"])),counts:counts.rows});}
+ const displayRows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_display_%'`);
+ res.json({settings:Object.fromEntries((rows.rows as any[]).map(x=>[String(x.key).slice(17),String(x.value)!=="false"])),display:Object.fromEntries((displayRows.rows as any[]).map(x=>[String(x.key).slice(17),String(x.value)])),counts:counts.rows});}
  catch(err){logger.error({err},"Category visibility load failed");res.status(500).json({error:"Could not load category visibility"});}
 });
 router.patch("/admin/category-visibility",async(req,res)=>{
  const category=String(req.body.category??"");const subcategory=String(req.body.subcategory??"");
- if(!/^[a-z0-9-]{1,80}$/.test(category)||(subcategory&&!/^[a-z0-9-]{1,80}$/.test(subcategory))||typeof req.body.enabled!=="boolean"){res.status(400).json({error:"Invalid category visibility request"});return;}
+ if(!/^[a-z0-9-]{1,80}$/.test(category)||(subcategory&&!/^[a-z0-9-]{1,80}$/.test(subcategory))||(req.body.state!==undefined?!["active","coming_soon","maintenance","hidden"].includes(req.body.state):typeof req.body.enabled!=="boolean")){res.status(400).json({error:"Invalid category visibility request"});return;}
  const key=`category_visible_${category}${subcategory?"__"+subcategory:""}`;
- try {await db.execute(sql`INSERT INTO site_settings(key,value) VALUES (${key},${req.body.enabled?"true":"false"}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`);
- res.json({ok:true,category,subcategory,enabled:req.body.enabled});}
+ try {const state=req.body.state??(req.body.enabled?"active":"coming_soon");const enabled=state==="active";
+ await db.execute(sql`INSERT INTO site_settings(key,value) VALUES (${key},${enabled?"true":"false"}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`);
+ const displayKey=`category_display_${category}${subcategory?"__"+subcategory:""}`;
+ await db.execute(sql`INSERT INTO site_settings(key,value) VALUES (${displayKey},${state}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`);
+ res.json({ok:true,category,subcategory,enabled,state});}
  catch(err){logger.error({err},"Category visibility update failed");res.status(500).json({error:"Could not update category visibility"});}
 });
 
