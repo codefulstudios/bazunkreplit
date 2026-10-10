@@ -135,7 +135,7 @@ export function Navbar() {
   const matchedCategories = trimmed
     ? ACTIVE_CATEGORIES.filter(
         (c) => !hiddenCategories.includes(c.slug) && c.name.toLowerCase().includes(trimmed) ||
-          c.subcategories.some((s) => s.name.toLowerCase().includes(trimmed))
+          c.subcategories.some((s) => !hiddenCategories.includes(c.slug+"__"+s.slug) && s.name.toLowerCase().includes(trimmed))
       ).slice(0, 3)
     : [];
   const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0;
