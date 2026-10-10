@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { Link, useRoute } from "wouter";
 import { ArrowLeft, ExternalLink, Wallet } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +26,13 @@ export function ImporterWorkspacePage(){
   }
  }, [source]);
  const {user}=useAuth();
+ const {getToken}=useClerkAuth();
+ const [platform,setPlatform]=useState<{authenticated:boolean;billingEnabled:boolean}|null>(null);
+ useEffect(()=>{if(!user)return;let cancelled=false;(async()=>{try{
+  const token=await getToken();if(!token)return;
+  const response=await fetch("https://data.bazunk.com/web/marketplace/importers",{headers:{Authorization:`Bearer ${token}`}});
+  if(response.ok&&!cancelled)setPlatform(await response.json());
+ }catch{}})();return()=>{cancelled=true}},[user?.email,getToken]);
  const paid=source==="ebay"||source==="amazon"||source==="aliexpress";
  const dataUrl="https://data.bazunk.com";
  if(!cfg)return <div className="max-w-4xl mx-auto px-4 py-16"><Link href="/importers">← Importer Hub</Link><h1>Importer not found</h1></div>;
@@ -34,6 +42,7 @@ export function ImporterWorkspacePage(){
   <div className={`rounded-[2rem] bg-gradient-to-r ${cfg.gradient} text-white p-7 md:p-9 mb-7 shadow-lg`}><p className="uppercase text-xs font-black tracking-widest text-white/75">{cfg.subtitle}</p><h1 className="text-4xl font-black mt-1">{cfg.name} Importer</h1><p className="mt-2 text-sm font-bold text-white">Connection type: {cfg.method}</p><p className="mt-3 text-white/80 max-w-2xl">A dedicated workspace for previewing, pricing and importing {cfg.name} inventory into Bazunk.</p></div>
   {paid ? <section className="rounded-3xl border border-indigo-500/30 bg-slate-900 p-7 text-white shadow-lg">
     <div className="flex items-center gap-3"><Wallet className="h-7 w-7 text-cyan-300"/><h2 className="text-2xl font-black">Bazunk-managed importer credits</h2></div>
+    <p className="mt-2 text-xs font-semibold text-cyan-200">{platform?.authenticated?"Data Platform account verified":"Data Platform connection not yet verified"} · {platform?.billingEnabled?"Billing enabled":"Prepaid billing pending"}</p>
     <p className="mt-3 text-slate-300 max-w-3xl">You won't need your own RapidAPI key. The Bazunk Data Platform will manage paid requests, usage records and prepaid balances. Seller billing is being connected and is not available yet.</p>
     <div className="mt-5 grid sm:grid-cols-3 gap-3 text-sm"><div className="rounded-xl bg-white/10 p-4"><b>1. Preview</b><p className="text-slate-300 mt-1">Search and inspect source products before selecting them.</p></div><div className="rounded-xl bg-white/10 p-4"><b>2. Select & price</b><p className="text-slate-300 mt-1">Choose listings, set markup and destination categories.</p></div><div className="rounded-xl bg-white/10 p-4"><b>3. Import & sync</b><p className="text-slate-300 mt-1">Import products and review usage charges in your account.</p></div></div>
     <a href={dataUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 hover:bg-cyan-300">Open Bazunk Data Platform <ExternalLink className="w-4 h-4"/></a>
