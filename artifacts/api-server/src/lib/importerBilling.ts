@@ -23,6 +23,14 @@ export async function ensureImporterBillingTables() {
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY(provider,endpoint))`);
+ await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_wallet_funding (
+  stripe_session_id TEXT PRIMARY KEY, email TEXT NOT NULL,
+  amount_microcents BIGINT NOT NULL CHECK(amount_microcents>0),
+  currency TEXT NOT NULL DEFAULT 'USD',
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','settled','refunded','disputed')),
+  stripe_payment_intent_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  settled_at TIMESTAMPTZ)`);
  await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_paid_usage (
   id BIGSERIAL PRIMARY KEY, email TEXT NOT NULL, provider TEXT NOT NULL,
   endpoint TEXT NOT NULL, supplier_cost_microcents BIGINT NOT NULL,
@@ -54,4 +62,17 @@ export async function reserveImporterCharge(email:string,provider:string,endpoin
 }
 export async function finishImporterCharge(id:number,status:string){
  await db.execute(sql`UPDATE importer_paid_usage SET status=${status},completed_at=NOW() WHERE id=${id}`);
+}
+
+/** Public quote only: no client-supplied price or currency is trusted. */
+export async function importerPriceList() {
+ await ensureImporterBillingTables();
+ const result=await db.execute(sql`SELECT provider,endpoint,supplier_cost_microcents,markup_bps,enabled
+  FROM importer_provider_prices ORDER BY provider,endpoint`);
+ return result.rows.map(row=>{
+  const cost=BigInt(String(row.supplier_cost_microcents));
+  const markup=BigInt(String(row.markup_bps));
+  return {provider:row.provider,endpoint:row.endpoint,enabled:row.enabled,
+    sellerPriceMicrocents:importerSellerCharge(cost,markup).toString()};
+ });
 }
