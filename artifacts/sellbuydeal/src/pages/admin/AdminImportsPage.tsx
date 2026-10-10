@@ -129,6 +129,9 @@ export function AdminImportsPage() {
   const [ebaySite, setEbaySite]             = useState<EbaySite>("uk");
   const [amazonSite, setAmazonSite] = useState<EbaySite>("uk");
   const [ebayQuery, setEbayQuery]           = useState("");
+  const [ebayCondition,setEbayCondition] = useState("all");
+  const [ebayShipFrom,setEbayShipFrom] = useState("GB");
+  const [ebayShipTo,setEbayShipTo] = useState("GB");
   const [ebayPage, setEbayPage]             = useState(1);
   const [ebaySearching, setEbaySearching]   = useState(false);
   const [ebayResults, setEbayResults]       = useState<EbaySearchResult[]>([]);
@@ -416,7 +419,7 @@ export function AdminImportsPage() {
     setEbaySelected(new Set());
     setEbayImportMsg(null);
     try {
-      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}`);
+      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
       const d = await r.json() as { products?: EbaySearchResult[]; error?: string };
       if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); setEbayResults([]); }
       else { setEbayResults(d.products ?? []); setEbayHasSearched(true); }
@@ -1046,7 +1049,7 @@ export function AdminImportsPage() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">Search {ebaySite === "uk" ? "eBay.co.uk" : "eBay.com"}</p>
-                    <p className="text-xs text-gray-400">{ebaySite === "uk" ? "UK-located items deliverable to the UK only" : "US-located items deliverable to the USA only"} · tick items, set markup and import</p>
+                    <p className="text-xs text-gray-400">{ebaySite === "uk" ? "Search UK marketplace listings with configurable shipping filters" : "Search US marketplace listings with configurable shipping filters"} · tick items, set markup and import</p>
                   </div>
                 </div>
                 <form onSubmit={handleEbaySearch} className="flex gap-2">
@@ -1068,6 +1071,24 @@ export function AdminImportsPage() {
                     {ebaySearching ? "Searching…" : "Search"}
                   </button>
                 </form>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                  <label className="text-xs font-semibold text-gray-600">Condition
+                    <select value={ebayCondition} onChange={e=>setEbayCondition(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      <option value="all">All conditions</option><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="open-box">Open box</option><option value="parts">For parts / not working</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-600">Ships from
+                    <select value={ebayShipFrom} onChange={e=>setEbayShipFrom(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      <option value="ALL">All locations</option>{[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-600">Ships to
+                    <select value={ebayShipTo} onChange={e=>setEbayShipTo(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      {[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Delivery eligibility is requested from the eBay search provider; confirm shipping on the original listing before importing.</p>
                 {ebaySearchErr && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-xl">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" /> {ebaySearchErr}
