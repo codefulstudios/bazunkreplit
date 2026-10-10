@@ -125,7 +125,7 @@ export default function CashbackPage() {
           <p className="text-white/50 text-sm mb-8">See how much you'd earn</p>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <label className="block text-white/50 text-sm mb-2">Monthly spend on Bazunk</label>
+            <label className="block text-white/50 text-sm mb-2">Monthly spend on Bazunk ({currency.code})</label>
             <div className="flex items-center gap-3 mb-4">
               <span className="text-white/50 font-bold">{currency.symbol}</span>
               <input
