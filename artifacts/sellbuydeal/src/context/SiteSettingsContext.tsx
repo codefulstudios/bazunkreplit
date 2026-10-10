@@ -80,17 +80,20 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     const loadSettings = () => {
       fetch(`${API_BASE}/api/settings/public`, { cache: "no-store" })
-        .then(r => r.ok ? r.json() : {})
+        .then(r => { if (!r.ok) throw new Error(`Settings HTTP ${r.status}`); return r.json(); })
         .then((data: Record<string, string>) => {
           setSettings({ ...DEFAULTS, ...data });
           setRawSettings(data);
           setSettingsLoaded(true);
         })
-        .catch(() => setSettingsLoaded(true));
+        .catch(() => { setSettingsLoaded(true); });
     };
     loadSettings();
+    const refreshOnFocus = () => { if (document.visibilityState === "visible") loadSettings(); };
     window.addEventListener("bazunk-settings-updated", loadSettings);
-    return () => window.removeEventListener("bazunk-settings-updated", loadSettings);
+    window.addEventListener("focus", loadSettings);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => {window.removeEventListener("bazunk-settings-updated", loadSettings);window.removeEventListener("focus", loadSettings);document.removeEventListener("visibilitychange", refreshOnFocus);};
   }, []);
 
   useEffect(() => {
