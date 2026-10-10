@@ -21,7 +21,7 @@ export function ImportersPage(){
  const current=sources.find(s=>s.id===selected)||sources[0];
  return <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#080d20] dark:text-white">
  <div className="max-w-6xl mx-auto px-4 py-10">
-  <Link href="/" className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2.5 text-sm font-bold mb-6"><ArrowLeft className="w-4 h-4"/> Back to Home</Link>
+  <Link href="/" className="inline-flex items-center gap-2 rounded-xl !bg-orange-500 !text-black hover:!bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 px-4 py-2.5 text-sm font-black mb-6 border border-orange-600 shadow-sm"><ArrowLeft className="w-4 h-4"/> Back to Home</Link>
   <section className="rounded-3xl bg-gradient-to-r from-[#171a32] to-[#262b62] text-white p-7 md:p-10">
    <span className="text-xs font-black uppercase tracking-widest text-cyan-300">Bazunk Importer Hub</span>
    <h1 className="text-3xl md:text-5xl font-black mt-3">Bring your products to Bazunk.</h1>
