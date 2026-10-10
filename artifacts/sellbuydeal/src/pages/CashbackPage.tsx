@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Coins, TrendingUp, Gift, Star, Zap, Crown } from 'lucide-react';
+import { Coins, TrendingUp, Gift, Star, Zap, Crown, ArrowLeft, House } from 'lucide-react';
+import { Link } from 'wouter';
 import { useCurrency } from '@/context/CurrencyContext';
 
 const DEFAULT_TIERS = [
@@ -70,6 +71,11 @@ export default function CashbackPage() {
 
   return (
     <div className="min-h-screen bg-[#1A1D2E] text-white">
+      <nav aria-label="Cashback page navigation" className="relative z-20 mx-auto max-w-6xl px-5 pt-5 flex flex-wrap gap-3">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20"><ArrowLeft className="h-4 w-4" /> Back to Dashboard</Link>
+        <Link href="/" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20"><House className="h-4 w-4" /> Home</Link>
+        <Link href="/rewards" className="inline-flex items-center gap-2 rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-2.5 text-sm font-semibold text-yellow-400 hover:bg-yellow-400/20"><Gift className="h-4 w-4" /> Rewards</Link>
+      </nav>
       {/* Hero */}
       <div className="relative overflow-hidden bg-gradient-to-br from-yellow-900/30 via-[#1A1D2E] to-[#1A1D2E] pt-20 pb-16 px-6">
         <div className="absolute top-0 left-0 w-[60vw] h-[60vw] bg-yellow-400/5 rounded-full blur-3xl pointer-events-none" />
