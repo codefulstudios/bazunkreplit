@@ -53,6 +53,14 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     gradient: "from-[#3B4FD8] to-[#4A5CE8]", bg: "bg-[#3B4FD8]", items: [],
   },
   {
+    id: "store", label: "Store", icon: Store,
+    gradient: "from-[#F26B21] to-orange-400", bg: "bg-[#F26B21]",
+    items: [
+      { id: "my-store", label: "My Store", icon: Store, iconBg: "bg-[#F26B21]" },
+      { id: "store-popular", label: "Popular Items", icon: Flame, iconBg: "bg-[#F26B21]" },
+    ],
+  },
+  {
     id: "buying", label: "Buying", icon: ShoppingCart,
     gradient: "from-[#4A5CE8] to-indigo-500", bg: "bg-[#4A5CE8]",
     items: [
@@ -67,7 +75,6 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     id: "selling", label: "Selling", icon: Store,
     gradient: "from-[#F26B21] to-orange-400", bg: "bg-[#F26B21]",
     items: [
-      { id: "my-store",      label: "My Store",      icon: Store,     iconBg: "bg-[#F26B21]" },
       { id: "my-listings",   label: "My Listings",   icon: Package,   iconBg: "bg-[#F26B21]" },
       { id: "sales",         label: "Sales",         icon: BarChart2, iconBg: "bg-[#F26B21]" },
       { id: "shipping-centre", label: "Shipping", icon: Truck, iconBg: "bg-[#4A5CE8]" },
@@ -5788,7 +5795,7 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store") { setMyStoreOpen(true); setSidebarOpen(false); setMobileExpandedCat(null); return; }
+                                if (item.id === "my-store" || item.id === "store-popular") { setLocation(item.id === "store-popular" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 setActiveSection(item.id);
@@ -5910,7 +5917,7 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store") { setMyStoreOpen(true); setActiveCategory(null); setSidebarOpen(false); return; }
+                                if (item.id === "my-store" || item.id === "store-popular") { setLocation(item.id === "store-popular" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
                                 setActiveSection(item.id);
                                 setActiveCategory(null);
                                 setSidebarOpen(false);
@@ -6446,60 +6453,41 @@ export function DashboardPage() {
         </main>
       </div>
 
-      {/* ── My Store Full-Screen Overlay ── */}
-      <AnimatePresence>
-        {myStoreOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-              onClick={() => setMyStoreOpen(false)}
-            />
-
-            {/* Floating modal — inset so the dashboard still peeks behind */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 24 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 24 }}
-              transition={{ type: "spring", stiffness: 300, damping: 28 }}
-              className="fixed inset-3 md:inset-6 lg:inset-10 bg-gray-100 rounded-3xl z-50 shadow-2xl overflow-hidden flex flex-col"
-            >
-              {/* Modal header */}
-              <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#F26B21] flex items-center justify-center shadow-sm">
-                    <Store className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-black text-gray-900 text-base leading-tight">My Store</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Manage, edit and preview your store</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setMyStoreOpen(false)}
-                  className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
-                  aria-label="Close"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Scrollable body — MyStoreSection fills it */}
-              <div className="flex-1 overflow-y-auto">
-                <MyStoreSection
-                  onNavigate={(s) => { setMyStoreOpen(false); setActiveSection(s); }}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       <Footer />
     </div>
   );
+}
+
+/** Full-page store manager, replacing the former dashboard modal. */
+export function MyStorePage() {
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const [listings, setListings] = useState<StoredListing[]>([]);
+  useEffect(() => { fetchMyListings(user?.email ?? "").then(setListings); }, [user?.email]);
+  useEffect(() => {
+    if (window.location.hash === "#popular-items") {
+      const id = window.setTimeout(() => document.getElementById("popular-items")?.scrollIntoView({behavior:"smooth"}), 150);
+      return () => window.clearTimeout(id);
+    }
+  }, []);
+  const popular = [...listings].filter(l => l.status === "active" || l.status === "published").sort((a,b) => (b.views ?? 0) - (a.views ?? 0)).slice(0,8);
+  return <div className="min-h-screen bg-[#f3f4f6] dark:bg-[#080d20]">
+    <Navbar />
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div><p className="text-xs font-black tracking-widest uppercase text-orange-600">Seller workspace</p><h1 className="text-3xl font-black text-slate-950 dark:text-white mt-1">My Store</h1><p className="text-sm text-slate-600 dark:text-orange-100">Manage, edit and preview your store on its own page.</p></div>
+        <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl !bg-orange-500 !text-black px-5 py-3 font-black hover:!bg-orange-400"><ArrowRight className="w-4 h-4 rotate-180"/> Back to Dashboard</Link>
+      </div>
+      <div className="rounded-2xl overflow-hidden bg-white shadow-sm"><MyStoreSection onNavigate={section => navigate(`/dashboard?section=${encodeURIComponent(section)}`)} /></div>
+      <section id="popular-items" className="mt-8 rounded-2xl bg-white dark:bg-[#141414] border border-orange-300 dark:border-orange-600/40 p-5 sm:p-7 scroll-mt-8">
+        <div className="flex items-center gap-2"><Flame className="w-6 h-6 text-orange-500"/><h2 className="text-xl font-black text-slate-950 dark:text-orange-300">Popular Items</h2></div>
+        <p className="text-sm text-slate-700 dark:text-orange-100 mt-2">Your active listings with the most views.</p>
+        {popular.length ? <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">{popular.map(item => <Link key={item.id} href={`/listing/${item.publicId ?? item.id}`} className="rounded-xl border border-slate-200 dark:border-orange-600/40 overflow-hidden bg-slate-50 dark:bg-[#24201c] hover:border-orange-500">
+          <div className="aspect-square bg-white flex items-center justify-center">{item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-contain"/> : <Package className="w-12 h-12 text-slate-300"/>}</div>
+          <div className="p-3"><p className="text-sm font-bold line-clamp-2 text-slate-950 dark:text-orange-100">{item.title}</p><p className="text-sm font-black text-orange-600 dark:text-orange-400 mt-2">£{item.price.toFixed(2)}</p><p className="text-xs text-slate-600 dark:text-orange-200 mt-1">{item.views ?? 0} views</p></div>
+        </Link>)}</div> : <p className="text-sm text-slate-700 dark:text-orange-100 mt-5">No active store listings to show yet. Once you publish items, your most-viewed products will appear here.</p>}
+      </section>
+    </main>
+    <Footer />
+  </div>;
 }
