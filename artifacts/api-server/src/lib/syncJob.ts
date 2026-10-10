@@ -8,7 +8,7 @@ import { fetchPublicEbayItem } from "./ebayPublic.js";
 import { toGbp } from "../fxRates.js";
 
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // daily scheduler; individual imports are checked only when due
-const EBAY_SYNC_DAYS = 7;
+const EBAY_SYNC_DAYS = 7; // fallback if admin has not configured a value
 
 interface ImportRow {
   id: number;
@@ -23,6 +23,12 @@ interface ImportRow {
 }
 
 export async function syncImport(importId: number): Promise<{ ok: boolean; error?: string }> {
+  let ebayDays=EBAY_SYNC_DAYS;
+  try {
+    const settings=await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
+    const parsed=JSON.parse(String(settings.rows[0]?.value??"{}"));
+    if(Number.isInteger(parsed.syncDays)&&parsed.syncDays>=1&&parsed.syncDays<=90) ebayDays=parsed.syncDays;
+  } catch { /* default to seven days */ }
   const rows = await db.execute(sql`
     SELECT si.id, si.listing_id AS "listingId", si.supplier_id AS "supplierId", si.supplier_source AS "supplierSource", si.markup_type AS "markupType", si.markup_value AS "markupValue", si.supplier_url AS "supplierUrl", si.supplier_data AS "supplierData", l.seller_email AS "sellerEmail"
     FROM supplier_imports si JOIN listings l ON l.id=si.listing_id WHERE si.id = ${importId}
@@ -39,7 +45,7 @@ export async function syncAllImports(): Promise<{ synced: number; errors: number
     SELECT si.id, si.listing_id AS "listingId", si.supplier_id AS "supplierId", si.supplier_source AS "supplierSource", si.markup_type AS "markupType", si.markup_value AS "markupValue", si.supplier_url AS "supplierUrl", si.supplier_data AS "supplierData", l.seller_email AS "sellerEmail"
     FROM supplier_imports si JOIN listings l ON l.id=si.listing_id
     WHERE si.sync_status <> 'disabled' AND COALESCE(si.supplier_data->>'syncEnabled','true') <> 'false'
-      AND (si.supplier_source <> 'ebay-public' OR si.last_synced_at IS NULL OR si.last_synced_at <= NOW() - INTERVAL '7 days')
+      AND (si.supplier_source <> 'ebay-public' OR si.last_synced_at IS NULL OR si.last_synced_at <= NOW() - (${ebayDays} * INTERVAL '1 day'))
     ORDER BY si.last_synced_at ASC NULLS FIRST
   `);
 
