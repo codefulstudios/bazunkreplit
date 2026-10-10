@@ -8,7 +8,7 @@ const router = Router();
 router.get("/classifieds", async (req, res) => {
   const { category, subcategory, type, limit = "60", offset = "0" } = req.query as Record<string, string>;
 
-  const conditions = [eq(classifiedAdsTable.status, "active")];
+  const conditions = [eq(classifiedAdsTable.status, "active"), sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${classifiedAdsTable.category} OR cv.key='category_visible_' || ${classifiedAdsTable.category} || '__' || COALESCE(${classifiedAdsTable.subcategory},'')))`];
   if (category && category !== "all") conditions.push(eq(classifiedAdsTable.category, category));
   if (subcategory) conditions.push(eq(classifiedAdsTable.subcategory, subcategory));
   if (type && type !== "all") conditions.push(eq(classifiedAdsTable.type, type));
