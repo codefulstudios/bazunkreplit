@@ -109,7 +109,7 @@ export function Navbar() {
   const featureSettings = useRawSettings();
   const visibleHref = (href:string) => { const f=featureForHref(href); return !f || isFeatureEnabled(featureSettings,f); };
   const [hiddenCategories,setHiddenCategories]=useState<string[]>([]);
-  useEffect(()=>{fetch("/api/settings/category-visibility",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
+  useEffect(()=>{fetch(`${API_BASE}/api/settings/category-visibility`,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
