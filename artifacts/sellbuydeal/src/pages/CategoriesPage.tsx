@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
-import { CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory } from "@/data/categories";
 import * as LucideIcons from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
 
@@ -86,19 +86,13 @@ export function CategoriesPage() {
   const [counts, setCounts] = useState<CategoryCount[]>([]);
 
   useEffect(() => {
-    fetch("${API_BASE}/api/listings/category-counts")
+    fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 
-  const digital = CATEGORIES.find((c) => c.slug === "digital")!;
-  const legacyDigital = CATEGORIES.find((c) => c.slug === "digital-products")!;
-  const digitalSubs = [...digital.subcategories];
-  for (const sub of legacyDigital.subcategories) {
-    if (!digitalSubs.some((existing) => existing.name === sub.name)) digitalSubs.push(sub);
-  }
-  const displayCategories = CATEGORIES.filter((c) => c.slug !== "digital-products").map((c) => c.slug === "digital" ? { ...c, name: "Digital Products", subcategories: digitalSubs } : c);
+  const displayCategories = ACTIVE_CATEGORIES;
   const ordered = [...displayCategories].sort((a, b) => {
     const ai = CATEGORY_ORDER.indexOf(a.slug);
     const bi = CATEGORY_ORDER.indexOf(b.slug);
@@ -118,7 +112,7 @@ export function CategoriesPage() {
   const selected = displayCategories.find((c) => c.slug === openSlug) ?? null;
 
   function catCount(slug: string) {
-    return counts.filter((l) => (l.category === slug || (slug === "digital" && l.category === "digital-products"))).reduce((sum, l) => sum + Number(l.count || 0), 0);
+    return counts.filter(l => resolveCategory(l.category, l.subcategory).category === slug).reduce((sum, l) => sum + Number(l.count || 0), 0);
   }
 
   function subCount(catSlug: string, subSlug: string) {
