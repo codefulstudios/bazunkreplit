@@ -16,7 +16,6 @@ export function ImportersPage(){
  const {user}=useAuth();
  const [dialog,setDialog]=useState<Dialog>(null);
  const [selected,setSelected]=useState("ebay");
- const [pricing,setPricing]=useState<{packagesUsdCents:number[];defaultMarkupBps:number;checkoutEnabled:boolean}|null>(null);
  useEffect(()=>{if(!dialog)return;const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")setDialog(null)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[dialog]);
  const open=(kind:Dialog,id?:string)=>{if(id)setSelected(id);setDialog(kind)};
  const current=sources.find(s=>s.id===selected)||sources[0];
