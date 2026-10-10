@@ -29,11 +29,14 @@ export function ImporterWorkspacePage(){
  const {getToken}=useClerkAuth();
  const [platform,setPlatform]=useState<{authenticated:boolean;billingEnabled:boolean}|null>(null);
  const [preview,setPreview]=useState<any[]>([]);
+ const [billing,setBilling]=useState<{currency:string;packagesUsdCents:number[];defaultMarkupBps:number;checkoutEnabled:boolean}|null>(null);
  useEffect(()=>{if(!user)return;let cancelled=false;(async()=>{try{
   const token=await getToken();if(!token)return;
   const response=await fetch("https://data.bazunk.com/web/marketplace/importers",{headers:{Authorization:`Bearer ${token}`}});
   if(response.ok&&!cancelled)setPlatform(await response.json());
   if(["ebay","amazon","aliexpress"].includes(source)){
+   const quote=await fetch("https://data.bazunk.com/web/marketplace/billing-status",{headers:{Authorization:"Bearer "+token}});
+   if(quote.ok&&!cancelled)setBilling(await quote.json());
    const products=await fetch("https://data.bazunk.com/web/marketplace/catalogue-preview?provider="+encodeURIComponent(source)+"&limit=6",{headers:{Authorization:"Bearer "+token}});
    if(products.ok&&!cancelled){const body=await products.json();setPreview(Array.isArray(body.items)?body.items:[])}
   }
@@ -51,6 +54,7 @@ export function ImporterWorkspacePage(){
     <p className="mt-3 text-slate-300 max-w-3xl">You won't need your own RapidAPI key. The Bazunk Data Platform will manage paid requests, usage records and prepaid balances. Seller billing is being connected and is not available yet.</p>
     <div className="mt-5 grid sm:grid-cols-3 gap-3 text-sm"><div className="rounded-xl bg-white/10 p-4"><b>1. Preview</b><p className="text-slate-300 mt-1">Search and inspect source products before selecting them.</p></div><div className="rounded-xl bg-white/10 p-4"><b>2. Select & price</b><p className="text-slate-300 mt-1">Choose listings, set markup and destination categories.</p></div><div className="rounded-xl bg-white/10 p-4"><b>3. Import & sync</b><p className="text-slate-300 mt-1">Import products and review usage charges in your account.</p></div></div>
     {preview.length>0&&<div className="mt-6"><h3 className="font-black text-lg mb-3">Cached product previews</h3><div className="grid grid-cols-2 md:grid-cols-3 gap-3">{preview.map((product:any,index:number)=><div key={String(product.externalId||index)} className="rounded-xl bg-white text-slate-900 p-3">{product.images?.[0]?.url&&<img src={product.images[0].url} alt={String(product.title||"Product")} loading="lazy" className="w-full h-32 object-contain rounded-lg"/>}<p className="text-sm font-bold mt-2 line-clamp-2">{product.title||"Product"}</p><p className="text-xs mt-1">{product.price?.currency||"USD"} {product.price?.amount??"—"}</p></div>)}</div><p className="text-xs text-slate-400 mt-2">Cached products are illustrative; stock and prices may have changed.</p></div>}
+    {billing&&<div className="mt-6 rounded-xl border border-white/20 p-4"><h3 className="font-black">Prepaid importer pricing</h3><p className="text-sm text-slate-300 mt-1">Default API markup: {((billing.defaultMarkupBps/10000-1)*100).toFixed(0)}%. Prices are shown in USD; payment in other currencies will be calculated at checkout when enabled.</p><div className="flex flex-wrap gap-2 mt-3">{billing.packagesUsdCents.map(cents=><span key={cents} className="rounded-lg bg-white/10 px-4 py-2 font-bold">${(cents/100).toFixed(0)}</span>)}</div><p className="mt-2 text-xs text-amber-200">{billing.checkoutEnabled?"Checkout available":"Checkout is not yet available"}</p></div>}
     <a href={dataUrl} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 hover:bg-cyan-300">Open Bazunk Data Platform <ExternalLink className="w-4 h-4"/></a>
     <p className="mt-3 text-xs text-amber-200">Paid importer checkout and cross-site account sync are not yet active. Do not purchase credits until the service is enabled.</p>
    </section> : source==="woocommerce"?<WooCommercePublicImporter/>:source==="offerup"?<OfferUpManualImporter/>:<ShopifyPublicImporter/>}
