@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES } from "@/data/categories";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useCurrency, CURRENCIES, MARKET_COUNTRIES, type CurrencyCode } from "@/context/CurrencyContext";
@@ -108,6 +108,8 @@ export function Navbar() {
   const changeCountry = (code: string) => { setCountry(code); setLanguageForCountry(code); };
   const featureSettings = useRawSettings();
   const visibleHref = (href:string) => { const f=featureForHref(href); return !f || isFeatureEnabled(featureSettings,f); };
+  const [hiddenCategories,setHiddenCategories]=useState<string[]>([]);
+  useEffect(()=>{fetch("/api/settings/category-visibility",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
@@ -131,8 +133,8 @@ export function Navbar() {
     ? ALL_PRODUCTS.filter((p) => p.title.toLowerCase().includes(trimmed)).slice(0, 4)
     : [];
   const matchedCategories = trimmed
-    ? CATEGORIES.filter(
-        (c) => c.name.toLowerCase().includes(trimmed) ||
+    ? ACTIVE_CATEGORIES.filter(
+        (c) => !hiddenCategories.includes(c.slug) && c.name.toLowerCase().includes(trimmed) ||
           c.subcategories.some((s) => s.name.toLowerCase().includes(trimmed))
       ).slice(0, 3)
     : [];
