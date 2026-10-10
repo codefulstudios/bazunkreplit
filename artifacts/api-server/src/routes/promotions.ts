@@ -271,6 +271,7 @@ router.get("/promotions/related", async (req, res) => {
       WHERE lp.type IN ('related-listings-5d', 'related-listings-10d')
         AND lp.expires_at > NOW()
         AND l.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
         ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
       ORDER BY RANDOM()
