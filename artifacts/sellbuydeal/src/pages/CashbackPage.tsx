@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Coins, TrendingUp, Gift, Star, Zap, Crown } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 
-const TIERS = [
+const DEFAULT_TIERS = [
   {
     id: 'bronze',
     icon: '🏅',
@@ -60,9 +60,13 @@ const HOW_IT_WORKS = [
 export default function CashbackPage() {
   const { formatPrice, currency } = useCurrency();
   const [calc, setCalc] = useState(100);
-  const rate = calc >= 2000 ? 0.03 : calc >= 750 ? 0.02 : calc >= 250 ? 0.015 : 0.01;
+  const [settings,setSettings] = useState<any>(null);
+  useEffect(()=>{fetch('https://bazunk-api.onrender.com/api/cashback/settings').then(r=>r.json()).then(setSettings).catch(()=>{});},[]);
+  const TIERS=DEFAULT_TIERS.map(t=>{const v=settings?.tiers?.find((x:any)=>x.id===t.id);return v?{...t,...v,rate:String(v.rate)+'%'}:t;});
+  const current=[...TIERS].reverse().find(t=>calc>=t.spendGbp)||TIERS[0];
+  const rate = parseFloat(current.rate)/100;
   const earned = (calc * rate).toFixed(2);
-  const tierName = calc >= 2000 ? 'Platinum' : calc >= 750 ? 'Gold' : calc >= 250 ? 'Silver' : 'Bronze';
+  const tierName = current.name;
 
   return (
     <div className="min-h-screen bg-[#1A1D2E] text-white">
@@ -83,12 +87,14 @@ export default function CashbackPage() {
             Just money returned to your wallet.
           </p>
           <div className="mt-8 inline-flex items-center gap-3 bg-yellow-400/10 border border-yellow-400/20 rounded-2xl px-6 py-4">
-            <span className="text-yellow-400 font-black text-4xl">Up to 3%</span>
+            <span className="text-yellow-400 font-black text-4xl">Up to {Math.max(...TIERS.map(t=>parseFloat(t.rate)))}%</span>
             <span className="text-white/60 text-left text-sm">cashback<br />on every order</span>
           </div>
         </div>
       </div>
 
+      {settings&&!settings.enabled&&<div className="max-w-3xl mx-auto p-4 text-center bg-amber-900/40">Cashback is not currently active. Rates are illustrative only.</div>}
+      {settings?.payoutPolicy&&<p className="max-w-3xl mx-auto p-4 text-center text-white/70">{settings.payoutPolicy}</p>}
       {/* How it works */}
       <div className="max-w-5xl mx-auto px-6 py-16">
         <h2 className="text-3xl font-black text-center mb-3">How CashBack Works</h2>
