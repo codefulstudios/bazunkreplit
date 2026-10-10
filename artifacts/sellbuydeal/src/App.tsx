@@ -285,11 +285,13 @@ function Router() {
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/audit-log" component={AdminAuditLogPage} />
       <Route path="/admin/system-status" component={AdminSystemStatusPage} />
-      <Route path="/admin/feature-flags" component={AdminFeatureFlagsPage} />
+      <Route path="/admin/feature-toggles" component={AdminFeatureFlagsPage} />
+      <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
       <Route path="/admin/products" component={AdminProductsPage} />
       <Route path="/admin/listings" component={AdminListingsPage} />
       <Route path="/admin/imports" component={AdminImportsPage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />
+      <Route path="/admin/api-centre" component={AdminImporterControlPage} />
       <Route path="/admin/classifieds" component={AdminClassifiedsPage} />
       <Route path="/admin/payments" component={AdminPaymentsPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
