@@ -1951,6 +1951,9 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
 // POST /api/admin/sync-ebay-prices — re-fetch current eBay prices and reprice
 router.post("/admin/sync-ebay-prices", async (req, res) => {
   const apiKey = process.env.RAPIDAPI_KEY;
+  const force = req.query.force === "true";
+  const settings = await ebayApiSettings();
+  let remaining = Math.max(0,settings.requestBudget - await ebayApiRequestCount());
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
 
   const rows = await db.execute(sql`
@@ -1962,7 +1965,7 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
   if (!rows.length) { res.json({ updated: 0, unchanged: 0, errors: 0, message: "No eBay imports found" }); return; }
 
   let updated = 0, unchanged = 0, errors = 0, stockUpdated = 0, stockUnknown = 0;
-  const BATCH = 5;
+  const BATCH = 1; // sequential budget enforcement, no concurrent overrun
 
   for (let i = 0; i < rows.length; i += BATCH) {
     await Promise.all(rows.slice(i, i + BATCH).map(async row => {
@@ -1975,12 +1978,19 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
         const minProfit = parseFloat(String(specs.min_profit ?? 5)) || 5;
         const oldPrice  = parseFloat(String(specs.ebay_price ?? 0));
         if (!itemId) return;
+        const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
+        if (!force && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
+        if (remaining <= 0) { errors++; return; }
+        remaining--;
 
         const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
         const resp = await fetch(
           `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(itemId)}&marketplace_id=${marketplaceId}`,
           { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
         );
+        try {
+          await db.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES (${site === "uk" ? "sync-uk" : "sync-us"},${resp.status})`);
+        } catch (usageError) { logger.warn({usageError},"eBay sync usage logging failed"); }
         if (!resp.ok) { errors++; return; }
 
         const data     = await resp.json() as Record<string, unknown>;
@@ -1994,7 +2004,7 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
         const sourceQty=ebayStockFromSummary(match);
         if(sourceQty===null)stockUnknown++;
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
-        if(priceUnchanged && (sourceQty===null || (sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active")))){unchanged++;return;}
+        if(priceUnchanged && (sourceQty===null || (sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active")))){await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);unchanged++;return;}
 
         const landedCost = newEbayPrice + shipping;
         const newBazunkPrice = Math.round(Math.max(landedCost * (1 + markupPct / 100), landedCost + minProfit) * 100) / 100;
