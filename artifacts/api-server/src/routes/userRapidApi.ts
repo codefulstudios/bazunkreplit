@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { importerBalance, ensureImporterBillingTables } from "../lib/importerBilling.js";
+import { importerBalance } from "../lib/importerBilling.js";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { BAZUNK_API_EMAILS, encryptRapidKey, requestEmail, rapidKeyForRequest } from "../lib/userRapidApi.js";
