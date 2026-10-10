@@ -32,11 +32,14 @@ export function ImportersPage(){
     <button onClick={()=>open("examples")} className="rounded-xl border border-white/40 bg-white/10 text-white px-5 py-3 font-bold inline-flex gap-2 items-center"><Search className="w-4 h-4"/> Examples</button>
    </div>
   </section>
-  <div className="mt-9 flex flex-wrap items-end justify-between gap-3"><div><p className="uppercase text-xs tracking-widest font-black text-orange-600 dark:text-orange-400">Supported sources</p><h2 className="text-2xl font-black mt-1 text-slate-950 dark:text-orange-400">Choose a marketplace</h2></div><span className="text-sm text-slate-700 dark:text-orange-200">Select an icon to learn more</span></div>
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">{sources.map(s=>{const Icon=s.icon;return <button key={s.id} onClick={()=>open(s.paid?"examples":"docs",s.id)} className="rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-[#101010] p-3 text-left shadow-sm hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400 transition-shadow">
-   <div className={`rounded-xl bg-gradient-to-br ${s.gradient} h-20 flex items-center justify-center text-white`}><Icon className="w-10 h-10"/></div>
+  <div className="mt-9 flex flex-wrap items-end justify-between gap-3"><div><p className="uppercase text-xs tracking-widest font-black text-orange-600 dark:text-orange-400">Supported sources</p><h2 className="text-2xl font-black mt-1 text-slate-950 dark:text-orange-400">Supported marketplaces</h2></div><span className="text-sm text-slate-700 dark:text-orange-200">Marketplace integrations</span></div>
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">{sources.map(s=><div key={s.id} className="rounded-2xl border border-orange-200 dark:border-orange-500/30 bg-white dark:bg-[#101010] p-3 text-center shadow-sm">
+   <div className={`rounded-xl bg-gradient-to-br ${s.gradient} h-20 flex items-center justify-center p-3`}>
+    <img src={`https://cdn.simpleicons.org/${({ebay:"ebay",amazon:"amazon",aliexpress:"aliexpress",shopify:"shopify",woocommerce:"woocommerce",offerup:"offerup"} as Record<string,string>)[s.id]}/ffffff`} alt={`${s.name} logo`} loading="lazy" className="max-w-full max-h-12 w-auto h-auto object-contain" onError={e=>{e.currentTarget.style.display="none";e.currentTarget.nextElementSibling?.classList.remove("hidden")}}/>
+    <span className="hidden text-white text-lg font-black">{s.name}</span>
+   </div>
    <p className="font-black mt-3 text-slate-950 dark:text-orange-300">{s.name}</p><p className="text-xs mt-1 text-slate-700 dark:text-orange-200">{s.paid?"Prepaid · preparing launch":"Free tool available"}</p>
-  </button>})}</div>
+  </div>)}</div>
   <section className="mt-9 grid md:grid-cols-3 gap-4">{[
    {title:"1. Find products",description:"Search a supported marketplace or provide a source URL. Preview product images and details before choosing.",icon:Search},
    {title:"2. Review costs",description:"Paid searches and product lookups will show their charge before execution. Choose your listings and selling markup.",icon:Wallet},
