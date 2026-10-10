@@ -85,16 +85,19 @@ export function CategoriesPage() {
   const [search, setSearch] = useState("");
   const [counts, setCounts] = useState<CategoryCount[]>([]);
   const [hidden, setHidden] = useState<string[]>([]);
+  const [display, setDisplay] = useState<Record<string,string>>({});
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/settings/category-visibility`, {cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHidden(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});
+    fetch(`${API_BASE}/api/settings/category-visibility`, {cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>(setHidden(Array.isArray(d.hidden)?d.hidden:[]),setDisplay(d.display||{}))).catch(()=>{});
     fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 
-  const displayCategories = ACTIVE_CATEGORIES.filter(c=>!hidden.includes(c.slug)).map(c=>({...c,subcategories:c.subcategories.filter(sub=>!hidden.includes(c.slug+"__"+sub.slug))}));
+  const statusFor=(category:string,sub?:string)=>{const key=category+(sub?"__"+sub:"");return display[key]||(hidden.includes(key)?"coming_soon":"active");};
+  const labelFor=(state:string)=>state==="maintenance"?"Under Maintenance":"Coming Soon";
+  const displayCategories = ACTIVE_CATEGORIES.filter(c=>statusFor(c.slug)!=="hidden").map(c=>({...c,subcategories:c.subcategories.filter(sub=>statusFor(c.slug,sub.slug)!=="hidden")}));
   const ordered = [...displayCategories].sort((a, b) => {
     const ai = CATEGORY_ORDER.indexOf(a.slug);
     const bi = CATEGORY_ORDER.indexOf(b.slug);
@@ -111,7 +114,7 @@ export function CategoriesPage() {
       )
     : ordered;
 
-  const selected = displayCategories.find((c) => c.slug === openSlug) ?? null;
+  const selected = displayCategories.find((c) => c.slug === openSlug && statusFor(c.slug)==="active") ?? null;
 
   function catCount(slug: string) {
     return counts.filter(l => resolveCategory(l.category, l.subcategory).category === slug).reduce((sum, l) => sum + Number(l.count || 0), 0);
@@ -183,7 +186,8 @@ export function CategoriesPage() {
         <div className={`grid gap-5 items-start ${selected ? "xl:grid-cols-[minmax(0,3fr)_minmax(330px,1.2fr)]" : ""}`}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((category, index) => {
-              const isOpen = openSlug === category.slug;
+              const isOpen = openSlug === category.slug && statusFor(category.slug)==="active";
+              const unavailable=statusFor(category.slug)!=="active";
               const totalListings = catCount(category.slug);
               const art = CATEGORY_ART[category.slug];
               return (
@@ -193,10 +197,11 @@ export function CategoriesPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: Math.min(index * 0.02, 0.22) }}
+                  disabled={unavailable}
                   onClick={() => setOpenSlug(isOpen ? null : category.slug)}
                   className={`relative overflow-hidden min-h-[145px] rounded-2xl text-left bg-gradient-to-br ${themeFor(category.slug)}
                     border ${isOpen ? "border-white/60 ring-2 ring-white/20" : "border-white/10"}
-                    shadow-lg shadow-slate-950/10 hover:-translate-y-0.5 hover:shadow-xl transition-all`}
+                    shadow-lg shadow-slate-950/10 disabled:cursor-not-allowed enabled:hover:-translate-y-0.5 enabled:hover:shadow-xl transition-all`}
                   data-testid={`card-category-${category.slug}`}
                 >
                   <div className="absolute inset-x-0 bottom-0 h-[72%] overflow-hidden pointer-events-none">
@@ -222,12 +227,13 @@ export function CategoriesPage() {
                         style={{ background: "radial-gradient(ellipse at 40% 50%, rgba(10, 15, 25, 0.40) 0%, rgba(10, 15, 25, 0.30) 45%, rgba(10, 15, 25, 0) 75%)" }}
                       />
                       <p className="text-[16px] leading-tight font-black text-white">{category.name}</p>
+                      {unavailable && <p className="mt-1 text-xs font-bold text-amber-100">({labelFor(statusFor(category.slug))})</p>}
                       <p className="mt-1 text-[12px] font-extrabold text-white">
                         {category.subcategories.length} subcategories
-                        {totalListings > 0 && <> <span className="text-white/70">•</span> {totalListings.toLocaleString()} listing{totalListings !== 1 ? "s" : ""}</>}
+                        {!unavailable && totalListings > 0 && <> <span className="text-white/70">•</span> {totalListings.toLocaleString()} listing{totalListings !== 1 ? "s" : ""}</>}
                       </p>
                     </div>
-                    <div className="w-9 h-9 rounded-full bg-white/35 border border-white/20 flex items-center justify-center flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-full bg-white/35 ${unavailable?"opacity-30":""} border border-white/20 flex items-center justify-center flex-shrink-0">
                       <ChevronRight className={`w-5 h-5 text-slate-900 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                     </div>
                   </div>
