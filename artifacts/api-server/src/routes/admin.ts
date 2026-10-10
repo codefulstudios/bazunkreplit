@@ -1960,7 +1960,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
       VALUES (
         ${publicId}, ${p.title}, ${bazunkPrice}, ${bazunkPrice}, ${currency},
         ${category}, ${subcategory}, ${description}, ${condNorm},
-        ${image}, ${sellerEmail}, ${SELLER_NAME}, ${specs}, ${p.available_quantity===0?'inactive':'active'}, ${p.available_quantity==null?1:Math.max(0,Math.floor(p.available_quantity))}, NOW(), NOW()
+        ${image}, ${sellerEmail}, ${SELLER_NAME}, ${specs}, ${p.available_quantity==null?'paused':p.available_quantity===0?'inactive':'active'}, ${p.available_quantity==null?0:Math.max(0,Math.floor(p.available_quantity))}, NOW(), NOW()
       )
     `);
     await db.execute(sql`UPDATE listings SET seller_username = 'Bazunk Official Store' WHERE public_id = ${publicId}`);
@@ -1982,7 +1982,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   const rows = await db.execute(sql`
     SELECT id, specifications, quantity, status FROM listings
     WHERE (specifications LIKE '%"source":"eBay UK"%' OR specifications LIKE '%"source":"eBay US"%')
-      AND status IN ('active','inactive')
+      AND status IN ('active','inactive','paused')
   `).then(r => r.rows as { id: number; specifications: string; quantity:number; status:string }[]);
 
   if (!rows.length) { res.json({ updated: 0, unchanged: 0, errors: 0, message: "No eBay imports found" }); return; }
