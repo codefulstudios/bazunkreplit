@@ -287,6 +287,7 @@ router.get("/promotions/related", async (req, res) => {
       SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category
       FROM listings l
       WHERE l.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
         ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
       ORDER BY l.created_at DESC
