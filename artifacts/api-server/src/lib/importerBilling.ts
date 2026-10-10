@@ -7,10 +7,12 @@ import { sql } from "drizzle-orm";
  * No funding endpoint is exposed until verified Stripe settlement is implemented.
  */
 export const IMPORTER_MICROCENTS_PER_USD = 100_000_000n;
-export const IMPORTER_MARKUP_BPS = 15_000n; // $0.10 supplier cost -> $0.15 seller charge
+export const IMPORTER_MARKUP_BPS = 17_500n; // 75% default markup: $0.10 -> $0.175
 export function importerSellerCharge(cost:bigint,markupBps:bigint=IMPORTER_MARKUP_BPS):bigint {
- if(cost<=0n || markupBps<IMPORTER_MARKUP_BPS || markupBps>100_000n) throw Error("Invalid importer pricing");
- return (cost*markupBps+9999n)/10000n;
+ if(cost<=0n || markupBps<15_000n || markupBps>100_000n) throw Error("Invalid importer pricing");
+ const percentagePrice=(cost*markupBps+9999n)/10000n;
+ const minimumSpread=5_000_000n; // $0.05
+ return percentagePrice>cost+minimumSpread?percentagePrice:cost+minimumSpread;
 }
 export async function ensureImporterBillingTables() {
  await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_paid_wallets (
@@ -19,7 +21,7 @@ export async function ensureImporterBillingTables() {
  await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_provider_prices (
   provider TEXT NOT NULL, endpoint TEXT NOT NULL,
   supplier_cost_microcents BIGINT NOT NULL CHECK(supplier_cost_microcents>0),
-  markup_bps INTEGER NOT NULL DEFAULT 15000 CHECK(markup_bps>=15000 AND markup_bps<=100000),
+  markup_bps INTEGER NOT NULL DEFAULT 17500 CHECK(markup_bps>=15000 AND markup_bps<=100000),
   enabled BOOLEAN NOT NULL DEFAULT FALSE,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY(provider,endpoint))`);
