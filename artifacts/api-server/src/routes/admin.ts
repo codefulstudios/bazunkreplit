@@ -99,6 +99,12 @@ router.get("/settings/public", async (_req, res) => {
 
 // ── All routes below require admin token ──────────────────────────────────────
 
+router.get("/settings/category-visibility",async(_req,res)=>{
+ try {const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%' AND value='false'`);
+ res.setHeader("Cache-Control","no-store");res.json({hidden:(rows.rows as any[]).map(x=>String(x.key).slice(17))});}
+ catch(err){logger.error({err},"Public category visibility failed");res.status(503).json({error:"Category visibility unavailable"});}
+});
+
 router.use("/admin", requireAdmin);
 
 // ── Feature Flags ───────────────────────────────────────────────────────────
