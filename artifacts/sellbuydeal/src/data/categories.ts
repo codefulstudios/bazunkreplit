@@ -371,7 +371,6 @@ export const CATEGORIES: Category[] = [
 // Legacy slugs remain readable until the server-side listing migration is complete.
 export const CATEGORY_ALIASES: Record<string, string> = {
   "digital-products": "digital",
-  "eco-friendly": "eco-friendly",
 };
 export const SUBCATEGORY_ALIASES: Record<string, { category: string; subcategory: string }> = {
   "electronics:gaming-consoles": { category: "video-games", subcategory: "consoles" },
@@ -385,6 +384,10 @@ export const SUBCATEGORY_ALIASES: Record<string, { category: string; subcategory
   "digital-products:stock-media": { category: "digital", subcategory: "photography" },
   "digital-products:templates": { category: "digital", subcategory: "graphics-design" },
   "digital-products:online-courses": { category: "digital", subcategory: "education-courses" },
+  "cds-vinyl:pop-rock": { category: "cds-vinyl", subcategory: "cds" },
+  "cds-vinyl:hip-hop": { category: "cds-vinyl", subcategory: "cds" },
+  "cds-vinyl:classical": { category: "cds-vinyl", subcategory: "cds" },
+  "cds-vinyl:country": { category: "cds-vinyl", subcategory: "cds" },
 };
 export function resolveCategory(category: string, subcategory?: string | null) {
   const alias = subcategory ? SUBCATEGORY_ALIASES[`${category}:${subcategory}`] : undefined;
