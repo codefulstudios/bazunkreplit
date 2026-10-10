@@ -10,6 +10,7 @@ const NAV = [
   { label: "Listings",     href: "/admin/listings",     icon: List            },
   { label: "Imports",      href: "/admin/imports",      icon: ArrowDownToLine },
   { label: "Importer Control", href: "/admin/importer-control", icon: Activity },
+  { label: "API Centre", href: "/admin/api-centre", icon: ServerCog },
   { label: "Classifieds",  href: "/admin/classifieds",  icon: FileText        },
   { label: "Orders",       href: "/admin/orders",       icon: ShoppingCart     },
   { label: "Payments",   href: "/admin/payments",   icon: CreditCard      },
@@ -25,7 +26,7 @@ const NAV = [
   { label: "Reviews",    href: "/admin/reviews",    icon: Star            },
   { label: "Audit Log",  href: "/admin/audit-log",  icon: ScrollText       },
   { label: "System Status", href: "/admin/system-status", icon: ServerCog },
-  { label: "Feature Flags", href: "/admin/feature-flags", icon: Flag },
+  { label: "Feature Toggles", href: "/admin/feature-toggles", icon: Flag },
   { label: "Email Templates", href: "/admin/emails", icon: Mail },
   { label: "Settings",   href: "/admin/settings",   icon: Settings        },
 ];
