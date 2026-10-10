@@ -72,23 +72,27 @@ export function rapidApiKeyStatus(): { configured: boolean; source: RapidApiKeyS
 
 // Reserve a billable eBay request atomically across app instances.
 // The reservation remains counted if the network call fails, preventing accidental overages.
-export async function reserveEbayApiRequest(endpoint:string):Promise<number> {
+export async function ensureEbayUsageLedger():Promise<void>{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+}
+export async function reserveEbayApiRequest(endpoint:string):Promise<number>{
+  await ensureEbayUsageLedger();
   return db.transaction(async(tx)=>{
     await tx.execute(sql`SELECT pg_advisory_xact_lock(917204311)`);
-    await tx.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
     const rows=await tx.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
-    let budget=15; // Free-tier safety ceiling until explicitly upgraded
-    try {const parsed=JSON.parse(String(rows.rows[0]?.value??"{}"));if(parsed.plan==="pro" && parsed.proConfirmed===true) budget=9000; else if(Number.isFinite(parsed.requestBudget)&&parsed.requestBudget>=0) budget=Math.min(15,parsed.requestBudget);}catch{}
+    let saved:Record<string,unknown>={};
+    try{saved=JSON.parse(String(rows.rows[0]?.value??"{}"));}catch{}
+    const pro=saved.plan==="pro"&&saved.proConfirmed===true;
+    const budget=pro?9000:15;
     const used=await tx.execute(sql`SELECT COUNT(*)::int AS n FROM ebay_api_usage WHERE used_at>=date_trunc('month',NOW())`);
     if(Number(used.rows[0]?.n??0)>=budget)throw new Error("eBay RapidAPI request budget reached");
-    const reserved=await tx.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES (${endpoint},0) RETURNING id`);
-    return Number(reserved.rows[0].id);
+    const result=await tx.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES(${endpoint},0) RETURNING id`);
+    return Number(result.rows[0].id);
   });
 }
 export async function finishEbayApiRequest(id:number,status:number):Promise<void>{
   await db.execute(sql`UPDATE ebay_api_usage SET status=${status} WHERE id=${id}`);
 }
-
 /** Plain-English explanation of a RapidAPI HTTP failure. */
 export function rapidApiErrorMessage(apiName: string, status: number): string {
   switch (status) {
