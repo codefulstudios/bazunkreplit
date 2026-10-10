@@ -262,6 +262,7 @@ function Router() {
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/sell/quick">{() => <Redirect to="/sell/direct" />}</Route>
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/my-store/settings">{() => <MyStorePage settingsPage />}</Route>
       <Route path="/my-store" component={MyStorePage} />
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
