@@ -187,7 +187,8 @@ export function CategoriesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((category, index) => {
               const isOpen = openSlug === category.slug && statusFor(category.slug)==="active";
-              const unavailable=statusFor(category.slug)!=="active";
+              const state=statusFor(category.slug);
+              const unavailable=state!=="active";
               const totalListings = catCount(category.slug);
               const art = CATEGORY_ART[category.slug];
               return (
@@ -199,9 +200,10 @@ export function CategoriesPage() {
                   transition={{ delay: Math.min(index * 0.02, 0.22) }}
                   disabled={unavailable}
                   onClick={() => setOpenSlug(isOpen ? null : category.slug)}
-                  className={`relative overflow-hidden min-h-[145px] rounded-2xl text-left bg-gradient-to-br ${themeFor(category.slug)}
+                  aria-label={unavailable ? `${category.name} — ${labelFor(state)}, unavailable` : category.name}
+                  className={`relative overflow-hidden min-h-[175px] rounded-2xl text-left bg-gradient-to-br ${unavailable?"from-slate-600 via-slate-700 to-slate-800":themeFor(category.slug)}
                     border ${isOpen ? "border-white/60 ring-2 ring-white/20" : "border-white/10"}
-                    shadow-lg shadow-slate-950/10 disabled:cursor-not-allowed enabled:hover:-translate-y-0.5 enabled:hover:shadow-xl transition-all`}
+                    shadow-lg shadow-slate-950/10 disabled:cursor-not-allowed disabled:opacity-80 disabled:saturate-[.35] enabled:hover:-translate-y-0.5 enabled:hover:shadow-xl transition-all`}
                   data-testid={`card-category-${category.slug}`}
                 >
                   <div className="absolute inset-x-0 bottom-0 h-[72%] overflow-hidden pointer-events-none">
@@ -210,10 +212,10 @@ export function CategoriesPage() {
                         src={art}
                         alt=""
                         aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover object-bottom"
+                        className={`absolute inset-0 w-full h-full object-cover object-bottom ${unavailable?"grayscale opacity-35":"opacity-100"}`}
                       />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-transparent" />
+                    <div className={`absolute inset-0 ${unavailable?"bg-slate-950/50":"bg-gradient-to-r from-black/20 via-transparent to-transparent"}`} />
                   </div>
 
                   <div className="relative z-10 p-4 flex items-start gap-3">
@@ -227,14 +229,14 @@ export function CategoriesPage() {
                         style={{ background: "radial-gradient(ellipse at 40% 50%, rgba(10, 15, 25, 0.40) 0%, rgba(10, 15, 25, 0.30) 45%, rgba(10, 15, 25, 0) 75%)" }}
                       />
                       <p className="text-[16px] leading-tight font-black text-white">{category.name}</p>
-                      {unavailable && <p className="mt-1 text-xs font-bold text-amber-100">({labelFor(statusFor(category.slug))})</p>}
-                      <p className="mt-1 text-[12px] font-extrabold text-white">
+                      {unavailable && <span className="inline-flex mt-2 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-950 border border-amber-200 text-[12px] font-black tracking-wide shadow-sm">{state==="maintenance"?"⚙ UNDER MAINTENANCE":"◷ COMING SOON"}</span>}
+                      <p className={`mt-2 text-[12px] font-extrabold ${unavailable?"text-slate-300":"text-white"}`}>
                         {category.subcategories.length} subcategories
                         {!unavailable && totalListings > 0 && <> <span className="text-white/70">•</span> {totalListings.toLocaleString()} listing{totalListings !== 1 ? "s" : ""}</>}
                       </p>
                     </div>
-                    <div className={`w-9 h-9 rounded-full bg-white/35 border border-white/20 flex items-center justify-center flex-shrink-0 ${unavailable?"opacity-30":""}`}>
-                      <ChevronRight className={`w-5 h-5 text-slate-900 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                    <div className={`w-9 h-9 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 ${unavailable?"bg-slate-800/80":"bg-white/35"}`}>
+                      {unavailable ? <LucideIcons.LockKeyhole className="w-4 h-4 text-white/75" /> : <ChevronRight className={`w-5 h-5 text-slate-900 transition-transform ${isOpen ? "rotate-90" : ""}`} />}
                     </div>
                   </div>
                 </motion.button>
