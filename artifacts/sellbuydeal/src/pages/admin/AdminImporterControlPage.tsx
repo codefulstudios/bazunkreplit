@@ -13,7 +13,7 @@ function ago(v:string|null|undefined) { if(!v) return "Never"; const d=new Date(
 
 export function AdminImporterControlPage() {
   const { authFetch } = useAdmin();
-  const [usage,setUsage]=useState<{recordedRequests:number;recordedErrors:number;monthlyLimit:number;remainingEstimate:number;estimatedCostUsd:number;syncDays:number;requestBudget:number;monthlyBaseUsd:number;overagePerRequestUsd:number;bandwidthIncludedMb:number;bandwidthOveragePerMbUsd:number;notice:string}|null>(null);
+  const [usage,setUsage]=useState<{plan:"free"|"pro";proConfirmed:boolean;recordedRequests:number;recordedErrors:number;monthlyLimit:number;remainingEstimate:number;estimatedCostUsd:number;syncDays:number;requestBudget:number;monthlyBaseUsd:number;overagePerRequestUsd:number;bandwidthIncludedMb:number;bandwidthOveragePerMbUsd:number;notice:string}|null>(null);
   const [editingApi,setEditingApi]=useState(false);
   const [savingApi,setSavingApi]=useState(false);
   const [data,setData]=useState<Data|null>(null); const [loading,setLoading]=useState(true);
@@ -24,7 +24,13 @@ export function AdminImporterControlPage() {
   useEffect(()=>{load();},[load]);
   useEffect(()=>{authFetch("/api/admin/api-centre/ebay").then(r=>r.ok?r.json():null).then(setUsage).catch(()=>setUsage(null));},[authFetch]);
 
-  async function saveApiSettings(){if(!usage)return;setSavingApi(true);setMsg(null);try{const r=await authFetch("/api/admin/api-centre/ebay",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({monthlyLimit:usage.monthlyLimit,monthlyBaseUsd:usage.monthlyBaseUsd,overagePerRequestUsd:usage.overagePerRequestUsd,bandwidthIncludedMb:usage.bandwidthIncludedMb,bandwidthOveragePerMbUsd:usage.bandwidthOveragePerMbUsd,requestBudget:usage.requestBudget,syncDays:usage.syncDays})});const d=await r.json();if(!r.ok)throw Error(d.error||"Save failed");setEditingApi(false);setMsg("eBay API Centre settings saved.");}catch(e){setMsg(e instanceof Error?e.message:"Save failed");}finally{setSavingApi(false);}}
+  async function saveApiSettings(){if(!usage)return;setSavingApi(true);setMsg(null);try{
+    if(usage.plan==="pro"&&!usage.proConfirmed){setMsg("Confirm your RapidAPI Pro subscription before saving.");return;}
+    const r=await authFetch("/api/admin/api-centre/ebay",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:usage.plan,proConfirmed:usage.proConfirmed,syncDays:usage.syncDays})});
+    const d=await r.json();if(!r.ok)throw Error(d.error||"Save failed");
+    const refreshed=await authFetch("/api/admin/api-centre/ebay");if(refreshed.ok)setUsage(await refreshed.json());
+    setEditingApi(false);setMsg("eBay API plan and settings saved.");
+  }catch(e){setMsg(e instanceof Error?e.message:"Save failed");}finally{setSavingApi(false);}}
   async function testApis(){ setTesting(true); setMsg(null); try { const r=await authFetch('/api/admin/rapidapi/test',{method:'POST'}); const d=await r.json(); if(!r.ok) throw new Error(d.error||'Health test failed'); const out:Record<string,string>={}; for(const x of (d.results||[])) out[String(x.name||'').toLowerCase()]=x.ok?'Connected':(x.error||'Error'); setHealth(out); } catch(e){setMsg(e instanceof Error?e.message:'Health test failed');} finally{setTesting(false);} }
   async function sync(source:SourceKey){ setSyncing(source); setMsg(null); try {
     if(source==='amazon'){ const r=await authFetch('/api/admin/sync-amazon-prices',{method:'POST'}); const d=await r.json(); if(!r.ok) throw new Error(d.error||'Amazon sync failed'); setMsg(d.message||'Amazon sync complete'); }
@@ -41,23 +47,30 @@ export function AdminImporterControlPage() {
     {msg&&<div className="rounded-xl border bg-white p-3 text-sm font-medium">{msg}</div>}
     {!data&&loading?<div className="p-10 text-center text-gray-500">Loading importer status…</div>:data&&<>
       <div className="bg-white border rounded-2xl p-5 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-black text-lg">API Centre · eBay RapidAPI Pro</h2><button onClick={()=>setEditingApi(!editingApi)} className="px-3 py-1.5 rounded-lg border text-sm font-semibold">{editingApi?"Cancel":"Edit Bazunk API settings"}</button></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-black text-lg">API Centre · eBay RapidAPI {usage?.plan==="pro"?"Pro":"Free"}</h2><button onClick={()=>setEditingApi(!editingApi)} className="px-3 py-1.5 rounded-lg border text-sm font-semibold">{editingApi?"Cancel":"Edit Bazunk API settings"}</button></div>
         <div className="flex flex-wrap gap-3 text-sm underline text-indigo-700">
           <a href="https://rapidapi.com/developer/billing/subscriptions-and-usage" target="_blank" rel="noopener noreferrer">RapidAPI billing & usage ↗</a>
           <a href="https://rapidapi.com/mahmudulhasandev/api/real-time-ebay-data" target="_blank" rel="noopener noreferrer">eBay API ↗</a>
           <a href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/real-time-amazon-data" target="_blank" rel="noopener noreferrer">Amazon API ↗</a>
         </div>
-        <p className="text-sm text-gray-500">UK and USA · $10/month · 10,000 requests · $0.009 per overage request · 10,240 MB bandwidth included.</p>
+        <p className="text-sm text-gray-500">UK and USA · {usage?.plan==="pro"?"Pro: $10/month, 10,000 included, $0.009 overage":"Free: 20 included requests, $0.10 per extra call"} · Bazunk safety budget: {usage?.requestBudget??15} requests.</p>
         {usage ? <>
-          {editingApi&&<div className="grid grid-cols-2 md:grid-cols-4 gap-3 rounded-xl bg-gray-50 p-4">
-            {([["monthlyLimit","Monthly requests"],["requestBudget","Bazunk request budget"],["monthlyBaseUsd","Base cost ($)"],["overagePerRequestUsd","Overage ($/request)"],["bandwidthIncludedMb","Included bandwidth (MB)"],["bandwidthOveragePerMbUsd","Bandwidth overage ($/MB)"],["syncDays","Sync interval (days)"]] as const).map(([key,label])=><label key={key} className="text-xs font-semibold">{label}<input type="number" min="0" step={key==="overagePerRequestUsd"||key==="bandwidthOveragePerMbUsd"?"0.001":"1"} value={usage[key]} onChange={e=>setUsage(v=>v?{...v,[key]:Number(e.target.value)}:v)} className="mt-1 block w-full rounded-lg border bg-white p-2 text-sm"/></label>)}
-            <div className="flex items-end"><button onClick={saveApiSettings} disabled={savingApi} className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{savingApi?"Saving…":"Save settings"}</button></div>
+          {editingApi&&<div className="rounded-xl bg-gray-50 p-4 space-y-3">
+            <label className="block text-sm font-semibold">RapidAPI subscription plan
+              <select className="mt-1 block w-full rounded-lg border bg-white p-2" value={usage.plan} onChange={e=>setUsage(v=>v?{...v,plan:e.target.value as "free"|"pro",proConfirmed:false}:v)}>
+                <option value="free">Free — 20 requests; Bazunk limit 15</option>
+                <option value="pro">Pro — 10,000 requests; Bazunk limit 9,000</option>
+              </select>
+            </label>
+            {usage.plan==="pro"&&<label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={usage.proConfirmed} onChange={e=>setUsage(v=>v?{...v,proConfirmed:e.target.checked}:v)}/>I have already upgraded to Pro on RapidAPI.</label>}
+            <label className="block text-sm">Automatic sync interval (days)<input type="number" min="1" max="90" className="mt-1 block rounded-lg border p-2" value={usage.syncDays} onChange={e=>setUsage(v=>v?{...v,syncDays:Number(e.target.value)}:v)}/></label>
+            <button onClick={saveApiSettings} disabled={savingApi||(usage.plan==="pro"&&!usage.proConfirmed)} className="rounded-lg bg-indigo-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{savingApi?"Saving…":"Save plan and settings"}</button>
           </div>}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div><p className="text-xs text-gray-500">Tracked requests</p><p className="font-black text-2xl">{usage.recordedRequests.toLocaleString()}</p></div>
             <div><p className="text-xs text-gray-500">Estimated remaining</p><p className="font-black text-2xl">{usage.remainingEstimate.toLocaleString()}</p></div>
             <div><p className="text-xs text-gray-500">Estimated cost</p><p className="font-black text-2xl">${usage.estimatedCostUsd.toFixed(2)}</p></div>
-            <div><p className="text-xs text-gray-500">Public eBay sync</p><p className="font-black text-2xl">Every {usage.syncDays} days</p></div>
+            <div><p className="text-xs text-gray-500">Admin eBay sync</p><p className="font-black text-2xl">Every {usage.syncDays} days</p></div>
           </div>
           <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden"><div className="h-full bg-indigo-600" style={{width:`${Math.min(100,usage.recordedRequests/usage.monthlyLimit*100)}%`}}/></div>
           <p className="text-xs text-amber-700">{usage.notice}</p>
