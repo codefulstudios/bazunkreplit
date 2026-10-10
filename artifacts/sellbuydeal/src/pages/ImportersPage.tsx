@@ -72,7 +72,7 @@ export function ImportersPage(){
    </div>}
   {dialog==="examples"&&<div className="mt-4">
     <p className="text-sm !text-slate-800 dark:!text-orange-100">See how products move from a source marketplace into your Bazunk store. These are realistic, illustrative examples — not live searches.</p>
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mt-5">{sources.map(s=><button key={s.id} onClick={()=>setSelected(s.id)} className={`rounded-xl border px-3 py-3 text-sm font-black ${selected===s.id?"!bg-orange-500 !text-black border-orange-500":"!bg-white !text-slate-950 dark:!bg-[#222] dark:!text-orange-100 border-orange-500/40"}`}>{s.name}</button>)}</div>
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 mt-5">{sources.map(s=><button key={s.id} onClick={()=>setSelected(s.id)} className={`rounded-xl border px-3 py-3 text-sm font-black ${selected===s.id ? "!bg-orange-500 !text-black border-orange-500" : "!bg-white !text-slate-950 dark:!bg-[#222] dark:!text-orange-100 border-orange-500/40"}`}>{s.name}</button>)}</div>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
       <div className="rounded-2xl border border-orange-500/70 bg-white dark:bg-[#141414] p-3 sm:p-4">
         <h3 className="text-lg font-black !text-orange-600 dark:!text-orange-400">1. Find a product</h3><p className="text-xs mt-1 !text-slate-700 dark:!text-orange-100">Search {current.name} and browse product results.</p>
