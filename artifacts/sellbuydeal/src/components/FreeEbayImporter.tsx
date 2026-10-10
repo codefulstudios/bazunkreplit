@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory } from "@/data/categories";
 import { CheckCircle2, ExternalLink, Link2, Loader2, Package, Percent, RefreshCw, Search, Truck } from "lucide-react";
 
 type Item={itemId:string;url:string;title:string;price:number;currency:string;image:string|null;condition:string;description:string;shipping:number|null;shippingLabel:string|null;available:boolean;categoryPath:string[]};
-const categories=CATEGORIES.filter(c=>c.slug!=="digital-products");
+const categories=ACTIVE_CATEGORIES;
 const money=(currency:string,n:number)=>new Intl.NumberFormat(undefined,{style:"currency",currency:currency||"GBP"}).format(n);
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -15,7 +15,7 @@ export function FreeEbayImporter(){
  const [category,setCategory]=useState(""),[sub,setSub]=useState(""),[markupType,setMarkupType]=useState<"percentage"|"fixed">("percentage"),[markup,setMarkup]=useState("25");
  const [shippingMode,setShippingMode]=useState("source"),[shippingExtra,setShippingExtra]=useState("0"),[fixedShipping,setFixedShipping]=useState("3.99"),[syncEnabled,setSyncEnabled]=useState(true);
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[message,setMessage]=useState(""),[failures,setFailures]=useState<{input:string;error:string}[]>([]),[imports,setImports]=useState<ImportRow[]>([]),[syncing,setSyncing]=useState<number|null>(null);
- const subs=category==="digital"?[...CATEGORIES.find(c=>c.slug==="digital")!.subcategories,...CATEGORIES.find(c=>c.slug==="digital-products")!.subcategories.filter(s=>!CATEGORIES.find(c=>c.slug==="digital")!.subcategories.some(t=>t.name===s.name))]:categories.find(c=>c.slug===category)?.subcategories??[];
+ const subs=categories.find(c=>c.slug===category)?.subcategories??[];
  const urls=useMemo(()=>input.split(/\r?\n|,\s*/).map(x=>x.trim()).filter(Boolean),[input]);
  async function af(url:string,init:RequestInit={}){const token=await getToken();const target=url.startsWith("/api/")?`${API_BASE}${url}`:url;return fetch(target,{...init,headers:{"Content-Type":"application/json",...(init.headers||{}),...(token?{Authorization:`Bearer ${token}`}:{})}})}
  async function loadImports(){if(!user?.email)return;try{const r=await af(`/api/supplier/imports?email=${encodeURIComponent(user.email)}`);if(r.ok){const rows=await r.json();setImports((rows as ImportRow[]).filter((x:any)=>x.supplier_source==="ebay-public"))}}catch{}}
@@ -33,7 +33,7 @@ export function FreeEbayImporter(){
  function calc(i:Item){const m=Math.max(0,Number(markup)||0),product=markupType==="fixed"?i.price+m:i.price*(1+m/100),source=i.shipping??0,ship=shippingMode==="free"?0:shippingMode==="fixed"?Math.max(0,Number(fixedShipping)||0):shippingMode==="source_plus"?source+Math.max(0,Number(shippingExtra)||0):source;return{product:Math.round(product*100)/100,ship:Math.round(ship*100)/100}}
  async function publish(){
   if(!category||!selected.size)return;setBusy(true);setError("");setMessage("");
-  try{const chosen=items.filter(i=>selected.has(i.itemId));const r=await af("/api/user/ebay-public/import",{method:"POST",body:JSON.stringify({items:chosen,category,subcategory:sub,markupType,markupValue:Number(markup)||0,shippingMode,shippingExtra:Number(shippingExtra)||0,fixedShipping:Number(fixedShipping)||0,syncEnabled})}),d=await r.json();if(!r.ok)throw new Error(d.error||"Import failed.");setMessage(d.message||"Listings imported.");setSelected(new Set());await loadImports()}catch(e){setError(e instanceof Error?e.message:"Import failed.")}finally{setBusy(false)}
+  try{const chosen=items.filter(i=>selected.has(i.itemId));const r=await af("/api/user/ebay-public/import",{method:"POST",body:JSON.stringify({items:chosen,...resolveCategory(category,sub),markupType,markupValue:Number(markup)||0,shippingMode,shippingExtra:Number(shippingExtra)||0,fixedShipping:Number(fixedShipping)||0,syncEnabled})}),d=await r.json();if(!r.ok)throw new Error(d.error||"Import failed.");setMessage(d.message||"Listings imported.");setSelected(new Set());await loadImports()}catch(e){setError(e instanceof Error?e.message:"Import failed.")}finally{setBusy(false)}
  }
  return <section className="rounded-3xl border border-emerald-200 bg-white p-5 md:p-7 shadow-sm space-y-5">
   <div><span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Bazunk eBay Import & Sync · No RapidAPI key</span><h2 className="text-2xl font-black mt-2">Import eBay listings by URL</h2><p className="text-gray-500 mt-2">Paste one item, a batch of item URLs, or a public eBay search/category/seller page. Bazunk reads available public listing data, imports it and can re-check it every six hours.</p></div>
