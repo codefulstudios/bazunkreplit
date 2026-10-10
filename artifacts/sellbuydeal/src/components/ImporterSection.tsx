@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAdmin } from "@/context/AdminContext";
-import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES as SITE_CATEGORIES, resolveCategory } from "@/data/categories";
 
 interface SupplierImport {
   id: number;
@@ -145,8 +145,7 @@ export function ImportModal({ onClose, onSuccess, userEmail, userName, initialUr
           title: title.trim(),
           supplierPriceUsd: usd,
           imageUrl: imageUrl.trim() || null,
-          category,
-          subcategory: subcategory || null,
+          ...resolveCategory(category, subcategory),
           condition,
           description: description.trim() || null,
           markupType,
