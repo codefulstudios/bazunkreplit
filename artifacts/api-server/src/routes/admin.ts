@@ -1716,6 +1716,18 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
 
 // ── eBay routes ──────────────────────────────────────────────────────────────
 
+// Admin API Centre: server-side eBay RapidAPI request accounting.
+// These are Bazunk-recorded requests, not the provider's complete billing history.
+router.get("/admin/api-centre/ebay", async (_req, res) => {
+  try {
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    const result = await db.execute(sql`SELECT COUNT(*)::int AS requests, COUNT(*) FILTER (WHERE status >= 400)::int AS errors FROM ebay_api_usage WHERE used_at >= date_trunc('month', NOW())`);
+    const used = Number(result.rows[0]?.requests ?? 0);
+    const errors = Number(result.rows[0]?.errors ?? 0);
+    res.json({provider:"RapidAPI",plan:"Pro",monthlyLimit:10000,monthlyBaseUsd:10,overagePerRequestUsd:0.009,bandwidthIncludedMb:10240,bandwidthOveragePerMbUsd:0.001,recordedRequests:used,recordedErrors:errors,estimatedCostUsd:10+Math.max(0,used-10000)*0.009,remainingEstimate:Math.max(0,10000-used),syncDays:7,notice:"Local counts start when tracking was enabled and may exclude other RapidAPI clients or endpoints. Confirm billable quota in RapidAPI."});
+  } catch(e) { res.status(500).json({error:"Unable to load eBay usage."}); }
+});
+
 // GET /api/admin/search-ebay — search eBay UK or US
 router.get("/admin/search-ebay", async (req, res) => {
   const apiKey = process.env.RAPIDAPI_KEY;
@@ -1739,6 +1751,10 @@ router.get("/admin/search-ebay", async (req, res) => {
       `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(query)}&marketplace_id=${marketplaceId}${locationFilter}&delivery_country=${to}&offset=${offset}`,
       { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
     );
+    try {
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+      await db.execute(sql`INSERT INTO ebay_api_usage (endpoint,status) VALUES ('search',${resp.status})`);
+    } catch (usageError) { logger.warn({usageError}, "Could not record eBay API usage"); }
     if (!resp.ok) { res.status(502).json({ error: rapidApiErrorMessage("eBay", resp.status) }); return; }
 
     const data = await resp.json() as Record<string, unknown>;
