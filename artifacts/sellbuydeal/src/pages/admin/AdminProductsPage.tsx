@@ -7,13 +7,9 @@ import {
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
-import { CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory } from "@/data/categories";
 
-const digital = CATEGORIES.find(c => c.slug === "digital")!;
-const SITE_CATEGORIES = CATEGORIES.filter(c => c.slug !== "digital-products").map(c => c.slug === "digital" ? {
-  ...c, name: "Digital Products", subcategories: [...digital.subcategories, ...CATEGORIES.find(c => c.slug === "digital-products")!.subcategories.filter(sub => !digital.subcategories.some(existing => existing.name === sub.name))],
-} : c);
-
+const SITE_CATEGORIES = ACTIVE_CATEGORIES;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -264,7 +260,7 @@ function ProductsTab({ authFetch, categories }: { authFetch: (url: string, opts?
                       <p className="font-semibold text-gray-800 truncate">{p.title}</p>
                       {p.seller_email && <p className="text-[10px] text-gray-400 truncate">{p.seller_email}</p>}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{SITE_CATEGORIES.find(c => c.slug === p.category_id)?.name ?? p.category_name ?? <span className="text-gray-300">—</span>}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{SITE_CATEGORIES.find(c => c.slug === resolveCategory(p.category_id ?? "").category)?.name ?? p.category_name ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">£{parseFloat(p.price).toFixed(2)}</td>
                     <td className="px-4 py-3">
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full capitalize ${CONDITION_STYLE[p.condition] ?? "bg-gray-100 text-gray-500"}`}>{p.condition}</span>
