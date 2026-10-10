@@ -57,7 +57,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     gradient: "from-[#F26B21] to-orange-400", bg: "bg-[#F26B21]",
     items: [
       { id: "my-store", label: "My Store", icon: Store, iconBg: "bg-[#F26B21]" },
-      { id: "store-popular", label: "Popular Items", icon: Flame, iconBg: "bg-[#F26B21]" },
+      { id: "store-settings", label: "Store Settings", icon: Settings, iconBg: "bg-[#F26B21]" },
     ],
   },
   {
@@ -2613,7 +2613,7 @@ const LOGO_COLORS = [
   "from-[#0EA5E9] to-[#3B4FD8]",
 ];
 
-function MyStoreSection({ onNavigate }: { onNavigate: (section: string) => void }) {
+function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (section: string) => void; settingsPage?: boolean }) {
   const { user } = useAuth();
   const [ratingText, setRatingText] = useState("New");
   useEffect(() => {
@@ -2633,7 +2633,8 @@ function MyStoreSection({ onNavigate }: { onNavigate: (section: string) => void 
   const storeKey = user?.email ? `sbd_my_store_${user.email}` : null;
   const [storeLoadedKey, setStoreLoadedKey] = useState<string | null>(null);
   const [view, setView] = useState<StoreView>("setup");
-  const [editTab, setEditTab] = useState<EditTab>("basic");
+  const [editTab, setEditTab] = useState<EditTab>(settingsPage ? "settings" : "basic");
+  useEffect(() => { if (settingsPage) { setView("edit"); setEditTab("settings"); } }, [settingsPage, storeLoadedKey]);
   const [copied, setCopied] = useState(false);
   const [coverPickerOpen, setCoverPickerOpen] = useState(false);
   const [logoColorIdx, setLogoColorIdx] = useState(0);
@@ -5795,7 +5796,7 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-popular") { setLocation(item.id === "store-popular" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
+                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 setActiveSection(item.id);
@@ -5917,7 +5918,7 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-popular") { setLocation(item.id === "store-popular" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
+                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
                                 setActiveSection(item.id);
                                 setActiveCategory(null);
                                 setSidebarOpen(false);
@@ -6459,34 +6460,29 @@ export function DashboardPage() {
 }
 
 /** Full-page store manager, replacing the former dashboard modal. */
-export function MyStorePage() {
+export function MyStorePage({ settingsPage = false }: { settingsPage?: boolean }) {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [listings, setListings] = useState<StoredListing[]>([]);
   useEffect(() => { fetchMyListings(user?.email ?? "").then(setListings); }, [user?.email]);
-  useEffect(() => {
-    if (window.location.hash === "#popular-items") {
-      const id = window.setTimeout(() => document.getElementById("popular-items")?.scrollIntoView({behavior:"smooth"}), 150);
-      return () => window.clearTimeout(id);
-    }
-  }, []);
-  const popular = [...listings].filter(l => l.status === "active" || l.status === "published").sort((a,b) => (b.views ?? 0) - (a.views ?? 0)).slice(0,8);
+  const activeListings = listings.filter(l => l.status === "active" || l.status === "published");
   return <div className="min-h-screen bg-[#f3f4f6] dark:bg-[#080d20]">
     <Navbar />
     <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div><p className="text-xs font-black tracking-widest uppercase text-orange-600">Seller workspace</p><h1 className="text-3xl font-black text-slate-950 dark:text-white mt-1">My Store</h1><p className="text-sm text-slate-600 dark:text-orange-100">Manage, edit and preview your store on its own page.</p></div>
+        <div><p className="text-xs font-black tracking-widest uppercase text-orange-600">Seller workspace</p><h1 className="text-3xl font-black text-slate-950 dark:text-white mt-1">{settingsPage ? "Store Settings" : "My Store"}</h1><p className="text-sm text-slate-600 dark:text-orange-100">{settingsPage ? "Manage your store preferences and connected selling tools." : "Manage, edit and preview your store on its own page."}</p></div>
         <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl !bg-orange-500 !text-black px-5 py-3 font-black hover:!bg-orange-400"><ArrowRight className="w-4 h-4 rotate-180"/> Back to Dashboard</Link>
       </div>
-      <div className="rounded-2xl overflow-hidden bg-white shadow-sm"><MyStoreSection onNavigate={section => navigate(`/dashboard?section=${encodeURIComponent(section)}`)} /></div>
-      <section id="popular-items" className="mt-8 rounded-2xl bg-white dark:bg-[#141414] border border-orange-300 dark:border-orange-600/40 p-5 sm:p-7 scroll-mt-8">
-        <div className="flex items-center gap-2"><Flame className="w-6 h-6 text-orange-500"/><h2 className="text-xl font-black text-slate-950 dark:text-orange-300">Popular Items</h2></div>
-        <p className="text-sm text-slate-700 dark:text-orange-100 mt-2">Your active listings with the most views.</p>
-        {popular.length ? <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">{popular.map(item => <Link key={item.id} href={`/listing/${item.publicId ?? item.id}`} className="rounded-xl border border-slate-200 dark:border-orange-600/40 overflow-hidden bg-slate-50 dark:bg-[#24201c] hover:border-orange-500">
+      <div className="flex flex-wrap gap-2 mb-5"><Link href="/my-store" className="rounded-xl bg-orange-500 text-black font-bold px-4 py-2">My Store</Link><Link href="/my-store/settings" className="rounded-xl bg-slate-900 text-white font-bold px-4 py-2">Store Settings</Link></div>
+      <div className="rounded-2xl overflow-hidden bg-white shadow-sm"><MyStoreSection settingsPage={settingsPage} onNavigate={section => navigate(`/dashboard?section=${encodeURIComponent(section)}`)} /></div>
+      {!settingsPage && <section id="my-listings" className="mt-8 rounded-2xl bg-white dark:bg-[#141414] border border-orange-300 dark:border-orange-600/40 p-5 sm:p-7 scroll-mt-8">
+        <div className="flex items-center gap-2"><Flame className="w-6 h-6 text-orange-500"/><h2 className="text-xl font-black text-slate-950 dark:text-orange-300">My Listings</h2></div>
+        <p className="text-sm text-slate-700 dark:text-orange-100 mt-2">Your active store listings.</p>
+        {activeListings.length ? <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5">{activeListings.map(item => <Link key={item.id} href={`/listing/${item.publicId ?? item.id}`} className="rounded-xl border border-slate-200 dark:border-orange-600/40 overflow-hidden bg-slate-50 dark:bg-[#24201c] hover:border-orange-500">
           <div className="aspect-square bg-white flex items-center justify-center">{item.image ? <img src={item.image} alt={item.title} className="w-full h-full object-contain"/> : <Package className="w-12 h-12 text-slate-300"/>}</div>
           <div className="p-3"><p className="text-sm font-bold line-clamp-2 text-slate-950 dark:text-orange-100">{item.title}</p><p className="text-sm font-black text-orange-600 dark:text-orange-400 mt-2">£{item.price.toFixed(2)}</p><p className="text-xs text-slate-600 dark:text-orange-200 mt-1">{item.views ?? 0} views</p></div>
-        </Link>)}</div> : <p className="text-sm text-slate-700 dark:text-orange-100 mt-5">No active store listings to show yet. Once you publish items, your most-viewed products will appear here.</p>}
-      </section>
+        </Link>)}</div> : <p className="text-sm text-slate-700 dark:text-orange-100 mt-5">No active store listings to show yet. Once you publish items, your products will appear here.</p>}
+      </section>}
     </main>
     <Footer />
   </div>;
