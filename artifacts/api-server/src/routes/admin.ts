@@ -13,7 +13,7 @@ import { clerkClient } from "@clerk/express";
 import { fetchAmazonDetails, buildAmazonDescription } from "../lib/amazon.js";
 import { fetchEbayDetails, buildEbayDescription } from "../lib/ebay.js";
 import {
-  saveRapidApiKey, clearRapidApiKey, rapidApiKeyStatus, testRapidApi, rapidApiErrorMessage,
+  saveRapidApiKey, clearRapidApiKey, rapidApiKeyStatus, testRapidApi, rapidApiErrorMessage, reserveEbayApiRequest, finishEbayApiRequest,
 } from "../lib/rapidapi.js";
 import { ensureAdminAuditLog, recordAdminAudit } from "../lib/adminAudit.js";
 import { ensureCreditEconomyTable, recordCreditEconomy } from "../lib/creditEconomy.js";
@@ -1762,7 +1762,6 @@ router.get("/admin/api-centre/ebay", async (_req, res) => {
 
 // GET /api/admin/search-ebay — search eBay UK or US
 router.get("/admin/search-ebay", async (req, res) => {
-  try { const settings=await ebayApiSettings(); if(await ebayApiRequestCount()>=settings.requestBudget){res.status(429).json({error:"eBay monthly API request budget reached. Adjust it in Admin API Centre or wait for the next month."});return;} } catch(e){res.status(503).json({error:"Cannot verify eBay API budget; search paused to prevent overages."});return;}
   const apiKey = process.env.RAPIDAPI_KEY;
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
 
@@ -1780,14 +1779,12 @@ router.get("/admin/search-ebay", async (req, res) => {
     const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
     const offset        = (page - 1) * 50;
     const locationFilter = from === "ALL" ? "" : `&item_location_country=${from}`;
+    const reservation=await reserveEbayApiRequest(site==="uk"?"search-uk":"search-us");
     const resp = await fetch(
       `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(query)}&marketplace_id=${marketplaceId}${locationFilter}&delivery_country=${to}&offset=${offset}`,
       { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
     );
-    try {
-      await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
-      await db.execute(sql`INSERT INTO ebay_api_usage (endpoint,status) VALUES ('search',${resp.status})`);
-    } catch (usageError) { logger.warn({usageError}, "Could not record eBay API usage"); }
+    await finishEbayApiRequest(reservation,resp.status);
     if (!resp.ok) { res.status(502).json({ error: rapidApiErrorMessage("eBay", resp.status) }); return; }
 
     const data = await resp.json() as Record<string, unknown>;
@@ -1953,7 +1950,7 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
   const apiKey = process.env.RAPIDAPI_KEY;
   const force = false; // manual and scheduled checks both respect configured sync interval
   const settings = await ebayApiSettings();
-  let remaining = Math.max(0,settings.requestBudget - await ebayApiRequestCount());
+
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
 
   const rows = await db.execute(sql`
@@ -1980,17 +1977,15 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
         if (!itemId) return;
         const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
         if (!force && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
-        if (remaining <= 0) { errors++; return; }
-        remaining--;
+
 
         const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
+        const reservation=await reserveEbayApiRequest(site==="uk"?"sync-uk":"sync-us");
         const resp = await fetch(
           `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(itemId)}&marketplace_id=${marketplaceId}`,
           { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
         );
-        try {
-          await db.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES (${site === "uk" ? "sync-uk" : "sync-us"},${resp.status})`);
-        } catch (usageError) { logger.warn({usageError},"eBay sync usage logging failed"); }
+        await finishEbayApiRequest(reservation,resp.status);
         if (!resp.ok) { errors++; return; }
 
         const data     = await resp.json() as Record<string, unknown>;
