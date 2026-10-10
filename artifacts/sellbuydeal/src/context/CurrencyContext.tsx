@@ -66,16 +66,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       if (saved && MARKET_COUNTRIES.some(c => c.code === saved)) return saved;
       const locale = (navigator.language || "").toUpperCase();
       const hit = MARKET_COUNTRIES.find(c => locale.endsWith(`-${c.code}`));
-      return hit?.code ?? "GB";
-    } catch { return "GB"; }
+      return hit?.code ?? "US";
+    } catch { return "US"; }
   });
   const [currencyCode, setCurrencyCode] = useState<CurrencyCode>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as CurrencyCode | null;
       if (saved && saved in CURRENCIES) return saved as CurrencyCode;
-      // Default to locale-matched currency, fallback to USD
-      const lang = navigator.language ?? "";
-      if (lang.includes("GB") || lang.includes("en-GB")) return "GBP";
+      // USD is the default for new visitors regardless of browser locale.
       return "USD";
     } catch {
       return "USD";
@@ -83,7 +81,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   });
 
   const currency = CURRENCIES[currencyCode];
-  const country = MARKET_COUNTRIES.find(c => c.code === countryCode) ?? MARKET_COUNTRIES[0];
+  const country = MARKET_COUNTRIES.find(c => c.code === countryCode) ?? MARKET_COUNTRIES.find(c => c.code === "US")!;
 
   function setCountry(code: string) {
     if (!MARKET_COUNTRIES.some(c => c.code === code)) return;
