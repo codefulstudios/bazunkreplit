@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { Link, useRoute } from "wouter";
+import { Link, Redirect, useRoute } from "wouter";
 import { ArrowLeft, ExternalLink, Wallet } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { OfferUpManualImporter } from "@/components/OfferUpManualImporter";
@@ -43,6 +43,7 @@ export function ImporterWorkspacePage(){
  }catch{}})();return()=>{cancelled=true}},[user?.email,getToken]);
  const paid=source==="ebay"||source==="amazon"||source==="aliexpress";
  const dataUrl="https://data.bazunk.com";
+ if(paid)return <Redirect to="/importers"/>;
  if(!cfg)return <div className="max-w-4xl mx-auto px-4 py-16"><Link href="/importers">← Importer Hub</Link><h1>Importer not found</h1></div>;
  if(!user)return <div className="max-w-4xl mx-auto px-4 py-16 text-center"><h1 className="text-3xl font-black">Sign in to use {cfg.name}</h1></div>;
  return <div className="min-h-screen bg-slate-50 dark:bg-slate-950"><div className="max-w-7xl mx-auto px-4 py-10">
