@@ -2024,6 +2024,10 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const newEbayPrice = parseFloat(String(priceObj.value ?? "").replace(/[^0-9.]/g, ""));
         if (!newEbayPrice || newEbayPrice <= 0) { errors++; failures.push({listingId:row.id,reason:"Source price missing or invalid"}); return; }
         const sourceQty=ebayStockFromSummary(match);
+        if(sourceQty===null && specs.stock_quantity_verified!==true){
+          await db.execute(sql`UPDATE listings SET status='paused', quantity=0, specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false})},updated_at=NOW() WHERE id=${row.id}`);
+          stockUnknown++; unchanged++; return;
+        }
         if(sourceQty===null)stockUnknown++;
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
         if(priceUnchanged && (sourceQty===null || (sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active")))){await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);unchanged++;return;}
