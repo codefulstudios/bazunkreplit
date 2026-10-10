@@ -1722,12 +1722,12 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
 
 // ── eBay routes ──────────────────────────────────────────────────────────────
 
-const EBAY_API_DEFAULTS = {monthlyLimit:10000,monthlyBaseUsd:10,overagePerRequestUsd:0.009,bandwidthIncludedMb:10240,bandwidthOveragePerMbUsd:0.001,requestBudget:9000,syncDays:7};
+const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:7};
 async function ebayApiSettings() {
   const result = await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
   let saved:Record<string,unknown>={};
   try { saved=JSON.parse(String(result.rows[0]?.value ?? "{}")); } catch {}
-  return {...EBAY_API_DEFAULTS,...saved};
+  return {...EBAY_API_DEFAULTS,...saved,monthlyLimit:20,monthlyBaseUsd:0,requestBudget:Math.min(15,Number(saved.requestBudget??15))};
 }
 async function ebayApiRequestCount() {
   await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
@@ -1742,7 +1742,8 @@ router.put("/admin/api-centre/ebay",async(req,res)=>{
       if(!Number.isFinite(n)||n<0||n>10000000){res.status(400).json({error:"Invalid setting: "+key});return;}
       next[key]=n;
     }
-    if(next.monthlyLimit<1||next.requestBudget>next.monthlyLimit||next.syncDays<1||next.syncDays>90){res.status(400).json({error:"Invalid request budget or sync interval"});return;}
+    if(next.monthlyLimit<1||next.requestBudget>15||next.syncDays<1||next.syncDays>90){res.status(400).json({error:"Invalid request budget or sync interval"});return;}
+    next.monthlyLimit=20; next.monthlyBaseUsd=0; next.requestBudget=Math.min(15,next.requestBudget);
     await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES ('ebay_api_centre_settings',${JSON.stringify(next)},NOW()) ON CONFLICT(key) DO UPDATE SET value=${JSON.stringify(next)},updated_at=NOW()`);
     res.json({ok:true,settings:next});
   } catch(e){res.status(500).json({error:"Unable to save API settings"});}
@@ -1756,7 +1757,7 @@ router.get("/admin/api-centre/ebay", async (_req, res) => {
     const settings=await ebayApiSettings();
     const used = Number(result.rows[0]?.requests ?? 0);
     const errors = Number(result.rows[0]?.errors ?? 0);
-    res.json({provider:"RapidAPI",plan:"Pro",...settings,recordedRequests:used,recordedErrors:errors,estimatedCostUsd:settings.monthlyBaseUsd+Math.max(0,used-settings.monthlyLimit)*settings.overagePerRequestUsd,remainingEstimate:Math.max(0,settings.monthlyLimit-used),notice:"Local counts start when tracking was enabled and may exclude other RapidAPI clients or endpoints. Confirm billable quota in RapidAPI."});
+    res.json({provider:"RapidAPI",plan:"Free",...settings,recordedRequests:used,recordedErrors:errors,estimatedCostUsd:settings.monthlyBaseUsd+Math.max(0,used-settings.monthlyLimit)*settings.overagePerRequestUsd,remainingEstimate:Math.max(0,settings.monthlyLimit-used),notice:"Local counts start when tracking was enabled and may exclude other RapidAPI clients or endpoints. Confirm billable quota in RapidAPI."});
   } catch(e) { res.status(500).json({error:"Unable to load eBay usage."}); }
 });
 
