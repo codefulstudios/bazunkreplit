@@ -1,11 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useRoute } from "wouter";
-import { useAuth as useClerkAuth } from "@clerk/react";
 import { ArrowLeft, ExternalLink, Wallet } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { UserAmazonImporterSection } from "@/components/UserAmazonImporterSection";
-import { UserEbayImporterSection } from "@/components/UserEbayImporterSection";
-import { ImporterSection } from "@/components/ImporterSection";
 import { OfferUpManualImporter } from "@/components/OfferUpManualImporter";
 import { ShopifyPublicImporter } from "@/components/ShopifyPublicImporter";
 import { WooCommercePublicImporter } from "@/components/WooCommercePublicImporter";
