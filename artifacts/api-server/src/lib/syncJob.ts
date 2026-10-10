@@ -7,7 +7,8 @@ import { rapidKeyForEmail } from "./userRapidApi.js";
 import { fetchPublicEbayItem } from "./ebayPublic.js";
 import { toGbp } from "../fxRates.js";
 
-const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // daily scheduler; individual imports are checked only when due
+const EBAY_SYNC_DAYS = 7;
 
 interface ImportRow {
   id: number;
@@ -38,6 +39,7 @@ export async function syncAllImports(): Promise<{ synced: number; errors: number
     SELECT si.id, si.listing_id AS "listingId", si.supplier_id AS "supplierId", si.supplier_source AS "supplierSource", si.markup_type AS "markupType", si.markup_value AS "markupValue", si.supplier_url AS "supplierUrl", si.supplier_data AS "supplierData", l.seller_email AS "sellerEmail"
     FROM supplier_imports si JOIN listings l ON l.id=si.listing_id
     WHERE si.sync_status <> 'disabled' AND COALESCE(si.supplier_data->>'syncEnabled','true') <> 'false'
+      AND (si.supplier_source <> 'ebay-public' OR si.last_synced_at IS NULL OR si.last_synced_at <= NOW() - INTERVAL '7 days')
     ORDER BY si.last_synced_at ASC NULLS FIRST
   `);
 
@@ -144,7 +146,7 @@ async function syncRow(row: ImportRow): Promise<{ ok: boolean; error?: string }>
 }
 
 export function startSyncJob(): void {
-  logger.info({ intervalMs: SYNC_INTERVAL_MS }, "Supplier sync job started (Bazunk eBay + connected suppliers)");
+  logger.info({ intervalMs: SYNC_INTERVAL_MS, ebaySyncDays: EBAY_SYNC_DAYS }, "Supplier sync job started (eBay public imports due every seven days)");
 
   setInterval(async () => {
     logger.info("Running scheduled supplier sync");
