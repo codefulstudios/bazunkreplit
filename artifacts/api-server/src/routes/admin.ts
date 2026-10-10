@@ -1472,11 +1472,11 @@ router.post("/admin/sync-amazon-prices", async (req, res) => {
           `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(asin)}&country=GB&page=1`,
           { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-amazon-data.p.rapidapi.com" } }
         );
-        if (!resp.ok) { errors++; return; }
+        if (!resp.ok) { errors++; failures.push({listingId:row.id,reason:`RapidAPI HTTP ${resp.status}`}); return; }
         const data = await resp.json() as Record<string, unknown>;
         const products = ((data?.data as Record<string, unknown>)?.products as Record<string, unknown>[]) ?? [];
         const match = products.find(p => p.asin === asin) ?? products[0];
-        if (!match) { errors++; return; }
+        if (!match) { errors++; failures.push({listingId:row.id,reason:"Item not returned by source search"}); return; }
 
         const priceStr = String(match.product_price ?? "").replace(/[^0-9.]/g, "");
         const newAmazonPrice = parseFloat(priceStr);
@@ -1967,6 +1967,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   if (!rows.length) { res.json({ updated: 0, unchanged: 0, errors: 0, message: "No eBay imports found" }); return; }
 
   let updated = 0, unchanged = 0, errors = 0, stockUpdated = 0, stockUnknown = 0;
+  const failures: Array<{listingId:number;reason:string}> = [];
   const BATCH = 1; // sequential budget enforcement, no concurrent overrun
 
   for (let i = 0; i < rows.length; i += BATCH) {
@@ -1979,7 +1980,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const shipping  = parseFloat(String(specs.shipping ?? 0)) || 0;
         const minProfit = parseFloat(String(specs.min_profit ?? 5)) || 5;
         const oldPrice  = parseFloat(String(specs.ebay_price ?? 0));
-        if (!itemId) return;
+        if (!itemId) { errors++; failures.push({listingId:row.id,reason:"Missing eBay item ID"}); return; }
         const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
         if (!force && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
 
@@ -2000,7 +2001,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
 
         const priceObj     = (match.price as Record<string, unknown>) ?? {};
         const newEbayPrice = parseFloat(String(priceObj.value ?? "").replace(/[^0-9.]/g, ""));
-        if (!newEbayPrice || newEbayPrice <= 0) { errors++; return; }
+        if (!newEbayPrice || newEbayPrice <= 0) { errors++; failures.push({listingId:row.id,reason:"Source price missing or invalid"}); return; }
         const sourceQty=ebayStockFromSummary(match);
         if(sourceQty===null)stockUnknown++;
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
@@ -2020,12 +2021,12 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
             specifications = ${newSpecs}, quantity = ${sourceQty===null?row.quantity:sourceQty}, status = ${sourceQty===null?row.status:sourceQty===0?"inactive":"active"}, updated_at = NOW() WHERE id = ${row.id}
         `);
         updated++;
-      } catch { errors++; }
+      } catch (err) { errors++; const reason=err instanceof Error?err.message:String(err);failures.push({listingId:row.id,reason});logger.warn({listingId:row.id,reason},"eBay listing sync failed"); }
     }));
   }
 
-  logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown }, "eBay price and stock sync complete");
-  res.json({ updated, unchanged, errors, stockUpdated, stockUnknown, message: `Synced ${rows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
+  logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown, failures }, "eBay price and stock sync complete");
+  res.json({ updated, unchanged, errors, stockUpdated, stockUnknown, failures, message: `Synced ${rows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
 };
 router.post("/admin/sync-ebay-prices", runAdminEbayPriceSync);
 
