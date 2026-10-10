@@ -1722,43 +1722,47 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
 
 // ── eBay routes ──────────────────────────────────────────────────────────────
 
-const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:7};
+const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0.10,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:7};
 async function ebayApiSettings() {
-  const result = await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
+  const result=await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
   let saved:Record<string,unknown>={};
-  try { saved=JSON.parse(String(result.rows[0]?.value ?? "{}")); } catch {}
-  return {...EBAY_API_DEFAULTS,...saved,monthlyLimit:20,monthlyBaseUsd:0,requestBudget:Math.min(15,Number(saved.requestBudget??15))};
+  try {saved=JSON.parse(String(result.rows[0]?.value??"{}"));}catch{}
+  const pro=saved.plan==="pro"&&saved.proConfirmed===true;
+  return {...EBAY_API_DEFAULTS,...saved,plan:pro?"pro":"free",proConfirmed:pro,
+    monthlyLimit:pro?10000:20,monthlyBaseUsd:pro?10:0,overagePerRequestUsd:pro?0.009:0.10,
+    bandwidthIncludedMb:pro?10240:0,bandwidthOveragePerMbUsd:pro?0.001:0,
+    requestBudget:pro?9000:Math.min(15,Math.max(0,Number(saved.requestBudget??15)))};
 }
 async function ebayApiRequestCount() {
   await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
-  const result=await db.execute(sql`SELECT COUNT(*)::int AS count FROM ebay_api_usage WHERE used_at >= date_trunc('month',NOW())`);
+  const result=await db.execute(sql`SELECT COUNT(*)::int AS count FROM ebay_api_usage WHERE used_at>=date_trunc('month',NOW())`);
   return Number(result.rows[0]?.count??0);
 }
 router.put("/admin/api-centre/ebay",async(req,res)=>{
   try {
-    const next:Record<string,number>={};
-    for(const key of Object.keys(EBAY_API_DEFAULTS) as Array<keyof typeof EBAY_API_DEFAULTS>){
-      const n=Number(req.body?.[key]);
-      if(!Number.isFinite(n)||n<0||n>10000000){res.status(400).json({error:"Invalid setting: "+key});return;}
-      next[key]=n;
-    }
-    if(next.monthlyLimit<1||next.requestBudget>15||next.syncDays<1||next.syncDays>90){res.status(400).json({error:"Invalid request budget or sync interval"});return;}
-    next.monthlyLimit=20; next.monthlyBaseUsd=0; next.requestBudget=Math.min(15,next.requestBudget);
+    const requestedPlan=req.body?.plan==="pro"?"pro":"free";
+    if(requestedPlan==="pro"&&req.body?.proConfirmed!==true){res.status(400).json({error:"Confirm your RapidAPI Pro subscription is active before enabling Pro."});return;}
+    const syncDays=Number(req.body?.syncDays??7);
+    if(!Number.isInteger(syncDays)||syncDays<1||syncDays>90){res.status(400).json({error:"Sync interval must be between 1 and 90 days"});return;}
+    const next={plan:requestedPlan,proConfirmed:requestedPlan==="pro",syncDays,
+      monthlyLimit:requestedPlan==="pro"?10000:20,monthlyBaseUsd:requestedPlan==="pro"?10:0,
+      overagePerRequestUsd:requestedPlan==="pro"?0.009:0.10,
+      bandwidthIncludedMb:requestedPlan==="pro"?10240:0,bandwidthOveragePerMbUsd:requestedPlan==="pro"?0.001:0,
+      requestBudget:requestedPlan==="pro"?9000:15};
     await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES ('ebay_api_centre_settings',${JSON.stringify(next)},NOW()) ON CONFLICT(key) DO UPDATE SET value=${JSON.stringify(next)},updated_at=NOW()`);
     res.json({ok:true,settings:next});
-  } catch(e){res.status(500).json({error:"Unable to save API settings"});}
+  }catch(e){res.status(500).json({error:"Unable to save API settings"});}
 });
-// Admin API Centre: server-side eBay RapidAPI request accounting.
-// These are Bazunk-recorded requests, not the provider's complete billing history.
-router.get("/admin/api-centre/ebay", async (_req, res) => {
-  try {
-    await db.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
-    const result = await db.execute(sql`SELECT COUNT(*)::int AS requests, COUNT(*) FILTER (WHERE status >= 400)::int AS errors FROM ebay_api_usage WHERE used_at >= date_trunc('month', NOW())`);
+router.get("/admin/api-centre/ebay",async(_req,res)=>{
+  try{
+    const used=await ebayApiRequestCount();
+    const result=await db.execute(sql`SELECT COUNT(*) FILTER(WHERE status>=400)::int AS errors FROM ebay_api_usage WHERE used_at>=date_trunc('month',NOW())`);
     const settings=await ebayApiSettings();
-    const used = Number(result.rows[0]?.requests ?? 0);
-    const errors = Number(result.rows[0]?.errors ?? 0);
-    res.json({provider:"RapidAPI",plan:"Free",...settings,recordedRequests:used,recordedErrors:errors,estimatedCostUsd:settings.monthlyBaseUsd+Math.max(0,used-settings.monthlyLimit)*settings.overagePerRequestUsd,remainingEstimate:Math.max(0,settings.monthlyLimit-used),notice:"Local counts start when tracking was enabled and may exclude other RapidAPI clients or endpoints. Confirm billable quota in RapidAPI."});
-  } catch(e) { res.status(500).json({error:"Unable to load eBay usage."}); }
+    res.json({provider:"RapidAPI",...settings,recordedRequests:used,recordedErrors:Number(result.rows[0]?.errors??0),
+      estimatedCostUsd:settings.monthlyBaseUsd+Math.max(0,used-settings.monthlyLimit)*settings.overagePerRequestUsd,
+      remainingEstimate:Math.max(0,settings.requestBudget-used),
+      notice:"Bazunk counts locally recorded calls by calendar month; RapidAPI subscription reset dates may differ. Confirm plan and usage in RapidAPI."});
+  }catch(e){res.status(500).json({error:"Unable to load eBay usage."});}
 });
 
 // GET /api/admin/search-ebay — search eBay UK or US
