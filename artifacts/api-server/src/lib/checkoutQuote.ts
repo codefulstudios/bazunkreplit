@@ -21,7 +21,8 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   const ids=[...counts.keys()];
   const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.seller_email,COALESCE(u.seller_type,'private') seller_type
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
-    WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})`)).rows as Array<Record<string,unknown>>;
+    WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
+    AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
   const fees=Object.fromEntries(settings.map(r=>[String(r.key),String(r.value)]));
