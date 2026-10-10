@@ -1946,7 +1946,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
 });
 
 // POST /api/admin/sync-ebay-prices — re-fetch current eBay prices and reprice
-router.post("/admin/sync-ebay-prices", async (req, res) => {
+const runAdminEbayPriceSync = async (req: any, res: any) => {
   const apiKey = process.env.RAPIDAPI_KEY;
   const force = false; // manual and scheduled checks both respect configured sync interval
   const settings = await ebayApiSettings();
@@ -2021,7 +2021,9 @@ router.post("/admin/sync-ebay-prices", async (req, res) => {
 
   logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown }, "eBay price and stock sync complete");
   res.json({ updated, unchanged, errors, stockUpdated, stockUnknown, message: `Synced ${rows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
-});
+};
+router.post("/admin/sync-ebay-prices", runAdminEbayPriceSync);
+
 
 // POST /api/admin/sync-ebay-details — re-fetch eBay titles & descriptions
 router.post("/admin/sync-ebay-details", async (req, res) => {
@@ -2290,5 +2292,25 @@ router.post("/admin/import-gumtree", requireAdmin, async (req, res) => {
   logger.info({ imported }, "Gumtree import");
   res.json({ imported, message: `Imported ${imported} Gumtree ad${imported === 1 ? "" : "s"} to Classifieds` });
 });
+
+
+// Scheduler runs the same guarded sync as the admin button, without an HTTP loopback.
+// The in-process flag prevents overlapping runs within an instance.
+let scheduledEbaySyncRunning=false;
+export function startAdminEbaySyncJob():void {
+  const run=async()=>{
+    if(scheduledEbaySyncRunning)return;
+    scheduledEbaySyncRunning=true;
+    try {
+      await runAdminEbayPriceSync({}, {
+        status:(_code:number)=>({json:(_body:unknown)=>undefined}),
+        json:(body:unknown)=>{logger.info({body},"Scheduled admin eBay sync completed");},
+      });
+    }catch(err){logger.error({err},"Scheduled admin eBay sync failed");}
+    finally{scheduledEbaySyncRunning=false;}
+  };
+  setInterval(()=>{void run();},24*60*60*1000);
+  logger.info("Admin eBay RapidAPI sync scheduler started (daily due check; per-listing interval configured in API Centre)");
+}
 
 export default router;
