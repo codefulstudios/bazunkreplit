@@ -7,6 +7,13 @@ import { sql } from "drizzle-orm";
  * No funding endpoint is exposed until verified Stripe settlement is implemented.
  */
 export const IMPORTER_MICROCENTS_PER_USD = 100_000_000n;
+export const IMPORTER_TOPUP_GBP_PENCE = [500,1000,2500,5000] as const;
+export function validateImporterTopupPence(value:unknown):number {
+ const amount=Number(value);
+ if(!Number.isSafeInteger(amount) || !IMPORTER_TOPUP_GBP_PENCE.includes(amount as typeof IMPORTER_TOPUP_GBP_PENCE[number]))
+  throw Error("Select a supported importer top-up amount");
+ return amount;
+}
 export const IMPORTER_MARKUP_BPS = 17_500n; // 75% default markup: $0.10 -> $0.175
 export function importerSellerCharge(cost:bigint,markupBps:bigint=IMPORTER_MARKUP_BPS):bigint {
  if(cost<=0n || markupBps<15_000n || markupBps>100_000n) throw Error("Invalid importer pricing");
