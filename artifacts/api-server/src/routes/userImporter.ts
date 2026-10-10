@@ -13,6 +13,31 @@ import { toGbp } from "../fxRates.js";
 import { discoverPublicEbayUrls, fetchPublicEbayItems } from "../lib/ebayPublic.js";
 const router = Router();
 
+// Keep legacy eBay destination slugs from creating new duplicate taxonomy branches.
+function canonicalEbayDestination(rawCategory: unknown, rawSubcategory: unknown) {
+  const category = String(rawCategory ?? "").trim();
+  const subcategory = String(rawSubcategory ?? "").trim();
+  if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) return null;
+  if (category === "eco-friendly") return null; // Sustainability is a filter, not a destination.
+  const aliases: Record<string, [string, string]> = {
+    "electronics:gaming-consoles": ["video-games", "consoles"],
+    "cell-phones:earphones": ["electronics", "audio"],
+    "clothing-shoes-jewelry:jewelry": ["jewellery-watches", "fashion-jewellery"],
+    "tools-home-improvement:safety-tools": ["industrial-scientific", "safety"],
+    "tools-home-improvement:electrical-tools": ["tools-home-improvement", "electrical-installation"],
+    "digital-products:software": ["digital", "software-apps"],
+    "digital-products:ebooks": ["digital", "documents-ebooks"],
+    "digital-products:music-downloads": ["digital", "audio-music"],
+    "digital-products:stock-media": ["digital", "photography"],
+    "digital-products:templates": ["digital", "graphics-design"],
+    "digital-products:online-courses": ["digital", "education-courses"],
+  };
+  const mapped = aliases[`${category}:${subcategory}`];
+  return { category: mapped?.[0] ?? (category === "digital-products" ? "digital" : category), subcategory: mapped?.[1] ?? subcategory };
+}
+
+
+
 // Bazunk-owned eBay URL importer: no RapidAPI key required.
 router.post("/user/ebay-public/preview", async (req, res) => {
   const email = await requestEmail(req); if (!email) { res.status(401).json({ error: "Sign in to import listings." }); return; }
@@ -31,8 +56,9 @@ router.post("/user/ebay-public/import", async (req, res) => {
     const email = await requestEmail(req); if (!email) { res.status(401).json({ error: "Sign in to import listings." }); return; }
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     if (!items.length || items.length > 200) { res.status(400).json({ error: "Choose between 1 and 200 listings." }); return; }
-    const category = String(req.body.category ?? ""), subcategory = String(req.body.subcategory ?? "");
-    if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) { res.status(400).json({ error: "Choose a Bazunk category." }); return; }
+    const destination = canonicalEbayDestination(req.body.category, req.body.subcategory);
+    if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+    const { category, subcategory } = destination;
     const markupType = req.body.markupType === "fixed" ? "fixed" : "percentage";
     const markupValue = Math.max(0, Number(req.body.markupValue ?? 0));
     const shippingMode = ["source","source_plus","fixed","free"].includes(req.body.shippingMode) ? req.body.shippingMode : "source";
@@ -69,9 +95,9 @@ router.post("/user/import-ebay-own", async (req, res) => {
     if (req.body.ownsItems !== true) { res.status(400).json({ error: "Confirm these are your own listings and inventory." }); return; }
     let items: ReturnType<typeof validateOwnEbayItems>;
     try { items = validateOwnEbayItems(req.body.products); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Invalid listings" }); return; }
-    const category = String(req.body.category ?? "");
-    const subcategory = String(req.body.subcategory ?? "");
-    if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) { res.status(400).json({ error: "Choose a Bazunk category." }); return; }
+    const destination = canonicalEbayDestination(req.body.category, req.body.subcategory);
+    if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+    const { category, subcategory } = destination;
     const pricedItems = await Promise.all(items.map(async item => ({ ...item, priceGbp: (await toGbp(item.price, item.currency)).toFixed(2) })));
     const result = await db.transaction(async tx => {
       // Serialise batches for this seller so retries and duplicate clicks cannot create duplicates.
@@ -156,8 +182,9 @@ router.post("/user/import-amazon", async (req, res) => {
   const products: SelectedProduct[] = req.body.products ?? [];
   const markupPct   = Math.max(0, parseFloat(String(req.body.markup   ?? 35))   || 35);
   const shippingGbp = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
-  const category    = (req.body.category    as string) || "other";
-  const subcategory = (req.body.subcategory as string) || null;
+  const destination = canonicalEbayDestination(req.body.category ?? "other", req.body.subcategory);
+  if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+  const { category, subcategory } = destination;
   const sellerEmail = (req.body.sellerEmail as string)?.trim();
 
   if (!sellerEmail)    { res.status(400).json({ error: "sellerEmail required" }); return; }
