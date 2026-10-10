@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES as SITE_CATEGORIES, resolveCategory } from "@/data/categories";
 
 interface SearchResult {
   asin: string;
@@ -152,8 +152,7 @@ export function UserAmazonImporterSection() {
           products,
           markup:      parseFloat(markup)   || 35,
           shipping:    parseFloat(shipping) || 3.99,
-          category:    importCat,
-          subcategory: importSub,
+          ...resolveCategory(importCat, importSub),
           sellerEmail: user.email,
         }),
       });
