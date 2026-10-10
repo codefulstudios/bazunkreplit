@@ -7,6 +7,13 @@ import { sql } from "drizzle-orm";
  * No funding endpoint is exposed until verified Stripe settlement is implemented.
  */
 export const IMPORTER_MICROCENTS_PER_USD = 100_000_000n;
+export const IMPORTER_TOPUP_USD_CENTS = [500,1000,2500,5000] as const;
+export const IMPORTER_TOPUP_CURRENCIES = ["USD","GBP","EUR","AUD","CAD","NZD","CHF"] as const;
+export function validateImporterTopupCurrency(value:unknown) {
+ const currency=String(value??"USD").toUpperCase();
+ if(!IMPORTER_TOPUP_CURRENCIES.some(code=>code===currency))throw Error("Unsupported importer payment currency");
+ return currency;
+}
 export const IMPORTER_TOPUP_GBP_PENCE = [500,1000,2500,5000] as const;
 export function validateImporterTopupPence(value:unknown):number {
  const amount=Number(value);
