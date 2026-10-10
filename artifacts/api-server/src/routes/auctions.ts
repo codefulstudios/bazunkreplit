@@ -42,9 +42,9 @@ router.get("/auctions", async (req, res) => {
   const orderClause = sort === "newest" ? sql`ORDER BY created_at DESC` : sql`ORDER BY end_time ASC`;
   let rows;
   if (category && category !== "all") {
-    rows = await db.execute(sql`SELECT * FROM auctions WHERE status = ${status} AND category = ${category} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+    rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   } else {
-    rows = await db.execute(sql`SELECT * FROM auctions WHERE status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+    rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   }
   res.json(rows.rows.map(r => publicAuction(r as Record<string, unknown>)));
 });
@@ -72,7 +72,7 @@ router.get("/auctions/my-listings", async (req, res) => {
 
 router.get("/auctions/:id", async (req, res) => {
   const { id } = req.params;
-  const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
+  const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0];
   // Auto-end if past end_time
