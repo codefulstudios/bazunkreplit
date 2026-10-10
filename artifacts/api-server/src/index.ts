@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { startSyncJob } from "./lib/syncJob.js";
 import { startAdminEbaySyncJob } from "./routes/admin.js";
-import { loadRapidApiKeyFromDb } from "./lib/rapidapi.js";
+import { loadRapidApiKeyFromDb, ensureEbayUsageLedger } from "./lib/rapidapi.js";
 import { startListingScheduler } from "./lib/scheduler.js";
 
 const rawPort = process.env["PORT"];
@@ -695,6 +695,7 @@ app.listen(port, (err?: Error) => {
 });
 
 runAppMigrations()
+  .then(() => ensureEbayUsageLedger())
   .then(() => loadRapidApiKeyFromDb())
   .then(() => {
     startListingScheduler();
