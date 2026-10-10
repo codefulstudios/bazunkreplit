@@ -233,7 +233,7 @@ export function CategoriesPage() {
                         {!unavailable && totalListings > 0 && <> <span className="text-white/70">•</span> {totalListings.toLocaleString()} listing{totalListings !== 1 ? "s" : ""}</>}
                       </p>
                     </div>
-                    <div className={`w-9 h-9 rounded-full bg-white/35 ${unavailable?"opacity-30":""} border border-white/20 flex items-center justify-center flex-shrink-0">
+                    <div className={`w-9 h-9 rounded-full bg-white/35 border border-white/20 flex items-center justify-center flex-shrink-0 ${unavailable?"opacity-30":""}`}>
                       <ChevronRight className={`w-5 h-5 text-slate-900 transition-transform ${isOpen ? "rotate-90" : ""}`} />
                     </div>
                   </div>
@@ -281,8 +281,7 @@ export function CategoriesPage() {
                   {selected.subcategories.map((sub) => {
                     const sc = subCount(selected.slug, sub.slug);
                     return (
-                      <Link
-                        key={sub.slug}
+                      <div key={sub.slug} className="contents">{statusFor(selected.slug,sub.slug)==="active" ? <Link
                         href={`/browse?category=${selected.slug}&sub=${sub.slug}`}
                         className="group flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-indigo-50 dark:border-white/[0.07] dark:hover:bg-white/[0.06]"
                       >
@@ -294,7 +293,7 @@ export function CategoriesPage() {
                           <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
-                      </Link>
+                      </Link> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
                     );
                   })}
                 </div>
