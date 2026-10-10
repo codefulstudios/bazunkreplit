@@ -1707,13 +1707,19 @@ router.get("/admin/search-ebay", async (req, res) => {
   const query = (req.query.q as string ?? "").trim();
   const site  = (req.query.site as string ?? "uk") === "us" ? "us" : "uk";
   const page  = Math.max(1, parseInt(req.query.page as string) || 1);
+  const from = String(req.query.shipFrom ?? (site === "uk" ? "GB" : "US")).toUpperCase();
+  const to = String(req.query.shipTo ?? (site === "uk" ? "GB" : "US")).toUpperCase();
+  const condition = String(req.query.condition ?? "all").toLowerCase();
+  const countries = new Set(["GB","US","DE","FR","IT","ES","CA","AU","IE"]);
+  if ((from !== "ALL" && !countries.has(from)) || !countries.has(to)) { res.status(400).json({error:"Unsupported shipping country."}); return; }
   if (!query) { res.status(400).json({ error: "q is required" }); return; }
 
   try {
     const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
     const offset        = (page - 1) * 50;
+    const locationFilter = from === "ALL" ? "" : `&item_location_country=${from}`;
     const resp = await fetch(
-      `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(query)}&marketplace_id=${marketplaceId}&item_location_country=${site === "uk" ? "GB" : "US"}&delivery_country=${site === "uk" ? "GB" : "US"}&offset=${offset}`,
+      `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(query)}&marketplace_id=${marketplaceId}${locationFilter}&delivery_country=${to}&offset=${offset}`,
       { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
     );
     if (!resp.ok) { res.status(502).json({ error: rapidApiErrorMessage("eBay", resp.status) }); return; }
@@ -1732,7 +1738,7 @@ router.get("/admin/search-ebay", async (req, res) => {
         const loc = (p.itemLocation as Record<string, unknown>) ?? {};
         const country = String(loc.country ?? "").trim().toUpperCase();
         const cur = String(((p.price as Record<string, unknown>)?.currency ?? "")).toUpperCase();
-        return expectedCountries.has(country) && cur === (site === "uk" ? "GBP" : "USD");
+        return (from === "ALL" ? !!country : country === from || (from === "GB" && expectedCountries.has(country) && site === "uk") || (from === "US" && expectedCountries.has(country) && site === "us")) && cur === (site === "uk" ? "GBP" : "USD");
       })
       .map(p => {
         const priceObj      = (p.price as Record<string, unknown>) ?? {};
@@ -1776,7 +1782,7 @@ router.get("/admin/search-ebay", async (req, res) => {
           item_location:   country ? `${country}${location.postalCode ? ` (${String(location.postalCode).replace(/\*+$/, "***")})` : ""}` : null,
         };
       })
-      .filter(p => p.price > 0);
+      .filter(p => p.price > 0 && (condition === "all" || (condition === "new" ? /^new\b/i.test(p.condition) : condition === "used" ? /used|pre-owned/i.test(p.condition) : condition === "refurbished" ? /refurbished/i.test(p.condition) : condition === "open-box" ? /open.box/i.test(p.condition) : condition === "parts" ? /parts|not working/i.test(p.condition) : false)));
 
     res.json({ products, total: (data.total as number) ?? products.length });
   } catch (err) {
