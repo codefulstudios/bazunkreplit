@@ -1951,7 +1951,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
 // POST /api/admin/sync-ebay-prices — re-fetch current eBay prices and reprice
 router.post("/admin/sync-ebay-prices", async (req, res) => {
   const apiKey = process.env.RAPIDAPI_KEY;
-  const force = req.query.force === "true";
+  const force = false; // manual and scheduled checks both respect configured sync interval
   const settings = await ebayApiSettings();
   let remaining = Math.max(0,settings.requestBudget - await ebayApiRequestCount());
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
