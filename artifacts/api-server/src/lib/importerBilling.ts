@@ -8,10 +8,21 @@ import { sql } from "drizzle-orm";
  */
 export const IMPORTER_MICROCENTS_PER_USD = 100_000_000n;
 export const IMPORTER_MARKUP_BPS = 15_000n; // $0.10 supplier cost -> $0.15 seller charge
+export function importerSellerCharge(cost:bigint,markupBps:bigint=IMPORTER_MARKUP_BPS):bigint {
+ if(cost<=0n || markupBps<IMPORTER_MARKUP_BPS || markupBps>100_000n) throw Error("Invalid importer pricing");
+ return (cost*markupBps+9999n)/10000n;
+}
 export async function ensureImporterBillingTables() {
  await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_paid_wallets (
   email TEXT PRIMARY KEY, balance_microcents BIGINT NOT NULL DEFAULT 0 CHECK(balance_microcents>=0),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+ await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_provider_prices (
+  provider TEXT NOT NULL, endpoint TEXT NOT NULL,
+  supplier_cost_microcents BIGINT NOT NULL CHECK(supplier_cost_microcents>0),
+  markup_bps INTEGER NOT NULL DEFAULT 15000 CHECK(markup_bps>=15000 AND markup_bps<=100000),
+  enabled BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY(provider,endpoint))`);
  await db.execute(sql`CREATE TABLE IF NOT EXISTS importer_paid_usage (
   id BIGSERIAL PRIMARY KEY, email TEXT NOT NULL, provider TEXT NOT NULL,
   endpoint TEXT NOT NULL, supplier_cost_microcents BIGINT NOT NULL,
@@ -24,10 +35,14 @@ export async function importerBalance(email:string) {
  return String(r.rows[0]?.balance_microcents ?? "0");
 }
 /** Fail closed: unknown prices, unfunded wallets and database failures block paid requests. */
-export async function reserveImporterCharge(email:string,provider:string,endpoint:string,supplierCostMicrocents:bigint) {
- if(!email || !["ebay","amazon","aliexpress"].includes(provider) || !endpoint || supplierCostMicrocents<=0n)throw Error("Importer billing configuration unavailable");
- const charge=(supplierCostMicrocents*IMPORTER_MARKUP_BPS+9999n)/10000n;
+export async function reserveImporterCharge(email:string,provider:string,endpoint:string) {
+ if(!email || !["ebay","amazon","aliexpress"].includes(provider) || !endpoint)throw Error("Importer billing configuration unavailable");
  await ensureImporterBillingTables();
+ const configured=await db.execute(sql`SELECT supplier_cost_microcents,markup_bps FROM importer_provider_prices
+   WHERE provider=${provider} AND endpoint=${endpoint} AND enabled=TRUE`);
+ if(!configured.rows.length)throw Error("Importer pricing not configured or disabled");
+ const supplierCostMicrocents=BigInt(String(configured.rows[0].supplier_cost_microcents));
+ const charge=importerSellerCharge(supplierCostMicrocents,BigInt(String(configured.rows[0].markup_bps)));
  return db.transaction(async tx=>{
   const debit=await tx.execute(sql`UPDATE importer_paid_wallets SET balance_microcents=balance_microcents-${charge.toString()}::bigint,updated_at=NOW()
    WHERE email=${email} AND balance_microcents>=${charge.toString()}::bigint RETURNING balance_microcents`);
