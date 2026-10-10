@@ -84,15 +84,17 @@ export function CategoriesPage() {
   const [openSlug, setOpenSlug] = useState<string | null>("electronics");
   const [search, setSearch] = useState("");
   const [counts, setCounts] = useState<CategoryCount[]>([]);
+  const [hidden, setHidden] = useState<string[]>([]);
 
   useEffect(() => {
+    fetch(`${API_BASE}/api/settings/category-visibility`, {cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHidden(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});
     fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
 
-  const displayCategories = ACTIVE_CATEGORIES;
+  const displayCategories = ACTIVE_CATEGORIES.filter(c=>!hidden.includes(c.slug)).map(c=>({...c,subcategories:c.subcategories.filter(sub=>!hidden.includes(c.slug+"__"+sub.slug))}));
   const ordered = [...displayCategories].sort((a, b) => {
     const ai = CATEGORY_ORDER.indexOf(a.slug);
     const bi = CATEGORY_ORDER.indexOf(b.slug);
