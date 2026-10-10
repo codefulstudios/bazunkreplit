@@ -2302,20 +2302,27 @@ router.post("/admin/import-gumtree", requireAdmin, async (req, res) => {
 // Scheduler runs the same guarded sync as the admin button, without an HTTP loopback.
 // The in-process flag prevents overlapping runs within an instance.
 let scheduledEbaySyncRunning=false;
-export function startAdminEbaySyncJob():void {
+export function startAdminEbaySyncJob():void{
   const run=async()=>{
     if(scheduledEbaySyncRunning)return;
     scheduledEbaySyncRunning=true;
-    try {
-      await runAdminEbayPriceSync({}, {
-        status:(_code:number)=>({json:(_body:unknown)=>undefined}),
-        json:(body:unknown)=>{logger.info({body},"Scheduled admin eBay sync completed");},
-      });
+    try{
+      // Database advisory lock prevents overlapping runs across Render instances.
+      const locked=await db.execute(sql`SELECT pg_try_advisory_lock(917204312) AS acquired`);
+      if(!locked.rows[0]?.acquired)return;
+      try{
+        await runAdminEbayPriceSync({},{
+          status:(code:number)=>({json:(body:unknown)=>logger.warn({code,body},"Scheduled admin eBay sync returned error")}),
+          json:(body:unknown)=>logger.info({body},"Scheduled admin eBay sync completed"),
+        });
+      }finally{await db.execute(sql`SELECT pg_advisory_unlock(917204312)`);}
     }catch(err){logger.error({err},"Scheduled admin eBay sync failed");}
     finally{scheduledEbaySyncRunning=false;}
   };
+  // Check shortly after startup and then daily; only due listings consume requests.
+  setTimeout(()=>{void run();},60_000);
   setInterval(()=>{void run();},24*60*60*1000);
-  logger.info("Admin eBay RapidAPI sync scheduler started (daily due check; per-listing interval configured in API Centre)");
+  logger.info("Admin eBay RapidAPI sync scheduler started (startup and daily due checks)");
 }
 
 export default router;
