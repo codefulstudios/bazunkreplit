@@ -3,6 +3,7 @@ import { logger } from "./lib/logger.js";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { startSyncJob } from "./lib/syncJob.js";
+import { startAdminEbaySyncJob } from "./routes/admin.js";
 import { loadRapidApiKeyFromDb } from "./lib/rapidapi.js";
 import { startListingScheduler } from "./lib/scheduler.js";
 
@@ -698,5 +699,6 @@ runAppMigrations()
   .then(() => {
     startListingScheduler();
     startSyncJob();
+    startAdminEbaySyncJob();
   })
   .catch((err: unknown) => logger.error({ err }, "Startup initialization error"));
