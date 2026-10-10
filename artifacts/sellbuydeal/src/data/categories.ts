@@ -121,7 +121,7 @@ export const CATEGORIES: Category[] = [
     subcategories: [
       { name: "Men's Clothing", slug: "mens-clothing" },
       { name: "Women's Clothing", slug: "womens-clothing" },
-      { name: "Kids' Clothing", slug: "kids-clothing" },
+      { name: "Children's Clothing (2+ Years)", slug: "kids-clothing" },
       { name: "Shoes & Boots", slug: "shoes" },
       { name: "Jewelry & Watches (Legacy)", slug: "jewelry" },
       { name: "Bags & Accessories", slug: "bags" },
@@ -273,6 +273,7 @@ export const CATEGORIES: Category[] = [
     subcategories: [
       { name: "Power Tools", slug: "power-tools" },
       { name: "Hand Tools", slug: "hand-tools" },
+      { name: "Electrical Installation", slug: "electrical-installation" },
       { name: "Electrical & Lighting (Legacy)", slug: "electrical-tools" },
       { name: "Plumbing", slug: "plumbing" },
       { name: "Paint & Supplies", slug: "paint" },
@@ -297,6 +298,7 @@ export const CATEGORIES: Category[] = [
     slug: "video-games",
     icon: "Gamepad",
     subcategories: [
+      { name: "Gaming Consoles", slug: "consoles" },
       { name: "PlayStation", slug: "playstation" },
       { name: "Xbox", slug: "xbox" },
       { name: "Nintendo", slug: "nintendo" },
@@ -364,3 +366,34 @@ export const CATEGORIES: Category[] = [
     ],
   },
 ];
+
+// Canonical taxonomy for new listings and importer destinations.
+// Legacy slugs remain readable until the server-side listing migration is complete.
+export const CATEGORY_ALIASES: Record<string, string> = {
+  "digital-products": "digital",
+  "eco-friendly": "eco-friendly",
+};
+export const SUBCATEGORY_ALIASES: Record<string, { category: string; subcategory: string }> = {
+  "electronics:gaming-consoles": { category: "video-games", subcategory: "consoles" },
+  "cell-phones:earphones": { category: "electronics", subcategory: "audio" },
+  "clothing-shoes-jewelry:jewelry": { category: "jewellery-watches", subcategory: "fashion-jewellery" },
+  "tools-home-improvement:safety-tools": { category: "industrial-scientific", subcategory: "safety" },
+  "tools-home-improvement:electrical-tools": { category: "tools-home-improvement", subcategory: "electrical-installation" },
+  "digital-products:software": { category: "digital", subcategory: "software-apps" },
+  "digital-products:ebooks": { category: "digital", subcategory: "documents-ebooks" },
+  "digital-products:music-downloads": { category: "digital", subcategory: "audio-music" },
+  "digital-products:stock-media": { category: "digital", subcategory: "photography" },
+  "digital-products:templates": { category: "digital", subcategory: "graphics-design" },
+  "digital-products:online-courses": { category: "digital", subcategory: "education-courses" },
+};
+export function resolveCategory(category: string, subcategory?: string | null) {
+  const alias = subcategory ? SUBCATEGORY_ALIASES[`${category}:${subcategory}`] : undefined;
+  if (alias) return alias;
+  return { category: CATEGORY_ALIASES[category] ?? category, subcategory: subcategory ?? "" };
+}
+export const ACTIVE_CATEGORIES = CATEGORIES.filter(c => !["digital-products", "eco-friendly"].includes(c.slug)).map(c => ({
+  ...c,
+  subcategories: c.subcategories.filter(s => !(
+    ["electronics:gaming-consoles", "cell-phones:earphones", "clothing-shoes-jewelry:jewelry", "tools-home-improvement:safety-tools"].includes(`${c.slug}:${s.slug}`)
+  )),
+}));
