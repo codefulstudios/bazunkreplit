@@ -31,21 +31,21 @@ router.get("/flash-sales", async (req, res) => {
   let rows;
   if (status === "upcoming") {
     if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   } else {
     if (sale_type && sale_type !== "all" && category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   }
   res.json(rows.rows);
@@ -62,7 +62,7 @@ router.get("/flash-sales/my-sales", async (req, res) => {
 router.get("/flash-sales/:id", async (req, res) => {
   await syncStatuses();
   const { id } = req.params;
-  const result = await db.execute(sql`SELECT * FROM flash_sales WHERE id = ${id}`);
+  const result = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (result.rows.length === 0) { res.status(404).json({ error: "Not found" }); return; }
   res.json(result.rows[0]);
 });
