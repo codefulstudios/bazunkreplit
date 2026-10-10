@@ -77,8 +77,8 @@ export async function reserveEbayApiRequest(endpoint:string):Promise<number> {
     await tx.execute(sql`SELECT pg_advisory_xact_lock(917204311)`);
     await tx.execute(sql`CREATE TABLE IF NOT EXISTS ebay_api_usage (id BIGSERIAL PRIMARY KEY, endpoint TEXT NOT NULL, status INTEGER NOT NULL, used_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
     const rows=await tx.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
-    let budget=9000;
-    try {const parsed=JSON.parse(String(rows.rows[0]?.value??"{}"));if(Number.isFinite(parsed.requestBudget)&&parsed.requestBudget>=0)budget=parsed.requestBudget;}catch{}
+    let budget=15; // Free-tier safety ceiling until explicitly upgraded
+    try {const parsed=JSON.parse(String(rows.rows[0]?.value??"{}"));if(Number.isFinite(parsed.requestBudget)&&parsed.requestBudget>=0)budget=Math.min(15,parsed.requestBudget);}catch{}
     const used=await tx.execute(sql`SELECT COUNT(*)::int AS n FROM ebay_api_usage WHERE used_at>=date_trunc('month',NOW())`);
     if(Number(used.rows[0]?.n??0)>=budget)throw new Error("eBay RapidAPI request budget reached");
     const reserved=await tx.execute(sql`INSERT INTO ebay_api_usage(endpoint,status) VALUES (${endpoint},0) RETURNING id`);
