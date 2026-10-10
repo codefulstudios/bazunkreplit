@@ -14,6 +14,13 @@ import { getPromoConfig } from "../lib/promoConfig.js";
 
 const router = Router();
 
+// Server-side visibility: missing setting means visible; parent OFF overrides children.
+async function categoryVisibility() {
+ const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%' AND value='false'`);
+ const hidden=(rows.rows as any[]).map(r=>String(r.key).slice(17));
+ return hidden.length?sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key = 'category_visible_' || ${listingsTable.category} OR cv.key = 'category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`:sql`TRUE`;
+}
+
 function makePublicId(id: number): string {
   return `BZL-${id}`;
 }
@@ -64,11 +71,13 @@ router.get("/listings", async (req, res) => {
     if (ids) {
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
-      const rows = await db.select().from(listingsTable).where(inArray(listingsTable.id, idList));
+      const visible = await categoryVisibility();
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible));
       res.json(rows);
       return;
     }
 
+    const visible = await categoryVisibility();
     const parsedLimit = Math.min(isNaN(parseInt(limit)) ? 40 : parseInt(limit), 100);
     const parsedOffset = isNaN(parseInt(offset)) ? 0 : parseInt(offset);
 
@@ -98,12 +107,12 @@ router.get("/listings", async (req, res) => {
       .from(listingsTable)
       .where(
         sellerEmail
-          ? and(eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
+          ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
-              ? and(eq(listingsTable.status, "active"), eq(listingsTable.category, category), eq(listingsTable.subcategory, sub))
-              : and(eq(listingsTable.status, "active"), eq(listingsTable.category, category))
-            : eq(listingsTable.status, "active")
+              ? and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category), eq(listingsTable.subcategory, sub))
+              : and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category))
+            : and(visible,eq(listingsTable.status, "active"))
       )
       .orderBy(desc(listingsTable.createdAt))
       .limit(parsedLimit)
@@ -127,7 +136,7 @@ router.get("/listings/category-counts", async (_req, res) => {
     const rows = await db.execute(sql`
       SELECT category, subcategory, COUNT(*)::int AS count
       FROM listings
-      WHERE status = 'active'
+      WHERE status = 'active' AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
     res.json(rows.rows);
@@ -139,6 +148,7 @@ router.get("/listings/category-counts", async (_req, res) => {
 
 router.get("/listings/spotlight", async (req, res) => {
   try {
+    const visible = await categoryVisibility();
     const now = new Date();
     const spotlightTypes = ["homepage-spotlight", "spotlight", "featured-badge", "featured", "premium-placement"];
 
@@ -156,7 +166,7 @@ router.get("/listings/spotlight", async (req, res) => {
     if (promos.length === 0) { res.json([]); return; }
     const ids = [...new Set(promos.map(p => p.listingId))];
     const rows = await db.select().from(listingsTable).where(
-      and(eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
+      and(visible,eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
@@ -249,6 +259,9 @@ router.get("/listings/:id", async (req, res) => {
     }).from(listingsTable).where(eq(listingsTable.id, Number(rawId))).limit(1);
     }
     if (!row) { res.status(404).json({ error: "not found" }); return; }
+    const visibility = await categoryVisibility();
+    const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility)).limit(1);
+    if (!publicRow.length) { res.status(404).json({ error: "Listing temporarily unavailable" }); return; }
     if (row.status === "scheduled") {
       const viewer = typeof req.query.email === "string" ? req.query.email.toLowerCase() : "";
       if (viewer !== String(row.sellerEmail).toLowerCase()) { res.status(404).json({ error: "not found" }); return; }
