@@ -2000,6 +2000,18 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
   res.json({ imported: inserted, message: `Imported ${inserted} product${inserted !== 1 ? "s" : ""}` });
 });
 
+// Audit existing eBay imports without consuming RapidAPI requests.
+router.get("/admin/ebay-stock-audit",async(_req,res)=>{
+  try{
+    const rows=await db.execute(sql`SELECT id,public_id,title,quantity,status,specifications FROM listings WHERE specifications LIKE '%"source":"eBay UK"%' OR specifications LIKE '%"source":"eBay US"%' ORDER BY id DESC`);
+    const items=(rows.rows as any[]).map(row=>{
+      let specs:Record<string,unknown>={};try{specs=JSON.parse(String(row.specifications||"{}"));}catch{}
+      return {id:row.id,publicId:row.public_id,title:row.title,quantity:Number(row.quantity),status:row.status,itemId:specs.item_id,verified:specs.stock_quantity_verified===true,sourceQuantity:specs.source_stock_quantity??null,lastChecked:specs.source_last_checked??null,needsReview:specs.stock_quantity_verified!==true||specs.source_stock_quantity==null};
+    });
+    res.json({total:items.length,needsReview:items.filter(x=>x.needsReview).length,items});
+  }catch(err){logger.error({err},"eBay stock audit failed");res.status(500).json({error:"Stock audit failed"});}
+});
+
 // POST /api/admin/sync-ebay-prices — re-fetch current eBay prices and reprice
 const runAdminEbayPriceSync = async (req: any, res: any) => {
   const apiKey = process.env.RAPIDAPI_KEY;
@@ -2054,13 +2066,17 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         if (!newEbayPrice || newEbayPrice <= 0) { errors++; failures.push({listingId:row.id,reason:"Source price missing or invalid"}); return; }
         let sourceQty=ebayStockFromSummary(match);
         if(sourceQty===null){try{sourceQty=await ebayDetailStock(itemId,site,apiKey);}catch(err){logger.warn({err,itemId},'eBay sync detail stock check skipped');}}
-        if(sourceQty===null && specs.stock_quantity_verified!==true){
-          await db.execute(sql`UPDATE listings SET status='paused', quantity=0, specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false})},updated_at=NOW() WHERE id=${row.id}`);
-          stockUnknown++; unchanged++; return;
+        if(sourceQty===null){
+          stockUnknown++;
+          const unknownSpecs=JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false,source_stock_quantity:null});
+          await db.execute(sql`UPDATE listings SET status='paused',quantity=0,specifications=${unknownSpecs},updated_at=NOW() WHERE id=${row.id}`);
+          updated++;return;
         }
-        if(sourceQty===null)stockUnknown++;
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
-        if(priceUnchanged && (sourceQty===null || (sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active")))){await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);unchanged++;return;}
+        if(priceUnchanged && sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active") && specs.stock_quantity_verified===true){
+          await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);
+          unchanged++;return;
+        }
 
         const landedCost = newEbayPrice + shipping;
         const newBazunkPrice = Math.round(Math.max(landedCost * (1 + markupPct / 100), landedCost + minProfit) * 100) / 100;
