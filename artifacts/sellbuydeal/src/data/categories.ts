@@ -484,7 +484,7 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   },
   "health-household": {
-    "subcategory": "first-aid",
+    "subcategory": "medical",
     "suggestions": [
       "Bandages",
       "First Aid Kits",
@@ -524,15 +524,15 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   },
   "office-products": {
-    "subcategory": "office-supplies",
+    "subcategory": "pens",
     "suggestions": [
-      "Pens",
-      "Paper",
-      "Organisers"
+      "Ballpoint Pens",
+      "Gel Pens",
+      "Fountain Pens"
     ]
   },
   "patio-lawn-garden": {
-    "subcategory": "garden-tools",
+    "subcategory": "gardening-tools",
     "suggestions": [
       "Lawnmowers",
       "Hedge Trimmers",
@@ -540,7 +540,7 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   },
   "pet-supplies": {
-    "subcategory": "dog-supplies",
+    "subcategory": "dogs",
     "suggestions": [
       "Dog Food",
       "Leads & Collars",
