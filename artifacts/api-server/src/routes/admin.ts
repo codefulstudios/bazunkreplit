@@ -141,6 +141,7 @@ router.post("/admin/seller-compliance/appeals/:id/decision",async(req,res)=>{
       updated_at=NOW() WHERE id=${Number(appeal.case_id)}`);
     await recordAdminAudit({req,category:"users",action:"seller_compliance.appeal",targetType:"seller_compliance_appeal",
       targetId:String(id),summary:`Appeal ${id} ${decision}: ${reason}`,after:appeal});
+    void sendSystemMessage(String(appeal.seller_email),{category:"Seller Compliance",subject:"Appeal decision",body:`Your appeal for compliance case #${appeal.case_id} has been ${decision}. Please check your seller compliance page for the case status.`});
     res.json({appeal});
   }catch(err){logger.error({err},"Appeal decision failed");res.status(503).json({error:"Appeal decision unavailable"});}
 });
@@ -186,6 +187,7 @@ router.post("/admin/seller-compliance/cases/:id/status", async (req, res) => {
     if (!updated.rows.length) {res.status(404).json({error:"Case not found"});return;}
     await recordAdminAudit({req,category:"users",action:"seller_compliance.status",targetType:"seller_compliance_case",targetId:String(id),
       summary:`Compliance case ${id}: ${status}; reason: ${reason}`,after:updated.rows[0]});
+    void sendSystemMessage(String((updated.rows[0] as any).seller_email),{category:"Seller Compliance",subject:"Compliance case updated",body:`Your compliance case #${id} is now ${status.replaceAll("_"," ")}. Check Seller Compliance in your dashboard for details.`});
     res.json({case:updated.rows[0]});
   } catch (err) {
     logger.error({err},"Seller compliance status update failed");
