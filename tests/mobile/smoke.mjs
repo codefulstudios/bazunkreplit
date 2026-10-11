@@ -4,9 +4,9 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const base = (process.env.BASE_URL || 'https://www.bazunk.com').replace(/\/$/, '');
 const routes = [
   ['Home', '/'], ['Browse', '/browse'], ['Filtered browse', '/browse?category=electronics'],
-  ['Categories', '/categories'], ['Direct Sale', '/direct-sale'],
+  ['Categories', '/categories'], ['Direct Sale', '/sell/direct'],
   ['Sell', '/sell'], ['Checkout', '/checkout'], ['Importers', '/importers'],
-  ['Offers', '/my-offers'], ['Admin', '/admin'],
+  ['Offers', '/offers'], ['Admin', '/admin'],
 ];
 const authenticated = process.env.MOBILE_AUTH_STORAGE_STATE;
 const skipProtectedWithoutSession = true;
@@ -14,7 +14,7 @@ const authRoutes = [
   ['Seller dashboard', '/dashboard'],
   ['Seller listing', '/sell/direct'],
   ['Seller importer', '/importers'],
-  ['Offers authenticated', '/my-offers'],
+  ['Offers authenticated', '/offers'],
   ['Checkout authenticated', '/checkout'],
   ['Admin dashboard', '/admin/dashboard'],
   ['Admin products', '/admin/products'],
