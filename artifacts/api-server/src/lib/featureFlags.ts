@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 export const FEATURE_DEFINITIONS = [
   ["quick_sell","Direct Sale","Selling"],["offers","Make an Offer","Selling"],["auctions","Auctions","Selling"],["flash_sales","Flash Sales","Selling"],["classifieds","Classifieds","Selling"],["live","Live selling","Selling"],["product_video","Product Video","Selling"],
   ["importers","Importers","Tools"],["promotions","Promotions","Tools"],["watchers","Watch / Watcher offers","Tools"],["messaging","Messaging","Community"],["reviews","Reviews & reputation","Community"],["referrals","Referrals","Rewards"],["games","Rewards Arcade / Games","Rewards"],["credits","Credits","Rewards"],["cashback","Cashback","Rewards"],
+  ["homepage_intro","Homepage Intro GIF","Appearance"],
   ["bundles","Bundles","Buying"],["buyer_protection","Buyer Protection","Buying"],["disputes_returns","Disputes & Returns","Buying"],["verification","Seller verification","Trust"]
 ] as const;
 
