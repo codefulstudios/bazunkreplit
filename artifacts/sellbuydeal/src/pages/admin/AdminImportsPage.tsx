@@ -416,7 +416,6 @@ export function AdminImportsPage() {
     if (!q) return;
     setEbaySearching(true);
     setEbaySearchErr(null);
-    setEbaySelected(new Set());
     setEbayImportMsg(null);
     try {
       const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
@@ -430,6 +429,8 @@ export function AdminImportsPage() {
       setEbaySearching(false);
     }
   }
+
+  useEffect(() => { if (ebayHasSearched) void handleEbaySearch(); }, [ebayPage]);
 
   function toggleEbaySelect(id: string) {
     setEbaySelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -1213,7 +1214,7 @@ export function AdminImportsPage() {
                         <ChevronLeft className="w-3 h-3" /> Prev
                       </button>
                       <span className="text-xs text-gray-500">Page {ebayPage}</span>
-                      <button onClick={() => setEbayPage(p => p + 1)} disabled={ebaySearching || ebayResults.length < 5}
+                      <button onClick={() => setEbayPage(p => p + 1)} disabled={ebaySearching || ebayResults.length === 0}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
