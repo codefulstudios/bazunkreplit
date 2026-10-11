@@ -1862,12 +1862,12 @@ async function ebayDetailStock(itemId:string,site:"uk"|"us",apiKey:string):Promi
 
 // ── eBay routes ──────────────────────────────────────────────────────────────
 
-const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0.10,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:7};
+const EBAY_API_DEFAULTS = {monthlyLimit:20,monthlyBaseUsd:0,overagePerRequestUsd:0.10,bandwidthIncludedMb:0,bandwidthOveragePerMbUsd:0,requestBudget:15,syncDays:1};
 async function ebayApiSettings() {
   const result=await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
   let saved:Record<string,unknown>={};
   try {saved=JSON.parse(String(result.rows[0]?.value??"{}"));}catch{}
-  const pro=saved.plan==="pro"&&saved.proConfirmed===true;
+  const pro=(saved.plan==="pro"&&saved.proConfirmed===true)||!result.rows.length;
   return {...EBAY_API_DEFAULTS,...saved,plan:pro?"pro":"free",proConfirmed:pro,
     monthlyLimit:pro?10000:20,monthlyBaseUsd:pro?10:0,overagePerRequestUsd:pro?0.009:0.10,
     bandwidthIncludedMb:pro?10240:0,bandwidthOveragePerMbUsd:pro?0.001:0,
