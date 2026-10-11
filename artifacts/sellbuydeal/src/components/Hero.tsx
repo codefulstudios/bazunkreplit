@@ -114,7 +114,7 @@ export function Hero() {
           >
             <h1 className="sr-only">Buy, Sell, Deal, Get Rewarded on Bazunk</h1>
             <Link href="/welcome-new-buyers">
-              <a className="block group rounded-2xl overflow-hidden mb-4 shadow-2xl shadow-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] bg-gradient-to-br from-[#061a4a] via-[#102c78] to-[#4a176f] text-white p-6 sm:p-8 min-h-[260px] flex items-center" aria-label="New buyer offer — learn more">
+              <a className="block group rounded-2xl overflow-hidden mb-4 shadow-2xl shadow-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] bg-gradient-to-br from-[#0652c8] via-[#283fd0] to-[#8c1cb0] text-white p-6 sm:p-8 min-h-[235px] flex items-center" aria-label="New buyer offer — learn more">
                 <div className="max-w-xl">
                   <p className="text-xs sm:text-sm font-black tracking-[0.2em] text-yellow-300 uppercase">New buyers · {country.flag} {country.name}</p>
                   <h2 className="mt-2 text-3xl sm:text-4xl font-black leading-tight">Get {currency.symbol}5 credit on us</h2>
@@ -169,14 +169,14 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-white/6 border border-white/10 rounded-2xl px-3 py-3.5 min-h-[96px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
+                  <div className="bg-gradient-to-br from-white/20 to-white/5 border border-white/25 rounded-2xl px-3 py-3.5 min-h-[96px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
                       style={{ backgroundColor: color }}
                     >
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <p className="text-white/65 text-[11px] font-semibold text-center leading-tight group-hover:text-white transition-colors">
+                    <p className="text-white text-[11px] font-semibold text-center leading-tight group-hover:text-white transition-colors">
                       {name}
                     </p>
                   </div>
@@ -196,23 +196,7 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* Original marketplace artwork moved below the main hero. */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-60px" }}
-          transition={{ duration: 0.45 }}
-          className="mt-6 lg:mt-7"
-        >
-          <img
-            src="/hero-buy-sell-deal-rewarded.png"
-            alt="Buy, Sell, Deal, Get Rewarded — colourful Bazunk marketplace artwork"
-            width={1672}
-            height={941}
-            loading="lazy"
-            className="block w-full h-auto rounded-2xl shadow-2xl shadow-black/20"
-          />
-        </motion.div>
+
       </div>
 
       {/* ── Sell flyout portal (escapes overflow-hidden) ── */}
