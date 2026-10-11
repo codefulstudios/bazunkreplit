@@ -1,161 +1,69 @@
-import { useEffect } from 'react';
-import { Shield, Clock, RotateCcw, AlertCircle, Phone, ArrowLeft } from 'lucide-react';
-import { Link } from 'wouter';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useEffect } from "react";
+import { Link } from "wouter";
+import { useCurrency } from "@/context/CurrencyContext";
+import { ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2, Package, SearchCheck, RotateCcw, CreditCard, ClipboardList, Handshake, MessageCircle, FileText, Bell, Headphones, Store, UserRound, LockKeyhole, Sparkles } from "lucide-react";
 
-const GUARANTEES = [
-  {
-    icon: Shield,
-    title: 'Item Not Received',
-    desc: 'If your order never arrives, you can open a dispute for review.',
-    color: 'bg-emerald-500',
-  },
-  {
-    icon: AlertCircle,
-    title: 'Not As Described',
-    desc: "If the item differs significantly from the listing, submit evidence so we can review your claim and any eligible return or refund.",
-    color: 'bg-blue-500',
-  },
-  {
-    icon: RotateCcw,
-    title: 'Return Support',
-    desc: 'Change your mind? Check the seller’s return policy and request an eligible return from your dashboard.',
-    color: 'bg-purple-500',
-  },
+const coverage = [
+  { title: "Item Not Received", text: "If your order never arrives, you can open a dispute for review and a possible refund.", icon: Package, gradient: "from-[#007c79] to-[#005f69]", iconBg: "bg-emerald-400" },
+  { title: "Not As Described", text: "If an item differs significantly from its listing, submit evidence and we'll review your claim.", icon: SearchCheck, gradient: "from-[#0656bd] to-[#073575]", iconBg: "bg-blue-500" },
+  { title: "Return Support", text: "Changed your mind? Check the seller's return policy and request an eligible return from your dashboard.", icon: RotateCcw, gradient: "from-[#7535b6] to-[#492487]", iconBg: "bg-fuchsia-500" },
 ];
-
-const HOW_IT_WORKS = [
-  { step: '1', title: 'Pay Securely', desc: 'Pay securely through Bazunk at checkout.' },
-  { step: '2', title: 'Item Arrives', desc: 'Check your item on arrival and report any problems promptly through your dashboard.' },
-  { step: '3', title: 'Issue? Open a Dispute', desc: 'File a claim from your dashboard. Our team reviews the information from both parties and works towards a fair resolution. Review times vary with the details of each case.' },
-  { step: '4', title: 'Review & Resolution', desc: 'We will explain the outcome of the review. Any approved refund is returned to your original payment method; processing times may vary.' },
+const steps = [
+  { title: "Pay Securely", text: "Complete your purchase through Bazunk checkout.", icon: CreditCard, emoji: "💳", gradient: "from-[#262755] to-[#19294e]", badge: "bg-orange-500" },
+  { title: "Item Arrives", text: "Check your item on arrival and report any problems promptly.", icon: Package, emoji: "📦", gradient: "from-[#123c80] to-[#142c59]", badge: "bg-sky-500" },
+  { title: "Open a Dispute", text: "If there's an issue, file a claim from your dashboard. We review evidence from both sides.", icon: ClipboardList, emoji: "📋", gradient: "from-[#33276f] to-[#122b56]", badge: "bg-purple-500" },
+  { title: "Review & Resolution", text: "We explain the outcome. Approved refunds return to your original payment method.", icon: Handshake, emoji: "🤝", gradient: "from-[#075b5d] to-[#103151]", badge: "bg-emerald-500" },
+];
+const support = [
+  { title: "Help reporting an order issue", subtitle: "Step-by-step instructions", icon: MessageCircle, color: "bg-blue-500" },
+  { title: "Review of buyer and seller evidence", subtitle: "Fair and impartial review", icon: FileText, color: "bg-sky-600" },
+  { title: "Guidance on eligible returns", subtitle: "Check if your item qualifies", icon: Package, color: "bg-orange-500" },
+  { title: "Updates on your claim and its outcome", subtitle: "We'll keep you informed", icon: Bell, color: "bg-violet-600" },
 ];
 
 export default function BuyerProtectionPage() {
   const { formatPrice, currency } = useCurrency();
   useEffect(() => {
-    const scrollToFees = () => {
-      if (window.location.hash === "#fees") document.getElementById("fees")?.scrollIntoView();
-    };
-    scrollToFees();
-    window.addEventListener("hashchange", scrollToFees);
-    return () => window.removeEventListener("hashchange", scrollToFees);
+    const jump = () => { if (window.location.hash === "#fees") document.getElementById("fees")?.scrollIntoView(); };
+    jump();
+    window.addEventListener("hashchange", jump);
+    return () => window.removeEventListener("hashchange", jump);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-[#1A1D2E] text-white">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-emerald-900/50 via-[#1A1D2E] to-[#1A1D2E] pt-20 pb-16 px-6">
-        
-        {/* Top-Left Back to Dashboard Link */}
-        <Link 
-          href="/dashboard" 
-          className="absolute top-6 left-6 z-20 flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Dashboard</span>
-        </Link>
-
-        <div className="absolute top-0 right-0 w-[50vw] h-[50vw] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold px-5 py-2 rounded-full text-sm mb-6">
-            <Shield className="w-4 h-4" />
-            Buyer Protection & Support
+  return <div className="min-h-screen bg-[#061b36] text-white">
+    <div className="relative overflow-hidden bg-gradient-to-br from-[#0045a6] via-[#1649e2] to-[#982de3]">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-36 right-[-5%] h-[550px] w-[550px] rounded-full bg-fuchsia-400/35 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 h-48 w-full bg-gradient-to-t from-[#001b50]/60 to-transparent" />
+      <div className="relative mx-auto max-w-7xl px-5 pb-10 pt-6 sm:px-8 lg:pb-0">
+        <Link href="/support" className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-[#08245e]/75 px-4 py-2 text-sm font-bold text-white hover:bg-[#153d85]"><ArrowLeft className="h-4 w-4"/> Back to Help & Support</Link>
+        <div className="grid items-center gap-8 lg:grid-cols-[1.04fr_.96fr]">
+          <div className="relative z-10 py-8 lg:py-14">
+            <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#068afa] px-4 py-2 text-sm font-extrabold text-white shadow-lg"><ShieldCheck className="h-4 w-4"/> Buyer Protection & Support</span>
+            <h1 className="text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl">Shop With Complete <span className="block text-[#ffdb22] drop-shadow-[0_3px_1px_rgba(0,0,0,0.2)]">Confidence</span></h1>
+            <p className="mt-6 max-w-xl text-base font-medium leading-relaxed text-white sm:text-lg">Eligible purchases completed through Bazunk checkout receive Buyer Protection. If something isn't right, we're here to help — with clear steps, fair resolutions and real support.</p>
+            <div className="mt-8 flex flex-wrap gap-3"><Link href="/dashboard?section=disputes" className="inline-flex items-center gap-2 rounded-full bg-[#ff691a] px-7 py-3.5 font-black text-white shadow-lg shadow-orange-950/30 hover:bg-[#ff813d]">Open a Dispute <ArrowRight className="h-5 w-5"/></Link><Link href="/terms" className="inline-flex items-center gap-2 rounded-full border border-sky-300 bg-[#062d81] px-7 py-3.5 font-bold text-white hover:bg-[#15419c]">View Protection Terms</Link></div>
           </div>
-          <h1 className="text-5xl md:text-6xl font-black mb-6 leading-tight">
-            Shop With Complete<br />
-            <span className="text-emerald-400">Confidence</span>
-          </h1>
-          <p className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Eligible purchases completed through Bazunk checkout receive Buyer Protection.
-            Report issues through your dashboard so our team can review the evidence and help resolve them.
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-4 mt-10">
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-3">
-              <Clock className="w-4 h-4 text-emerald-400" />
-              <span className="text-sm font-semibold">Dispute support</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-3">
-              <RotateCcw className="w-4 h-4 text-[#4A5CE8]" />
-              <span className="text-sm font-semibold">Eligible returns</span>
-            </div>
+          <div aria-hidden="true" className="relative flex min-h-[290px] items-center justify-center lg:min-h-[425px]">
+            <div className="absolute h-64 w-64 rounded-full bg-yellow-400/40 blur-3xl"/>
+            <div className="relative flex h-56 w-56 items-center justify-center rounded-[3rem] border-[10px] border-[#58c5ff] bg-gradient-to-br from-[#1cc8ff] via-[#075bfa] to-[#00399d] shadow-[0_25px_60px_rgba(0,0,0,.4)] sm:h-72 sm:w-72"><ShieldCheck className="h-32 w-32 text-white drop-shadow-[0_8px_10px_rgba(0,0,0,.25)] sm:h-44 sm:w-44"/></div>
+            <span className="absolute bottom-3 left-0 -rotate-12 text-7xl drop-shadow-2xl sm:text-8xl">📦</span>
+            <span className="absolute bottom-0 right-0 rotate-6 text-7xl drop-shadow-2xl sm:text-8xl">🛒</span>
+            <span className="absolute right-0 top-0 rotate-12 rounded-2xl bg-emerald-500 px-4 py-3 text-center text-base font-black shadow-xl sm:text-xl">YOU'RE<br/>PROTECTED ✓</span>
+            <Sparkles className="absolute left-4 top-8 h-12 w-12 text-yellow-300"/>
           </div>
-        </div>
-      </div>
-
-      <section id="fees" className="max-w-5xl mx-auto px-6 pt-10 scroll-mt-24"><div className="grid md:grid-cols-2 gap-4"><div className="border rounded-2xl p-6"><h2 className="font-black text-xl">Buying from a personal seller</h2><p className="mt-2">Personal sellers pay no selling commission. Buyers pay Buyer Protection: 5% + {formatPrice(0.70)} by default in {currency.code}, with one fixed fee per checkout. Your exact fee is shown before payment.</p></div><div className="border rounded-2xl p-6"><h2 className="font-black text-xl">Buying from a business</h2><p className="mt-2">Buyer Protection is included with no extra buyer fee. Business sellers pay a selling fee, 8% by default, including protection and support. Admin-configured category rates can differ.</p><Link href="/terms" className="inline-block mt-3 underline">Seller protection terms</Link></div></div></section>
-
-      {/* Guarantees */}
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-black text-center mb-3">What You're Protected Against</h2>
-        <p className="text-white/50 text-center mb-10">Support is available for eligible purchases completed through Bazunk checkout, subject to the protection terms.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {GUARANTEES.map(g => (
-            <div key={g.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex gap-5 hover:border-white/20 transition-colors">
-              <div className={`${g.color} w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0`}>
-                <g.icon className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black mb-2">{g.title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed">{g.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* How it works */}
-      <div className="bg-white/3 border-y border-white/10 py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-black text-center mb-10">How Protection Works</h2>
-          <div className="relative">
-            <div className="hidden md:block absolute left-6 top-8 bottom-8 w-0.5 bg-white/10" />
-            <div className="space-y-6">
-              {HOW_IT_WORKS.map(s => (
-                <div key={s.step} className="flex gap-5 items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#F26B21] flex items-center justify-center font-black text-white text-lg flex-shrink-0 z-10">
-                    {s.step}
-                  </div>
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex-1">
-                    <h3 className="font-black text-lg mb-1">{s.title}</h3>
-                    <p className="text-white/60 text-sm">{s.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="max-w-3xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-black text-center mb-3">Support Through the Process</h2>
-        <p className="text-white/60 text-center mb-8">Clear steps, evidence-based review and help with eligible claims.</p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {['Help reporting an order issue', 'Review of buyer and seller evidence', 'Guidance on eligible returns', 'Updates on your claim and its outcome'].map((feature) => (
-            <div key={feature} className="rounded-2xl border border-white/10 bg-white/5 p-5 text-white/80">{feature}</div>
-          ))}
-        </div>
-        <p className="mt-6 text-sm text-white/50 text-center">Eligibility, outcomes and timing depend on the circumstances of the claim. <Link href="/terms" className="underline text-emerald-400">Read the protection terms</Link></p>
-      </section>
-
-      {/* Support CTA */}
-      <div className="bg-emerald-900/20 border-t border-emerald-500/20 py-12 px-6 text-center">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500 mb-5">
-          <Phone className="w-7 h-7 text-white" />
-        </div>
-        <h3 className="text-2xl font-black mb-2">Need Help With an Order?</h3>
-        <p className="text-white/50 mb-6">Contact our support team for help with an order or an existing claim.</p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link href="/dashboard?section=disputes" className="bg-[#F26B21] text-white font-black px-8 py-3 rounded-full hover:bg-[#e05a10] transition-colors">
-            Open a Dispute
-          </Link>
-          <Link href="/support" className="bg-white/10 border border-white/20 text-white font-semibold px-8 py-3 rounded-full hover:bg-white/15 transition-colors">
-            Contact Support
-          </Link>
         </div>
       </div>
     </div>
-  );
+    <div className="border-b border-blue-400/20 bg-[#04142d]"><div className="mx-auto grid max-w-7xl grid-cols-2 gap-3 px-5 py-4 sm:grid-cols-4 sm:px-8">{["Secure checkout","Eligible purchase protection","Clear dispute process","Dedicated support"].map(t=><div key={t} className="flex items-center gap-2 text-sm font-bold text-white"><CheckCircle2 className="h-5 w-5 shrink-0 fill-emerald-500 text-[#073a44]"/>{t}</div>)}</div></div>
+    <main className="mx-auto max-w-7xl space-y-4 px-5 py-5 sm:px-8">
+      <section id="fees" className="grid scroll-mt-24 gap-4 md:grid-cols-2">
+        <div className="relative overflow-hidden rounded-2xl border border-pink-400/40 bg-gradient-to-br from-[#d71c94] via-[#fa466a] to-[#ff973f] p-6 shadow-lg"><div className="relative z-10 max-w-[80%]"><UserRound className="mb-3 h-10 w-10 rounded-xl bg-white/20 p-2"/><h2 className="text-xl font-black sm:text-2xl">Buying from a Personal Seller</h2><p className="mt-3 text-sm font-medium leading-relaxed text-white">Personal sellers pay no selling commission. Buyers pay Buyer Protection: 5% + {formatPrice(0.70)} by default in {currency.code}, with one fixed fee per checkout. Your exact fee is shown before payment.</p><Link href="/terms" className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#a90068] hover:bg-pink-100">Learn more <ArrowRight className="h-4 w-4"/></Link></div><span aria-hidden="true" className="absolute -bottom-5 -right-5 text-[125px] drop-shadow-2xl">🙋📦</span></div>
+        <div className="relative overflow-hidden rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#0056f6] via-[#5336ed] to-[#cd35df] p-6 shadow-lg"><div className="relative z-10 max-w-[80%]"><Store className="mb-3 h-10 w-10 rounded-xl bg-white/20 p-2"/><h2 className="text-xl font-black sm:text-2xl">Buying from a Business</h2><p className="mt-3 text-sm font-medium leading-relaxed text-white">Buyer Protection is included with no extra buyer fee. Business sellers pay a selling fee, 8% by default, including protection and support. Admin-configured category rates can differ.</p><Link href="/terms" className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-black text-[#154ad5] hover:bg-blue-100">Business seller fees <ArrowRight className="h-4 w-4"/></Link></div><span aria-hidden="true" className="absolute -bottom-5 -right-4 text-[125px] drop-shadow-2xl">🏬</span></div>
+      </section>
+      <section className="rounded-3xl border border-blue-500/25 bg-gradient-to-br from-[#062a55] to-[#071b3b] p-5 sm:p-7"><div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-2xl font-black sm:text-3xl">What You're Protected Against</h2><p className="mt-1 text-sm font-medium text-sky-200">For eligible purchases completed through Bazunk checkout, subject to the protection terms.</p></div><Link href="/terms" className="rounded-full border border-blue-400 px-5 py-2 text-sm font-bold text-white hover:bg-blue-800">Learn more →</Link></div><div className="grid gap-4 md:grid-cols-3">{coverage.map(c=><div key={c.title} className={`rounded-2xl border border-white/15 bg-gradient-to-br ${c.gradient} p-5`}><div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${c.iconBg}`}><c.icon className="h-8 w-8 text-white"/></div><h3 className="text-lg font-black">{c.title}</h3><p className="mt-2 text-sm font-medium leading-relaxed text-white">{c.text}</p></div>)}</div></section>
+      <section className="rounded-3xl border border-blue-500/25 bg-gradient-to-br from-[#062a55] to-[#071b3b] p-5 sm:p-7"><h2 className="text-2xl font-black sm:text-3xl">How Protection Works</h2><p className="mb-5 mt-1 text-sm text-sky-200">A simple, fair process from purchase to resolution.</p><div className="grid gap-3 md:grid-cols-4">{steps.map((s,i)=><div key={s.title} className={`relative min-h-[210px] rounded-2xl border border-white/15 bg-gradient-to-br ${s.gradient} p-4`}><div className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${s.badge} text-xl font-black`}>{i+1}</span><h3 className="text-base font-black">{s.title}</h3></div><p className="mt-3 text-sm leading-relaxed text-white">{s.text}</p><span aria-hidden="true" className="absolute bottom-2 right-4 text-5xl">{s.emoji}</span></div>)}</div></section>
+      <section className="rounded-3xl border border-blue-500/25 bg-gradient-to-br from-[#062a55] to-[#071b3b] p-5 sm:p-7"><h2 className="text-2xl font-black sm:text-3xl">Support Through the Process</h2><p className="mb-5 mt-1 text-sm text-sky-200">Clear guidance and evidence-based review at every step.</p><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{support.map(s=><div key={s.title} className="flex items-center gap-3 rounded-xl border border-sky-300/20 bg-[#17355e] p-4"><span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${s.color}`}><s.icon className="h-6 w-6"/></span><div><h3 className="text-sm font-bold text-white">{s.title}</h3><p className="mt-1 text-xs text-sky-200">{s.subtitle}</p></div></div>)}</div><p className="mt-5 text-xs text-sky-200">Eligibility, outcomes and timing depend on the circumstances of the claim. <Link href="/terms" className="font-bold text-cyan-300 underline">Read the protection terms</Link>.</p></section>
+    </main>
+    <section className="mt-5 overflow-hidden bg-gradient-to-r from-[#8bc9ff] via-[#f0e8ff] to-[#d2c3ff] text-[#081c40]"><div className="mx-auto grid max-w-7xl items-center gap-6 px-5 py-8 sm:px-8 lg:grid-cols-[190px_1fr_250px]"><div aria-hidden="true" className="text-center text-[105px] leading-none">👩‍💻</div><div className="text-center"><h2 className="text-2xl font-black sm:text-3xl">Need Help With an Order?</h2><p className="mt-2 font-medium text-[#344b72]">Contact our support team for help with an order or an existing claim.</p><div className="mt-5 flex flex-wrap justify-center gap-3"><Link href="/dashboard?section=disputes" className="inline-flex items-center gap-2 rounded-full bg-[#ff671b] px-7 py-3 font-black text-white hover:bg-orange-600">Open a Dispute <ArrowRight className="h-4 w-4"/></Link><Link href="/support" className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3 font-black text-blue-700 hover:bg-blue-50"><Headphones className="h-4 w-4"/> Contact Support</Link></div></div><div className="rounded-2xl bg-white/95 p-5 shadow-lg">{["Friendly support team","Clear and honest guidance","Help with disputes and returns","Updates on your case"].map(t=><div key={t} className="mb-2 flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-emerald-500"/>{t}</div>)}</div></div></section>
+  </div>;
 }
