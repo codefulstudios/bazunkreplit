@@ -109,7 +109,7 @@ const AD_SLOTS = [
   { key: "browse_bottom", label: "Browse Page — Bottom Banner", desc: "Leaderboard (728×90) below listings, above footer" },
   { key: "auctions_mid",   label: "Auctions — Mid Banner",        desc: "Leaderboard (728×90) between the hero and auction filters" },
   { key: "flash_sales_mid",label: "Flash Sales — Mid Banner",    desc: "Leaderboard (728×90) between the hero and sale type filters" },
-  { key: "categories_top", label: "Categories — Top Banner",     desc: "Leaderboard (728×90) below the category header, above the grid" },
+  { key: "categories_top", label: "Categories — Bottom Banner",  desc: "Leaderboard (728×90) below the category content, above the footer (existing advert settings preserved)" },
   { key: "classifieds_mid",label: "Classifieds — Mid Banner",    desc: "Leaderboard (728×90) between the hero and search filters" },
   { key: "support_mid",    label: "Support — Mid Banner",        desc: "Leaderboard (728×90) between the hero and FAQ tabs" },
   { key: "live_left",      label: "Live Page — Left Vertical",    desc: "Vertical advert beside the Live Now content on desktop; moves below the content on smaller screens" },
