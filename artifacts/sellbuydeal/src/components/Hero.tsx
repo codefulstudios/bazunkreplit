@@ -65,15 +65,15 @@ const SELL_OPTIONS = [
 ];
 
 const HERO_CATS = [
-  { name: "Electronics",   icon: Smartphone, color: "#3B82F6", href: "/browse?category=electronics" },
-  { name: "Fashion",       icon: Shirt,      color: "#EC4899", href: "/browse?category=fashion"     },
-  { name: "Gaming",        icon: Gamepad2,   color: "#8B5CF6", href: "/browse?category=gaming"      },
-  { name: "Home & Garden", icon: Armchair,   color: "#0D9488", href: "/browse?category=home"        },
-  { name: "Sports",        icon: Dumbbell,   color: "#10B981", href: "/browse?category=sports"      },
-  { name: "Books",         icon: BookOpen,   color: "#F59E0B", href: "/browse?category=books"       },
-  { name: "Collectibles",  icon: Gem,        color: "#F26B21", href: "/browse?category=collectibles"},
-  { name: "Automotive",    icon: CarFront,   color: "#64748B", href: "/browse?category=automotive"  },
-  { name: "All Categories",icon: Package2,   color: "#4A5CE8", href: "/categories"                  },
+  { name: "Electronics",   icon: Smartphone, color: "#3B82F6", emoji:"💻", href: "/browse?category=electronics" },
+  { name: "Fashion",       icon: Shirt,      color: "#EC4899", emoji:"🧥", href: "/browse?category=fashion"     },
+  { name: "Gaming",        icon: Gamepad2,   color: "#8B5CF6", emoji:"🎮", href: "/browse?category=gaming"      },
+  { name: "Home & Garden", icon: Armchair,   color: "#0D9488", emoji:"🪴", href: "/browse?category=home"        },
+  { name: "Sports",        icon: Dumbbell,   color: "#10B981", emoji:"👟", href: "/browse?category=sports"      },
+  { name: "Books",         icon: BookOpen,   color: "#F59E0B", emoji:"📚", href: "/browse?category=books"       },
+  { name: "Collectibles",  icon: Gem,        color: "#F26B21", emoji:"🧸", href: "/browse?category=collectibles"},
+  { name: "Automotive",    icon: CarFront,   color: "#64748B", emoji:"🚙", href: "/browse?category=automotive"  },
+  { name: "All Categories",icon: Package2,   color: "#4A5CE8", emoji:"🛍️", href: "/categories"                  },
 ];
 
 export function Hero() {
@@ -160,8 +160,8 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="hidden lg:flex flex-col gap-4 self-start"
           >
-            <div className="grid grid-cols-3 gap-3">
-            {HERO_CATS.map(({ name, icon: Icon, color, href }, i) => (
+            <div className="grid grid-cols-4 gap-2.5">
+            {HERO_CATS.map(({ name, icon: Icon, color, emoji, href }, i) => (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -169,12 +169,12 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-gradient-to-br from-white/20 to-white/5 border border-white/25 rounded-2xl px-3 py-3.5 min-h-[96px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
+                  <div className="bg-gradient-to-br from-white/20 to-white/5 border border-white/25 rounded-2xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                      className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
                       style={{ backgroundColor: color }}
                     >
-                      <Icon className="w-5 h-5 text-white" />
+                      <span className="text-3xl leading-none" aria-hidden="true">{emoji}</span>
                     </div>
                     <p className="text-white text-[11px] font-semibold text-center leading-tight group-hover:text-white transition-colors">
                       {name}
