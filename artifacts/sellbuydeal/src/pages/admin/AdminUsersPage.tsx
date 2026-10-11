@@ -53,6 +53,7 @@ export function AdminUsersPage() {
   const [editUser, setEditUser] = useState<User | null>(null);
   const [editName, setEditName] = useState("");
   const [editSellerType, setEditSellerType] = useState<"private" | "sole_trader" | "business">("private");
+  const [editReviewReason, setEditReviewReason] = useState("");
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
 
@@ -149,10 +150,12 @@ export function AdminUsersPage() {
 
   async function saveEdit() {
     if (!editUser) return;
+    const changingType = editSellerType !== (editUser.seller_type ?? "private");
+    if (changingType && editReviewReason.trim().length < 20) { setEditError("Please explain the classification change in at least 20 characters."); return; }
     setEditSaving(true);
     setEditError("");
     const res = await authFetch(`/api/admin/users/${encodeURIComponent(editUser.email)}`, {
-      method: "PATCH", body: JSON.stringify({ name: editName.trim() || null, sellerType: editSellerType }),
+      method: "PATCH", body: JSON.stringify({ name: editName.trim() || null, sellerType: editSellerType, reviewReason: changingType ? editReviewReason.trim() : undefined }),
     });
     if (res.ok) {
       setEditUser(null);
@@ -411,7 +414,7 @@ export function AdminUsersPage() {
                       <div className="flex flex-wrap items-center gap-1.5">
                         {/* Edit */}
                         <button
-                          onClick={() => { setEditUser(u); setEditName(u.name ?? ""); setEditSellerType(u.seller_type ?? "private"); setEditError(""); }}
+                          onClick={() => { setEditUser(u); setEditName(u.name ?? ""); setEditSellerType(u.seller_type ?? "private"); setEditReviewReason(""); setEditError(""); }}
                           className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                           title="Edit user"
                         >
@@ -642,6 +645,16 @@ export function AdminUsersPage() {
                   <option value="business">Registered business — business seller fees apply</option>
                 </select>
               </div>
+
+              {editUser && editSellerType !== (editUser.seller_type ?? "private") && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Reason for seller classification change (required)</label>
+                  <textarea value={editReviewReason} onChange={e => setEditReviewReason(e.target.value)}
+                    maxLength={2000} rows={3} placeholder="Explain the evidence and why this seller should be reclassified..."
+                    className="w-full border border-gray-300 bg-white text-gray-900 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30" />
+                  <p className="text-xs text-gray-500 mt-1">Minimum 20 characters. The decision and reason are recorded in the admin audit log.</p>
+                </div>
+              )}
 
               {editError && (
                 <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{editError}</p>
