@@ -604,9 +604,24 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   }
 };
+type ThirdLevelEntry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
+let taxonomyOverrides: ThirdLevelEntry[] = [];
+let taxonomyLoaded = false;
+export async function loadThirdLevelTaxonomy(): Promise<void> {
+  try {
+    const response = await fetch("/api/taxonomy/third-level");
+    if (!response.ok) return;
+    const data = await response.json();
+    if (Array.isArray(data.categories)) { taxonomyOverrides = data.categories; taxonomyLoaded = true; }
+  } catch { /* static taxonomy remains available offline */ }
+}
 export function suggestedThirdLevel(categorySlug: string, subcategorySlug: string): string[] {
   const entry = THIRD_LEVEL_SUGGESTIONS[categorySlug];
-  return entry?.subcategory === subcategorySlug ? entry.suggestions : [];
+  const original = entry?.subcategory === subcategorySlug ? entry.suggestions : [];
+  if (!taxonomyLoaded) return original;
+  const overrides = taxonomyOverrides.filter(e => e.category === categorySlug && e.subcategory === subcategorySlug);
+  const saved = overrides.filter(e => e.visible).sort((a,b) => a.sort_order-b.sort_order).map(e => e.name);
+  return [...saved, ...original.filter(name => !overrides.some(e => e.slug === thirdLevelSlug(name)))];
 }
 
 export function thirdLevelSlug(name: string): string {
