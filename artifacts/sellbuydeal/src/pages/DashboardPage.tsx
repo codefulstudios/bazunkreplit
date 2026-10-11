@@ -31,6 +31,7 @@ import { LiveKitBroadcaster } from "@/components/LiveKitBroadcaster";
 import { LiveChat } from "@/components/LiveChat";
 import { ALL_PRODUCTS } from "@/data/products";
 
+import { DashboardSetupProgress } from "@/components/DashboardSetupProgress";
 import { StoreToolkit } from "@/components/StoreToolkit";
 import { SellerSales } from "@/components/SellerSales";
 import { SellerShipping } from "@/components/SellerShipping";
@@ -5957,7 +5958,7 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
-            {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} />}
+            {activeSection === "overview" && <><DashboardSetupProgress fallbackName={user.name || user.username || ""}/><OverviewContent user={user} onNavigate={setActiveSection} /></>}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
