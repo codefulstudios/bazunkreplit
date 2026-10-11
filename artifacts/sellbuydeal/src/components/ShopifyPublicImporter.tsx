@@ -1,8 +1,11 @@
-import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import {useEffect,useState} from "react";
 import {useAuth as useClerkAuth} from "@clerk/react";
 import {CheckCircle2,Store} from "lucide-react";
 export function ShopifyPublicImporter(){
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
  const{getToken}=useClerkAuth();const[url,setUrl]=useState(""),[items,setItems]=useState<any[]>([]),[selected,setSelected]=useState<Record<string,boolean>>({}),[markup,setMarkup]=useState(20),[markupType,setMarkupType]=useState("percentage"),[category,setCategory]=useState(""),[subcategory,setSubcategory]=useState(""),[subsubcategory,setSubsubcategory]=useState(""),[sync,setSync]=useState(true),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
  const af=async(path:string,body:any)=>{const t=await getToken();return fetch(path,{method:"POST",headers:{"Content-Type":"application/json",...(t?{Authorization:`Bearer ${t}`}:{})},body:JSON.stringify(body)})};
  const preview=async()=>{setBusy(true);setMsg("");setItems([]);setSelected({});try{const r=await af("/api/user/shopify-public/preview",{url});const d=await r.json();if(!r.ok)throw new Error(d.error||"Could not load store");setItems(d.items||[]);setSelected(Object.fromEntries((d.items||[]).map((x:any)=>[x.sourceUrl,true])));setMsg(`Loaded ${d.items?.length||0} products from ${d.store}.`)}catch(e){setMsg(e instanceof Error?e.message:"Preview failed")}finally{setBusy(false)}};
