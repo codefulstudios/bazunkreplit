@@ -35,12 +35,12 @@ function CountdownPill({ target, label, urgent }: { target: string; label: strin
     const id = setInterval(() => setT(getTimeLeft(target)), 1000);
     return () => clearInterval(id);
   }, [target]);
-  if (!t) return <span className="text-xs font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-500">Ended</span>;
+  if (!t) return <span className="text-xs font-bold px-2 py-1 rounded-full bg-[#253d60] text-white">Ended</span>;
   const isUrgent = urgent && t.total < 3600000;
   return (
     <span className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
-      isUrgent ? "bg-red-100 text-red-600 animate-pulse" :
-      urgent ? "bg-orange-100 text-orange-600" : "bg-amber-100 text-amber-700"
+      isUrgent ? "bg-[#ff315f] text-white animate-pulse" :
+      urgent ? "bg-[#ff681d] text-white" : "bg-[#3051b0] text-white"
     }`}>
       <Timer className="w-3 h-3" />
       {label} {String(t.hours).padStart(2,"0")}:{String(t.mins).padStart(2,"0")}:{String(t.secs).padStart(2,"0")}
@@ -96,17 +96,17 @@ function NotifyButton({ sale }: { sale: FlashSale }) {
   }
 
   if (state === "set") return (
-    <button className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 cursor-default">
+    <button className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[#075d55] text-white cursor-default">
       <Bell className="w-3 h-3" /> Notified
     </button>
   );
   if (state === "denied") return (
-    <button className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-400 cursor-default">
+    <button className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[#253d60] text-white cursor-default">
       <BellOff className="w-3 h-3" /> Blocked
     </button>
   );
   return (
-    <button onClick={handleNotify} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[#4A5CE8]/10 text-[#4A5CE8] hover:bg-[#4A5CE8]/20 transition-colors">
+    <button onClick={handleNotify} className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-[#164db4] text-white hover:bg-[#246de2] transition-colors">
       <Bell className="w-3 h-3" /> Notify Me
     </button>
   );
@@ -172,164 +172,56 @@ export function FlashSalesPage() {
   const otherSales = sales.filter(s => s.sale_type !== "lightning");
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#03152e] text-white">
       <Navbar />
-
-      {/* Hero */}
-      <div className="relative bg-[#1A1D2E] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-8 -left-8 w-64 h-64 rounded-full bg-[#F26B21]/10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#4A5CE8]/10 blur-3xl" />
-        </div>
-        <div className="relative container mx-auto max-w-5xl px-4 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-[#F26B21] flex items-center justify-center shadow-lg shadow-[#F26B21]/30">
-                  <Zap className="w-5 h-5 text-white fill-white" />
-                </div>
-                <span className="text-[#F26B21] font-black text-sm uppercase tracking-widest">Flash Sales</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-2">
-                Deals that don't last forever.
-              </h1>
-              <p className="text-white/50 text-sm">Massive discounts for a limited time only. Grab them before the countdown hits zero.</p>
+      <header className="relative overflow-hidden border-b border-[#2d65ff] bg-gradient-to-r from-[#00349c] via-[#0755e8] to-[#7a20c9]">
+        <div className="pointer-events-none absolute -top-24 right-[-8%] h-[380px] w-[600px] rounded-full bg-[#fb29c8]/40 blur-3xl"/>
+        <div className="pointer-events-none absolute bottom-[-150px] left-[30%] h-[320px] w-[420px] rounded-full bg-[#00b9ff]/50 blur-3xl"/>
+        <div className="relative mx-auto grid max-w-7xl items-center gap-5 px-5 py-8 sm:px-8 md:grid-cols-[1fr_.85fr] md:py-10">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-[#ff315f] px-4 py-2 text-sm font-black uppercase tracking-wide text-white shadow-[0_5px_20px_rgba(255,35,102,.45)]"><Zap className="h-5 w-5 fill-white"/> Flash Sales</span>
+            <h1 className="mt-4 max-w-2xl text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">Deals that don't <span className="block text-[#ffe329]">last forever!</span></h1>
+            <p className="mt-4 max-w-lg text-base font-semibold leading-relaxed text-white sm:text-lg">Massive discounts for a limited time only. Grab them before the countdown hits zero.</p>
+            <div className="mt-5 inline-flex max-w-full items-center gap-2 rounded-xl border border-purple-200/40 bg-[#5c32e9] px-4 py-2.5 text-sm font-bold text-white shadow-lg"><Calendar className="h-4 w-4 shrink-0"/>{isWeekend() ? "Weekend Mega Sales are on — explore this weekend's deals!" : "Limited-time offers — check back for upcoming deals!"}</div>
+            {user && <Link href="/flash-sales/create" className="mt-5 flex w-fit items-center gap-2 rounded-xl bg-[#ff711f] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8b42]"><Plus className="h-5 w-5"/> Run a Flash Sale</Link>}
+          </div>
+          <div aria-hidden="true" className="relative flex min-h-[230px] items-center justify-center sm:min-h-[280px]">
+            <div className="absolute left-[8%] top-[12%] rotate-[-18deg] text-7xl drop-shadow-2xl">🎮</div>
+            <div className="absolute right-[5%] top-[8%] rotate-[18deg] text-6xl drop-shadow-2xl">⚡</div>
+            <div className="absolute left-[8%] bottom-[5%] rotate-[-12deg] text-7xl drop-shadow-2xl">📦</div>
+            <div className="absolute right-[3%] bottom-[2%] rotate-[9deg] text-8xl drop-shadow-2xl">🛒</div>
+            <div className="relative flex h-52 w-52 rotate-[-8deg] flex-col items-center justify-center rounded-[2.5rem] border-[9px] border-[#ff80ac] bg-gradient-to-br from-[#ffdf43] to-[#ff792e] text-[#102047] shadow-[0_22px_50px_rgba(0,0,0,.4)] sm:h-60 sm:w-60">
+              <Clock className="h-12 w-12 stroke-[3]"/>
+              <strong className="mt-2 text-center text-3xl font-black leading-none">LIMITED<br/>TIME<br/>ONLY</strong>
             </div>
-            {user && (
-              <Link href="/flash-sales/create" className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#F26B21] text-white font-bold hover:opacity-90 transition-opacity shrink-0 shadow-lg shadow-[#F26B21]/30">
-                <Plus className="w-4 h-4" /> Run a Flash Sale
-              </Link>
-            )}
-          </div>
-
-          {/* Live context banners */}
-          <div className="flex flex-wrap gap-3 mt-6">
-            {isHappyHour() && (
-              <div className="flex items-center gap-2 bg-amber-500/20 border border-amber-500/30 rounded-xl px-4 py-2 text-amber-300 text-sm font-semibold">
-                <Coffee className="w-4 h-4" /> Happy Hour is live now — check Happy Hour deals!
-              </div>
-            )}
-            {isWeekend() && (
-              <div className="flex items-center gap-2 bg-purple-500/20 border border-purple-500/30 rounded-xl px-4 py-2 text-purple-300 text-sm font-semibold">
-                <Calendar className="w-4 h-4" /> Weekend Mega Sales are on — bigger discounts this weekend!
-              </div>
-            )}
+            <span className="absolute right-[8%] top-[28%] rotate-12 rounded-xl bg-[#ff2c9b] px-3 py-2 text-3xl font-black shadow-xl">%</span>
           </div>
         </div>
-      </div>
-
-      <AdSlot slotKey="flash_sales_mid" />
-
-      <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
-
-        {/* Sale type strip */}
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
-          {TYPE_FILTERS.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              onClick={() => setSaleTypeFilter(value)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${
-                saleTypeFilter === value
-                  ? value === "lightning" ? "bg-red-600 text-white border-red-600"
-                  : value === "happy_hour" ? "bg-amber-500 text-white border-amber-500"
-                  : value === "weekend_mega" ? "bg-purple-600 text-white border-purple-600"
-                  : value === "category_event" ? "bg-[#4A5CE8] text-white border-[#4A5CE8]"
-                  : "bg-[#1A1D2E] text-white border-[#1A1D2E]"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" /> {label}
-            </button>
-          ))}
+      </header>
+      <div className="mx-auto w-full max-w-7xl px-5 pt-4 sm:px-8"><AdSlot slotKey="flash_sales_mid" /></div>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 sm:px-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">{TYPE_FILTERS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setSaleTypeFilter(value)} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-extrabold transition-all ${saleTypeFilter===value?"border-[#248bff] bg-[#066af3] text-white shadow-lg shadow-blue-950/50":"border-[#2463a3] bg-[#092b55] text-white hover:bg-[#174a85]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
+          <span className="inline-flex items-center gap-2 rounded-xl border border-[#2562aa] bg-[#08254c] px-4 py-3 text-sm font-bold text-white"><Timer className="h-5 w-5 text-[#ff5473]"/> Live deals update automatically when refreshed</span>
         </div>
-
-        {/* Tabs + Category */}
-        <div className="flex items-center gap-3 mb-6 flex-wrap">
-          <div className="flex bg-white rounded-xl border border-gray-200 p-1 gap-1">
-            {TABS.map(({ value, label, icon: Icon }) => (
-              <button key={value} onClick={() => setTab(value)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                  tab === value ? "bg-[#1A1D2E] text-white" : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${tab === value ? "text-[#F26B21]" : ""}`} />
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 flex-wrap">
-            {CATEGORIES.map((cat) => (
-              <button key={cat} onClick={() => setCategory(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  category === cat ? "bg-[#4A5CE8] text-white" : "text-gray-500 hover:bg-gray-50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        <div className="mb-5 flex flex-wrap items-center gap-3">
+          <div className="flex gap-1 rounded-xl border border-[#2869b4] bg-[#08264b] p-1">{TABS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setTab(value)} className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-extrabold ${tab===value?"bg-[#0669ef] text-white":"text-white hover:bg-[#19487b]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
+          <div className="flex flex-wrap gap-1 rounded-xl border border-[#2869b4] bg-[#08264b] p-1">{CATEGORIES.map(cat=><button key={cat} onClick={()=>setCategory(cat)} className={`rounded-lg px-3 py-2 text-xs font-bold sm:text-sm ${category===cat?"bg-[#0669ef] text-white":"text-white hover:bg-[#19487b]"}`}>{cat}</button>)}</div>
         </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-24"><Loader2 className="w-8 h-8 animate-spin text-[#F26B21]" /></div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-            <AlertCircle className="w-10 h-10 mb-3 text-red-300" />
-            <p className="font-semibold">{error}</p>
-            <button onClick={load} className="mt-4 px-4 py-2 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold">Retry</button>
-          </div>
-        ) : sales.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-            <Zap className="w-14 h-14 mb-4 text-gray-200" />
-            <p className="text-lg font-semibold text-gray-600">
-              {tab === "active" ? "No flash sales running right now" : "No upcoming flash sales scheduled"}
-            </p>
-            <p className="text-sm mt-1">Check back soon, or be the first to run one!</p>
-            {user && (
-              <Link href="/flash-sales/create" className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white font-bold hover:opacity-90 transition-opacity">
-                <Zap className="w-4 h-4" /> Create Flash Sale
-              </Link>
-            )}
-          </div>
-        ) : (
-          <>
-            {/* Lightning Deals section */}
-            {lightningDeals.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-7 h-7 rounded-lg bg-red-600 flex items-center justify-center">
-                    <Zap className="w-4 h-4 text-white fill-white" />
-                  </div>
-                  <h2 className="text-lg font-black text-gray-900">Lightning Deals</h2>
-                  <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full animate-pulse">5–15 min</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {lightningDeals.map(s => <SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation} />)}
-                </div>
-              </div>
-            )}
-
-            {/* All other sales */}
-            {otherSales.length > 0 && (
-              <>
-                {lightningDeals.length > 0 && (
-                  <div className="flex items-center gap-2 mb-4">
-                    <h2 className="text-lg font-black text-gray-900">More Deals</h2>
-                    <span className="text-xs text-gray-400">{otherSales.length} sale{otherSales.length !== 1 ? "s" : ""}</span>
-                  </div>
-                )}
-                {lightningDeals.length === 0 && (
-                  <p className="text-sm text-gray-500 mb-4">{sales.length} flash sale{sales.length !== 1 ? "s" : ""}</p>
-                )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {otherSales.map(s => <SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation} />)}
-                </div>
-              </>
-            )}
-          </>
-        )}
+        {loading ? <div className="flex justify-center py-20"><Loader2 className="h-9 w-9 animate-spin text-[#ff751f]"/></div>
+        : error ? <div className="flex flex-col items-center rounded-2xl border border-red-500/40 bg-[#12294c] py-20 text-white"><AlertCircle className="mb-3 h-10 w-10 text-red-400"/><p className="font-bold">{error}</p><button onClick={load} className="mt-4 rounded-xl bg-[#1767f5] px-6 py-3 font-bold text-white">Retry</button></div>
+        : sales.length===0 ? <div className="flex flex-col items-center rounded-3xl border border-[#1e508d] bg-gradient-to-br from-[#092a59] to-[#17225d] px-5 py-16 text-center"><span className="text-7xl">⏰</span><h2 className="mt-4 text-2xl font-black text-white">{tab==="active"?"No flash sales running right now":"No upcoming flash sales scheduled"}</h2><p className="mt-2 max-w-lg text-sm font-medium text-sky-100">Real seller deals will appear here as soon as they are available. Check back soon, or launch the next great deal!</p>{user&&<Link href="/flash-sales/create" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#ff721e] px-6 py-3 font-black !text-white hover:bg-[#ff8d3d]"><Zap className="h-5 w-5"/> Create Flash Sale</Link>}</div>
+        : <div className="space-y-7">
+          {lightningDeals.length>0&&<section><div className="mb-4 flex items-center gap-2"><Zap className="h-6 w-6 text-yellow-300"/><h2 className="text-2xl font-black text-white">Lightning Deals</h2><span className="rounded-full bg-[#ff315f] px-3 py-1 text-xs font-black text-white">5–15 min</span></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{lightningDeals.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
+          {otherSales.length>0&&<section>{lightningDeals.length>0&&<h2 className="mb-4 text-2xl font-black text-white">More Deals</h2>}<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{otherSales.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
+        </div>}
+        <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-fuchsia-300/60 bg-gradient-to-r from-[#6526f9] via-[#c41bdc] to-[#ff6284] px-6 py-6 shadow-xl">
+          <span aria-hidden="true" className="absolute -left-5 bottom-[-22px] rotate-[-15deg] text-7xl">📣</span>
+          <div className="relative pl-14 sm:pl-20"><h2 className="text-2xl font-black text-[#fff22a] sm:text-3xl">Weekend Mega Sales!</h2><p className="mt-1 text-sm font-bold text-white">Discover limited-time deals across your favourite categories.</p></div>
+          <button onClick={()=>{setSaleTypeFilter("weekend_mega");setTab("active");window.scrollTo({top:0,behavior:"smooth"});}} className="relative rounded-xl bg-white px-5 py-3 font-black text-[#5025d4] hover:bg-yellow-100">View Mega Sales →</button>
+        </div>
       </main>
-      <Footer />
+      <Footer/>
     </div>
   );
 }
@@ -343,45 +235,19 @@ function SaleCard({ s, tab, formatPrice, setLocation }: {
   const sale = parseFloat(s.sale_price);
   const isLightning = s.sale_type === "lightning";
   return (
-    <div className={`bg-white rounded-2xl border overflow-hidden hover:shadow-md transition-shadow flex flex-col group ${isLightning ? "border-red-200 ring-1 ring-red-100" : "border-gray-100"}`}>
-      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-        {s.image ? (
-          <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center"><Zap className="w-12 h-12 text-gray-200" /></div>
-        )}
-        <div className={`absolute top-2 left-2 text-white text-xs font-black px-2.5 py-1 rounded-full shadow ${isLightning ? "bg-red-600" : "bg-[#F26B21]"}`}>
-          -{s.discount_percent}%
-        </div>
-        <div className="absolute top-2 right-2"><SaleTypeBadge type={s.sale_type} /></div>
-        <div className="absolute bottom-2 left-2 right-2 flex justify-center">
-          {tab === "active"
-            ? <CountdownPill target={s.ends_at} label="Ends in" urgent />
-            : <CountdownPill target={s.starts_at} label="Starts in" />
-          }
-        </div>
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-[#2875c2] bg-gradient-to-b from-[#0c315f] to-[#051c3a] shadow-lg shadow-black/20 transition-transform hover:-translate-y-1">
+      <div className="relative aspect-[5/3] overflow-hidden bg-gradient-to-br from-[#1666f2] via-[#8435ec] to-[#ff36aa]">
+        {s.image?<img src={s.image} alt={s.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"/>:<div className="flex h-full items-center justify-center text-7xl" aria-label="Product image unavailable">🎁</div>}
+        <span className="absolute left-2 top-2 rounded-lg bg-[#ff315b] px-3 py-1 text-base font-black text-white shadow-lg">-{s.discount_percent}%</span>
+        <span className="absolute right-2 top-2 rounded-lg bg-[#102348]/90 px-2 py-1 text-[11px] font-extrabold text-white">{SALE_TYPE_META[s.sale_type]?.label??"Flash Sale"}</span>
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2 line-clamp-2">{s.title}</h3>
-        <div className="flex items-center gap-3 mb-3">
-          <p className={`text-xl font-black ${isLightning ? "text-red-600" : "text-[#F26B21]"}`}>{formatPrice(sale)}</p>
-          <p className="text-sm text-gray-400 line-through">{formatPrice(orig)}</p>
-          <span className="ml-auto text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-            <TrendingDown className="w-3 h-3" /> Save {formatPrice(orig - sale)}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3 flex-wrap">
-          {s.category && <><Tag className="w-3 h-3" /><span>{s.category}</span></>}
-          <span className="ml-auto">by {s.seller_name}</span>
-        </div>
-        <div className="flex gap-2 mt-auto">
-          <button onClick={() => setLocation(`/flash-sales/${s.id}`)}
-            className={`flex-1 py-2.5 rounded-xl text-white text-sm font-bold transition-colors flex items-center justify-center gap-1.5 ${isLightning ? "bg-red-600 hover:bg-red-700" : "bg-[#1A1D2E] hover:bg-[#2a2d3e]"}`}>
-            {tab === "active" ? "Grab Deal" : "Preview Deal"} <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-          <NotifyButton sale={s} />
-        </div>
+      <div className="flex flex-1 flex-col p-3.5">
+        <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-snug text-white">{s.title}</h3>
+        <div className="mt-1 flex flex-wrap items-baseline gap-2"><strong className="text-xl font-black text-[#ffe15b]">{formatPrice(sale)}</strong><span className="text-sm font-semibold text-slate-300 line-through">{formatPrice(orig)}</span></div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#34557b]"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#ff386a] to-[#ff812c]"/></div>
+        <div className="mt-3 flex items-center justify-between gap-2"><CountdownPill target={tab==="active"?s.ends_at:s.starts_at} label={tab==="active"?"Ends":"Starts"} urgent={tab==="active"}/><NotifyButton sale={s}/></div>
+        <button onClick={()=>setLocation(`/flash-sales/${s.id}`)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#ff701e] px-4 py-2.5 text-sm font-black text-white hover:bg-[#ff8b3e]">{tab==="active"?"View Deal":"Preview Deal"}<ChevronRight className="h-4 w-4"/></button>
       </div>
-    </div>
+    </article>
   );
 }
