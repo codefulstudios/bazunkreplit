@@ -295,7 +295,7 @@ export function CategoriesPage() {
                           <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
                           {suggestedThirdLevel(selected.slug,sub.slug).length > 0 && <div className="flex flex-wrap gap-1 mt-2" aria-label="Suggested deeper categories">
                             {suggestedThirdLevel(selected.slug,sub.slug).map(name => <span key={name} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</span>)}
-                          </div>
+                          </div>}
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
                       </Link> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
