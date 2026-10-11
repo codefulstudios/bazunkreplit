@@ -109,8 +109,8 @@ router.get("/listings", async (req, res) => {
           ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
-              ? and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category), eq(listingsTable.subcategory, sub), ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
-              : and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category))
+              ? and(visible, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
+              : and(visible, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
             : and(visible,eq(listingsTable.status, "active"))
       )
       .orderBy(desc(listingsTable.createdAt))
