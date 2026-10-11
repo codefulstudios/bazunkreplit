@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 
 const CONDITIONS = [
   { id: "brand-new", label: "Brand New", desc: "Never used, in original packaging", icon: Tag },
@@ -126,6 +126,9 @@ function extractCurrencyCode(display: string): string {
 }
 
 export function QuickSellPage() {
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
   interface BuilderOption { label: string; hex: string; qty: number; }
   interface BuilderVariant { type: "size" | "colour"; options: BuilderOption[]; newLabel: string; newHex: string; newQty: string; }
 
