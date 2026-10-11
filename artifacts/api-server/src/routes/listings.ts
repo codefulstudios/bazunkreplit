@@ -574,6 +574,18 @@ router.patch("/listings/profile/me", async (req, res) => {
     const postcode = typeof b.postcode === "string" ? b.postcode.trim().slice(0,30) : null;
     const country = typeof b.country === "string" ? b.country.trim().slice(0,80) : null;
     const sellerType = ["private","sole_trader","business"].includes(b.sellerType) ? b.sellerType : null;
+    // Self-service cannot downgrade an established commercial account to private.
+    // The admin review workflow must handle that request with an audit trail.
+    if (b.sellerType !== undefined && sellerType === null) {
+      res.status(400).json({ error: "Invalid seller classification." }); return;
+    }
+    if (sellerType === "private") {
+      const current = await db.execute(sql`SELECT seller_type FROM users WHERE LOWER(email)=LOWER(${email}) LIMIT 1`);
+      const existing = String((current.rows[0] as any)?.seller_type ?? "private");
+      if (existing === "business" || existing === "sole_trader") {
+        res.status(409).json({ error: "Business-to-private changes require a seller compliance review. Contact Bazunk support." }); return;
+      }
+    }
     const step = Number.isInteger(b.onboardingStep) ? Math.max(1,Math.min(6,b.onboardingStep)) : null;
     const completed = b.onboardingCompleted === true ? true : null;
     const prefs = b.notificationPreferences && typeof b.notificationPreferences === "object" ? b.notificationPreferences : null;
