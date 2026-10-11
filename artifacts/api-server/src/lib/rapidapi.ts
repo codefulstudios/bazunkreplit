@@ -82,7 +82,7 @@ export async function reserveEbayApiRequest(endpoint:string):Promise<number>{
     const rows=await tx.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
     let saved:Record<string,unknown>={};
     try{saved=JSON.parse(String(rows.rows[0]?.value??"{}"));}catch{}
-    const pro=saved.plan==="pro"&&saved.proConfirmed===true;
+    const pro=(saved.plan==="pro"&&saved.proConfirmed===true)||!rows.rows.length;
     const budget=pro?9000:15;
     const used=await tx.execute(sql`SELECT COUNT(*)::int AS n FROM ebay_api_usage WHERE used_at>=date_trunc('month',NOW())`);
     if(Number(used.rows[0]?.n??0)>=budget)throw new Error("eBay RapidAPI request budget reached");
