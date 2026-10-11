@@ -67,7 +67,7 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
   );
 }
 
-export function FeaturedListings() {
+export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promoted" }) {
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
@@ -102,7 +102,7 @@ export function FeaturedListings() {
   }, []);
 
   const hasSpotlight = spotlightListings.length > 0;
-  const displayListings = hasSpotlight ? spotlightListings : recentListings;
+  const displayListings = mode === "promoted" ? spotlightListings : recentListings;
 
   function updateScrollButtons() {
     const el = scrollRef.current;
@@ -129,7 +129,7 @@ export function FeaturedListings() {
 
   if (loading) {
     return (
-      <section className="py-12 bg-white border-b border-gray-100">
+      <section className={`py-9 border-b border-white/10 ${mode === "promoted" ? "bg-gradient-to-r from-[#2a1050] via-[#1a1d4c] to-[#3a145c]" : "bg-[#091a33]"}`}>
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -156,15 +156,15 @@ export function FeaturedListings() {
               viewport={{ once: true }}
               className="text-xs font-black text-[#F26B21] uppercase tracking-widest mb-1"
             >
-              {hasSpotlight ? t("promotedListings") : t("trendingToday")}
+              {mode === "promoted" ? t("promotedListings") : t("trendingToday")}
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl md:text-3xl font-black text-gray-900"
+              className="text-2xl md:text-3xl font-black text-white"
             >
-              {hasSpotlight ? t("homepageSpotlight") : t("featuredListings")}
+              {mode === "promoted" ? t("homepageSpotlight") : t("featuredListings")}
             </motion.h2>
           </div>
 
@@ -186,7 +186,7 @@ export function FeaturedListings() {
             </button>
 
             <Link href="/browse">
-              <button className="flex items-center gap-1.5 text-sm font-bold text-[#4A5CE8] hover:text-[#3B4DD6] transition-colors ml-1">
+              <button className="flex items-center gap-1.5 text-sm font-bold text-sky-300 hover:text-[#3B4DD6] transition-colors ml-1">
                 {t("browseAll")} <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
@@ -207,7 +207,7 @@ export function FeaturedListings() {
                 viewport={{ once: true }}
                 transition={{ delay: Math.min(index * 0.04, 0.3) }}
                 style={{ scrollSnapAlign: "start" }}
-                className="w-52 shrink-0 group bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                className="w-52 shrink-0 group bg-[#132543] rounded-2xl border border-sky-400/20 hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
