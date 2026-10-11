@@ -1834,15 +1834,30 @@ function ebayStockFromSummary(item:Record<string,unknown>):number|null {
 
 // Detail lookups are budgeted separately; never assume a missing quantity means one unit.
 function ebayDetailQuantity(payload:unknown):number|null {
-  const root=payload as Record<string,unknown>;
-  const candidates=[root,root?.data,root?.product,root?.item,root?.productInfo,root?.product_info,root?.result,(root?.data as Record<string,unknown>|undefined)?.product,(root?.data as Record<string,unknown>|undefined)?.item,(root?.result as Record<string,unknown>|undefined)?.product];
-  for(const candidate of candidates){
-    if(!candidate||typeof candidate!=="object")continue;
-    const item=candidate as Record<string,unknown>;
-    const stock=item.availability && typeof item.availability==="object"?item.availability as Record<string,unknown>:{};
-    const raw=stock.availableQuantity??stock.estimatedAvailableQuantity??item.availableQuantity??item.estimatedAvailableQuantity??item.quantityAvailable??item.available_quantity??item.stockQuantity??item.stock_quantity??item.quantity;
-    if(raw!==undefined&&raw!==null&&raw!==""&&Number.isSafeInteger(Number(raw))&&Number(raw)>=0)return Number(raw);
-    const status=String(stock.availabilityStatus??item.availabilityStatus??item.stockStatus??"").toUpperCase();
+  const candidates:Record<string,unknown>[]=[];
+  const visit=(value:unknown,depth:number)=>{
+    if(depth>4||!value||typeof value!=="object")return;
+    if(Array.isArray(value)){for(const entry of value.slice(0,12))visit(entry,depth+1);return;}
+    const obj=value as Record<string,unknown>;candidates.push(obj);
+    for(const key of ["data","product","item","productInfo","product_info","result","availability","inventory","stock","details"])visit(obj[key],depth+1);
+  };
+  visit(payload,0);
+  for(const item of candidates){
+    for(const key of ["availableQuantity","estimatedAvailableQuantity","quantityAvailable","available_quantity","stockQuantity","stock_quantity","quantity","inventoryCount"]){
+      const raw=item[key];
+      if(raw!==undefined&&raw!==null&&raw!==""&&Number.isSafeInteger(Number(raw))&&Number(raw)>=0)return Number(raw);
+    }
+    for(const key of ["availabilityText","availability_text","quantityText","quantity_text","stockText","stock_text","availabilityMessage","availability_message","availability"]){
+      const raw=item[key];if(typeof raw!=="string")continue;
+      const text=raw.trim();
+      const more=text.match(/more than\\s+(\\d+)\\s+available/i);
+      if(more)return Number(more[1])+1;
+      const exact=text.match(/(?:^|\\b)(\\d+)\\s+available\\b/i);
+      if(exact)return Number(exact[1]);
+      if(/last one|only one left/i.test(text))return 1;
+      if(/out of stock|sold out/i.test(text))return 0;
+    }
+    const status=String(item.availabilityStatus??item.stockStatus??"").toUpperCase();
     if(["OUT_OF_STOCK","SOLD_OUT","UNAVAILABLE"].includes(status))return 0;
   }
   return null;
@@ -2162,7 +2177,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
           stockUnknown++;
           outcomes.push({listingId:row.id,result:"unverified",quantity:null,reason:"Product-details response did not provide a usable stock quantity"});
           const unknownSpecs=JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false,source_stock_quantity:null});
-          await db.execute(sql`UPDATE listings SET status='paused',quantity=0,specifications=${unknownSpecs},updated_at=NOW() WHERE id=${row.id}`);
+          await db.execute(sql`UPDATE listings SET specifications=${unknownSpecs},quantity=${row.status==='active'?Math.max(1,Number(row.quantity)||1):row.quantity},updated_at=NOW() WHERE id=${row.id}`);
           updated++;continue;
         }
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
