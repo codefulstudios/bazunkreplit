@@ -81,8 +81,8 @@ export function FeaturedListings() {
     const fetchAll = async () => {
       try {
         const [spotlightRes, recentRes] = await Promise.all([
-          fetch("${API_BASE}/api/listings/spotlight"),
-          fetch("${API_BASE}/api/listings?limit=16"),
+          fetch(`${API_BASE}/api/listings/spotlight`),
+          fetch(`${API_BASE}/api/listings?limit=16`),
         ]);
         if (spotlightRes.ok) {
           const data = await spotlightRes.json();
@@ -92,6 +92,8 @@ export function FeaturedListings() {
           const data = await recentRes.json();
           setRecentListings(Array.isArray(data) ? shuffle(data) : []);
         }
+      } catch (error) {
+        console.error("Homepage listings failed to load", error);
       } finally {
         setLoading(false);
       }
