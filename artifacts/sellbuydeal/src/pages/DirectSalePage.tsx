@@ -335,7 +335,7 @@ export function DirectSalePage() {
             {/* Title */}
             <div className="mb-4">
               <label className="text-sm font-medium text-slate-200 mb-1.5 block">
-                {t("title")} <span className="text-red-500">*</span>
+                Title <span className="text-red-500">*</span>
               </label>
               <input
                 required
@@ -394,7 +394,7 @@ export function DirectSalePage() {
                     className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-100 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="select-category"
                   >
-                    <option value="">{t("selectCategory")}</option>
+                    <option value="">Select a category</option>
                     {CATEGORIES.map((cat) => (
                       <option key={cat.slug} value={cat.slug}>{cat.name}</option>
                     ))}
