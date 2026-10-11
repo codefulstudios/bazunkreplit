@@ -2147,9 +2147,9 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const shipping  = parseFloat(String(specs.shipping ?? 0)) || 0;
         const minProfit = parseFloat(String(specs.min_profit ?? 5)) || 5;
         const oldPrice  = parseFloat(String(specs.ebay_price ?? 0));
-        if (!itemId) { errors++; failures.push({listingId:row.id,reason:"Missing eBay item ID"}); return; }
+        if (!itemId) { errors++; failures.push({listingId:row.id,reason:"Missing eBay item ID"}); continue; }
         const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
-        if (!force && specs.stock_quantity_verified===true && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
+        if (!force && specs.stock_quantity_verified===true && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; continue; }
 
 
         // Stock-only reconciliation: use the known item ID directly (one request),
@@ -2163,12 +2163,12 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
           outcomes.push({listingId:row.id,result:"unverified",quantity:null,reason:"Product-details response did not provide a usable stock quantity"});
           const unknownSpecs=JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false,source_stock_quantity:null});
           await db.execute(sql`UPDATE listings SET status='paused',quantity=0,specifications=${unknownSpecs},updated_at=NOW() WHERE id=${row.id}`);
-          updated++;return;
+          updated++;continue;
         }
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
         if(priceUnchanged && sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active") && specs.stock_quantity_verified===true){
           await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);
-          unchanged++;outcomes.push({listingId:row.id,result:"verified",quantity:sourceQty});return;
+          unchanged++;outcomes.push({listingId:row.id,result:"verified",quantity:sourceQty});continue;
         }
 
         const landedCost = newEbayPrice + shipping;
@@ -2176,7 +2176,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const changeRatio = oldPrice > 0 ? newEbayPrice / oldPrice : 1;
         if (changeRatio > 2.5 || changeRatio < 0.4) {
           const pausedSpecs = JSON.stringify({ ...specs, source_price_anomaly: true, source_last_checked: new Date().toISOString(), proposed_source_price: newEbayPrice });
-          await db.execute(sql`UPDATE listings SET status='paused', specifications=${pausedSpecs}, updated_at=NOW() WHERE id=${row.id}`); errors++; return;
+          await db.execute(sql`UPDATE listings SET status='paused', specifications=${pausedSpecs}, updated_at=NOW() WHERE id=${row.id}`); errors++; continue;
         }
         const newSpecs = JSON.stringify({ ...specs, ebay_price: newEbayPrice, source_price_anomaly: false, source_last_checked: new Date().toISOString(), ...(sourceQty===null?{}:{source_stock_quantity:sourceQty,stock_quantity_verified:true}) });
         if(sourceQty!==null && (sourceQty!==Number(row.quantity)||row.status!==(sourceQty===0?"inactive":"active")))stockUpdated++;
