@@ -532,6 +532,55 @@ async function authenticatedEmail(req: any): Promise<string | null> {
   return clerkUser.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
 }
 
+// Seller-owned compliance cases and text evidence; identity is always taken from Clerk.
+router.get("/listings/seller-compliance/me", async(req,res)=>{
+  try {
+    const email=await authenticatedEmail(req);
+    if(!email){res.status(401).json({error:"Sign in required"});return;}
+    const result=await db.execute(sql`SELECT id,status,risk_band,opened_at,updated_at FROM seller_compliance_cases
+      WHERE LOWER(seller_email)=LOWER(${email}) ORDER BY opened_at DESC LIMIT 20`);
+    res.setHeader("Cache-Control","no-store");res.json({cases:result.rows});
+  }catch(err){console.error("Seller compliance cases failed",err);res.status(503).json({error:"Compliance cases unavailable"});}
+});
+
+router.post("/listings/seller-compliance/:id/evidence",async(req,res)=>{
+  try{
+    const email=await authenticatedEmail(req);
+    if(!email){res.status(401).json({error:"Sign in required"});return;}
+    const id=Number(req.params.id),explanation=String(req.body?.explanation||"").trim();
+    if(!Number.isSafeInteger(id)||id<1||explanation.length<20||explanation.length>5000){
+      res.status(400).json({error:"Provide an explanation between 20 and 5000 characters."});return;
+    }
+    const own=await db.execute(sql`SELECT id FROM seller_compliance_cases WHERE id=${id}
+      AND LOWER(seller_email)=LOWER(${email}) AND status<>'resolved'`);
+    if(!own.rows.length){res.status(404).json({error:"Active case not found"});return;}
+    await db.execute(sql`INSERT INTO seller_compliance_events(case_id,actor_type,actor_id,action,details)
+      VALUES(${id},'seller',${email},'evidence_submitted',${JSON.stringify({explanation})}::jsonb)`);
+    await db.execute(sql`UPDATE seller_compliance_cases SET status='under_review',updated_at=NOW() WHERE id=${id}`);
+    res.json({success:true});
+  }catch(err){console.error("Seller compliance evidence failed",err);res.status(503).json({error:"Could not submit evidence"});}
+});
+
+router.post("/listings/seller-compliance/:id/appeal",async(req,res)=>{
+  try{
+    const email=await authenticatedEmail(req);
+    if(!email){res.status(401).json({error:"Sign in required"});return;}
+    const id=Number(req.params.id),explanation=String(req.body?.explanation||"").trim();
+    if(!Number.isSafeInteger(id)||id<1||explanation.length<20||explanation.length>5000){
+      res.status(400).json({error:"Provide an appeal explanation between 20 and 5000 characters."});return;
+    }
+    const own=await db.execute(sql`SELECT id FROM seller_compliance_cases WHERE id=${id}
+      AND LOWER(seller_email)=LOWER(${email})`);
+    if(!own.rows.length){res.status(404).json({error:"Case not found"});return;}
+    const existing=await db.execute(sql`SELECT id FROM seller_compliance_appeals WHERE case_id=${id} AND status='pending' LIMIT 1`);
+    if(existing.rows.length){res.status(409).json({error:"An appeal is already pending"});return;}
+    await db.execute(sql`INSERT INTO seller_compliance_appeals(case_id,seller_email,explanation)
+      VALUES(${id},${email},${explanation})`);
+    await db.execute(sql`UPDATE seller_compliance_cases SET status='appealed',updated_at=NOW() WHERE id=${id}`);
+    res.json({success:true});
+  }catch(err){console.error("Seller compliance appeal failed",err);res.status(503).json({error:"Could not submit appeal"});}
+});
+
 router.get("/listings/profile/me", async (req, res) => {
   try {
     const email = await authenticatedEmail(req);
