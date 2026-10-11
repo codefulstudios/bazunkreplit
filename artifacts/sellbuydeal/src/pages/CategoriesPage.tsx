@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
-import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
 import * as LucideIcons from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
 
@@ -294,7 +294,7 @@ export function CategoriesPage() {
                           <p className="font-black text-sm text-slate-950 dark:text-white truncate">{sub.name}</p>
                           <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
                           {suggestedThirdLevel(selected.slug,sub.slug).length > 0 && <div className="flex flex-wrap gap-1 mt-2" aria-label="Suggested deeper categories">
-                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <span key={name} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</span>)}
+                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} onClick={event => event.stopPropagation()} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</Link>)}
                           </div>}
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
