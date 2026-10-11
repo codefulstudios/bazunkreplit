@@ -2123,8 +2123,14 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   const failures: Array<{listingId:number;reason:string}> = [];
   const BATCH = 1; // sequential budget enforcement, no concurrent overrun
 
-  for (let i = 0; i < rows.length; i += BATCH) {
-    await Promise.all(rows.slice(i, i + BATCH).map(async row => {
+  // Prioritise unverified inventory, and stop when the monthly API budget is exhausted.
+  rows.sort((a,b)=>{
+    const unverified=(row:typeof a)=>{try{return JSON.parse(row.specifications).stock_quantity_verified===true?1:0;}catch{return 0;}};
+    return unverified(a)-unverified(b);
+  });
+  let budgetExhausted=false;
+  for (let i = 0; i < rows.length && !budgetExhausted; i += BATCH) {
+    for (const row of rows.slice(i, i + BATCH)) {
       try {
         const specs     = JSON.parse(row.specifications) as Record<string, unknown>;
         const itemId    = specs.item_id as string;
@@ -2183,8 +2189,8 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
             specifications = ${newSpecs}, quantity = ${sourceQty===null?row.quantity:sourceQty}, status = ${sourceQty===null?row.status:sourceQty===0?"inactive":"active"}, updated_at = NOW() WHERE id = ${row.id}
         `);
         updated++;
-      } catch (err) { errors++; const reason=err instanceof Error?err.message:String(err);failures.push({listingId:row.id,reason});logger.warn({listingId:row.id,reason},"eBay listing sync failed"); }
-    }));
+      } catch (err) { const reason=err instanceof Error?err.message:String(err);if(reason.includes("request budget reached")){budgetExhausted=true;break;} errors++;failures.push({listingId:row.id,reason});logger.warn({listingId:row.id,reason},"eBay listing sync failed"); }
+    }
   }
 
   logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown, failures }, "eBay price and stock sync complete");
