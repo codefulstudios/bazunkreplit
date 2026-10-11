@@ -12,7 +12,7 @@ import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { Badge } from "@/components/ui/badge";
 import { ALL_PRODUCTS } from "@/data/products";
-import { CATEGORIES } from "@/data/categories";
+import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
@@ -25,6 +25,7 @@ interface ApiListing {
   price: string;
   category: string;
   subcategory: string | null;
+  subsubcategory?: string | null;
   condition: string;
   image: string | null;
   seller_email: string;
@@ -42,7 +43,7 @@ interface ApiListing {
   shippingPrice?: string | number | null;
 }
 
-function mapApiListing(l: ApiListing): typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] } {
+function mapApiListing(l: ApiListing): typeof ALL_PRODUCTS[0] & { subcategory?: string; subsubcategory?: string; promotions: string[] } {
   return {
     id: l.id,
     title: l.title,
@@ -50,6 +51,7 @@ function mapApiListing(l: ApiListing): typeof ALL_PRODUCTS[0] & { subcategory?: 
     condition: (l.condition as typeof ALL_PRODUCTS[0]["condition"]) || "good",
     category: l.category,
     subcategory: l.subcategory ?? undefined,
+    subsubcategory: l.subsubcategory ?? undefined,
     promotions: l.promotions ?? [],
     publicId: l.publicId ?? l.public_id ?? null,
     shipOrigin: l.shipOrigin ?? null,
@@ -233,10 +235,12 @@ export function BrowsePage() {
   const urlQuery = params.get("q") ?? "";
   const urlCategory = params.get("category") ?? "";
   const urlSub = params.get("sub") ?? "";
+  const urlSubsub = params.get("subsub") ?? "";
 
   const [query, setQuery] = useState(urlQuery);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(urlCategory ? [urlCategory] : []);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlSub ? [urlSub] : []);
+  const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlSubsub ? [urlSubsub] : []);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -361,6 +365,9 @@ export function BrowsePage() {
     if (selectedSubcategories.length > 0) {
       result = result.filter((p) => (p.subcategory && matchesSubcategory(p.subcategory)) || parseExtras(p).some((e) => matchesSubcategory(e.subcategory)));
     }
+    if (selectedThirdLevels.length > 0) {
+      result = result.filter(p => selectedThirdLevels.includes(p.subsubcategory ?? ""));
+    }
     if (selectedConditions.length > 0) {
       result = result.filter((p) => selectedConditions.includes(p.condition));
     }
@@ -417,7 +424,7 @@ export function BrowsePage() {
     }
 
     return result;
-  }, [allListings, query, selectedCategories, selectedSubcategories, selectedConditions, minPrice, maxPrice, verifiedOnly, shipFrom, shipTo, freeShipping, minRating, listedWithin, sort]);
+  }, [allListings, query, selectedCategories, selectedSubcategories, selectedThirdLevels, selectedConditions, minPrice, maxPrice, verifiedOnly, shipFrom, shipTo, freeShipping, minRating, listedWithin, sort]);
 
   function toggleCategory(slug: string) {
     setSelectedCategories((prev) => {
@@ -427,14 +434,19 @@ export function BrowsePage() {
         const cat = CATEGORIES.find((c) => c.slug === slug);
         const catSubSlugs = cat?.subcategories.map((s) => s.slug) ?? [];
         setSelectedSubcategories((subs) => subs.filter((s) => !catSubSlugs.includes(s)));
+        setSelectedThirdLevels([]);
       }
       return next;
     });
   }
   function toggleSubcategory(slug: string) {
+    setSelectedThirdLevels([]);
     setSelectedSubcategories((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
     );
+  }
+  function toggleThirdLevel(slug: string) {
+    setSelectedThirdLevels(prev => prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev,slug]);
   }
   function toggleCondition(c: string) {
     setSelectedConditions((prev) =>
@@ -445,6 +457,7 @@ export function BrowsePage() {
     setQuery("");
     setSelectedCategories([]);
     setSelectedSubcategories([]);
+    setSelectedThirdLevels([]);
     setSelectedConditions([]);
     setMinPrice("");
     setMaxPrice("");
@@ -466,6 +479,7 @@ export function BrowsePage() {
   const activeFilterCount =
     selectedCategories.length +
     selectedSubcategories.length +
+    selectedThirdLevels.length +
     selectedConditions.length +
     (minPrice ? 1 : 0) +
     (maxPrice ? 1 : 0) +
@@ -533,6 +547,7 @@ export function BrowsePage() {
                     {cat.subcategories.map((sub) => {
                       const subCount = subcategoryCounts[`${cat.slug}:${sub.slug}`] ?? 0;
                       return (
+                        <div key={sub.slug}>
                         <label key={sub.slug} className="flex items-center justify-between gap-2 cursor-pointer group py-0.5">
                           <div className="flex items-center gap-2">
                             <input
@@ -546,6 +561,18 @@ export function BrowsePage() {
                           </div>
                           <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{subCount}</span>
                         </label>
+                        {selectedSubcategories.includes(sub.slug) && suggestedThirdLevel(cat.slug, sub.slug).length > 0 && (
+                          <div className="ml-5 space-y-1 border-l border-orange-200 pl-2">
+                            {suggestedThirdLevel(cat.slug, sub.slug).map(name => {
+                              const slug = thirdLevelSlug(name);
+                              return <label key={slug} className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-200">
+                                <input type="checkbox" checked={selectedThirdLevels.includes(slug)} onChange={() => toggleThirdLevel(slug)} />
+                                {name}
+                              </label>;
+                            })}
+                          </div>
+                        )}
+                      </div>
                       );
                     })}
                   </div>
