@@ -199,7 +199,7 @@ router.get("/admin/products", async (req, res) => {
       SELECT
         id::text AS id, title, description, price::float AS price,
         status, condition, seller_email, seller_name,
-        category AS category_slug, category AS category_name, subcategory,
+        category AS category_slug, category AS category_name, subcategory, subsubcategory,
         image AS images, created_at, updated_at, specifications, currency,
         NULL AS inventory, tags, '[]'::text AS variants, category AS category_id
       FROM listings
@@ -300,7 +300,7 @@ router.get("/admin/products/:id", async (req, res) => {
 router.put("/admin/products/:id", async (req, res) => {
   try {
     const {
-      title, description, price, condition, status, category_id, subcategory,
+      title, description, price, condition, status, category_id, subcategory, subsubcategory,
       seller_email, tags, images, currency, inventory, brand, sku,
       ships_from, ships_from_location, ships_to, shipping_price, free_shipping,
       dispatch_time, delivery_estimate,
@@ -331,6 +331,7 @@ router.put("/admin/products/:id", async (req, res) => {
         title = ${title}, description = ${description ?? ""}, price = ${price ?? 0},
         price_gbp = ${price ?? 0}, currency = ${currency ?? "GBP"},
         category = ${category_id || "other"}, subcategory = ${subcategory || null},
+        subsubcategory = ${subcategory && typeof subsubcategory === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subsubcategory) ? subsubcategory : null},
         condition = ${condition ?? "used"}, status = ${dbStatus},
         seller_email = ${seller_email ?? ""}, tags = ${tags || null}, image = ${image},
         specifications = ${JSON.stringify(specs)}, updated_at = NOW()
