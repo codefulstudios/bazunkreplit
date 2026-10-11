@@ -2111,6 +2111,8 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
 
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
 
+  const requestedId=Number(req.body?.listingId);
+  if(req.body?.listingId!==undefined&&(!Number.isSafeInteger(requestedId)||requestedId<=0)){res.status(400).json({error:"Invalid listing ID"});return;}
   const rows = await db.execute(sql`
     SELECT id, specifications, quantity, status FROM listings
     WHERE (specifications LIKE '%"source":"eBay UK"%' OR specifications LIKE '%"source":"eBay US"%')
@@ -2120,6 +2122,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
 
   if (!rows.length) { res.json({ updated: 0, unchanged: 0, errors: 0, message: "No eBay imports found" }); return; }
 
+  if(req.body?.listingId!==undefined&&!rows.length){res.status(404).json({error:"eBay listing not found"});return;}
   let updated = 0, unchanged = 0, errors = 0, stockUpdated = 0, stockUnknown = 0;
   const failures: Array<{listingId:number;reason:string}> = [];
   const BATCH = 1; // sequential budget enforcement, no concurrent overrun
@@ -2132,6 +2135,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   const batchOffset=Math.max(0,Math.floor(Number(req.body?.offset??0)||0));
   const batchLimit=Math.min(3,Math.max(1,Math.floor(Number(req.body?.limit??rows.length)||rows.length)));
   const selectedRows=req.body?.limit===undefined?rows:rows.slice(batchOffset,batchOffset+batchLimit);
+  const outcomes:Array<{listingId:number;result:string;quantity:number|null;reason?:string}>=[];
   let budgetExhausted=false;
   for (let i = 0; i < selectedRows.length && !budgetExhausted; i += BATCH) {
     for (const row of selectedRows.slice(i, i + BATCH)) {
@@ -2156,6 +2160,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const newEbayPrice=oldPrice;
         if(sourceQty===null){
           stockUnknown++;
+          outcomes.push({listingId:row.id,result:"unverified",quantity:null,reason:"Product-details response did not provide a usable stock quantity"});
           const unknownSpecs=JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false,source_stock_quantity:null});
           await db.execute(sql`UPDATE listings SET status='paused',quantity=0,specifications=${unknownSpecs},updated_at=NOW() WHERE id=${row.id}`);
           updated++;return;
@@ -2163,7 +2168,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const priceUnchanged=Math.abs(newEbayPrice-oldPrice)<0.01;
         if(priceUnchanged && sourceQty===Number(row.quantity) && row.status===(sourceQty===0?"inactive":"active") && specs.stock_quantity_verified===true){
           await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify({...specs,source_last_checked:new Date().toISOString()})} WHERE id=${row.id}`);
-          unchanged++;return;
+          unchanged++;outcomes.push({listingId:row.id,result:"verified",quantity:sourceQty});return;
         }
 
         const landedCost = newEbayPrice + shipping;
@@ -2175,17 +2180,18 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         }
         const newSpecs = JSON.stringify({ ...specs, ebay_price: newEbayPrice, source_price_anomaly: false, source_last_checked: new Date().toISOString(), ...(sourceQty===null?{}:{source_stock_quantity:sourceQty,stock_quantity_verified:true}) });
         if(sourceQty!==null && (sourceQty!==Number(row.quantity)||row.status!==(sourceQty===0?"inactive":"active")))stockUpdated++;
+        outcomes.push({listingId:row.id,result:"verified",quantity:sourceQty});
         await db.execute(sql`
           UPDATE listings SET price = ${newBazunkPrice}, price_gbp = ${newBazunkPrice},
             specifications = ${newSpecs}, quantity = ${sourceQty===null?row.quantity:sourceQty}, status = ${sourceQty===null?row.status:sourceQty===0?"inactive":"active"}, updated_at = NOW() WHERE id = ${row.id}
         `);
         updated++;
-      } catch (err) { const reason=err instanceof Error?err.message:String(err);if(reason.includes("request budget reached")){budgetExhausted=true;break;} errors++;failures.push({listingId:row.id,reason});logger.warn({listingId:row.id,reason},"eBay listing sync failed"); }
+      } catch (err) { const reason=err instanceof Error?err.message:String(err);if(reason.includes("request budget reached")){budgetExhausted=true;break;} errors++;failures.push({listingId:row.id,reason});outcomes.push({listingId:row.id,result:"error",quantity:null,reason});logger.warn({listingId:row.id,reason},"eBay listing sync failed"); }
     }
   }
 
   logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown, failures }, "eBay price and stock sync complete");
-  res.json({ total:rows.length, processed:selectedRows.length, offset:batchOffset, updated, unchanged, errors, stockUpdated, stockUnknown, failures, message: `Synced ${selectedRows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
+  res.json({ total:rows.length, processed:selectedRows.length, offset:batchOffset, updated, unchanged, errors, stockUpdated, stockUnknown, failures, outcomes, message: `Synced ${selectedRows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
 };
 router.post("/admin/sync-ebay-prices", runAdminEbayPriceSync);
 
