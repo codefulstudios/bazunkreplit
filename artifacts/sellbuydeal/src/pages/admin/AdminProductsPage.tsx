@@ -608,12 +608,12 @@ function ProductDrawer({
               <p className="text-xs text-gray-400 italic">No variants — click "Add Variant" for size, colour, etc.</p>
             )}
             {form.variants.length > 0 && (
-              <div className="rounded-xl border border-gray-100 overflow-hidden">
-                <div className="grid grid-cols-[100px_1fr_80px_60px_32px] gap-0 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+              <div className="rounded-xl border border-gray-100 overflow-x-auto">
+                <div className="grid grid-cols-[100px_1fr_80px_60px_32px] gap-0 bg-gray-50 px-3 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wide min-w-[420px]">
                   <span>Type</span><span>Value</span><span>Price +/-</span><span>Stock</span><span />
                 </div>
                 {form.variants.map((v, i) => (
-                  <div key={i} className="grid grid-cols-[100px_1fr_80px_60px_32px] gap-1 px-2 py-2 border-t border-gray-50 items-center">
+                  <div key={i} className="grid grid-cols-[100px_1fr_80px_60px_32px] gap-1 px-2 py-2 border-t border-gray-50 items-center min-w-[420px]">
                     <select value={v.type} onChange={e => setVariant(i, "type", e.target.value)}
                       className="border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]">
                       {VARIANT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
