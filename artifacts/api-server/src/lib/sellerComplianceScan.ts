@@ -1,6 +1,7 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { scoreSellerRisk } from "./sellerComplianceRisk.js";
+import { sendSystemMessage } from "./systemMessages.js";
 
 /** Conservative signals from server-owned listings. Does not infer legal seller status. */
 export async function scanSellerCompliance(): Promise<{scanned:number;opened:number;updated:number}> {
@@ -44,6 +45,7 @@ export async function scanSellerCompliance(): Promise<{scanned:number;opened:num
         VALUES(${email},${risk.score},${risk.band},${reasons}::jsonb,'v1')
         ON CONFLICT DO NOTHING`);
       opened++;
+      void sendSystemMessage(email,{category:"Seller Compliance",subject:"Seller account review",body:"We have opened a review of your seller activity. Your account has not been automatically reclassified. Please visit Dashboard → Seller Compliance to provide context or evidence."});
     }
   }
   return {scanned:rows.rows.length,opened,updated};
