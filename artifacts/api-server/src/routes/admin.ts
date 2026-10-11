@@ -2141,7 +2141,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const oldPrice  = parseFloat(String(specs.ebay_price ?? 0));
         if (!itemId) { errors++; failures.push({listingId:row.id,reason:"Missing eBay item ID"}); return; }
         const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
-        if (!force && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
+        if (!force && specs.stock_quantity_verified===true && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
 
 
         const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
