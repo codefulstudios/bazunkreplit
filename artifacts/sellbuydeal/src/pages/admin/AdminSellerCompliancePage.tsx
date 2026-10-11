@@ -14,6 +14,8 @@ export function AdminSellerCompliancePage() {
   const [error,setError] = useState("");
   const [reason,setReason] = useState<Record<number,string>>({});
   const [target,setTarget] = useState<Record<number,string>>({});
+  const [evidence,setEvidence]=useState<Record<number,{id:number;details:{explanation?:string};created_at:string}[]>>({});
+  const [evidenceBusy,setEvidenceBusy]=useState<number|null>(null);
   const [appeals,setAppeals]=useState<Appeal[]>([]);
   const [scanning,setScanning]=useState(false);
   const [busy,setBusy] = useState<number|null>(null);
@@ -29,6 +31,13 @@ export function AdminSellerCompliancePage() {
     } catch(e:any) {setError(e.message||"Unable to load cases");} finally {setLoading(false);}
   },[authFetch,status]);
   useEffect(()=>{void load();},[load]);
+  async function showEvidence(id:number){
+    setEvidenceBusy(id);setError("");
+    try{const r=await authFetch("/api/admin/seller-compliance/cases/"+id+"/evidence");const d=await r.json();
+      if(!r.ok)throw new Error(d.error||"Unable to load evidence");
+      setEvidence(x=>({...x,[id]:Array.isArray(d.evidence)?d.evidence:[]}));
+    }catch(e:any){setError(e.message||"Unable to load evidence");}finally{setEvidenceBusy(null);}
+  }
   async function scan(){setScanning(true);setError("");try{const r=await authFetch("/api/admin/seller-compliance/scan",{method:"POST"});const d=await r.json();if(!r.ok)throw new Error(d.error||"Scan failed");await load();}catch(e:any){setError(e.message||"Scan failed");}finally{setScanning(false);}}
   async function decide(a:Appeal,decision:"accepted"|"rejected"){
     const rationale=(reason[-a.id]||"").trim();
@@ -64,6 +73,8 @@ export function AdminSellerCompliancePage() {
     </section>
     {loading?<p>Loading compliance cases…</p>:cases.length===0?<p className="rounded-xl border bg-white p-6">No cases in this view. Automatic monitoring may not be enabled yet.</p>:<div className="space-y-4">{cases.map(c=><section key={c.id} className="rounded-xl border bg-white p-5 shadow-sm space-y-3">
       <div className="flex flex-wrap justify-between gap-2"><div><h2 className="font-bold">{c.seller_email}</h2><p className="text-xs text-gray-500">Case #{c.id} · Opened {new Date(c.opened_at).toLocaleDateString()}</p></div><div className="text-sm font-semibold">{c.risk_band||"Unscored"} · {c.risk_score??"—"}/100</div></div>
+      <button type="button" onClick={()=>void showEvidence(c.id)} disabled={evidenceBusy!==null} className="rounded-lg border border-indigo-700 bg-white px-3 py-2 text-sm text-indigo-700 disabled:opacity-50">{evidenceBusy===c.id?"Loading…":"View seller evidence"}</button>
+      {evidence[c.id]&&<div className="rounded-lg bg-gray-50 p-3 text-sm"><h3 className="font-semibold">Submitted evidence</h3>{evidence[c.id].length===0?<p>No evidence submitted yet.</p>:evidence[c.id].map(e=><div key={e.id} className="mt-2 border-t pt-2"><p className="text-xs text-gray-500">{new Date(e.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap">{e.details?.explanation||"No explanation available"}</p></div>)}</div>}
       <p className="text-sm">Current status: <b>{c.status.replaceAll("_"," ")}</b></p>
       <ul className="list-disc pl-5 text-sm text-gray-700">{(Array.isArray(c.risk_reasons)?c.risk_reasons:[]).map((x,i)=><li key={i}>{x.detail} ({x.points>0?"+":""}{x.points})</li>)}</ul>
       <div className="grid gap-3 md:grid-cols-[220px_1fr_auto] items-end"><label className="text-sm font-medium">New status<select value={target[c.id]||c.status} onChange={e=>setTarget(x=>({...x,[c.id]:e.target.value}))} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900">{statuses.filter(x=>x!=="all").map(x=><option key={x} value={x}>{x.replaceAll("_"," ")}</option>)}</select></label><label className="text-sm font-medium">Documented review reason<textarea rows={2} value={reason[c.id]||""} onChange={e=>setReason(x=>({...x,[c.id]:e.target.value}))} className="mt-1 block w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900" placeholder="Evidence considered and rationale (minimum 20 characters)"/></label><button onClick={()=>void save(c)} disabled={busy!==null||(target[c.id]||c.status)===c.status} className="rounded-lg bg-indigo-700 px-4 py-2 text-white disabled:opacity-50">Save review</button></div>
