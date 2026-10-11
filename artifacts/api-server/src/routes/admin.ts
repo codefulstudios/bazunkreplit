@@ -2147,25 +2147,12 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         if (!force && specs.stock_quantity_verified===true && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; return; }
 
 
-        const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
-        const reservation=await reserveEbayApiRequest(site==="uk"?"sync-uk":"sync-us");
-        const resp = await fetch(
-          `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(itemId)}&marketplace_id=${marketplaceId}`,
-          { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
-        );
-        await finishEbayApiRequest(reservation,resp.status);
-        if (!resp.ok) { errors++; return; }
-
-        const data     = await resp.json() as Record<string, unknown>;
-        const results  = (data?.itemSummaries as Record<string, unknown>[]) ?? [];
-        const match    = results.find(p => String(p.legacyItemId) === itemId);
-        if (!match) { errors++; return; }
-
-        const priceObj     = (match.price as Record<string, unknown>) ?? {};
-        const newEbayPrice = parseFloat(String(priceObj.value ?? "").replace(/[^0-9.]/g, ""));
-        if (!newEbayPrice || newEbayPrice <= 0) { errors++; failures.push({listingId:row.id,reason:"Source price missing or invalid"}); return; }
-        let sourceQty=ebayStockFromSummary(match);
-        if(sourceQty===null){try{sourceQty=await ebayDetailStock(itemId,site,apiKey);}catch(err){logger.warn({err,itemId},'eBay sync detail stock check skipped');}}
+        // Stock-only reconciliation: use the known item ID directly (one request),
+        // rather than spending a search request and possibly a second detail request.
+        let sourceQty:number|null=null;
+        try{sourceQty=await ebayDetailStock(itemId,site,apiKey);}
+        catch(err){logger.warn({err,itemId},"eBay product detail stock lookup failed");}
+        const newEbayPrice=oldPrice;
         if(sourceQty===null){
           stockUnknown++;
           const unknownSpecs=JSON.stringify({...specs,source_last_checked:new Date().toISOString(),stock_quantity_verified:false,source_stock_quantity:null});
