@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
-import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import * as LucideIcons from "lucide-react";
 import { useCurrency } from "@/context/CurrencyContext";
 
@@ -80,6 +80,9 @@ function CategoryIcon({ name, className = "w-6 h-6 text-white" }: { name: string
 }
 
 export function CategoriesPage() {
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
   const { formatPrice, currency } = useCurrency();
   const [openSlug, setOpenSlug] = useState<string | null>("electronics");
   const [search, setSearch] = useState("");
