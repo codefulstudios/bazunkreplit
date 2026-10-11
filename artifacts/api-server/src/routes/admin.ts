@@ -2150,11 +2150,8 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   const failures: Array<{listingId:number;reason:string}> = [];
   const BATCH = 1; // sequential budget enforcement, no concurrent overrun
 
-  // Prioritise unverified inventory, and stop when the monthly API budget is exhausted.
-  rows.sort((a,b)=>{
-    const unverified=(row:typeof a)=>{try{return JSON.parse(row.specifications).stock_quantity_verified===true?1:0;}catch{return 0;}};
-    return unverified(a)-unverified(b);
-  });
+  // Stable pagination: a stock result must not reorder subsequent batches.
+  rows.sort((a,b)=>a.id-b.id);
   const batchOffset=Math.max(0,Math.floor(Number(req.body?.offset??0)||0));
   const batchLimit=Math.min(3,Math.max(1,Math.floor(Number(req.body?.limit??rows.length)||rows.length)));
   const selectedRows=req.body?.limit===undefined?rows:rows.slice(batchOffset,batchOffset+batchLimit);
@@ -2172,7 +2169,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
         const oldPrice  = parseFloat(String(specs.ebay_price ?? 0));
         if (!itemId) { errors++; failures.push({listingId:row.id,reason:"Missing eBay item ID"}); continue; }
         const lastChecked = Date.parse(String(specs.source_last_checked ?? ""));
-        if (!force && specs.stock_quantity_verified===true && Number.isFinite(lastChecked) && Date.now()-lastChecked < settings.syncDays*86400000) { unchanged++; continue; }
+        if (!force && Number.isFinite(lastChecked) && Date.now()-lastChecked < Math.max(7,Number(settings.syncDays)||7)*86400000) { unchanged++; continue; }
 
 
         // Stock-only reconciliation: use the known item ID directly (one request),
