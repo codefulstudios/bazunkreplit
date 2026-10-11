@@ -586,6 +586,21 @@ router.patch("/listings/profile/me", async (req, res) => {
         res.status(409).json({ error: "Business-to-private changes require a seller compliance review. Contact Bazunk support." }); return;
       }
     }
+    // Record explicit seller declarations independently of profile preferences.
+    // Fail closed if declaration persistence is unavailable.
+    if (sellerType !== null) {
+      if (b.sellerDeclarationAccepted !== true || b.sellerDeclarationVersion !== "2026-10-11-v1") {
+        res.status(400).json({ error: "Accept the current seller declaration before selecting an account type." }); return;
+      }
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS seller_declarations (
+        id BIGSERIAL PRIMARY KEY, seller_email TEXT NOT NULL,
+        declared_type TEXT NOT NULL CHECK (declared_type IN ('private','sole_trader','business')),
+        declaration_version TEXT NOT NULL, declared_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        source TEXT NOT NULL DEFAULT 'seller_onboarding'
+      )`);
+      await db.execute(sql`INSERT INTO seller_declarations(seller_email,declared_type,declaration_version,source)
+        VALUES(${email},${sellerType},${"2026-10-11-v1"},${"seller_onboarding"})`);
+    }
     const step = Number.isInteger(b.onboardingStep) ? Math.max(1,Math.min(6,b.onboardingStep)) : null;
     const completed = b.onboardingCompleted === true ? true : null;
     const prefs = b.notificationPreferences && typeof b.notificationPreferences === "object" ? b.notificationPreferences : null;
