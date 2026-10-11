@@ -95,6 +95,8 @@ async function runAppMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     )
   `, "listings");
+  await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS subsubcategory TEXT`, "listings.subsubcategory");
+  await run(sql`CREATE INDEX IF NOT EXISTS listings_category_levels_idx ON listings (category, subcategory, subsubcategory)`, "listings_category_levels_idx");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_origin TEXT`, "listings.ship_origin");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_origin_other TEXT`, "listings.ship_origin_other");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_zone TEXT`, "listings.ship_zone");
