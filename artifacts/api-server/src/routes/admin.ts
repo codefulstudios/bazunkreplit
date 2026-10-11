@@ -2128,9 +2128,12 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
     const unverified=(row:typeof a)=>{try{return JSON.parse(row.specifications).stock_quantity_verified===true?1:0;}catch{return 0;}};
     return unverified(a)-unverified(b);
   });
+  const batchOffset=Math.max(0,Math.floor(Number(req.body?.offset??0)||0));
+  const batchLimit=Math.min(3,Math.max(1,Math.floor(Number(req.body?.limit??rows.length)||rows.length)));
+  const selectedRows=req.body?.limit===undefined?rows:rows.slice(batchOffset,batchOffset+batchLimit);
   let budgetExhausted=false;
-  for (let i = 0; i < rows.length && !budgetExhausted; i += BATCH) {
-    for (const row of rows.slice(i, i + BATCH)) {
+  for (let i = 0; i < selectedRows.length && !budgetExhausted; i += BATCH) {
+    for (const row of selectedRows.slice(i, i + BATCH)) {
       try {
         const specs     = JSON.parse(row.specifications) as Record<string, unknown>;
         const itemId    = specs.item_id as string;
@@ -2194,7 +2197,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
   }
 
   logger.info({ updated, unchanged, errors, stockUpdated, stockUnknown, failures }, "eBay price and stock sync complete");
-  res.json({ updated, unchanged, errors, stockUpdated, stockUnknown, failures, message: `Synced ${rows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
+  res.json({ total:rows.length, processed:selectedRows.length, offset:batchOffset, updated, unchanged, errors, stockUpdated, stockUnknown, failures, message: `Synced ${selectedRows.length}: ${updated} updated, ${unchanged} unchanged, ${errors} errors; ${stockUpdated} stock quantities updated, ${stockUnknown} without a reported stock count` });
 };
 router.post("/admin/sync-ebay-prices", runAdminEbayPriceSync);
 
