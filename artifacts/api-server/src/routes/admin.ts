@@ -2106,7 +2106,7 @@ router.get("/admin/ebay-stock-audit",async(_req,res)=>{
 // POST /api/admin/sync-ebay-prices — re-fetch current eBay prices and reprice
 const runAdminEbayPriceSync = async (req: any, res: any) => {
   const apiKey = process.env.RAPIDAPI_KEY;
-  const force = false; // manual and scheduled checks both respect configured sync interval
+  const force = Number(req.body?.listingId)>0; // explicit single-item refresh bypasses interval
   const settings = await ebayApiSettings();
 
   if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
@@ -2115,6 +2115,7 @@ const runAdminEbayPriceSync = async (req: any, res: any) => {
     SELECT id, specifications, quantity, status FROM listings
     WHERE (specifications LIKE '%"source":"eBay UK"%' OR specifications LIKE '%"source":"eBay US"%')
       AND status IN ('active','inactive','paused')
+      AND (${Number(req.body?.listingId)>0?sql`id = ${Number(req.body.listingId)}`:sql`TRUE`})
   `).then(r => r.rows as { id: number; specifications: string; quantity:number; status:string }[]);
 
   if (!rows.length) { res.json({ updated: 0, unchanged: 0, errors: 0, message: "No eBay imports found" }); return; }
