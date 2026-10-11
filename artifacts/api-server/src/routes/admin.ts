@@ -111,6 +111,45 @@ async function readCashback(){const r=await db.execute(sql`SELECT value FROM sit
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
 
+// Seller compliance: restricted to authenticated administrators by router.use above.
+// Returns only review cases, not raw private seller evidence.
+router.get("/admin/seller-compliance/cases", async (req, res) => {
+  try {
+    const status = String(req.query.status ?? "open");
+    if (!["open","awaiting_information","under_review","resolved","appealed","all"].includes(status)) {
+      res.status(400).json({ error: "Invalid case status" }); return;
+    }
+    const rows = await db.execute(sql`SELECT id,seller_email,status,risk_score,risk_band,risk_reasons,rule_version,
+      assigned_admin,opened_at,updated_at,closed_at FROM seller_compliance_cases
+      WHERE (${status} = 'all' OR status = ${status}) ORDER BY updated_at DESC LIMIT 100`);
+    res.setHeader("Cache-Control","no-store");
+    res.json({ cases: rows.rows });
+  } catch (err) {
+    logger.error({err},"Seller compliance cases unavailable");
+    res.status(503).json({error:"Seller compliance database migration is required or unavailable."});
+  }
+});
+
+router.post("/admin/seller-compliance/cases/:id/status", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const status = String(req.body?.status ?? "");
+    const reason = String(req.body?.reason ?? "").trim();
+    if (!Number.isSafeInteger(id) || id < 1 || !["open","awaiting_information","under_review","resolved","appealed"].includes(status) || reason.length < 20) {
+      res.status(400).json({error:"Valid case, status and a review reason of at least 20 characters required."}); return;
+    }
+    const updated = await db.execute(sql`UPDATE seller_compliance_cases SET status=${status},updated_at=NOW(),
+      closed_at=CASE WHEN ${status}='resolved' THEN NOW() ELSE NULL END WHERE id=${id} RETURNING id,seller_email,status`);
+    if (!updated.rows.length) {res.status(404).json({error:"Case not found"});return;}
+    await recordAdminAudit({req,category:"users",action:"seller_compliance.status",targetType:"seller_compliance_case",targetId:String(id),
+      summary:`Compliance case ${id}: ${status}; reason: ${reason}`,after:updated.rows[0]});
+    res.json({case:updated.rows[0]});
+  } catch (err) {
+    logger.error({err},"Seller compliance status update failed");
+    res.status(503).json({error:"Could not update compliance case."});
+  }
+});
+
 router.get("/admin/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.put("/admin/cashback/settings",async(req,res)=>{
 try{
