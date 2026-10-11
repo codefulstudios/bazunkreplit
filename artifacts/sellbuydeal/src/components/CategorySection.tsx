@@ -11,10 +11,10 @@ const categories = [
   {name:"Books",slug:"books",icon:BookOpen,emoji:"📚",gradient:"from-amber-600 to-yellow-500"},
   {name:"Collectibles",slug:"collectibles",icon:Gem,emoji:"🧸",gradient:"from-orange-600 to-rose-500"},
   {name:"Automotive",slug:"automotive",icon:CarFront,emoji:"🚙",gradient:"from-slate-600 to-blue-600"},
-  {name:"Toys & Hobbies",slug:"toys-hobbies",icon:ToyBrick,emoji:"🧩",gradient:"from-orange-500 to-amber-400"},
-  {name:"Health & Beauty",slug:"health-beauty",icon:HeartPulse,emoji:"💄",gradient:"from-pink-600 to-red-400"},
-  {name:"Jewellery & Watches",slug:"jewelry",icon:Watch,emoji:"⌚",gradient:"from-amber-600 to-orange-400"},
-  {name:"Business & Office",slug:"office",icon:BriefcaseBusiness,emoji:"📦",gradient:"from-slate-600 to-cyan-600"},
+  {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,emoji:"🧩",gradient:"from-orange-500 to-amber-400"},
+  {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,emoji:"💄",gradient:"from-pink-600 to-red-400"},
+  {name:"Jewellery & Watches",slug:"jewellery-watches",icon:Watch,emoji:"⌚",gradient:"from-amber-600 to-orange-400"},
+  {name:"Business & Office",slug:"office-products",icon:BriefcaseBusiness,emoji:"📦",gradient:"from-slate-600 to-cyan-600"},
 ];
 const bento = [
   {title:"Time for an upgrade?",subtitle:"Electronics · Gaming · Cameras · Tablets",emoji:"💻",gradient:"from-blue-700 to-indigo-500",href:"/browse?category=electronics"},
