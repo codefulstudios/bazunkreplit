@@ -1419,7 +1419,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           </div>
           <div className="text-right">
             <p className="text-3xl font-black">{Math.round(user.balance * 100).toLocaleString()}</p>
-            <p className="text-blue-200 text-xs mt-0.5">credits · ≈ {formatPrice(user.balance)}</p>
+            <p className="text-white text-xs mt-0.5">credits · ≈ {formatPrice(user.balance)}</p>
             <div className="mt-2 flex items-center gap-2">
               <Link
                 href="/credits"
@@ -1450,7 +1450,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                   <Icon className="w-3.5 h-3.5" /> {stat.label}
                 </div>
                 <p className="text-lg font-black text-white">{stat.value}</p>
-                <p className="text-[10px] text-blue-100 mt-0.5">{stat.sub}</p>
+                <p className="text-xs text-white mt-0.5">{stat.sub}</p>
               </div>
             );
           })}
@@ -1512,24 +1512,24 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           {creditsTab === "rewards" && (
             <div>
               {/* Weekly cap notice */}
-              <div className="flex items-start gap-3 rounded-xl border border-[#28477b] bg-[#18294b] px-4 py-4 mb-4">
+              <div className="flex items-start gap-3 rounded-xl border border-blue-400 bg-gradient-to-r from-[#0759dc] to-[#0747b4] px-4 py-4 mb-4">
                 <Info className="w-4 h-4 text-blue-300 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-black text-white">Weekly earning cap: 150 credits</p>
-                  <p className="text-xs text-sky-100 mt-0.5">You can earn up to 150 credits per week from activity rewards (≈ {formatPrice(1.5)} value). Resets every Monday. Buy more anytime.</p>
+                  <p className="text-xs text-white mt-0.5">You can earn up to 150 credits per week from activity rewards (≈ {formatPrice(1.5)} value). Resets every Monday. Buy more anytime.</p>
                 </div>
               </div>
 
               {/* One-time welcome milestones */}
-              <div className="flex items-start gap-3 rounded-xl border border-[#423051] bg-[#29223d] px-4 py-4 mb-3">
+              <div className="flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#d02a8e] to-[#8429ce] px-4 py-4 mb-3">
                 <Gift className="w-4 h-4 text-pink-300 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-white">One-Time Starter Credits</p>
-                  <p className="text-xs text-slate-200 mt-0.5">Get bonus credits for completing these milestones once — they count toward your weekly cap.</p>
+                  <p className="text-xs text-white mt-0.5">Get bonus credits for completing these milestones once — they count toward your weekly cap.</p>
                 </div>
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-black text-white">👑 One-Time Rewards</h3><span className="rounded-full bg-[#113d64] px-3 py-1 text-xs font-bold text-emerald-300">{oneTimeMilestones.filter(m => m.completed).length}/{oneTimeMilestones.length} completed</span></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
                 {displayMilestones.filter(m => m.oneTime).map((m) => {
                   const RewardIcon = m.rewardIcon;
                   const pct = Math.round((m.progress / m.total) * 100);
@@ -1543,8 +1543,8 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         m.completed && !isClaimed
                           ? "border-amber-400 bg-[#29233c]"
                           : isClaimed
-                          ? "border-emerald-700 bg-[#102e36]"
-                          : "border-[#263550] bg-[#121f38]"
+                          ? "border-emerald-500 bg-gradient-to-br from-[#064e52] to-[#082c45]"
+                          : "border-[#24528c] bg-gradient-to-br from-[#0c2852] to-[#111c3b]"
                       }`}
                     >
                       <div className="flex items-start gap-3 mb-3">
@@ -1553,8 +1553,8 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-gray-900">{m.name}</p>
-                            <span className="text-[9px] font-black bg-pink-100 text-pink-600 px-1.5 py-0.5 rounded-full uppercase">One-time</span>
+                            <p className="text-sm font-bold text-white">{m.name}</p>
+                            <span className="text-[9px] font-black bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded-full uppercase">One-time</span>
                             {(m.completed || isClaimed) && (
                               <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                                 <CheckCircle2 className="w-3 h-3 text-white" />
@@ -1566,7 +1566,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                       </div>
                       <div className="flex items-center gap-1.5 bg-[#e9f4ff] rounded-lg px-3 py-2 border border-[#a7d4ff] mb-3">
                         <RewardIcon className={`w-3.5 h-3.5 ${m.iconColor} flex-shrink-0`} />
-                        <span className="text-xs text-[#153153] flex-1">{m.reward}</span>
+                        <span className="text-xs text-white flex-1">{m.reward}</span>
                         {/^\d[\d,]* credits$/.test(m.reward) && (
                           <span className={`text-xs font-black ${m.iconColor}`}>+{m.reward.split(" ")[0]}</span>
                         )}
@@ -1589,14 +1589,14 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
               </div>
 
               {/* Monthly challenges */}
-              <div className="flex items-start gap-3 rounded-xl border border-[#473447] bg-[#32253a] px-4 py-4 mb-3">
+              <div className="flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#b21b85] to-[#6b25bd] px-4 py-4 mb-3">
                 <Flame className="w-4 h-4 text-[#F26B21] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-bold text-gray-900">Monthly Challenges</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Complete milestones to earn credits, fee waivers, boosts, and discounts!</p>
+                  <p className="text-sm font-bold text-white">Monthly Challenges</p>
+                  <p className="text-xs text-slate-200 mt-0.5">Complete milestones to earn credits, fee waivers, boosts, and discounts!</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 {displayMilestones.filter(m => !m.oneTime).map((m) => {
                   const RewardIcon = m.rewardIcon;
                   const pct = Math.round((m.progress / m.total) * 100);
@@ -1608,10 +1608,10 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                       key={m.id}
                       className={`rounded-xl border-2 p-4 ${
                         m.completed && !isClaimed
-                          ? "border-yellow-300 bg-yellow-50/50"
+                          ? "border-amber-400 bg-[#312746]"
                           : isClaimed
-                          ? "border-emerald-200 bg-emerald-50/40"
-                          : "border-gray-100"
+                          ? "border-emerald-500 bg-gradient-to-br from-[#064e52] to-[#082c45]"
+                          : "border-[#24528c] bg-gradient-to-br from-[#0c2852] to-[#111c3b]"
                       }`}
                     >
                       <div className="flex items-start gap-3 mb-3">
@@ -1620,7 +1620,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-gray-900">{m.name}</p>
+                            <p className="text-sm font-bold text-white">{m.name}</p>
                             {(m.completed || isClaimed) && (
                               <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                                 <CheckCircle2 className="w-3 h-3 text-white" />
@@ -1631,7 +1631,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs text-sky-100 mb-1.5">
+                      <div className="flex items-center justify-between text-xs text-white mb-1.5">
                         <span>Progress</span>
                         <span className="font-bold">{m.progress}/{m.total}</span>
                       </div>
@@ -1644,9 +1644,9 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         />
                       </div>
 
-                      <div className="flex items-center gap-1.5 bg-white rounded-lg px-3 py-2 border border-gray-100 mb-3">
+                      <div className="flex items-center gap-1.5 bg-[#142e53] rounded-lg px-3 py-2 border border-[#28528a] mb-3">
                         <RewardIcon className={`w-3.5 h-3.5 ${m.iconColor} flex-shrink-0`} />
-                        <span className="text-xs text-[#153153] flex-1">{m.reward}</span>
+                        <span className="text-xs text-white flex-1">{m.reward}</span>
                         {/^\d[\d,]* credits$/.test(m.reward) && (
                           <span className={`text-xs font-black ${m.iconColor}`}>
                             +{m.reward.split(" ")[0]}
@@ -1663,7 +1663,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                           {isClaiming ? "Claiming…" : "Claim Reward"}
                         </button>
                       ) : isClaimed ? (
-                        <div className="w-full py-2.5 rounded-xl bg-emerald-100 text-emerald-700 font-bold text-sm text-center">
+                        <div className="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm text-center">
                           ✓ Reward Claimed
                         </div>
                       ) : (
@@ -1686,9 +1686,9 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                   { label: "Milestones Active", value: String(displayMilestones.filter(m => !m.completed && m.progress > 0).length) },
                   { label: "Total Milestones", value: String(MILESTONES.length) },
                 ].map((s) => (
-                  <div key={s.label} className="bg-gray-50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-black text-[#4A5CE8]">{s.value}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{s.label}</p>
+                  <div key={s.label} className="bg-[#142e53] border border-[#28528a] rounded-xl p-4 text-center">
+                    <p className="text-2xl font-black text-blue-300">{s.value}</p>
+                    <p className="text-[10px] text-slate-300 mt-1">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -1696,16 +1696,16 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                 {displayMilestones.map((m) => {
                   const pct = Math.min(100, Math.round((m.progress / m.total) * 100));
                   return (
-                    <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border ${m.completed ? "border-emerald-100 bg-emerald-50/40" : "border-gray-100"}`}>
+                    <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border ${m.completed ? "border-emerald-500 bg-[#06434a]" : "border-[#28528a] bg-[#142e53]"}`}>
                       <div className={`w-8 h-8 rounded-lg ${m.iconBg} flex items-center justify-center flex-shrink-0`}>
                         <m.rewardIcon className={`w-4 h-4 ${m.iconColor}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs font-bold text-gray-800">{m.name}</p>
-                          <span className={`text-xs font-bold ${m.completed ? "text-emerald-600" : "text-gray-500"}`}>{m.progress}/{m.total}</span>
+                          <p className="text-xs font-bold text-white">{m.name}</p>
+                          <span className={`text-xs font-bold ${m.completed ? "text-emerald-300" : "text-slate-200"}`}>{m.progress}/{m.total}</span>
                         </div>
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-[#27466f] rounded-full overflow-hidden">
                           <div className={`h-full rounded-full transition-all duration-500 ${m.completed ? "bg-emerald-500" : m.color}`} style={{ width: `${pct}%` }} />
                         </div>
                       </div>
@@ -1720,10 +1720,10 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           {creditsTab === "history" && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-bold text-gray-700">Recent Transactions</p>
+                <p className="text-sm font-bold text-white">Recent Transactions</p>
                 <span className="text-xs text-[#4A5CE8] font-semibold">All time</span>
               </div>
-              <div className="py-10 text-center text-gray-400">
+              <div className="py-10 text-center text-slate-300">
                 <Coins className="w-8 h-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm font-medium">No transactions yet</p>
                 <p className="text-xs mt-1">Credit purchases and rewards will appear here</p>
