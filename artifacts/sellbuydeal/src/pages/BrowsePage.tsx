@@ -340,7 +340,7 @@ export function BrowsePage() {
     }
   }, [urlCategory]);
 
-  const allListings = useMemo(() => [...apiListings, ...(ALL_PRODUCTS as unknown as (typeof ALL_PRODUCTS[0] & { subcategory?: string })[])], [apiListings]);
+  const allListings = useMemo(() => [...apiListings, ...(ALL_PRODUCTS as unknown as (typeof ALL_PRODUCTS[0] & { subcategory?: string; subsubcategory?: string })[])], [apiListings]);
 
   const filtered = useMemo(() => {
     let result = [...allListings];
