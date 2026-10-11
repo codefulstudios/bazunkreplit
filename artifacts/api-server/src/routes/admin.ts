@@ -2063,6 +2063,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     const source      = site === "uk" ? "eBay UK" : "eBay US";
     const specs       = JSON.stringify({
       source, item_id: p.item_id, ebay_url: p.ebay_url,
+      ships_from: p.item_location ?? "", source_condition: p.condition ?? "", source_shipping_label: p.shipping_label ?? "",
       ebay_price: p.price, ebay_currency: currency, ebay_site: site,
       shipping: shippingAmt, markup_pct: markupPct, min_profit: minProfit, official_store: true,
       official_store_name: "Bazunk Official Store", source_last_checked: new Date().toISOString(),
@@ -2086,8 +2087,11 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     const description = descParts.join("\n");
     const image       = p.image ?? null;
     const condition   = p.condition ?? "used";
-    const condNorm  = ["new", "used", "refurbished", "for-parts"].includes(condition.toLowerCase())
-      ? condition.toLowerCase() : "used";
+    const normalizedCondition=condition.trim().toLowerCase();
+    const condNorm = /^(new|brand new|new with tags|new without tags|new other)/.test(normalizedCondition) ? "new"
+      : /open.box|open box/.test(normalizedCondition) ? "open-box"
+      : /refurbished|renewed/.test(normalizedCondition) ? "refurbished"
+      : /for parts|not working|parts only/.test(normalizedCondition) ? "for-parts" : "used";
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
@@ -2095,7 +2099,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
       VALUES (
         ${publicId}, ${p.title}, ${bazunkPrice}, ${bazunkPrice}, ${currency},
         ${category}, ${subcategory}, ${description}, ${condNorm},
-        ${image}, ${sellerEmail}, ${SELLER_NAME}, ${specs}, ${p.available_quantity==null?'paused':p.available_quantity===0?'inactive':'active'}, ${p.available_quantity==null?0:Math.max(0,Math.floor(p.available_quantity))}, NOW(), NOW()
+        ${image}, ${sellerEmail}, ${SELLER_NAME}, ${specs}, ${p.available_quantity===0?'inactive':'active'}, ${p.available_quantity==null?1:Math.max(0,Math.floor(p.available_quantity))}, NOW(), NOW()
       )
     `);
     await db.execute(sql`UPDATE listings SET seller_username = 'Bazunk Official Store' WHERE public_id = ${publicId}`);
