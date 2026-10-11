@@ -2002,7 +2002,10 @@ router.get("/admin/search-ebay", async (req, res) => {
           original_price:  origPrice ? String(origPrice) : null,
           discount_pct:    discountPct,
           buying_options:  buyingOptions,
-          item_location:   country ? `${country}${location.postalCode ? ` (${String(location.postalCode).replace(/\*+$/, "***")})` : ""}` : null,
+          item_location: [location.city,location.stateOrProvince,location.country].filter(Boolean).map(String).join(", ") || country || null,
+          ship_to_country: to,
+          shipping_options: shippingOpts.map(o=>({type:o.shippingCostType??null,cost:(o.shippingCost as Record<string,unknown>|undefined)?.value??null})),
+          availability_status: String(((p.estimatedAvailabilities as Record<string,unknown>[]|undefined)?.[0]?.estimatedAvailabilityStatus)??""),
         };
       })
       .filter(p => p.price > 0 && (condition === "all" || (condition === "new" ? /^new\b/i.test(p.condition) : condition === "used" ? /used|pre-owned/i.test(p.condition) : condition === "refurbished" ? /refurbished/i.test(p.condition) : condition === "open-box" ? /open.box/i.test(p.condition) : condition === "parts" ? /parts|not working/i.test(p.condition) : false)));
@@ -2025,7 +2028,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     seller_username?: string; seller_feedback?: string; available_quantity?: number|null;
     categories?: string[]; shipping_label?: string | null; shipping_type?: string;
     original_price?: string | null; discount_pct?: string | null;
-    buying_options?: string[]; item_location?: string | null;
+    buying_options?: string[]; item_location?: string | null; ship_to_country?:string; shipping_options?:Array<{type:unknown;cost:unknown}>;availability_status?:string;
   }
 
   const products: SelectedEbay[] = req.body.products ?? [];
@@ -2064,6 +2067,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     const specs       = JSON.stringify({
       source, item_id: p.item_id, ebay_url: p.ebay_url,
       ships_from: p.item_location ?? "", source_condition: p.condition ?? "", source_shipping_label: p.shipping_label ?? "",
+      source_shipping_options:p.shipping_options??[], source_delivery_country:p.ship_to_country??null, source_availability_status:p.availability_status??null,
       ebay_price: p.price, ebay_currency: currency, ebay_site: site,
       shipping: shippingAmt, markup_pct: markupPct, min_profit: minProfit, official_store: true,
       official_store_name: "Bazunk Official Store", source_last_checked: new Date().toISOString(),
