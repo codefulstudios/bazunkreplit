@@ -2070,6 +2070,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
       source, item_id: p.item_id, ebay_url: p.ebay_url,
       ships_from: p.item_location ?? "", source_condition: p.condition ?? "", source_shipping_label: p.shipping_label ?? "",
       source_shipping_options:p.shipping_options??[], source_delivery_country:p.ship_to_country??null, source_shipping_estimate_country:p.shipping_estimate_country??null, source_ship_to_locations:p.ship_to_locations??null, source_availability_status:p.availability_status??null,
+      ships_to: p.ship_to_country??"", shipping_destinations: p.ship_to_country?[{country:p.ship_to_country,source:"ebay_search_estimate",shipping_cost:p.shipping_options?.[0]?.cost??null}]:[], shipping_destination_requests_enabled:true,
       ebay_price: p.price, ebay_currency: currency, ebay_site: site,
       shipping: shippingAmt, markup_pct: markupPct, min_profit: minProfit, official_store: true,
       official_store_name: "Bazunk Official Store", source_last_checked: new Date().toISOString(),
