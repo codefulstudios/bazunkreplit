@@ -400,3 +400,211 @@ export const ACTIVE_CATEGORIES = CATEGORIES.filter(c => !["digital-products", "e
     ["electronics:gaming-consoles", "cell-phones:earphones", "clothing-shoes-jewelry:jewelry", "tools-home-improvement:safety-tools"].includes(`${c.slug}:${s.slug}`)
   )),
 }));
+
+/** Suggested third-level taxonomy. Suggestions are editorial only until listing and search APIs support a third slug. */
+export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; suggestions: string[]}> = {
+  "appliances": {
+    "subcategory": "refrigerators",
+    "suggestions": [
+      "French-door fridges",
+      "Chest freezers",
+      "Mini fridges"
+    ]
+  },
+  "arts-crafts-sewing": {
+    "subcategory": "painting",
+    "suggestions": [
+      "Acrylic paints",
+      "Watercolour sets",
+      "Drawing pencils"
+    ]
+  },
+  "automotive": {
+    "subcategory": "car-parts",
+    "suggestions": [
+      "Brake parts",
+      "Filters",
+      "Engine components"
+    ]
+  },
+  "baby-products": {
+    "subcategory": "baby-clothing",
+    "suggestions": [
+      "Bodysuits",
+      "Sleepwear",
+      "Outfits"
+    ]
+  },
+  "beauty-personal-care": {
+    "subcategory": "skincare",
+    "suggestions": [
+      "Cleansers",
+      "Moisturisers",
+      "Sunscreen"
+    ]
+  },
+  "books": {
+    "subcategory": "fiction",
+    "suggestions": [
+      "Mystery & Thriller",
+      "Romance",
+      "Science Fiction"
+    ]
+  },
+  "cds-vinyl": {
+    "subcategory": "vinyl",
+    "suggestions": [
+      "LP Albums",
+      "7-inch Singles",
+      "Picture Discs"
+    ]
+  },
+  "cell-phones": {
+    "subcategory": "smartphones",
+    "suggestions": [
+      "Android Phones",
+      "iPhones",
+      "Refurbished Phones"
+    ]
+  },
+  "clothing-shoes-jewelry": {
+    "subcategory": "mens-clothing",
+    "suggestions": [
+      "Shirts",
+      "Jackets & Coats",
+      "Jeans"
+    ]
+  },
+  "electronics": {
+    "subcategory": "computers",
+    "suggestions": [
+      "Gaming Laptops",
+      "Desktop PCs",
+      "Monitors"
+    ]
+  },
+  "health-household": {
+    "subcategory": "first-aid",
+    "suggestions": [
+      "Bandages",
+      "First Aid Kits",
+      "Dressings"
+    ]
+  },
+  "home-kitchen": {
+    "subcategory": "furniture",
+    "suggestions": [
+      "Sofas",
+      "Tables",
+      "Storage Units"
+    ]
+  },
+  "industrial-scientific": {
+    "subcategory": "safety",
+    "suggestions": [
+      "Protective Eyewear",
+      "Safety Gloves",
+      "Hi-vis Clothing"
+    ]
+  },
+  "movies-tv": {
+    "subcategory": "dvd",
+    "suggestions": [
+      "Films",
+      "TV Box Sets",
+      "Special Editions"
+    ]
+  },
+  "musical-instruments": {
+    "subcategory": "guitars",
+    "suggestions": [
+      "Electric Guitars",
+      "Acoustic Guitars",
+      "Bass Guitars"
+    ]
+  },
+  "office-products": {
+    "subcategory": "office-supplies",
+    "suggestions": [
+      "Pens",
+      "Paper",
+      "Organisers"
+    ]
+  },
+  "patio-lawn-garden": {
+    "subcategory": "garden-tools",
+    "suggestions": [
+      "Lawnmowers",
+      "Hedge Trimmers",
+      "Hand Tools"
+    ]
+  },
+  "pet-supplies": {
+    "subcategory": "dog-supplies",
+    "suggestions": [
+      "Dog Food",
+      "Leads & Collars",
+      "Dog Beds"
+    ]
+  },
+  "sports-outdoors": {
+    "subcategory": "fitness",
+    "suggestions": [
+      "Weights",
+      "Exercise Bikes",
+      "Yoga Equipment"
+    ]
+  },
+  "tools-home-improvement": {
+    "subcategory": "power-tools",
+    "suggestions": [
+      "Drills",
+      "Saws",
+      "Sanders"
+    ]
+  },
+  "toys-games": {
+    "subcategory": "action-figures",
+    "suggestions": [
+      "Collectible Figures",
+      "Playsets",
+      "Accessories"
+    ]
+  },
+  "video-games": {
+    "subcategory": "consoles",
+    "suggestions": [
+      "PlayStation Consoles",
+      "Xbox Consoles",
+      "Nintendo Consoles"
+    ]
+  },
+  "digital": {
+    "subcategory": "software-apps",
+    "suggestions": [
+      "Desktop Software",
+      "Mobile Apps",
+      "Plugins"
+    ]
+  },
+  "jewellery-watches": {
+    "subcategory": "watches",
+    "suggestions": [
+      "Smart Watches",
+      "Analogue Watches",
+      "Watch Straps"
+    ]
+  },
+  "adult": {
+    "subcategory": "adult-clothing",
+    "suggestions": [
+      "Lingerie",
+      "Costumes",
+      "Accessories"
+    ]
+  }
+};
+export function suggestedThirdLevel(categorySlug: string, subcategorySlug: string): string[] {
+  const entry = THIRD_LEVEL_SUGGESTIONS[categorySlug];
+  return entry?.subcategory === subcategorySlug ? entry.suggestions : [];
+}
