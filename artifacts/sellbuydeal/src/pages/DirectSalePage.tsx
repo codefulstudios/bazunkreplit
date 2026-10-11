@@ -289,7 +289,7 @@ export function DirectSalePage() {
 
       <div className="container mx-auto px-4 py-7 max-w-7xl">
         <style>{`
-          .direct-sale-form > section h2, .direct-sale-form > aside h2 { color: #fff; }
+          .direct-sale-form > section h2, .direct-sale-form > aside h2 { color: #fff; }\n          .direct-sale-form > aside > section p, .direct-sale-form > aside > section li { color: #f0f5ff !important; opacity: 1 !important; }\n          .direct-sale-form > aside > section svg { color: #e2d5ff; opacity: 1; }\n          .direct-sale-form > aside > section a { color: #fff; }
           .direct-sale-form > section label { color: #e8f2ff; font-weight: 650; }
           .direct-sale-form > section p, .direct-sale-form > section small { color: #c8dbf3; }
           .direct-sale-form > section input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
@@ -324,7 +324,7 @@ export function DirectSalePage() {
                 <div className="p-4"><p className="font-bold text-base break-words">{title.trim()||"Your listing title will appear here"}</p><p className="font-black text-xl mt-2">{currency.split(" ")[0]}{Number(price||0).toFixed(2)}</p><div className="flex flex-wrap gap-2 mt-3 text-xs text-slate-600"><span className="bg-slate-100 rounded-lg px-2 py-1">{CONDITIONS.find(c=>c.id===condition)?.label||"Condition not set"}</span><span className="bg-slate-100 rounded-lg px-2 py-1">{category||"Category not set"}</span><span className="bg-slate-100 rounded-lg px-2 py-1">{shipOrigin||"Location not set"}</span></div></div>
               </div>
             </section>
-            <section className="rounded-2xl border border-purple-400/30 bg-gradient-to-br from-[#221747] to-[#321b68] p-5 text-white"><h2 className="font-black text-lg flex items-center gap-2"><Video className="w-5 h-5 text-purple-200"/> Boost Your Listing</h2><p className="text-sm text-purple-100 mt-2">Add a product video to help buyers see your item in action. Optional — you can add it below.</p><a href="#product-video" className="inline-flex mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-bold text-white hover:bg-purple-400">Go to video options ↓</a></section>
+            <section className="rounded-2xl border border-purple-400/60 bg-gradient-to-br from-[#35205d] to-[#44227d] p-5 text-white shadow-lg"><h2 className="font-black text-lg flex items-center gap-2"><Video className="w-5 h-5 text-purple-200"/> Boost Your Listing</h2><p className="text-sm font-medium leading-relaxed text-white mt-2">Add a product video to help buyers see your item in action. Optional — you can add it below.</p><a href="#product-video" className="inline-flex mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-bold text-white hover:bg-purple-400">Go to video options ↓</a></section>
             <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-100"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
           </aside>
 
