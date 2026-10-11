@@ -296,10 +296,10 @@ export function BundlePage() {
               </h3>
 
               {selected.length === 0 ? (
-                <div className="py-8 text-center text-slate-200">
-                  <Layers className="w-10 h-10 mx-auto mb-2 text-gray-200" />
-                  <p className="text-sm font-medium">Select items from the left to build your bundle</p>
-                  <p className="text-xs mt-1">Min. 2 items for a discount</p>
+                <div className="rounded-2xl border border-cyan-400/40 bg-gradient-to-br from-[#1255a4] via-[#183b91] to-[#7024b4] px-4 py-8 text-center text-white shadow-inner">
+                  <Layers className="mx-auto mb-3 h-12 w-12 text-yellow-300" />
+                  <p className="text-base font-black text-white">🎁 Pick your favourites! Select items to build your bundle</p>
+                  <p className="mt-2 text-sm font-bold text-cyan-100">✨ Choose 2 or more items to unlock savings</p>
                 </div>
               ) : (
                 <>
@@ -358,7 +358,7 @@ export function BundlePage() {
                   bundleAdded
                     ? "bg-emerald-500 text-white"
                     : selected.length < 2
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    ? "bg-[#315487] text-white/90 border border-[#5485c2] cursor-not-allowed"
                     : "bg-gradient-to-r from-[#04db91] to-[#00b9ee] text-[#062b3c] hover:brightness-110 shadow-lg"
                 }`}
               >
