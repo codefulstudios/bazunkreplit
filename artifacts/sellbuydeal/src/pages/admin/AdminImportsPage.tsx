@@ -138,6 +138,7 @@ export function AdminImportsPage() {
   const [ebaySearchErr, setEbaySearchErr]   = useState<string | null>(null);
   const [ebayHasSearched, setEbayHasSearched] = useState(false);
   const [ebaySelected, setEbaySelected]     = useState<Set<string>>(new Set());
+  const [ebaySelectionCache,setEbaySelectionCache] = useState<Record<string,EbaySearchResult>>({});
   const [ebayMarkup, setEbayMarkup]         = useState("35");
   const [ebayShipping, setEbayShipping]     = useState("3.99");
   const [ebayCat, setEbayCat]               = useState("");
@@ -433,15 +434,18 @@ export function AdminImportsPage() {
   useEffect(() => { if (ebayHasSearched) void handleEbaySearch(); }, [ebayPage]);
 
   function toggleEbaySelect(id: string) {
-    setEbaySelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    const product=ebayResults.find(p=>p.item_id===id);
+    setEbaySelected(prev=>{const next=new Set(prev);if(next.has(id)){next.delete(id);setEbaySelectionCache(cache=>{const copy={...cache};delete copy[id];return copy;});}else{next.add(id);if(product)setEbaySelectionCache(cache=>({...cache,[id]:product}));}return next;});
   }
   function toggleAllEbay() {
-    setEbaySelected(ebaySelected.size === ebayResults.length ? new Set() : new Set(ebayResults.map(p => p.item_id)));
+    const allSelected=ebayResults.every(p=>ebaySelected.has(p.item_id));
+    setEbaySelected(prev=>{const next=new Set(prev);for(const p of ebayResults){if(allSelected)next.delete(p.item_id);else next.add(p.item_id);}return next;});
+    setEbaySelectionCache(prev=>{const next={...prev};for(const p of ebayResults){if(allSelected)delete next[p.item_id];else next[p.item_id]=p;}return next;});
   }
 
   // ── eBay import ───────────────────────────────────────────────
   async function handleEbayImport() {
-    const products = ebayResults.filter(p => ebaySelected.has(p.item_id));
+    const products = Object.values(ebaySelectionCache).filter(p=>ebaySelected.has(p.item_id));
     if (!products.length) return;
     if (!ebayCat) { setEbayImportMsg({ ok: false, text: "Choose a category before importing." }); return; }
     setEbayImporting(true);
@@ -462,6 +466,7 @@ export function AdminImportsPage() {
       if (r.ok) {
         setEbayImportMsg({ ok: true, text: d.message ?? `Imported ${d.imported} products` });
         setEbaySelected(new Set());
+        setEbaySelectionCache({});
         loadEbayListings();
       } else {
         setEbayImportMsg({ ok: false, text: d.error ?? "Import failed" });
