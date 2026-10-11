@@ -41,9 +41,10 @@ export async function scanSellerCompliance(): Promise<{scanned:number;opened:num
         risk_reasons=${reasons}::jsonb,updated_at=NOW() WHERE id=${Number((existing.rows[0] as any).id)}`);
       updated++;
     }else{
-      await db.execute(sql`INSERT INTO seller_compliance_cases(seller_email,risk_score,risk_band,risk_reasons,rule_version)
+      const created=await db.execute(sql`INSERT INTO seller_compliance_cases(seller_email,risk_score,risk_band,risk_reasons,rule_version)
         VALUES(${email},${risk.score},${risk.band},${reasons}::jsonb,'v1')
-        ON CONFLICT DO NOTHING`);
+        ON CONFLICT DO NOTHING RETURNING id`);
+      if (!created.rows.length) continue;
       opened++;
       void sendSystemMessage(email,{category:"Seller Compliance",subject:"Seller account review",body:"We have opened a review of your seller activity. Your account has not been automatically reclassified. Please visit Dashboard → Seller Compliance to provide context or evidence."});
     }
