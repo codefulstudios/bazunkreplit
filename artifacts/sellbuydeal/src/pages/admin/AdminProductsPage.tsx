@@ -651,12 +651,57 @@ function ProductDrawer({
 
 // ── Categories Tab ────────────────────────────────────────────────────────────
 
-function CategoriesTab(_props: { authFetch: (url: string, opts?: RequestInit) => Promise<Response>; categories: Category[]; onRefresh: () => void }) {
+function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestInit) => Promise<Response>; categories: Category[]; onRefresh: () => void }) {
+  type Entry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [category, setCategory] = useState(SITE_CATEGORIES[0]?.slug ?? "");
+  const [subcategory, setSubcategory] = useState("");
+  const [name, setName] = useState("");
+  useEffect(() => {
+    authFetch("/api/admin/taxonomy/third-level").then(async response => {
+      if (!response.ok) throw Error("Taxonomy could not be loaded");
+      const data = await response.json();
+      setEntries(data.categories ?? []);
+    }).catch(error => setMessage(String(error))).finally(() => setLoading(false));
+  }, [authFetch]);
+  const options = SITE_CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
+  function add() {
+    const clean = name.trim(), slug = thirdLevelSlug(clean);
+    if (!clean || !slug || !subcategory) { setMessage("Choose a subcategory and enter a name."); return; }
+    if (entries.some(e => e.category === category && e.subcategory === subcategory && e.slug === slug)) { setMessage("That third-level category already exists."); return; }
+    setEntries(prev => [...prev, { category, subcategory, name: clean, slug, visible: true, sort_order: prev.filter(e => e.category === category && e.subcategory === subcategory).length }]);
+    setName(""); setMessage("Unsaved changes — click Save taxonomy.");
+  }
+  async function save() {
+    setSaving(true); setMessage("");
+    try {
+      const response = await authFetch("/api/admin/taxonomy/third-level", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categories: entries }) });
+      if (!response.ok) throw Error((await response.json()).error ?? "Save failed");
+      setMessage("Taxonomy saved.");
+    } catch (error) { setMessage(String(error)); } finally { setSaving(false); }
+  }
   return <div className="space-y-4">
-    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm text-blue-800">These are the shared marketplace categories used by browsing and product editing. Digital and Digital Products are combined. Category names and subcategories come from the site's shared category list.</div>
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"><table className="w-full text-sm"><thead className="bg-gray-50"><tr>{["Category", "Slug", "Subcategories"].map(label => <th key={label} className="text-left px-4 py-3">{label}</th>)}</tr></thead><tbody>
-      {SITE_CATEGORIES.map(c => <tr key={c.slug} className="border-t border-gray-100"><td className="px-4 py-3 font-semibold">{c.name}</td><td className="px-4 py-3 font-mono text-xs">{c.slug}</td><td className="px-4 py-3 text-gray-500">{c.subcategories.map(sub => sub.name).join(" · ")}</td></tr>)}
-    </tbody></table></div>
+    <p className="text-sm text-gray-600">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
+    <div className="flex flex-wrap gap-2">
+      <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{SITE_CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
+      <select value={subcategory} onChange={e => setSubcategory(e.target.value)} className="border rounded-lg p-2 bg-white text-gray-900"><option value="">Choose subcategory</option>{options.map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}</select>
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="New third-level category" className="border rounded-lg p-2 text-gray-900" />
+      <button onClick={add} className="bg-indigo-600 text-white px-4 rounded-lg">Add</button>
+      <button onClick={save} disabled={saving || loading} className="bg-emerald-700 text-white px-4 rounded-lg disabled:opacity-50">{saving ? "Saving…" : "Save taxonomy"}</button>
+    </div>
+    {message && <p role="status" className="text-sm text-gray-700">{message}</p>}
+    {loading ? <p>Loading taxonomy…</p> : <div className="space-y-2">
+      {entries.filter(e => e.category === category && (!subcategory || e.subcategory === subcategory)).sort((a,b) => a.sort_order-b.sort_order).map(e => <div key={e.category+":"+e.subcategory+":"+e.slug} className="flex flex-wrap gap-3 items-center border rounded-lg p-3 bg-white">
+        <span className="text-xs text-gray-500">{e.subcategory}</span>
+        <input aria-label="Category name" value={e.name} onChange={event => setEntries(prev => prev.map(x => x === e ? {...x,name:event.target.value} : x))} className="border rounded p-2 flex-1 min-w-32 text-gray-900" />
+        <span className="text-xs text-gray-500">{e.slug}</span>
+        <label className="text-sm"><input type="checkbox" checked={e.visible} onChange={event => setEntries(prev => prev.map(x => x === e ? {...x,visible:event.target.checked} : x))} /> Visible</label>
+        <input type="number" aria-label="Sort order" value={e.sort_order} onChange={event => setEntries(prev => prev.map(x => x === e ? {...x,sort_order:Number(event.target.value)} : x))} className="w-16 border rounded p-2 text-gray-900" />
+      </div>)}
+    </div>}
   </div>;
 }
 
