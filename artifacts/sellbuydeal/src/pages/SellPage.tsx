@@ -114,7 +114,7 @@ function buildFeeRows(mktRatePct: number) {
       label: "Listing fee",
       value: "Free",
       sub: "Always — no upfront cost",
-      color: "text-emerald-600",
+      color: "text-emerald-300",
       bg: "bg-emerald-50",
       icon: Tag,
       iconColor: "text-emerald-500",
@@ -144,22 +144,25 @@ function buildFeeRows(mktRatePct: number) {
       color: "text-emerald-700",
       bg: "bg-emerald-50",
       icon: Banknote,
-      iconColor: "text-emerald-600",
+      iconColor: "text-emerald-300",
     },
   ];
 }
 
 function FeeCalculator() {
-  const { formatPrice, currency } = useCurrency();
+  const { currency } = useCurrency();
+  const formatPrice = (amount: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: currency.code }).format(amount);
   const rawSettings = useRawSettings();
   const businessRate = useMktRate(rawSettings);
   const businessRatePct = businessRate * 100;
   const buyerPct = (parseFloat(rawSettings["buyer_protection_rate"] ?? rawSettings["buyer_protection_percent"] ?? "5") || 5) / 100;
-  const buyerFixedGBP = parseFloat(rawSettings["buyer_protection_fixed_gbp"] ?? rawSettings["buyer_protection_fixed"] ?? "0.70") || 0.70;
+  const defaultFixed: Record<string, number> = { GBP: 0.70, USD: 0.89, EUR: 1.00, AUD: 1.00, CAD: 1.00, NZD: 1.00, CHF: 1.00 };
+  const fixedSetting = rawSettings[`buyer_protection_fixed_${currency.code.toLowerCase()}`] ?? (currency.code === "GBP" ? rawSettings["buyer_protection_fixed"] : undefined);
+  const buyerFixed = fixedSetting !== undefined && Number.isFinite(Number(fixedSetting)) ? Math.max(0, Number(fixedSetting)) : defaultFixed[currency.code] ?? 1;
   const [amount, setAmount] = useState("50");
   const [sellerType, setSellerType] = useState<"private"|"business">("private");
   const val = Math.max(0, parseFloat(amount) || 0);
-  const buyerProtection = sellerType === "private" ? val * buyerPct + (val > 0 ? buyerFixedGBP : 0) : 0;
+  const buyerProtection = sellerType === "private" ? val * buyerPct + (val > 0 ? buyerFixed : 0) : 0;
   const buyerPays = val + buyerProtection;
   const sellerFee = sellerType === "business" ? val * businessRate : 0;
   const sellerReceives = Math.max(0, val - sellerFee);
@@ -167,11 +170,11 @@ function FeeCalculator() {
   return (
     <div className="bg-[#081c3c] text-white rounded-xl border border-blue-400/25 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-[#4A5CE8]/10 flex items-center justify-center"><Calculator className="w-4 h-4 text-[#4A5CE8]" /></div>
-        <div><p className="font-bold text-white text-sm">Buyer & Seller Fee Calculator</p><p className="text-xs text-blue-200">See what the buyer pays and seller receives</p></div>
+        <div className="w-9 h-9 rounded-xl bg-blue-500/30 flex items-center justify-center"><Calculator className="w-4 h-4 text-[#4A5CE8]" /></div>
+        <div><p className="font-bold text-white text-sm">Buyer & Seller Fee Calculator</p><p className="text-xs text-white/85">See what the buyer pays and seller receives</p></div>
       </div>
       <div className="grid grid-cols-2 gap-2 mb-4 rounded-xl bg-[#0c2852] p-1">
-        <button type="button" onClick={()=>setSellerType("private")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="private"?"bg-white text-[#4A5CE8] shadow-sm":"text-blue-100"}`}>Private seller</button>
+        <button type="button" onClick={()=>setSellerType("private")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="private"?"bg-[#ff9b28] text-[#06142e] shadow-sm":"text-white hover:bg-blue-700"}`}>Private seller</button>
         <button type="button" onClick={()=>setSellerType("business")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="business"?"bg-white text-[#4A5CE8] shadow-sm":"text-blue-100"}`}>Business seller</button>
       </div>
       <label className="block text-xs font-bold text-blue-100 mb-1.5">Item sale price</label>
@@ -179,16 +182,16 @@ function FeeCalculator() {
       {val>0 ? <div className="space-y-2.5">
         <div className="flex justify-between text-sm"><span className="text-blue-100">Item price</span><b>{formatPrice(val)}</b></div>
         {sellerType==="private" ? <>
-          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection ({(buyerPct*100).toFixed(1).replace(".0","")}% + {formatPrice(buyerFixedGBP)})</span><b className="text-[#4A5CE8]">+{formatPrice(buyerProtection)}</b></div>
-          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black text-white">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-blue-100">Private seller fee</span><b className="text-emerald-600">{formatPrice(0)} (0%)</b></div>
-          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
+          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection ({(buyerPct*100).toFixed(1).replace(".0","")}% + {formatPrice(buyerFixed)})</span><b className="text-cyan-300">+{formatPrice(buyerProtection)}</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black text-white">Buyer pays</span><span className="font-black text-cyan-300 text-base">{formatPrice(buyerPays)}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-blue-100">Private seller fee</span><b className="text-emerald-300">{formatPrice(0)} (0%)</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Seller receives</span><span className="font-black text-emerald-300 text-base">{formatPrice(sellerReceives)}</span></div>
           <p className="text-xs text-blue-200">Buyer Protection is paid by the buyer. The private seller keeps 100% of the item price. Delivery is excluded from this example.</p>
         </> : <>
-          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection</span><b className="text-emerald-600">Included · {formatPrice(0)} extra</b></div>
-          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
+          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection</span><b className="text-emerald-300">Included · {formatPrice(0)} extra</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Buyer pays</span><span className="font-black text-cyan-300 text-base">{formatPrice(buyerPays)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-blue-100">Business selling fee ({businessRatePct.toFixed(1).replace(".0","")}%)</span><b className="text-[#F26B21]">−{formatPrice(sellerFee)}</b></div>
-          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Business seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Business seller receives</span><span className="font-black text-emerald-300 text-base">{formatPrice(sellerReceives)}</span></div>
           <p className="text-xs text-blue-200">Protection and support are included in the business selling fee, so the buyer pays no additional Buyer Protection charge. Category rates may differ. Delivery is excluded.</p>
         </>}
       </div> : <div className="text-center py-4 text-sm text-blue-200">Enter an item price to calculate the transaction</div>}
@@ -218,7 +221,7 @@ export function SellPage() {
           <div className="absolute bottom-0 left-1/3 h-40 w-64 rounded-full bg-cyan-400/30 blur-3xl" />
           <div className="relative mx-auto max-w-7xl px-5 py-9 md:py-14 grid gap-5 md:grid-cols-[1fr_1fr] items-center">
             <div>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.02] drop-shadow-lg">Start Selling<br/><span className="text-yellow-300">Today!</span></h1>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.02] drop-shadow-lg">Start Selling<br/><span className="text-[#ff9b28] drop-shadow-[0_2px_12px_rgba(255,130,0,0.45)]">Today!</span></h1>
               <p className="mt-4 max-w-lg text-lg md:text-xl font-semibold text-white">Turn your items into cash. It's free, simple and takes just minutes!</p>
               <div className="mt-6 flex flex-wrap gap-3 text-xs md:text-sm font-bold">
                 {["✓ No seller fees for private sellers","✓ Reach buyers worldwide","✓ Safe & secure marketplace"].map(t=><span key={t} className="rounded-full bg-[#001b64]/55 border border-white/20 px-3 py-2 text-white">{t}</span>)}
