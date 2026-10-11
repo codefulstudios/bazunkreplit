@@ -270,6 +270,17 @@ export function BrowsePage() {
 
 
   const LISTING_BATCH = 24;
+  // Query the database for the selected category rather than filtering only the
+  // first 24 listings from the entire marketplace.
+  const browseCategory = selectedCategories.length === 1 ? selectedCategories[0] : "";
+  const browseSub = browseCategory && selectedSubcategories.length === 1 ? selectedSubcategories[0] : "";
+  const browseSubsub = browseSub && selectedThirdLevels.length === 1 ? selectedThirdLevels[0] : "";
+  const browseScope = new URLSearchParams();
+  if (browseCategory) browseScope.set("category", browseCategory);
+  if (browseSub) browseScope.set("sub", browseSub);
+  if (browseSubsub) browseScope.set("subsub", browseSubsub);
+  const browseScopeQuery = browseScope.toString();
+
 
   useEffect(() => {
     fetch(`${API_BASE}/api/listings/category-counts`)
@@ -296,9 +307,11 @@ export function BrowsePage() {
   useEffect(() => {
     const controller = new AbortController();
     setLoadingListings(true);
+    setApiListings([]);
+    setHasMoreListings(true);
     setListingError(null);
     setMoreError(null);
-    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0`, { signal: controller.signal })
+    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error("Could not load listings");
         const data: ApiListing[] = await r.json();
@@ -314,14 +327,14 @@ export function BrowsePage() {
         if (!controller.signal.aborted) setLoadingListings(false);
       });
     return () => controller.abort();
-  }, [loadAttempt]);
+  }, [loadAttempt, browseScopeQuery]);
 
   async function loadMoreListings() {
     if (loadingMore || loadingListings || !hasMoreListings) return;
     setLoadingMore(true);
     setMoreError(null);
     try {
-      const r = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${apiListings.length}`);
+      const r = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${apiListings.length}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`);
       if (!r.ok) throw new Error("Could not load more listings");
       const data: ApiListing[] = await r.json();
       if (!Array.isArray(data)) throw new Error("Invalid listings response");
