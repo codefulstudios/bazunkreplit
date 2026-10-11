@@ -24,12 +24,19 @@ import verificationRouter from "./verification.js";
 import userImporterRouter from "./userImporter.js";
 import userRapidApiRouter from "./userRapidApi.js";
 import referralsRouter from "./referrals.js";
+import { featureEnabled } from "../lib/featureFlags.js";
 import { featureGate } from "../middlewares/featureGate.js";
 
 const router: IRouter = Router();
 
 // Runtime feature gates: disabled modules stay in code/database but public APIs stop immediately.
 router.use(featureGate);
+
+// Public read-only setting for the homepage intro; no admin credentials exposed.
+router.get("/public/homepage-intro", async (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ enabled: await featureEnabled("homepage_intro") });
+});
 
 router.use(healthRouter);
 router.use(stripeRouter);
