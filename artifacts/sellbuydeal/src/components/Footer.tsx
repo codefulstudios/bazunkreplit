@@ -10,9 +10,9 @@ export function Footer() {
   const s = useSiteSettings();
 
   return (
-    <footer className="bg-[#151a2b] text-white/80 border-t border-white/10">
+    <footer className="bg-[#07172c] text-white/80 border-t border-sky-400/20">
       <div className="container mx-auto px-4 py-9 md:py-10">
-        <div className="grid grid-cols-2 md:grid-cols-[1.35fr_1fr_1fr_1.15fr] gap-x-8 gap-y-8">
+        <div className="grid grid-cols-2 md:grid-cols-[1.35fr_1fr_1fr_1.15fr_1fr] gap-x-8 gap-y-8">
           <div className="col-span-2 md:col-span-1 md:pr-5">
             <Link href="/" className="inline-block mb-3">
               <img
@@ -77,6 +77,19 @@ export function Footer() {
               <li><Link href="/dashboard" className={linkClass}>Returns & Refunds</Link></li>
               <li><Link href="/support" className={linkClass}>Contact Us</Link></li>
             </ul>
+          </div>
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="text-white font-black mb-3 text-sm uppercase tracking-wide">Follow Us</h4>
+            <div className="flex flex-wrap gap-2">
+              {[
+                {url:s.footer_facebook, Icon:Facebook, label:"Facebook"},
+                {url:s.footer_instagram, Icon:Instagram, label:"Instagram"},
+                {url:s.footer_youtube, Icon:Youtube, label:"YouTube"},
+                {url:s.footer_twitter, Icon:Twitter, label:"Twitter"}
+              ].filter(item => item.url && item.url !== "#").map(({url,Icon,label}) => (
+                <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-9 h-9 flex items-center justify-center rounded-full bg-[#203b63] text-white hover:bg-blue-600 transition-colors"><Icon className="w-4 h-4" /></a>
+              ))}
+            </div>
           </div>
         </div>
 
