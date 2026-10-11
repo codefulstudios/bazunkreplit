@@ -10,6 +10,43 @@ const router = Router();
 router.use("/admin/products", requireAdmin);
 router.use("/admin/categories", requireAdmin);
 
+// Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
+router.get("/taxonomy/third-level", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
+    res.json({ categories: rows.rows });
+  } catch (err) {
+    logger.error({ err }, "Third-level taxonomy unavailable");
+    res.status(503).json({ error: "Taxonomy unavailable" });
+  }
+});
+router.get("/admin/taxonomy/third-level", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
+    res.json({ categories: rows.rows });
+  } catch (err) { res.status(500).json({ error: "Could not load taxonomy" }); }
+});
+router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
+  try {
+    const items = req.body?.categories;
+    if (!Array.isArray(items) || items.length > 500) { res.status(400).json({ error: "Invalid taxonomy" }); return; }
+    const cleaned = [];
+    for (const item of items) {
+      const category = String(item.category ?? ""), subcategory = String(item.subcategory ?? "");
+      const name = String(item.name ?? "").trim().slice(0, 100);
+      const slug = String(item.slug ?? "").trim();
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subcategory) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !name) { res.status(400).json({ error: "Invalid category, subcategory or slug" }); return; }
+      cleaned.push({ category, subcategory, name, slug, visible: item.visible !== false, sortOrder: Math.max(0, Math.min(9999, Number(item.sort_order) || 0)) });
+    }
+    await db.transaction(async tx => {
+      for (const item of cleaned) {
+        await tx.execute(sql`INSERT INTO third_level_categories (category,subcategory,slug,name,visible,sort_order) VALUES (${item.category},${item.subcategory},${item.slug},${item.name},${item.visible},${item.sortOrder}) ON CONFLICT (category,subcategory,slug) DO UPDATE SET name=EXCLUDED.name,visible=EXCLUDED.visible,sort_order=EXCLUDED.sort_order`);
+      }
+    });
+    res.json({ saved: cleaned.length });
+  } catch (err) { logger.error({ err }, "Taxonomy save failed"); res.status(500).json({ error: "Taxonomy save failed" }); }
+});
+
 // ── Categories ────────────────────────────────────────────────────────────────
 
 router.get("/admin/categories", async (_req, res) => {
