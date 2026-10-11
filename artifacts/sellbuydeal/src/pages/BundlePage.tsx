@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, Layers, Plus, Check, Trash2, ShoppingCart,
-  Tag, Sparkles, ChevronRight, Info, Users, MapPin, Lock, Package,
+  Tag, Sparkles, ChevronRight, Info, Users, MapPin, Lock, Package, Gift, Crown, Star, Percent, Search,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -22,8 +22,8 @@ const CONDITION_COLORS: Record<string, string> = {
 const TIERS = [
   { min: 2, discount: 5,  label: "5% off",  color: "text-blue-600 bg-blue-50 border-blue-200" },
   { min: 3, discount: 10, label: "10% off", color: "text-violet-600 bg-violet-50 border-violet-200" },
-  { min: 4, discount: 15, label: "15% off", color: "text-[#F26B21] bg-orange-50 border-orange-200" },
-  { min: 5, discount: 20, label: "20% off", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  { min: 5, discount: 15, label: "15% off", color: "text-[#F26B21] bg-orange-50 border-orange-200" },
+  { min: 10, discount: 20, label: "20% off", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
 ];
 
 function getTier(count: number) {
@@ -54,6 +54,8 @@ export function BundlePage() {
   const [bundleAdded, setBundleAdded] = useState(false);
   const [filterCategory, setFilterCategory] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("default");
 
   useEffect(() => {
     if (!user?.email) { setLoading(false); return; }
@@ -82,9 +84,7 @@ export function BundlePage() {
     ];
   }, [listings]);
 
-  const visible = filterCategory === "all"
-    ? listings
-    : listings.filter((p) => p.category === filterCategory);
+  const visible = listings.filter((p) => (filterCategory === "all" || p.category === filterCategory) && `${p.title} ${p.category}`.toLowerCase().includes(search.toLowerCase())).sort((a,b) => sort === "price-low" ? a.price-b.price : sort === "price-high" ? b.price-a.price : 0);
 
   const selected = listings.filter((p) => selectedIds.has(p.id));
   const subtotal = selected.reduce((s, p) => s + p.price, 0);
@@ -110,7 +110,7 @@ export function BundlePage() {
   /* ── Auth gate ── */
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-[#06162d] flex flex-col">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
           <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center mb-5">
@@ -182,46 +182,32 @@ export function BundlePage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 max-w-5xl flex-1">
-        <button onClick={() => setLocation("/dashboard")}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-6">
-          <ChevronLeft className="w-4 h-4" /> Back to Dashboard
-        </button>
-
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center">
-              <Layers className="w-5 h-5 text-white" />
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-4 pb-10 sm:px-6">
+        <div className="relative -mx-4 mb-5 overflow-hidden bg-gradient-to-r from-[#0347df] via-[#5832f5] to-[#ed11b9] px-6 py-9 text-white sm:-mx-6 sm:px-12">
+          <div className="pointer-events-none absolute -right-8 -top-10 text-[150px] opacity-20">🎁</div>
+          <div className="relative z-10 max-w-3xl">
+            <span className="mb-3 inline-flex items-center gap-2 rounded-xl bg-[#ff2793] px-4 py-2 text-sm font-black uppercase tracking-wide shadow-lg"><Gift className="h-4 w-4"/> Bundle Builder</span>
+            <h1 className="text-4xl font-black leading-tight drop-shadow-lg sm:text-6xl">Create Your <span className="text-[#ffe84c]">Perfect Bundle</span></h1>
+            <p className="mt-3 text-lg font-semibold text-white">Pick your listings, offer bigger savings and make an irresistible deal!</p>
+            <div className="mt-5 flex flex-wrap gap-2 text-xs font-extrabold">
+              {["⭐ Bigger savings","🧩 Mix your items","📦 Build your own deal","🎁 Great for gifts"].map(t=><span key={t} className="rounded-xl bg-[#062eab]/70 px-3 py-2 text-white shadow">{t}</span>)}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Bundle Builder</h1>
-              <p className="text-sm text-gray-400">Select your listings to create a bundled deal with tiered discounts</p>
-            </div>
+            <button onClick={() => setLocation("/dashboard")} className="mt-5 rounded-lg border border-white/40 bg-[#092864]/70 px-4 py-2 text-sm font-bold text-white hover:bg-[#092864]">← Back to Dashboard</button>
           </div>
+          <div aria-hidden="true" className="pointer-events-none absolute bottom-0 right-[5%] hidden text-[130px] drop-shadow-2xl lg:block">🧑🏻‍🚀📦🎮</div>
         </div>
-
-        {/* Discount tier display */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {TIERS.map((t) => {
-            const active = tier?.min === t.min;
-            const achieved = selected.length >= t.min;
-            return (
-              <div key={t.min} className={`rounded-2xl border-2 p-3 text-center transition-all ${achieved ? t.color : "bg-white border-gray-100 text-gray-400"} ${active ? "shadow-md scale-105" : ""}`}>
-                <p className="text-lg font-black">{t.label}</p>
-                <p className="text-xs font-medium mt-0.5">{t.min}+ items</p>
-                {active && <span className="mt-1.5 inline-flex items-center gap-0.5 text-[10px] font-bold"><Sparkles className="w-3 h-3" /> Active!</span>}
-              </div>
-            );
-          })}
+        <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {TIERS.map((t,i) => <div key={t.min} className={`flex items-center gap-3 rounded-2xl border p-4 shadow-lg ${selected.length>=t.min ? "border-yellow-300 bg-gradient-to-r from-[#7420d8] to-[#ed178f]" : "border-[#2676ff] bg-gradient-to-r from-[#0356dc] to-[#101c82]"}`}>
+            <span className="text-4xl">{["⭐","🎁","💥","👑"][i]}</span><div><p className="text-sm font-bold text-white">{t.min}+ items</p><p className="text-2xl font-black text-white">{t.label}</p></div>
+          </div>)}
         </div>
-
         {nextTier && selected.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-3 mb-5 flex items-center gap-3">
+          <div className="bg-[#123a7b] rounded-2xl border border-blue-400 shadow-sm px-5 py-3 mb-5 flex items-center gap-3">
             <Info className="w-4 h-4 text-[#4A5CE8] flex-shrink-0" />
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-white">
               Add <strong>{nextTier.min - selected.length} more item{nextTier.min - selected.length > 1 ? "s" : ""}</strong> to unlock <strong className="text-[#4A5CE8]">{nextTier.label} off</strong>
             </p>
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-blue-950 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] rounded-full transition-all"
                 style={{ width: `${Math.min((selected.length / nextTier.min) * 100, 100)}%` }}
@@ -230,16 +216,20 @@ export function BundlePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-[#2865bd] bg-[#071d3e] p-3">
+          <div className="flex min-w-[230px] flex-1 items-center gap-2 rounded-xl border border-[#3768a9] bg-[#0c2b56] px-3"><Search className="h-4 w-4 text-cyan-300"/><input aria-label="Search your listings" placeholder="Search items for your bundle..." value={search} onChange={e=>setSearch(e.target.value)} className="w-full bg-transparent py-3 text-sm font-semibold text-white outline-none placeholder:text-slate-300"/></div>
+          <select aria-label="Sort listings" value={sort} onChange={e=>setSort(e.target.value)} className="rounded-xl border border-[#3768a9] bg-[#0c2b56] px-4 py-3 text-sm font-bold text-white"><option value="default">Sort: Default</option><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option></select>
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
           {/* Listings picker */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0">
             {categories.length > 1 && (
-              <div className="flex gap-2 flex-wrap mb-4">
+              <div className="mb-4 flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <button
                     key={cat.slug}
                     onClick={() => setFilterCategory(cat.slug)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${filterCategory === cat.slug ? "bg-[#4A5CE8] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#4A5CE8] hover:text-[#4A5CE8]"}`}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${filterCategory === cat.slug ? "bg-[#1769ff] text-white" : "bg-[#10274f] border border-[#315a9b] text-white hover:border-[#36bbff] hover:text-cyan-200"}`}
                   >
                     {cat.label}
                   </button>
@@ -247,7 +237,7 @@ export function BundlePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               <AnimatePresence>
                 {visible.map((product) => {
                   const sel = selectedIds.has(product.id);
@@ -259,13 +249,13 @@ export function BundlePage() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       onClick={() => toggle(product.id)}
-                      className={`relative bg-white rounded-2xl border-2 cursor-pointer transition-all group overflow-hidden ${sel ? "border-[#4A5CE8] shadow-lg shadow-[#4A5CE8]/10" : "border-gray-100 hover:border-gray-200 shadow-sm"}`}
+                      className={`relative bg-[#0c2447] rounded-2xl border-2 cursor-pointer transition-all group overflow-hidden ${sel ? "border-[#4A5CE8] shadow-lg shadow-[#4A5CE8]/10" : "border-[#244b83] hover:border-cyan-400 shadow-sm"}`}
                     >
                       <div className={`absolute top-2 right-2 z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${sel ? "bg-[#4A5CE8] border-[#4A5CE8]" : "bg-white border-gray-300 group-hover:border-[#4A5CE8]"}`}>
                         {sel && <Check className="w-3.5 h-3.5 text-white" />}
                       </div>
 
-                      <div className="aspect-square bg-gray-50 p-3 flex items-center justify-center">
+                      <div className="aspect-square bg-white p-2 flex items-center justify-center">
                         {product.image ? (
                           <img src={product.image} alt={product.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -279,9 +269,9 @@ export function BundlePage() {
                       </div>
 
                       <div className="p-3">
-                        <p className="text-xs font-semibold text-gray-800 line-clamp-2 mb-2 min-h-[2rem]">{product.title}</p>
+                        <p className="text-sm font-bold text-white line-clamp-2 mb-2 min-h-[2rem]">{product.title}</p>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-gray-900">{formatPrice(product.price)}</span>
+                          <span className="text-lg font-black text-cyan-300">{formatPrice(product.price)}</span>
                         </div>
                         {product.location && (
                           <div className="flex items-center gap-0.5 mt-1 text-[10px] text-gray-400">
@@ -300,13 +290,13 @@ export function BundlePage() {
 
           {/* Bundle summary */}
           <div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="sticky top-24 rounded-2xl border border-[#2184ff] bg-gradient-to-b from-[#07346d] to-[#081a3c] p-5 shadow-xl">
+              <h3 className="mb-4 flex items-center gap-2 text-xl font-black text-white">
                 <Layers className="w-4 h-4 text-[#4A5CE8]" /> Your Bundle
               </h3>
 
               {selected.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
+                <div className="py-8 text-center text-slate-200">
                   <Layers className="w-10 h-10 mx-auto mb-2 text-gray-200" />
                   <p className="text-sm font-medium">Select items from the left to build your bundle</p>
                   <p className="text-xs mt-1">Min. 2 items for a discount</p>
@@ -321,8 +311,8 @@ export function BundlePage() {
                             ? <img src={p.image} alt={p.title} className="w-full h-full object-contain p-1" />
                             : <Package className="w-4 h-4 text-gray-300" />}
                         </div>
-                        <p className="flex-1 text-xs font-medium text-gray-700 line-clamp-1">{p.title}</p>
-                        <span className="text-xs font-bold text-gray-900 flex-shrink-0">{formatPrice(p.price)}</span>
+                        <p className="flex-1 text-xs font-semibold text-white line-clamp-1">{p.title}</p>
+                        <span className="flex-shrink-0 text-xs font-bold text-yellow-300">{formatPrice(p.price)}</span>
                         <button onClick={(e) => { e.stopPropagation(); toggle(p.id); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -331,9 +321,9 @@ export function BundlePage() {
                   </div>
 
                   <div className="border-t border-gray-100 pt-3 space-y-1.5 text-sm">
-                    <div className="flex justify-between text-gray-600">
+                    <div className="flex justify-between text-slate-200">
                       <span>Subtotal ({selected.length} items)</span>
-                      <span className="font-semibold text-gray-900">{formatPrice(subtotal)}</span>
+                      <span className="font-semibold text-white">{formatPrice(subtotal)}</span>
                     </div>
                     {tier && (
                       <div className="flex justify-between text-emerald-600 font-semibold">
@@ -341,7 +331,7 @@ export function BundlePage() {
                         <span>−{formatPrice(discount)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
+                    <div className="flex justify-between border-t border-blue-400/40 pt-2 text-lg font-black text-white">
                       <span>Bundle Total</span>
                       <span className={tier ? "text-emerald-600" : ""}>{formatPrice(total)}</span>
                     </div>
@@ -369,7 +359,7 @@ export function BundlePage() {
                     ? "bg-emerald-500 text-white"
                     : selected.length < 2
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] text-white hover:opacity-90 shadow-sm"
+                    : "bg-gradient-to-r from-[#04db91] to-[#00b9ee] text-[#062b3c] hover:brightness-110 shadow-lg"
                 }`}
               >
                 {bundleAdded ? (
@@ -389,6 +379,9 @@ export function BundlePage() {
         </div>
       </div>
 
+      <div className="mx-auto mb-6 grid w-full max-w-[1500px] gap-3 px-4 sm:grid-cols-3 sm:px-6">
+        {[["🎁","Perfect for Gifts","Create an exciting offer for any occasion.","from-[#af20e9] to-[#e81caf]"],["📦","Mix Your Listings","Combine different items from your store.","from-[#0359ed] to-[#00a8ec]"],["💰","Bigger Savings","The more listings you add, the better the discount.","from-[#fa2689] to-[#ff9c28]"]].map(([icon,title,body,gradient])=><div key={title} className={`rounded-2xl bg-gradient-to-r ${gradient} p-5 text-white shadow-lg`}><span className="text-4xl">{icon}</span><h3 className="mt-2 text-xl font-black">{title}</h3><p className="mt-1 text-sm font-semibold">{body}</p></div>)}
+      </div>
       <Footer />
     </div>
   );
