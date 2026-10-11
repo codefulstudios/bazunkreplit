@@ -696,3 +696,28 @@ select optgroup {
     transition: background-color .25s ease, border-color .25s ease, color .25s ease !important;
   }
 }
+
+/* Mobile viewport safety shared by all marketplace pages.
+   Preserve intentionally horizontally scrollable carousels and tables. */
+html, body, #root {
+  max-width: 100%;
+  min-width: 0;
+}
+html { overflow-x: clip; }
+body { overflow-x: clip; }
+img, video, canvas, svg { max-width: 100%; }
+@media (max-width: 767px) {
+  main, section, article, aside, form { min-width: 0; }
+  main :where(input, textarea, select) { max-width: 100%; }
+  main :where(h1, h2, h3, p) { overflow-wrap: break-word; }
+  /* Native tables keep their column structure while remaining swipeable. */
+  main :where(.overflow-x-auto, [data-horizontal-scroll]) {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Dialogs stay within the usable screen on small devices. */
+  [role="dialog"], dialog {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+}
