@@ -9,6 +9,7 @@ const routes = [
   ['Offers', '/my-offers'], ['Admin', '/admin'],
 ];
 const authenticated = process.env.MOBILE_AUTH_STORAGE_STATE;
+const skipProtectedWithoutSession = true;
 const authRoutes = [
   ['Seller dashboard', '/dashboard'],
   ['Seller listing', '/sell/direct'],
@@ -26,6 +27,10 @@ try {
   for(const size of sizes) {
     const context=await browser.newContext({viewport:{width:size.width,height:size.height},deviceScaleFactor:1,isMobile:size.width<768,hasTouch:true});
     for(const [label,path] of routes) {
+      if (skipProtectedWithoutSession && !authenticated && ['Checkout','Importers','Offers','Admin','Sell'].includes(label)) {
+        results.push({size:size.name,label,path,skipped:'Requires an authenticated test session'});
+        continue;
+      }
       const page=await context.newPage();
       const errors=[];
       page.on('pageerror',e=>errors.push(e.message));
@@ -45,7 +50,8 @@ try {
         const overflow=Math.max(data.documentWidth,data.bodyWidth)-size.width;
         const status=response?.status()??0;
         const blocked=/sign.in|log.in|unauthori[sz]ed/i.test(page.url());
-        const outcome={size:size.name,label,path,status,overflow,errors,blocked, ...data};
+        const pageNotFound=/page not found|404 not found/i.test((await page.locator('body').innerText().catch(()=>'' )).slice(0,3000));
+        const outcome={size:size.name,label,path,status,overflow,errors,blocked,pageNotFound, ...data};
         results.push(outcome);
         if(overflow>3||errors.length||status>=400) {
           await page.screenshot({path:`mobile-results/${size.name}-${label.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.png`,fullPage:true}).catch(()=>{});
@@ -78,7 +84,7 @@ try {
   }
 } finally {await browser.close();}
 await writeFile('mobile-results/report.json',JSON.stringify(results,null,2));
-const failures=results.filter(r=>r.error||r.status>=400||r.overflow>3||r.errors?.length||(r.authenticated&&r.redirectedToLogin));
-console.log(JSON.stringify({tested:results.length,failures:failures.length,details:failures},null,2));
+const failures=results.filter(r=>r.error||r.status>=400||r.overflow>3||r.errors?.length||r.pageNotFound||(r.authenticated&&r.redirectedToLogin));
+console.log(JSON.stringify({checked:results.filter(r=>!r.skipped).length,skipped:results.filter(r=>r.skipped).length,failures:failures.length,details:failures},null,2));
 console.log(authenticated?'Authenticated read-only route checks enabled; no purchases or mutations performed.':'Authenticated checks skipped: set MOBILE_AUTH_STORAGE_STATE secret to enable.');
 if(failures.length)process.exitCode=1;
