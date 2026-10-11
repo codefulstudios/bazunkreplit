@@ -67,6 +67,52 @@ const CATEGORY_ART: Record<string, string> = {
   "movies-tv": "/category-art/electronics.webp",
 };
 
+// Distinct, lightweight subcategory illustrations. Each card uses its own
+// subject and colour palette rather than repeating the parent category photo.
+const SUBCATEGORY_SUBJECTS: Array<[RegExp, string]> = [
+  [/cookware|bakeware|pots|pans/i,"🍳"],[/bedding|pillows|linen|mattress/i,"🛏️"],
+  [/furniture|sofa|seating/i,"🛋️"],[/decor|decoration|ornament/i,"🏺"],
+  [/storage|organization|organis/i,"🗃️"],[/lighting|lamps/i,"💡"],
+  [/kitchen appliances|microwaves|ovens/i,"🍞"],[/dining|tableware|dinnerware/i,"🍽️"],
+  [/cleaning|laundry|detergent/i,"🧽"],[/bathroom|bath/i,"🛁"],
+  [/garden|outdoor|plants/i,"🪴"],[/smart home/i,"🏠"],
+  [/heating|cooling|air condition|fans/i,"🌡️"],[/curtains|blinds|rugs/i,"🪟"],
+  [/tools|improvement|hardware/i,"🛠️"],[/computers|laptops|desktop/i,"💻"],
+  [/television|tvs|home theater/i,"📺"],[/audio|headphones|speakers/i,"🎧"],
+  [/cameras|photography/i,"📷"],[/phones|mobile/i,"📱"],
+  [/gaming|video games|consoles/i,"🎮"],[/wearables|watches/i,"⌚"],
+  [/shoes|footwear|sneakers/i,"👟"],[/clothing|apparel|fashion/i,"👗"],
+  [/jewelry|jewellery/i,"💎"],[/bags|handbags|luggage/i,"👜"],
+  [/makeup|cosmetics|beauty/i,"💄"],[/skincare|skin care/i,"🧴"],
+  [/haircare|hair care/i,"💇"],[/fragrance|perfume/i,"🌸"],
+  [/books|fiction|reading/i,"📚"],[/music|vinyl|records/i,"🎵"],
+  [/painting|drawing|art supplies/i,"🎨"],[/knitting|crochet|sewing/i,"🧶"],
+  [/craft|scrapbook/i,"✂️"],[/cars|automotive|vehicle/i,"🚗"],
+  [/tires|wheels/i,"🛞"],[/motorcycle|scooter/i,"🏍️"],
+  [/baby|nursery|toddler/i,"🧸"],[/stroller/i,"🍼"],
+  [/sports|fitness|exercise|gym/i,"🏋️"],[/camping|hiking/i,"⛺"],
+  [/football|soccer/i,"⚽"],[/cycling|bicycle|bike/i,"🚲"],
+  [/toys|dolls|figures/i,"🧸"],[/puzzles|board games/i,"🧩"],
+  [/pets|dogs|cats/i,"🐾"],[/office|stationery/i,"🗂️"],
+  [/appliances|refrigerator|freezer/i,"🧊"],[/dishwasher/i,"🍽️"],
+  [/collectibles|antiques/i,"🏆"],[/electronics|gadgets/i,"🔌"],
+];
+const SUBCATEGORY_COLOURS: Array<[string,string]> = [
+  ["#ff8617","#fa356b"],["#fa36b3","#8138f5"],["#0ac48a","#007baf"],
+  ["#ffbe12","#f4681b"],["#0676f9","#04c3ef"],["#8641ef","#dc35f6"],
+  ["#ff596f","#ff9b38"],["#14b8a6","#0c78db"],["#91c91b","#08a46e"],
+  ["#d638db","#5635c6"],["#ff6a23","#e92c9c"],["#169cf6","#6045e9"],
+];
+function subcategoryArtwork(category: string, subcategory: string, index: number) {
+  const key = category + "/" + subcategory;
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = ((hash << 5) - hash + key.charCodeAt(i)) | 0;
+  const colors = SUBCATEGORY_COLOURS[Math.abs(hash) % SUBCATEGORY_COLOURS.length];
+  const subject = SUBCATEGORY_SUBJECTS.find(([pattern]) => pattern.test(subcategory))?.[1]
+    ?? ["📦","✨","🎁","🛍️","⭐","🎯"][Math.abs(hash) % 6];
+  return {colors,subject,angle: (Math.abs(hash) % 17) - 8};
+}
+
 const CATEGORY_ORDER = [
   "electronics", "home-kitchen", "clothing-shoes-jewelry",
   "health-household", "toys-games", "automotive",
@@ -227,9 +273,16 @@ export function CategoriesPage() {
                 <div className="flex flex-wrap justify-between items-center gap-2 mb-4"><h3 className="text-xl font-black">Subcategories</h3><Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="text-sm font-bold text-amber-300 hover:text-white">View All {selected.name} →</Link></div>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                   {selected.subcategories.map((sub,index)=>{
-                    const state=statusFor(selected.slug,sub.slug),disabled=state!=="active",subArt=CATEGORY_ART[selected.slug],subTotal=subCount(selected.slug,sub.slug);
-                    const body=<><div className={`relative h-28 sm:h-36 overflow-hidden bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{subArt&&<img src={subArt} alt="" className="w-full h-full object-cover object-bottom opacity-80"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#08182e]/70 to-transparent"/><span className="absolute bottom-2 left-3 rounded-lg bg-black/35 p-2"><CategoryIcon name={selected.icon} className="w-5 h-5 text-white"/></span></div><div className="p-3"><h4 className="text-sm font-bold leading-tight">{sub.name}</h4><p className="text-xs text-sky-200 mt-1">{disabled?labelFor(state):subTotal>0?`${subTotal.toLocaleString()} listings`:"Browse listings"}</p></div></>;
-                    return disabled?<div key={sub.slug} className="rounded-xl overflow-hidden border border-white/10 bg-[#102541] opacity-50">{body}</div>:<Link key={sub.slug} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="rounded-xl overflow-hidden border border-sky-300/20 bg-[#102541] hover:border-sky-400 hover:-translate-y-1 transition-all">{body}</Link>;
+                    const state=statusFor(selected.slug,sub.slug),disabled=state!=="active",subTotal=subCount(selected.slug,sub.slug),art=subcategoryArtwork(selected.slug,sub.name,index);
+                    const body=<><div className="relative h-36 sm:h-44 overflow-hidden" style={{background:`linear-gradient(125deg, ${art.colors[0]}, ${art.colors[1]})`}}>
+                      <div aria-hidden="true" className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-white/20 blur-xl"/>
+                      <div aria-hidden="true" className="absolute -left-8 -bottom-12 h-36 w-36 rounded-full bg-black/10"/>
+                      <span aria-hidden="true" className="absolute right-3 bottom-0 text-[100px] sm:text-[120px] leading-none drop-shadow-[0_12px_12px_rgba(0,0,0,0.24)] transition-transform duration-300 group-hover:scale-110" style={{transform:`rotate(${art.angle}deg)`}}>{art.subject}</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent"/>
+                      <div className="absolute left-3 top-3 right-3"><h4 className="max-w-[88%] text-base sm:text-lg font-black leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">{sub.name}</h4><p className="text-xs font-bold text-white mt-1 drop-shadow">{disabled?labelFor(state):subTotal>0?`${subTotal.toLocaleString()} listings`:"Explore listings"}</p></div>
+                      <span className="absolute bottom-2 right-2 flex items-center justify-center w-8 h-8 rounded-full bg-[#092243]/85 border border-white/40 text-white"><ChevronRight className="w-5 h-5"/></span>
+                    </div></>;
+                    return disabled?<div key={sub.slug} className="rounded-xl overflow-hidden border border-white/10 bg-[#102541] opacity-60">{body}</div>:<Link key={sub.slug} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="group rounded-xl overflow-hidden border border-sky-300/20 bg-[#102541] hover:border-sky-400 hover:-translate-y-1 hover:shadow-lg hover:shadow-fuchsia-900/30 transition-all">{body}</Link>;
                   })}
                 </div>
               </section>
