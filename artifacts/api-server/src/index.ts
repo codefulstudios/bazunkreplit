@@ -95,6 +95,12 @@ async function runAppMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     )
   `, "listings");
+  await run(sql`CREATE TABLE IF NOT EXISTS third_level_categories (
+    category TEXT NOT NULL, subcategory TEXT NOT NULL, slug TEXT NOT NULL,
+    name TEXT NOT NULL, visible BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (category,subcategory,slug)
+  )`, "third_level_categories");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS subsubcategory TEXT`, "listings.subsubcategory");
   await run(sql`CREATE INDEX IF NOT EXISTS listings_category_levels_idx ON listings (category, subcategory, subsubcategory)`, "listings_category_levels_idx");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_origin TEXT`, "listings.ship_origin");
