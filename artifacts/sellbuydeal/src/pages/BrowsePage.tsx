@@ -313,15 +313,15 @@ export function BrowsePage() {
     setMoreError(null);
     fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
-        if (!r.ok) throw new Error("Could not load listings");
+        if (!r.ok) throw new Error(`Listings API returned HTTP ${r.status}`);
         const data: ApiListing[] = await r.json();
         if (!Array.isArray(data)) throw new Error("Invalid listings response");
         if (controller.signal.aborted) return;
         setApiListings(data.map(mapApiListing));
         setHasMoreListings(data.length === LISTING_BATCH);
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setListingError("We couldn’t load listings. Please try again.");
+      .catch((error) => {
+        if (!controller.signal.aborted) setListingError(error instanceof Error ? error.message : "We couldn’t load listings. Please try again.");
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoadingListings(false);
@@ -358,7 +358,8 @@ export function BrowsePage() {
     }
   }, [urlCategory]);
 
-  const allListings = useMemo(() => [...apiListings, ...(ALL_PRODUCTS as unknown as (typeof ALL_PRODUCTS[0] & { subcategory?: string; subsubcategory?: string })[])], [apiListings]);
+  // Public browsing must use the live listings API, not stale demo products.
+  const allListings = useMemo(() => apiListings, [apiListings]);
 
   const filtered = useMemo(() => {
     let result = [...allListings];
@@ -508,7 +509,7 @@ export function BrowsePage() {
     (minRating !== null ? 1 : 0) +
     (listedWithin !== "any" ? 1 : 0);
 
-  const pageTitle = urlQuery ? `Results for "${urlQuery}"` : "Browse All Listings";
+  const pageTitle = urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "newest",    label: "Newest First" },
