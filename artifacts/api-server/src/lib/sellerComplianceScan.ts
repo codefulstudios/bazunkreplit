@@ -4,6 +4,9 @@ import { scoreSellerRisk } from "./sellerComplianceRisk.js";
 
 /** Conservative signals from server-owned listings. Does not infer legal seller status. */
 export async function scanSellerCompliance(): Promise<{scanned:number;opened:number;updated:number}> {
+  const lock=await db.execute(sql`SELECT pg_try_advisory_lock(714202611) AS acquired`);
+  if (!(lock.rows[0] as any)?.acquired) return {scanned:0,opened:0,updated:0};
+  try {
   const rows=await db.execute(sql`
     SELECT u.email AS seller_email,
       COUNT(l.id) FILTER (WHERE LOWER(COALESCE(l.status,''))='active')::int AS active_listings,
@@ -46,4 +49,5 @@ export async function scanSellerCompliance(): Promise<{scanned:number;opened:num
     }
   }
   return {scanned:rows.rows.length,opened,updated};
+  } finally { await db.execute(sql`SELECT pg_advisory_unlock(714202611)`); }
 }
