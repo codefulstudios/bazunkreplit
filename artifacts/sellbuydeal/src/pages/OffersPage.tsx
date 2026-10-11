@@ -243,7 +243,7 @@ export function OffersPage() {
                 {icon:"🏷️", title:"Be reasonable",detail:"Fair offers are more likely to be accepted."},
                 {icon:"💬",title:"Try a counter offer",detail:"Sellers might come back with a better price."},
                 {icon:"💗",title:"Keep an eye on offers",detail:"Check back for seller responses."},
-              ].map(t=><div key={t.title} className="flex gap-3 items-center rounded-xl border border-blue-400/30 bg-[#051d4b]/75 p-3 mb-2"><span className="text-3xl">{t.icon}</span><div><h3 className="text-white font-extrabold">{t.title}</h3><p className="text-blue-100 text-sm">{t.detail}</p></div></div>)}
+              ].map(t=><div key={t.title} className="flex gap-3 items-center rounded-xl border border-blue-400/30 bg-[#051d4b]/75 p-3 mb-2"><span className="text-3xl">{t.icon}</span><div><h3 className="text-white font-extrabold">{t.title}</h3><p className="text-sm font-semibold text-white/95 leading-relaxed">{t.detail}</p></div></div>)}
             </aside>
           </div>
           {counts.countered>0&&tab!=="countered"&&<button onClick={()=>setTab("countered")} className="w-full text-left rounded-xl border border-cyan-400 bg-cyan-900 p-4 text-white font-bold">{counts.countered} counter offer(s) waiting for your response →</button>}
