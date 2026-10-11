@@ -238,7 +238,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="text-sm font-medium text-gray-800 line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-[#4A5CE8] transition-colors leading-snug">
+                  <p className="text-sm font-medium text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-sky-300 transition-colors leading-snug">
                     {listing.title}
                   </p>
 
@@ -247,13 +247,13 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                       {formatPrice(parseFloat(listing.price))}
                     </span>
                     {listing.views > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                      <span className="flex items-center gap-1 text-[11px] text-slate-300">
                         <Eye className="w-3 h-3" /> {listing.views.toLocaleString()}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-300">
                     <CheckCircle2 className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Verified Seller")}
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
           {/* Browse All end card */}
           <Link href="/browse">
-            <div className="w-52 shrink-0 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[#4A5CE8] hover:bg-[#4A5CE8]/5 transition-all group" style={{ minHeight: "280px" }}>
+            <div className="w-52 shrink-0 rounded-2xl border-2 border-dashed border-sky-400/40 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[#4A5CE8] hover:bg-[#4A5CE8]/5 transition-all group" style={{ minHeight: "280px" }}>
               <div className="w-12 h-12 rounded-full bg-[#4A5CE8]/10 flex items-center justify-center group-hover:bg-[#4A5CE8]/20 transition-colors">
                 <ArrowRight className="w-5 h-5 text-[#4A5CE8]" />
               </div>
