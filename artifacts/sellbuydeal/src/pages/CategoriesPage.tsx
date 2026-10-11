@@ -185,137 +185,53 @@ export function CategoriesPage() {
 
       <AdSlot slotKey="categories_top" />
 
-      <main className="flex-1 container mx-auto px-4 py-7">
-        <div className={`grid gap-5 items-start ${selected ? "xl:grid-cols-[minmax(0,3fr)_minmax(330px,1.2fr)]" : ""}`}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((category, index) => {
-              const isOpen = openSlug === category.slug && statusFor(category.slug)==="active";
-              const state=statusFor(category.slug);
-              const unavailable=state!=="active";
-              const totalListings = catCount(category.slug);
-              const art = CATEGORY_ART[category.slug];
-              return (
-                <motion.button
-                  type="button"
-                  key={category.slug}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(index * 0.02, 0.22) }}
-                  disabled={unavailable}
-                  onClick={() => setOpenSlug(isOpen ? null : category.slug)}
-                  aria-label={unavailable ? `${category.name} — ${labelFor(state)}, unavailable` : category.name}
-                  className={`relative overflow-hidden min-h-[175px] rounded-2xl text-left bg-gradient-to-br ${unavailable?"from-slate-600 via-slate-700 to-slate-800":themeFor(category.slug)}
-                    border ${isOpen ? "border-white/60 ring-2 ring-white/20" : "border-white/10"}
-                    shadow-lg shadow-slate-950/10 disabled:cursor-not-allowed disabled:opacity-80 disabled:saturate-[.35] enabled:hover:-translate-y-0.5 enabled:hover:shadow-xl transition-all`}
-                  data-testid={`card-category-${category.slug}`}
-                >
-                  <div className="absolute inset-x-0 bottom-0 h-[72%] overflow-hidden pointer-events-none">
-                    {art && (
-                      <img
-                        src={art}
-                        alt=""
-                        aria-hidden="true"
-                        className={`absolute inset-0 w-full h-full object-cover object-bottom ${unavailable?"grayscale opacity-35":"opacity-100"}`}
-                      />
-                    )}
-                    <div className={`absolute inset-0 ${unavailable?"bg-slate-950/50":"bg-gradient-to-r from-black/20 via-transparent to-transparent"}`} />
-                  </div>
-
-                  <div className="relative z-10 p-4 flex items-start gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-black/10 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                      <CategoryIcon name={category.icon} />
-                    </div>
-                    <div className="relative isolate min-w-0 flex-1 pt-0.5 drop-shadow-md">
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -inset-x-4 -inset-y-3 -z-10"
-                        style={{ background: "radial-gradient(ellipse at 40% 50%, rgba(10, 15, 25, 0.40) 0%, rgba(10, 15, 25, 0.30) 45%, rgba(10, 15, 25, 0) 75%)" }}
-                      />
-                      <p className="text-[16px] leading-tight font-black text-white">{category.name}</p>
-                      {unavailable && <span className="inline-flex mt-2 px-3 py-1.5 rounded-lg bg-amber-100 text-amber-950 border border-amber-200 text-[12px] font-black tracking-wide shadow-sm">{state==="maintenance"?"⚙ UNDER MAINTENANCE":"◷ COMING SOON"}</span>}
-                      <p className={`mt-2 text-[12px] font-extrabold ${unavailable?"text-slate-300":"text-white"}`}>
-                        {category.subcategories.length} subcategories
-                        {!unavailable && totalListings > 0 && <> <span className="text-white/70">•</span> {totalListings.toLocaleString()} listing{totalListings !== 1 ? "s" : ""}</>}
-                      </p>
-                    </div>
-                    <div className={`w-9 h-9 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 ${unavailable?"bg-slate-800/80":"bg-white/35"}`}>
-                      {unavailable ? <LucideIcons.LockKeyhole className="w-4 h-4 text-white/75" /> : <ChevronRight className={`w-5 h-5 text-slate-900 transition-transform ${isOpen ? "rotate-90" : ""}`} />}
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-
-          <AnimatePresence mode="wait">
-            {selected && (
-              <motion.aside
-                key={selected.slug}
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                className="xl:sticky xl:top-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#132543] dark:shadow-[0_22px_70px_rgba(27,101,255,0.22)]"
-              >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-sky-400/25 dark:bg-[#172c50]">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-sky-200">
-                    <span>Categories</span><ChevronRight className="w-3 h-3"/><span className="font-black text-slate-900 dark:text-white">{selected.name}</span>
-                  </div>
-                  <button onClick={() => setOpenSlug(null)} className="text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-xl leading-none">×</button>
+      <main className="flex-1 bg-[#071426] text-white">
+        <div className="container mx-auto px-4 py-7 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[290px_minmax(0,1fr)] gap-5 items-start">
+          <aside className="lg:sticky lg:top-24 rounded-2xl border border-sky-300/20 bg-[#0d203b] p-3 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto [scrollbar-width:thin]" aria-label="Browse categories">
+            <div className="relative mb-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-200" />
+              <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." className="pl-9 bg-[#07172e] border-sky-300/25 text-white placeholder:text-slate-400" />
+            </div>
+            <nav className="space-y-1">
+              {filtered.map(category=>{
+                const state=statusFor(category.slug), active=selected?.slug===category.slug;
+                const disabled=state!=="active";
+                return <button key={category.slug} type="button" disabled={disabled} onClick={()=>setOpenSlug(category.slug)} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors ${active?"bg-blue-600 text-white shadow-lg shadow-blue-900/30":disabled?"opacity-50 cursor-not-allowed":"text-slate-200 hover:bg-sky-500/15"}`}>
+                  <span className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(category.slug)}`}><CategoryIcon name={category.icon} className="w-4 h-4 text-white"/></span>
+                  <span className="flex-1 min-w-0 text-xs sm:text-sm font-semibold">{category.name}</span>
+                  {disabled?<LucideIcons.LockKeyhole className="w-3.5 h-3.5"/>:<span className="flex items-center gap-1 text-xs text-white/80">{catCount(category.slug)>0?catCount(category.slug).toLocaleString():""}<ChevronRight className="w-3.5 h-3.5"/></span>}
+                </button>;
+              })}
+              {!filtered.length&&<p className="p-3 text-sm text-slate-300">No categories match your search.</p>}
+            </nav>
+          </aside>
+          <div className="min-w-0 space-y-7">
+            {selected ? <>
+              <section className={`relative min-h-[190px] sm:min-h-[215px] overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r ${themeFor(selected.slug)}`}>
+                {CATEGORY_ART[selected.slug]&&<img src={CATEGORY_ART[selected.slug]} alt="" className="absolute right-0 inset-y-0 h-full w-[65%] object-cover object-bottom opacity-90"/>}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#06132e]/95 via-[#071d43]/75 to-transparent"/>
+                <div className="relative z-10 p-6 sm:p-8 max-w-[75%]">
+                  <p className="text-xs text-sky-200 mb-3"><Link href="/" className="hover:underline">Home</Link> › Categories › {selected.name}</p>
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{selected.name}</h2>
+                  <p className="mt-2 text-sm font-semibold text-slate-100">{selected.subcategories.length} subcategories{catCount(selected.slug)>0?` · ${catCount(selected.slug).toLocaleString()} listings`:""}</p>
+                  <p className="mt-3 text-xs sm:text-sm text-slate-200">Explore {selected.name.toLowerCase()} products from Bazunk sellers.</p>
+                  <Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="inline-flex mt-4 items-center gap-1 rounded-lg bg-white px-4 py-2 text-xs font-black text-[#08204a] hover:bg-sky-100">View all listings <ChevronRight className="w-4 h-4"/></Link>
                 </div>
-
-                <div className={`relative overflow-hidden bg-gradient-to-br ${themeFor(selected.slug)} px-5 py-5 min-h-[115px]`}>
-                  {CATEGORY_ART[selected.slug] && (
-                    <img src={CATEGORY_ART[selected.slug]} alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-full w-[58%] object-cover object-bottom opacity-95" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/5" />
-                  <div className="relative z-10 flex items-center gap-3 max-w-[65%]">
-                    <div className="w-12 h-12 rounded-xl bg-black/10 border border-white/20 flex items-center justify-center">
-                      <CategoryIcon name={selected.icon} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-white drop-shadow">{selected.name}</h2>
-                      <p className="text-xs font-extrabold text-white mt-1">
-                        {selected.subcategories.length} subcategories
-                        {catCount(selected.slug) > 0 && <> • {catCount(selected.slug).toLocaleString()} listings</>}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  {selected.subcategories.map((sub) => {
-                    const sc = subCount(selected.slug, sub.slug);
-                    return (
-                      <div key={sub.slug} className="contents">{statusFor(selected.slug,sub.slug)==="active" ? <div
-                        className="group flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-indigo-50 dark:border-white/[0.07] dark:hover:bg-sky-400/15 dark:odd:bg-[#1b3456] dark:even:bg-[#162c4a] transition-colors"
-                      >
-                        <div className={`relative w-14 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${themeFor(selected.slug)}`}>
-                          {CATEGORY_ART[selected.slug] && <img src={CATEGORY_ART[selected.slug]} alt="" className="w-full h-full object-cover object-bottom brightness-110 saturate-150" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/browse?category=${selected.slug}&sub=${sub.slug}`} className="font-black text-sm text-slate-950 dark:text-white hover:underline">{sub.name}</Link>
-                          <p className="text-xs font-semibold text-slate-500 dark:text-sky-200">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
-                          {suggestedThirdLevel(selected.slug,sub.slug).length > 0 && <div className="flex flex-wrap gap-1 mt-2" aria-label="Suggested deeper categories">
-                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-amber-400/20 dark:border-amber-300/60 dark:text-amber-100 dark:hover:bg-amber-400/35">{name}</Link>)}
-                          </div>}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-blue-500 dark:text-sky-300 group-hover:text-indigo-500" />
-                      </div> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
-                    );
+              </section>
+              <section>
+                <div className="flex flex-wrap justify-between items-center gap-2 mb-4"><h3 className="text-xl font-black">Subcategories</h3><Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="text-sm font-bold text-sky-300 hover:text-white">View All {selected.name} →</Link></div>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {selected.subcategories.map((sub,index)=>{
+                    const state=statusFor(selected.slug,sub.slug),disabled=state!=="active",subArt=CATEGORY_ART[selected.slug],subTotal=subCount(selected.slug,sub.slug);
+                    const body=<><div className={`relative h-28 sm:h-36 overflow-hidden bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{subArt&&<img src={subArt} alt="" className="w-full h-full object-cover object-bottom opacity-80"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#08182e]/70 to-transparent"/><span className="absolute bottom-2 left-3 rounded-lg bg-black/35 p-2"><CategoryIcon name={selected.icon} className="w-5 h-5 text-white"/></span></div><div className="p-3"><h4 className="text-sm font-bold leading-tight">{sub.name}</h4><p className="text-xs text-sky-200 mt-1">{disabled?labelFor(state):subTotal>0?`${subTotal.toLocaleString()} listings`:"Browse listings"}</p></div></>;
+                    return disabled?<div key={sub.slug} className="rounded-xl overflow-hidden border border-white/10 bg-[#102541] opacity-50">{body}</div>:<Link key={sub.slug} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="rounded-xl overflow-hidden border border-sky-300/20 bg-[#102541] hover:border-sky-400 hover:-translate-y-1 transition-all">{body}</Link>;
                   })}
                 </div>
-
-                <div className="p-4">
-                  <Link
-                    href={`/browse?category=${selected.slug}`}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 py-3 text-sm font-black text-slate-950 dark:border-white/10 dark:bg-blue-600 dark:hover:bg-blue-500 dark:border-blue-400 dark:text-white"
-                  >
-                    View all {selected.name} <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </motion.aside>
-            )}
-          </AnimatePresence>
+              </section>
+              {selected.subcategories.some(sub=>suggestedThirdLevel(selected.slug,sub.slug).length>0)&&<section className="rounded-2xl border border-sky-300/15 bg-[#10213a] p-4"><h3 className="font-black text-lg mb-3">Explore more specific categories</h3><div className="flex flex-wrap gap-2">{selected.subcategories.flatMap(sub=>suggestedThirdLevel(selected.slug,sub.slug).map(name=><Link key={sub.slug+name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-lg bg-sky-500/15 border border-sky-400/30 px-3 py-2 text-xs font-semibold text-sky-100 hover:bg-sky-500/30">{name}</Link>))}</div></section>}
+              <section><h3 className="text-xl font-black mb-4">Browse Other Categories</h3><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">{ordered.filter(c=>c.slug!==selected.slug&&statusFor(c.slug)==="active").slice(0,8).map(c=><button type="button" key={c.slug} onClick={()=>{setOpenSlug(c.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`relative min-h-[105px] rounded-xl overflow-hidden text-left p-3 bg-gradient-to-br ${themeFor(c.slug)} hover:brightness-110 transition-all`}>{CATEGORY_ART[c.slug]&&<img src={CATEGORY_ART[c.slug]} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom opacity-65"/>}<div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent"/><span className="relative z-10 text-sm font-black">{c.name}</span></button>)}</div></section>
+            </>:<section className="rounded-2xl bg-[#102541] border border-white/10 p-8"><h2 className="text-2xl font-black">Choose a category</h2><p className="text-slate-300 mt-2">Select a category on the left to explore its subcategories and listings.</p></section>}
+          </div>
         </div>
       </main>
 
