@@ -288,7 +288,24 @@ export function DirectSalePage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-7 max-w-7xl">
-        <form onSubmit={handlePublish} noValidate className="grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start">
+        <style>{`
+          .direct-sale-form > section h2, .direct-sale-form > aside h2 { color: #fff; }
+          .direct-sale-form > section label { color: #e8f2ff; font-weight: 650; }
+          .direct-sale-form > section p, .direct-sale-form > section small { color: #c8dbf3; }
+          .direct-sale-form > section input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+          .direct-sale-form > section select,
+          .direct-sale-form > section textarea {
+            background-color: #091c36; color: #fff; border-color: #426087;
+          }
+          .direct-sale-form > section input::placeholder,
+          .direct-sale-form > section textarea::placeholder { color: #aabed9; opacity: 1; }
+          .direct-sale-form > section select option { background: #102541; color: white; }
+          .direct-sale-form > section input:focus,
+          .direct-sale-form > section select:focus,
+          .direct-sale-form > section textarea:focus { border-color: #5aa3ff; outline-color: #5aa3ff; }
+          .direct-sale-form > section [class*="text-gray-"] { color: #d5e4f6; }
+        `}</style>
+        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start">
 
           {/* Header card */}
           <div className="lg:col-span-2 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
@@ -308,12 +325,12 @@ export function DirectSalePage() {
               </div>
             </section>
             <section className="rounded-2xl border border-purple-400/30 bg-gradient-to-br from-[#221747] to-[#321b68] p-5 text-white"><h2 className="font-black text-lg flex items-center gap-2"><Video className="w-5 h-5 text-purple-200"/> Boost Your Listing</h2><p className="text-sm text-purple-100 mt-2">Add a product video to help buyers see your item in action. Optional — you can add it below.</p><a href="#product-video" className="inline-flex mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-bold text-white hover:bg-purple-400">Go to video options ↓</a></section>
-            <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-200"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
+            <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-100"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
           </aside>
 
           {/* Basic Information */}
           <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
-            <h2 className="text-base font-bold text-white mb-5">{t("basicInformation")}</h2>
+            <h2 className="text-base font-bold text-white mb-5">Basic Information</h2>
 
             {/* Title */}
             <div className="mb-4">
@@ -325,7 +342,7 @@ export function DirectSalePage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., iPhone 14 Pro Max - 256GB Space Black"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                 data-testid="input-listing-title"
               />
             </div>
@@ -334,7 +351,7 @@ export function DirectSalePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-1">
               <div>
                 <label className="text-sm font-medium text-slate-200 mb-1.5 block">
-                  {t("currencyPrice")} <span className="text-red-500">*</span>
+                  Currency & Price <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <div className="relative">
@@ -1226,20 +1243,20 @@ export function DirectSalePage() {
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 text-slate-200 font-semibold text-sm hover:border-gray-400 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border-2 border-sky-300/60 bg-[#142d50] text-white font-bold text-base hover:bg-[#20436e] transition-colors"
                 data-testid="button-save-draft"
               >
                 <Save className="w-4 h-4" />
-                {draftSaved ? "Draft Saved!" : t("saveDraft")}
+                {draftSaved ? "Draft Saved!" : "Save as Draft"}
               </button>
               <button
                 type="submit"
                 disabled={published || publishing}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#3B4FD8] to-[#1E3A8A] text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0867ff] to-[#3558ed] text-white font-black text-base hover:from-[#2782ff] hover:to-[#536fff] transition-all shadow-lg shadow-blue-900/40 disabled:opacity-70"
                 data-testid="button-publish-listing"
               >
                 <Bell className="w-4 h-4" />
-                {published ? "Published! Redirecting…" : publishing ? "Publishing…" : t("publishListing")}
+                {published ? "Published! Redirecting…" : publishing ? "Publishing…" : "Publish Listing"}
               </button>
             </div>
 
