@@ -254,10 +254,10 @@ export function CategoriesPage() {
                 initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 16 }}
-                className="xl:sticky xl:top-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#0a1a2e]"
+                className="xl:sticky xl:top-28 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-white/10 dark:bg-[#132543] dark:shadow-[0_22px_70px_rgba(27,101,255,0.22)]"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-300">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-sky-400/25 dark:bg-[#172c50]">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-sky-200">
                     <span>Categories</span><ChevronRight className="w-3 h-3"/><span className="font-black text-slate-900 dark:text-white">{selected.name}</span>
                   </div>
                   <button onClick={() => setOpenSlug(null)} className="text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white text-xl leading-none">×</button>
@@ -287,19 +287,19 @@ export function CategoriesPage() {
                     const sc = subCount(selected.slug, sub.slug);
                     return (
                       <div key={sub.slug} className="contents">{statusFor(selected.slug,sub.slug)==="active" ? <div
-                        className="group flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-indigo-50 dark:border-white/[0.07] dark:hover:bg-white/[0.06]"
+                        className="group flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-indigo-50 dark:border-white/[0.07] dark:hover:bg-sky-400/15 dark:odd:bg-[#1b3456] dark:even:bg-[#162c4a] transition-colors"
                       >
                         <div className={`relative w-14 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${themeFor(selected.slug)}`}>
-                          {CATEGORY_ART[selected.slug] && <img src={CATEGORY_ART[selected.slug]} alt="" className="w-full h-full object-cover object-bottom" />}
+                          {CATEGORY_ART[selected.slug] && <img src={CATEGORY_ART[selected.slug]} alt="" className="w-full h-full object-cover object-bottom brightness-110 saturate-150" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <Link href={`/browse?category=${selected.slug}&sub=${sub.slug}`} className="font-black text-sm text-slate-950 dark:text-white hover:underline">{sub.name}</Link>
-                          <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
+                          <p className="text-xs font-semibold text-slate-500 dark:text-sky-200">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
                           {suggestedThirdLevel(selected.slug,sub.slug).length > 0 && <div className="flex flex-wrap gap-1 mt-2" aria-label="Suggested deeper categories">
-                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</Link>)}
+                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-amber-400/20 dark:border-amber-300/60 dark:text-amber-100 dark:hover:bg-amber-400/35">{name}</Link>)}
                           </div>}
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
+                        <ChevronRight className="w-4 h-4 text-blue-500 dark:text-sky-300 group-hover:text-indigo-500" />
                       </div> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
                     );
                   })}
@@ -308,7 +308,7 @@ export function CategoriesPage() {
                 <div className="p-4">
                   <Link
                     href={`/browse?category=${selected.slug}`}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 py-3 text-sm font-black text-slate-950 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09] dark:text-white"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 py-3 text-sm font-black text-slate-950 dark:border-white/10 dark:bg-blue-600 dark:hover:bg-blue-500 dark:border-blue-400 dark:text-white"
                   >
                     View all {selected.name} <ChevronRight className="w-4 h-4" />
                   </Link>
