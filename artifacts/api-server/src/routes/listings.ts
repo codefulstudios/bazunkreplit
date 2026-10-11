@@ -316,6 +316,7 @@ router.post("/listings", async (req, res) => {
     const sellerName = typeof body.sellerName === "string" ? body.sellerName : null;
     const sellerUsername = typeof body.sellerUsername === "string" ? body.sellerUsername : null;
     const subcategory = typeof body.subcategory === "string" && body.subcategory ? body.subcategory : null;
+    const subsubcategory = subcategory && typeof body.subsubcategory === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory) && body.subsubcategory.length <= 100 ? body.subsubcategory : null;
     const tags = typeof body.tags === "string" ? body.tags : null;
     const specifications = Array.isArray(body.specifications) ? JSON.stringify(body.specifications) : null;
     const extraCategories = Array.isArray(body.extra_categories) && body.extra_categories.length
@@ -363,6 +364,7 @@ router.post("/listings", async (req, res) => {
         price: String(price), 
         category, 
         subcategory, 
+        subsubcategory,
         description, 
         condition, 
         image, 
@@ -436,12 +438,14 @@ router.patch("/listings/:id", async (req, res) => {
     const { email } = req.query as Record<string, string>;
     if (!email) { res.status(400).json({ error: "email required" }); return; }
     const body = req.body as Record<string, unknown>;
-    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "image", "status", "currency"] as const;
+    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency"] as const;
     const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
     for (const key of allowed) {
       if (typeof body[key] === "string") updates[key] = body[key] as string;
     }
 
+    if (typeof body.subsubcategory === "string" && body.subsubcategory !== "" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory)) { res.status(400).json({ error: "Invalid third-level category slug" }); return; }
+    if (body.subsubcategory === null || body.subsubcategory === "") (updates as Record<string, string | null>).subsubcategory = null;
     if (Array.isArray(body.extra_categories)) {
       updates.extraCategories = body.extra_categories.length ? JSON.stringify(body.extra_categories) : "";
     }
