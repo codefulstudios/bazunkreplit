@@ -7,7 +7,7 @@ import {
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
-import { ACTIVE_CATEGORIES, resolveCategory } from "@/data/categories";
+import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
 
 const SITE_CATEGORIES = ACTIVE_CATEGORIES;
 
@@ -25,7 +25,7 @@ interface Product {
   id: string; title: string; description: string | null; price: string;
   status: string; inventory: number; condition: string; tags: string | null;
   images: string[]; variants: Variant[]; seller_email: string | null;
-  category_id: string | null; category_name: string | null; subcategory?: string | null; created_at: string;
+  category_id: string | null; category_name: string | null; subcategory?: string | null; subsubcategory?: string | null; created_at: string;
   currency?: string; brand?: string; sku?: string; ships_from?: string; ships_from_location?: string;
   ships_to?: string; shipping_price?: string | number; free_shipping?: boolean; dispatch_time?: string;
   delivery_estimate?: string; source?: string | null; source_url?: string | null; source_item_id?: string | null;
@@ -36,7 +36,7 @@ interface Product {
 interface ProductForm {
   title: string; description: string; price: string; category_id: string;
   condition: string; status: string; inventory: string; tags: string;
-  seller_email: string; images: string[]; variants: Variant[]; subcategory: string; currency: string;
+  seller_email: string; images: string[]; variants: Variant[]; subcategory: string; subsubcategory: string; currency: string;
   brand: string; sku: string; ships_from: string; ships_from_location: string; ships_to: string;
   shipping_price: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
 }
@@ -44,7 +44,7 @@ interface ProductForm {
 const EMPTY_FORM: ProductForm = {
   title: "", description: "", price: "0", category_id: "", condition: "new",
   status: "pending", inventory: "0", tags: "", seller_email: "", images: [], variants: [],
-  subcategory: "", currency: "GBP", brand: "", sku: "", ships_from: "", ships_from_location: "",
+  subcategory: "", subsubcategory: "", currency: "GBP", brand: "", sku: "", ships_from: "", ships_from_location: "",
   ships_to: "", shipping_price: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
 };
 
@@ -359,7 +359,7 @@ function ProductDrawer({
     seller_email: product.seller_email ?? "",
     images: Array.isArray(product.images) ? [...product.images] : [],
     variants: Array.isArray(product.variants) ? product.variants.map(v => ({ ...v, priceModifier: String(v.priceModifier), inventory: String(v.inventory) })) : [],
-    subcategory: product.subcategory ?? "", currency: product.currency ?? "GBP", brand: product.brand ?? "", sku: product.sku ?? "",
+    subcategory: product.subcategory ?? "", subsubcategory: product.subsubcategory ?? "", currency: product.currency ?? "GBP", brand: product.brand ?? "", sku: product.sku ?? "",
     ships_from: product.ships_from ?? "", ships_from_location: product.ships_from_location ?? "", ships_to: product.ships_to ?? "",
     shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), free_shipping: Boolean(product.free_shipping),
     dispatch_time: product.dispatch_time ?? "", delivery_estimate: product.delivery_estimate ?? "",
@@ -515,10 +515,16 @@ function ProductDrawer({
 
             <div className="grid grid-cols-3 gap-3">
               <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Subcategory</span>
-                <select value={form.subcategory} onChange={e => set("subcategory", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">
+                <select value={form.subcategory} onChange={e => setForm(f => ({...f, subcategory: e.target.value, subsubcategory: ""}))} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm">
                   <option value="">No subcategory</option>
                   {form.subcategory && !SITE_CATEGORIES.find(c => c.slug === form.category_id)?.subcategories.some(sub => sub.slug === form.subcategory) && <option value={form.subcategory}>Current subcategory: {form.subcategory} (legacy)</option>}
                   {(SITE_CATEGORIES.find(c => c.slug === form.category_id)?.subcategories ?? []).map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}
+                </select></label>
+              <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Third-level category</span>
+                <select value={form.subsubcategory} onChange={e => set("subsubcategory", e.target.value)} disabled={!form.subcategory} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white text-gray-900">
+                  <option value="">Unclassified (optional)</option>
+                  {form.subsubcategory && !suggestedThirdLevel(form.category_id, form.subcategory).some(name => thirdLevelSlug(name) === form.subsubcategory) && <option value={form.subsubcategory}>Current: {form.subsubcategory} (legacy)</option>}
+                  {suggestedThirdLevel(form.category_id, form.subcategory).map(name => <option key={name} value={thirdLevelSlug(name)}>{name}</option>)}
                 </select></label>
               <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Brand</span>
                 <input value={form.brand} onChange={e => set("brand", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" /></label>
