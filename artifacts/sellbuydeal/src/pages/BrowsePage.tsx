@@ -525,10 +525,9 @@ export function BrowsePage() {
 
 
       <FilterSection title="Category">
-        <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+        <div className="space-y-1 max-h-72 overflow-y-auto pr-1 [scrollbar-width:thin]">
           {CATEGORIES.map((cat) => {
             const count = categoryCounts[cat.slug] ?? 0;
-            if (count === 0) return null;
             const isChecked = selectedCategories.includes(cat.slug);
             return (
               <div key={cat.slug}>
@@ -904,7 +903,7 @@ export function BrowsePage() {
 
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:sticky md:top-24 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto overscroll-contain [scrollbar-width:thin] dark:bg-[#132543] dark:border-slate-700">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-[#4A5CE8]" /> Filters
