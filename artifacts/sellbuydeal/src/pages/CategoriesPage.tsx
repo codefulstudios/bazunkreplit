@@ -229,8 +229,6 @@ export function CategoriesPage() {
         </div>
       </div>
 
-      <AdSlot slotKey="categories_top" />
-
       <main className="flex-1 bg-[#071426] text-white">
         <div className="container mx-auto px-4 py-7 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[290px_minmax(0,1fr)] gap-5 items-start">
           <aside className="lg:sticky lg:top-24 rounded-2xl border border-sky-300/20 bg-[#0d203b] p-3 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto [scrollbar-width:thin]" aria-label="Browse categories">
@@ -306,6 +304,9 @@ return <button key={category.slug} type="button" disabled={unavailable} onClick=
           </div>
         </div>
       </main>
+
+      {/* Keep the existing admin-managed categories_top placement and its saved advert settings. */}
+      <AdSlot slotKey="categories_top" />
 
       <Footer />
     </div>
