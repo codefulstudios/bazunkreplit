@@ -11,7 +11,7 @@ export function DashboardSetupProgress({fallbackName}:{fallbackName:string}){
  const [profile,setProfile]=useState<Profile|null>(null),[error,setError]=useState(""),[open,setOpen]=useState(false),[revision,setRevision]=useState(0);
  const load=useCallback(async()=>{
   if(!isSignedIn)return;
-  try{const token=await getToken();const r=await fetch("/api/listings/profile/me",{headers:token?{Authorization:"Bearer "+token}:{}});if(!r.ok)throw new Error("Could not load account setup progress");setProfile(await r.json());setError("");}
+  try{const token=await getToken();const r=await fetch("/api/listings/profile/me",{headers:token?{Authorization:"Bearer "+token}:{}});if(!r.ok)throw new Error("Could not load account setup progress");const data:Profile=await r.json();setProfile(data);if(!data.onboarding_completed)setOpen(true);setError("");}
   catch(e:any){setError(e.message||"Unable to load progress");}
  },[getToken,isSignedIn]);
  useEffect(()=>{void load();},[load,revision]);
