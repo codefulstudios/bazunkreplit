@@ -8,6 +8,7 @@ const NAV = [
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "Listings & Imports", href: "/admin/importer-control", icon: Package },
+  { label: "Importers", href: "/admin/imports", icon: ArrowDownToLine },
   { label: "Cashback", href: "/admin/cashback", icon: Gift },
   { label: "Classifieds",  href: "/admin/classifieds",  icon: FileText        },
   { label: "Orders",       href: "/admin/orders",       icon: ShoppingCart     },
