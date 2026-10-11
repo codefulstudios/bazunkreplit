@@ -23,4 +23,6 @@ jobs:
       - name: Build API and frontend
         run: pnpm run build
       - name: Compliance policy tests
-        run: node --experimental-strip-types --test artifacts/api-server/src/lib/sellerComplianceRisk.test.ts artifacts/api-server/src/lib/sellerClassification.test.ts
+        run: |
+          pnpm --filter @workspace/api-server exec esbuild src/lib/sellerComplianceRisk.test.ts src/lib/sellerClassification.test.ts --bundle --platform=node --format=esm --outdir=/tmp/bazunk-compliance-tests
+          node --test /tmp/bazunk-compliance-tests/*.test.js
