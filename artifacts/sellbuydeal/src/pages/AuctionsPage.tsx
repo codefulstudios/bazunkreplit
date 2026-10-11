@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Gavel, Clock, Plus, ChevronRight, Loader2,
-  Tag, Filter, AlertCircle, ShieldCheck, Globe2, Gem, Trophy, Users, Flame, Search, Zap,
+  Tag, Filter, AlertCircle, ShieldCheck, Globe2, Gem, Trophy, Users, Zap,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -54,16 +54,19 @@ export function AuctionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("ending");
+  const [endingOnly, setEndingOnly] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({ status: "active", sort });
-      if (category !== "All") params.set("category", category);
+      if (category !== "All") params.set("category", category.toLowerCase());
       const res = await fetch(`/api/auctions?${params}`);
       if (!res.ok) throw new Error("Failed to load auctions");
-      setAuctions(await res.json());
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid auction response");
+      setAuctions(data as Auction[]);
     } catch {
       setError("Could not load auctions. Please try again.");
     } finally {
@@ -73,7 +76,8 @@ export function AuctionsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const endingCount = auctions.filter(a => new Date(a.end_time).getTime() - Date.now() <= 86400000).length;
+  const endingCount = auctions.filter(a => { const left = new Date(a.end_time).getTime() - Date.now(); return left > 0 && left <= 86400000; }).length;
+  const visibleAuctions = endingOnly ? auctions.filter(a => { const left = new Date(a.end_time).getTime() - Date.now(); return left > 0 && left <= 86400000; }) : auctions;
   const isEndingSoon = (endTime: string) => new Date(endTime).getTime() - Date.now() < 3600000;
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 86400000;
 
@@ -107,17 +111,18 @@ export function AuctionsPage() {
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <div className="flex flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
-            {CATEGORIES.map(cat => <button key={cat} onClick={() => setCategory(cat)} className={`rounded-xl px-3 py-2.5 text-xs font-extrabold transition-colors sm:text-sm ${category===cat?"bg-[#0878fa] text-white shadow-lg":"text-white hover:bg-[#15538d]"}`}>{cat}</button>)}
+            {CATEGORIES.map(cat => <button key={cat} onClick={() => { setCategory(cat); setEndingOnly(false); }} className={`rounded-xl px-3 py-2.5 text-xs font-extrabold transition-colors sm:text-sm ${category===cat?"bg-[#0878fa] text-white shadow-lg":"text-white hover:bg-[#15538d]"}`}>{cat}</button>)}
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Filter className="h-4 w-4 text-white"/>
-            <select value={sort} onChange={e => setSort(e.target.value)} className="rounded-xl border border-[#3476c1] bg-[#082b54] px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#3aa8ff]">{SORT_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select>
+            <select value={sort} onChange={e => { setSort(e.target.value); setEndingOnly(false); }} className="rounded-xl border border-[#3476c1] bg-[#082b54] px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#3aa8ff]">{SORT_OPTIONS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select>
           </div>
         </div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-[#082e59] to-[#09214a] p-4">
           <div className="flex items-center gap-3"><span className="text-4xl">🔥</span><div><h2 className="text-2xl font-black text-white">Ending Soon</h2><p className="text-sm font-medium text-white">Hurry! These auctions finish soon.</p></div></div>
           <span className="inline-flex items-center gap-2 rounded-xl bg-[#112f62] px-4 py-2 text-sm font-extrabold text-white"><Zap className="h-5 w-5 text-[#ffe342]"/>{loading?"Loading live auctions":`${endingCount} ending in the next 24 hours`}</span>
         </div>
+        {endingOnly && <div className="mb-4 flex items-center justify-between rounded-xl border border-orange-400/50 bg-orange-500/15 px-4 py-2 text-sm font-bold text-white"><span>Showing auctions ending in the next 24 hours</span><button onClick={() => setEndingOnly(false)} className="rounded-lg bg-white px-3 py-1.5 font-bold text-[#09325b]">Show all</button></div>}
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
@@ -129,15 +134,15 @@ export function AuctionsPage() {
             <p className="font-semibold">{error}</p>
             <button onClick={load} className="mt-4 px-4 py-2 rounded-xl bg-[#086ff1] text-white text-sm font-bold">Retry</button>
           </div>
-        ) : auctions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        ) : visibleAuctions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border border-[#2463a0] bg-gradient-to-br from-[#0b3266] to-[#191d59] py-20 text-white">
             <Gavel className="w-14 h-14 mb-4 text-blue-300" />
             <p className="text-2xl font-black text-white">No active auctions</p>
             <p className="text-sm mt-1">
-              {category !== "All" ? `No auctions in ${category} right now. ` : ""}
-              Be the first to list one!
+              {endingOnly ? "No auctions are ending within 24 hours." : category !== "All" ? `No auctions in ${category} right now.` : "Be the first to list one!"}
             </p>
-            {user && (
+            {endingOnly && <button onClick={() => setEndingOnly(false)} className="mt-4 rounded-xl bg-[#0878fa] px-5 py-2.5 font-bold text-white">Show All Auctions</button>}
+            {user && !endingOnly && (
               <Link href="/auctions/create" className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white font-bold hover:opacity-90 transition-opacity">
                 <Plus className="w-4 h-4" /> Create Auction
               </Link>
@@ -145,9 +150,9 @@ export function AuctionsPage() {
           </div>
         ) : (
           <>
-            <p className="text-sm font-bold text-white mb-4">{auctions.length} auction{auctions.length !== 1 ? "s" : ""} found</p>
+            <p className="text-sm font-bold text-white mb-4">{visibleAuctions.length} auction{visibleAuctions.length !== 1 ? "s" : ""} found</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-              {auctions.map((a) => {
+              {visibleAuctions.map((a) => {
                 const currentBid = a.current_bid ? parseFloat(a.current_bid) : null;
                 const displayBid = currentBid ?? parseFloat(a.starting_bid);
                 const endingSoon = isEndingSoon(a.end_time);
@@ -187,7 +192,7 @@ export function AuctionsPage() {
 
                       <div className="flex items-end justify-between mb-3">
                         <div>
-                          <p className="text-xs text-gray-400">{currentBid ? "Current bid" : "Starting bid"}</p>
+                          <p className="text-xs text-slate-200">{currentBid ? "Current bid" : "Starting bid"}</p>
                           <p className="text-xl font-black text-[#ffe04b]">{formatPrice(displayBid)}</p>
                         </div>
                         <div className="text-right">
@@ -199,7 +204,7 @@ export function AuctionsPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-3">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-200 mb-3">
                         <Tag className="w-3 h-3" />
                         <span>{a.condition}</span>
                         <span className="ml-auto">by {a.seller_name}</span>
@@ -219,7 +224,7 @@ export function AuctionsPage() {
             </div>
           </>
         )}
-        <div className="mt-6 grid gap-3 md:grid-cols-3"><div className="rounded-2xl bg-gradient-to-r from-[#7b21e8] to-[#d228e9] p-5"><div className="text-4xl">💎</div><h3 className="mt-2 text-xl font-black text-white">Find Hidden Gems!</h3><p className="mt-1 text-sm font-medium text-white">Rare items, great deals and amazing finds.</p><button onClick={()=>{setCategory("All");setSort("newest");}} className="mt-4 rounded-xl bg-white px-4 py-2 font-black text-[#5b20ae]">Browse Auctions →</button></div><div className="rounded-2xl bg-gradient-to-r from-[#0373ec] to-[#11b2ed] p-5"><div className="text-4xl">🔎</div><h3 className="mt-2 text-xl font-black text-white">Something for Everyone</h3><p className="mt-1 text-sm font-medium text-white">Electronics, collectibles, fashion, gaming and more.</p><Link href="/categories" className="mt-4 inline-block rounded-xl bg-white px-4 py-2 font-black !text-[#0453b3]">Explore Categories →</Link></div><div className="rounded-2xl bg-gradient-to-r from-[#ee149f] to-[#ff7550] p-5"><div className="text-4xl">⏰</div><h3 className="mt-2 text-xl font-black text-white">Don’t Miss Out!</h3><p className="mt-1 text-sm font-medium text-white">Bids end fast. Find your favourite items before the timer hits zero.</p><button onClick={()=>setSort("ending")} className="mt-4 rounded-xl bg-white px-4 py-2 font-black text-[#bd176f]">View Ending Soon →</button></div></div><div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#164c84] bg-[#082b55] p-5 text-xs font-bold text-white sm:grid-cols-5">{[[Trophy,"Unique one-of-a-kind items"],[ShieldCheck,"Safe & secure bidding"],[Users,"Active community"],[Globe2,"Worldwide buyers"],[Gem,"Great deals"]].map(([Icon,label])=><div key={label as string} className="flex items-center gap-2">{typeof Icon!=="string"&&<Icon className="h-5 w-5 shrink-0 text-[#ffcf37]"/>}{label as string}</div>)}</div>
+        <div className="mt-6 grid gap-3 md:grid-cols-3"><div className="rounded-2xl bg-gradient-to-r from-[#7b21e8] to-[#d228e9] p-5"><div className="text-4xl">💎</div><h3 className="mt-2 text-xl font-black text-white">Find Hidden Gems!</h3><p className="mt-1 text-sm font-medium text-white">Rare items, great deals and amazing finds.</p><button onClick={()=>{setCategory("All");setSort("newest");setEndingOnly(false);window.scrollTo({top:0,behavior:"smooth"});}} className="mt-4 rounded-xl bg-white px-4 py-2 font-black text-[#5b20ae]">Browse Auctions →</button></div><div className="rounded-2xl bg-gradient-to-r from-[#0373ec] to-[#11b2ed] p-5"><div className="text-4xl">🔎</div><h3 className="mt-2 text-xl font-black text-white">Something for Everyone</h3><p className="mt-1 text-sm font-medium text-white">Electronics, collectibles, fashion, gaming and more.</p><Link href="/categories" className="mt-4 inline-block rounded-xl bg-white px-4 py-2 font-black !text-[#0453b3]">Explore Categories →</Link></div><div className="rounded-2xl bg-gradient-to-r from-[#ee149f] to-[#ff7550] p-5"><div className="text-4xl">⏰</div><h3 className="mt-2 text-xl font-black text-white">Don’t Miss Out!</h3><p className="mt-1 text-sm font-medium text-white">Bids end fast. Find your favourite items before the timer hits zero.</p><button onClick={()=>{setCategory("All");setSort("ending");setEndingOnly(true);window.scrollTo({top:0,behavior:"smooth"});}} className="mt-4 rounded-xl bg-white px-4 py-2 font-black text-[#bd176f]">View Ending Soon →</button></div></div><div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-[#164c84] bg-[#082b55] p-5 text-xs font-bold text-white sm:grid-cols-5">{[[Trophy,"Unique one-of-a-kind items"],[ShieldCheck,"Safe & secure bidding"],[Users,"Active community"],[Globe2,"Worldwide buyers"],[Gem,"Great deals"]].map(([Icon,label])=><div key={label as string} className="flex items-center gap-2">{typeof Icon!=="string"&&<Icon className="h-5 w-5 shrink-0 text-[#ffcf37]"/>}{label as string}</div>)}</div>
       </main>
 
       <Footer />
