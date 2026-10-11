@@ -265,13 +265,14 @@ export function BrowsePage() {
   const [moreError, setMoreError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const [countsLoaded, setCountsLoaded] = useState(false);
   const [subcategoryCounts, setSubcategoryCounts] = useState<Record<string, number>>({});
 
 
   const LISTING_BATCH = 24;
 
   useEffect(() => {
-    fetch("${API_BASE}/api/listings/category-counts")
+    fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => {
         if (!r.ok) throw new Error(`category counts ${r.status}`);
         return r.json();
@@ -287,8 +288,9 @@ export function BrowsePage() {
         }
         setCategoryCounts(cats);
         setSubcategoryCounts(subs);
+        setCountsLoaded(true);
       })
-      .catch((err) => console.warn("Could not load category counts", err));
+      .catch((err) => { setCountsLoaded(false); console.warn("Could not load category counts", err); });
   }, []);
 
   useEffect(() => {
@@ -542,7 +544,7 @@ export function BrowsePage() {
                     />
                     <span className="text-sm text-gray-700 group-hover:text-[#4A5CE8] transition-colors">{cat.name}</span>
                   </div>
-                  <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{loadingListings || listingError ? "—" : count}</span>
+                  <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{!countsLoaded ? "—" : count}</span>
                 </label>
                 {isChecked && cat.subcategories.length > 0 && (
                   <div className="ml-5 mt-0.5 space-y-0.5 border-l-2 border-[#4A5CE8]/15 pl-2.5">
