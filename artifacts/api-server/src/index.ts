@@ -6,6 +6,7 @@ import { startSyncJob } from "./lib/syncJob.js";
 import { startAdminEbaySyncJob } from "./routes/admin.js";
 import { loadRapidApiKeyFromDb, ensureEbayUsageLedger } from "./lib/rapidapi.js";
 import { startListingScheduler } from "./lib/scheduler.js";
+import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
 
 const rawPort = process.env["PORT"];
 
@@ -707,6 +708,7 @@ async function runAppMigrations() {
   )`, "seller_compliance_appeals");
   await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_cases_email_idx ON seller_compliance_cases(LOWER(seller_email),status)`, "seller_compliance_cases_email_idx");
   await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_appeals_case_idx ON seller_compliance_appeals(case_id,status)`, "seller_compliance_appeals_case_idx");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS seller_compliance_active_unique ON seller_compliance_cases(LOWER(seller_email)) WHERE status IN ('open','awaiting_information','under_review','appealed')`, "seller_compliance_active_unique");
   logger.info("App migrations complete");
 }
 
@@ -732,5 +734,8 @@ runAppMigrations()
     startListingScheduler();
     startSyncJob();
     startAdminEbaySyncJob();
+    const complianceScan = () => { void scanSellerCompliance().then(result => logger.info({result},"Seller compliance scan complete")).catch(err => logger.error({err},"Seller compliance scan failed")); };
+    complianceScan();
+    setInterval(complianceScan, 24 * 60 * 60 * 1000).unref();
   })
   .catch((err: unknown) => logger.error({ err }, "Startup initialization error"));
