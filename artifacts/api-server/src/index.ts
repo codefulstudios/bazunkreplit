@@ -676,6 +676,37 @@ async function runAppMigrations() {
       )
   `, "listings.map_aliexpress_old_categories");
 
+  // Seller compliance tables: idempotent startup setup before monitoring begins.
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_cases (
+    id BIGSERIAL PRIMARY KEY, seller_email TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','awaiting_information','under_review','resolved','appealed')),
+    risk_score SMALLINT CHECK(risk_score BETWEEN 0 AND 100),
+    risk_band TEXT CHECK(risk_band IN ('normal','enhanced','review')),
+    risk_reasons JSONB NOT NULL DEFAULT '[]'::jsonb,rule_version TEXT NOT NULL DEFAULT 'v1',
+    assigned_admin TEXT,opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),closed_at TIMESTAMPTZ
+  )`, "seller_compliance_cases");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_declarations (
+    id BIGSERIAL PRIMARY KEY,seller_email TEXT NOT NULL,
+    declared_type TEXT NOT NULL CHECK(declared_type IN ('private','sole_trader','business')),
+    declaration_version TEXT NOT NULL,declared_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    source TEXT NOT NULL DEFAULT 'seller_onboarding'
+  )`, "seller_declarations");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_events (
+    id BIGSERIAL PRIMARY KEY,case_id BIGINT NOT NULL REFERENCES seller_compliance_cases(id),
+    actor_type TEXT NOT NULL CHECK(actor_type IN ('system','seller','admin')),
+    actor_id TEXT,action TEXT NOT NULL,details JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`, "seller_compliance_events");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_appeals (
+    id BIGSERIAL PRIMARY KEY,case_id BIGINT NOT NULL REFERENCES seller_compliance_cases(id),
+    seller_email TEXT NOT NULL,explanation TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','accepted','rejected')),
+    decision_reason TEXT,decided_by TEXT,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    decided_at TIMESTAMPTZ
+  )`, "seller_compliance_appeals");
+  await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_cases_email_idx ON seller_compliance_cases(LOWER(seller_email),status)`, "seller_compliance_cases_email_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_appeals_case_idx ON seller_compliance_appeals(case_id,status)`, "seller_compliance_appeals_case_idx");
   logger.info("App migrations complete");
 }
 
