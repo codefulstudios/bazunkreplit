@@ -8,6 +8,16 @@ const routes = [
   ['Sell', '/sell'], ['Checkout', '/checkout'], ['Importers', '/importers'],
   ['Offers', '/my-offers'], ['Admin', '/admin'],
 ];
+const authenticated = process.env.MOBILE_AUTH_STORAGE_STATE;
+const authRoutes = [
+  ['Seller dashboard', '/dashboard'],
+  ['Seller listing', '/sell/direct'],
+  ['Seller importer', '/importers'],
+  ['Offers authenticated', '/my-offers'],
+  ['Checkout authenticated', '/checkout'],
+  ['Admin dashboard', '/admin/dashboard'],
+  ['Admin products', '/admin/products'],
+];
 const sizes = [{name:'phone-360',width:360,height:780},{name:'phone-390',width:390,height:844},{name:'tablet-768',width:768,height:1024},{name:'tablet-1024',width:1024,height:768}];
 await mkdir('mobile-results',{recursive:true});
 const browser = await chromium.launch({headless:true});
@@ -44,10 +54,31 @@ try {
       await page.close();
     }
     await context.close();
+    if (authenticated) {
+      // An exported test-account storage state is supplied via an encrypted Actions secret.
+      // Never automate purchases, payouts, imports, listing publication or admin writes.
+      const authContext = await browser.newContext({viewport:{width:size.width,height:size.height},storageState:JSON.parse(authenticated),deviceScaleFactor:1,isMobile:size.width<768,hasTouch:true});
+      for (const [label,path] of authRoutes) {
+        const page=await authContext.newPage();
+        try {
+          const response=await page.goto(base+path,{waitUntil:'domcontentloaded',timeout:30000});
+          await page.waitForTimeout(1700);
+          const data=await page.evaluate(()=>({
+            viewport:innerWidth, width:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),
+            heading:document.querySelector('h1')?.textContent?.trim()||''
+          }));
+          const redirectedToLogin=/sign-in|login|sign-up/i.test(new URL(page.url()).pathname);
+          results.push({size:size.name,label,path,authenticated:true,status:response?.status()??0,overflow:data.width-size.width,redirectedToLogin,...data});
+        } catch(e) {results.push({size:size.name,label,path,authenticated:true,error:String(e)});}
+        // Never capture authenticated screenshots: they may expose private user data.
+        await page.close();
+      }
+      await authContext.close();
+    }
   }
 } finally {await browser.close();}
 await writeFile('mobile-results/report.json',JSON.stringify(results,null,2));
-const failures=results.filter(r=>r.error||r.status>=400||r.overflow>3||r.errors?.length);
+const failures=results.filter(r=>r.error||r.status>=400||r.overflow>3||r.errors?.length||(r.authenticated&&r.redirectedToLogin));
 console.log(JSON.stringify({tested:results.length,failures:failures.length,details:failures},null,2));
-console.log('NOTE: Protected flows require separate authenticated test credentials/session setup. This smoke suite does not submit orders or payments.');
+console.log(authenticated?'Authenticated read-only route checks enabled; no purchases or mutations performed.':'Authenticated checks skipped: set MOBILE_AUTH_STORAGE_STATE secret to enable.');
 if(failures.length)process.exitCode=1;
