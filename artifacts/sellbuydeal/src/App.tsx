@@ -64,6 +64,7 @@ import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
 import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminSellerCompliancePage } from "@/pages/admin/AdminSellerCompliancePage";
+import { SellerCompliancePage } from "@/pages/SellerCompliancePage";
 import { AdminAuditLogPage } from "@/pages/admin/AdminAuditLogPage";
 import { AdminSystemStatusPage } from "@/pages/admin/AdminSystemStatusPage";
 import { AdminFeatureFlagsPage } from "@/pages/admin/AdminFeatureFlagsPage";
@@ -288,6 +289,7 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboardPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/seller-compliance" component={AdminSellerCompliancePage} />
+      <Route path="/seller-compliance" component={SellerCompliancePage} />
       <Route path="/admin/audit-log" component={AdminAuditLogPage} />
       <Route path="/admin/system-status" component={AdminSystemStatusPage} />
       <Route path="/admin/feature-toggles" component={AdminFeatureFlagsPage} />
