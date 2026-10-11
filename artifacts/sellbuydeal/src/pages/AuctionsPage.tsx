@@ -96,15 +96,10 @@ export function AuctionsPage() {
             </div>
             {user && <Link href="/auctions/create" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#ff711d] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8c3b]" data-testid="button-create-auction"><Plus className="h-5 w-5"/> List an Auction</Link>}
           </div>
-          <div aria-hidden="true" className="relative flex min-h-[235px] items-center justify-center sm:min-h-[310px]">
-            <span className="absolute left-[5%] top-[5%] rotate-[-20deg] text-7xl drop-shadow-2xl">🎸</span>
-            <span className="absolute right-[2%] top-[3%] rotate-[14deg] text-7xl drop-shadow-2xl">🖼️</span>
-            <span className="absolute left-[3%] bottom-[8%] rotate-[-12deg] text-6xl drop-shadow-2xl">⌚</span>
-            <span className="absolute right-[5%] bottom-[8%] rotate-[15deg] text-7xl drop-shadow-2xl">👟</span>
-            <div className="relative flex h-44 w-44 rotate-[-7deg] flex-col items-center justify-center rounded-[2.5rem] border-8 border-[#ffb43c] bg-gradient-to-br from-[#ffec8b] via-[#ffa43a] to-[#ff5a4c] shadow-[0_24px_50px_rgba(0,0,0,.4)] sm:h-56 sm:w-56">
-              <span className="text-7xl sm:text-8xl">🔨</span><span className="mt-1 rounded-lg bg-[#102c72] px-5 py-1 text-2xl font-black text-[#ffe146]">BAZUNK</span>
-            </div>
-            <span className="absolute right-[4%] top-[37%] rotate-12 rounded-xl bg-[#ed17d0] px-4 py-2 text-2xl font-black text-[#ffe735] shadow-xl">BID NOW!</span>
+          <div className="relative flex min-h-[235px] items-center justify-center sm:min-h-[310px]">
+            <div className="pointer-events-none absolute inset-4 rounded-full bg-[#ff56c7]/30 blur-3xl" />
+            <img src="/auction-mascot.svg" alt="Smiling Bazunk auction mascot in a blue hoodie holding a gold coin and auction gavel" className="relative z-10 h-[290px] w-full max-w-[470px] object-contain drop-shadow-[0_20px_25px_rgba(3,5,46,.45)] sm:h-[370px]" />
+            <span className="absolute bottom-[7%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-4 border-[#ffe94a] bg-[#f20a9b] px-4 py-2 text-xl font-black text-white shadow-2xl sm:text-2xl">BID NOW!</span>
           </div>
         </div>
       </section>
