@@ -25,6 +25,7 @@ export function DashboardSetupProgress({fallbackName}:{fallbackName:string}){
   <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-200" role="progressbar" aria-valuemin={0} aria-valuemax={6} aria-valuenow={done} aria-label="Account setup progress"><div className="h-full bg-indigo-600 transition-all" style={{width:`${done/6*100}%`}}/></div>
   <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{labels.map((label,i)=><li key={label} className="flex items-center gap-2 text-sm text-gray-700">{i<done?<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600"/>:<Circle className="h-4 w-4 shrink-0 text-gray-400"/>}<span>{label}</span></li>)}</ol>
   {error&&<p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+  {completed&&<p className="mt-3 text-xs text-gray-500">Review setup opens the editable wizard. Seller type changes from commercial to private require admin review.</p>}
   {open&&<AccountSetupWizard key={revision} fallbackName={fallbackName} forceOpen onComplete={()=>{setOpen(false);setRevision(x=>x+1);}}/>}
  </section>;
 }
