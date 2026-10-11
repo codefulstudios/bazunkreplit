@@ -1948,7 +1948,7 @@ router.get("/admin/search-ebay", async (req, res) => {
     if (!resp.ok) { res.status(502).json({ error: rapidApiErrorMessage("eBay", resp.status) }); return; }
 
     const data = await resp.json() as Record<string, unknown>;
-    const raw  = (data?.itemSummaries as Record<string, unknown>[]) ?? [];
+    const raw  = (data?.itemSummaries as Record<string, unknown>[]) ?? (data?.data as Record<string,unknown>|undefined)?.itemSummaries as Record<string,unknown>[] ?? [];
     const currency: "GBP" | "USD" = site === "uk" ? "GBP" : "USD";
     const ebayBase = site === "uk" ? "https://www.ebay.co.uk" : "https://www.ebay.com";
 
