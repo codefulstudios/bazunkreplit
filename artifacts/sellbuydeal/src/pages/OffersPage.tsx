@@ -51,7 +51,7 @@ function OfferCard({ offer }: { offer: Offer }) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex gap-4 p-4">
+      <div className="flex flex-col sm:flex-row gap-4 p-4">
         {/* Product image */}
         <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
           {offer.productImage ? (
@@ -65,7 +65,7 @@ function OfferCard({ offer }: { offer: Offer }) {
 
         {/* Details */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1.5">
+          <div className="flex flex-wrap items-start justify-between gap-2 mb-1.5">
             <h3 className="font-bold text-gray-900 text-sm leading-tight truncate">{offer.productTitle}</h3>
             <StatusBadge status={offer.status} />
           </div>
@@ -114,7 +114,7 @@ function OfferCard({ offer }: { offer: Offer }) {
               )}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={() => respondToCounter(offer.id, true)}
               className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
@@ -198,7 +198,7 @@ export function OffersPage() {
           <div className="relative max-w-7xl mx-auto px-5 py-9 md:py-12 flex items-center justify-between gap-5">
             <div className="relative z-10">
               <button onClick={() => setLocation("/dashboard")} className="mb-4 flex items-center gap-2 text-white font-bold text-sm hover:text-yellow-200"><ArrowLeft className="w-4 h-4"/> Back to Dashboard</button>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-yellow-300">Offers</span></h1>
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-yellow-300">Offers</span></h1>
               <p className="text-base md:text-xl font-semibold mt-3 text-white">Track and manage all your price negotiations</p>
               <div className="flex gap-2 mt-5 flex-wrap"><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">✨ Make a deal</span><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">💸 Save money</span></div>
             </div>
