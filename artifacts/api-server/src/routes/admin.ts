@@ -637,12 +637,19 @@ router.patch("/admin/users/:email", async (req, res) => {
     const { name } = req.body;
     const [beforeUser] = await db.execute(sql`SELECT email, name, seller_type FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
     const sellerType = ["private", "sole_trader", "business"].includes(String(req.body?.sellerType)) ? String(req.body.sellerType) : undefined;
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
+    if (req.body?.sellerType !== undefined && !sellerType) { res.status(400).json({ error: "Invalid seller type" }); return; }
+    const changingSellerType = sellerType !== undefined && sellerType !== String(beforeUser.seller_type ?? "private");
+    const reviewReason = String(req.body?.reviewReason ?? "").trim();
+    if (changingSellerType && reviewReason.length < 20) {
+      res.status(400).json({ error: "Changing seller classification requires a documented review reason (at least 20 characters)." }); return;
+    }
     const [updated] = await db.execute(
       sql`UPDATE users SET name = ${name ?? null}, seller_type = COALESCE(${sellerType ?? null}, seller_type) WHERE email = ${email} RETURNING email, name, seller_type`
     ).then(r => r.rows as any[]);
     if (!updated) { res.status(404).json({ error: "User not found" }); return; }
     logger.info({ email, name }, "Admin edited user");
-    await recordAdminAudit({ req, category: "users", action: "user.update", targetType: "user", targetId: email, summary: `Admin updated user ${email}`, before: beforeUser, after: updated });
+    await recordAdminAudit({ req, category: "users", action: "user.update", targetType: "user", targetId: email, summary: changingSellerType ? `Seller classification reviewed for ${email}: ${reviewReason}` : `Admin updated user ${email}`, before: beforeUser, after: updated });
     res.json({ email: updated.email, name: updated.name, sellerType: updated.seller_type });
   } catch (err) {
     logger.error({ err }, "Failed to edit user");
