@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { scanSellerCompliance } from "../lib/sellerComplianceScan.js";
 import { syncAllImports } from "../lib/syncJob.js";
 import { attachStripePaymentAmounts } from "../lib/adminPaymentRevenue.js";
 import { sql } from "drizzle-orm";
@@ -113,6 +114,37 @@ router.use("/admin", requireAdmin);
 
 // Seller compliance: restricted to authenticated administrators by router.use above.
 // Returns only review cases, not raw private seller evidence.
+router.post("/admin/seller-compliance/scan", async (_req,res)=>{
+  try { res.json(await scanSellerCompliance()); }
+  catch(err){logger.error({err},"Compliance scan failed");res.status(503).json({error:"Compliance scan unavailable; check migration and database."});}
+});
+
+router.get("/admin/seller-compliance/appeals", async (_req,res)=>{
+  try {
+    const result=await db.execute(sql`SELECT id,case_id,seller_email,explanation,status,decision_reason,created_at
+      FROM seller_compliance_appeals ORDER BY created_at DESC LIMIT 100`);
+    res.setHeader("Cache-Control","no-store");res.json({appeals:result.rows});
+  }catch(err){logger.error({err},"Appeals unavailable");res.status(503).json({error:"Appeals unavailable"});}
+});
+
+router.post("/admin/seller-compliance/appeals/:id/decision",async(req,res)=>{
+  try {
+    const id=Number(req.params.id), decision=String(req.body?.decision||""),reason=String(req.body?.reason||"").trim();
+    if(!Number.isSafeInteger(id)||id<1||!["accepted","rejected"].includes(decision)||reason.length<20){
+      res.status(400).json({error:"Valid appeal decision and reason (20+ characters) required."});return;
+    }
+    const result=await db.execute(sql`UPDATE seller_compliance_appeals SET status=${decision},decision_reason=${reason},
+      decided_by='admin',decided_at=NOW() WHERE id=${id} AND status='pending' RETURNING id,case_id,seller_email,status`);
+    if(!result.rows.length){res.status(409).json({error:"Appeal not found or already decided"});return;}
+    const appeal=result.rows[0] as any;
+    await db.execute(sql`UPDATE seller_compliance_cases SET status=${decision==="accepted"?"under_review":"resolved"},
+      updated_at=NOW() WHERE id=${Number(appeal.case_id)}`);
+    await recordAdminAudit({req,category:"users",action:"seller_compliance.appeal",targetType:"seller_compliance_appeal",
+      targetId:String(id),summary:`Appeal ${id} ${decision}: ${reason}`,after:appeal});
+    res.json({appeal});
+  }catch(err){logger.error({err},"Appeal decision failed");res.status(503).json({error:"Appeal decision unavailable"});}
+});
+
 router.get("/admin/seller-compliance/cases", async (req, res) => {
   try {
     const status = String(req.query.status ?? "open");
