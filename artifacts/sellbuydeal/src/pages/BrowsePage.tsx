@@ -12,7 +12,7 @@ import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { Badge } from "@/components/ui/badge";
 import { ALL_PRODUCTS } from "@/data/products";
-import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
@@ -227,6 +227,9 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 }
 
 export function BrowsePage() {
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
   const { t } = useLanguage();
   const rawSearch = useSearch();
   const [, setLocation] = useLocation();
