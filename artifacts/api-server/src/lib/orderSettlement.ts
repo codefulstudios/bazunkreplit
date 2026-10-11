@@ -71,7 +71,8 @@ export async function releaseOrderPayout(id:string) {
     const open=(await tx.execute(sql`SELECT 1 FROM disputes WHERE order_id=${id} AND status NOT IN ('closed','resolved_no_action','resolved_refund') UNION ALL SELECT 1 FROM returns WHERE order_id=${id} AND status NOT IN ('closed','declined','refund_issued') LIMIT 1`)).rows;
     if(open.length)throw new Error("Resolve the open dispute or return before releasing payout.");
     if(reconciled.netMinor<=0)throw new Error("No seller proceeds remain to transfer.");
-    const seller=(await tx.execute(sql`SELECT stripe_account_id FROM users WHERE LOWER(email)=LOWER(${order.seller_email}) LIMIT 1`)).rows[0] as any;
+    const seller=(await tx.execute(sql`SELECT stripe_account_id,onboarding_completed FROM users WHERE LOWER(email)=LOWER(${order.seller_email}) LIMIT 1`)).rows[0] as any;
+    if(seller?.onboarding_completed!==true)throw new Error("Seller must complete all account setup steps before payouts can be released.");
     if(!seller?.stripe_account_id)throw new Error("Seller must connect a Stripe payout account first.");
     const account=await stripe.accounts.retrieve(seller.stripe_account_id);
     if(account.capabilities?.transfers!=="active" || !account.payouts_enabled)throw new Error("Seller's Stripe account is not ready for transfers and payouts.");
