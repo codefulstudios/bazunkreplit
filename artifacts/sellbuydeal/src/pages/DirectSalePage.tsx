@@ -746,7 +746,7 @@ export function DirectSalePage() {
 
             {/* Preview grid */}
             {photos.length > 0 && (
-              <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
                 {photos.map((src, i) => (
                   <div key={i} className="aspect-square rounded-lg overflow-hidden border border-gray-200 relative group">
                     <img src={src} alt="" className="w-full h-full object-cover" />
@@ -964,7 +964,7 @@ export function DirectSalePage() {
             {/* Ship From Country */}
             <div className="mb-5">
               <label className="text-sm font-medium text-slate-200 mb-2 block">Ship From</label>
-              <div className="grid grid-cols-5 gap-2 mb-3">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
                 {SHIP_ORIGINS.map((o) => {
                   const sel = shipOrigin === o.id;
                   return (
@@ -1176,7 +1176,7 @@ export function DirectSalePage() {
             </div>
 
             {/* Benefits */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { icon: Eye, label: "5x More Views", desc: "Videos dramatically increase engagement" },
                 { icon: Zap, label: "Sell 3x Faster", desc: "Videos build trust and confidence" },
@@ -1188,7 +1188,7 @@ export function DirectSalePage() {
                     <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-2">
                       <Icon className="w-4 h-4 text-green-500" />
                     </div>
-                    <p className="text-xs font-bold text-slate-100 mb-1">{b.label}</p>
+                    <p className="text-xs font-bold text-slate-900 mb-1">{b.label}</p>
                     <p className="text-[10px] text-slate-400">{b.desc}</p>
                   </div>
                 );
