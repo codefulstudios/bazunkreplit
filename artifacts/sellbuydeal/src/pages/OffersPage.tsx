@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import {
   Tag, Clock, CheckCircle2, XCircle, ChevronRight,
-  MessageSquare, AlertCircle, RefreshCw, ArrowLeft,
+  MessageSquare, AlertCircle, RefreshCw, ArrowLeft, Sparkles, Search, Lightbulb, ShoppingBag, Percent, Gift, Handshake, Hourglass, List,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -41,6 +41,7 @@ function StatusBadge({ status }: { status: OfferStatus }) {
 }
 
 function OfferCard({ offer }: { offer: Offer }) {
+  const { formatPrice } = useCurrency();
   const { respondToCounter } = useOffers();
   const [, setLocation] = useLocation();
   const cfg = STATUS_CONFIG[offer.status];
@@ -189,110 +190,73 @@ export function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#06172f] text-white flex flex-col">
       <Navbar />
-
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={() => setLocation("/dashboard")}
-            className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-gray-500" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">My Offers</h1>
-            <p className="text-sm text-gray-400">Track and manage all your price negotiations</p>
-          </div>
-        </div>
-
-        {/* Summary stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            { label: "Pending",  value: counts.pending,   color: "text-amber-600",   bg: "bg-amber-50"   },
-            { label: "Accepted", value: counts.accepted,  color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "Total",    value: counts.all,       color: "text-[#4A5CE8]",   bg: "bg-blue-50"    },
-          ].map(({ label, value, color, bg }) => (
-            <div key={label} className={`${bg} rounded-2xl p-4 text-center`}>
-              <p className={`text-2xl font-black ${color}`}>{value}</p>
-              <p className="text-xs text-gray-500 font-medium mt-0.5">{label}</p>
+      <main className="flex-1">
+        <section className="relative overflow-hidden border-b border-blue-400/30 bg-gradient-to-r from-[#074af2] via-[#2528e9] to-[#c423e7]">
+          <div className="absolute inset-0 opacity-30" style={{backgroundImage:"radial-gradient(circle at 30% 20%, #4ff9ff 0, transparent 25%), radial-gradient(circle at 82% 70%, #ff3cae 0, transparent 30%)"}} />
+          <div className="relative max-w-7xl mx-auto px-5 py-9 md:py-12 flex items-center justify-between gap-5">
+            <div className="relative z-10">
+              <button onClick={() => setLocation("/dashboard")} className="mb-4 flex items-center gap-2 text-white font-bold text-sm hover:text-yellow-200"><ArrowLeft className="w-4 h-4"/> Back to Dashboard</button>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-yellow-300">Offers</span></h1>
+              <p className="text-base md:text-xl font-semibold mt-3 text-white">Track and manage all your price negotiations</p>
+              <div className="flex gap-2 mt-5 flex-wrap"><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">✨ Make a deal</span><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">💸 Save money</span></div>
             </div>
-          ))}
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1.5 mb-5 overflow-x-auto pb-1">
-          {TABS.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                tab === t.key
-                  ? "bg-[#1A1D2E] text-white"
-                  : "bg-white text-gray-500 hover:text-gray-700 border border-gray-200"
-              }`}
-            >
-              {t.label}
-              {counts[t.key] > 0 && (
-                <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${
-                  tab === t.key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
-                }`}>
-                  {counts[t.key]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Offers list */}
-        {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-            <Tag className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <h3 className="font-bold text-gray-900 mb-1">
-              {tab === "all" ? "No offers yet" : `No ${tab} offers`}
-            </h3>
-            <p className="text-sm text-gray-400 mb-4">
-              {tab === "all"
-                ? "Browse listings and make an offer on something you like."
-                : "Switch tabs to see other offers."}
-            </p>
-            {tab === "all" && (
-              <button
-                onClick={() => setLocation("/browse")}
-                className="bg-[#F26B21] text-white font-bold px-5 py-2.5 rounded-xl text-sm hover:bg-[#d45c1a] transition-colors"
-              >
-                Browse Listings
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map(offer => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))}
-          </div>
-        )}
-
-        {/* Counter offers notice */}
-        {counts.countered > 0 && tab !== "countered" && (
-          <button
-            onClick={() => setTab("countered")}
-            className="mt-4 w-full bg-blue-50 border border-blue-200 rounded-2xl p-3.5 flex items-center gap-3 hover:bg-blue-100 transition-colors text-left"
-          >
-            <RefreshCw className="w-5 h-5 text-blue-500 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-blue-700">
-                {counts.countered} counter offer{counts.countered > 1 ? "s" : ""} waiting for your response
-              </p>
-              <p className="text-xs text-blue-500">Click to review and respond</p>
+            <div aria-hidden="true" className="hidden sm:flex relative shrink-0 items-center justify-center w-48 h-40 md:w-80 md:h-48">
+              <span className="absolute left-0 top-0 text-5xl rotate-[-22deg] drop-shadow-lg">🏷️</span>
+              <span className="absolute right-0 top-0 text-5xl rotate-[20deg] drop-shadow-lg">💝</span>
+              <span className="text-[110px] md:text-[145px] leading-none drop-shadow-2xl">🧑🏻‍💻</span>
+              <span className="absolute bottom-0 right-1 text-5xl">🛍️</span>
+              <span className="absolute top-3 right-1/3 text-3xl">⭐</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-blue-400" />
-          </button>
-        )}
+          </div>
+        </section>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { label:"Pending Offers", value:counts.pending, detail:"Waiting for a response", icon:Hourglass, cls:"from-orange-500 via-orange-600 to-amber-700" },
+              { label:"Accepted Offers", value:counts.accepted, detail:"Great deals!", icon:CheckCircle2, cls:"from-emerald-500 via-teal-600 to-emerald-800" },
+              { label:"Declined Offers", value:counts.declined, detail:"Keep trying!", icon:XCircle, cls:"from-pink-500 via-fuchsia-700 to-purple-800" },
+            ].map(item => <div key={item.label} className={`flex items-center gap-4 rounded-2xl border border-white/20 bg-gradient-to-br ${item.cls} p-4 shadow-lg`}>
+              <div className="p-3 rounded-xl bg-white/20"><item.icon className="w-8 h-8 text-white"/></div>
+              <div><p className="text-3xl font-black text-white">{item.value}</p><p className="font-extrabold text-white">{item.label}</p><p className="text-white/90 text-sm">{item.detail}</p></div>
+            </div>)}
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {TABS.map(t => <button key={t.key} onClick={() => setTab(t.key)} className={`rounded-full px-4 py-2.5 text-sm font-bold border transition-all ${tab===t.key?"bg-gradient-to-r from-sky-500 to-blue-600 border-sky-400 text-white shadow-lg":"bg-[#09254c] border-blue-500/40 text-white hover:bg-[#16427b]"}`}>{t.label}{counts[t.key]>0?` (${counts[t.key]})`:""}</button>)}
+            </div>
+            <button onClick={() => setLocation("/browse")} className="flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-6 py-3 text-white font-black shadow-lg"><ShoppingBag className="w-5 h-5"/> Browse Listings</button>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] gap-4">
+            <div className="min-h-[310px] rounded-2xl border border-blue-400/60 bg-gradient-to-br from-[#073a97] via-[#092a6e] to-[#21146d] p-6">
+              {filtered.length===0 ? <div className="flex min-h-[265px] flex-col items-center justify-center text-center">
+                <div className="text-7xl mb-3 drop-shadow-xl">🎁</div>
+                <h2 className="text-2xl font-black text-white">{tab==="all"?"No offers yet":`No ${tab} offers`}</h2>
+                <p className="mt-2 text-blue-100">{tab==="all"?"Browse listings and make an offer on something you like.":"Switch tabs to see your other offers."}</p>
+                <button onClick={() => tab==="all"?setLocation("/browse"):setTab("all")} className="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-6 py-3 text-white font-black"><Search className="w-4 h-4"/>{tab==="all"?"Browse Listings":"All Offers"} <ChevronRight className="w-4 h-4"/></button>
+              </div> : <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{filtered.map(offer=><OfferCard key={offer.id} offer={offer}/>)}</div>}
+            </div>
+            <aside className="rounded-2xl border border-blue-400/60 bg-gradient-to-br from-[#092d80] to-[#111060] p-5">
+              <h2 className="text-xl font-black text-white flex items-center gap-2 mb-4"><Lightbulb className="w-6 h-6 text-yellow-300"/> Tips for Getting Great Deals</h2>
+              {[
+                {icon:"🏷️", title:"Be reasonable",detail:"Fair offers are more likely to be accepted."},
+                {icon:"💬",title:"Try a counter offer",detail:"Sellers might come back with a better price."},
+                {icon:"💗",title:"Keep an eye on offers",detail:"Check back for seller responses."},
+              ].map(t=><div key={t.title} className="flex gap-3 items-center rounded-xl border border-blue-400/30 bg-[#051d4b]/75 p-3 mb-2"><span className="text-3xl">{t.icon}</span><div><h3 className="text-white font-extrabold">{t.title}</h3><p className="text-blue-100 text-sm">{t.detail}</p></div></div>)}
+            </aside>
+          </div>
+          {counts.countered>0&&tab!=="countered"&&<button onClick={()=>setTab("countered")} className="w-full text-left rounded-xl border border-cyan-400 bg-cyan-900 p-4 text-white font-bold">{counts.countered} counter offer(s) waiting for your response →</button>}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-6">
+            {[
+              {title:"Find Something You Love",detail:"Browse items and make an offer.",icon:"🔎",cls:"from-blue-600 via-indigo-600 to-fuchsia-600",link:"/browse"},
+              {title:"Negotiate a Better Price",detail:"Make an offer and save on items you want.",icon:"🤝",cls:"from-cyan-500 via-blue-600 to-indigo-700",link:"/browse"},
+              {title:"Great Deals Are Waiting!",detail:"Start browsing and make your first offer today.",icon:"🛍️",cls:"from-fuchsia-600 via-pink-600 to-orange-500",link:"/browse"},
+            ].map(c=><button key={c.title} onClick={()=>setLocation(c.link)} className={`text-left rounded-2xl p-5 bg-gradient-to-r ${c.cls} flex items-center gap-4 hover:brightness-110 transition shadow-lg`}><span className="text-5xl">{c.icon}</span><span><strong className="text-xl font-black text-white block">{c.title}</strong><span className="text-sm text-white font-medium">{c.detail}</span></span></button>)}
+          </div>
+        </div>
       </main>
-
       <Footer />
     </div>
-  );
+  )
 }
