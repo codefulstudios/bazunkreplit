@@ -11,7 +11,7 @@ export function DashboardSetupProgress({fallbackName}:{fallbackName:string}){
  const [profile,setProfile]=useState<Profile|null>(null),[error,setError]=useState(""),[open,setOpen]=useState(false),[revision,setRevision]=useState(0);
  const load=useCallback(async()=>{
   if(!isSignedIn)return;
-  try{const token=await getToken();const r=await fetch("/api/listings/profile/me",{headers:token?{Authorization:"Bearer "+token}:{}});if(!r.ok)throw new Error("Could not load account setup progress");const data:Profile=await r.json();setProfile(data);if(!data.onboarding_completed)setOpen(true);setError("");}
+  try{const token=await getToken();const r=await fetch("/api/listings/profile/me",{headers:token?{Authorization:"Bearer "+token}:{}});if(!r.ok)throw new Error("Could not load account setup progress");const data:Profile=await r.json();setProfile(data);setError("");}
   catch(e:any){setError(e.message||"Unable to load progress");}
  },[getToken,isSignedIn]);
  useEffect(()=>{void load();},[load,revision]);
@@ -24,6 +24,7 @@ export function DashboardSetupProgress({fallbackName}:{fallbackName:string}){
   </div>
   <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-200" role="progressbar" aria-valuemin={0} aria-valuemax={6} aria-valuenow={done} aria-label="Account setup progress"><div className="h-full bg-indigo-600 transition-all" style={{width:`${done/6*100}%`}}/></div>
   <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{labels.map((label,i)=><li key={label} className="flex items-center gap-2 text-sm text-gray-700">{i<done?<CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600"/>:<Circle className="h-4 w-4 shrink-0 text-gray-400"/>}<span>{label}</span></li>)}</ol>
+  {!completed&&<p className="mt-3 text-sm text-amber-800">You can finish setup whenever you are ready. All steps must be completed before seller payouts can be released.</p>}
   {error&&<p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
   {completed&&<p className="mt-3 text-xs text-gray-500">Review setup opens the editable wizard. Seller type changes from commercial to private require admin review.</p>}
   {open&&<AccountSetupWizard key={revision} fallbackName={fallbackName} forceOpen onComplete={()=>{setOpen(false);setRevision(x=>x+1);}}/>}
