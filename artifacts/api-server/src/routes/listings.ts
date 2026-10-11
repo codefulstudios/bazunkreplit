@@ -557,6 +557,7 @@ router.post("/listings/seller-compliance/:id/evidence",async(req,res)=>{
     await db.execute(sql`INSERT INTO seller_compliance_events(case_id,actor_type,actor_id,action,details)
       VALUES(${id},'seller',${email},'evidence_submitted',${JSON.stringify({explanation})}::jsonb)`);
     await db.execute(sql`UPDATE seller_compliance_cases SET status='under_review',updated_at=NOW() WHERE id=${id}`);
+    void sendSystemMessage(email,{category:"Seller Compliance",subject:"Evidence received",body:`Your evidence for seller compliance case #${id} has been received for review.`});
     res.json({success:true});
   }catch(err){console.error("Seller compliance evidence failed",err);res.status(503).json({error:"Could not submit evidence"});}
 });
@@ -577,6 +578,7 @@ router.post("/listings/seller-compliance/:id/appeal",async(req,res)=>{
     await db.execute(sql`INSERT INTO seller_compliance_appeals(case_id,seller_email,explanation)
       VALUES(${id},${email},${explanation})`);
     await db.execute(sql`UPDATE seller_compliance_cases SET status='appealed',updated_at=NOW() WHERE id=${id}`);
+    void sendSystemMessage(email,{category:"Seller Compliance",subject:"Appeal received",body:`Your appeal for seller compliance case #${id} has been received and is pending review.`});
     res.json({success:true});
   }catch(err){console.error("Seller compliance appeal failed",err);res.status(503).json({error:"Could not submit appeal"});}
 });
