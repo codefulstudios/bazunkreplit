@@ -1,122 +1,45 @@
 import { Link } from "wouter";
-import { useLanguage } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
-import {
-  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront,
-  Gamepad2, Gem, ArrowRight,
-} from "lucide-react";
+import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
 
-const CATEGORIES = [
-  { name: "Electronics",   icon: Smartphone, href: "/browse?category=electronics",   bg: "bg-blue-500",      ring: "ring-blue-200"   },
-  { name: "Fashion",       icon: Shirt,       href: "/browse?category=fashion",       bg: "bg-pink-500",      ring: "ring-pink-200"   },
-  { name: "Gaming",        icon: Gamepad2,    href: "/browse?category=gaming",        bg: "bg-violet-500",    ring: "ring-violet-200" },
-  { name: "Home & Garden", icon: Armchair,    href: "/browse?category=home",          bg: "bg-teal-500",      ring: "ring-teal-200"   },
-  { name: "Sports",        icon: Dumbbell,    href: "/browse?category=sports",        bg: "bg-emerald-500",   ring: "ring-emerald-200"},
-  { name: "Books",         icon: BookOpen,    href: "/browse?category=books",         bg: "bg-amber-500",     ring: "ring-amber-200"  },
-  { name: "Collectibles",  icon: Gem,         href: "/browse?category=collectibles",  bg: "bg-[#F26B21]",     ring: "ring-orange-200" },
-  { name: "Automotive",    icon: CarFront,    href: "/browse?category=automotive",    bg: "bg-slate-600",     ring: "ring-slate-200"  },
+const categories = [
+  {name:"Electronics",slug:"electronics",icon:Smartphone,emoji:"📱",gradient:"from-blue-600 to-sky-500"},
+  {name:"Fashion",slug:"fashion",icon:Shirt,emoji:"🧥",gradient:"from-pink-600 to-fuchsia-500"},
+  {name:"Gaming",slug:"gaming",icon:Gamepad2,emoji:"🎮",gradient:"from-violet-700 to-indigo-500"},
+  {name:"Home & Garden",slug:"home",icon:Armchair,emoji:"🪴",gradient:"from-teal-600 to-emerald-500"},
+  {name:"Sports",slug:"sports",icon:Dumbbell,emoji:"👟",gradient:"from-emerald-600 to-green-500"},
+  {name:"Books",slug:"books",icon:BookOpen,emoji:"📚",gradient:"from-amber-600 to-yellow-500"},
+  {name:"Collectibles",slug:"collectibles",icon:Gem,emoji:"🧸",gradient:"from-orange-600 to-rose-500"},
+  {name:"Automotive",slug:"automotive",icon:CarFront,emoji:"🚙",gradient:"from-slate-600 to-blue-600"},
+  {name:"Toys & Hobbies",slug:"toys-hobbies",icon:ToyBrick,emoji:"🧩",gradient:"from-orange-500 to-amber-400"},
+  {name:"Health & Beauty",slug:"health-beauty",icon:HeartPulse,emoji:"💄",gradient:"from-pink-600 to-red-400"},
+  {name:"Jewellery & Watches",slug:"jewelry",icon:Watch,emoji:"⌚",gradient:"from-amber-600 to-orange-400"},
+  {name:"Business & Office",slug:"office",icon:BriefcaseBusiness,emoji:"📦",gradient:"from-slate-600 to-cyan-600"},
 ];
-
-/* ── Bento spotlight cards ────────────────────────────── */
-const BENTO = [
-  {
-    title: "Time for an upgrade?",
-    items: ["Electronics", "Gaming", "Cameras", "Tablets"],
-    bg: "bg-[#4A5CE8]",
-    accent: "bg-[#4A5CE8]/80",
-    href: "/browse?category=electronics",
-  },
-  {
-    title: "Fresh style, better prices",
-    items: ["Trainers", "Denim", "Accessories", "Outerwear"],
-    bg: "bg-[#F26B21]",
-    accent: "bg-[#F26B21]/80",
-    href: "/browse?category=fashion",
-  },
-  {
-    title: "Home & Garden",
-    items: ["Furniture", "Lighting", "Garden Tools", "Décor"],
-    bg: "bg-teal-600",
-    accent: "bg-teal-700",
-    href: "/browse?category=home",
-  },
+const bento = [
+  {title:"Time for an upgrade?",subtitle:"Electronics · Gaming · Cameras · Tablets",emoji:"💻",gradient:"from-blue-700 to-indigo-500",href:"/browse?category=electronics"},
+  {title:"Fresh style, better prices",subtitle:"Trainers · Denim · Accessories · Outerwear",emoji:"👟",gradient:"from-orange-600 to-amber-500",href:"/browse?category=fashion"},
+  {title:"Home & Garden",subtitle:"Furniture · Lighting · Garden Tools · Décor",emoji:"🛋️",gradient:"from-teal-700 to-emerald-500",href:"/browse?category=home"},
 ];
-
 export function CategorySection() {
-  const { t } = useLanguage();
-  const categoryKey: Record<string,string> = { "Electronics":"electronics", "Fashion":"fashion", "Gaming":"gaming", "Home & Garden":"homeGarden", "Sports":"sports", "Books":"books", "Collectibles":"collectibles", "Automotive":"automotive" };
-  return (
-    <section className="bg-gray-50 py-10 border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-4">
-
-        {/* ── Scrollable icon row ─────────────────── */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 mb-10">
-          {CATEGORIES.map(({ name, icon: Icon, href, bg, ring }, i) => (
-            <motion.div
-              key={name}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Link href={href}>
-                <div className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 w-20">
-                  <div className={`w-14 h-14 rounded-2xl ${bg} ring-4 ring-transparent group-hover:${ring} flex items-center justify-center shadow-sm group-hover:scale-105 transition-all`}>
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <p className="text-[11px] font-semibold text-gray-600 group-hover:text-gray-900 text-center leading-tight transition-colors">{t(categoryKey[name] || name, name)}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.45 }}
-          >
-            <Link href="/categories">
-              <div className="flex flex-col items-center gap-2 cursor-pointer group shrink-0 w-20">
-                <div className="w-14 h-14 rounded-2xl bg-gray-200 flex items-center justify-center group-hover:bg-gray-300 transition-colors">
-                  <ArrowRight className="w-5 h-5 text-gray-600" />
-                </div>
-                <p className="text-[11px] font-semibold text-gray-500 group-hover:text-gray-900 text-center leading-tight transition-colors">{t("allCategories")}</p>
-              </div>
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* ── Bento spotlight grid ────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {BENTO.map(({ title, items, bg, href }, i) => (
-            <motion.div
-              key={title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-            >
-              <Link href={href}>
-                <div className={`${bg} rounded-2xl p-5 h-44 flex flex-col justify-between cursor-pointer group hover:opacity-95 transition-opacity overflow-hidden relative`}>
-                  <div className="absolute -bottom-4 -right-4 w-32 h-32 rounded-full bg-white/8" />
-                  <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/5" />
-                  <div className="relative z-10">
-                    <p className="text-white font-black text-lg leading-snug">{title}</p>
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {items.map(item => (
-                        <span key={item} className="text-white/80 text-[11px] font-medium bg-white/15 px-2 py-0.5 rounded-full">{item}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="relative z-10 flex items-center gap-1.5 text-white/80 text-xs font-bold group-hover:text-white transition-colors">
-                    {t("shopNow")} <ArrowRight className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+ return <section className="bg-[#08182e] text-white py-10 border-y border-sky-400/10">
+  <div className="max-w-6xl mx-auto px-4">
+   <div className="flex justify-between items-center gap-3 mb-5"><h2 className="text-2xl font-black">Shop by Category</h2><Link href="/categories" className="text-xs sm:text-sm font-bold text-sky-100 border border-sky-300/30 rounded-xl px-4 py-2 hover:bg-sky-400/15">View All Categories →</Link></div>
+   <div className="flex gap-2.5 overflow-x-auto pb-4 mb-7 [scrollbar-width:thin]">
+    {categories.map(({name,slug,icon:Icon,emoji,gradient},i)=><motion.div key={slug} initial={{opacity:0,y:12}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.035,.3)}} className="shrink-0">
+      <Link href={`/browse?category=${slug}`} className="group flex w-[104px] h-[124px] flex-col items-center justify-between rounded-xl border border-sky-300/15 bg-[#132743] hover:border-sky-400/70 hover:-translate-y-1 transition-all overflow-hidden pb-3">
+       <div className={`w-full h-[84px] flex items-center justify-center bg-gradient-to-br ${gradient} relative`}><span aria-hidden="true" className="text-5xl drop-shadow-xl group-hover:scale-110 transition-transform">{emoji}</span><Icon className="absolute bottom-1 left-2 w-4 h-4 text-white/80"/></div>
+       <span className="text-[11px] text-center font-bold leading-tight px-1">{name}</span>
+      </Link>
+     </motion.div>)}
+   </div>
+   <div className="grid md:grid-cols-3 gap-4">
+    {bento.map(({title,subtitle,emoji,gradient,href})=><Link key={title} href={href} className={`group relative min-h-[155px] overflow-hidden rounded-2xl p-5 flex flex-col justify-between bg-gradient-to-br ${gradient} hover:brightness-110 transition-all`}>
+      <div className="relative z-10 max-w-[75%]"><h3 className="font-black text-lg">{title}</h3><p className="mt-2 text-xs text-white/85 leading-relaxed">{subtitle}</p></div>
+      <span className="relative z-10 font-bold text-xs">Shop Now <ArrowRight className="inline w-3 h-3"/></span>
+      <span aria-hidden="true" className="absolute right-3 bottom-1 text-[92px] leading-none drop-shadow-2xl group-hover:scale-110 transition-transform">{emoji}</span>
+     </Link>)}
+   </div>
+  </div>
+ </section>;
 }
