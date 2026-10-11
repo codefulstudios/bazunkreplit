@@ -233,11 +233,12 @@ function Home() {
       <PerksStrip />
       <main className="flex-1">
         <Hero />
+        <FeaturedListings mode="recent" />
         <CategorySection />
+        <FeaturedListings mode="promoted" />
         <FeatureVisible feature="live"><LiveNowStrip /></FeatureVisible>
-        <RewardsTeaser />
-        <FeaturedListings />
         <FeaturedFeatures />
+        <RewardsTeaser />
         <AdSlot slotKey="home_bottom" />
       </main>
       <Footer />
