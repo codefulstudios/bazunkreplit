@@ -84,7 +84,7 @@ export function CategoriesPage() {
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
   const { formatPrice, currency } = useCurrency();
-  const [openSlug, setOpenSlug] = useState<string | null>("electronics");
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [counts, setCounts] = useState<CategoryCount[]>([]);
   const [hidden, setHidden] = useState<string[]>([]);
@@ -193,6 +193,11 @@ export function CategoriesPage() {
               <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." className="pl-9 bg-[#07172e] border-sky-300/25 text-white placeholder:text-slate-400" />
             </div>
             <nav className="space-y-1">
+              <button type="button" onClick={()=>{setOpenSlug(null);setSearch("");}} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-3 text-left font-extrabold transition-colors ${!selected?"bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg":"bg-[#193353] text-white hover:bg-[#255082]"}`}>
+                <span className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-white/20"><Grid3X3 className="w-5 h-5 text-white"/></span>
+                <span className="flex-1 text-sm">Category Dashboard</span><ChevronRight className="w-4 h-4"/>
+              </button>
+              <div className="my-3 border-t border-sky-300/20"/>
               {filtered.map(category=>{
                 const state=statusFor(category.slug), active=selected?.slug===category.slug;
                 const disabled=state!=="active";
@@ -210,16 +215,16 @@ export function CategoriesPage() {
               <section className={`relative min-h-[190px] sm:min-h-[215px] overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r ${themeFor(selected.slug)}`}>
                 {CATEGORY_ART[selected.slug]&&<img src={CATEGORY_ART[selected.slug]} alt="" className="absolute right-0 inset-y-0 h-full w-[65%] object-cover object-bottom opacity-90"/>}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#06132e]/95 via-[#071d43]/75 to-transparent"/>
-                <div className="relative z-10 p-6 sm:p-8 max-w-[75%]">
-                  <p className="text-xs text-sky-200 mb-3"><Link href="/" className="hover:underline">Home</Link> › Categories › {selected.name}</p>
+                <div className="relative z-10 p-6 sm:p-8 max-w-[85%]">
+                  <p className="text-xs text-sky-100 mb-3"><Link href="/" className="hover:underline">Home</Link> › Categories › {selected.name}</p>
                   <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{selected.name}</h2>
                   <p className="mt-2 text-sm font-semibold text-slate-100">{selected.subcategories.length} subcategories{catCount(selected.slug)>0?` · ${catCount(selected.slug).toLocaleString()} listings`:""}</p>
-                  <p className="mt-3 text-xs sm:text-sm text-slate-200">Explore {selected.name.toLowerCase()} products from Bazunk sellers.</p>
+                  <p className="mt-3 text-xs sm:text-sm text-white">Explore {selected.name.toLowerCase()} products from Bazunk sellers.</p>
                   <Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="inline-flex mt-4 items-center gap-1 rounded-lg bg-white px-4 py-2 text-xs font-black text-[#08204a] hover:bg-sky-100">View all listings <ChevronRight className="w-4 h-4"/></Link>
                 </div>
               </section>
               <section>
-                <div className="flex flex-wrap justify-between items-center gap-2 mb-4"><h3 className="text-xl font-black">Subcategories</h3><Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="text-sm font-bold text-sky-300 hover:text-white">View All {selected.name} →</Link></div>
+                <div className="flex flex-wrap justify-between items-center gap-2 mb-4"><h3 className="text-xl font-black">Subcategories</h3><Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="text-sm font-bold text-amber-300 hover:text-white">View All {selected.name} →</Link></div>
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                   {selected.subcategories.map((sub,index)=>{
                     const state=statusFor(selected.slug,sub.slug),disabled=state!=="active",subArt=CATEGORY_ART[selected.slug],subTotal=subCount(selected.slug,sub.slug);
@@ -230,7 +235,21 @@ export function CategoriesPage() {
               </section>
               {selected.subcategories.some(sub=>suggestedThirdLevel(selected.slug,sub.slug).length>0)&&<section className="rounded-2xl border border-sky-300/15 bg-[#10213a] p-4"><h3 className="font-black text-lg mb-3">Explore more specific categories</h3><div className="flex flex-wrap gap-2">{selected.subcategories.flatMap(sub=>suggestedThirdLevel(selected.slug,sub.slug).map(name=><Link key={sub.slug+name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-lg bg-sky-500/15 border border-sky-400/30 px-3 py-2 text-xs font-semibold text-sky-100 hover:bg-sky-500/30">{name}</Link>))}</div></section>}
               <section><h3 className="text-xl font-black mb-4">Browse Other Categories</h3><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">{ordered.filter(c=>c.slug!==selected.slug&&statusFor(c.slug)==="active").slice(0,8).map(c=><button type="button" key={c.slug} onClick={()=>{setOpenSlug(c.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`relative min-h-[105px] rounded-xl overflow-hidden text-left p-3 bg-gradient-to-br ${themeFor(c.slug)} hover:brightness-110 transition-all`}>{CATEGORY_ART[c.slug]&&<img src={CATEGORY_ART[c.slug]} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom opacity-65"/>}<div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent"/><span className="relative z-10 text-sm font-black">{c.name}</span></button>)}</div></section>
-            </>:<section className="rounded-2xl bg-[#102541] border border-white/10 p-8"><h2 className="text-2xl font-black">Choose a category</h2><p className="text-slate-300 mt-2">Select a category on the left to explore its subcategories and listings.</p></section>}
+            </>:<>
+<section className="relative overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r from-[#1045a4] via-[#4031a5] to-[#9a278e] p-6 sm:p-8">
+<div className="relative z-10"><p className="text-xs uppercase font-black tracking-widest text-amber-300">Explore Bazunk</p><h2 className="text-3xl sm:text-4xl font-black mt-2">Category Dashboard</h2><p className="mt-2 text-sm text-white font-medium max-w-xl">Discover something brilliant. Choose a category below to explore subcategories and listings from our sellers.</p><p className="mt-4 text-xs font-bold text-sky-100">{ordered.filter(c=>statusFor(c.slug)==="active").length} categories to explore</p></div>
+<Grid3X3 className="absolute -right-4 -bottom-8 w-52 h-52 text-white/10 rotate-12"/>
+</section>
+<section><div className="flex items-center justify-between gap-3 mb-4"><h3 className="text-xl font-black">Shop by Category</h3><span className="text-sm font-semibold text-sky-200">Select a category</span></div>
+<div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+{filtered.map((category,index)=>{
+const state=statusFor(category.slug),unavailable=state!=="active",art=CATEGORY_ART[category.slug];
+return <button key={category.slug} type="button" disabled={unavailable} onClick={()=>{setOpenSlug(category.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`group relative overflow-hidden rounded-2xl border border-sky-300/20 bg-[#112846] text-left transition-all ${unavailable?"opacity-55 cursor-not-allowed":"hover:border-sky-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/40"}`}>
+<div className={`relative h-28 sm:h-36 bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{art&&<img src={art} alt="" className="absolute inset-0 h-full w-full object-cover object-bottom"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#061426]/80 via-transparent to-transparent"/><div className="absolute bottom-2 left-3 rounded-lg bg-black/45 p-2"><CategoryIcon name={category.icon} className="w-5 h-5 text-white"/></div></div>
+<div className="p-3 sm:p-4"><h4 className="text-sm sm:text-base font-black leading-tight text-white">{category.name}</h4><p className="mt-1 text-xs font-semibold text-sky-200">{unavailable?labelFor(state):category.subcategories.length+" subcategories"+(catCount(category.slug)>0?" · "+catCount(category.slug)+" listings":"")}</p></div>
+</button>;
+})}
+</div></section></>}
           </div>
         </div>
       </main>
