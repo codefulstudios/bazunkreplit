@@ -165,33 +165,33 @@ function FeeCalculator() {
   const sellerReceives = Math.max(0, val - sellerFee);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+    <div className="bg-[#081c3c] text-white rounded-xl border border-blue-400/25 p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-9 h-9 rounded-xl bg-[#4A5CE8]/10 flex items-center justify-center"><Calculator className="w-4 h-4 text-[#4A5CE8]" /></div>
-        <div><p className="font-bold text-gray-900 text-sm">Buyer & Seller Fee Calculator</p><p className="text-xs text-gray-400">See what the buyer pays and seller receives</p></div>
+        <div><p className="font-bold text-white text-sm">Buyer & Seller Fee Calculator</p><p className="text-xs text-blue-200">See what the buyer pays and seller receives</p></div>
       </div>
-      <div className="grid grid-cols-2 gap-2 mb-4 rounded-xl bg-gray-50 p-1">
-        <button type="button" onClick={()=>setSellerType("private")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="private"?"bg-white text-[#4A5CE8] shadow-sm":"text-gray-500"}`}>Private seller</button>
-        <button type="button" onClick={()=>setSellerType("business")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="business"?"bg-white text-[#4A5CE8] shadow-sm":"text-gray-500"}`}>Business seller</button>
+      <div className="grid grid-cols-2 gap-2 mb-4 rounded-xl bg-[#0c2852] p-1">
+        <button type="button" onClick={()=>setSellerType("private")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="private"?"bg-white text-[#4A5CE8] shadow-sm":"text-blue-100"}`}>Private seller</button>
+        <button type="button" onClick={()=>setSellerType("business")} className={`rounded-lg px-3 py-2.5 text-sm font-bold transition ${sellerType==="business"?"bg-white text-[#4A5CE8] shadow-sm":"text-blue-100"}`}>Business seller</button>
       </div>
-      <label className="block text-xs font-bold text-gray-500 mb-1.5">Item sale price</label>
-      <div className="relative mb-5"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">{currency.symbol}</span><input type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#4A5CE8] focus:ring-2 focus:ring-[#4A5CE8]/10"/></div>
+      <label className="block text-xs font-bold text-blue-100 mb-1.5">Item sale price</label>
+      <div className="relative mb-5"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-200 font-bold text-sm">{currency.symbol}</span><input type="number" min="0" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full bg-[#102d57] text-white pl-8 pr-4 py-3 border border-blue-400/30 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#4A5CE8] focus:ring-2 focus:ring-[#4A5CE8]/10"/></div>
       {val>0 ? <div className="space-y-2.5">
-        <div className="flex justify-between text-sm"><span className="text-gray-500">Item price</span><b>{formatPrice(val)}</b></div>
+        <div className="flex justify-between text-sm"><span className="text-blue-100">Item price</span><b>{formatPrice(val)}</b></div>
         {sellerType==="private" ? <>
-          <div className="flex justify-between gap-3 text-sm"><span className="text-gray-500">Buyer Protection ({(buyerPct*100).toFixed(1).replace(".0","")}% + {formatPrice(buyerFixedGBP)})</span><b className="text-[#4A5CE8]">+{formatPrice(buyerProtection)}</b></div>
-          <div className="flex justify-between border-t pt-3 text-sm"><span className="font-black text-gray-900">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Private seller fee</span><b className="text-emerald-600">{formatPrice(0)} (0%)</b></div>
-          <div className="flex justify-between border-t pt-3 text-sm"><span className="font-black">Seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
-          <p className="text-xs text-gray-400">Buyer Protection is paid by the buyer. The private seller keeps 100% of the item price. Delivery is excluded from this example.</p>
+          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection ({(buyerPct*100).toFixed(1).replace(".0","")}% + {formatPrice(buyerFixedGBP)})</span><b className="text-[#4A5CE8]">+{formatPrice(buyerProtection)}</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black text-white">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-blue-100">Private seller fee</span><b className="text-emerald-600">{formatPrice(0)} (0%)</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
+          <p className="text-xs text-blue-200">Buyer Protection is paid by the buyer. The private seller keeps 100% of the item price. Delivery is excluded from this example.</p>
         </> : <>
-          <div className="flex justify-between gap-3 text-sm"><span className="text-gray-500">Buyer Protection</span><b className="text-emerald-600">Included · {formatPrice(0)} extra</b></div>
-          <div className="flex justify-between border-t pt-3 text-sm"><span className="font-black">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Business selling fee ({businessRatePct.toFixed(1).replace(".0","")}%)</span><b className="text-[#F26B21]">−{formatPrice(sellerFee)}</b></div>
-          <div className="flex justify-between border-t pt-3 text-sm"><span className="font-black">Business seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
-          <p className="text-xs text-gray-400">Protection and support are included in the business selling fee, so the buyer pays no additional Buyer Protection charge. Category rates may differ. Delivery is excluded.</p>
+          <div className="flex justify-between gap-3 text-sm"><span className="text-blue-100">Buyer Protection</span><b className="text-emerald-600">Included · {formatPrice(0)} extra</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Buyer pays</span><span className="font-black text-[#4A5CE8] text-base">{formatPrice(buyerPays)}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-blue-100">Business selling fee ({businessRatePct.toFixed(1).replace(".0","")}%)</span><b className="text-[#F26B21]">−{formatPrice(sellerFee)}</b></div>
+          <div className="flex justify-between border-t border-white/20 pt-3 text-sm"><span className="font-black">Business seller receives</span><span className="font-black text-emerald-600 text-base">{formatPrice(sellerReceives)}</span></div>
+          <p className="text-xs text-blue-200">Protection and support are included in the business selling fee, so the buyer pays no additional Buyer Protection charge. Category rates may differ. Delivery is excluded.</p>
         </>}
-      </div> : <div className="text-center py-4 text-sm text-gray-400">Enter an item price to calculate the transaction</div>}
+      </div> : <div className="text-center py-4 text-sm text-blue-200">Enter an item price to calculate the transaction</div>}
     </div>
   );
 }
@@ -203,298 +203,92 @@ export function SellPage() {
   const mktRatePct = Math.round(mktRate * 100);
   const FEE_ROWS = buildFeeRows(mktRatePct);
 
+  const visibleOptions = SELL_OPTIONS.filter(option => ["direct-sale","create-bundle","open-store"].includes(option.id) && (!featureForHref(option.href) || isFeatureEnabled(rawSettings, featureForHref(option.href)!)));
+  const art: Record<string,{emoji:string;bg:string;caption:string}> = {
+    "direct-sale": {emoji:"👟 📱 ✨",bg:"from-orange-500 via-amber-400 to-pink-500",caption:"Quick & easy · Most popular"},
+    "create-bundle": {emoji:"📦 🎁 💝",bg:"from-purple-600 via-fuchsia-500 to-indigo-600",caption:"Save time · Bigger sales"},
+    "open-store": {emoji:"🏪 📦 🌟",bg:"from-blue-600 via-cyan-500 to-blue-700",caption:"Build your brand · Grow your business"}
+  };
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#03152d] text-white flex flex-col">
       <Navbar />
-
-      {/* Hero */}
-      <section className="bg-white pt-16 pb-14 border-b">
-        <div className="container mx-auto px-4 text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
-          >
-            Start Selling Today
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="text-gray-500 text-lg"
-          >
-            Choose how you want to sell your items
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Selling option cards */}
-      <section className="container mx-auto px-4 py-14">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {SELL_OPTIONS.filter(option => { const feature=featureForHref(option.href); return !feature || isFeatureEnabled(rawSettings,feature); }).map((option, i) => {
-            const Icon = option.icon;
-            return (
-              <motion.div
-                key={option.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md hover:-translate-y-1 transition-all duration-300"
-                data-testid={`card-sell-option-${option.id}`}
-              >
-                <div
-                  className={`relative h-44 bg-gradient-to-br ${option.gradient} flex items-center justify-center`}
-                >
-                  {option.badge && (
-                    <span className="absolute top-3 right-3 bg-white text-gray-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm tracking-wide">
-                      {option.badge}
-                    </span>
-                  )}
-                  <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <Icon className="w-7 h-7 text-white" />
-                  </div>
-                </div>
-
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
-                    {option.title}
-                  </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed flex-1">
-                    {option.description}
-                  </p>
-                  <Link
-                    href={option.href}
-                    className={`inline-flex items-center gap-1 mt-4 text-sm font-semibold ${option.ctaColor} hover:underline`}
-                    data-testid={`link-sell-option-${option.id}`}
-                  >
-                    {option.cta}
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ── Seller Fees & Payouts ── */}
-      <section className="bg-white border-t border-b py-16">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F26B21] bg-orange-50 px-3 py-1.5 rounded-full mb-4">
-              <TrendingUp className="w-3.5 h-3.5" /> Transparent Pricing
-            </span>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">Seller Fees — No Hidden Costs</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">
-              Private sellers list and sell free. Business sellers pay their configured selling fee when an item sells, and fees are
-              deducted automatically — no invoices, no surprises.
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-5xl mx-auto items-start">
-            {/* Fee table */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
-            >
-              <div className="px-6 py-4 border-b border-gray-100">
-                <p className="font-bold text-gray-900">Fee breakdown per sale</p>
-                <p className="text-xs text-gray-400 mt-0.5">Per completed transaction</p>
+      <main className="flex-1">
+        <section className="relative overflow-hidden border-b border-blue-400/30 bg-gradient-to-r from-[#063bd4] via-[#174aff] to-[#b318db]">
+          <div className="absolute -top-20 right-16 h-72 w-72 rounded-full bg-pink-400/40 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-40 w-64 rounded-full bg-cyan-400/30 blur-3xl" />
+          <div className="relative mx-auto max-w-7xl px-5 py-9 md:py-14 grid gap-5 md:grid-cols-[1fr_1fr] items-center">
+            <div>
+              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.02] drop-shadow-lg">Start Selling<br/><span className="text-yellow-300">Today!</span></h1>
+              <p className="mt-4 max-w-lg text-lg md:text-xl font-semibold text-white">Turn your items into cash. It's free, simple and takes just minutes!</p>
+              <div className="mt-6 flex flex-wrap gap-3 text-xs md:text-sm font-bold">
+                {["✓ No seller fees for private sellers","✓ Reach buyers worldwide","✓ Safe & secure marketplace"].map(t=><span key={t} className="rounded-full bg-[#001b64]/55 border border-white/20 px-3 py-2 text-white">{t}</span>)}
               </div>
-              <div className="divide-y divide-gray-50">
-                {FEE_ROWS.map((row) => {
-                  const Icon = row.icon;
-                  return (
-                    <div key={row.label} className={`flex items-center gap-4 px-6 py-4 ${row.label === "Seller receives" ? "bg-emerald-50/40" : ""}`}>
-                      <div className={`w-10 h-10 rounded-xl ${row.bg} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-4 h-4 ${row.iconColor}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-800">{row.label}</p>
-                        <p className="text-xs text-gray-400">{row.sub}</p>
-                      </div>
-                      <span className={`text-base font-black ${row.color} flex-shrink-0`}>{row.value}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-gray-500">
-                  Private sellers list and sell free. Bazunk Credits are for optional promotions and premium tools.
-                </p>
-              </div>
-
-              {/* Per-category rates */}
-              <div className="border-t border-gray-100">
-                <div className="px-6 py-3 bg-gray-50/60">
-                  <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Business / sole-trader seller fee by category</p>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {[
-                    { name: "Electronics",               slug: "electronics" },
-                    { name: "Phones & Tablets",          slug: "cell-phones" },
-                    { name: "Fashion & Jewellery",       slug: "clothing-shoes-jewelry" },
-                    { name: "Automotive",                slug: "automotive" },
-                    { name: "Home & Garden",             slug: "home-garden" },
-                    { name: "Sports & Outdoors",         slug: "sports-outdoors" },
-                    { name: "Toys & Games",              slug: "toys-games" },
-                    { name: "Books",                     slug: "books" },
-                    { name: "CDs, Vinyl & Music",        slug: "cds-vinyl" },
-                    { name: "Beauty & Personal Care",    slug: "beauty-personal-care" },
-                    { name: "Baby Products",             slug: "baby-products" },
-                    { name: "Health & Household",        slug: "health-household" },
-                    { name: "Arts, Crafts & Sewing",     slug: "arts-crafts-sewing" },
-                    { name: "Appliances",                slug: "appliances" },
-                    { name: "Eco-Friendly",              slug: "eco-friendly" },
-                  ].map((cat) => {
-                    const rate = parseFloat(rawSettings[`fee_rate_${cat.slug}`] ?? rawSettings["fee_rate_default"] ?? "8") || 8;
-                    const isDefault = !rawSettings[`fee_rate_${cat.slug}`] || rawSettings[`fee_rate_${cat.slug}`] === rawSettings["fee_rate_default"];
-                    return (
-                      <div key={cat.slug} className="flex items-center justify-between px-6 py-2 text-sm">
-                        <span className="text-gray-600">{cat.name}</span>
-                        <span className={`font-bold tabular-nums ${isDefault ? "text-gray-500" : "text-[#F26B21]"}`}>
-                          {rate}%
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Fee calculator + bank connect */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="space-y-4"
-            >
-              <FeeCalculator />
-
-              {/* Bank account connect CTA */}
-              <div className="bg-gradient-to-br from-[#4A5CE8] to-[#3B4FD8] rounded-2xl p-6 text-white">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <Banknote className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-lg">Get paid automatically</p>
-                    <p className="text-white/70 text-sm mt-0.5">
-                      Connect your bank account via Stripe Express. Fast, free, and secure — set up in ~5 minutes.
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-2 mb-5">
-                  {[
-                    "Payouts sent directly to your UK bank",
-                    "Fees deducted automatically at point of sale",
-                    "View payout history in your Stripe dashboard",
-                  ].map((point) => (
-                    <div key={point} className="flex items-center gap-2 text-sm text-white/85">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 flex-shrink-0" />
-                      {point}
-                    </div>
-                  ))}
-                </div>
-                <Link
-                  href="/dashboard?section=seller-payouts"
-                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-white text-[#4A5CE8] font-bold text-sm hover:bg-gray-50 transition-colors"
-                  data-testid="button-connect-bank"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Connect Bank Account in Dashboard
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why sellers choose us */}
-      <section className="bg-gray-50 border-b py-16">
-        <div className="container mx-auto px-4 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-gray-900 mb-3"
-          >
-            Why Sellers Choose Us
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.07 }}
-            className="text-gray-500 mb-14"
-          >
-            Everything you need to succeed as a seller
-          </motion.p>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {WHY_FEATURES.map((feat, i) => {
-              const Icon = feat.icon;
-              return (
-                <motion.div
-                  key={feat.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07 }}
-                  className="flex flex-col items-center gap-4"
-                  data-testid={`feature-seller-${i}`}
-                >
-                  <div className="w-16 h-16 rounded-full bg-[#F26B21] flex items-center justify-center shadow-md">
-                    <Icon className="w-7 h-7 text-white" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-base">{feat.title}</h3>
-                  <p className="text-sm text-gray-500 max-w-[180px]">{feat.desc}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* CTA card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="max-w-xl mx-auto bg-white rounded-2xl border border-gray-200 py-10 px-8 shadow-sm"
-          >
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Ready to Start Selling?
-            </h3>
-            <p className="text-sm text-gray-500 mb-7">
-              Free to list. Keep ~92–93% of every sale.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link
-                href="/sell/direct"
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#F26B21] text-white font-semibold text-sm hover:bg-[#d95f1c] transition-colors shadow-sm"
-                data-testid="button-create-seller-account"
-              >
-                <ShoppingCart className="w-4 h-4" /> List Your First Item
-              </Link>
-              <Link
-                href="/dashboard?section=seller-payouts"
-                className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-colors shadow-sm"
-                data-testid="button-seller-dashboard"
-              >
-                <Banknote className="w-4 h-4" /> Connect Bank Account
-              </Link>
             </div>
-          </motion.div>
-        </div>
-      </section>
+            <div className="relative flex justify-center items-center min-h-48 md:min-h-64">
+              <div className="absolute inset-4 rounded-[3rem] bg-gradient-to-br from-yellow-300/35 via-pink-400/25 to-cyan-400/30 blur-2xl" />
+              <div className="relative text-center rotate-[-5deg]">
+                <div className="text-7xl md:text-8xl drop-shadow-2xl">📦 🎮 👟</div>
+                <div className="mt-3 inline-block rotate-6 rounded-2xl border-4 border-yellow-300 bg-fuchsia-600 px-7 py-3 text-2xl md:text-3xl font-black shadow-xl">SELL ANYTHING! ✨</div>
+              </div>
+            </div>
+          </div>
+        </section>
 
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
+          <section>
+            <h2 className="text-center text-3xl md:text-4xl font-black">Choose <span className="text-yellow-300">How You Want to Sell</span></h2>
+            <p className="text-center text-white/85 mt-1 mb-5">Different ways to sell for every item and every style.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {visibleOptions.map(option => {
+                const artwork=art[option.id];
+                return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border-2 border-white/25 bg-[#0d2550] hover:border-yellow-300 hover:-translate-y-1 transition-all shadow-xl" data-testid={`card-sell-option-${option.id}`}>
+                  <div className={`h-36 sm:h-44 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
+                    <span className="text-6xl sm:text-7xl drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
+                    {option.badge && <span className="absolute right-3 top-3 rounded-lg bg-green-400 px-3 py-1 text-[#002e24] font-black rotate-6">{option.badge}</span>}
+                  </div>
+                  <div className="p-5 bg-gradient-to-br from-[#102c57] to-[#08172f]">
+                    <div className="flex items-center justify-between"><h3 className="text-2xl font-black">{option.title}</h3><span className="rounded-full bg-orange-500 p-2 text-white"><ArrowRight className="w-5 h-5"/></span></div>
+                    <p className="text-sm text-white/90 mt-2 min-h-10">{option.description}</p>
+                    <div className="mt-3 text-xs font-bold text-yellow-300">✓ {artwork.caption}</div>
+                  </div>
+                </Link>;
+              })}
+            </div>
+          </section>
+
+          <section className="grid lg:grid-cols-2 gap-3" aria-label="Seller fees and calculator">
+            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-5">
+              <span className="inline-block rounded-full bg-orange-500 px-3 py-1 text-xs font-black">⚡ Transparent Pricing</span>
+              <h2 className="text-2xl md:text-3xl font-black mt-3">Seller Fees — No Hidden Costs</h2>
+              <p className="mt-2 text-sm text-white/85">Private sellers list and sell free. Business sellers pay their configured fee when an item sells. No invoices, no surprises.</p>
+              <div className="mt-4 rounded-xl border border-blue-400/25 overflow-hidden">
+                {FEE_ROWS.map(row=>{const Icon=row.icon;return <div key={row.label} className="flex gap-3 items-center justify-between border-b border-white/10 bg-[#041c3b]/80 p-3 last:border-b-0"><span className="flex items-center gap-3"><span className="rounded-lg bg-blue-600 p-2"><Icon className="w-5 h-5 text-white"/></span><span><strong className="block text-sm text-white">{row.label}</strong><small className="text-white/75">{row.sub}</small></span></span><strong className="text-emerald-300 text-sm text-right">{row.value}</strong></div>})}
+              </div>
+              <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs font-bold text-white/90"><span>✓ No invoices</span><span>✓ No monthly fees</span><span>✓ No hidden charges</span></div>
+              <p className="mt-3 text-xs text-white/70">Business fees vary by category. Exact fees appear before checkout.</p>
+            </div>
+            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-4 sm:p-5">
+              <h2 className="text-xl font-black mb-3">🧮 Fee Calculator</h2>
+              <div className="sell-bright-calculator"><FeeCalculator /></div>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 p-4">
+                <div><strong className="block">💳 Get paid automatically</strong><span className="text-xs text-white/90">Connect your bank account securely via Stripe.</span></div>
+                <Link href="/dashboard?section=seller-payouts" className="rounded-lg bg-white px-4 py-2.5 font-black text-blue-800 hover:bg-yellow-200" data-testid="button-connect-bank">Connect Bank Account →</Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-blue-400/40 bg-gradient-to-r from-[#04264e] to-[#061b3c] p-5">
+            <h2 className="text-center text-2xl md:text-3xl font-black">Why Sellers <span className="text-yellow-300">Choose Bazunk</span></h2>
+            <p className="text-center text-white/85 text-sm mb-5">Everything you need to succeed as a seller.</p>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{WHY_FEATURES.map((f,i)=>{const Icon=f.icon;return <div key={f.title} className="flex items-start gap-3"><span className={`shrink-0 rounded-xl p-3 ${["bg-fuchsia-600","bg-blue-600","bg-orange-500","bg-emerald-500"][i]}`}><Icon className="w-6 h-6 text-white"/></span><div><h3 className="font-black text-sm">{f.title}</h3><p className="text-xs text-white/85 mt-1">{f.desc}</p></div></div>})}</div>
+          </section>
+          <section className="relative overflow-hidden rounded-2xl border-2 border-purple-400 bg-gradient-to-r from-[#1256f2] via-[#4e20e8] to-[#f02dc1] p-5 md:p-7 flex flex-col md:flex-row justify-between gap-5 items-center">
+            <span className="absolute right-4 top-1 text-5xl opacity-60">🚀 📦 ✨</span>
+            <div className="relative"><h2 className="text-2xl md:text-3xl font-black">Ready to <span className="text-yellow-300">Start Selling?</span></h2><p className="text-sm text-white mt-1">It's free to list. Private sellers keep 100% of the item price.</p></div>
+            <div className="relative flex flex-wrap gap-2"><Link href="/sell/direct" className="rounded-full bg-orange-500 px-5 py-3 text-sm font-black text-white hover:bg-orange-600" data-testid="button-create-seller-account">🛒 List Your First Item →</Link><Link href="/dashboard?section=seller-payouts" className="rounded-full bg-[#071c46] px-5 py-3 text-sm font-black text-white hover:bg-blue-900" data-testid="button-seller-dashboard">Connect Bank Account</Link></div>
+          </section>
+        </div>
+      </main>
       <Footer />
     </div>
   );
