@@ -6,6 +6,7 @@ import { useAdmin } from "@/context/AdminContext";
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Users",        href: "/admin/users",        icon: Users           },
+  { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "Products",     href: "/admin/products",     icon: Package         },
   { label: "Listings",     href: "/admin/listings",     icon: List            },
   { label: "Imports",      href: "/admin/imports",      icon: ArrowDownToLine },
