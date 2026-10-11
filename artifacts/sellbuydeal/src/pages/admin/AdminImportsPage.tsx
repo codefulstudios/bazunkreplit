@@ -92,6 +92,7 @@ export function AdminImportsPage() {
 
   // ── Selection & import state ──────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [amazonSelectionCache,setAmazonSelectionCache] = useState<Record<string,SearchResult>>({});
   const [markup, setMarkup] = useState("35");
   const [shipping, setShipping] = useState("3.99");
   const [importCategory, setImportCategory] = useState("");
@@ -247,7 +248,6 @@ export function AdminImportsPage() {
     if (!q) return;
     setSearching(true);
     setSearchError(null);
-    setSelected(new Set());
     setImportMsg(null);
     try {
       const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}`);
@@ -262,25 +262,23 @@ export function AdminImportsPage() {
     }
   }
 
+  useEffect(() => { if (hasSearched) void handleSearch(); }, [searchPage]);
+
   function toggleSelect(asin: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(asin) ? next.delete(asin) : next.add(asin);
-      return next;
-    });
+    const product=searchResults.find(p=>p.asin===asin);
+    setSelected(prev=>{const next=new Set(prev);if(next.has(asin))next.delete(asin);else next.add(asin);return next;});
+    setAmazonSelectionCache(prev=>{const next={...prev};if(selected.has(asin))delete next[asin];else if(product)next[asin]=product;return next;});
   }
 
   function toggleAll() {
-    if (selected.size === searchResults.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(searchResults.map(p => p.asin)));
-    }
+    const allSelected=searchResults.length>0&&searchResults.every(p=>selected.has(p.asin));
+    setSelected(prev=>{const next=new Set(prev);for(const p of searchResults){if(allSelected)next.delete(p.asin);else next.add(p.asin);}return next;});
+    setAmazonSelectionCache(prev=>{const next={...prev};for(const p of searchResults){if(allSelected)delete next[p.asin];else next[p.asin]=p;}return next;});
   }
 
   // ── Import selected ───────────────────────────────────────────
   async function handleImportSelected() {
-    const products = searchResults.filter(p => selected.has(p.asin));
+    const products = Object.values(amazonSelectionCache).filter(p=>selected.has(p.asin));
     if (!products.length) return;
     if (!importCategory) { setImportMsg({ ok: false, text: "Choose a category before importing." }); return; }
     setImporting(true);
@@ -302,6 +300,7 @@ export function AdminImportsPage() {
       if (r.ok) {
         setImportMsg({ ok: true, text: d.message ?? `Imported ${d.imported} products` });
         setSelected(new Set());
+        setAmazonSelectionCache({});
         loadListings();
       } else {
         setImportMsg({ ok: false, text: d.error ?? "Import failed" });
