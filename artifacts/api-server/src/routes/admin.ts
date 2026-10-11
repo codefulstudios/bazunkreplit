@@ -1812,7 +1812,7 @@ router.get("/admin/importer-control", async (_req, res) => {
         productsNeedingAttention: alerts.length,
       },
       alerts: alerts.slice(0, 200),
-      importedListings: listingRows.slice(0, 200).map(row=>{let settings:Record<string,unknown>={};try{settings=JSON.parse(String(row.specifications||"{}"));}catch{}return {id:row.id,title:row.title,publicId:row.public_id,condition:row.condition,quantity:row.quantity,status:row.status,source:settings.source,shipsFrom:settings.ships_from||"",shipsTo:settings.ships_to||"",markupPct:settings.markup_pct??35};}),
+      importedListings: listingRows.slice(0, 200).map(row=>{let settings:Record<string,unknown>={};try{settings=JSON.parse(String(row.specifications||"{}"));}catch{}return {id:row.id,title:row.title,publicId:row.public_id,condition:row.condition,quantity:row.quantity,status:row.status,source:settings.source,shipsFrom:settings.ships_from||"",shipsTo:settings.ships_to||"",markupPct:settings.markup_pct??35,stockVerified:settings.stock_quantity_verified===true,sourceQuantity:settings.source_stock_quantity??null,lastChecked:settings.source_last_checked??null,sourceUrl:settings.source_url??settings.original_url??settings.ebay_url??settings.amazon_url??null,itemId:settings.item_id??null};}),
       note: 'Usage shown here is Bazunk-tracked importer activity, not RapidAPI billing/quota usage.',
     });
   } catch (err) {
