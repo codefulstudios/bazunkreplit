@@ -25,6 +25,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
+import { HomepagePromoCards } from "@/components/HomepagePromoCards";
 import { FeaturedListings } from "@/components/FeaturedListings";
 import { FeaturedFeatures } from "@/components/FeaturedFeatures";
 import { Footer } from "@/components/Footer";
@@ -233,8 +234,9 @@ function Home() {
       <PerksStrip />
       <main className="flex-1">
         <Hero />
-        <FeaturedListings mode="recent" />
+        <HomepagePromoCards />
         <CategorySection />
+        <FeaturedListings mode="recent" />
         <FeaturedListings mode="promoted" />
         <FeatureVisible feature="live"><LiveNowStrip /></FeatureVisible>
         <FeaturedFeatures />
