@@ -21,14 +21,13 @@ jobs:
         with:
           node-version: '22'
       - name: Install Playwright runner
-        run: npm install --no-save --no-package-lock playwright@1.56.1
+        run: npm install --prefix tests/mobile --no-save --no-package-lock playwright@1.56.1
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: tests/mobile/node_modules/.bin/playwright install --with-deps chromium
       - name: Run responsive smoke tests
         env:
           BASE_URL: https://www.bazunk.com
-          TEST_USER_EMAIL: ${{ secrets.MOBILE_TEST_EMAIL }}
-          TEST_USER_PASSWORD: ${{ secrets.MOBILE_TEST_PASSWORD }}
+          MOBILE_AUTH_STORAGE_STATE: ${{ secrets.MOBILE_AUTH_STORAGE_STATE }}
         run: node tests/mobile/smoke.mjs
       - name: Upload failure screenshots and report
         if: always()
