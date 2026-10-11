@@ -283,22 +283,21 @@ export function CategoriesPage() {
                   {selected.subcategories.map((sub) => {
                     const sc = subCount(selected.slug, sub.slug);
                     return (
-                      <div key={sub.slug} className="contents">{statusFor(selected.slug,sub.slug)==="active" ? <Link
-                        href={`/browse?category=${selected.slug}&sub=${sub.slug}`}
+                      <div key={sub.slug} className="contents">{statusFor(selected.slug,sub.slug)==="active" ? <div
                         className="group flex items-center gap-3 px-4 py-3 border-b border-slate-100 hover:bg-indigo-50 dark:border-white/[0.07] dark:hover:bg-white/[0.06]"
                       >
                         <div className={`relative w-14 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br ${themeFor(selected.slug)}`}>
                           {CATEGORY_ART[selected.slug] && <img src={CATEGORY_ART[selected.slug]} alt="" className="w-full h-full object-cover object-bottom" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-black text-sm text-slate-950 dark:text-white truncate">{sub.name}</p>
+                          <Link href={`/browse?category=${selected.slug}&sub=${sub.slug}`} className="font-black text-sm text-slate-950 dark:text-white hover:underline">{sub.name}</Link>
                           <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">{sc.toLocaleString()} listing{sc !== 1 ? "s" : ""}</p>
                           {suggestedThirdLevel(selected.slug,sub.slug).length > 0 && <div className="flex flex-wrap gap-1 mt-2" aria-label="Suggested deeper categories">
-                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} onClick={event => event.stopPropagation()} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</Link>)}
+                            {suggestedThirdLevel(selected.slug,sub.slug).map(name => <Link key={name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-900 hover:bg-orange-100 dark:border-orange-700/50 dark:bg-[#25190f] dark:text-orange-200">{name}</Link>)}
                           </div>}
                         </div>
                         <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-500" />
-                      </Link> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
+                      </div> : <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/[0.07] opacity-65 cursor-not-allowed" aria-disabled="true"><div className="flex-1 font-semibold text-sm">{sub.name} <span className="text-amber-600 dark:text-amber-300">({labelFor(statusFor(selected.slug,sub.slug))})</span></div></div>}</div>
                     );
                   })}
                 </div>
