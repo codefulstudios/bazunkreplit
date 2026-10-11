@@ -141,7 +141,7 @@ export function Hero() {
                 onClick={handleSellClick}
                 className="flex items-center justify-center gap-2 px-7 py-3.5 border border-white/20 text-white font-bold rounded-2xl hover:bg-white/5 transition-colors text-sm w-full sm:w-auto"
               >
-                <Store className="w-4 h-4" /> {t("directSale", "Start Selling")}
+                <Store className="w-4 h-4" /> Start Selling
                 <svg
                   className={`w-3.5 h-3.5 ml-0.5 transition-transform duration-200 ${sellOpen ? "rotate-180" : ""}`}
                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -149,6 +149,9 @@ export function Hero() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
+              <Link href="/rewards" className="flex items-center justify-center gap-2 px-6 py-3.5 border border-amber-400/60 bg-amber-400/15 text-amber-100 font-bold rounded-2xl hover:bg-amber-400/25 transition-colors text-sm w-full sm:w-auto">
+                <Gamepad2 className="w-4 h-4" /> Earn Free Credits
+              </Link>
             </div>
 
           </motion.div>
