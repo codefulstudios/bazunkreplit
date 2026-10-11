@@ -145,6 +145,17 @@ router.post("/admin/seller-compliance/appeals/:id/decision",async(req,res)=>{
   }catch(err){logger.error({err},"Appeal decision failed");res.status(503).json({error:"Appeal decision unavailable"});}
 });
 
+router.get("/admin/seller-compliance/cases/:id/evidence",async(req,res)=>{
+  try{
+    const id=Number(req.params.id);
+    if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid case"});return;}
+    const rows=await db.execute(sql`SELECT e.id,e.actor_type,e.action,e.details,e.created_at
+      FROM seller_compliance_events e JOIN seller_compliance_cases c ON c.id=e.case_id
+      WHERE c.id=${id} AND e.action='evidence_submitted' ORDER BY e.created_at DESC LIMIT 100`);
+    res.setHeader("Cache-Control","no-store");res.json({evidence:rows.rows});
+  }catch(err){logger.error({err},"Seller evidence lookup failed");res.status(503).json({error:"Evidence unavailable"});}
+});
+
 router.get("/admin/seller-compliance/cases", async (req, res) => {
   try {
     const status = String(req.query.status ?? "open");
