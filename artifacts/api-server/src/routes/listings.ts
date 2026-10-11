@@ -64,7 +64,7 @@ function promoRank(promotions: string[]): number {
 
 router.get("/listings", async (req, res) => {
   try {
-    const { category, sub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
 
     if (ids) {
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
@@ -89,6 +89,7 @@ router.get("/listings", async (req, res) => {
         price: listingsTable.price,
         category: listingsTable.category,
         subcategory: listingsTable.subcategory,
+        subsubcategory: listingsTable.subsubcategory,
         condition: listingsTable.condition,
         image: listingsTable.image,
         views: listingsTable.views,
@@ -108,7 +109,7 @@ router.get("/listings", async (req, res) => {
           ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
-              ? and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category), eq(listingsTable.subcategory, sub))
+              ? and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category), eq(listingsTable.subcategory, sub), ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
               : and(visible,eq(listingsTable.status, "active"), eq(listingsTable.category, category))
             : and(visible,eq(listingsTable.status, "active"))
       )
