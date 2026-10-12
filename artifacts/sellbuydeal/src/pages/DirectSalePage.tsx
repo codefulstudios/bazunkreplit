@@ -169,7 +169,11 @@ export function DirectSalePage() {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const quickMode = location === "/sell/quick";
+  const [step, setStep] = useState(1);
+  const steps = ["Basics", "Photos", "Details", "Shipping", "Video", "Review"];
+  const goStep = (next: number) => { setStep(Math.max(1, Math.min(6, next))); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -284,7 +288,7 @@ export function DirectSalePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07182f] flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07182f] flex flex-col">
       <Navbar />
 
       <div className="container mx-auto px-4 py-7 max-w-7xl">
@@ -309,8 +313,8 @@ export function DirectSalePage() {
 
           {/* Header card */}
           <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
-            <h1 className="text-3xl font-black text-white">Direct Sale</h1>
-            <p className="text-white text-sm mt-1">List your item quickly and easily. No listing fees for private sellers.</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
+            <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sale" : "Direct Sale"}</h1>
+            <p className="text-white text-sm mt-1">{quickMode ? "List in under a minute. Add more details from your dashboard later." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
           </div>
 
           <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-9 lg:sticky lg:top-24 space-y-4">
@@ -328,8 +332,10 @@ export function DirectSalePage() {
             <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-100"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
           </aside>
 
+          {!quickMode && <nav aria-label="Direct Sale steps" className="lg:col-span-2 grid grid-cols-3 sm:grid-cols-6 gap-2 rounded-2xl bg-white dark:bg-[#102541] p-3 shadow-sm border border-slate-200 dark:border-blue-700/40">{steps.map((name,i)=><button type="button" key={name} onClick={()=>goStep(i+1)} aria-current={step===i+1?"step":undefined} className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-xs sm:text-sm font-bold transition-colors ${step===i+1?"bg-blue-600 text-white shadow-md":"bg-slate-100 text-slate-700 hover:bg-blue-100 dark:bg-[#192e51] dark:text-slate-200 dark:hover:bg-blue-900"}`}><span className="rounded-full bg-white/20 px-2 py-1">{i+1}</span>{name}</button>)}</nav>}
+          {!quickMode && <div className="lg:col-span-2 flex justify-between items-center gap-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 px-5 py-3 text-slate-800 dark:text-white"><span className="font-bold">Step {step} of 6: {steps[step-1]}</span><div className="flex gap-2"><button type="button" disabled={step===1} onClick={()=>goStep(step-1)} className="rounded-lg bg-white dark:bg-slate-700 px-4 py-2 font-bold disabled:opacity-40">Back</button><button type="button" disabled={step===6} onClick={()=>goStep(step+1)} className="rounded-lg bg-gradient-to-r from-blue-600 to-fuchsia-600 px-4 py-2 font-black text-white disabled:opacity-40">Next →</button></div></div>}
           {/* Basic Information */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-base font-bold text-white mb-5">Basic Information</h2>
 
             {/* Title */}
@@ -528,7 +534,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Product Variants */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "none" : step === 3 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-base font-bold text-white">Product Variants</h2>
               <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">OPTIONAL</span>
@@ -695,7 +701,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Item Condition */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-base font-bold text-white mb-4">Item Condition</h2>
             <div className="space-y-2">
               {CONDITIONS.map((c) => {
@@ -736,7 +742,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Photos */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "block" : step === 2 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center gap-2 mb-4">
               <Camera className="w-4 h-4 text-[#4A5CE8]" />
               <h2 className="text-base font-bold text-white">
@@ -814,7 +820,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Specifications (Optional) */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "none" : step === 3 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center gap-3 mb-1">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#F26B21] to-[#D97706] flex items-center justify-center flex-shrink-0">
                 <Tag className="w-3.5 h-3.5 text-white" />
@@ -914,7 +920,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Shipping & Details */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "none" : step === 4 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-base font-bold text-white mb-5">Shipping & Details</h2>
 
             {/* Quantity + SKU */}
@@ -1111,7 +1117,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Premium Video */}
-          <section id="product-video" className="min-w-0 rounded-2xl bg-[#201b40] px-5 sm:px-7 py-6 border border-purple-400/25">
+          <section id="product-video" style={{ display: quickMode ? "none" : step === 5 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#201b40] px-5 sm:px-7 py-6 border border-purple-400/25">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center">
@@ -1197,7 +1203,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Ready to List */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode ? "none" : step === 6 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-lg font-bold text-white mb-1">Ready to List?</h2>
             <p className="text-sm text-slate-300 mb-4">Review your listing and publish when ready</p>
 
