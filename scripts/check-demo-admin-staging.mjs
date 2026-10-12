@@ -5,6 +5,14 @@
  */
 import assert from "node:assert/strict";
 const base=process.env.API_BASE_URL?.replace(/\/$/,"");
+// Never exercise test mutations or checkout probes against production hosts.
+if (base) {
+  const hostname = new URL(base).hostname.toLowerCase();
+  if (hostname === "bazunk.com" || hostname === "www.bazunk.com" || hostname === "bazunk-api.onrender.com" || hostname === "bazunk-web.onrender.com" || !/staging|preview|localhost|127\\.0\\.0\\.1|test/i.test(hostname)) {
+    throw new Error("Refusing to run Demo Creator integration checks against a non-staging host.");
+  }
+}
+
 const token=process.env.ADMIN_TOKEN;
 const sellerEmail=process.env.DEMO_SELLER_EMAIL;
 if(!base||!token||!sellerEmail||!process.env.STAGING_TEST_CONFIRMATION){
