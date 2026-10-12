@@ -174,7 +174,7 @@ router.get("/listings/spotlight", async (req, res) => {
           inArray(listingPromotionsTable.type, spotlightTypes)
         )
       )
-      .limit(12);
+      .limit(100);
 
     if (promos.length === 0) { res.json([]); return; }
     const ids = [...new Set(promos.map(p => p.listingId))];
