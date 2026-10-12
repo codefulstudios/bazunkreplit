@@ -1,3 +1,4 @@
+import { validateClassifiedBatch } from "./classifiedImportValidation.mjs";
 import { Router } from "express";
 import { db, classifiedAdsTable } from "@workspace/db";
 import { eq, desc, and, ilike, or, sql } from "drizzle-orm";
@@ -125,22 +126,12 @@ router.get("/admin/classifieds", requireAdmin, async (req, res) => {
 
 router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) => {
   const { ads } = req.body as { ads?: unknown[] };
-  if (!Array.isArray(ads) || ads.length === 0) {
-    res.status(400).json({ error: "ads array is required" }); return;
-  }
-
-  if (ads.length > 200 || ads.some(a => !a || typeof a !== "object" || Array.isArray(a))) {
-    res.status(400).json({ error: "Import requires 1–200 classified objects" }); return;
-  }
-
-  type AdInput = Record<string, unknown>;
-  // Batch imports must explicitly identify their destination marketplace.
-  // Never infer from location text, currency, or the admin's own region.
-  const invalidRegionRows = (ads as AdInput[]).filter(a => a.marketplaceRegion !== "uk" && a.marketplaceRegion !== "us");
-  if (invalidRegionRows.length > 0) {
-    res.status(400).json({ error: "Each imported classified requires marketplaceRegion: uk or us", invalidCount: invalidRegionRows.length });
+  const validation = validateClassifiedBatch(ads);
+  if (!validation.ok) {
+    res.status(validation.status).json({ error: validation.error, ...("invalidCount" in validation ? { invalidCount: validation.invalidCount } : {}) });
     return;
   }
+  type AdInput = Record<string, unknown>;
   const valid: typeof classifiedAdsTable.$inferInsert[] = (ads as AdInput[])
     .filter(a => a.title && a.description && a.category && a.location && a.contactName)
     .map(a => ({
