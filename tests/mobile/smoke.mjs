@@ -45,7 +45,7 @@ try {
           });
           return {title:document.title,bodyWidth:document.body.scrollWidth,viewport:innerWidth,documentWidth:root.scrollWidth,
             tinyControls:candidates.filter(e=>{const r=e.getBoundingClientRect();return r.width<24||r.height<24}).length,
-            visibleControls:candidates.length,heading:document.querySelector('h1')?.textContent?.trim()||''};
+            visibleControls:candidates.length,heading:document.querySelector('h1')?.textContent?.trim()||'',offscreenElements:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();const st=getComputedStyle(e);return r.width>0&&r.height>0&&st.position!=='fixed'&&st.visibility!=='hidden'&&r.right>innerWidth+4&&r.left<innerWidth}).slice(0,12).map(e=>({tag:e.tagName,classes:typeof e.className==='string'?e.className.slice(0,120):'',right:Math.round(e.getBoundingClientRect().right)}))};
         });
         const overflow=Math.max(data.documentWidth,data.bodyWidth)-size.width;
         const status=response?.status()??0;
