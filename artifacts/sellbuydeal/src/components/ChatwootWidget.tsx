@@ -98,7 +98,7 @@ export function ChatwootWidget() {
       try {
         const token = await getToken();
         if (!token || cancelled) return;
-        const base = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\\/$/, "");
+        const base = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\/$/, "");
         const response = await fetch(`${base}/api/chatwoot/identity`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         if (!response.ok) return;
         const data = await response.json();
