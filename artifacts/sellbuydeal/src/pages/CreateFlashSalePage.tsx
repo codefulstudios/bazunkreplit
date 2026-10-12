@@ -191,6 +191,7 @@ export function CreateFlashSalePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            marketplaceRegion: marketRegion,
             sellerEmail: user.email,
             sellerName: user.username ?? user.name,
             title: form.title.trim(),
