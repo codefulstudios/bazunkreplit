@@ -78,6 +78,10 @@ function promoRank(promotions: string[]): number {
 
 router.get("/listings", async (req, res) => {
   try {
+    if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {
+      res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+      return;
+    }
     const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
 
     if (ids) {
@@ -148,6 +152,10 @@ router.get("/listings", async (req, res) => {
 
 router.get("/listings/category-counts", async (req, res) => {
   try {
+    if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {
+      res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+      return;
+    }
     res.setHeader("Cache-Control", "public, max-age=120");
     const regionFilter = listingRegionFilter(req.query.region);
     const rows = await db.execute(sql`
@@ -165,6 +173,10 @@ router.get("/listings/category-counts", async (req, res) => {
 
 router.get("/listings/spotlight", async (req, res) => {
   try {
+    if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {
+      res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+      return;
+    }
     const visible = await categoryVisibility();
     const regionFilter = listingRegionFilter(req.query.region);
     const now = new Date();
