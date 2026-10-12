@@ -86,7 +86,7 @@ router.get("/listings", async (req, res) => {
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
-      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible,demoVisible));
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible,demoVisible,listingRegionFilter(req.query.region)));
       res.json(rows);
       return;
     }
@@ -123,7 +123,7 @@ router.get("/listings", async (req, res) => {
       .from(listingsTable)
       .where(
         sellerEmail
-          ? and(visible,demoVisible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
+          ? and(visible,demoVisible,regionalVisibility,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
               ? and(visible,demoVisible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
@@ -278,7 +278,7 @@ router.get("/listings/:id", async (req, res) => {
     }
     if (!row) { res.status(404).json({ error: "not found" }); return; }
     const visibility = await categoryVisibility();
-    const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility,demoVisible)).limit(1);
+    const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility,demoVisible,listingRegionFilter(req.query.region))).limit(1);
     if (!publicRow.length) { res.status(404).json({ error: "Listing temporarily unavailable" }); return; }
     if (row.status === "scheduled") {
       const viewer = typeof req.query.email === "string" ? req.query.email.toLowerCase() : "";
