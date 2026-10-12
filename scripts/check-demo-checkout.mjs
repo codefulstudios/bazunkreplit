@@ -6,6 +6,14 @@
  */
 import assert from "node:assert/strict";
 const base=process.env.API_BASE_URL?.replace(/\/$/,"");
+// Never exercise test mutations or checkout probes against production hosts.
+if (base) {
+  const hostname = new URL(base).hostname.toLowerCase();
+  if (hostname === "bazunk.com" || hostname === "www.bazunk.com" || hostname === "bazunk-api.onrender.com" || hostname === "bazunk-web.onrender.com" || !/staging|preview|localhost|127\\.0\\.0\\.1|test/i.test(hostname)) {
+    throw new Error("Refusing to run Demo Creator integration checks against a non-staging host.");
+  }
+}
+
 const demo=Number(process.env.DEMO_LISTING_ID);
 const real=Number(process.env.REAL_LISTING_ID);
 if(!base||!Number.isSafeInteger(demo)||!Number.isSafeInteger(real)||demo===real){
