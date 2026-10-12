@@ -13,6 +13,7 @@ import { CLASSIFIED_CATEGORIES } from "@/data/classifieds";
 interface AdRow {
   id: string;
   category: string;
+  marketplaceRegion: "uk" | "us";
   subcategory: string;
   title: string;
   description: string;
@@ -47,6 +48,7 @@ function makeBlankRow(): AdRow {
   return {
     id: Math.random().toString(36).slice(2),
     category: CLASSIFIED_CATEGORIES[0].slug,
+    marketplaceRegion: "uk",
     subcategory: "",
     title: "",
     description: "",
@@ -134,6 +136,7 @@ export function AdminClassifiedsPage() {
     try {
       const ads = valid.map(r => ({
         title: r.title.trim(),
+        marketplaceRegion: r.marketplaceRegion,
         description: r.description.trim(),
         category: r.category,
         subcategory: r.subcategory || null,
@@ -216,6 +219,7 @@ export function AdminClassifiedsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap w-[110px]">Marketplace</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap w-[220px]">Category / Subcategory</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[200px]">Title</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[220px]">Description</th>
@@ -236,6 +240,12 @@ export function AdminClassifiedsPage() {
                   const isEmpty = !row.title.trim() && !row.description.trim();
                   return (
                     <tr key={row.id} className={`border-b border-gray-50 ${isEmpty && idx > 0 ? "opacity-50" : ""}`}>
+                      <td className="px-3 py-2">
+                        <select aria-label="Marketplace region" value={row.marketplaceRegion} onChange={e => updateRow(row.id, { marketplaceRegion: e.target.value as "uk" | "us" })} className={inputCls}>
+                          <option value="uk">UK</option>
+                          <option value="us">USA / Canada</option>
+                        </select>
+                      </td>
                       {/* Category / Subcategory */}
                       <td className="px-3 py-2">
                         <select value={row.category} onChange={e => updateRow(row.id, { category: e.target.value, subcategory: "" })}
