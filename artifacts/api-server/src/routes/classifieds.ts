@@ -126,9 +126,17 @@ router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) =>
   }
 
   type AdInput = Record<string, unknown>;
+  // Batch imports must explicitly identify their destination marketplace.
+  // Never infer from location text, currency, or the admin's own region.
+  const invalidRegionRows = (ads as AdInput[]).filter(a => a.marketplaceRegion !== "uk" && a.marketplaceRegion !== "us");
+  if (invalidRegionRows.length > 0) {
+    res.status(400).json({ error: "Each imported classified requires marketplaceRegion: uk or us", invalidCount: invalidRegionRows.length });
+    return;
+  }
   const valid: typeof classifiedAdsTable.$inferInsert[] = (ads as AdInput[])
     .filter(a => a.title && a.description && a.category && a.location && a.contactName)
     .map(a => ({
+      marketplaceRegion: a.marketplaceRegion as "uk" | "us",
       title:       String(a.title).trim(),
       description: String(a.description).trim(),
       category:    String(a.category),
