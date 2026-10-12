@@ -755,6 +755,16 @@ async function runAppMigrations() {
     source_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`, "demo_listing_registry");
+  await run(sql`CREATE TABLE IF NOT EXISTS demo_activity_fixtures (
+    id BIGSERIAL PRIMARY KEY,
+    seller_email TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN ('review','sale','repeat_buyer')),
+    rating INTEGER CHECK(rating BETWEEN 1 AND 5),
+    note TEXT,
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK(quantity BETWEEN 1 AND 100),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`, "demo_activity_fixtures");
   logger.info("App migrations complete");
 }
 
