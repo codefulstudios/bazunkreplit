@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'lib/db/scripts/test-marketplace-regions.mjs'
+      - 'artifacts/api-server/src/routes/listings.ts'
+      - 'artifacts/api-server/src/routes/auctions.ts'
+      - 'artifacts/api-server/src/routes/flashSales.ts'
+      - 'artifacts/api-server/src/routes/classifieds.ts'
       - 'scripts/test-live-region-api.mjs'
       - '.github/workflows/marketplace-region-db.yml'
   workflow_dispatch:
@@ -33,7 +37,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
       - name: Create minimal isolated activity schema
         run: |
           psql -h localhost -U bazunk_test -d bazunk_region_test -v ON_ERROR_STOP=1 <<'SQL'
