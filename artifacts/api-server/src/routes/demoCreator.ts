@@ -197,9 +197,9 @@ router.post("/admin/demo-creator/listings/batch-delete", async (req,res) => {
       const safeIds = found.rows.map(r=>Number(r.listing_id));
       if (!safeIds.length) return 0;
       // Never delete a genuine listing, even if the caller supplies its ID.
-      // Delete dependent promotions first; the registry FK cascades on listing deletion.
+      // Keep registry tombstones so deleted demo IDs can never be reactivated and charged.
       await tx.execute(sql`DELETE FROM listing_promotions WHERE listing_id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
-      await tx.execute(sql`DELETE FROM demo_listing_registry WHERE listing_id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
+      await tx.execute(sql`UPDATE demo_listing_registry SET enabled=FALSE WHERE listing_id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
       await tx.execute(sql`UPDATE listings SET status='deleted',updated_at=NOW() WHERE id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
       return safeIds.length;
     });
