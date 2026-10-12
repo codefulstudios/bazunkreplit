@@ -149,7 +149,7 @@ export function Hero() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <Link href="/rewards" className="flex items-center justify-center gap-2 px-6 py-3.5 border border-amber-400/60 bg-amber-400/15 text-amber-100 font-bold rounded-2xl hover:bg-amber-400/25 transition-colors text-sm w-full sm:w-auto">
+              <Link href="/rewards" className="flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-yellow-300 bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 !text-slate-950 font-black rounded-2xl hover:from-yellow-200 hover:to-orange-300 hover:scale-[1.03] transition-all shadow-lg shadow-amber-500/30 text-sm w-full sm:w-auto" style={{ color: "#111827" }}>
                 <Gamepad2 className="w-4 h-4" /> Earn Free Credits
               </Link>
             </div>
