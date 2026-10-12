@@ -6,9 +6,10 @@ import { requireAdmin } from "../middlewares/adminAuth.js";
 const router = Router();
 
 router.get("/classifieds", async (req, res) => {
-  const { category, subcategory, type, limit = "60", offset = "0" } = req.query as Record<string, string>;
+  const { category, subcategory, type, region, limit = "60", offset = "0" } = req.query as Record<string, string>;
 
   const conditions = [eq(classifiedAdsTable.status, "active"), sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${classifiedAdsTable.category} OR cv.key='category_visible_' || ${classifiedAdsTable.category} || '__' || COALESCE(${classifiedAdsTable.subcategory},'')))`];
+  if (region === "uk" || region === "us") conditions.push(eq(classifiedAdsTable.marketplaceRegion, region));
   if (category && category !== "all") conditions.push(eq(classifiedAdsTable.category, category));
   if (subcategory) conditions.push(eq(classifiedAdsTable.subcategory, subcategory));
   if (type && type !== "all") conditions.push(eq(classifiedAdsTable.type, type));
@@ -29,9 +30,10 @@ router.post("/classifieds", async (req, res) => {
     title, description, category, subcategory, type,
     price, priceLabel, negotiable, condition,
     location, contactName, contactEmail, contactPhone,
-    urgency, photos, externalLink, expiresAt,
+    urgency, photos, externalLink, expiresAt, marketplaceRegion,
   } = req.body as Record<string, unknown>;
 
+  if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   if (!title || typeof title !== "string" || !title.trim()) {
     res.status(400).json({ error: "title is required" }); return;
   }
@@ -51,6 +53,7 @@ router.post("/classifieds", async (req, res) => {
   const [row] = await db
     .insert(classifiedAdsTable)
     .values({
+      marketplaceRegion,
       title: (title as string).trim(),
       description: (description as string).trim(),
       category: category as string,
