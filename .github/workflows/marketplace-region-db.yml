@@ -57,8 +57,7 @@ jobs:
           );
           SQL
       - name: Test UK and US database isolation
-        working-directory: lib/db
-        run: node --test scripts/test-marketplace-regions.mjs
+        run: pnpm --filter @workspace/db exec node --test scripts/test-marketplace-regions.mjs
 
   read-only-live-api:
     runs-on: ubuntu-latest
