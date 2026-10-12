@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { useSession } from "@clerk/react";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 
 interface Reputation {
   reviews: { total: number; positive: number; neutral: number; negative: number; average: number };
@@ -33,6 +34,7 @@ function dispatchLabel(hours: number) {
 
 export function SellerProfilePage() {
   const { formatPrice, currency } = useCurrency();
+  const [marketRegion] = useMarketplaceRegion();
   const { id } = useParams<{ id: string }>();
   const { session } = useSession();
   const { user } = useAuth();
@@ -50,12 +52,12 @@ export function SellerProfilePage() {
     Promise.all([
       fetch(`/api/sellers/reputation?email=${encodeURIComponent(sellerEmail)}`).then(async r => { if (!r.ok) throw new Error("Seller not found"); return r.json(); }),
       fetch(`/api/reviews/seller?email=${encodeURIComponent(sellerEmail)}&limit=50`).then(r => r.ok ? r.json() : []),
-      fetch(`/api/listings?sellerEmail=${encodeURIComponent(sellerEmail)}&limit=24`).then(r => r.ok ? r.json() : []),
+      fetch(`/api/listings?sellerEmail=${encodeURIComponent(sellerEmail)}&limit=24&region=${marketRegion}`).then(r => r.ok ? r.json() : []),
     ]).then(([reputation, reviewRows, listingRows]) => {
       setRep(reputation); setReviews(reviewRows); setListings(listingRows);
     }).catch(e => setError(e instanceof Error ? e.message : "Couldn't load this seller"))
       .finally(() => setLoading(false));
-  }, [sellerEmail]);
+  }, [sellerEmail, marketRegion]);
 
   const breakdown = useMemo(() => [5,4,3,2,1].map(star => ({ star, count: reviews.filter(r => r.rating === star).length })), [reviews]);
   const maxBreakdown = Math.max(1, ...breakdown.map(x => x.count));
