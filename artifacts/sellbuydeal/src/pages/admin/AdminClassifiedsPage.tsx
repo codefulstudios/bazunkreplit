@@ -224,13 +224,13 @@ export function AdminClassifiedsPage() {
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[200px]">Title</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[220px]">Description</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[80px]">Type</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[70px]">Price £</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[70px]">Price</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[90px]">Price Label</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[80px]">Condition</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[120px]">Location</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[120px]">Contact Name</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[110px]">Phone</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[140px]">Gumtree URL</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[140px]">Source URL</th>
                   <th className="px-3 py-2.5 w-[60px]"></th>
                 </tr>
               </thead>
@@ -326,12 +326,12 @@ export function AdminClassifiedsPage() {
                       {/* Phone */}
                       <td className="px-3 py-2">
                         <input value={row.contactPhone} onChange={e => updateRow(row.id, { contactPhone: e.target.value })}
-                          placeholder="07..." className={inputCls} />
+                          placeholder="Phone number" className={inputCls} />
                       </td>
                       {/* Gumtree URL */}
                       <td className="px-3 py-2">
                         <input value={row.externalLink} onChange={e => updateRow(row.id, { externalLink: e.target.value })}
-                          placeholder="https://gumtree.com/…" className={inputCls} />
+                          placeholder="Source URL (optional)" className={inputCls} />
                       </td>
                       {/* Actions */}
                       <td className="px-3 py-2">
