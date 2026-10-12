@@ -46,6 +46,14 @@ router.get("/auctions", async (req, res) => {
   } else {
     rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   }
+  // Only explicitly assigned auctions belong to a regional catalogue.
+  // Legacy unassigned auctions remain visible in unscoped/admin views.
+  const selectedRegion = req.query.region;
+  if (selectedRegion === "uk" || selectedRegion === "us") {
+    const ids = rows.rows.filter((r: any) => r.marketplace_region === selectedRegion);
+    res.json(ids.map(r => publicAuction(r as Record<string, unknown>)));
+    return;
+  }
   res.json(rows.rows.map(r => publicAuction(r as Record<string, unknown>)));
 });
 
