@@ -226,7 +226,7 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
         <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest">Category: {scramble.category}</p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {scramble.scrambled.split("").map((letter, i) => (
-            <span key={i} className="w-10 h-10 rounded-xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-lg font-black text-pink-700">
+            <motion.span key={i} initial={{opacity:0,y:-20,rotate:-15}} animate={{opacity:1,y:0,rotate:0}} transition={{delay:i*.07,type:"spring"}} className="w-10 h-10 rounded-xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-lg font-black text-pink-700">
               {letter}
             </span>
           ))}
@@ -254,11 +254,36 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
 }
 
 function MysteryBoxGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  return <div className="py-4 text-center"><p className="font-bold text-gray-900 mb-4">Pick one. You won't know the prize until it opens.</p><div className="grid grid-cols-3 gap-3">{[1,2,3].map(n => <button key={n} onClick={() => onPlay(n)} className="rounded-2xl border-2 border-pink-100 bg-pink-50 py-8 text-3xl hover:scale-105 transition-transform">🎁<span className="block text-xs mt-2 font-bold text-pink-700">Box {n}</span></button>)}</div></div>;
+  const [chosen,setChosen]=useState<number|null>(null);
+  const [busy,setBusy]=useState(false);
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,1100));await onPlay(n);}finally{setBusy(false);}}
+  return <div className="py-4 text-center">
+    <motion.div animate={{y:[0,-5,0]}} transition={{repeat:Infinity,duration:2.5}}><Gift className="w-12 h-12 mx-auto text-pink-500 mb-3"/></motion.div>
+    <p className="font-black text-gray-900 text-lg mb-2">Choose your mystery box!</p>
+    <p className="text-sm text-gray-600 mb-6">Three boxes, one surprise. Pick your favourite.</p>
+    <div className="grid grid-cols-3 gap-3">{[1,2,3].map(n=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)} whileHover={!busy?{scale:1.09,y:-6}:undefined} whileTap={!busy?{scale:.94}:undefined}
+      animate={chosen===n&&busy?{rotate:[0,-8,8,-6,6,0],scale:[1,1.15,1]}:{y:[0,-3,0]}} transition={chosen===n&&busy?{duration:.8}:{duration:2+n*.3,repeat:Infinity}}
+      className="relative rounded-2xl border-2 border-pink-200 bg-gradient-to-b from-fuchsia-50 to-pink-100 py-7 sm:py-9 shadow-md disabled:cursor-wait focus-visible:ring-4 focus-visible:ring-pink-400">
+      <span className="block text-4xl sm:text-5xl drop-shadow-md" aria-hidden="true">{chosen===n&&busy?"✨":"🎁"}</span><span className="block text-sm mt-3 font-black text-pink-800">BOX {n}</span>
+    </motion.button>)}</div>
+    <p className="mt-5 text-sm font-semibold text-gray-600">{busy?"Opening your mystery box…":"Tap a box to reveal your reward"}</p>
+  </div>;
 }
 
 function LuckyNumberGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  return <div className="py-4 text-center"><p className="font-bold text-gray-900 mb-1">Choose your lucky number</p><p className="text-sm text-gray-500 mb-5">Match 1–6 for the jackpot. Miss it and you still get a small prize.</p><div className="grid grid-cols-3 gap-3">{[1,2,3,4,5,6].map(n => <button key={n} onClick={() => onPlay(n)} className="rounded-xl border border-amber-200 bg-amber-50 py-4 text-xl font-black text-amber-700 hover:bg-amber-100">{n}</button>)}</div></div>;
+  const [chosen,setChosen]=useState<number|null>(null);
+  const [busy,setBusy]=useState(false);
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,850));await onPlay(n);}finally{setBusy(false);}}
+  return <div className="py-4 text-center">
+    <motion.div animate={{rotate:[-10,10,-10],y:[0,-5,0]}} transition={{repeat:Infinity,duration:2.2}}><Dices className="w-12 h-12 text-amber-500 mx-auto mb-3"/></motion.div>
+    <p className="font-black text-gray-900 text-lg mb-2">Pick your lucky number</p>
+    <p className="text-sm text-gray-600 mb-5">Choose 1–6. Match the secret number for the jackpot!</p>
+    <div className="grid grid-cols-3 gap-3">{[1,2,3,4,5,6].map(n=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)}
+      whileHover={!busy?{scale:1.1,rotate:4}:undefined} whileTap={!busy?{scale:.9}:undefined}
+      animate={chosen===n?{scale:[1,1.2,1],rotate:[0,12,-12,0]}:undefined} transition={{duration:.7}}
+      className={`rounded-2xl border-2 py-5 text-2xl font-black shadow-sm focus-visible:ring-4 focus-visible:ring-amber-400 ${chosen===n?"bg-amber-400 text-amber-950 border-amber-500":"border-amber-200 bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800"}`}>{n}</motion.button>)}</div>
+    <p className="mt-5 text-sm font-semibold text-gray-600">{busy?"Rolling your lucky number…":"Tap a number to play"}</p>
+  </div>;
 }
 
 // ── Game Modal ────────────────────────────────────────────────────────────────
@@ -326,9 +351,9 @@ function GameModal({
                 key="result"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center gap-4 py-4 text-center"
+                className="relative flex flex-col items-center gap-4 py-4 text-center"
               >
-                {result.won ? (
+                {result.won && <motion.div aria-hidden="true" initial={{opacity:0,scale:.6}} animate={{opacity:[0,1,0],scale:[.6,1.5,1.8]}} transition={{duration:1.5}} className="absolute inset-0 pointer-events-none flex justify-center items-start text-4xl">✨ 🎉 ✨</motion.div>}\n                {result.won ? (
                   <>
                     <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
                       <CheckCircle2 className="w-9 h-9 text-emerald-500" />
