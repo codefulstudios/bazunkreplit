@@ -19,34 +19,50 @@ export function ImportersPage(){
  useEffect(()=>{if(!dialog)return;const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")setDialog(null)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[dialog]);
  const open=(kind:Dialog,id?:string)=>{if(id)setSelected(id);setDialog(kind)};
  const current=sources.find(s=>s.id===selected)||sources[0];
- return <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#080d20] dark:text-white">
- <div className="max-w-6xl mx-auto px-4 py-10">
-  <Link href="/" className="inline-flex items-center gap-2 rounded-xl !bg-orange-500 !text-black hover:!bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 px-4 py-2.5 text-sm font-black mb-6 border border-orange-600 shadow-sm"><ArrowLeft className="w-4 h-4"/> Back to Home</Link>
-  <section className="rounded-3xl bg-gradient-to-r from-[#171a32] to-[#262b62] text-white p-7 md:p-10">
-   <span className="text-xs font-black uppercase tracking-widest text-cyan-300">Bazunk Importer Hub</span>
-   <h1 className="text-3xl md:text-5xl font-black mt-3">Bring your products to Bazunk.</h1>
-   <p className="text-slate-200 mt-4 max-w-2xl">Explore supported marketplaces, see how importing works and understand the costs before getting started. Paid importers run through the Bazunk Data Platform.</p>
-   <div className="flex flex-wrap gap-3 mt-6">
-    <button onClick={()=>open("docs")} className="rounded-xl bg-cyan-400 text-slate-950 px-5 py-3 font-black inline-flex gap-2 items-center"><BookOpen className="w-4 h-4"/> How it works</button>
-    <button onClick={()=>open("pricing")} className="rounded-xl border border-white/40 bg-white/10 text-white px-5 py-3 font-bold inline-flex gap-2 items-center"><Wallet className="w-4 h-4"/> Pricing & credits</button>
-    <button onClick={()=>open("examples")} className="rounded-xl border border-white/40 bg-white/10 text-white px-5 py-3 font-bold inline-flex gap-2 items-center"><Search className="w-4 h-4"/> Examples</button>
+ return <div className="min-h-screen bg-white text-slate-950 dark:bg-[#070e20] dark:text-white transition-colors duration-300">
+ <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7">
+  <Link href="/" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-slate-950 px-5 py-3 text-sm font-black mb-4 shadow-sm"><ArrowLeft className="w-4 h-4"/> Back to Home</Link>
+  <section className="relative isolate overflow-hidden rounded-3xl border border-indigo-100 dark:border-indigo-400/30 bg-gradient-to-br from-indigo-100 via-sky-50 to-fuchsia-100 dark:from-[#0b1b3e] dark:via-[#10143d] dark:to-[#201050] p-6 sm:p-9 lg:p-12 shadow-sm">
+   <div className="absolute inset-0 pointer-events-none opacity-70 dark:opacity-50" style={{background:"radial-gradient(circle at 78% 30%,#bba4ff88,transparent 34%),radial-gradient(circle at 95% 85%,#3bdcf766,transparent 35%)"}}/>
+   <div className="relative z-10 max-w-[650px]">
+    <p className="text-xs uppercase font-black tracking-widest text-violet-700 dark:text-cyan-300">Bazunk Importer Hub</p>
+    <h1 className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-tight">Bring your products<br/><span className="bg-gradient-to-r from-violet-700 via-blue-600 to-orange-500 bg-clip-text text-transparent">to Bazunk.</span></h1>
+    <p className="mt-5 text-base font-medium leading-relaxed text-slate-700 dark:text-slate-200">Import products from top marketplaces, compare costs, add your markup and publish on Bazunk. Paid importers run through the Bazunk Data Platform.</p>
+    <div className="flex flex-wrap gap-3 mt-6">
+     <button onClick={()=>open("docs")} className="rounded-xl bg-blue-600 dark:bg-cyan-400 text-white dark:text-slate-950 px-5 py-3 font-black inline-flex gap-2 items-center shadow-lg"><BookOpen className="w-4 h-4"/> How it works</button>
+     <button onClick={()=>open("pricing")} className="rounded-xl bg-white/90 dark:bg-indigo-950/80 border border-indigo-100 dark:border-indigo-400/40 text-slate-900 dark:text-white px-5 py-3 font-bold inline-flex gap-2 items-center"><Wallet className="w-4 h-4"/> Pricing & credits</button>
+     <button onClick={()=>open("examples")} className="rounded-xl bg-white/90 dark:bg-indigo-950/80 border border-indigo-100 dark:border-indigo-400/40 text-slate-900 dark:text-white px-5 py-3 font-bold inline-flex gap-2 items-center"><Search className="w-4 h-4"/> Examples</button>
+    </div>
+   </div>
+   <div aria-hidden="true" className="hidden lg:flex absolute right-4 top-4 bottom-4 w-[36%] flex-col justify-center items-center">
+    <div className="grid grid-cols-3 gap-3 rotate-[-7deg]">{sources.map((s,i)=><div key={s.id} className={`flex h-20 w-24 items-center justify-center rounded-2xl shadow-xl border-2 border-white/80 bg-gradient-to-br ${s.gradient} text-white font-black text-sm`} style={{transform:`translateY(${i%3===1?-12:10}px)`}}>{s.name}</div>)}</div>
+    <div className="mt-6 rounded-2xl bg-[#111b48] px-12 py-5 text-3xl font-black italic text-white shadow-2xl border-4 border-slate-400">Bazun<span className="text-orange-400">k</span></div>
+    <p className="mt-3 text-indigo-800 dark:text-cyan-200 font-black tracking-wide">Import · List · Sell · Grow! 🚀</p>
    </div>
   </section>
-  <div className="mt-9 flex flex-wrap items-end justify-between gap-3"><div><p className="uppercase text-xs tracking-widest font-black text-orange-600 dark:text-orange-400">Supported sources</p><h2 className="text-2xl font-black mt-1 text-slate-950 dark:text-orange-400">Supported marketplaces</h2></div><span className="text-sm text-slate-700 dark:text-orange-200">Marketplace integrations</span></div>
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">{sources.map(s=><div key={s.id} className="rounded-2xl border border-orange-200 dark:border-orange-500/30 bg-white dark:bg-[#101010] p-3 text-center shadow-sm">
-   <div className={`rounded-xl bg-gradient-to-br ${s.gradient} h-20 flex items-center justify-center p-3`}>
-    <img src={`https://cdn.simpleicons.org/${({ebay:"ebay",amazon:"amazon",aliexpress:"aliexpress",shopify:"shopify",woocommerce:"woocommerce",offerup:"offerup"} as Record<string,string>)[s.id]}/ffffff`} alt={`${s.name} logo`} loading="lazy" className="max-w-full max-h-12 w-auto h-auto object-contain" onError={e=>{e.currentTarget.style.display="none";e.currentTarget.nextElementSibling?.classList.remove("hidden")}}/>
-    <span className="hidden text-white text-lg font-black">{s.name}</span>
+  <div className="mt-8 flex flex-wrap items-end justify-between gap-3"><div><p className="uppercase text-xs tracking-widest font-black text-blue-600 dark:text-amber-400">Supported sources</p><h2 className="text-2xl sm:text-3xl font-black mt-1">Supported marketplaces</h2></div><span className="rounded-full bg-green-50 dark:bg-emerald-950 border border-green-100 dark:border-emerald-700/40 px-4 py-2 text-xs sm:text-sm font-bold text-green-700 dark:text-green-300">✓ More marketplaces coming soon!</span></div>
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-5">{sources.map(s=><div key={s.id} className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-600/70 bg-white dark:bg-[#101e37] shadow-md hover:-translate-y-1 hover:shadow-xl transition-all">
+   <div className={`bg-gradient-to-br ${s.gradient} h-24 flex items-center justify-center p-4`}>
+    <img src={`https://cdn.simpleicons.org/${({ebay:"ebay",amazon:"amazon",aliexpress:"aliexpress",shopify:"shopify",woocommerce:"woocommerce",offerup:"offerup"} as Record<string,string>)[s.id]}/ffffff`} alt={`${s.name} logo`} loading="lazy" className="max-w-full max-h-12 object-contain" onError={e=>{e.currentTarget.style.display="none";e.currentTarget.nextElementSibling?.classList.remove("hidden")}}/>
+    <span className="hidden text-white text-xl font-black">{s.name}</span>
    </div>
-   <p className="font-black mt-3 text-slate-950 dark:text-orange-300">{s.name}</p><p className="text-xs mt-1 text-slate-700 dark:text-orange-200">{s.paid?"Prepaid · preparing launch":"Free tool available"}</p>
+   <div className="p-3">
+    <span className={`inline-flex rounded-full px-2 py-1 text-[11px] font-black ${s.paid?"bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100":"bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-100"}`}>{s.paid?"Paid importer":"Free tool"}</span>
+    <p className="font-black mt-2 text-base">{s.name}</p>
+    <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 min-h-[46px]">{s.id==="ebay"?"Search and import millions of products.":s.id==="amazon"?"Browse and import product catalogues.":s.id==="aliexpress"?"Find products from AliExpress.":s.id==="shopify"?"Import from a public Shopify store.":s.id==="woocommerce"?"Import from WooCommerce stores.":"Transfer your own OfferUp adverts."}</p>
+    <div className="mt-2 flex items-center justify-between gap-2"><span className="text-[11px] font-bold text-slate-500 dark:text-slate-300">{s.paid?"Preparing launch":"Available tool"}</span>{s.paid?<button onClick={()=>open("pricing",s.id)} aria-label={`Learn about ${s.name} importer`} className="rounded-full bg-blue-600 text-white p-2"><ArrowRight className="w-4 h-4"/></button>:<Link href={s.href!} aria-label={`Open ${s.name} importer`} className="rounded-full bg-emerald-500 text-white p-2"><ArrowRight className="w-4 h-4"/></Link>}</div>
+   </div>
   </div>)}</div>
-  <section className="mt-9 grid md:grid-cols-3 gap-4">{[
-   {title:"1. Find products",description:"Search a supported marketplace or provide a source URL. Preview product images and details before choosing.",icon:Search},
-   {title:"2. Review costs",description:"Paid searches and product lookups will show their charge before execution. Choose your listings and selling markup.",icon:Wallet},
-   {title:"3. Import and manage",description:"Create listings on Bazunk, retain the original source and review available stock-sync options.",icon:RefreshCw}
-  ].map(step=>{const Icon=step.icon;return <div key={step.title} className="rounded-2xl bg-white dark:bg-[#101010] border border-slate-200 dark:border-orange-500/30 p-5"><Icon className="w-6 h-6 text-indigo-500"/><h3 className="font-black text-lg mt-3 text-slate-950 dark:text-orange-400">{step.title}</h3><p className="text-sm text-slate-800 dark:text-orange-100 mt-2">{step.description}</p></div>})}</section>
-  <div className="mt-7 rounded-2xl border border-amber-300/50 bg-orange-50 text-slate-950 dark:bg-[#15100b] dark:text-orange-200 p-5 flex gap-3"><Info className="w-5 h-5 shrink-0 mt-0.5"/><p className="text-sm"><b>Paid importer launch in progress.</b> eBay, Amazon and AliExpress searches are not open for prepaid use yet. You do not need to enter your own RapidAPI key. Shopify, WooCommerce and manual OfferUp tools can be opened from their guides.</p></div>
-  <div className="mt-6 flex flex-wrap gap-4 text-sm"><button className="font-bold text-orange-700 dark:text-orange-300 underline" onClick={()=>open("docs")}>Read importer documentation</button><a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="font-bold text-indigo-600 dark:text-cyan-300 underline inline-flex items-center gap-1">Bazunk Data Platform <ExternalLink className="w-3 h-3"/></a></div>
+  <section className="mt-8 rounded-3xl bg-slate-50 dark:bg-[#0e1b32] border border-slate-100 dark:border-slate-700/70 p-5 sm:p-7">
+   <div className="flex flex-wrap justify-between gap-3 items-center"><div><h2 className="text-2xl font-black">How it works</h2><p className="text-sm text-slate-600 dark:text-slate-300">Get from product to sale in three simple steps.</p></div><button onClick={()=>open("docs")} className="rounded-xl border border-blue-300 dark:border-cyan-500 px-4 py-2 text-blue-700 dark:text-cyan-300 font-bold text-sm">Read the full documentation →</button></div>
+   <div className="grid md:grid-cols-3 gap-4 mt-5">{[
+    {title:"Find products",description:"Search a supported marketplace or enter a product URL. Preview images, details and pricing.",icon:Search,color:"text-blue-600 bg-blue-100 dark:bg-blue-950"},
+    {title:"Review costs",description:"See importer costs before importing. Add your markup and choose listing settings.",icon:Wallet,color:"text-violet-600 bg-violet-100 dark:bg-violet-950"},
+    {title:"Import and manage",description:"Create Bazunk listings, keep the original source and use available stock-sync options.",icon:RefreshCw,color:"text-pink-600 bg-pink-100 dark:bg-pink-950"}
+   ].map((step,i)=>{const Icon=step.icon;return <div key={step.title} className="flex gap-4 rounded-2xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-[#14243d] p-5 shadow-sm"><div className={`shrink-0 rounded-full h-14 w-14 flex items-center justify-center ${step.color}`}><Icon className="w-7 h-7"/></div><div><p className="text-base font-black">{i+1}. {step.title}</p><p className="text-sm mt-2 text-slate-600 dark:text-slate-200 leading-relaxed">{step.description}</p></div></div>})}</div>
+  </section>
+  <div className="mt-5 rounded-2xl border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-[#281c12] p-5 flex gap-3 text-slate-800 dark:text-amber-100"><Info className="w-6 h-6 shrink-0 text-amber-600 dark:text-amber-400"/><p className="text-sm leading-relaxed"><b>Paid importer launch in progress.</b> eBay, Amazon and AliExpress searches are not open for prepaid use yet. You do not need to enter your own RapidAPI key. Shopify, WooCommerce and manual OfferUp tools can be opened from their guides.</p></div>
+  <div className="mt-5 flex flex-wrap gap-4 text-sm"><button className="font-bold text-blue-700 dark:text-cyan-300 underline" onClick={()=>open("docs")}>Read importer documentation</button><a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 dark:text-cyan-300 underline inline-flex items-center gap-1">Bazunk Data Platform <ExternalLink className="w-3 h-3"/></a></div>
  </div>
  {dialog&&<div className="fixed inset-0 z-[100] bg-black/75 flex items-center justify-center p-4" onMouseDown={e=>{if(e.target===e.currentTarget)setDialog(null)}}>
  <div role="dialog" aria-modal="true" aria-label={dialog==="pricing"?"Importer pricing":dialog==="examples"?"Importer examples":"Importer documentation"} className={`w-full ${dialog==="examples"?"max-w-[1500px]":"max-w-2xl"} max-h-[90vh] overflow-y-auto rounded-3xl bg-orange-50 text-slate-950 dark:bg-[#0d0d0d] dark:text-orange-100 border border-orange-400/40 shadow-2xl p-6 md:p-8`}>
