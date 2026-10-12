@@ -115,6 +115,14 @@ export function Navbar() {
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [marketRegion, setMarketRegion] = useState<"uk" | "us">(() => {
+    try { return window.localStorage.getItem("bazunk-market-region") === "us" ? "us" : "uk"; } catch { return "uk"; }
+  });
+  const changeMarketRegion = (region: "uk" | "us") => {
+    setMarketRegion(region);
+    try { window.localStorage.setItem("bazunk-market-region", region); } catch { /* storage disabled */ }
+    window.dispatchEvent(new CustomEvent("bazunk:market-region", { detail: region }));
+  };
   const [sellOpen, setSellOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
@@ -215,6 +223,11 @@ export function Navbar() {
   return (
     <>
       <nav className="sticky top-0 z-50 w-full bg-white shadow-sm">
+        <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
+          <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
+          <button type="button" aria-pressed={marketRegion === "uk"} onClick={() => changeMarketRegion("uk")} className={`rounded-lg px-3 py-1 text-xs font-bold ${marketRegion === "uk" ? "bg-[#F26B21] text-white" : "bg-white text-gray-700 border border-gray-200"}`}>🇬🇧 UK</button>
+          <button type="button" aria-pressed={marketRegion === "us"} onClick={() => changeMarketRegion("us")} className={`rounded-lg px-3 py-1 text-xs font-bold ${marketRegion === "us" ? "bg-[#F26B21] text-white" : "bg-white text-gray-700 border border-gray-200"}`}>🇺🇸 USA / Canada</button>
+        </div>
         <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-3">
 
           {/* Theme + Logo */}
