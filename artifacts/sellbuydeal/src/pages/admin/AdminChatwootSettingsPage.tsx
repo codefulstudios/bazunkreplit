@@ -49,7 +49,7 @@ export function AdminChatwootSettingsPage(){
     <section className="bg-white border rounded-xl p-5"><h2 className="font-bold mb-2">Customer context</h2>
       {check("chatwoot_region_context","Share UK/US marketplace region")}
       {check("chatwoot_order_context","Share current order or dispute reference when available")}
-      {check("chatwoot_identify","Verified account identity (requires server-side identity endpoint)")}
+      <label className="flex items-center justify-between gap-3 py-3 text-sm text-gray-500"><span>Verified account identity (requires server-side identity endpoint)</span><input type="checkbox" checked={false} disabled className="h-5 w-5"/></label>
       <p className="text-xs text-amber-700 mt-3">Verified identity is not activated until the authenticated HMAC endpoint is configured. Email addresses are never trusted from query parameters.</p>
     </section>
     <section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="font-bold">Connection and Chatwoot administration</h2>
