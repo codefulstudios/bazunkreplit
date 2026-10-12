@@ -120,7 +120,7 @@ router.get("/admin/classifieds", requireAdmin, async (req, res) => {
 });
 
 router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) => {
-  const { ads } = req.body as { ads?: unknown[] };
+  const ads: unknown = req.body?.ads;
   if (!Array.isArray(ads) || ads.length === 0) {
     res.status(400).json({ error: "ads array is required" }); return;
   }
