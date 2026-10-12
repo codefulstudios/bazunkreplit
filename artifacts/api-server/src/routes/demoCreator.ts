@@ -196,7 +196,11 @@ router.post("/admin/demo-creator/listings/batch-delete", async (req,res) => {
       const found = await tx.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) FOR UPDATE`);
       const safeIds = found.rows.map(r=>Number(r.listing_id));
       if (!safeIds.length) return 0;
-      await tx.execute(sql`DELETE FROM listings WHERE id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
+      // Never delete a genuine listing, even if the caller supplies its ID.
+      // Delete dependent promotions first; the registry FK cascades on listing deletion.
+      await tx.execute(sql`DELETE FROM listing_promotions WHERE listing_id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
+      await tx.execute(sql`DELETE FROM demo_listing_registry WHERE listing_id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
+      await tx.execute(sql`UPDATE listings SET status='deleted',updated_at=NOW() WHERE id IN (${sql.join(safeIds.map(id=>sql`${id}`),sql`,`)})`);
       return safeIds.length;
     });
     res.json({ deleted:removed });
