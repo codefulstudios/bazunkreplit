@@ -18,6 +18,7 @@ const NAV = [
   { label: "Disputes",   href: "/admin/disputes",   icon: Shield          },
   { label: "Returns",    href: "/admin/returns",    icon: RotateCcw       },
   { label: "Support",    href: "/admin/support",    icon: LifeBuoy        },
+  { label: "Chatwoot Settings", href: "/admin/chatwoot", icon: LifeBuoy },
   { label: "Rewards",    href: "/admin/rewards",    icon: Gift            },
   { label: "Credits Economy", href: "/admin/credits-economy", icon: CircleDollarSign },
   { label: "Referrals",  href: "/admin/referrals",  icon: Users           },
