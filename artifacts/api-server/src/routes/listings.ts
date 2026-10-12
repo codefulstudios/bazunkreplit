@@ -78,6 +78,13 @@ router.get("/listings", async (req, res) => {
     const visible = await categoryVisibility();
     const parsedLimit = Math.min(isNaN(parseInt(limit)) ? 40 : parseInt(limit), 100);
     const parsedOffset = isNaN(parseInt(offset)) ? 0 : parseInt(offset);
+    // Regional discovery only. Account inventory and explicit ID lookups stay global.
+    // Legacy rows without a region retain visibility using currency/origin fallback.
+    const requestedRegion = req.query.region === "us" ? "us" : req.query.region === "uk" ? "uk" : null;
+    const regionalVisibility = !requestedRegion ? undefined : requestedRegion === "us"
+      ? sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"us"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND (UPPER(COALESCE(${listingsTable.currency}, '')) IN ('USD','CAD') OR UPPER(COALESCE(${listingsTable.shipOrigin}, '')) IN ('US','USA','CA','CANADA'))))`
+      : sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"uk"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND UPPER(COALESCE(${listingsTable.currency}, 'GBP')) NOT IN ('USD','CAD') AND UPPER(COALESCE(${listingsTable.shipOrigin}, '')) NOT IN ('US','USA','CA','CANADA')))`;
+
 
     // Browse/list views only need card fields. Avoid sending large description, tags,
     // specifications and other detail-only columns for every listing.
@@ -109,9 +116,9 @@ router.get("/listings", async (req, res) => {
           ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
-              ? and(visible, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
+              ? and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
               : and(visible, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
-            : and(visible,eq(listingsTable.status, "active"))
+            : and(visible,regionalVisibility,eq(listingsTable.status, "active"))
       )
       .orderBy(desc(listingsTable.createdAt))
       .limit(parsedLimit)
