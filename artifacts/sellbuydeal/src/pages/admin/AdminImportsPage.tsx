@@ -250,7 +250,7 @@ export function AdminImportsPage() {
     setSearchError(null);
     setImportMsg(null);
     try {
-      const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}`);
+      const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}&site=${amazonSite}`);
       const d = await r.json() as { products?: SearchResult[]; error?: string };
       if (!r.ok) { setSearchError(d.error ?? "Search failed"); setSearchResults([]); }
       else { setSearchResults(d.products ?? []); setHasSearched(true); }
@@ -289,6 +289,7 @@ export function AdminImportsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           products,
+          site: amazonSite,
           markup: parseFloat(markup) || 35,
           shipping: parseFloat(shipping) || 3.99,
           category: importCategory,
@@ -618,7 +619,7 @@ export function AdminImportsPage() {
         ))}
       </div>
 
-      {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("uk");setPage(0)}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("us");setPage(0)}}>🇺🇸 Amazon USA imports</button></div>}
+      {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("uk");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("us");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇺🇸 Amazon USA imports</button></div>}
       <AnimatePresence mode="wait">
         {tab === "amazon" && (
           <motion.div key="amazon" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
@@ -825,7 +826,7 @@ export function AdminImportsPage() {
                       </button>
                       <span className="text-xs text-gray-500">Page {searchPage}</span>
                       <button onClick={() => { setSearchPage(p => p + 1); }}
-                        disabled={searching || searchResults.length < 5}
+                        disabled={searching || searchResults.length === 0}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
