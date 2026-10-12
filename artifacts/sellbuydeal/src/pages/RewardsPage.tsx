@@ -65,59 +65,33 @@ const ICON_COLOR: Record<string, string> = {
 function SpinWheelGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => Promise<void> }) {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
-  const segments = [game.creditsMin, 10, 15, 20, 25, 30, 35, game.creditsMax];
-
+  const segments = Array.from({ length: 8 }, (_, i) => Math.round(game.creditsMin + (game.creditsMax - game.creditsMin) * i / 7));
+  const colors = ["#5546e8","#fa742e","#0cae89","#f5a623","#8749df","#f04458","#00a9c8","#df3d94"];
   async function spin() {
+    if (spinning) return;
     setSpinning(true);
-    const extraSpins = 5 * 360;
-    const randAngle = Math.floor(Math.random() * 360);
-    setAngle(a => a + extraSpins + randAngle);
-    setTimeout(async () => {
-      await onPlay();
-      setSpinning(false);
-    }, 2500);
+    setAngle(a => a + 1800 + Math.random() * 360);
+    await new Promise(r => setTimeout(r, 3400));
+    try { await onPlay(); } finally { setSpinning(false); }
   }
-
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="relative w-48 h-48">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10">
-          <div className="w-0 h-0 border-l-[10px] border-r-[10px] border-t-[20px] border-l-transparent border-r-transparent border-t-[#F26B21]" />
-        </div>
-        <motion.div
-          className="w-48 h-48 rounded-full relative overflow-hidden border-4 border-white shadow-xl"
-          animate={{ rotate: angle }}
-          transition={{ duration: 2.5, ease: [0.2, 0.8, 0.3, 1] }}
-        >
-          {segments.map((val, i) => {
-            const deg = 360 / segments.length;
-            const colors = ["#4A5CE8","#F26B21","#10b981","#f59e0b","#8b5cf6","#ef4444","#06b6d4","#ec4899"];
-            return (
-              <div
-                key={i}
-                className="absolute inset-0 flex items-center justify-center"
-                style={{
-                  transform: `rotate(${i * deg}deg)`,
-                  clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.tan((deg * Math.PI) / 360)}% 0%)`,
-                  background: colors[i % colors.length],
-                }}
-              >
-                <span className="absolute text-white font-black text-xs" style={{ top: "18%", left: "50%", transform: `translateX(-50%) rotate(${deg / 2}deg)` }}>
-                  {val}
-                </span>
-              </div>
-            );
-          })}
+    <div className="flex flex-col items-center gap-5 py-2">
+      <p className="text-center text-sm font-medium text-gray-600">Give the wheel a spin to reveal your reward!</p>
+      <div className="relative w-[min(72vw,288px)] aspect-square rounded-full p-2 bg-gradient-to-br from-amber-300 via-orange-400 to-yellow-500 shadow-[0_12px_35px_rgba(245,158,11,.25)]">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg" aria-hidden="true"><div className="w-0 h-0 border-l-[13px] border-r-[13px] border-t-[27px] border-l-transparent border-r-transparent border-t-orange-600" /></div>
+        <motion.div className="w-full h-full rounded-full border-[5px] border-white shadow-inner relative overflow-hidden" animate={{ rotate: angle }} transition={{ duration: 3.4, ease: [0.12, 0.75, 0.12, 1] }}
+          style={{ background: `conic-gradient(from -22.5deg, ${colors.map((color,i)=>`${color} ${i*45}deg ${(i+1)*45}deg`).join(", ")})` }}>
+          {segments.map((val,i) => <div key={i} className="absolute inset-0" style={{ transform: `rotate(${i*45}deg)` }}>
+            <span className="absolute top-[13%] left-1/2 -translate-x-1/2 text-white text-base sm:text-lg font-black drop-shadow-md" style={{ textShadow:"0 1px 3px #2229" }}>{val}</span>
+          </div>)}
+          <div className="absolute inset-[39%] rounded-full bg-white border-4 border-amber-300 flex items-center justify-center shadow-lg"><Star className="w-6 h-6 text-orange-500 fill-orange-400" /></div>
         </motion.div>
       </div>
-      <button
-        onClick={spin}
-        disabled={spinning}
-        className="px-8 py-3 rounded-xl bg-purple-600 text-white font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-      >
-        {spinning ? <><Loader2 className="w-4 h-4 animate-spin" /> Spinning…</> : <><RotateCcw className="w-4 h-4" /> Spin!</>}
+      <button onClick={spin} disabled={spinning} className="min-w-44 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-black text-base shadow-lg hover:scale-105 active:scale-95 transition-transform disabled:opacity-60 disabled:cursor-wait flex items-center justify-center gap-2">
+        {spinning ? <><Loader2 className="w-5 h-5 animate-spin" /> Spinning…</> : <><RotateCcw className="w-5 h-5" /> SPIN NOW</>}
       </button>
-      <p className="text-xs text-gray-400">Win between {game.creditsMin}–{game.creditsMax} credits</p>
+      <p className="text-sm font-semibold text-gray-600">Prizes: {game.creditsMin}–{game.creditsMax} credits</p>
+      <p className="text-xs text-gray-500 text-center">Your actual prize is determined securely when the spin completes.</p>
     </div>
   );
 }
@@ -171,42 +145,32 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 
 // ── Scratch Card ──────────────────────────────────────────────────────────────
 function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  const [scratching, setScratching] = useState(false);
-  const [scratched, setScratched] = useState(false);
-
+  const [revealing, setRevealing] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   async function scratch() {
-    setScratching(true);
-    setScratched(true);
-    await new Promise(r => setTimeout(r, 800));
-    await onPlay();
-    setScratching(false);
+    if (revealing || revealed) return;
+    setRevealing(true);
+    await new Promise(r => setTimeout(r, 900));
+    try { await onPlay(); setRevealed(true); } finally { setRevealing(false); }
   }
-
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div
-        onClick={!scratched ? scratch : undefined}
-        className={`w-56 h-36 rounded-2xl flex items-center justify-center cursor-pointer transition-all select-none ${
-          scratched ? "bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200" : "bg-gradient-to-br from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 border-2 border-gray-300"
-        }`}
-      >
-        {scratching ? (
-          <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
-        ) : scratched ? (
-          <div className="text-center">
-            <Gift className="w-10 h-10 text-orange-400 mx-auto mb-1" />
-            <p className="text-sm font-bold text-orange-700">Revealed!</p>
-          </div>
-        ) : (
-          <div className="text-center pointer-events-none">
-            <p className="text-gray-500 text-2xl mb-1">🎰</p>
-            <p className="text-xs font-bold text-gray-500">Tap to scratch</p>
-          </div>
-        )}
-      </div>
-      {!scratched && (
-        <p className="text-xs text-gray-400">70% chance to win 5–30 credits</p>
-      )}
+    <div className="flex flex-col items-center gap-5 py-2">
+      <p className="text-sm font-medium text-gray-600 text-center">Your lucky ticket is ready. Reveal what's underneath!</p>
+      <motion.button type="button" onClick={scratch} disabled={revealing || revealed} whileHover={!revealed ? { scale: 1.03 } : undefined} whileTap={!revealed ? { scale: .97 } : undefined}
+        className="relative w-full max-w-[320px] min-h-[190px] rounded-3xl overflow-hidden border-4 border-amber-300 shadow-xl focus-visible:outline-4 focus-visible:outline-violet-500 disabled:cursor-default"
+        style={{ background:"linear-gradient(135deg,#7c3aed,#c026d3 55%,#f97316)" }}>
+        <div className="absolute inset-0 opacity-20" style={{ backgroundImage:"radial-gradient(circle,white 1.5px,transparent 2px)",backgroundSize:"19px 19px" }} />
+        <div className="relative flex flex-col items-center justify-center gap-3 text-white p-6">
+          <motion.div animate={revealing ? { rotate:[-8,8,-8,8,0],scale:[1,1.15,1] } : { y:[0,-4,0] }} transition={{ duration:revealing?.7:2,repeat:revealing?0:Infinity }}>
+            <Ticket className="w-12 h-12 text-amber-200" strokeWidth={2.5} />
+          </motion.div>
+          <span className="text-2xl font-black tracking-wide">{revealing ? "Revealing…" : revealed ? "Ticket revealed!" : "LUCKY SCRATCH"}</span>
+          <span className="text-sm font-bold bg-white/20 rounded-full px-4 py-1.5">{revealing ? "Checking your prize" : revealed ? "See your result" : "Tap to reveal your prize"}</span>
+        </div>
+        {revealing && <motion.div initial={{ x:"-110%" }} animate={{ x:"110%" }} transition={{ duration:.8 }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12" />}
+      </motion.button>
+      <p className="text-sm font-semibold text-gray-600">70% chance to win 5–30 credits</p>
+      <p className="text-xs text-gray-500 text-center">Your prize is awarded by the game server, not the animation.</p>
     </div>
   );
 }
@@ -314,7 +278,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
