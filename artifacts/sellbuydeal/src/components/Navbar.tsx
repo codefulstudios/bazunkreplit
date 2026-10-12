@@ -15,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useCurrency, CURRENCIES, MARKET_COUNTRIES, type CurrencyCode } from "@/context/CurrencyContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
+import { useMarketplaceRegion, MARKETPLACE_REGION_STORAGE_KEY } from "@/hooks/useMarketplaceRegion";
 import { MessageCenterOverlay } from "./MessageCenterOverlay";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRawSettings } from "@/context/SiteSettingsContext";
@@ -117,6 +117,19 @@ export function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [marketRegion, changeMarketRegion] = useMarketplaceRegion();
+  const [regionPromptOpen, setRegionPromptOpen] = useState(() => {
+    try { return !window.localStorage.getItem(MARKETPLACE_REGION_STORAGE_KEY); } catch { return false; }
+  });
+  const [regionTransition, setRegionTransition] = useState(false);
+  const selectMarket = (region: "uk" | "us") => {
+    if (region !== marketRegion) {
+      setRegionTransition(true);
+      window.setTimeout(() => setRegionTransition(false), 620);
+    }
+    changeMarketRegion(region);
+    setCurrency(region === "uk" ? "GBP" : "USD");
+    setRegionPromptOpen(false);
+  };
   const [sellOpen, setSellOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
@@ -216,11 +229,62 @@ export function Navbar() {
 
   return (
     <>
+      <AnimatePresence>
+        {regionPromptOpen && (
+          <motion.div key="marketplace-welcome" role="dialog" aria-modal="true" aria-labelledby="marketplace-welcome-title"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
+            <motion.div initial={{ opacity: 0, scale: 0.85, y: 36 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: -12 }} transition={{ type: "spring", stiffness: 250, damping: 22 }}
+              className="w-full max-w-lg rounded-3xl border border-white/20 bg-white p-6 sm:p-9 shadow-2xl text-center">
+              <motion.div initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.15, type: "spring" }}
+                className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-4xl">🌍</motion.div>
+              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-black text-slate-900">Welcome to Bazunk!</h2>
+              <p className="mt-2 text-sm sm:text-base text-slate-600">Choose your marketplace to discover local listings. You can switch anytime at the top of the page.</p>
+              <div className="mt-7 grid grid-cols-2 gap-3">
+                {(["uk", "us"] as const).map(region => (
+                  <motion.button key={region} type="button" whileHover={{ y: -5, scale: 1.03 }} whileTap={{ scale: 0.96 }}
+                    onClick={() => selectMarket(region)}
+                    className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-3 py-6 text-slate-900 transition-colors hover:border-orange-500 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">
+                    <span className="block text-5xl">{region === "uk" ? "🇬🇧" : "🇺🇸"}</span>
+                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "USA / Canada"}</span>
+                    <span className="mt-1 block text-sm font-semibold text-slate-500">{region === "uk" ? "GBP · £" : "USD · $"}</span>
+                  </motion.button>
+                ))}
+              </div>
+              <p className="mt-5 text-xs text-slate-500">One Bazunk account works in both marketplaces.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {regionTransition && !regionPromptOpen && (
+          <motion.div key="market-switch" aria-live="polite" initial={{ opacity: 0, scale: 0.94 }}
+            animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.04 }}
+            transition={{ duration: 0.18 }} className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-slate-950/35 backdrop-blur-[2px]">
+            <motion.div initial={{ y: 16 }} animate={{ y: 0 }} className="rounded-3xl bg-white px-10 py-7 text-center shadow-2xl">
+              <div className="text-5xl">{marketRegion === "uk" ? "🇬🇧" : "🇺🇸"}</div>
+              <div className="mt-2 text-lg font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA / Canada Marketplace"}</div>
+              <div className="text-sm text-slate-500">{marketRegion === "uk" ? "Prices in GBP" : "Prices in USD"}</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <nav className="sticky top-0 z-50 w-full bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
-          <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
-          <button type="button" aria-pressed={marketRegion === "uk"} onClick={() => changeMarketRegion("uk")} className={`rounded-lg px-3 py-1 text-xs font-bold ${marketRegion === "uk" ? "bg-[#F26B21] text-white" : "bg-white text-gray-700 border border-gray-200"}`}>🇬🇧 UK</button>
-          <button type="button" aria-pressed={marketRegion === "us"} onClick={() => changeMarketRegion("us")} className={`rounded-lg px-3 py-1 text-xs font-bold ${marketRegion === "us" ? "bg-[#F26B21] text-white" : "bg-white text-gray-700 border border-gray-200"}`}>🇺🇸 USA / Canada</button>
+          <span className="text-xs font-semibold text-gray-600">Shop in:</span>
+          <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
+            <motion.div layout initial={false} transition={{ type: "spring", stiffness: 420, damping: 30 }}
+              className="absolute top-1 bottom-1 rounded-full bg-[#F26B21] shadow-sm"
+              style={{ left: marketRegion === "uk" ? 4 : "50%", width: "calc(50% - 4px)" }} />
+            {(["uk", "us"] as const).map(region => (
+              <button key={region} type="button" aria-pressed={marketRegion === region}
+                onClick={() => selectMarket(region)}
+                className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-bold transition-colors duration-200 ${marketRegion === region ? "text-white" : "text-gray-700 hover:text-[#F26B21]"}`}>
+                {region === "uk" ? "🇬🇧 GBP" : "🇺🇸 USD"}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-3">
 
