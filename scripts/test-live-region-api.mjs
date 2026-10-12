@@ -6,7 +6,7 @@ const base = (process.env.MARKETPLACE_API_BASE_URL || "https://bazunk-api.onrend
 const routes = ["auctions", "flash-sales", "classifieds"];
 
 async function get(path) {
-  const response = await fetch(base + path, { signal: AbortSignal.timeout(30000) });
+  const response = await fetch(base + "/api" + path, { signal: AbortSignal.timeout(30000) });
   let body;
   try { body = await response.json(); } catch { body = null; }
   return { response, body };
