@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useCurrency, CURRENCIES, MARKET_COUNTRIES, type CurrencyCode } from "@/context/CurrencyContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { MessageCenterOverlay } from "./MessageCenterOverlay";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRawSettings } from "@/context/SiteSettingsContext";
@@ -115,14 +116,7 @@ export function Navbar() {
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
-  const [marketRegion, setMarketRegion] = useState<"uk" | "us">(() => {
-    try { return window.localStorage.getItem("bazunk-market-region") === "us" ? "us" : "uk"; } catch { return "uk"; }
-  });
-  const changeMarketRegion = (region: "uk" | "us") => {
-    setMarketRegion(region);
-    try { window.localStorage.setItem("bazunk-market-region", region); } catch { /* storage disabled */ }
-    window.dispatchEvent(new CustomEvent("bazunk:market-region", { detail: region }));
-  };
+  const [marketRegion, changeMarketRegion] = useMarketplaceRegion();
   const [sellOpen, setSellOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
@@ -166,7 +160,7 @@ export function Navbar() {
     if (q.length < 2) { setLiveSearchResults([]); return; }
     const timer = window.setTimeout(async () => {
       try {
-        const r = await fetch(`${API_BASE}/api/listings?limit=60&offset=0`);
+        const r = await fetch(`${API_BASE}/api/listings?limit=60&offset=0&region=${marketRegion}`);
         if (!r.ok) return;
         const rows = await r.json();
         const needle = q.toLowerCase();
@@ -176,7 +170,7 @@ export function Navbar() {
       } catch { setLiveSearchResults([]); }
     }, 180);
     return () => window.clearTimeout(timer);
-  }, [query]);
+  }, [query, marketRegion]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
