@@ -281,7 +281,7 @@ export function Navbar() {
               <button key={region} type="button" aria-pressed={marketRegion === region}
                 onClick={() => selectMarket(region)}
                 className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-bold transition-colors duration-200 ${marketRegion === region ? "text-white" : "text-gray-700 hover:text-[#F26B21]"}`}>
-                <span className="inline-flex items-center gap-1.5"><span className="text-lg leading-none" role="img" aria-label={region === "uk" ? "UK flag" : "USA flag"}>{region === "uk" ? "🇬🇧" : "🇺🇸"}</span><span>{region === "uk" ? "GBP" : "USD"}</span></span>
+                <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "GBP" : "USD"}</span></span>
               </button>
             ))}
           </div>
