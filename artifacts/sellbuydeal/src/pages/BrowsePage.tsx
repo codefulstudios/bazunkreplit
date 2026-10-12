@@ -305,7 +305,7 @@ export function BrowsePage() {
         setCountsLoaded(true);
       })
       .catch((err) => { setCountsLoaded(false); console.warn("Could not load category counts", err); });
-  }, []);
+  }, [marketRegion]);
 
   useEffect(() => {
     const controller = new AbortController();
