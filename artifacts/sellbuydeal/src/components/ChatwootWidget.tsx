@@ -89,6 +89,9 @@ export function ChatwootWidget() {
     return () => window.removeEventListener("chatwoot:ready", apply);
   }, [allowed, path, countryCode, settings.chatwoot_region_context, settings.chatwoot_order_context]);
   useEffect(() => {
+    if (!isSignedIn && window.$chatwoot) window.$chatwoot.reset?.();
+  }, [isSignedIn]);
+  useEffect(() => {
     if (!allowed || settings.chatwoot_identify !== "true" || !isSignedIn || !userId) return;
     let cancelled = false;
     const identify = async () => {
