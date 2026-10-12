@@ -7,6 +7,16 @@ const router = Router();
 const validRegion = (v: unknown) => v === "uk" || v === "us";
 async function ensureTables() {
   await db.execute(sql`CREATE TABLE IF NOT EXISTS demo_creator_settings (key TEXT PRIMARY KEY, enabled BOOLEAN NOT NULL DEFAULT FALSE)`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS demo_activity_fixtures (
+    id BIGSERIAL PRIMARY KEY,
+    seller_email TEXT NOT NULL,
+    kind TEXT NOT NULL CHECK (kind IN ('review','sale','repeat_buyer')),
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    note TEXT,
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity BETWEEN 1 AND 100),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
   await db.execute(sql`CREATE TABLE IF NOT EXISTS demo_listing_registry (
     listing_id INTEGER PRIMARY KEY REFERENCES listings(id) ON DELETE CASCADE,
     seller_email TEXT NOT NULL,
@@ -20,12 +30,13 @@ router.use("/admin/demo-creator", requireAdmin);
 router.get("/admin/demo-creator", async (_req, res) => {
   try {
     await ensureTables();
-    const [listings, settings] = await Promise.all([
+    const [listings, settings, activities] = await Promise.all([
       db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id ORDER BY d.created_at DESC LIMIT 500`),
-      db.execute(sql`SELECT key,enabled FROM demo_creator_settings`)
+      db.execute(sql`SELECT key,enabled FROM demo_creator_settings`),
+      db.execute(sql`SELECT * FROM demo_activity_fixtures ORDER BY created_at DESC LIMIT 500`)
     ]);
     res.setHeader("Cache-Control", "no-store");
-    res.json({ listings: listings.rows, settings: settings.rows });
+    res.json({ listings: listings.rows, settings: settings.rows, activities: activities.rows });
   } catch { res.status(503).json({ error: "Demo Creator database unavailable" }); }
 });
 router.post("/admin/demo-creator/settings", async (req, res) => {
@@ -39,6 +50,57 @@ router.post("/admin/demo-creator/settings", async (req, res) => {
       ON CONFLICT(key) DO UPDATE SET enabled=EXCLUDED.enabled`);
     res.json({ key, enabled });
   } catch { res.status(503).json({ error: "Unable to update setting" }); }
+});
+// URL preview deliberately does not fetch arbitrary external hosts (SSRF).
+// Admin can review and edit the inferred title before creating the listing.
+router.post("/admin/demo-creator/url-preview", async (req,res) => {
+  try {
+    const raw=req.body?.url;
+    if(typeof raw!=="string" || raw.length>2048) {res.status(400).json({error:"Valid product URL required"});return;}
+    const url=new URL(raw);
+    if(url.protocol!=="https:" || url.username || url.password ||
+      !/^[a-z0-9.-]+\\.[a-z]{2,}$/i.test(url.hostname) ||
+      /^(localhost|.*\\.localhost|.*\\.local)$/i.test(url.hostname)) {
+      res.status(400).json({error:"Public HTTPS product URL required"});return;
+    }
+    const slug=decodeURIComponent(url.pathname.split("/").filter(Boolean).pop()||"Product");
+    const title=slug.replace(/[-_]+/g," ").replace(/\\.[a-z0-9]{2,5}$/i,"").slice(0,180).trim();
+    res.json({sourceUrl:url.toString(),title:title||"Product",description:"",category:"Other",price:null,requiresManualReview:true,
+      note:"Preview inferred from URL only. Product details and price must be entered manually."});
+  } catch {res.status(400).json({error:"Invalid URL"});}
+});
+router.post("/admin/demo-creator/activities", async (req,res) => {
+  const {sellerEmail,kind,rating,note,quantity=1}=req.body??{};
+  if(typeof sellerEmail!=="string" || !sellerEmail.includes("@") ||
+    !["review","sale","repeat_buyer"].includes(kind) ||
+    !Number.isInteger(quantity) || quantity<1 || quantity>100 ||
+    (kind==="review" && (!Number.isInteger(rating)||rating<1||rating>5)) ||
+    (note!=null && (typeof note!=="string"||note.length>1000))) {
+    res.status(400).json({error:"Invalid simulated activity"});return;
+  }
+  try {
+    await ensureTables();
+    const user=await db.execute(sql`SELECT email FROM users WHERE LOWER(email)=LOWER(${sellerEmail}) LIMIT 1`);
+    if(!user.rows.length){res.status(404).json({error:"Seller not found"});return;}
+    const result=await db.execute(sql`INSERT INTO demo_activity_fixtures(seller_email,kind,rating,note,quantity)
+      VALUES(${String(user.rows[0].email)},${kind},${kind==="review"?rating:null},${note||null},${quantity}) RETURNING id`);
+    res.status(201).json({id:result.rows[0].id,simulated:true});
+  } catch {res.status(503).json({error:"Unable to save simulated activity"});}
+});
+router.patch("/admin/demo-creator/activities/:id",async(req,res)=>{
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id)||id<1||typeof req.body?.enabled!=="boolean"){res.status(400).json({error:"Invalid fixture"});return;}
+  try {await ensureTables();const result=await db.execute(sql`UPDATE demo_activity_fixtures SET enabled=${req.body.enabled} WHERE id=${id} RETURNING id`);
+    if(!result.rows.length){res.status(404).json({error:"Fixture not found"});return;}res.json({id,enabled:req.body.enabled});
+  }catch{res.status(503).json({error:"Unable to update fixture"});}
+});
+router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
+  const ids=req.body?.ids;
+  if(!Array.isArray(ids)||ids.length<1||ids.length>200||!ids.every((v:unknown)=>Number.isSafeInteger(v)&&(v as number)>0)){
+    res.status(400).json({error:"Provide 1–200 valid fixture IDs"});return;}
+  try {await ensureTables();const r=await db.execute(sql`DELETE FROM demo_activity_fixtures WHERE id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) RETURNING id`);
+    res.json({deleted:r.rows.length});
+  }catch{res.status(503).json({error:"Unable to delete fixtures"});}
 });
 const templates = [
   { title:"Compact Bluetooth Speaker", category:"Electronics", description:"Portable rechargeable speaker with Bluetooth connectivity.", price:24.99 },
