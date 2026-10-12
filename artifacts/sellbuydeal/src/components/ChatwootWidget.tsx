@@ -12,6 +12,11 @@ const BASE_URL = "https://app.chatwoot.com";
 const WEBSITE_TOKEN = "gu46ahHNS8MPiQ4zJwK7PjnU";
 const SCRIPT_ID = "bazunk-chatwoot-sdk";
 
+export function openChatwootSupport() {
+  if (window.$chatwoot) window.$chatwoot.toggle("open");
+  else window.addEventListener("chatwoot:ready", () => window.$chatwoot?.toggle("open"), { once: true });
+}
+
 /** Load the support widget once, even across React strict-mode remounts. */
 export function ChatwootWidget() {
   useEffect(() => {
