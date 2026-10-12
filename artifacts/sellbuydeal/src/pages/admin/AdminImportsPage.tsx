@@ -604,7 +604,7 @@ export function AdminImportsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-black text-gray-900">Imports</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Search Amazon UK or eBay, choose products, import with your markup</p>
+          <p className="text-sm text-gray-400 mt-0.5">Search Amazon UK, Amazon USA or eBay, choose products, import with your markup</p>
         </div>
       </div>
 
@@ -620,7 +620,7 @@ export function AdminImportsPage() {
               tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            {t === "amazon" ? "🛒 Amazon UK" : t === "ebay" ? "🏷️ eBay" : "📦 AliExpress"}
+            {t === "amazon" ? "🛒 Amazon UK / USA" : t === "ebay" ? "🏷️ eBay" : "📦 AliExpress"}
           </button>
         ))}
       </div>
@@ -637,7 +637,7 @@ export function AdminImportsPage() {
                     <Search className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900">Search Amazon UK</p>
+                    <p className="font-bold text-gray-900">Search Amazon {amazonSite === "us" ? "USA (.com)" : "UK (.co.uk)"}</p>
                     <p className="text-xs text-gray-400">Find products, tick the ones you want, set your markup and import</p>
                   </div>
                 </div>
@@ -848,7 +848,7 @@ export function AdminImportsPage() {
               {!hasSearched && !searching && (
                 <div className="py-10 text-center text-gray-400 text-sm">
                   <Search className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                  Search for a product above to see Amazon UK results
+                  Search for a product above to see Amazon {amazonSite === "us" ? "USA" : "UK"} results
                 </div>
               )}
             </div>
