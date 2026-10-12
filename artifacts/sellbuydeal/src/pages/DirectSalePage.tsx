@@ -1203,7 +1203,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Ready to List */}
-          <section style={{ display: quickMode ? "none" : step === 6 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] px-5 sm:px-7 py-6 border border-sky-400/15">
+          <section style={{ display: quickMode || step === 6 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-lg font-bold text-white mb-1">Ready to List?</h2>
             <p className="text-sm text-slate-300 mb-4">Review your listing and publish when ready</p>
 
