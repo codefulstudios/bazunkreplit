@@ -21,13 +21,16 @@ async function categoryVisibility() {
 
 // Region is a browsing scope, not an account or permissions boundary.
 function listingRegionFilter(region: unknown) {
-    const requestedRegion = region === "us" ? "us" : region === "uk" ? "uk" : null;
-    const regionalVisibility = !requestedRegion ? undefined : requestedRegion === "us"
-      ? sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"us"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND (UPPER(COALESCE(${listingsTable.currency}, '')) IN ('USD','CAD') OR UPPER(COALESCE(${listingsTable.shipOrigin}, '')) IN ('US','USA','CA','CANADA'))))`
-      : sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"uk"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND UPPER(COALESCE(${listingsTable.currency}, 'GBP')) NOT IN ('USD','CAD') AND UPPER(COALESCE(${listingsTable.shipOrigin}, '')) NOT IN ('US','USA','CA','CANADA')))`;
-
-
-    return regionalVisibility;
+  if (region !== "uk" && region !== "us") return undefined;
+  // Explicit region wins. Older UK/US supplier imports have a verifiable
+  // source-market identifier; store currency alone is never location evidence.
+  // Unassigned Shopify and manually created listings remain out of regional
+  // discovery until the seller/admin confirms their shipping market.
+  const specs = sql`CASE WHEN COALESCE(${listingsTable.specifications}, '') ~ '^\\s*\\{' THEN ${listingsTable.specifications}::jsonb ELSE '{}'::jsonb END`;
+  const source = sql`(${specs}->>'source')`;
+  const explicit = sql`(${specs}->>'marketplace_region')`;
+  const origins = region === "uk" ? ["eBay UK", "Amazon UK"] : ["eBay US", "Amazon US"];
+  return sql`(${explicit} = ${region} OR (${explicit} IS NULL AND ${source} IN (${sql.join(origins.map(v => sql`${v}`), sql`, `)})))`;
 }
 
 function makePublicId(id: number): string {
