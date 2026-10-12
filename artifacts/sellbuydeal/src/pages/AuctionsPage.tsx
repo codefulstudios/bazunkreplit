@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useAuth } from "@/context/AuthContext";
 
 type Auction = {
@@ -46,6 +47,7 @@ const SORT_OPTIONS = [
 ];
 
 export function AuctionsPage() {
+  const [marketRegion] = useMarketplaceRegion();
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
@@ -62,6 +64,7 @@ export function AuctionsPage() {
     try {
       const params = new URLSearchParams({ status: "active", sort });
       if (category !== "All") params.set("category", category.toLowerCase());
+      params.set("region", marketRegion);
       const res = await fetch(`/api/auctions?${params}`);
       if (!res.ok) throw new Error("Failed to load auctions");
       const data: unknown = await res.json();
@@ -72,7 +75,7 @@ export function AuctionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, sort]);
+  }, [category, sort, marketRegion]);
 
   useEffect(() => { load(); }, [load]);
 
