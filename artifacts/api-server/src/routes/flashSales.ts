@@ -29,6 +29,10 @@ router.get("/flash-sales", async (req, res) => {
   const off = parseInt(offset);
 
   const region = req.query.region;
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+    return;
+  }
   const regionClause = region === "uk" || region === "us"
     ? sql`marketplace_region = ${region}`
     : sql`TRUE`;
