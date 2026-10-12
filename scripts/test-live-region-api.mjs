@@ -39,12 +39,19 @@ for (const region of ["uk", "us"]) {
     const listings = Array.isArray(body) ? body : Array.isArray(body?.listings) ? body.listings : null;
     assert.ok(listings, "Expected listing array or listings property");
     for (const listing of listings) {
-      let specs = listing.specifications;
-      if (typeof specs === "string") {
-        try { specs = JSON.parse(specs); } catch { specs = null; }
-      }
-      const explicit = specs?.marketplace_region ?? listing.marketplaceRegion ?? listing.marketplace_region;
-      if (explicit) assert.equal(explicit, region, "Opposite-region listing leaked into browse");
+      assert.equal(listing.marketplaceRegion, region,
+        `Listing ${listing.id} missing or mismatched region in ${region} browse`);
+    }
+    // ID-list retrieval is also a public browse path: it must not leak listings
+    // selected from the opposite market.
+    if (listings.length) {
+      const ids = listings.slice(0, 5).map(x => x.id).join(",");
+      const opposite = region === "uk" ? "us" : "uk";
+      const { response: otherResponse, body: otherBody } = await get(
+        `${listingRoute}?ids=${ids}&region=${opposite}`);
+      assert.equal(otherResponse.status, 200);
+      assert.ok(Array.isArray(otherBody));
+      assert.equal(otherBody.length, 0, "Opposite-market IDs leaked via ids lookup");
     }
   });
 }
