@@ -50,8 +50,6 @@ router.get("/auctions", async (req, res) => {
   } else {
     rows = await db.execute(sql`SELECT * FROM auctions WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   }
-    return;
-  }
   res.json(rows.rows.map(r => publicAuction(r as Record<string, unknown>)));
 });
 
