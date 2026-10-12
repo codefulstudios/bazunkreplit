@@ -48,6 +48,13 @@ router.get("/flash-sales", async (req, res) => {
       rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   }
+  if (req.query.region === "uk" || req.query.region === "us") {
+    const selected = req.query.region;
+    const filtered = await db.execute(sql`SELECT id FROM flash_sales WHERE marketplace_region = ${selected}`);
+    const allowed = new Set(filtered.rows.map(r => String(r.id)));
+    res.json(rows.rows.filter(r => allowed.has(String(r.id))));
+    return;
+  }
   res.json(rows.rows);
 });
 
@@ -69,6 +76,8 @@ router.get("/flash-sales/:id", async (req, res) => {
 
 router.post("/flash-sales", async (req, res) => {
   const body = req.body as Record<string, unknown>;
+  const marketplaceRegion = body.marketplaceRegion;
+  if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   const { sellerEmail, sellerName, title, description, image, category, originalPrice, salePrice, startsAt, endsAt, saleType = "standard" } = body as Record<string, string>;
   if (!sellerEmail || !sellerName || !title || !originalPrice || !salePrice || !startsAt || !endsAt) {
     res.status(400).json({ error: "sellerEmail, sellerName, title, originalPrice, salePrice, startsAt, endsAt are required" });
@@ -85,11 +94,11 @@ router.post("/flash-sales", async (req, res) => {
   await db.execute(sql`
     INSERT INTO flash_sales
       (id, seller_email, seller_name, title, description, image, category,
-       original_price, sale_price, discount_percent, starts_at, ends_at, status, sale_type, created_at, updated_at)
+       original_price, sale_price, discount_percent, starts_at, ends_at, status, sale_type, marketplace_region, created_at, updated_at)
     VALUES (
       ${id}, ${sellerEmail}, ${sellerName}, ${title}, ${description ?? null},
       ${image ?? null}, ${category ?? null},
-      ${op}, ${sp}, ${discountPercent}, ${startsAt}, ${endsAt}, ${status}, ${resolvedType}, NOW(), NOW()
+      ${op}, ${sp}, ${discountPercent}, ${startsAt}, ${endsAt}, ${status}, ${resolvedType}, ${marketplaceRegion}, NOW(), NOW()
     )
   `);
   storage.completeMilestone(sellerEmail, "first-flash-sale").catch((err) => {
