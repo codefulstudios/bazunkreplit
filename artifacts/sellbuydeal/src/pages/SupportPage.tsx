@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { openChatwootSupport } from "@/components/ChatwootWidget";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import {
@@ -259,9 +260,10 @@ export function SupportPage() {
           </div>
           <h3 className="text-lg font-bold text-gray-900 mb-2">Still need help?</h3>
           <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-            Support open 24/7. Open a ticket from your Dashboard and we'll get back to you as soon as possible.
+            Chat with our support team or open a ticket from your Dashboard. Replies depend on agent availability.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
+            <button type="button" onClick={openChatwootSupport} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F26B21] text-white font-semibold text-sm hover:opacity-90 transition-opacity"><MessageSquare className="w-4 h-4" /> Live Support Chat</button>
             <Link
               href="/dashboard?section=support-tickets"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
