@@ -265,7 +265,7 @@ function Router() {
       <Route path="/categories" component={CategoriesPage} />
       <Route path="/sell" component={SellPage} />
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
-      <Route path="/sell/quick">{() => <Redirect to="/sell/direct" />}</Route>
+      <Route path="/sell/quick">{() => <FeatureGate feature="quick_sell" name="Quick Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/my-store/settings">{() => <MyStorePage settingsPage />}</Route>
       <Route path="/my-store" component={MyStorePage} />
