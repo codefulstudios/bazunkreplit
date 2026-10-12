@@ -19,6 +19,17 @@ async function categoryVisibility() {
  return sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${listingsTable.category} OR cv.key='category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`;
 }
 
+// Region is a browsing scope, not an account or permissions boundary.
+function listingRegionFilter(region: unknown) {
+    const requestedRegion = region === "us" ? "us" : region === "uk" ? "uk" : null;
+    const regionalVisibility = !requestedRegion ? undefined : requestedRegion === "us"
+      ? sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"us"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND (UPPER(COALESCE(${listingsTable.currency}, '')) IN ('USD','CAD') OR UPPER(COALESCE(${listingsTable.shipOrigin}, '')) IN ('US','USA','CA','CANADA'))))`
+      : sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"uk"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND UPPER(COALESCE(${listingsTable.currency}, 'GBP')) NOT IN ('USD','CAD') AND UPPER(COALESCE(${listingsTable.shipOrigin}, '')) NOT IN ('US','USA','CA','CANADA')))`;
+
+
+    return regionalVisibility;
+}
+
 function makePublicId(id: number): string {
   return `BZL-${id}`;
 }
@@ -78,13 +89,7 @@ router.get("/listings", async (req, res) => {
     const visible = await categoryVisibility();
     const parsedLimit = Math.min(isNaN(parseInt(limit)) ? 40 : parseInt(limit), 100);
     const parsedOffset = isNaN(parseInt(offset)) ? 0 : parseInt(offset);
-    // Regional discovery only. Account inventory and explicit ID lookups stay global.
-    // Legacy rows without a region retain visibility using currency/origin fallback.
-    const requestedRegion = req.query.region === "us" ? "us" : req.query.region === "uk" ? "uk" : null;
-    const regionalVisibility = !requestedRegion ? undefined : requestedRegion === "us"
-      ? sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"us"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND (UPPER(COALESCE(${listingsTable.currency}, '')) IN ('USD','CAD') OR UPPER(COALESCE(${listingsTable.shipOrigin}, '')) IN ('US','USA','CA','CANADA'))))`
-      : sql`(COALESCE(${listingsTable.specifications}, '') LIKE '%"marketplace_region":"uk"%' OR (COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"us"%' AND COALESCE(${listingsTable.specifications}, '') NOT LIKE '%"marketplace_region":"uk"%' AND UPPER(COALESCE(${listingsTable.currency}, 'GBP')) NOT IN ('USD','CAD') AND UPPER(COALESCE(${listingsTable.shipOrigin}, '')) NOT IN ('US','USA','CA','CANADA')))`;
-
+    const regionalVisibility = listingRegionFilter(req.query.region);
 
     // Browse/list views only need card fields. Avoid sending large description, tags,
     // specifications and other detail-only columns for every listing.
@@ -136,13 +141,14 @@ router.get("/listings", async (req, res) => {
   }
 });
 
-router.get("/listings/category-counts", async (_req, res) => {
+router.get("/listings/category-counts", async (req, res) => {
   try {
     res.setHeader("Cache-Control", "public, max-age=120");
+    const regionFilter = listingRegionFilter(req.query.region);
     const rows = await db.execute(sql`
       SELECT category, subcategory, COUNT(*)::int AS count
       FROM listings
-      WHERE status = 'active' AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
+      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
     res.json(rows.rows);
@@ -155,6 +161,7 @@ router.get("/listings/category-counts", async (_req, res) => {
 router.get("/listings/spotlight", async (req, res) => {
   try {
     const visible = await categoryVisibility();
+    const regionFilter = listingRegionFilter(req.query.region);
     const now = new Date();
     const spotlightTypes = ["homepage-spotlight", "spotlight", "featured-badge", "featured", "premium-placement"];
 
@@ -172,7 +179,7 @@ router.get("/listings/spotlight", async (req, res) => {
     if (promos.length === 0) { res.json([]); return; }
     const ids = [...new Set(promos.map(p => p.listingId))];
     const rows = await db.select().from(listingsTable).where(
-      and(visible,eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
+      and(visible,regionFilter,eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
