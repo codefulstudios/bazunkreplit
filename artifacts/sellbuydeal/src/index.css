@@ -721,3 +721,11 @@ img, video, canvas, svg { max-width: 100%; }
     overflow-y: auto;
   }
 }
+
+/* Admin Feature Toggle: Chatwoot Live Support */
+html.bazunk-chatwoot-disabled #chatwoot_live_chat_widget,
+html.bazunk-chatwoot-disabled .woot-widget-holder,
+html.bazunk-chatwoot-disabled .woot--bubble-holder,
+html.bazunk-chatwoot-disabled .woot-widget-bubble,
+html.bazunk-chatwoot-disabled .woot--bubble-holder,
+html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
