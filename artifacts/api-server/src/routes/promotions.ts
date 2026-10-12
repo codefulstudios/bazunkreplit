@@ -38,10 +38,11 @@ router.post("/promotions/apply", async (req, res) => {
 
   try {
     // Seller tools act on the listing itself, so check it exists and belongs to this seller.
-    let listing: { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string } | null = null;
+    type SellerListing = { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string };
+    let listing: SellerListing | null = null;
     if (SELLER_TOOLS.has(type)) {
       const r = await db.execute(sql`SELECT id, public_id, title, price, seller_email, seller_name, status FROM listings WHERE id = ${listingId}`);
-      listing = (r.rows[0] as typeof listing) ?? null;
+      listing = (r.rows[0] as SellerListing | undefined) ?? null;
       if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
       if (String(listing.seller_email).toLowerCase() !== email.toLowerCase()) { res.status(403).json({ error: "That isn't your listing" }); return; }
     }
