@@ -95,6 +95,7 @@ export function AdminImportsPage() {
   // ── Selection & import state ──────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [amazonSelectionCache,setAmazonSelectionCache] = useState<Record<string,SearchResult>>({});
+  const amazonSearchRequest = useRef(0);
   const [markup, setMarkup] = useState("35");
   const [shipping, setShipping] = useState("3.99");
   const [importCategory, setImportCategory] = useState("");
@@ -245,6 +246,7 @@ export function AdminImportsPage() {
 
   // ── Search ────────────────────────────────────────────────────
   async function handleSearch(e?: React.FormEvent) {
+    const requestId = ++amazonSearchRequest.current;
     e?.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
@@ -254,13 +256,15 @@ export function AdminImportsPage() {
     try {
       const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}&site=${amazonSite}`);
       const d = await r.json() as { products?: SearchResult[]; error?: string };
+      if (requestId !== amazonSearchRequest.current) return;
       if (!r.ok) { setSearchError(d.error ?? "Search failed"); setSearchResults([]); }
       else { setSearchResults(d.products ?? []); setHasSearched(true); }
     } catch {
+      if (requestId !== amazonSearchRequest.current) return;
       setSearchError("Network error — check your connection");
       setSearchResults([]);
     } finally {
-      setSearching(false);
+      if (requestId === amazonSearchRequest.current) setSearching(false);
     }
   }
 
@@ -621,7 +625,7 @@ export function AdminImportsPage() {
         ))}
       </div>
 
-      {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("uk");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{setAmazonSite("us");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇺🇸 Amazon USA imports</button></div>}
+      {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("uk");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("us");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇺🇸 Amazon USA imports</button></div>}
       <AnimatePresence mode="wait">
         {tab === "amazon" && (
           <motion.div key="amazon" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
