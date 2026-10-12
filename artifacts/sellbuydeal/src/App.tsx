@@ -62,6 +62,7 @@ import IntroSplash from "@/components/IntroSplash";
 import { UserCurrencySync } from "@/components/UserCurrencySync";
 import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
 import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminDemoCreatorPage } from "@/pages/admin/AdminDemoCreatorPage";
 import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminSellerCompliancePage } from "@/pages/admin/AdminSellerCompliancePage";
@@ -290,6 +291,7 @@ function Router() {
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
       <Route path="/admin" component={AdminLoginPage} />
       <Route path="/admin/dashboard" component={AdminDashboardPage} />
+      <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/seller-compliance" component={AdminSellerCompliancePage} />
       <Route path="/seller-compliance" component={SellerCompliancePage} />
