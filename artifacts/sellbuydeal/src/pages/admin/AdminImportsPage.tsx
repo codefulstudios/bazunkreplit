@@ -29,6 +29,7 @@ type GtExpiry = "7" | "14" | "30" | "unlimited";
 type EbaySite = "uk" | "us";
 
 interface SearchResult {
+  currency?: "GBP" | "USD";
   asin: string;
   title: string;
   price_gbp: number;
@@ -67,6 +68,7 @@ interface Specs {
   asin?: string;
   amazon_url?: string;
   amazon_price_gbp?: number;
+  source_currency?: string;
   shipping_gbp?: number;
   markup_pct?: number;
 }
@@ -798,9 +800,9 @@ export function AdminImportsPage() {
 
                           {/* Prices */}
                           <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
-                            <span className="text-xs text-gray-500">Amazon: <span className="font-bold text-gray-700">£{p.price_gbp.toFixed(2)}</span></span>
+                            <span className="text-xs text-gray-500">Amazon: <span className="font-bold text-gray-700">{p.currency === "USD" || amazonSite === "us" ? "$" : "£"}{p.price_gbp.toFixed(2)}</span></span>
                             {bazunkPreview !== null && (
-                              <span className="text-xs font-black text-[#F26B21]">£{bazunkPreview.toFixed(2)}</span>
+                              <span className="text-xs font-black text-[#F26B21]">{p.currency === "USD" || amazonSite === "us" ? "$" : "£"}{bazunkPreview.toFixed(2)}</span>
                             )}
                           </div>
 
@@ -984,7 +986,7 @@ export function AdminImportsPage() {
                               {amazonPrice != null ? `£${amazonPrice.toFixed(2)}` : "—"}
                             </td>
                             <td className="px-4 py-3 font-black text-[#F26B21]">
-                              £{bazunkPrice.toFixed(2)}
+                              {amazonSite === "us" ? "$" : "£"}{bazunkPrice.toFixed(2)}
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                               {specs.markup_pct != null ? `${specs.markup_pct}% + £${specs.shipping_gbp ?? 0}` : "—"}
