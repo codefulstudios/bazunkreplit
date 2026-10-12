@@ -15,6 +15,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useAuth } from "@/context/AuthContext";
 import {
   MOCK_ADS, CLASSIFIED_CATEGORIES,
@@ -506,6 +507,7 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          marketplaceRegion: marketRegion,
           title: title.trim(),
           description: description.trim(),
           category,
@@ -974,6 +976,7 @@ function rowToAd(row: Record<string, unknown>): ClassifiedAd {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export function ClassifiedsPage() {
+  const [marketRegion] = useMarketplaceRegion();
   const search = useSearch();
   const [ads, setAds] = useState<ClassifiedAd[]>([]);
   const [loading, setLoading] = useState(true);
@@ -987,12 +990,12 @@ export function ClassifiedsPage() {
   const [selectedAd, setSelectedAd] = useState<ClassifiedAd | null>(null);
 
   useEffect(() => {
-    fetch("/api/classifieds")
+    fetch(`/api/classifieds?region=${marketRegion}`)
       .then((r) => r.json())
       .then((rows: Record<string, unknown>[]) => { setAds(rows.map(rowToAd)); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [marketRegion]);
 
   const categoryCounts = useMemo(() => {
     const map: Record<string, number> = {};
