@@ -717,6 +717,16 @@ async function runAppMigrations() {
   await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_cases_email_idx ON seller_compliance_cases(LOWER(seller_email),status)`, "seller_compliance_cases_email_idx");
   await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_appeals_case_idx ON seller_compliance_appeals(case_id,status)`, "seller_compliance_appeals_case_idx");
   await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS seller_compliance_active_unique ON seller_compliance_cases(LOWER(seller_email)) WHERE status IN ('open','awaiting_information','under_review','appealed')`, "seller_compliance_active_unique");
+  // Regional activity schema: idempotent, additive and safe on existing databases.
+  // Do not backfill historical records on startup: that requires a verified backup
+  // and an explicit review of source-country evidence.
+  await run(sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "auctions.marketplace_region");
+  await run(sql`ALTER TABLE flash_sales ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "flash_sales.marketplace_region");
+  await run(sql`ALTER TABLE classified_ads ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "classified_ads.marketplace_region");
+  await run(sql`CREATE INDEX IF NOT EXISTS auctions_marketplace_region_idx ON auctions(marketplace_region)`, "auctions.marketplace_region_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS flash_sales_marketplace_region_idx ON flash_sales(marketplace_region)`, "flash_sales.marketplace_region_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS classified_ads_marketplace_region_idx ON classified_ads(marketplace_region)`, "classified_ads.marketplace_region_idx");
+
   logger.info("App migrations complete");
 }
 
