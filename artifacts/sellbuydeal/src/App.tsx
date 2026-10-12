@@ -92,6 +92,7 @@ import { FlashSaleDetailPage } from "@/pages/FlashSaleDetailPage";
 import { CreateFlashSalePage } from "@/pages/CreateFlashSalePage";
 import { AdminFlashSalesPage } from "@/pages/admin/AdminFlashSalesPage";
 import { AdminSupportPage } from "@/pages/admin/AdminSupportPage";
+import { AdminChatwootSettingsPage } from "@/pages/admin/AdminChatwootSettingsPage";
 import { SetupWizardPage } from "@/pages/SetupWizardPage";
 import VideoPage from "@/pages/VideoPage";
 import { RewardsPage } from "@/pages/RewardsPage";
@@ -320,6 +321,7 @@ function Router() {
       <Route path="/flash-sales">{() => <FeatureGate feature="flash_sales" name="Flash Sales"><FlashSalesPage /></FeatureGate>}</Route>
       <Route path="/admin/flash-sales" component={AdminFlashSalesPage} />
       <Route path="/admin/support" component={AdminSupportPage} />
+      <Route path="/admin/chatwoot" component={AdminChatwootSettingsPage} />
       <Route path="/admin/rewards" component={AdminRewardsPage} />
       <Route path="/admin/credits-economy" component={AdminCreditsEconomyPage} />
       <Route path="/admin/referrals" component={AdminReferralsPage} />
