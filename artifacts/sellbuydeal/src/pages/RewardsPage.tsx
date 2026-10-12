@@ -322,7 +322,7 @@ function GameModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -330,7 +330,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -352,7 +352,7 @@ function GameModal({
                 key="result"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative flex flex-col items-center gap-4 py-4 text-center"
+                className="relative flex flex-col items-center gap-3 py-2 text-center"
               >
                 {result.won && <motion.div aria-hidden="true" initial={{opacity:0,scale:.6}} animate={{opacity:[0,1,0],scale:[.6,1.5,1.8]}} transition={{duration:1.5}} className="absolute inset-0 pointer-events-none flex justify-center items-start text-4xl">✨ 🎉 ✨</motion.div>}\n                {result.won ? (
                   <>
