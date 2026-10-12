@@ -33,6 +33,8 @@ function listingRegionFilter(region: unknown) {
   return sql`(${explicit} = ${region} OR (${explicit} IS NULL AND ${source} IN (${sql.join(origins.map(v => sql`${v}`), sql`, `)})))`;
 }
 
+
+const demoVisible = sql`NOT EXISTS (SELECT 1 FROM demo_listing_registry d WHERE d.listing_id = ${listingsTable.id} AND (NOT d.enabled OR NOT EXISTS (SELECT 1 FROM demo_creator_settings s WHERE s.key='master' AND s.enabled=TRUE) OR NOT EXISTS (SELECT 1 FROM demo_creator_settings s WHERE s.key='listings' AND s.enabled=TRUE)))`;
 function makePublicId(id: number): string {
   return `BZL-${id}`;
 }
@@ -84,7 +86,7 @@ router.get("/listings", async (req, res) => {
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
-      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible));
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible,demoVisible));
       res.json(rows);
       return;
     }
@@ -121,12 +123,12 @@ router.get("/listings", async (req, res) => {
       .from(listingsTable)
       .where(
         sellerEmail
-          ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
+          ? and(visible,demoVisible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
-              ? and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
-              : and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
-            : and(visible,regionalVisibility,eq(listingsTable.status, "active"))
+              ? and(visible,demoVisible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
+              : and(visible,demoVisible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
+            : and(visible,demoVisible,regionalVisibility,eq(listingsTable.status, "active"))
       )
       .orderBy(desc(listingsTable.createdAt))
       .limit(parsedLimit)
@@ -151,7 +153,7 @@ router.get("/listings/category-counts", async (req, res) => {
     const rows = await db.execute(sql`
       SELECT category, subcategory, COUNT(*)::int AS count
       FROM listings
-      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
+      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND NOT EXISTS (SELECT 1 FROM demo_listing_registry d WHERE d.listing_id=listings.id AND (NOT d.enabled OR NOT EXISTS (SELECT 1 FROM demo_creator_settings s WHERE s.key='master' AND s.enabled=TRUE) OR NOT EXISTS (SELECT 1 FROM demo_creator_settings s WHERE s.key='listings' AND s.enabled=TRUE))) AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
     res.json(rows.rows);
@@ -182,7 +184,7 @@ router.get("/listings/spotlight", async (req, res) => {
     if (promos.length === 0) { res.json([]); return; }
     const ids = [...new Set(promos.map(p => p.listingId))];
     const rows = await db.select().from(listingsTable).where(
-      and(visible,regionFilter,eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
+      and(visible,demoVisible,regionFilter,eq(listingsTable.status, "active"), inArray(listingsTable.id, ids))
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
@@ -276,7 +278,7 @@ router.get("/listings/:id", async (req, res) => {
     }
     if (!row) { res.status(404).json({ error: "not found" }); return; }
     const visibility = await categoryVisibility();
-    const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility)).limit(1);
+    const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility,demoVisible)).limit(1);
     if (!publicRow.length) { res.status(404).json({ error: "Listing temporarily unavailable" }); return; }
     if (row.status === "scheduled") {
       const viewer = typeof req.query.email === "string" ? req.query.email.toLowerCase() : "";
