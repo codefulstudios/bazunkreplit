@@ -7,6 +7,8 @@ on:
       - 'artifacts/api-server/src/routes/auctions.ts'
       - 'artifacts/api-server/src/routes/flashSales.ts'
       - 'artifacts/api-server/src/routes/classifieds.ts'
+      - 'artifacts/api-server/src/routes/classifiedImportValidation.mjs'
+      - 'artifacts/api-server/src/routes/classifiedImportValidation.test.mjs'
       - 'scripts/test-live-region-api.mjs'
       - '.github/workflows/marketplace-region-db.yml'
   workflow_dispatch:
@@ -60,6 +62,8 @@ jobs:
             status TEXT NOT NULL, marketplace_region TEXT
           );
           SQL
+      - name: Test admin classified import validation
+        run: node --test artifacts/api-server/src/routes/classifiedImportValidation.test.mjs
       - name: Test UK and US database isolation
         run: pnpm --filter @workspace/db exec node --test scripts/test-marketplace-regions.mjs
 
