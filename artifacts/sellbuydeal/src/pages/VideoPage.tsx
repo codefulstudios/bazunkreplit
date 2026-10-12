@@ -10,7 +10,7 @@ const videos = [
   { title: "The Bazunk Chainsaw", file: "bazunk-chainsaw", description: "One branch. One chainsaw. Several extremely expensive consequences." },
   { title: "Bazunk Desert Island", file: "bazunk-desertislandadvert", poster: "bazunk-desertislandposter.png", description: "Two castaways. Five hundred iPhones. Absolutely nowhere sensible to sell them." },
 ];
-const posterFor = (video: typeof videos[number]) => "poster" in video ? video.poster : `${video.file}-poster.${video.file === "bazunk-chainsaw" ? "png" : "jpg"}`;
+const posterFor = (video: typeof videos[number]): string => "poster" in video && video.poster ? video.poster : `${video.file}-poster.${video.file === "bazunk-chainsaw" ? "png" : "jpg"}`;
 const asset = (name: string) => `${import.meta.env.BASE_URL}${name}`;
 
 export default function VideoPage() {
