@@ -52,8 +52,8 @@ router.post("/listings/:id/watcher-offer", async (req: Request, res: Response) =
 });
 
 router.get("/listings/:id/watcher-offer", async (req:Request,res:Response)=>{
-  const email=await authEmail(req); if(!email) return res.json({offer:null}); const id=Number(req.params.id);
-  const w=await db.execute(sql`SELECT 1 FROM listing_watchers WHERE listing_id=${id} AND LOWER(buyer_email)=LOWER(${email}) LIMIT 1`); if(!w.rows.length) return res.json({offer:null});
+  const email=await authEmail(req); if(!email) return void res.json({offer:null}); const id=Number(req.params.id);
+  const w=await db.execute(sql`SELECT 1 FROM listing_watchers WHERE listing_id=${id} AND LOWER(buyer_email)=LOWER(${email}) LIMIT 1`); if(!w.rows.length) return void res.json({offer:null});
   const r=await db.execute(sql`SELECT discount_percent,original_price,offer_price,expires_at FROM watcher_offers WHERE listing_id=${id} AND expires_at>NOW() ORDER BY created_at DESC LIMIT 1`);
   res.json({offer:r.rows[0]||null});
 });
