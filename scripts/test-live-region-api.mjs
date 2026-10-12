@@ -4,6 +4,7 @@ import { test } from "node:test";
 
 const base = (process.env.MARKETPLACE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\/$/, "");
 const routes = ["auctions", "flash-sales", "classifieds"];
+const listingRoute = "/listings";
 
 async function get(path) {
   const response = await fetch(base + "/api" + path, { signal: AbortSignal.timeout(30000) });
@@ -30,3 +31,20 @@ for (const route of routes) {
   }
 }
 
+
+for (const region of ["uk", "us"]) {
+  test(`GET /listings?region=${region} excludes explicit opposite-region listings`, async () => {
+    const { response, body } = await get(`${listingRoute}?region=${region}&limit=50`);
+    assert.equal(response.status, 200);
+    const listings = Array.isArray(body) ? body : Array.isArray(body?.listings) ? body.listings : null;
+    assert.ok(listings, "Expected listing array or listings property");
+    for (const listing of listings) {
+      let specs = listing.specifications;
+      if (typeof specs === "string") {
+        try { specs = JSON.parse(specs); } catch { specs = null; }
+      }
+      const explicit = specs?.marketplace_region ?? listing.marketplaceRegion ?? listing.marketplace_region;
+      if (explicit) assert.equal(explicit, region, "Opposite-region listing leaked into browse");
+    }
+  });
+}
