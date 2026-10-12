@@ -32,12 +32,21 @@ const SELL_OPTIONS: Array<{
 }> = [
   {
     id: "quick",
-    label: "Direct Sale",
-    desc: "List a single item in seconds",
+    label: "Quick Sale",
+    desc: "List the basics now, add details later",
     icon: Zap,
-    href: "/sell/direct",
+    href: "/sell/quick",
     color: "text-[#F26B21]",
     bg: "bg-orange-50",
+  },
+  {
+    id: "direct",
+    label: "Direct Sale",
+    desc: "Guided six-step full listing",
+    icon: Tag,
+    href: "/sell/direct",
+    color: "text-[#4A5CE8]",
+    bg: "bg-blue-50",
   },
   {
     id: "bundle",
