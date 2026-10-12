@@ -24,6 +24,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { SellerListingPicker, type SellerListing } from "@/components/SellerListingPicker";
 
 const CATEGORIES = [
@@ -52,6 +53,7 @@ const DURATIONS: { label: string; hours: number }[] = [
 ];
 
 export function CreateAuctionPage() {
+  const [marketRegion] = useMarketplaceRegion();
   const [, setLocation] = useLocation();
   const { user, refreshBalance } = useAuth();
   const { currency } = useCurrency();
@@ -166,6 +168,7 @@ export function CreateAuctionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          marketplaceRegion: marketRegion,
           title: title.trim(),
           description: description.trim() || null,
           images: photos,
