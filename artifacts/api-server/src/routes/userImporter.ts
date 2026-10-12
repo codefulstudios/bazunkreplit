@@ -468,6 +468,10 @@ router.post("/user/import-shopify-public", async (req, res) => {
   const markupType=req.body.markupType==="fixed"?"fixed":"percentage",markupValue=Number(req.body.markupValue??0);
   if (!Number.isFinite(markupValue) || markupValue < 0 || markupValue > 999999) { res.status(400).json({error:"Enter a valid non-negative markup."}); return; }
   const syncEnabled=req.body.syncEnabled!==false;
+  // A Shopify store currency is not proof of its dispatch location. The seller
+  // must explicitly choose the regional marketplace before importing.
+  const marketplaceRegion=req.body.marketplaceRegion;
+  if(marketplaceRegion!=="uk"&&marketplaceRegion!=="us"){res.status(400).json({error:"Choose UK or USA / Canada marketplace for these Shopify listings."});return;}
   // Validate source identities before opening the transaction. Source data is re-read;
   // the cross-site handoff is a selection, never authority for prices or stock.
   const products = [];
@@ -494,7 +498,7 @@ router.post("/user/import-shopify-public", async (req, res) => {
    const priceGbp=(await toGbp(bazunkPrice,currency)).toFixed(2);
    const image=Array.isArray(raw.images)&&raw.images[0]?.url?String(raw.images[0].url):null;
    const quantity=raw.availability==="out_of_stock"?0:1,status=quantity?"active":"inactive";
-   const specs=JSON.stringify({source:"Shopify Public",shopify_store:host,shopify_url:sourceUrl,shopify_id:externalId,source_price:sourcePrice,source_currency:currency,markup_type:markupType,markup_value:markupValue,sync_enabled:syncEnabled,variants:Array.isArray(raw.variants)?raw.variants:[]});
+   const specs=JSON.stringify({source:"Shopify Public",marketplace_region:marketplaceRegion,shopify_store:host,shopify_url:sourceUrl,shopify_id:externalId,source_price:sourcePrice,source_currency:currency,markup_type:markupType,markup_value:markupValue,sync_enabled:syncEnabled,variants:Array.isArray(raw.variants)?raw.variants:[]});
    const listing=await tx.execute(sql`INSERT INTO listings(public_id,title,price,price_gbp,currency,category,subcategory,subsubcategory,description,condition,image,seller_email,seller_name,specifications,status,quantity,created_at,updated_at)
     VALUES(${'BZK-SHP-'+randomUUID()},${title},${bazunkPrice},${priceGbp},${currency},${category},${subcategory||null},${subsubcategory||null},${String(raw.description??title).slice(0,5000)},'new',${image},${email},${user?.name||email.split("@")[0]},${specs},${status},${quantity},NOW(),NOW()) RETURNING id`).then(r=>r.rows[0] as any);
    await tx.execute(sql`INSERT INTO supplier_imports(listing_id,supplier_source,supplier_id,supplier_url,supplier_price,supplier_currency,markup_type,markup_value,last_synced_at,sync_status,supplier_data,created_at,updated_at)
