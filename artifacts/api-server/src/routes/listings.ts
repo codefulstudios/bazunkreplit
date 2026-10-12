@@ -81,10 +81,11 @@ router.get("/listings", async (req, res) => {
     const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
 
     if (ids) {
+      const regionalVisibility = listingRegionFilter(req.query.region);
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
-      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList),visible));
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), visible, regionalVisibility));
       res.json(rows);
       return;
     }
@@ -121,7 +122,7 @@ router.get("/listings", async (req, res) => {
       .from(listingsTable)
       .where(
         sellerEmail
-          ? and(visible,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
+          ? and(visible,regionalVisibility,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
           : category && category !== "all"
             ? sub
               ? and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
