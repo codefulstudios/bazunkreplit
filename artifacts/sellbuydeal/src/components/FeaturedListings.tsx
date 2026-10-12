@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -68,6 +69,7 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
 }
 
 export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promoted" }) {
+  const [marketRegion] = useMarketplaceRegion();
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
@@ -78,28 +80,33 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setSpotlightListings([]);
+    setRecentListings([]);
     const fetchAll = async () => {
       try {
         const [spotlightRes, recentRes] = await Promise.all([
-          fetch(`${API_BASE}/api/listings/spotlight`),
-          fetch(`${API_BASE}/api/listings?limit=16`),
+          fetch(`${API_BASE}/api/listings/spotlight?region=${marketRegion}`),
+          fetch(`${API_BASE}/api/listings?limit=16&region=${marketRegion}`),
         ]);
-        if (spotlightRes.ok) {
+        if (!cancelled && spotlightRes.ok) {
           const data = await spotlightRes.json();
           setSpotlightListings(Array.isArray(data) ? shuffle(data) : []);
         }
-        if (recentRes.ok) {
+        if (!cancelled && recentRes.ok) {
           const data = await recentRes.json();
           setRecentListings(Array.isArray(data) ? shuffle(data) : []);
         }
       } catch (error) {
         console.error("Homepage listings failed to load", error);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchAll();
-  }, []);
+    return () => { cancelled = true; };
+  }, [marketRegion]);
 
   const hasSpotlight = spotlightListings.length > 0;
   const displayListings = mode === "promoted" ? spotlightListings : recentListings;
