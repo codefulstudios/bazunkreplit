@@ -74,7 +74,7 @@ async function drawCard(canvas: HTMLCanvasElement, listing: ShareListing, format
 
   const pad = Math.round(w * 0.05);
   const price = typeof listing.price === "number" ? listing.price : parseFloat(String(listing.price));
-  const priceText = isFinite(price) ? formatPrice(price) : formatPrice(0);
+  const priceText = new Intl.NumberFormat('en-GB', {style:'currency', currency:'GBP'}).format(isFinite(price) ? price : 0);
 
   const drawPhoto = (x: number, y: number, pw: number, ph: number, r: number) => {
     ctx.save();
