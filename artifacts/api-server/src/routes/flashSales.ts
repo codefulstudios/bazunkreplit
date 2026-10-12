@@ -23,7 +23,6 @@ async function syncStatuses() {
 }
 
 router.get("/flash-sales", async (req, res) => {
-  await syncStatuses();
   const { status = "active", category, sale_type, limit = "40", offset = "0" } = req.query as Record<string, string>;
   const lim = parseInt(limit);
   const off = parseInt(offset);
@@ -33,6 +32,7 @@ router.get("/flash-sales", async (req, res) => {
     res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
     return;
   }
+  await syncStatuses();
   const regionClause = region === "uk" || region === "us"
     ? sql`marketplace_region = ${region}`
     : sql`TRUE`;
