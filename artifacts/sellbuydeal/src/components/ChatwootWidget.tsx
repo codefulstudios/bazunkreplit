@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useRawSettings, useSettingsLoaded } from "@/context/SiteSettingsContext";
@@ -9,6 +10,8 @@ declare global {
     chatwootSettings?: { position: string; type: string; launcherTitle: string };
     chatwootSDK?: { run: (options: { websiteToken: string; baseUrl: string }) => void };
     $chatwoot?: {
+      setUser?: (identifier: string, details: { name: string; email: string; identifier_hash: string }) => void;
+      reset?: () => void;
       toggle: (state?: "open" | "close") => void;
       setCustomAttributes?: (attributes: Record<string, string>) => void;
       setLabel?: (label: string) => void;
@@ -41,6 +44,7 @@ export function openChatwootSupport() {
 /** Keep the widget mounted once while applying live admin settings. */
 export function ChatwootWidget() {
   const enabled = useFeature("chatwoot_support");
+  const { getToken, isSignedIn, userId } = useClerkAuth();
   const loaded = useSettingsLoaded();
   const settings = useRawSettings();
   const [path] = useLocation();
@@ -84,5 +88,25 @@ export function ChatwootWidget() {
     window.addEventListener("chatwoot:ready", apply);
     return () => window.removeEventListener("chatwoot:ready", apply);
   }, [allowed, path, countryCode, settings.chatwoot_region_context, settings.chatwoot_order_context]);
+  useEffect(() => {
+    if (!allowed || settings.chatwoot_identify !== "true" || !isSignedIn || !userId) return;
+    let cancelled = false;
+    const identify = async () => {
+      try {
+        const token = await getToken();
+        if (!token || cancelled) return;
+        const base = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\\/$/, "");
+        const response = await fetch(`${base}/api/chatwoot/identity`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled || !data.identifier_hash) return;
+        const apply = () => window.$chatwoot?.setUser?.(data.identifier, { name: data.name, email: data.email, identifier_hash: data.identifier_hash });
+        apply();
+        window.addEventListener("chatwoot:ready", apply, { once: true });
+      } catch { /* Visitor can still use anonymous support chat. */ }
+    };
+    void identify();
+    return () => { cancelled = true; };
+  }, [allowed, isSignedIn, userId, getToken, settings.chatwoot_identify]);
   return null;
 }
