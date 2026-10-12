@@ -1486,12 +1486,9 @@ router.get("/admin/search-amazon", async (req, res) => {
 
 // POST /api/admin/import-selected-amazon — import specific chosen ASINs
 router.post("/admin/import-selected-amazon", async (req, res) => {
-  const apiKey = process.env.RAPIDAPI_KEY;
-  if (!apiKey) { res.status(503).json({ error: "RapidAPI key not set — add it at the top of Admin → Importers." }); return; }
-
   interface SelectedProduct {
     asin: string; title: string; price_gbp: number;
-    image: string | null; amazon_url: string; category?: string;
+    image: string | null; amazon_url: string; category?: string; currency?: string;
   }
 
   const products: SelectedProduct[] = req.body.products ?? [];
@@ -1516,7 +1513,9 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
   let inserted = 0;
 
   for (const p of products) {
-    if (!p.asin || !p.price_gbp) continue;
+    if (!p.asin || !Number.isFinite(p.price_gbp) || p.price_gbp <= 0) continue;
+    if (p.currency && p.currency !== currency) { res.status(400).json({error:"Selected product currency does not match the selected Amazon marketplace."}); return; }
+    if (!p.amazon_url?.startsWith(site === "us" ? "https://www.amazon.com/dp/" : "https://www.amazon.co.uk/dp/")) { res.status(400).json({error:"Selected product URL does not match the selected Amazon marketplace."}); return; }
     const exists = await db.execute(
       sql`SELECT id FROM listings WHERE specifications LIKE ${'%"asin":"' + p.asin + '"%'}`
     ).then(r => r.rows.length > 0);
@@ -1528,13 +1527,16 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
       source,
       asin: p.asin,
       amazon_url: p.amazon_url,
-      amazon_price_gbp: p.price_gbp,
+      source_price: p.price_gbp,
+      source_currency: currency,
+      amazon_price_gbp: site === "uk" ? p.price_gbp : null,
       shipping_gbp: shippingGbp,
       markup_pct: markupPct,
     });
 
     // Fetch rich product details (About this item bullets + description)
-    const details = site === "uk" ? await fetchAmazonDetails(p.asin, apiKey) : null;
+    // Use already fetched search results; no paid detail API request during bulk import.
+    const details = null;
     const richTitle = details?.title ?? p.title;
     const description = details
       ? buildAmazonDescription(details, p.price_gbp)
@@ -1554,7 +1556,7 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     inserted++;
   }
 
-  logger.info({ inserted, markupPct, shippingGbp }, "Amazon selected import complete");
+  logger.info({ inserted, site, markupPct, shippingGbp }, "Amazon selected import complete");
   res.json({ imported: inserted, message: `Imported ${inserted} products` });
 });
 
