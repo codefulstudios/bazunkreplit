@@ -305,15 +305,15 @@ export function DirectSalePage() {
           .direct-sale-form > section textarea:focus { border-color: #5aa3ff; outline-color: #5aa3ff; }
           .direct-sale-form > section [class*="text-gray-"] { color: #d5e4f6; }
         `}</style>
-        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start">
+        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0">
 
           {/* Header card */}
-          <div className="lg:col-span-2 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
+          <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
             <h1 className="text-3xl font-black text-white">Direct Sale</h1>
             <p className="text-white text-sm mt-1">List your item quickly and easily. No listing fees for private sellers.</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
           </div>
 
-          <aside className="lg:col-start-2 lg:row-start-2 lg:row-span-9 lg:sticky lg:top-24 space-y-4">
+          <aside className="min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-9 lg:sticky lg:top-24 space-y-4">
             <section className="rounded-2xl border border-sky-400/25 bg-[#102541] p-4 text-white shadow-xl">
               <h2 className="font-black text-lg flex items-center gap-2"><Eye className="w-5 h-5 text-sky-300"/> Listing Preview</h2>
               <p className="text-xs text-sky-200 mt-1 mb-4">Updates as you enter your details</p>
