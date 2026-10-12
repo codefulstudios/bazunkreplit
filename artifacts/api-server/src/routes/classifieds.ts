@@ -95,11 +95,15 @@ router.delete("/classifieds/:id", async (req, res) => {
 // ── Admin routes ─────────────────────────────────────────────────
 
 router.get("/admin/classifieds", requireAdmin, async (req, res) => {
-  const { limit = "50", offset = "0", search } = req.query as Record<string, string>;
+  const { limit = "50", offset = "0", search, region } = req.query as Record<string, string>;
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" }); return;
+  }
   const lim = Math.min(parseInt(limit) || 50, 200);
   const off = parseInt(offset) || 0;
 
   const conditions = [eq(classifiedAdsTable.status, "active")];
+  if (region) conditions.push(eq(classifiedAdsTable.marketplaceRegion, region));
   if (search?.trim()) {
     conditions.push(
       or(
