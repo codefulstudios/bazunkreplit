@@ -1,7 +1,9 @@
 // One-shot, idempotent production backfill for two owner-confirmed UK flash sales.
-// Usage: DATABASE_URL=<connection> node scripts/backfill-uk-flash-sales.mjs
+// Usage: DATABASE_URL=<connection> node scripts/backfill-uk-flash-sales.mjs (after pnpm install)
 // Never run this as a recurring scheduled job.
-import pg from "pg";
+import { createRequire } from "node:module";
+const require = createRequire(new URL("../lib/db/package.json", import.meta.url));
+const pg = require("pg");
 
 const ids = ["FS-95097A8B", "FS-E94BB649"];
 if (!process.env.DATABASE_URL) {
