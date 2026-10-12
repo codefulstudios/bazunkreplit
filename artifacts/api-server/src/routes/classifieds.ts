@@ -125,6 +125,10 @@ router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) =>
     res.status(400).json({ error: "ads array is required" }); return;
   }
 
+  if (ads.length > 200 || ads.some(a => !a || typeof a !== "object" || Array.isArray(a))) {
+    res.status(400).json({ error: "Import requires 1–200 classified objects" }); return;
+  }
+
   type AdInput = Record<string, unknown>;
   // Batch imports must explicitly identify their destination marketplace.
   // Never infer from location text, currency, or the admin's own region.
@@ -154,6 +158,10 @@ router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) =>
       photos:      null,
       externalLink:a.externalLink ? String(a.externalLink) : null,
     }));
+
+  if (valid.length !== ads.length) {
+    res.status(400).json({ error: "Every ad must contain title, description, category, location and contactName", invalidCount: ads.length - valid.length }); return;
+  }
 
   if (valid.length === 0) {
     res.status(400).json({ error: "No valid ads in payload (need title, description, category, location, contactName)" }); return;
