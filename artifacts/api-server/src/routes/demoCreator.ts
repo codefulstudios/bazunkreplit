@@ -40,6 +40,44 @@ router.post("/admin/demo-creator/settings", async (req, res) => {
     res.json({ key, enabled });
   } catch { res.status(503).json({ error: "Unable to update setting" }); }
 });
+const templates = [
+  { title:"Compact Bluetooth Speaker", category:"Electronics", description:"Portable rechargeable speaker with Bluetooth connectivity.", price:24.99 },
+  { title:"Ceramic Coffee Mug Set", category:"Home & Garden", description:"Set of four ceramic mugs for everyday use.", price:18.50 },
+  { title:"Canvas Weekend Bag", category:"Fashion", description:"Durable canvas travel bag with zip fastening and handles.", price:32.00 },
+  { title:"LED Desk Lamp", category:"Home & Garden", description:"Adjustable desk light with multiple brightness levels.", price:21.95 },
+  { title:"Wireless Computer Mouse", category:"Electronics", description:"Compact wireless mouse suitable for laptop or desktop use.", price:15.00 }
+];
+router.post("/admin/demo-creator/generate", async (req,res) => {
+  const { sellerEmail, region, count = 1 } = req.body ?? {};
+  if (typeof sellerEmail !== "string" || !sellerEmail.includes("@") || !validRegion(region) ||
+      !Number.isInteger(count) || count < 1 || count > 20) {
+    res.status(400).json({error:"Valid seller, region and count (1–20) required"}); return;
+  }
+  try {
+    await ensureTables();
+    const account = await db.execute(sql`SELECT email FROM users WHERE LOWER(email)=LOWER(${sellerEmail}) LIMIT 1`);
+    if (!account.rows.length) {res.status(404).json({error:"Seller account not found"});return;}
+    const email=String(account.rows[0].email);
+    const currency=region==="uk"?"GBP":"USD";
+    const created=await db.transaction(async tx => {
+      const ids:number[]=[];
+      for(let i=0;i<count;i++){
+        const item=templates[Math.floor(Math.random()*templates.length)];
+        const row=await tx.execute(sql`INSERT INTO listings
+          (title,description,category,price,condition,seller_email,currency,status,specifications,quantity)
+          VALUES (${item.title},${item.description},${item.category},${item.price.toFixed(2)},
+          'new',${email},${currency},'active',
+          ${JSON.stringify({marketplace_region:region,demo_creator:true})},1) RETURNING id`);
+        const id=Number(row.rows[0].id);
+        await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
+          VALUES(${id},${email},${region})`);
+        ids.push(id);
+      }
+      return ids;
+    });
+    res.status(201).json({listingIds:created});
+  } catch {res.status(503).json({error:"Unable to generate listings"});}
+});
 router.post("/admin/demo-creator/listings", async (req, res) => {
   const { sellerEmail, region, title, description, category, price, image, condition } = req.body ?? {};
   const amount = Number(price);
