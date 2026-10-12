@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -145,34 +145,60 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 
 // ── Scratch Card ──────────────────────────────────────────────────────────────
 function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  const [revealing, setRevealing] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  async function scratch() {
-    if (revealing || revealed) return;
-    setRevealing(true);
-    await new Promise(r => setTimeout(r, 900));
-    try { await onPlay(); setRevealed(true); } finally { setRevealing(false); }
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dragging = useRef(false);
+  const last = useRef<{x:number;y:number}|null>(null);
+  const [progress,setProgress] = useState(0);
+  const [revealing,setRevealing] = useState(false);
+  const [revealed,setRevealed] = useState(false);
+  useEffect(() => {
+    const canvas=canvasRef.current;
+    if(!canvas) return;
+    const ctx=canvas.getContext("2d");
+    if(!ctx) return;
+    const w=320,h=190;
+    ctx.globalCompositeOperation="source-over";
+    const gradient=ctx.createLinearGradient(0,0,w,h);
+    gradient.addColorStop(0,"#d9dde7");gradient.addColorStop(.5,"#8e9aad");gradient.addColorStop(1,"#e6e9f1");
+    ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#283248";ctx.textAlign="center";ctx.font="bold 23px sans-serif";
+    ctx.fillText("✦ SCRATCH HERE ✦",w/2,86);
+    ctx.font="14px sans-serif";ctx.fillText("Swipe or drag to reveal",w/2,113);
+  },[]);
+  function scratchAt(e:React.PointerEvent<HTMLCanvasElement>) {
+    if(revealing||revealed||!dragging.current)return;
+    const canvas=canvasRef.current;const ctx=canvas?.getContext("2d");
+    if(!canvas||!ctx)return;
+    const rect=canvas.getBoundingClientRect();
+    const point={x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height};
+    ctx.globalCompositeOperation="destination-out";ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=38;
+    ctx.beginPath();if(last.current){ctx.moveTo(last.current.x,last.current.y);ctx.lineTo(point.x,point.y);}else{ctx.moveTo(point.x,point.y);ctx.lineTo(point.x+.1,point.y+.1);}ctx.stroke();
+    last.current=point;
+    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+    let clear=0;for(let i=3;i<pixels.length;i+=64)if(pixels[i]<100)clear++;
+    const pct=Math.min(100,Math.round(clear/(pixels.length/64)*100));
+    setProgress(pct);
+    if(pct>=48)finish();
   }
-  return (
-    <div className="flex flex-col items-center gap-5 py-2">
-      <p className="text-sm font-medium text-gray-600 text-center">Your lucky ticket is ready. Reveal what's underneath!</p>
-      <motion.button type="button" onClick={scratch} disabled={revealing || revealed} whileHover={!revealed ? { scale: 1.03 } : undefined} whileTap={!revealed ? { scale: .97 } : undefined}
-        className="relative w-full max-w-[320px] min-h-[190px] rounded-3xl overflow-hidden border-4 border-amber-300 shadow-xl focus-visible:outline-4 focus-visible:outline-violet-500 disabled:cursor-default"
-        style={{ background:"linear-gradient(135deg,#7c3aed,#c026d3 55%,#f97316)" }}>
-        <div className="absolute inset-0 opacity-20" style={{ backgroundImage:"radial-gradient(circle,white 1.5px,transparent 2px)",backgroundSize:"19px 19px" }} />
-        <div className="relative flex flex-col items-center justify-center gap-3 text-white p-6">
-          <motion.div animate={revealing ? { rotate:[-8,8,-8,8,0],scale:[1,1.15,1] } : { y:[0,-4,0] }} transition={{ duration:revealing?.7:2,repeat:revealing?0:Infinity }}>
-            <Ticket className="w-12 h-12 text-amber-200" strokeWidth={2.5} />
-          </motion.div>
-          <span className="text-2xl font-black tracking-wide">{revealing ? "Revealing…" : revealed ? "Ticket revealed!" : "LUCKY SCRATCH"}</span>
-          <span className="text-sm font-bold bg-white/20 rounded-full px-4 py-1.5">{revealing ? "Checking your prize" : revealed ? "See your result" : "Tap to reveal your prize"}</span>
-        </div>
-        {revealing && <motion.div initial={{ x:"-110%" }} animate={{ x:"110%" }} transition={{ duration:.8 }} className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-12" />}
-      </motion.button>
-      <p className="text-sm font-semibold text-gray-600">70% chance to win 5–30 credits</p>
-      <p className="text-xs text-gray-500 text-center">Your prize is awarded by the game server, not the animation.</p>
+  async function finish(){
+    if(revealing||revealed)return;
+    dragging.current=false;setRevealing(true);
+    try { await onPlay();setRevealed(true); } finally {setRevealing(false);}
+  }
+  return <div className="flex flex-col items-center gap-4 py-2">
+    <p className="text-center text-base font-semibold text-gray-700">Scratch away the silver coating to reveal your surprise!</p>
+    <div className="relative w-full max-w-[320px] aspect-[320/190] rounded-2xl overflow-hidden border-[5px] border-amber-400 shadow-[0_12px_30px_rgba(245,158,11,.3)] select-none" style={{background:"linear-gradient(135deg,#6d28d9,#c026d3 55%,#f97316)"}}>
+      <div className="absolute inset-0 flex flex-col justify-center items-center text-white gap-2">
+        <motion.div animate={{rotate:[-8,8,-8],scale:[1,1.15,1]}} transition={{duration:1.6,repeat:Infinity}}><Gift className="w-14 h-14 text-yellow-200"/></motion.div>
+        <span className="font-black text-2xl">BAZUNK BONUS!</span><span className="text-sm font-bold">Keep scratching!</span>
+      </div>
+      {!revealed&&<canvas ref={canvasRef} width={320} height={190} aria-label="Scratch ticket coating. Drag or swipe to reveal." onPointerDown={e=>{dragging.current=true;last.current=null;e.currentTarget.setPointerCapture(e.pointerId);scratchAt(e);}} onPointerMove={scratchAt} onPointerUp={()=>{dragging.current=false;last.current=null;}} onPointerCancel={()=>{dragging.current=false;last.current=null;}} className="absolute inset-0 w-full h-full cursor-crosshair touch-none"/>}
     </div>
-  );
+    <div className="w-full max-w-[320px] h-2 rounded-full bg-gray-200 overflow-hidden"><div className="h-full bg-gradient-to-r from-purple-500 to-orange-500 transition-all" style={{width:`${progress}%`}}/></div>
+    <p className="text-sm font-bold text-gray-700">{revealing?"Checking your prize…":revealed?"Ticket revealed!":`${progress}% scratched · Reveal at 48%`}</p>
+    <button type="button" disabled={revealing||revealed} onClick={finish} className="rounded-xl bg-violet-600 text-white px-6 py-3 font-bold disabled:opacity-50">Reveal without scratching</button>
+    <p className="text-sm text-gray-600">70% chance to win 5–30 credits</p>
+  </div>;
 }
 
 // ── Word Scramble ─────────────────────────────────────────────────────────────
