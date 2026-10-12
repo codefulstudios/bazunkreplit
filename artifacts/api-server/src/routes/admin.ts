@@ -1445,11 +1445,13 @@ router.get("/admin/search-amazon", async (req, res) => {
 
   const query = (req.query.q as string ?? "").trim();
   const page  = Math.max(1, parseInt(req.query.page as string) || 1);
+  const site = req.query.site === "us" ? "us" : "uk";
+  const country = site === "us" ? "US" : "GB";
   if (!query) { res.status(400).json({ error: "q is required" }); return; }
 
   try {
     const resp = await fetch(
-      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(query)}&country=GB&page=${page}`,
+      `https://real-time-amazon-data.p.rapidapi.com/search?query=${encodeURIComponent(query)}&country=${country}&page=${page}`,
       { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-amazon-data.p.rapidapi.com" } }
     );
     if (!resp.ok) {
@@ -1467,13 +1469,15 @@ router.get("/admin/search-amazon", async (req, res) => {
           asin: p.asin as string,
           title: String(p.product_title ?? "Amazon Product").slice(0, 200),
           price_gbp: priceGbp,
+          currency: site === "us" ? "USD" : "GBP",
+          site,
           image: (p.product_photo as string | null) ?? null,
           rating: String(p.product_star_rating ?? ""),
-          amazon_url: `https://www.amazon.co.uk/dp/${p.asin}`,
+          amazon_url: `https://www.amazon.${site === "us" ? "com" : "co.uk"}/dp/${p.asin}`,
         };
       });
 
-    res.json({ products, total: products.length });
+    res.json({ products, total: products.length, site });
   } catch (err) {
     logger.error({ err }, "Amazon search failed");
     res.status(500).json({ error: "Amazon search failed" });
@@ -1491,6 +1495,9 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
   }
 
   const products: SelectedProduct[] = req.body.products ?? [];
+  const site = req.body.site === "us" ? "us" : "uk";
+  const currency = site === "us" ? "USD" : "GBP";
+  const source = site === "us" ? "Amazon US" : "Amazon UK";
   const markupPct    = Math.max(0, parseFloat(String(req.body.markup   ?? 35))   || 35);
   const shippingGbp  = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
   const category     = (req.body.category    as string) || "other";
@@ -1516,9 +1523,9 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     if (exists) continue;
 
     const bazunkPrice = Math.round((p.price_gbp * (1 + markupPct / 100) + shippingGbp) * 100) / 100;
-    const publicId = `BZK-AMZ-${date}-${String(Date.now()).slice(-6)}-${String(inserted + 1).padStart(3, "0")}`;
+    const publicId = `BZK-AMZ-${site.toUpperCase()}-${date}-${String(Date.now()).slice(-6)}-${String(inserted + 1).padStart(3, "0")}`;
     const specs = JSON.stringify({
-      source: "Amazon UK",
+      source,
       asin: p.asin,
       amazon_url: p.amazon_url,
       amazon_price_gbp: p.price_gbp,
@@ -1527,18 +1534,18 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     });
 
     // Fetch rich product details (About this item bullets + description)
-    const details = await fetchAmazonDetails(p.asin, apiKey);
+    const details = site === "uk" ? await fetchAmazonDetails(p.asin, apiKey) : null;
     const richTitle = details?.title ?? p.title;
     const description = details
       ? buildAmazonDescription(details, p.price_gbp)
-      : [p.title, "", "Product sourced from Amazon UK.", "", `Original Amazon UK price: £${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
+      : [p.title, "", "Product sourced from ${source}.", "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = details?.image ?? p.image ?? null;
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
         description, condition, image, seller_email, seller_name, specifications, status, created_at, updated_at)
       VALUES (
-        ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, 'GBP', ${category}, ${subcategory},
+        ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, ${currency}, ${category}, ${subcategory},
         ${description},
         'new', ${image}, ${SELLER_EMAIL}, ${SELLER_NAME},
         ${specs}, 'active', NOW(), NOW()
@@ -1547,7 +1554,7 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     inserted++;
   }
 
-  logger.info({ inserted, markupPct, shippingGbp }, "Amazon UK selected import complete");
+  logger.info({ inserted, markupPct, shippingGbp }, "Amazon selected import complete");
   res.json({ imported: inserted, message: `Imported ${inserted} products` });
 });
 
