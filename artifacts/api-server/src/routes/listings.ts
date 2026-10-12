@@ -116,6 +116,7 @@ router.get("/listings", async (req, res) => {
         sellerUsername: listingsTable.sellerUsername,
         extraCategories: listingsTable.extraCategories,
         currency: listingsTable.currency,
+        marketplaceRegion: sql<string | null>`CASE WHEN COALESCE(${listingsTable.specifications}, '') ~ '^\\s*\\{' THEN ${listingsTable.specifications}::jsonb->>'marketplace_region' ELSE NULL END`,
         priceGbp: listingsTable.priceGbp,
         createdAt: listingsTable.createdAt,
       })
