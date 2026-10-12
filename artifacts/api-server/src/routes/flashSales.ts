@@ -28,31 +28,30 @@ router.get("/flash-sales", async (req, res) => {
   const lim = parseInt(limit);
   const off = parseInt(offset);
 
+  const region = req.query.region;
+  const regionClause = region === "uk" || region === "us"
+    ? sql`marketplace_region = ${region}`
+    : sql`TRUE`;
   let rows;
   if (status === "upcoming") {
     if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   } else {
     if (sale_type && sale_type !== "all" && category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   }
-  if (req.query.region === "uk" || req.query.region === "us") {
-    const selected = req.query.region;
-    const filtered = await db.execute(sql`SELECT id FROM flash_sales WHERE marketplace_region = ${selected}`);
-    const allowed = new Set(filtered.rows.map(r => String(r.id)));
-    res.json(rows.rows.filter(r => allowed.has(String(r.id))));
     return;
   }
   res.json(rows.rows);
