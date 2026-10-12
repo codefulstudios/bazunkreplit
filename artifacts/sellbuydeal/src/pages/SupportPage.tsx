@@ -11,7 +11,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { useRawSettings } from "@/context/SiteSettingsContext";
-import { isFeatureEnabled } from "@/components/FeatureGate";
+import { isFeatureEnabled, useFeature } from "@/components/FeatureGate";
 
 const CATEGORIES = [
   {
@@ -179,6 +179,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export function SupportPage() {
   const featureSettings = useRawSettings();
+  const chatwootEnabled = useFeature("chatwoot_support");
   const visibleCategories = CATEGORIES.filter((c:any) => !c.feature || isFeatureEnabled(featureSettings, c.feature));
   const [activeCategory, setActiveCategory] = useState(0);
   const faqVisible = (faq:{q:string;a:string}) => {
@@ -263,7 +264,7 @@ export function SupportPage() {
             Chat with our support team or open a ticket from your Dashboard. Replies depend on agent availability.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <button type="button" onClick={openChatwootSupport} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F26B21] text-white font-semibold text-sm hover:opacity-90 transition-opacity"><MessageSquare className="w-4 h-4" /> Live Support Chat</button>
+            {chatwootEnabled && <button type="button" onClick={openChatwootSupport} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F26B21] text-white font-semibold text-sm hover:opacity-90 transition-opacity"><MessageSquare className="w-4 h-4" /> Live Support Chat</button>}
             <Link
               href="/dashboard?section=support-tickets"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
