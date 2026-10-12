@@ -36,7 +36,13 @@ test("region-scoped activity queries isolate UK and US, with rollback", async ()
       const placeholders = values.map((_, i) => "$"+(i+1)).join(",");
       await client.query(`INSERT INTO ${table} (${columns}) VALUES (${placeholders})`, values);
     }
-    for (const table of ["auctions", "flash_sales"]) {
+    for (const region of ["uk", "us"]) {
+      await client.query(
+        "INSERT INTO classified_ads (title,description,category,location,contact_name,status,marketplace_region) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+        ["regional-test-"+region+"-"+marker, "Temporary region isolation test", "test", "Test Location", "Regional Test", "active", region],
+      );
+    }
+    for (const table of ["auctions", "flash_sales", "classified_ads"]) {
       for (const region of ["uk", "us"]) {
         const result = await client.query(`SELECT title,marketplace_region FROM ${table} WHERE marketplace_region=$1 AND title LIKE $2`, [region, "%"+marker]);
         assert.equal(result.rowCount, 1, `${table} ${region} should return exactly one test row`);
