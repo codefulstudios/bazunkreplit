@@ -3470,6 +3470,7 @@ const DISPUTE_STATUS_META: Record<string, { label: string; color: string }> = {
 // ─── Orders Section ──────────────────────────────────────────────────────────
 
 function OrdersSection() {
+  const { session } = useSession();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
   const [orders, setOrders] = useState<MockOrder[]>([]);
@@ -3480,7 +3481,7 @@ function OrdersSection() {
     let cancelled = false;
     (async () => {
       try {
-        const token = await session.getToken();
+        const token = await session?.getToken();
         const res = await fetch(`/api/orders`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         if (res.ok) {
           const rows = await res.json();
