@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { ALL_PRODUCTS } from "@/data/products";
 import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -227,6 +228,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 }
 
 export function BrowsePage() {
+  const [marketRegion] = useMarketplaceRegion();
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
@@ -276,6 +278,7 @@ export function BrowsePage() {
   const browseSub = browseCategory && selectedSubcategories.length === 1 ? selectedSubcategories[0] : "";
   const browseSubsub = browseSub && selectedThirdLevels.length === 1 ? selectedThirdLevels[0] : "";
   const browseScope = new URLSearchParams();
+  browseScope.set("region", marketRegion);
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
@@ -283,7 +286,7 @@ export function BrowsePage() {
 
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/listings/category-counts`)
+    fetch(`${API_BASE}/api/listings/category-counts?region=${marketRegion}`)
       .then((r) => {
         if (!r.ok) throw new Error(`category counts ${r.status}`);
         return r.json();
