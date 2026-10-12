@@ -29,3 +29,15 @@ for (const route of routes) {
     });
   }
 }
+
+for (const route of routes) {
+  test(`POST /${route} rejects missing region without creating a record`, async () => {
+    const response = await fetch(base + "/api/" + route, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+      signal: AbortSignal.timeout(30000),
+    });
+    assert.equal(response.status, 400, `Expected missing-region validation for ${route}; got ${response.status}`);
+  });
+}
