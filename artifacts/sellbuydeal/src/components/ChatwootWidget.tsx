@@ -23,11 +23,10 @@ export function ChatwootWidget() {
   const enabled = useFeature("chatwoot_support");
   useEffect(() => {
     if (!enabled) {
-      document.querySelectorAll("chatwoot-widget, #chatwoot_live_chat_widget").forEach(el => el.remove());
-      const iframe = document.querySelector("iframe#chatwoot_live_chat_widget");
-      iframe?.remove();
+      document.documentElement.classList.add("bazunk-chatwoot-disabled");
       return;
     }
+    document.documentElement.classList.remove("bazunk-chatwoot-disabled");
     window.chatwootSettings = {
       position: "right",
       type: "standard",
