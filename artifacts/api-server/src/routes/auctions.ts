@@ -40,17 +40,16 @@ const VALID_STATUSES = ["active", "ended", "cancelled"];
 router.get("/auctions", async (req, res) => {
   const { status = "active", category, sort = "ending", limit = "40", offset = "0" } = req.query as Record<string, string>;
   const orderClause = sort === "newest" ? sql`ORDER BY created_at DESC` : sql`ORDER BY end_time ASC`;
+  const region = req.query.region;
+  const regionClause = region === "uk" || region === "us"
+    ? sql`marketplace_region = ${region}`
+    : sql`TRUE`;
   let rows;
   if (category && category !== "all") {
-    rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+    rows = await db.execute(sql`SELECT * FROM auctions WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   } else {
-    rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
+    rows = await db.execute(sql`SELECT * FROM auctions WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   }
-  if (req.query.region === "uk" || req.query.region === "us") {
-    const selected = req.query.region;
-    const filtered = await db.execute(sql`SELECT id FROM auctions WHERE marketplace_region = ${selected}`);
-    const allowed = new Set(filtered.rows.map(r => String(r.id)));
-    res.json(rows.rows.filter(r => allowed.has(String(r.id))).map(r => publicAuction(r as Record<string, unknown>)));
     return;
   }
   res.json(rows.rows.map(r => publicAuction(r as Record<string, unknown>)));
