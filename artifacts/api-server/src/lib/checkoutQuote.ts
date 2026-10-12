@@ -27,6 +27,15 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   // registry lookup fails; do not create a Stripe session for uncertain items.
   const demoRows = (await db.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})`)).rows;
   const demoIds = demoRows.map(row => Number(row.listing_id));
+  // Defence in depth: also reject legacy demo rows missing a registry entry.
+  const legacyDemoRows = (await db.execute(sql`SELECT id FROM listings
+    WHERE id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
+      AND COALESCE(specifications,'') ~ '^\\s*\\{'
+      AND (specifications::jsonb->>'demo_creator') = 'true'`)).rows;
+  for (const row of legacyDemoRows) {
+    const id=Number(row.id);
+    if(!demoIds.includes(id)) demoIds.push(id);
+  }
   if (demoIds.length) throw new QuoteError(`These items are unavailable for checkout: ${demoIds.join(", ")}. Remove them from your cart to continue.`, 409);
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
