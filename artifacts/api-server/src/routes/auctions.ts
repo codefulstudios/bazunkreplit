@@ -46,6 +46,13 @@ router.get("/auctions", async (req, res) => {
   } else {
     rows = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ${orderClause} LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`);
   }
+  if (req.query.region === "uk" || req.query.region === "us") {
+    const selected = req.query.region;
+    const filtered = await db.execute(sql`SELECT id FROM auctions WHERE marketplace_region = ${selected}`);
+    const allowed = new Set(filtered.rows.map(r => String(r.id)));
+    res.json(rows.rows.filter(r => allowed.has(String(r.id))).map(r => publicAuction(r as Record<string, unknown>)));
+    return;
+  }
   res.json(rows.rows.map(r => publicAuction(r as Record<string, unknown>)));
 });
 
@@ -135,6 +142,8 @@ router.get("/auctions/:id", async (req, res) => {
 
 router.post("/auctions", async (req, res) => {
   const body = req.body as Record<string, unknown>;
+  const marketplaceRegion = body.marketplaceRegion;
+  if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   const { title, description, category, condition, sellerEmail, sellerName, startingBid, reservePrice, bidIncrement, endTime } = body as Record<string, string>;
   const images = (body["images"] as string[]) ?? [];
   if (!title || !sellerEmail || !sellerName || !startingBid || !endTime) {
@@ -162,14 +171,14 @@ router.post("/auctions", async (req, res) => {
   await db.execute(sql`
     INSERT INTO auctions
       (id, title, description, images, category, condition, seller_email, seller_name,
-       starting_bid, reserve_price, bid_increment, end_time, extend_enabled, status, created_at, updated_at)
+       starting_bid, reserve_price, bid_increment, end_time, extend_enabled, status, marketplace_region, created_at, updated_at)
     VALUES (
       ${id}, ${title}, ${description ?? null}, ${JSON.stringify(images)},
       ${category ?? null}, ${condition ?? "used"}, ${sellerEmail}, ${sellerName},
       ${parseFloat(startingBid)},
       ${wantsReserve ? parseFloat(reservePrice) : null},
       ${bidIncrement ? parseFloat(bidIncrement) : 1.0},
-      ${endTime}, ${wantsExtension}, 'active', NOW(), NOW()
+      ${endTime}, ${wantsExtension}, 'active', ${marketplaceRegion}, NOW(), NOW()
     )
   `);
   let newBalance: number | undefined;
