@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'lib/db/scripts/test-marketplace-regions.mjs'
+      - 'scripts/test-live-region-api.mjs'
       - '.github/workflows/marketplace-region-db.yml'
   workflow_dispatch:
 jobs:
@@ -58,3 +59,15 @@ jobs:
       - name: Test UK and US database isolation
         working-directory: lib/db
         run: node --test scripts/test-marketplace-regions.mjs
+
+  read-only-live-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check live regional GET endpoints (no writes)
+        env:
+          MARKETPLACE_API_BASE_URL: https://bazunk-api.onrender.com
+        run: node --test scripts/test-live-region-api.mjs
