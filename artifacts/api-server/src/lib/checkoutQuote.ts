@@ -23,6 +23,11 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
     WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
     AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
+  // Demo listings are cart-visible but never purchasable. Fail closed if the
+  // registry lookup fails; do not create a Stripe session for uncertain items.
+  const demoRows = (await db.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})`)).rows;
+  const demoIds = demoRows.map(row => Number(row.listing_id));
+  if (demoIds.length) throw new QuoteError(`These items are unavailable for checkout: ${demoIds.join(", ")}. Remove them from your cart to continue.`, 409);
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
   const fees=Object.fromEntries(settings.map(r=>[String(r.key),String(r.value)]));
