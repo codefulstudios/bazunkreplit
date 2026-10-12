@@ -727,6 +727,25 @@ async function runAppMigrations() {
   await run(sql`CREATE INDEX IF NOT EXISTS flash_sales_marketplace_region_idx ON flash_sales(marketplace_region)`, "flash_sales.marketplace_region_idx");
   await run(sql`CREATE INDEX IF NOT EXISTS classified_ads_marketplace_region_idx ON classified_ads(marketplace_region)`, "classified_ads.marketplace_region_idx");
 
+  // One-time idempotent backfill for listings with an explicit importer market.
+  // Never guess from currency, price, seller address, or generic Shopify sources.
+  // Keep any manually assigned region unchanged.
+  await run(sql`
+    UPDATE listings
+    SET specifications = jsonb_set(
+      specifications::jsonb, '{marketplace_region}',
+      to_jsonb(CASE
+        WHEN specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK') THEN 'uk'
+        ELSE 'us'
+      END), true
+    )::text
+    WHERE specifications IS NOT NULL
+      AND specifications ~ '^\\s*\\{'
+      AND jsonb_typeof(specifications::jsonb) = 'object'
+      AND NOT (specifications::jsonb ? 'marketplace_region')
+      AND specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK', 'eBay US', 'Amazon US')
+  `, "listings.explicit_source_region_backfill");
+
   logger.info("App migrations complete");
 }
 
