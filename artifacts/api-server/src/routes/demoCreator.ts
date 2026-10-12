@@ -31,7 +31,7 @@ router.get("/admin/demo-creator", async (_req, res) => {
   try {
     await ensureTables();
     const [listings, settings, activities] = await Promise.all([
-      db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id ORDER BY d.created_at DESC LIMIT 500`),
+      db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' ORDER BY d.created_at DESC LIMIT 500`),
       db.execute(sql`SELECT key,enabled FROM demo_creator_settings`),
       db.execute(sql`SELECT * FROM demo_activity_fixtures ORDER BY created_at DESC LIMIT 500`)
     ]);
@@ -179,7 +179,7 @@ router.patch("/admin/demo-creator/listings/:id", async (req,res) => {
   }
   try {
     await ensureTables();
-    const r = await db.execute(sql`UPDATE demo_listing_registry SET enabled=${req.body.enabled} WHERE listing_id=${id} RETURNING listing_id`);
+    const r = await db.execute(sql`UPDATE demo_listing_registry SET enabled=${req.body.enabled} WHERE listing_id=${id} AND EXISTS (SELECT 1 FROM listings l WHERE l.id=${id} AND l.status <> 'deleted') RETURNING listing_id`);
     if (!r.rows.length) { res.status(404).json({ error: "Demo listing not found" }); return; }
     res.json({ listingId:id, enabled:req.body.enabled });
   } catch { res.status(503).json({ error: "Unable to update listing" }); }
@@ -193,7 +193,7 @@ router.post("/admin/demo-creator/listings/batch-delete", async (req,res) => {
   try {
     await ensureTables();
     const removed = await db.transaction(async tx => {
-      const found = await tx.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) FOR UPDATE`);
+      const found = await tx.execute(sql`SELECT d.listing_id FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' AND d.listing_id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) FOR UPDATE`);
       const safeIds = found.rows.map(r=>Number(r.listing_id));
       if (!safeIds.length) return 0;
       // Never delete a genuine listing, even if the caller supplies its ID.
