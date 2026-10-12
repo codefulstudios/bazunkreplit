@@ -1537,9 +1537,8 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
 
     // Fetch rich product details (About this item bullets + description)
     // Use already fetched search results; no paid detail API request during bulk import.
-    const details = null;
     const richTitle = p.title;
-    const description = [p.title, "", "Product sourced from ${source}.", "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
+    const description = [p.title, "", `Product sourced from ${source}.`, "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = p.image ?? null;
 
     await db.execute(sql`
