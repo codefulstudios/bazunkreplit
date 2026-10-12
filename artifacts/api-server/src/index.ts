@@ -746,6 +746,15 @@ async function runAppMigrations() {
       AND specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK', 'eBay US', 'Amazon US')
   `, "listings.explicit_source_region_backfill");
 
+  await run(sql`CREATE TABLE IF NOT EXISTS demo_creator_settings (key TEXT PRIMARY KEY, enabled BOOLEAN NOT NULL DEFAULT FALSE)`, "demo_creator_settings");
+  await run(sql`CREATE TABLE IF NOT EXISTS demo_listing_registry (
+    listing_id INTEGER PRIMARY KEY REFERENCES listings(id) ON DELETE CASCADE,
+    seller_email TEXT NOT NULL,
+    region TEXT NOT NULL CHECK(region IN ('uk','us')),
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    source_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`, "demo_listing_registry");
   logger.info("App migrations complete");
 }
 
