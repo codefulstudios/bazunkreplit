@@ -213,7 +213,7 @@ router.post("/reviews", async (req, res) => {
 
 // Buyers/sellers may correct their own review for 30 days. The order/role cannot change.
 router.patch("/reviews/:id", async (req, res) => {
-  const id=Number(req.params.id); const stars=Math.round(Number(req.body?.rating));
+  const id=Number(String(req.params.id)); const stars=Math.round(Number(req.body?.rating));
   if(!id || stars<1 || stars>5) { res.status(400).json({error:"Choose a rating from 1 to 5"}); return; }
   const email=await authenticatedEmail(req); if(!email){res.status(401).json({error:"Please sign in"});return;}
   const row=(await db.execute(sql`SELECT * FROM reviews WHERE id=${id} LIMIT 1`)).rows[0] as any;
@@ -229,7 +229,7 @@ router.patch("/reviews/:id", async (req, res) => {
   res.json({ok:true});
 });
 router.delete("/reviews/:id/mine", async (req,res)=>{
-  const id=Number(req.params.id); const email=await authenticatedEmail(req); if(!email){res.status(401).json({error:"Please sign in"});return;}
+  const id=Number(String(req.params.id)); const email=await authenticatedEmail(req); if(!email){res.status(401).json({error:"Please sign in"});return;}
   const r=await db.execute(sql`UPDATE reviews SET deleted_by_reviewer_at=NOW() WHERE id=${id} AND LOWER(reviewer_email)=LOWER(${email}) AND deleted_by_reviewer_at IS NULL RETURNING id`);
   if(!r.rows.length){res.status(404).json({error:"Review not found or not yours"});return;} res.json({ok:true});
 });
@@ -237,7 +237,7 @@ router.delete("/reviews/:id/mine", async (req,res)=>{
 // ── Review replies & reporting ───────────────────────────────────────────────
 
 router.post("/reviews/:id/reply", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const reply = typeof req.body?.reply === "string" ? req.body.reply.trim().slice(0, 1000) : "";
   if (!id || !reply) { res.status(400).json({ error: "Write a reply first" }); return; }
   try {
@@ -261,7 +261,7 @@ router.post("/reviews/:id/reply", async (req, res) => {
 
 const REPORT_REASONS = new Set(["abusive", "spam", "personal_information", "not_about_transaction", "other"]);
 router.post("/reviews/:id/report", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const reason = typeof req.body?.reason === "string" ? req.body.reason : "";
   const details = typeof req.body?.details === "string" ? req.body.details.trim().slice(0, 1000) : "";
   if (!id || !REPORT_REASONS.has(reason)) { res.status(400).json({ error: "Choose a valid report reason" }); return; }
@@ -309,7 +309,7 @@ router.post("/orders/:id/dispatch", async (req, res) => {
   try {
     const sellerEmail = await authenticatedEmail(req);
     if (!sellerEmail) { res.status(401).json({ error: "Please sign in to dispatch orders" }); return; }
-    const order = (await db.execute(sql`SELECT id, buyer_email, seller_email, item_title, status FROM orders WHERE id = ${req.params.id}`)).rows[0] as
+    const order = (await db.execute(sql`SELECT id, buyer_email, seller_email, item_title, status FROM orders WHERE id = ${String(req.params.id)}`)).rows[0] as
       { id: string; buyer_email: string; seller_email: string | null; item_title: string; status: string } | undefined;
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
     if (!order.seller_email || order.seller_email.toLowerCase() !== sellerEmail.toLowerCase()) { res.status(403).json({ error: "That isn't your order" }); return; }
@@ -367,7 +367,7 @@ router.get("/admin/reviews", requireAdmin, async (_req, res) => {
 });
 
 router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "Removed by admin";
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NOW(), removed_reason = ${reason || "Removed by admin"} WHERE id = ${id}`);
@@ -376,7 +376,7 @@ router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
 });
 
 router.post("/admin/reviews/:id/restore", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NULL, removed_reason = NULL WHERE id = ${id}`);
   logger.info({ id }, "Admin restored review");
