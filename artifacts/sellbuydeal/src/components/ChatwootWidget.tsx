@@ -79,7 +79,10 @@ export function ChatwootWidget() {
       const match = path.match(/^\/(?:orders?|disputes?|returns?)\/([a-zA-Z0-9_-]{1,80})/);
       if (match) attributes.bazunk_case_reference = match[1];
     }
-    window.$chatwoot.setCustomAttributes?.(attributes);
+    const apply = () => window.$chatwoot?.setCustomAttributes?.(attributes);
+    apply();
+    window.addEventListener("chatwoot:ready", apply);
+    return () => window.removeEventListener("chatwoot:ready", apply);
   }, [allowed, path, countryCode, settings.chatwoot_region_context, settings.chatwoot_order_context]);
   return null;
 }
