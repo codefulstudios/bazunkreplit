@@ -650,7 +650,7 @@ export function Navbar() {
       </nav>
 
       {/* Floating country + currency selector */}
-      <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
+      {isFeatureEnabled(featureSettings, "currency_selector") && <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
         <button onClick={() => setCurrencyOpen(!currencyOpen)}
           className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 bg-white shadow-lg hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors">
           <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-400">·</span><span>{currency.code} {currency.symbol}</span>
@@ -671,7 +671,7 @@ export function Navbar() {
             <p className="mt-2 text-[11px] leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Mobile menu drawer */}
       <AnimatePresence>
