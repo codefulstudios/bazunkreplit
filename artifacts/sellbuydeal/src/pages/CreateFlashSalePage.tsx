@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { SellerListingPicker, type SellerListing } from "@/components/SellerListingPicker";
 
 const CATEGORIES = ["Electronics", "Fashion", "Gaming", "Books", "Collectibles", "Home", "Sports", "Digital", "Adult", "Other"];
@@ -30,6 +31,7 @@ const LIGHTNING_DURATIONS: { label: string; mins: number }[] = [
 ];
 
 export function CreateFlashSalePage() {
+  const [marketRegion] = useMarketplaceRegion();
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { currency, formatPrice } = useCurrency();
@@ -157,6 +159,7 @@ export function CreateFlashSalePage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+          marketplaceRegion: marketRegion,
               sellerEmail: user.email,
               sellerName: user.username ?? user.name,
               sellerUsername: user.username,
