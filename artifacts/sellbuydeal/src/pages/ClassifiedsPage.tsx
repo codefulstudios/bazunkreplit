@@ -507,7 +507,7 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          marketplaceRegion: marketRegion,
+          marketplaceRegion: window.localStorage.getItem('bazunk_marketplace_region') === 'uk' ? 'uk' : 'us',
           title: title.trim(),
           description: description.trim(),
           category,
