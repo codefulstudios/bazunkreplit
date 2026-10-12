@@ -746,6 +746,26 @@ async function runAppMigrations() {
       AND specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK', 'eBay US', 'Amazon US')
   `, "listings.explicit_source_region_backfill");
 
+  // Owner-approved assignment (12 Oct 2026): four verified manual listings to UK.
+  // Match BOTH ID and title, and only fill missing specifications/region.
+  // This remains idempotent on subsequent starts and never overrides a later choice.
+  await run(sql`
+    UPDATE listings
+    SET specifications = jsonb_set(
+      CASE WHEN specifications IS NULL OR BTRIM(specifications) = ''
+        THEN '{}'::jsonb ELSE specifications::jsonb END,
+      '{marketplace_region}', '"uk"'::jsonb, true
+    )::text
+    WHERE (
+      (id = 2 AND title = 'Abercrombie & Fitch Fierce Cologne Eau de Cologne 200ml Spray')
+      OR (id = 4 AND title = 'Abercrombie & Fitch A&F Quarterly Illustrated Lifestyle Magazine')
+      OR (id = 7 AND title = 'Xiaomi Red Note 15')
+      OR (id = 27 AND title = 'JML Electric Can Opener – Automatic Tin Opener, One Touch Hands Free')
+    )
+    AND (specifications IS NULL OR BTRIM(specifications) = ''
+      OR (specifications ~ '^\\s*\\{' AND NOT (specifications::jsonb ? 'marketplace_region')))
+  `, "listings.owner_approved_four_uk_assignments");
+
   logger.info("App migrations complete");
 }
 
