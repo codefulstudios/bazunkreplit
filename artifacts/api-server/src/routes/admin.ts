@@ -2077,7 +2077,7 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
     const publicId    = `${prefix}-${date}-${String(Date.now()).slice(-6)}-${String(inserted + 1).padStart(3, "0")}`;
     const source      = site === "uk" ? "eBay UK" : "eBay US";
     const specs       = JSON.stringify({
-      source, item_id: p.item_id, ebay_url: p.ebay_url,
+      source, marketplace_region: site, item_id: p.item_id, ebay_url: p.ebay_url,
       ships_from: p.item_location ?? "", source_condition: p.condition ?? "", source_shipping_label: p.shipping_label ?? "",
       source_shipping_options:p.shipping_options??[], source_delivery_country:p.ship_to_country??null, source_shipping_estimate_country:p.shipping_estimate_country??null, source_ship_to_locations:p.ship_to_locations??null, source_availability_status:p.availability_status??null,
       ships_to: p.ship_to_country??"", shipping_destinations: p.ship_to_country?[{country:p.ship_to_country,source:"ebay_search_estimate",shipping_cost:p.shipping_options?.[0]?.cost??null}]:[], shipping_destination_requests_enabled:true,
