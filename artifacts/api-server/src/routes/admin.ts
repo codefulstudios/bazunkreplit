@@ -1525,6 +1525,7 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     const publicId = `BZK-AMZ-${site.toUpperCase()}-${date}-${String(Date.now()).slice(-6)}-${String(inserted + 1).padStart(3, "0")}`;
     const specs = JSON.stringify({
       source,
+      marketplace_region: site,
       asin: p.asin,
       amazon_url: p.amazon_url,
       source_price: p.price_gbp,
