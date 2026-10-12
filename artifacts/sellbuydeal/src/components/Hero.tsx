@@ -22,6 +22,7 @@ const PILLS = [
 ];
 
 const SELL_OPTIONS = [
+  { icon: Zap, label: "Quick Sale", desc: "List the basics now, edit later", href: "/sell/quick", color: "bg-yellow-500/10 text-yellow-500", hover: "hover:border-yellow-400/30 hover:bg-yellow-50" },
   {
     icon: ShoppingCart,
     label: "Direct Sale",
