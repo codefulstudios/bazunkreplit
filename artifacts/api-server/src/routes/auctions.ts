@@ -41,6 +41,10 @@ router.get("/auctions", async (req, res) => {
   const { status = "active", category, sort = "ending", limit = "40", offset = "0" } = req.query as Record<string, string>;
   const orderClause = sort === "newest" ? sql`ORDER BY created_at DESC` : sql`ORDER BY end_time ASC`;
   const region = req.query.region;
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+    return;
+  }
   const regionClause = region === "uk" || region === "us"
     ? sql`marketplace_region = ${region}`
     : sql`TRUE`;
