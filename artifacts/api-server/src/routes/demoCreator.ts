@@ -59,12 +59,12 @@ router.post("/admin/demo-creator/url-preview", async (req,res) => {
     if(typeof raw!=="string" || raw.length>2048) {res.status(400).json({error:"Valid product URL required"});return;}
     const url=new URL(raw);
     if(url.protocol!=="https:" || url.username || url.password ||
-      !/^[a-z0-9.-]+\\.[a-z]{2,}$/i.test(url.hostname) ||
-      /^(localhost|.*\\.localhost|.*\\.local)$/i.test(url.hostname)) {
+      !/^[a-z0-9.-]+\.[a-z]{2,}$/i.test(url.hostname) ||
+      /^(localhost|.*\.localhost|.*\.local)$/i.test(url.hostname)) {
       res.status(400).json({error:"Public HTTPS product URL required"});return;
     }
     const slug=decodeURIComponent(url.pathname.split("/").filter(Boolean).pop()||"Product");
-    const title=slug.replace(/[-_]+/g," ").replace(/\\.[a-z0-9]{2,5}$/i,"").slice(0,180).trim();
+    const title=slug.replace(/[-_]+/g," ").replace(/\.[a-z0-9]{2,5}$/i,"").slice(0,180).trim();
     res.json({sourceUrl:url.toString(),title:title||"Product",description:"",category:"Other",price:null,requiresManualReview:true,
       note:"Preview inferred from URL only. Product details and price must be entered manually."});
   } catch {res.status(400).json({error:"Invalid URL"});}
