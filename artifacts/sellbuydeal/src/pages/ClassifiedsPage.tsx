@@ -15,7 +15,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { useCurrency } from "@/context/CurrencyContext";
-import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
+import { getMarketplaceRegion, useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useAuth } from "@/context/AuthContext";
 import {
   MOCK_ADS, CLASSIFIED_CATEGORIES,
@@ -507,7 +507,7 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          marketplaceRegion: window.localStorage.getItem('bazunk_marketplace_region') === 'uk' ? 'uk' : 'us',
+          marketplaceRegion: getMarketplaceRegion(),
           title: title.trim(),
           description: description.trim(),
           category,
