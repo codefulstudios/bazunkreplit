@@ -52,8 +52,6 @@ router.get("/flash-sales", async (req, res) => {
       rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   }
-    return;
-  }
   res.json(rows.rows);
 });
 
