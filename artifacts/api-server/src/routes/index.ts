@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import healthRouter from "./health.js";
 import stripeRouter from "./stripe.js";
 import adminRouter from "./admin.js";
+import demoCreatorRouter from "./demoCreator.js";
 import setupRouter from "./setup.js";
 import productsRouter from "./products.js";
 import disputesRouter from "./disputes.js";
@@ -41,6 +42,7 @@ router.get("/public/homepage-intro", async (_req, res) => {
 router.use(healthRouter);
 router.use(stripeRouter);
 router.use(adminRouter);
+router.use(demoCreatorRouter);
 router.use(setupRouter);
 router.use(productsRouter);
 router.use(disputesRouter);
