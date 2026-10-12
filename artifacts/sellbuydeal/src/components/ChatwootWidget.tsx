@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useFeature } from "@/components/FeatureGate";
 
 declare global {
   interface Window {
@@ -19,7 +20,14 @@ export function openChatwootSupport() {
 
 /** Load the support widget once, even across React strict-mode remounts. */
 export function ChatwootWidget() {
+  const enabled = useFeature("chatwoot_support");
   useEffect(() => {
+    if (!enabled) {
+      document.querySelectorAll("chatwoot-widget, #chatwoot_live_chat_widget").forEach(el => el.remove());
+      const iframe = document.querySelector("iframe#chatwoot_live_chat_widget");
+      iframe?.remove();
+      return;
+    }
     window.chatwootSettings = {
       position: "right",
       type: "standard",
@@ -35,6 +43,6 @@ export function ChatwootWidget() {
       window.chatwootSDK?.run({ websiteToken: WEBSITE_TOKEN, baseUrl: BASE_URL });
     };
     document.head.appendChild(script);
-  }, []);
+  }, [enabled]);
   return null;
 }
