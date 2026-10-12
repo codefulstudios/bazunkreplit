@@ -33,3 +33,8 @@ SELECT COALESCE(specifications::jsonb->>'marketplace_region','UNASSIGNED') AS re
 FROM listings WHERE specifications ~ '^\\s*\\{' GROUP BY 1 ORDER BY 1;
 SELECT id, title, seller_email, status, marketplace_region
 FROM flash_sales WHERE marketplace_region IS NULL ORDER BY id;
+
+-- Historical flash sales verified by the marketplace owner as UK records (2026-10-13).
+-- Run only with a write-enabled PostgreSQL client after backup.
+-- UPDATE flash_sales SET marketplace_region = 'uk'
+-- WHERE id IN ('FS-95097A8B', 'FS-E94BB649') AND marketplace_region IS NULL;
