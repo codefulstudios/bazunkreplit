@@ -22,6 +22,7 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { WatchlistProvider } from "@/context/WatchlistContext";
 import { CartDrawer } from "@/components/CartDrawer";
+import { ChatwootWidget } from "@/components/ChatwootWidget";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
@@ -369,6 +370,7 @@ function InnerApp() {
                     <ScrollToTop />
                     <Router />
                     <CartDrawer />
+                    <ChatwootWidget />
                     <Toaster />
                   </OfferProvider>
                 </LiveStreamProvider>
