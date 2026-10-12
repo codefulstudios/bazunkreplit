@@ -117,18 +117,19 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 
   return (
     <div className="space-y-4">
-      <p className="font-bold text-gray-900 text-base">{question.question}</p>
+      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="rounded-2xl bg-blue-50 border border-blue-200 p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><p className="font-bold text-gray-900 text-lg">{question.question}</p></motion.div>
       <div className="space-y-2">
         {question.options.map((opt, i) => (
-          <button
+          <motion.button
             key={i}
+            initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}} transition={{delay:i*.09}} whileHover={{scale:1.015}} whileTap={{scale:.98}}
             onClick={() => setSelected(i)}
             className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
               selected === i ? "border-blue-500 bg-blue-50 text-blue-900" : "border-gray-200 hover:border-gray-300 text-gray-700"
             }`}
           >
             <span className="font-bold text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
-          </button>
+          </motion.button>
         ))}
       </div>
       <button
@@ -228,7 +229,7 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
           {scramble.scrambled.split("").map((letter, i) => (
             <motion.span key={i} initial={{opacity:0,y:-20,rotate:-15}} animate={{opacity:1,y:0,rotate:0}} transition={{delay:i*.07,type:"spring"}} className="w-10 h-10 rounded-xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-lg font-black text-pink-700">
               {letter}
-            </span>
+            </motion.span>
           ))}
         </div>
       </div>
