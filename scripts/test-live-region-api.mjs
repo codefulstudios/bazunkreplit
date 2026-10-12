@@ -55,3 +55,17 @@ for (const region of ["uk", "us"]) {
     }
   });
 }
+
+for (const path of ["/listings", "/listings/category-counts", "/listings/spotlight"]) {
+  test(`GET ${path} rejects invalid marketplace region`, async () => {
+    const { response } = await get(`${path}?region=invalid-region`);
+    assert.equal(response.status, 400);
+  });
+  for (const region of ["uk", "us"]) {
+    test(`GET ${path} accepts ${region} marketplace`, async () => {
+      const { response, body } = await get(`${path}?region=${region}`);
+      assert.equal(response.status, 200);
+      assert.ok(Array.isArray(body));
+    });
+  }
+}
