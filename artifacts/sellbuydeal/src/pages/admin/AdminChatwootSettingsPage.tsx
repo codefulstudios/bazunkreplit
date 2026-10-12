@@ -49,8 +49,8 @@ export function AdminChatwootSettingsPage(){
     <section className="bg-white border rounded-xl p-5"><h2 className="font-bold mb-2">Customer context</h2>
       {check("chatwoot_region_context","Share UK/US marketplace region")}
       {check("chatwoot_order_context","Share current order or dispute reference when available")}
-      <label className="flex items-center justify-between gap-3 py-3 text-sm text-gray-500"><span>Verified account identity (requires server-side identity endpoint)</span><input type="checkbox" checked={false} disabled className="h-5 w-5"/></label>
-      <p className="text-xs text-amber-700 mt-3">Verified identity is not activated until the authenticated HMAC endpoint is configured. Email addresses are never trusted from query parameters.</p>
+      {check("chatwoot_identify","Identify signed-in customers using server-verified HMAC")}
+      <p className="text-xs text-amber-700 mt-3">Set CHATWOOT_IDENTITY_VALIDATION_SECRET on the Bazunk API Render service, matching the Chatwoot website inbox identity-validation secret. Until configured, visitors remain anonymous.</p>
     </section>
     <section className="bg-white border rounded-xl p-5 space-y-3"><h2 className="font-bold">Connection and Chatwoot administration</h2>
       <p className="text-sm">Host: app.chatwoot.com · Widget token configured · Live service status must be verified in Chatwoot.</p>
