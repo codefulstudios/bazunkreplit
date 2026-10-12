@@ -1,0 +1,60 @@
+name: Marketplace regional database isolation
+on:
+  push:
+    paths:
+      - 'lib/db/scripts/test-marketplace-regions.mjs'
+      - '.github/workflows/marketplace-region-db.yml'
+  workflow_dispatch:
+jobs:
+  region-isolation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: bazunk_test
+          POSTGRES_PASSWORD: regional_test_only
+          POSTGRES_DB: bazunk_region_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bazunk_test -d bazunk_region_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://bazunk_test:regional_test_only@localhost:5432/bazunk_region_test
+      PGPASSWORD: regional_test_only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create minimal isolated activity schema
+        run: |
+          psql -h localhost -U bazunk_test -d bazunk_region_test -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE auctions (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, seller_email TEXT NOT NULL,
+            seller_name TEXT NOT NULL, starting_bid NUMERIC NOT NULL,
+            bid_increment NUMERIC NOT NULL, end_time TIMESTAMPTZ NOT NULL,
+            status TEXT NOT NULL, marketplace_region TEXT
+          );
+          CREATE TABLE flash_sales (
+            id TEXT PRIMARY KEY, title TEXT NOT NULL, seller_email TEXT NOT NULL,
+            seller_name TEXT NOT NULL, original_price NUMERIC NOT NULL,
+            sale_price NUMERIC NOT NULL, discount_percent INTEGER NOT NULL,
+            starts_at TIMESTAMPTZ NOT NULL, ends_at TIMESTAMPTZ NOT NULL,
+            status TEXT NOT NULL, sale_type TEXT NOT NULL, marketplace_region TEXT
+          );
+          CREATE TABLE classified_ads (
+            id SERIAL PRIMARY KEY, title TEXT NOT NULL, description TEXT NOT NULL,
+            category TEXT NOT NULL, location TEXT NOT NULL, contact_name TEXT NOT NULL,
+            status TEXT NOT NULL, marketplace_region TEXT
+          );
+          SQL
+      - name: Test UK and US database isolation
+        working-directory: lib/db
+        run: node --test scripts/test-marketplace-regions.mjs
