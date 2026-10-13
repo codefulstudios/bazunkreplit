@@ -45,7 +45,7 @@ try {
   }
   const { rows: checks } = await client.query(
     `SELECT conrelid::regclass::text AS table_name, conname
-     FROM pg_constraint WHERE conrelid = ANY($1::regclass[])
+     FROM pg_constraint WHERE conrelid::regclass::text = ANY($1::text[])
        AND conname = ANY($2::text[])`,
     [tables, tables.map(t => `${t}_marketplace_region_allowed`)],
   );
