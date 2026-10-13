@@ -889,7 +889,7 @@ router.put("/admin/fee-settings", async (req, res) => {
     const entries = Object.entries(incoming).filter(([key]) =>
       key === "fee_listing_free" || key === "fee_rate_default" || key.startsWith("fee_rate_") || key.startsWith("buyer_protection_")
     );
-    if (!entries.length) return res.status(400).json({ error: "No fee settings supplied" });
+    if (!entries.length) return void res.status(400).json({ error: "No fee settings supplied" });
     const changedKeys = entries.map(([key]) => key);
     const oldFeeRows = await db.execute(sql`SELECT key, value FROM site_settings WHERE key LIKE 'fee_%' OR key LIKE 'buyer_protection_%'`).then(r => r.rows as any[]);
     const beforeFees = Object.fromEntries(oldFeeRows.filter((r:any) => changedKeys.includes(String(r.key))).map((r:any) => [r.key, r.value]));
@@ -899,7 +899,7 @@ router.put("/admin/fee-settings", async (req, res) => {
       if (key.startsWith("fee_rate_") || key === "buyer_protection_percent" || key.startsWith("buyer_protection_fixed_")) {
         const rate = Number(value);
         if (!Number.isFinite(rate) || rate < 0 || rate > 30) {
-          return res.status(400).json({ error: `Invalid fee rate for ${key}` });
+          return void res.status(400).json({ error: `Invalid fee rate for ${key}` });
         }
         value = String(rate);
       }
