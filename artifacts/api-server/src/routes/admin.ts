@@ -1537,12 +1537,9 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
 
     // Fetch rich product details (About this item bullets + description)
     // Use already fetched search results; no paid detail API request during bulk import.
-    const details = null;
-    const richTitle = details?.title ?? p.title;
-    const description = details
-      ? buildAmazonDescription(details, p.price_gbp)
-      : [p.title, "", "Product sourced from ${source}.", "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
-    const image = details?.image ?? p.image ?? null;
+    const richTitle = p.title;
+    const description = [p.title, "", `Product sourced from ${source}.`, "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
+    const image = p.image ?? null;
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
@@ -1577,6 +1574,7 @@ router.post("/admin/sync-amazon-prices", async (req, res) => {
 
   // Fetch current prices in parallel batches of 5
   let updated = 0, unchanged = 0, errors = 0;
+  const failures: { listingId: number; reason: string }[] = [];
   const BATCH = 5;
 
   for (let i = 0; i < rows.length; i += BATCH) {
