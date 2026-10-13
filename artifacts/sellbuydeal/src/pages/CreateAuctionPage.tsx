@@ -1,3 +1,4 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +56,7 @@ const DURATIONS: { label: string; hours: number }[] = [
 export function CreateAuctionPage() {
   const [marketRegion] = useMarketplaceRegion();
   const [, setLocation] = useLocation();
+  const { getToken } = useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const { currency } = useCurrency();
 
@@ -164,9 +166,11 @@ export function CreateAuctionPage() {
     try {
       const endTime = new Date(Date.now() + durationHours * 3600000).toISOString();
       const toGBP = (n: number) => n / currency.rate;
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in to create a listing.");
       const res = await fetch("/api/auctions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           marketplaceRegion: marketRegion,
           title: title.trim(),
