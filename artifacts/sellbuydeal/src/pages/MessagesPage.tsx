@@ -122,6 +122,7 @@ function MessageBubble({ msg }: { msg: Message }) {
 }
 
 function SellerPanel({ convo, onClose }: { convo: Conversation; onClose: () => void }) {
+  const { formatPrice } = useCurrency();
   return (
     <div className="w-64 bg-white border-l border-gray-100 flex flex-col overflow-y-auto">
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-100">
@@ -192,6 +193,7 @@ const STATUS_CONFIG: Record<OfferStatus, { label: string; color: string; bg: str
 };
 
 function OfferRow({ offer, active, onClick }: { offer: Offer; active: boolean; onClick: () => void }) {
+  const { formatPrice } = useCurrency();
   const cfg = STATUS_CONFIG[offer.status];
   const savings = ((1 - offer.offerPrice / offer.listingPrice) * 100).toFixed(0);
   return (
@@ -230,6 +232,7 @@ function OfferDetail({
   onRespond: (action: "accept" | "decline" | "counter", price?: number, msg?: string) => void;
   onRespondToCounter: (accept: boolean) => void;
 }) {
+  const { formatPrice, currency } = useCurrency();
   const { addToCart } = useCart();
   const product = ALL_PRODUCTS.find((p) => p.id === offer.productId);
   const [showCounter, setShowCounter] = useState(false);
