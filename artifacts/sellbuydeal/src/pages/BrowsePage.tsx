@@ -388,7 +388,7 @@ export function BrowsePage() {
       result = result.filter((p) => (p.subcategory && matchesSubcategory(p.subcategory)) || parseExtras(p).some((e) => matchesSubcategory(e.subcategory)));
     }
     if (selectedThirdLevels.length > 0) {
-      result = result.filter(p => selectedThirdLevels.includes(p.subsubcategory ?? ""));
+      result = result.filter(p => selectedThirdLevels.includes((p as unknown as { subsubcategory?: string }).subsubcategory ?? ""));
     }
     if (selectedConditions.length > 0) {
       result = result.filter((p) => selectedConditions.includes(p.condition));
@@ -1013,7 +1013,7 @@ export function BrowsePage() {
               : "flex flex-col gap-3"
             }>
               {filtered.map((product) => (
-                <Link key={product.id} href={`/listing/${'publicId' in product && product.publicId ? (product as Record<string,unknown>).publicId as string : product.id}`}>
+                <Link key={product.id} href={`/listing/${'publicId' in product && product.publicId ? (product as unknown as Record<string,unknown>).publicId as string : product.id}`}>
                   <ProductCard product={product} view={view} promotions={'promotions' in product ? (product as Record<string,unknown>).promotions as string[] : []} />
                 </Link>
               ))}
