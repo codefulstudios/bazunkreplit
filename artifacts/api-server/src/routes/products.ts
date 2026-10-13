@@ -30,7 +30,7 @@ router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
   try {
     const items = req.body?.categories;
     if (!Array.isArray(items) || items.length > 500) { res.status(400).json({ error: "Invalid taxonomy" }); return; }
-    const cleaned: unknown[] = [];
+    const cleaned: { category: string; subcategory: string; name: string; slug: string; visible: boolean; sortOrder: number }[] = [];
     for (const item of items) {
       const category = String(item.category ?? ""), subcategory = String(item.subcategory ?? "");
       const name = String(item.name ?? "").trim().slice(0, 100);
