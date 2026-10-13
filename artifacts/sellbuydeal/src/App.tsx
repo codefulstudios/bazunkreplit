@@ -257,9 +257,12 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      {/* Auth — REQUIRED: use /*? wildcard verbatim for OAuth callbacks */}
-      <Route path="/sign-in/*?" component={SignInPage} />
-      <Route path="/sign-up/*?" component={SignUpPage} />
+      {/* Clerk OAuth returns to nested callback paths. Match these explicitly
+          because Wouter's optional wildcard syntax is not supported here. */}
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-in/*" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/sign-up/*" component={SignUpPage} />
       {/* Legacy redirects */}
       <Route path="/login">{() => <Redirect to="/sign-in" />}</Route>
       <Route path="/register">{() => <Redirect to="/sign-up" />}</Route>
