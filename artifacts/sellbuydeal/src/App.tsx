@@ -259,8 +259,10 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       {/* Auth — REQUIRED: use /*? wildcard verbatim for OAuth callbacks */}
-      <Route path="/sign-in/*?" component={SignInPage} />
-      <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-in/*" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/sign-up/*" component={SignUpPage} />
       {/* Legacy redirects */}
       <Route path="/login">{() => <Redirect to="/sign-in" />}</Route>
       <Route path="/register">{() => <Redirect to="/sign-up" />}</Route>
