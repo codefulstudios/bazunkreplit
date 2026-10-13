@@ -111,7 +111,15 @@ export function ChatwootWidget() {
           if (cancelled || !window.$chatwoot?.setUser) return;
           if (identifiedUser.current !== data.identifier) {
             identifiedUser.current = data.identifier;
-            window.$chatwoot.reset?.();
+            if (window.$chatwoot.reset) {
+              window.addEventListener("chatwoot:ready", () => {
+                if (!cancelled) window.$chatwoot?.setUser?.(data.identifier, {
+                  name: data.name, email: data.email, identifier_hash: data.identifier_hash,
+                });
+              }, { once: true });
+              window.$chatwoot.reset();
+              return;
+            }
           }
           window.$chatwoot.setUser(data.identifier, {
             name: data.name, email: data.email, identifier_hash: data.identifier_hash,
