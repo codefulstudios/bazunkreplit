@@ -1014,7 +1014,7 @@ export function BrowsePage() {
             }>
               {filtered.map((product) => (
                 <Link key={product.id} href={`/listing/${'publicId' in product && product.publicId ? (product as unknown as Record<string,unknown>).publicId as string : product.id}`}>
-                  <ProductCard product={product} view={view} promotions={'promotions' in product ? (product as Record<string,unknown>).promotions as string[] : []} />
+                  <ProductCard product={product} view={view} promotions={'promotions' in product ? (product as unknown as Record<string,unknown>).promotions as string[] : []} />
                 </Link>
               ))}
             </div>
