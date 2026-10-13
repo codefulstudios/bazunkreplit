@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -43,6 +43,7 @@ export function openChatwootSupport() {
 
 /** Keep the widget mounted once while applying live admin settings. */
 export function ChatwootWidget() {
+  const identifiedUser = useRef<string | null>(null);
   const enabled = useFeature("chatwoot_support");
   const { getToken, isSignedIn, userId } = useClerkAuth();
   const loaded = useSettingsLoaded();
@@ -89,7 +90,10 @@ export function ChatwootWidget() {
     return () => window.removeEventListener("chatwoot:ready", apply);
   }, [allowed, path, countryCode, settings.chatwoot_region_context, settings.chatwoot_order_context]);
   useEffect(() => {
-    if (!isSignedIn && window.$chatwoot) window.$chatwoot.reset?.();
+    if (!isSignedIn && identifiedUser.current) {
+      identifiedUser.current = null;
+      window.$chatwoot?.reset?.();
+    }
   }, [isSignedIn]);
   useEffect(() => {
     if (!allowed || settings.chatwoot_identify !== "true" || !isSignedIn || !userId) return;
@@ -103,9 +107,18 @@ export function ChatwootWidget() {
         if (!response.ok) return;
         const data = await response.json();
         if (cancelled || !data.identifier_hash) return;
-        const apply = () => window.$chatwoot?.setUser?.(data.identifier, { name: data.name, email: data.email, identifier_hash: data.identifier_hash });
-        apply();
-        window.addEventListener("chatwoot:ready", apply, { once: true });
+        const apply = () => {
+          if (cancelled || !window.$chatwoot?.setUser) return;
+          if (identifiedUser.current !== data.identifier) {
+            identifiedUser.current = data.identifier;
+            window.$chatwoot.reset?.();
+          }
+          window.$chatwoot.setUser(data.identifier, {
+            name: data.name, email: data.email, identifier_hash: data.identifier_hash,
+          });
+        };
+        if (window.$chatwoot?.setUser) apply();
+        else window.addEventListener("chatwoot:ready", apply, { once: true });
       } catch { /* Visitor can still use anonymous support chat. */ }
     };
     void identify();
