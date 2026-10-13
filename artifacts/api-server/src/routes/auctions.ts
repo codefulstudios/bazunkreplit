@@ -3,6 +3,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { randomUUID } from "crypto";
 import {
   sendNewBidNotification,
@@ -142,10 +143,15 @@ router.get("/auctions/:id", async (req, res) => {
 });
 
 router.post("/auctions", async (req, res) => {
+  const authenticatedEmail = await authenticatedSellerEmail(req, res);
+  if (!authenticatedEmail) return;
   const body = req.body as Record<string, unknown>;
   const marketplaceRegion = body.marketplaceRegion;
   if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   const { title, description, category, condition, sellerEmail, sellerName, startingBid, reservePrice, bidIncrement, endTime } = body as Record<string, string>;
+  if (typeof sellerEmail !== "string" || sellerEmail.trim().toLowerCase() !== authenticatedEmail) {
+    res.status(403).json({ error: "Seller account mismatch" }); return;
+  }
   const images = (body["images"] as string[]) ?? [];
   if (!title || !sellerEmail || !sellerName || !startingBid || !endTime) {
     res.status(400).json({ error: "title, sellerEmail, sellerName, startingBid, endTime are required" });
@@ -273,12 +279,14 @@ router.post("/auctions/:id/bid", async (req, res) => {
 });
 
 router.patch("/auctions/:id/cancel", async (req, res) => {
+  const authenticatedEmail = await authenticatedSellerEmail(req, res);
+  if (!authenticatedEmail) return;
   const { id } = req.params;
   const { email } = req.body as Record<string, string>;
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0] as Record<string, unknown>;
-  if (auction["seller_email"] !== email) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (typeof email !== "string" || email.trim().toLowerCase() !== authenticatedEmail || String(auction["seller_email"]).toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Forbidden" }); return; }
   await db.execute(sql`UPDATE auctions SET status = 'cancelled', updated_at = NOW() WHERE id = ${id}`);
   res.json({ ok: true });
 });
