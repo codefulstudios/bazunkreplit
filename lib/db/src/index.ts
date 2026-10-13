@@ -11,14 +11,28 @@ if (!process.env.DATABASE_URL) {
 }
 
 const databaseUrl = process.env.DATABASE_URL;
-const isLocalDatabase = /(?:localhost|127\\.0\\.0\\.1)/i.test(databaseUrl);
+const isLocalDatabase = /(?:localhost|127\.0\.0\.1)/i.test(databaseUrl);
+const aivenCaCert = process.env.AIVEN_CA_CERT?.trim();
 
-// Hosted PostgreSQL providers (including Render external database URLs) require TLS.
-// Keep local development non-TLS, while allowing production DATABASE_URL connections
-// to negotiate SSL without requiring a locally installed CA certificate.
+// node-postgres parses sslmode in the connection string and may overwrite the
+// explicit ssl.ca option. Remove URL SSL parameters when a CA is supplied so
+// the trusted Aiven certificate is actually used for verification.
+let connectionString = databaseUrl;
+if (aivenCaCert && !isLocalDatabase) {
+  const parsed = new URL(databaseUrl);
+  for (const key of ["sslmode", "sslrootcert", "sslcert", "sslkey"]) {
+    parsed.searchParams.delete(key);
+  }
+  connectionString = parsed.toString();
+}
+
 export const pool = new Pool({
-  connectionString: databaseUrl,
-  ssl: isLocalDatabase ? false : { rejectUnauthorized: false },
+  connectionString,
+  ssl: isLocalDatabase
+    ? false
+    : aivenCaCert
+      ? { ca: aivenCaCert.replace(/\\n/g, "\n"), rejectUnauthorized: true }
+      : { rejectUnauthorized: false },
 });
 export const db = drizzle(pool, { schema });
 
