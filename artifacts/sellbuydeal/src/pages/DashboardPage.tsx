@@ -3470,6 +3470,7 @@ const DISPUTE_STATUS_META: Record<string, { label: string; color: string }> = {
 // ─── Orders Section ──────────────────────────────────────────────────────────
 
 function OrdersSection() {
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
   const [orders, setOrders] = useState<MockOrder[]>([]);
