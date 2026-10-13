@@ -404,7 +404,7 @@ export function BrowsePage() {
     }
     if (shipFrom.length > 0) {
       result = result.filter((p) => {
-        const sf = (p as unknown as Record<string, unknown>).shipOrigin as string | undefined;
+        const sf = (p as unknown as unknown as Record<string, unknown>).shipOrigin as string | undefined;
         return sf == null || shipFrom.includes(sf);
       });
     }
