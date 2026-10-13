@@ -41,6 +41,12 @@ export async function syncImport(importId: number): Promise<{ ok: boolean; error
 }
 
 export async function syncAllImports(): Promise<{ synced: number; errors: number }> {
+  let ebayDays = EBAY_SYNC_DAYS;
+  try {
+    const settings = await db.execute(sql`SELECT value FROM site_settings WHERE key='ebay_api_centre_settings'`);
+    const parsed = JSON.parse(String(settings.rows[0]?.value ?? "{}"));
+    if (Number.isInteger(parsed.syncDays) && parsed.syncDays >= 1 && parsed.syncDays <= 90) ebayDays = parsed.syncDays;
+  } catch { /* use fallback */ }
   const rows = await db.execute(sql`
     SELECT si.id, si.listing_id AS "listingId", si.supplier_id AS "supplierId", si.supplier_source AS "supplierSource", si.markup_type AS "markupType", si.markup_value AS "markupValue", si.supplier_url AS "supplierUrl", si.supplier_data AS "supplierData", l.seller_email AS "sellerEmail"
     FROM supplier_imports si JOIN listings l ON l.id=si.listing_id
