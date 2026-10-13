@@ -451,7 +451,7 @@ function AdDetailModal({ ad, onClose }: { ad: ClassifiedAd; onClose: () => void 
 // ─── Post Ad Modal ─────────────────────────────────────────────────────────────
 function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: ClassifiedAd) => void }) {
   const { getToken } = useClerkAuth();
-  const marketRegion = useMarketplaceRegion();
+  const [marketRegion] = useMarketplaceRegion();
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
 
