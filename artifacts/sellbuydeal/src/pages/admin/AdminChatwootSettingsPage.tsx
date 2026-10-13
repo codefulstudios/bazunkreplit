@@ -22,7 +22,7 @@ export function AdminChatwootSettingsPage(){
   const [message,setMessage]=useState("");
   useEffect(()=>{ if(!token)return; fetch(`${API}/api/admin/settings`,{headers:{Authorization:`Bearer ${token}`}})
     .then(r=>{if(!r.ok)throw Error("Could not load settings");return r.json()})
-    .then(d=>setSettings({...defaults,...Object.fromEntries(Object.entries(d).filter(([k])=>k in defaults))}))
+    .then(d=>setSettings({...defaults,...Object.fromEntries(Object.entries(d as Record<string, unknown>).filter(([k, v])=>k in defaults && typeof v === "string")) as Record<string, string>}))
     .catch(e=>setMessage(e.message));},[token]);
   const update=(key:string,value:string)=>setSettings(prev=>({...prev,[key]:value}));
   const check=(key:string,label:string)=><label className="flex items-center justify-between gap-3 py-3 border-b border-gray-100 text-sm text-gray-800"><span>{label}</span><input type="checkbox" checked={settings[key]==="true"} onChange={e=>update(key,String(e.target.checked))} className="h-5 w-5 accent-orange-500"/></label>;
