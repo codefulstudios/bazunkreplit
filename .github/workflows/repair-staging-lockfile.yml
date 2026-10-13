@@ -2,6 +2,11 @@ name: Repair staging pnpm lockfile
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/admin-demo-creator
+    paths:
+      - .github/workflows/repair-staging-lockfile.yml
 
 permissions:
   contents: write
