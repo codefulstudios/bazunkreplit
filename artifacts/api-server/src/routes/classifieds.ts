@@ -3,6 +3,7 @@ import { Router } from "express";
 import { db, classifiedAdsTable } from "@workspace/db";
 import { eq, desc, and, ilike, or, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
@@ -32,10 +33,12 @@ router.get("/classifieds", async (req, res) => {
 });
 
 router.post("/classifieds", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
   const {
     title, description, category, subcategory, type,
     price, priceLabel, negotiable, condition,
-    location, contactName, contactEmail, contactPhone,
+    location, contactName, contactPhone,
     urgency, photos, externalLink, expiresAt, marketplaceRegion,
   } = req.body as Record<string, unknown>;
 
@@ -71,7 +74,7 @@ router.post("/classifieds", async (req, res) => {
       condition: condition ? String(condition) : null,
       location: (location as string).trim(),
       contactName: (contactName as string).trim(),
-      contactEmail: contactEmail ? String(contactEmail) : null,
+      contactEmail: sellerEmail,
       contactPhone: contactPhone ? String(contactPhone) : null,
       urgency: urgency ? String(urgency) : null,
       photos: Array.isArray(photos) ? JSON.stringify(photos) : null,
@@ -84,12 +87,16 @@ router.post("/classifieds", async (req, res) => {
 });
 
 router.delete("/classifieds/:id", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  await db
+  const changed = await db
     .update(classifiedAdsTable)
     .set({ status: "deleted" })
-    .where(eq(classifiedAdsTable.id, id));
+    .where(and(eq(classifiedAdsTable.id, id), sql`LOWER(${classifiedAdsTable.contactEmail}) = ${sellerEmail}`))
+    .returning({ id: classifiedAdsTable.id });
+  if (!changed.length) { res.status(404).json({ error: "Classified not found or not yours" }); return; }
   res.json({ ok: true });
 });
 
