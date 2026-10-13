@@ -2138,7 +2138,7 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
           </label>
         )}
         {!loading && !status?.chargesEnabled && (
-          <button onClick={handleConnect} disabled={connecting || !payoutCountry} disabled={connecting}
+          <button onClick={handleConnect} disabled={connecting || !payoutCountry}
             className="mt-4 w-full py-3 rounded-xl bg-[#4A5CE8] hover:bg-[#3B4FD8] text-white font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
             {connecting ? <><RefreshCw className="w-4 h-4 animate-spin" />Redirecting to Stripe…</> : <><ExternalLink className="w-4 h-4" />Connect Bank Account via Stripe</>}
           </button>
@@ -3480,7 +3480,7 @@ function OrdersSection() {
     let cancelled = false;
     (async () => {
       try {
-        const token = await session.getToken();
+        const token = await getToken();
         const res = await fetch(`/api/orders`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         if (res.ok) {
           const rows = await res.json();
