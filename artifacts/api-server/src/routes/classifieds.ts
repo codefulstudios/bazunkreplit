@@ -138,6 +138,7 @@ router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) =>
     res.status(validation.status).json({ error: validation.error, ...("invalidCount" in validation ? { invalidCount: validation.invalidCount } : {}) });
     return;
   }
+  if (!Array.isArray(ads)) { res.status(400).json({ error: "ads must be an array" }); return; }
   type AdInput = Record<string, unknown>;
   const valid: typeof classifiedAdsTable.$inferInsert[] = (ads as AdInput[])
     .filter(a => a.title && a.description && a.category && a.location && a.contactName)
