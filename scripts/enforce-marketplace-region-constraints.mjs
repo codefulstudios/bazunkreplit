@@ -46,8 +46,8 @@ try {
   const { rows: checks } = await client.query(
     `SELECT conrelid::regclass::text AS table_name, conname
      FROM pg_constraint WHERE conrelid = ANY($1::regclass[])
-       AND conname LIKE '%_marketplace_region_allowed'`,
-    [tables],
+       AND conname = ANY($2::text[])`,
+    [tables, tables.map(t => `${t}_marketplace_region_allowed`)],
   );
   if (checks.length !== tables.length) throw new Error("Constraint verification failed");
   await client.query("COMMIT");
