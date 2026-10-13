@@ -1,3 +1,4 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -133,6 +134,7 @@ export function DirectSalePage() {
   interface BuilderOption { label: string; hex: string; qty: number; }
   interface BuilderVariant { type: "size" | "colour"; options: BuilderOption[]; newLabel: string; newHex: string; newQty: string; }
 
+  const { getToken } = useClerkAuth();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [title, setTitle] = useState("");
@@ -231,9 +233,11 @@ export function DirectSalePage() {
     setPublishing(true);
 
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in to create a listing.");
       const res = await fetch("/api/listings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           title: title.trim(),
           price,
