@@ -1,6 +1,6 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, useClerk } from "@clerk/react";
+import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 
 function ScrollToTop() {
@@ -117,7 +117,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 // Only set if you front Clerk with your own proxy. Leave unset on Render.
-const clerkProxyUrl = (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined) || undefined;
+const clerkProxyUrl = window.location.hostname.endsWith(".onrender.com") ? undefined : (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined) || undefined;
 
 if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
@@ -204,11 +204,10 @@ function ClerkQueryClientCacheInvalidator() {
 function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-[#0D0F1C] px-4">
-      <SignIn
-        routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-      />
+      <div className="w-full max-w-[440px]">
+        <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white"><h1 className="text-xl font-bold">Bazunk sign in</h1><p className="mt-3 text-white/70">Connecting to secure sign in…</p><p className="mt-4 text-sm text-white/60">If this stays visible, the authentication service may be unavailable.</p></div></ClerkLoading>
+        <ClerkLoaded><SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} /></ClerkLoaded>
+      </div>
     </div>
   );
 }
@@ -216,11 +215,10 @@ function SignInPage() {
 function SignUpPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-[#0D0F1C] px-4">
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-      />
+      <div className="w-full max-w-[440px]">
+        <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white">Connecting to secure sign up…</div></ClerkLoading>
+        <ClerkLoaded><SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} /></ClerkLoaded>
+      </div>
     </div>
   );
 }
