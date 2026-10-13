@@ -2,6 +2,7 @@ import { recordCreditEconomy } from "../lib/creditEconomy.js";
 import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { db, listingsTable, listingPromotionsTable } from "@workspace/db";
 import { eq, desc, and, gt, sql, inArray } from "drizzle-orm";
 import { toGbp } from "../fxRates.js";
@@ -317,6 +318,8 @@ router.get("/listings/:id", async (req, res) => {
 
 router.post("/listings", async (req, res) => {
   try {
+    const authenticatedEmail = await authenticatedSellerEmail(req, res);
+    if (!authenticatedEmail) return;
     const body = req.body as Record<string, unknown>;
     
     const title = (body.title || body.name) as string;
@@ -325,6 +328,9 @@ router.post("/listings", async (req, res) => {
     const description = (body.description || body.details || title || "No description provided") as string;
     const sellerEmail = (body.sellerEmail || body.email || req.headers["x-user-email"]) as string;
 
+    if (typeof sellerEmail !== "string" || sellerEmail.trim().toLowerCase() !== authenticatedEmail) {
+      res.status(403).json({ error: "Seller account mismatch" }); return;
+    }
     console.log("POST /api/listings payload received:", { title, price, category, sellerEmail });
 
     if (await isBanned(sellerEmail)) {
@@ -465,9 +471,11 @@ router.post("/listings", async (req, res) => {
 
 router.patch("/listings/:id", async (req, res) => {
   try {
+    const authenticatedEmail = await authenticatedSellerEmail(req, res);
+    if (!authenticatedEmail) return;
     const id = parseInt(req.params.id);
     const { email } = req.query as Record<string, string>;
-    if (!email) { res.status(400).json({ error: "email required" }); return; }
+    if (!email || email.trim().toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Seller account mismatch" }); return; }
     const body = req.body as Record<string, unknown>;
     const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency"] as const;
     const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
@@ -509,10 +517,12 @@ router.patch("/listings/:id", async (req, res) => {
 
 router.delete("/listings/:id", async (req, res) => {
   try {
+    const authenticatedEmail = await authenticatedSellerEmail(req, res);
+    if (!authenticatedEmail) return;
     const id = parseInt(req.params.id);
     const { email } = req.query as Record<string, string>;
-    if (!email) {
-      res.status(400).json({ error: "email required" });
+    if (!email || email.trim().toLowerCase() !== authenticatedEmail) {
+      res.status(403).json({ error: "Seller account mismatch" });
       return;
     }
     const deleted = await db

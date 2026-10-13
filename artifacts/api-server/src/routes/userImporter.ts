@@ -474,7 +474,7 @@ router.post("/user/import-shopify-public", async (req, res) => {
   if(marketplaceRegion!=="uk"&&marketplaceRegion!=="us"){res.status(400).json({error:"Choose UK or USA / Canada marketplace for these Shopify listings."});return;}
   // Validate source identities before opening the transaction. Source data is re-read;
   // the cross-site handoff is a selection, never authority for prices or stock.
-  const products = [];
+  const products: Awaited<ReturnType<typeof browseShopify>>["items"] = [];
   try {
   for (const raw of items) {
    const result = await browseShopify(String(raw.sourceUrl ?? ""));

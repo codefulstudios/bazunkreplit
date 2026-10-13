@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearch } from "wouter";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, ChevronDown, Plus, X, MapPin, Clock, Tag,
@@ -449,6 +450,8 @@ function AdDetailModal({ ad, onClose }: { ad: ClassifiedAd; onClose: () => void 
 
 // ─── Post Ad Modal ─────────────────────────────────────────────────────────────
 function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: ClassifiedAd) => void }) {
+  const { getToken } = useClerkAuth();
+  const [marketRegion] = useMarketplaceRegion();
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
 
@@ -503,9 +506,11 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
     setSubmitting(true);
     try {
       const parsedPrice = price ? parseFloat(price) : null;
+      const token = await getToken();
+      if (!token) { setErrors(["Please sign in before posting a classified ad."]); return; }
       const res = await fetch("/api/classifieds", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           marketplaceRegion: marketRegion,
           title: title.trim(),

@@ -181,7 +181,7 @@ export default function CashbackPage() {
               </div>
               <div className="p-5 flex-1">
                 <ul className="space-y-2.5">
-                  {tier.perks.map(p => (
+                  {tier.perks.map((p: string) => (
                     <li key={p} className="flex items-start gap-2 text-sm text-white/70">
                       <Star className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
                       {p}

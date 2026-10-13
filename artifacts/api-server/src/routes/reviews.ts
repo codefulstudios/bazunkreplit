@@ -237,7 +237,7 @@ router.delete("/reviews/:id/mine", async (req,res)=>{
 // ── Review replies & reporting ───────────────────────────────────────────────
 
 router.post("/reviews/:id/reply", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reply = typeof req.body?.reply === "string" ? req.body.reply.trim().slice(0, 1000) : "";
   if (!id || !reply) { res.status(400).json({ error: "Write a reply first" }); return; }
   try {
@@ -261,7 +261,7 @@ router.post("/reviews/:id/reply", async (req, res) => {
 
 const REPORT_REASONS = new Set(["abusive", "spam", "personal_information", "not_about_transaction", "other"]);
 router.post("/reviews/:id/report", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reason = typeof req.body?.reason === "string" ? req.body.reason : "";
   const details = typeof req.body?.details === "string" ? req.body.details.trim().slice(0, 1000) : "";
   if (!id || !REPORT_REASONS.has(reason)) { res.status(400).json({ error: "Choose a valid report reason" }); return; }
@@ -367,7 +367,7 @@ router.get("/admin/reviews", requireAdmin, async (_req, res) => {
 });
 
 router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "Removed by admin";
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NOW(), removed_reason = ${reason || "Removed by admin"} WHERE id = ${id}`);
@@ -376,7 +376,7 @@ router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
 });
 
 router.post("/admin/reviews/:id/restore", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NULL, removed_reason = NULL WHERE id = ${id}`);
   logger.info({ id }, "Admin restored review");
