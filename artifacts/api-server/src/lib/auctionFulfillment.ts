@@ -17,10 +17,11 @@ export async function fulfillAuctionSession(sessionId: string): Promise<"fulfill
   const buyer = String(session.client_reference_id ?? "").toLowerCase();
   const priceMinor = Number(m.priceMinor), protectionMinor = Number(m.protectionMinor);
   const sellerFeeMinor = Number(m.sellerFeeMinor);
+  const totalMinor = Number(m.totalMinor);
   if (!buyer || buyer !== String(m.email).toLowerCase() ||
-      ![priceMinor,protectionMinor,sellerFeeMinor].every(Number.isSafeInteger) ||
+      ![priceMinor,protectionMinor,sellerFeeMinor,totalMinor].every(Number.isSafeInteger) ||
       priceMinor <= 0 || protectionMinor < 0 || sellerFeeMinor < 0 ||
-      session.currency !== "gbp" || session.amount_total !== priceMinor + protectionMinor) {
+      session.mode !== "payment" || session.currency !== "gbp" || totalMinor !== priceMinor + protectionMinor || session.amount_total !== totalMinor) {
     throw new Error("Auction payment details do not match the signed checkout snapshot");
   }
   const orderId = `ORD-${randomUUID().slice(0,8).toUpperCase()}`;
