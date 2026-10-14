@@ -4,6 +4,7 @@ import { useAdmin } from "@/context/AdminContext";
 import { useLocation } from "wouter";
 
 type Activity={id:number;seller_email:string;kind:string;rating:number|null;note:string|null;quantity:number;enabled:boolean};
+type CatalogueProduct={id:number;title:string;category:string;description:string;price:number};
 type DemoListing={listing_id:number;title:string;price:string;seller_email:string;region:string;enabled:boolean};
 export function AdminDemoCreatorPage(){
   const {isAdmin,authFetch}=useAdmin();const [,go]=useLocation();
@@ -19,6 +20,12 @@ export function AdminDemoCreatorPage(){
   const [demoCategory,setDemoCategory]=useState("All categories");
   const [demoCategories,setDemoCategories]=useState<string[]>(["All categories"]);
   const [catalogueTotal,setCatalogueTotal]=useState(0);
+  const [catalogue,setCatalogue]=useState<CatalogueProduct[]>([]);
+  const [catalogueSearch,setCatalogueSearch]=useState("");
+  const [generationMode,setGenerationMode]=useState<"random"|"category"|"selected">("random");
+  const [selectedProducts,setSelectedProducts]=useState<number[]>([]);
+  const [preventDuplicates,setPreventDuplicates]=useState(true);
+  const [requireApproval,setRequireApproval]=useState(true);
   const [title,setTitle]=useState("");const [description,setDescription]=useState("");
   const [category,setCategory]=useState("Electronics");const [price,setPrice]=useState("19.99");
   const [selected,setSelected]=useState<number[]>([]);
@@ -31,7 +38,7 @@ export function AdminDemoCreatorPage(){
       const d=await r.json();setListings(d.listings||[]);setActivities(d.activities||[]);setSettings(Object.fromEntries((d.settings||[]).map((s:{key:string;enabled:boolean})=>[s.key,s.enabled])));
     }catch(e){setError(String(e));}
   }
-  useEffect(()=>{if(!isAdmin){go("/admin");return;}void load();void authFetch("/api/admin/demo-creator/catalogue").then(r=>r.ok?r.json():null).then(d=>{if(d){setDemoCategories(d.categories||["All categories"]);setCatalogueTotal(d.total||0);}}).catch(()=>{});},[isAdmin]);
+  useEffect(()=>{if(!isAdmin){go("/admin");return;}void load();void authFetch("/api/admin/demo-creator/catalogue").then(r=>r.ok?r.json():null).then(d=>{if(d){setDemoCategories(d.categories||["All categories"]);setCatalogueTotal(d.total||0);setCatalogue(d.products||[]);}}).catch(()=>{});},[isAdmin]);
   async function send(path:string,body:object,method="POST"){
     setBusy(true);setError("");setMessage("");
     try{const r=await authFetch("/api/admin/demo-creator"+path,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
@@ -74,6 +81,8 @@ export function AdminDemoCreatorPage(){
       setTitle(d.title);setDescription(d.description);setCategory(d.category);setSourcePreview(d.note);
     }catch(e){setError(String(e));}finally{setBusy(false);}
   }
+  const filteredCatalogue=catalogue.filter(p=>(demoCategory==="All categories"||p.category===demoCategory) &&
+    (p.title+" "+p.category).toLowerCase().includes(catalogueSearch.toLowerCase()));
   const field="w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900";
   return <AdminLayout><div className="space-y-6 text-gray-900">
     <div><h1 className="text-2xl font-bold">Demo Creator</h1><p className="text-sm text-gray-600">Create non-purchasable catalogue samples. Simulated activity is not genuine seller reputation.</p></div>
@@ -81,11 +90,38 @@ export function AdminDemoCreatorPage(){
     {message&&<p role="status" className="rounded bg-green-50 p-3 text-green-800">{message}</p>}
     <section className="rounded-xl border bg-white p-4"><h2 className="font-semibold mb-3">Visibility settings</h2><div className="flex flex-wrap gap-4">{["master","listings","reviews","sales","repeat_buyers"].map(key=><label key={key} className="flex items-center gap-2"><input type="checkbox" checked={!!settings[key]} disabled={busy} onChange={e=>send("/settings",{key,enabled:e.target.checked})}/>{key.replaceAll("_"," ")}</label>)}</div><p className="text-xs text-gray-500 mt-2">Master and listings switches control public demo listing visibility. Review and sales fixtures remain internal and do not alter real seller reputation.</p></section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Seller and region</h2><div className="grid gap-3 md:grid-cols-2"><label>Existing seller email<input className={field} type="email" value={sellerEmail} onChange={e=>setSellerEmail(e.target.value)} placeholder="seller@example.com"/></label><label>Marketplace<select className={field} value={region} onChange={e=>setRegion(e.target.value)}><option value="uk">UK</option><option value="us">US</option></select></label></div></section>
-    <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Generate sample listings</h2><p className="text-sm text-gray-600">{catalogueTotal} different demo products available across {Math.max(0,demoCategories.length-1)} categories. Each batch uses unique products.</p><label>Product category<select className={field} value={demoCategory} onChange={e=>setDemoCategory(e.target.value)}>{demoCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label><label>Quantity (1–20)<input className={field} type="number" min={1} max={20} value={count} onChange={e=>setCount(Number(e.target.value))}/></label><button disabled={busy||!sellerEmail} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/generate",{sellerEmail,region,count,category:demoCategory})}>Generate listings</button></section>
+    <section className="rounded-xl border bg-white p-4 space-y-3">
+      <h2 className="font-semibold">Visual product catalogue & generator</h2>
+      <p className="text-sm text-gray-600">{catalogueTotal} sample products across {Math.max(0,demoCategories.length-1)} categories.</p>
+      <div className="grid gap-3 md:grid-cols-3">
+        <label>Generation mode<select className={field} value={generationMode} onChange={e=>setGenerationMode(e.target.value as "random"|"category"|"selected")}><option value="random">Random Mix</option><option value="category">Selected Category</option><option value="selected">Selected Products</option></select></label>
+        <label>Category<select className={field} value={demoCategory} onChange={e=>setDemoCategory(e.target.value)}>{demoCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
+        <label>Quantity (1–20)<input className={field} type="number" min={1} max={20} value={generationMode==="selected"?selectedProducts.length:count} disabled={generationMode==="selected"} onChange={e=>setCount(Number(e.target.value))}/></label>
+      </div>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <label><input type="checkbox" checked={preventDuplicates} onChange={e=>setPreventDuplicates(e.target.checked)}/> Prevent duplicates for this seller and region</label>
+        <label><input type="checkbox" checked={requireApproval} onChange={e=>setRequireApproval(e.target.checked)}/> Require photo approval before publishing</label>
+      </div>
+      <input className={field} placeholder="Search products by name or category" value={catalogueSearch} onChange={e=>setCatalogueSearch(e.target.value)}/>
+      <p className="text-sm text-gray-600">Showing {filteredCatalogue.length} products · {selectedProducts.length} selected. Images are searched when generated; approve or replace them before enabling listings.</p>
+      <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3 xl:grid-cols-4">
+        {filteredCatalogue.map(p=><label key={p.id} className={`rounded-lg border p-3 text-sm ${selectedProducts.includes(p.id)?"border-orange-500 bg-orange-50":"border-gray-200"}`}>
+          <div className="mb-2 flex items-center gap-2"><input type="checkbox" checked={selectedProducts.includes(p.id)} disabled={!selectedProducts.includes(p.id)&&selectedProducts.length>=20} onChange={e=>setSelectedProducts(old=>e.target.checked?[...old,p.id]:old.filter(id=>id!==p.id))}/><strong>{p.title}</strong></div>
+          <p className="text-xs text-gray-500">{p.category}</p><p className="font-semibold">{region==="uk"?"£":"$"}{Number(p.price).toFixed(2)}</p>
+        </label>)}
+      </div>
+      <button disabled={busy||!sellerEmail||(generationMode==="selected"?selectedProducts.length===0:count<1||count>20)}
+        className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
+        onClick={()=>send("/generate",{sellerEmail,region,count:generationMode==="selected"?selectedProducts.length:count,category:demoCategory,mode:generationMode,productIds:generationMode==="selected"?selectedProducts:[],preventDuplicates,requireApproval})}>
+        {busy?"Generating…":"Generate demo listings"}
+      </button>
+      {requireApproval&&<p className="text-xs text-amber-800">New listings remain unpublished until you review their photos and enable each listing below.</p>}
+    </section>
     <section className="rounded-xl border bg-white p-4 space-y-3">
       <h2 className="font-semibold">Automatic product photographs</h2>
       <p className="text-sm text-gray-600">New generated listings search Pixabay automatically when PIXABAY_API_KEY is configured. Use this action to replace missing or generic placeholder images on existing demo listings (up to 20 at a time). Image credits and source URLs are stored with each listing.</p>
-      <button disabled={busy} onClick={()=>fillMissingImages(false)} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Auto-fill missing product images</button>\n      <button disabled={busy} onClick={()=>{if(window.confirm("Search again and replace existing photos on up to 20 demo listings?"))void fillMissingImages(true);}} className="ml-2 rounded border border-gray-400 bg-white px-4 py-2 text-gray-900 disabled:opacity-50">Replace existing demo photos</button>
+      <button disabled={busy} onClick={()=>fillMissingImages(false)} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Auto-fill missing product images</button>
+      <button disabled={busy} onClick={()=>{if(window.confirm("Search again and replace existing photos on up to 20 demo listings?"))void fillMissingImages(true);}} className="ml-2 rounded border border-gray-400 bg-white px-4 py-2 text-gray-900 disabled:opacity-50">Replace existing demo photos</button>
     </section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Preview product URL</h2><input className={field} type="url" placeholder="https://example.com/product" value={url} onChange={e=>setUrl(e.target.value)}/><button disabled={busy||!url} onClick={previewUrl} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Prepare listing draft</button>{sourcePreview&&<p className="text-sm text-amber-800">{sourcePreview}</p>}</section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Create manually</h2><input className={field} placeholder="Listing title" value={title} onChange={e=>setTitle(e.target.value)}/><textarea className={field} placeholder="Description" value={description} onChange={e=>setDescription(e.target.value)}/><div className="grid gap-3 md:grid-cols-2"><input className={field} placeholder="Category" value={category} onChange={e=>setCategory(e.target.value)}/><input className={field} type="number" min="0.01" step="0.01" value={price} onChange={e=>setPrice(e.target.value)}/></div><button disabled={busy||!sellerEmail||!title||!description} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/listings",{sellerEmail,region,title,description,category,price})}>Create listing</button></section>
