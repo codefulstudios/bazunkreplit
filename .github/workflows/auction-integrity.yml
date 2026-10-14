@@ -15,6 +15,20 @@ jobs:
   auction-integrity:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: auction_test
+          POSTGRES_PASSWORD: auction_test
+          POSTGRES_DB: auction_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U auction_test -d auction_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -32,3 +46,9 @@ jobs:
         run: |
           pnpm --filter @workspace/api-server exec esbuild src/lib/auctionRules.test.ts --bundle --platform=node --format=esm --outfile=/tmp/bazunk-auction-rules.test.mjs
           node --test /tmp/bazunk-auction-rules.test.mjs
+      - name: Run PostgreSQL auction concurrency tests
+        env:
+          AUCTION_TEST_DATABASE_URL: postgresql://auction_test:auction_test@localhost:5432/auction_test
+        run: |
+          pnpm --filter @workspace/api-server exec esbuild src/lib/auctionDatabase.test.ts --bundle --packages=external --platform=node --format=esm --outfile=./auctionDatabase.test.mjs
+          pnpm --filter @workspace/api-server exec node --test ./auctionDatabase.test.mjs
