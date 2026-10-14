@@ -193,7 +193,7 @@ router.post("/stripe/checkout-auction", async (req, res) => {
     if (!row || row.status !== "ended" || !row.winner_bid || String(row.winner_email ?? "").toLowerCase() !== email) {
       res.status(403).json({error:"Only the confirmed winner of an ended auction can pay."}); return;
     }
-    const existing = (await db.execute(sql`SELECT id FROM orders WHERE notes = ${"auction:" + auctionId} AND status NOT IN ('cancelled','refunded') LIMIT 1`)).rows;
+    const existing = (await db.execute(sql`SELECT id FROM orders WHERE notes = ${"auction:" + auctionId} LIMIT 1`)).rows;
     if (existing.length) { res.status(409).json({error:"This auction already has a paid order."}); return; }
     const priceMinor = Math.round(Number(row.winner_bid) * 100);
     if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) { res.status(409).json({error:"Invalid stored winning bid."}); return; }
