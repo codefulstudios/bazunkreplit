@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 
 type Bid = { id: string; bidder_name: string; bidder_email: string; amount: string; created_at: string };
 type Auction = {
@@ -73,6 +74,7 @@ export function AuctionDetailPage() {
   const [, setLocation] = useLocation();
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,10 +119,12 @@ export function AuctionDetailPage() {
     setBidding(true);
     setBidError(null);
     try {
+      const token = await getToken();
+      if (!token) { setBidError("Please sign in again to place a bid."); return; }
       const res = await fetch(`/api/auctions/${id}/bid`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bidderEmail: user.email, bidderName: user.name ?? user.username, amount }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bidderName: user.name ?? user.username, amount }),
       });
       const data = await res.json();
       if (!res.ok) { setBidError(data.error ?? "Bid failed"); return; }
