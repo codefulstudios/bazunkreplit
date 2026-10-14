@@ -27,3 +27,25 @@ jobs:
       - run: pnpm --filter @workspace/sellbuydeal run typecheck
       - run: pnpm --filter @workspace/api-server run build
       - run: pnpm --filter @workspace/sellbuydeal run build
+
+  staging-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run authenticated staging-only integration checks
+        env:
+          API_BASE_URL: https://bazunk-api-staging.onrender.com
+          ADMIN_TOKEN: ${{ secrets.DEMO_STAGING_ADMIN_TOKEN }}
+          DEMO_SELLER_EMAIL: ${{ secrets.DEMO_STAGING_SELLER_EMAIL }}
+          STAGING_TEST_CONFIRMATION: "yes"
+        run: |
+          if [ -z "$ADMIN_TOKEN" ] || [ -z "$DEMO_SELLER_EMAIL" ]; then
+            echo "::error::Configure DEMO_STAGING_ADMIN_TOKEN and DEMO_STAGING_SELLER_EMAIL secrets to run staging regression tests."
+            exit 1
+          fi
+          node scripts/check-demo-admin-staging.mjs
