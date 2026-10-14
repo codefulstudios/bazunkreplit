@@ -13,10 +13,11 @@ export async function fulfillAuctionSession(sessionId: string): Promise<"fulfill
   if (session.payment_status !== "paid") return "not_paid";
   const m = session.metadata;
   const auctionId = m.auctionId;
+  if (!auctionId) throw new Error("Missing auction ID");
   const buyer = String(session.client_reference_id ?? "").toLowerCase();
   const priceMinor = Number(m.priceMinor), protectionMinor = Number(m.protectionMinor);
   const sellerFeeMinor = Number(m.sellerFeeMinor);
-  if (!auctionId || !buyer || buyer !== String(m.email).toLowerCase() ||
+  if (!buyer || buyer !== String(m.email).toLowerCase() ||
       ![priceMinor,protectionMinor,sellerFeeMinor].every(Number.isSafeInteger) ||
       priceMinor <= 0 || protectionMinor < 0 || sellerFeeMinor < 0 ||
       session.currency !== "gbp" || session.amount_total !== priceMinor + protectionMinor) {
@@ -30,8 +31,13 @@ export async function fulfillAuctionSession(sessionId: string): Promise<"fulfill
         Math.round(Number(auction.winner_bid)*100) !== priceMinor) {
       throw new Error("Paid auction no longer matches its winner and winning bid; requires manual reconciliation");
     }
-    const existing = await tx.execute(sql`SELECT id FROM orders WHERE notes=${"auction:"+auctionId} LIMIT 1`);
-    if (existing.rows.length) return null;
+    const existing = await tx.execute(sql`SELECT id,stripe_session_id FROM orders WHERE notes=${"auction:"+auctionId} LIMIT 1`);
+    if (existing.rows.length) {
+      if (String(existing.rows[0]["stripe_session_id"]) !== sessionId) {
+        throw new Error("A second paid checkout exists for this auction; manual refund/reconciliation required");
+      }
+      return null;
+    }
     const inserted = await tx.execute(sql`
       INSERT INTO orders (id,buyer_email,seller_email,item_title,item_image,price,status,stripe_session_id,line_no,
         buyer_protection_fee,seller_fee,seller_type,seller_fee_rate,seller_net,delivery_fee,buyer_total,fee_policy,notes,created_at,updated_at)
