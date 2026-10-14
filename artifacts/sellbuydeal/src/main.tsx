@@ -22,4 +22,11 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   return nativeFetch(input, init);
 }) as typeof window.fetch;
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Clerk production keys are restricted to bazunk.com. Render's default
+// hostname is not an authorized authentication origin; preserve the path,
+// query and hash while directing visitors to the canonical site.
+if (window.location.hostname === "bazunk-web.onrender.com") {
+  window.location.replace(`https://bazunk.com${window.location.pathname}${window.location.search}${window.location.hash}`);
+} else {
+  createRoot(document.getElementById("root")!).render(<App />);
+}
