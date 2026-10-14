@@ -126,6 +126,19 @@ router.get("/auctions/my-listings", async (req, res) => {
   res.json(rows.rows);
 });
 
+router.get("/auctions/:id/payment-eligibility", async (req,res) => {
+  const email = await authenticatedSellerEmail(req,res);
+  if (!email) return;
+  const id = String(req.params.id);
+  const result = await db.execute(sql`SELECT status,winner_email,winner_bid FROM auctions WHERE id=${id}`);
+  const a = result.rows[0] as Record<string,unknown> | undefined;
+  if (!a) { res.status(404).json({error:"Auction not found"}); return; }
+  const eligible = a.status === "ended" && !!a.winner_bid && String(a.winner_email ?? "").toLowerCase() === email;
+  const orders = eligible ? await db.execute(sql`SELECT id FROM orders WHERE notes=${"auction:"+id} LIMIT 1`) : null;
+  res.setHeader("Cache-Control","no-store");
+  res.json({eligible:eligible && !orders?.rows.length});
+});
+
 router.get("/auctions/:id", async (req, res) => {
   const { id } = req.params;
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
