@@ -1,0 +1,33 @@
+name: Demo Creator main integration validation
+on:
+  pull_request:
+    paths:
+      - 'artifacts/api-server/src/routes/demoCreator.ts'
+      - 'artifacts/api-server/src/routes/listings.ts'
+      - 'artifacts/api-server/src/lib/checkoutQuote.ts'
+      - 'artifacts/api-server/src/routes/index.ts'
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminDemoCreatorPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/ListingPage.tsx'
+      - 'artifacts/sellbuydeal/src/App.tsx'
+      - '.github/workflows/demo-creator-main-validation.yml'
+  workflow_dispatch:
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile --prod=false
+      - run: pnpm run typecheck:libs
+      - run: pnpm --filter @workspace/api-server run typecheck
+      - run: pnpm --filter @workspace/sellbuydeal run typecheck
+      - run: pnpm --filter @workspace/api-server run build
+      - run: pnpm --filter @workspace/sellbuydeal run build
+      - run: node --test scripts/demo-creator-contract.test.mjs
