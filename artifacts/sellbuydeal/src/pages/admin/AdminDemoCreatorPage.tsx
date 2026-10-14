@@ -16,6 +16,9 @@ export function AdminDemoCreatorPage(){
   const [sellerEmail,setSellerEmail]=useState("");
   const [region,setRegion]=useState("uk");
   const [count,setCount]=useState(3);
+  const [demoCategory,setDemoCategory]=useState("All categories");
+  const [demoCategories,setDemoCategories]=useState<string[]>(["All categories"]);
+  const [catalogueTotal,setCatalogueTotal]=useState(0);
   const [title,setTitle]=useState("");const [description,setDescription]=useState("");
   const [category,setCategory]=useState("Electronics");const [price,setPrice]=useState("19.99");
   const [selected,setSelected]=useState<number[]>([]);
@@ -28,7 +31,7 @@ export function AdminDemoCreatorPage(){
       const d=await r.json();setListings(d.listings||[]);setActivities(d.activities||[]);setSettings(Object.fromEntries((d.settings||[]).map((s:{key:string;enabled:boolean})=>[s.key,s.enabled])));
     }catch(e){setError(String(e));}
   }
-  useEffect(()=>{if(!isAdmin){go("/admin");return;}void load();},[isAdmin]);
+  useEffect(()=>{if(!isAdmin){go("/admin");return;}void load();void authFetch("/api/admin/demo-creator/catalogue").then(r=>r.ok?r.json():null).then(d=>{if(d){setDemoCategories(d.categories||["All categories"]);setCatalogueTotal(d.total||0);}}).catch(()=>{});},[isAdmin]);
   async function send(path:string,body:object,method="POST"){
     setBusy(true);setError("");setMessage("");
     try{const r=await authFetch("/api/admin/demo-creator"+path,{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
@@ -78,7 +81,7 @@ export function AdminDemoCreatorPage(){
     {message&&<p role="status" className="rounded bg-green-50 p-3 text-green-800">{message}</p>}
     <section className="rounded-xl border bg-white p-4"><h2 className="font-semibold mb-3">Visibility settings</h2><div className="flex flex-wrap gap-4">{["master","listings","reviews","sales","repeat_buyers"].map(key=><label key={key} className="flex items-center gap-2"><input type="checkbox" checked={!!settings[key]} disabled={busy} onChange={e=>send("/settings",{key,enabled:e.target.checked})}/>{key.replaceAll("_"," ")}</label>)}</div><p className="text-xs text-gray-500 mt-2">Master and listings switches control public demo listing visibility. Review and sales fixtures remain internal and do not alter real seller reputation.</p></section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Seller and region</h2><div className="grid gap-3 md:grid-cols-2"><label>Existing seller email<input className={field} type="email" value={sellerEmail} onChange={e=>setSellerEmail(e.target.value)} placeholder="seller@example.com"/></label><label>Marketplace<select className={field} value={region} onChange={e=>setRegion(e.target.value)}><option value="uk">UK</option><option value="us">US</option></select></label></div></section>
-    <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Generate sample listings</h2><label>Quantity (1–20)<input className={field} type="number" min={1} max={20} value={count} onChange={e=>setCount(Number(e.target.value))}/></label><button disabled={busy||!sellerEmail} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/generate",{sellerEmail,region,count})}>Generate listings</button></section>
+    <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Generate sample listings</h2><p className="text-sm text-gray-600">{catalogueTotal} different demo products available across {Math.max(0,demoCategories.length-1)} categories. Each batch uses unique products.</p><label>Product category<select className={field} value={demoCategory} onChange={e=>setDemoCategory(e.target.value)}>{demoCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label><label>Quantity (1–20)<input className={field} type="number" min={1} max={20} value={count} onChange={e=>setCount(Number(e.target.value))}/></label><button disabled={busy||!sellerEmail} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/generate",{sellerEmail,region,count,category:demoCategory})}>Generate listings</button></section>
     <section className="rounded-xl border bg-white p-4 space-y-3">
       <h2 className="font-semibold">Automatic product photographs</h2>
       <p className="text-sm text-gray-600">New generated listings search Pixabay automatically when PIXABAY_API_KEY is configured. Use this action to replace missing or generic placeholder images on existing demo listings (up to 20 at a time). Image credits and source URLs are stored with each listing.</p>
