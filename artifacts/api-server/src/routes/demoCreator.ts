@@ -404,7 +404,7 @@ router.patch("/admin/demo-creator/listings/:id", async (req,res) => {
 router.post("/admin/demo-creator/listings/batch-delete", async (req,res) => {
   const ids = req.body?.ids;
   if (!Array.isArray(ids) || ids.length < 1 || ids.length > 200 ||
-      !ids.every((id: unknown) => typeof id === 'number' && Number.isSafeInteger(id) && id > 0)) {
+      !ids.every((id: unknown) => typeof id === 'number' && Number.isSafeInteger(id) && Number(id) > 0)) {
     res.status(400).json({ error: "Provide 1–200 valid listing IDs" }); return;
   }
   try {
