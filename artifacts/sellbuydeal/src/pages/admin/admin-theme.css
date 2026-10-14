@@ -1,0 +1,65 @@
+/* Bazunk admin design system: scoped to management pages only. */
+.bazunk-admin main { font-size: 14px; line-height: 1.5; }
+.bazunk-admin main h1, .bazunk-admin main h2, .bazunk-admin main h3 { letter-spacing: -.025em; }
+.bazunk-admin main button { transition: background-color .15s ease, border-color .15s ease, transform .15s ease; }
+.bazunk-admin main button:not(:disabled):hover { transform: translateY(-1px); }
+.bazunk-admin main :is(input,select,textarea,button):focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+.bazunk-admin main table { border-collapse: collapse; min-width: max-content; }
+.bazunk-admin main th { font-weight: 800; letter-spacing: .025em; }
+.bazunk-admin main td { vertical-align: middle; }
+.bazunk-admin main :is(th,td) { padding-top: .75rem; padding-bottom: .75rem; }
+.dark .bazunk-admin main .bg-white { background-color: #172541; }
+.dark .bazunk-admin main .bg-gray-50 { background-color: #20314f; }
+.dark .bazunk-admin main .bg-gray-100 { background-color: #253653; }
+.dark .bazunk-admin main .text-gray-900, .dark .bazunk-admin main .text-gray-800 { color: #f3f7ff; }
+.dark .bazunk-admin main .text-gray-700, .dark .bazunk-admin main .text-gray-600 { color: #d4e0f3; }
+.dark .bazunk-admin main .text-gray-500, .dark .bazunk-admin main .text-gray-400 { color: #b5c4dc; }
+.dark .bazunk-admin main .border-gray-100, .dark .bazunk-admin main .border-gray-200, .dark .bazunk-admin main .border-gray-300 { border-color: #354766; }
+.dark .bazunk-admin main :is(input,select,textarea) { background-color: #1b2b49; color: #f3f7ff; border-color: #425573; }
+.dark .bazunk-admin main :is(input,textarea)::placeholder { color: #9dadc7; }
+.dark .bazunk-admin main .recharts-cartesian-grid line { stroke: #3f506a; }
+.dark .bazunk-admin main .recharts-text { fill: #d4e0f3; }
+@media (max-width: 640px) {
+ .bazunk-admin main { font-size: 13px; }
+ .bazunk-admin main :is(th,td) { padding: .7rem; }
+}
+
+/* Mockup-inspired consistent component surfaces */
+.bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white {
+  border-color: #e3eaf6;
+  box-shadow: 0 3px 16px rgba(29,54,102,.045);
+}
+.bazunk-admin main :is(input,select,textarea) {
+  min-height: 38px;
+  border-radius: 10px;
+}
+.bazunk-admin main table thead {
+  background: #f0f5fc;
+  color: #475d81;
+}
+.bazunk-admin main table tbody tr {
+  border-bottom: 1px solid #e9eef7;
+}
+.bazunk-admin main table tbody tr:hover {
+  background: rgba(41,112,240,.035);
+}
+.bazunk-admin main :is(button,a) {
+  -webkit-tap-highlight-color: transparent;
+}
+.dark .bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white {
+  border-color: #30415d;
+  box-shadow: 0 3px 16px rgba(0,0,0,.12);
+}
+.dark .bazunk-admin main table thead {
+  background: #213351;
+  color: #c3d3ec;
+}
+.dark .bazunk-admin main table tbody tr {
+  border-color: #30415d;
+}
+.dark .bazunk-admin main table tbody tr:hover {
+  background: rgba(103,157,247,.08);
+}
+@media (min-width: 1024px) {
+ .bazunk-admin main { max-width: 1800px; margin-inline: auto; }
+}
