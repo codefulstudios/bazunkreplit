@@ -13,6 +13,8 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 
+const API_BASE = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\/$/, "");
+
 type Step = "summary" | "redirecting";
 
 function StepIndicator({ step }: { step: Step }) {
@@ -67,7 +69,7 @@ export function CheckoutPage() {
   useEffect(()=>{
     const controller=new AbortController();setQuoteLoading(true);setQuoteError("");setQuote(null);
     if(!items.length) { setQuoteLoading(false); return; }
-    fetch("/api/stripe/quote-cart",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
+    fetch(`${API_BASE}/api/stripe/quote-cart",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
       .then(async r=>{const data=await r.json();if(!r.ok)throw new Error(data.error||"Could not calculate fees.");return data;})
       .then(data=>{setQuote(data);setQuotedKey(cartKey);})
       .catch(err=>{if(err.name!=="AbortError")setQuoteError(err.message);})
@@ -89,7 +91,7 @@ export function CheckoutPage() {
     // Clean the URL without reloading
     window.history.replaceState({}, "", "/checkout");
 
-    fetch("/api/stripe/confirm-cart-payment", {
+    fetch(`${API_BASE}/api/stripe/confirm-cart-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
@@ -125,7 +127,7 @@ export function CheckoutPage() {
     setStep("redirecting");
 
     try {
-      const res = await fetch("/api/stripe/checkout-cart", {
+      const res = await fetch(`${API_BASE}/api/stripe/checkout-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
