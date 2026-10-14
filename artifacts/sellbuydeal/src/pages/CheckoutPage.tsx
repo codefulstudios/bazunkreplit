@@ -69,7 +69,7 @@ export function CheckoutPage() {
   useEffect(()=>{
     const controller=new AbortController();setQuoteLoading(true);setQuoteError("");setQuote(null);
     if(!items.length) { setQuoteLoading(false); return; }
-    fetch(`${API_BASE}/api/stripe/quote-cart",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
+    fetch(`${API_BASE}/api/stripe/quote-cart`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
       .then(async r=>{const data=await r.json();if(!r.ok)throw new Error(data.error||"Could not calculate fees.");return data;})
       .then(data=>{setQuote(data);setQuotedKey(cartKey);})
       .catch(err=>{if(err.name!=="AbortError")setQuoteError(err.message);})
