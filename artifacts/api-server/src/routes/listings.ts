@@ -264,7 +264,7 @@ router.get("/listings/:id", async (req, res) => {
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
     }).from(listingsTable).where(eq(listingsTable.publicId, rawId)).limit(1);
-    if (!row && /^\\d+$/.test(rawId)) {
+    if (!row && /^\d+$/.test(rawId)) {
       [row] = await db.select({
       id: listingsTable.id, publicId: listingsTable.publicId, title: listingsTable.title,
       price: listingsTable.price, category: listingsTable.category, subcategory: listingsTable.subcategory,
