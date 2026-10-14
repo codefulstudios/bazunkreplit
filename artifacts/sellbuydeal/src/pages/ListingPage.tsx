@@ -220,6 +220,7 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
     listed: (l.createdAt as string) ?? new Date().toISOString(),
     description: (l.description as string) ?? "",
     extra_categories: (l.extraCategories as string) ?? "",
+    _rawSpecifications: (l.specifications as string) ?? "",
     _sellerEmail: (l.sellerEmail as string) ?? undefined,
     _sellerName: (l.sellerName as string) ?? "Seller",
     _sellerUsername: (l.sellerUsername as string) ?? undefined,
@@ -349,6 +350,12 @@ export function ListingPage() {
     );
   }
 
+  const isDemoListing = (() => {
+    try {
+      const specs = JSON.parse(String((apiProduct as any)?._rawSpecifications ?? ""));
+      return specs?.demo_creator === true;
+    } catch { return false; }
+  })();
   const images = getProductImages(product.image);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
@@ -463,6 +470,12 @@ export function ListingPage() {
           <ChevronRight className="w-3 h-3" />
           <span className="text-gray-600 line-clamp-1 max-w-[200px]">{product.title}</span>
         </nav>
+
+        {isDemoListing && (
+          <div role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <strong>Demo listing — preview only.</strong> This is a simulated marketplace item, not a real product for sale. You can add it to your cart to try the interface, but checkout is blocked.
+          </div>
+        )}
 
         {/* Extra categories tags */}
         {(() => {
