@@ -1,8 +1,17 @@
 name: Auction integrity regression tests
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - 'test/auction-staging-integration'
+    paths:
+      - 'artifacts/api-server/src/**'
+      - 'artifacts/sellbuydeal/src/pages/AuctionDetailPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/DashboardPage.tsx'
+      - '.github/workflows/auction-integrity.yml'
   pull_request:
     paths:
+      - 'artifacts/api-server/src/routes/demoCreator.ts'
       - 'artifacts/api-server/src/routes/auctions.ts'
       - 'artifacts/api-server/src/lib/auctionRules*'
       - 'artifacts/api-server/src/lib/auctionFulfillment.ts'
