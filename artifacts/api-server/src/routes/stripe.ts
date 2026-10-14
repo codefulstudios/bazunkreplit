@@ -10,6 +10,7 @@ import { getUncachableStripeClient, getStripePublishableKey } from "../stripeCli
 import { convertAmount, smallestUnit } from "../fxRates.js";
 import { logger } from "../lib/logger.js";
 import { sendCreditsConfirmation, sendOrderConfirmation } from "../email.js";
+import { fulfillAuctionSession } from "../lib/auctionFulfillment.js";
 import { fulfillCartSession } from "../lib/fulfillment.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
@@ -175,6 +176,69 @@ router.post("/stripe/quote-cart", async (req,res) => {
     res.setHeader("Cache-Control","no-store");
     res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
   } catch(err) { res.status(err instanceof QuoteError ? err.status : 500).json({error:err instanceof QuoteError ? err.message : "Could not calculate checkout fees."}); }
+});
+
+
+/** Auction payment is available exclusively to the verified winning bidder. */
+router.post("/stripe/checkout-auction", async (req, res) => {
+  try {
+    const auth = getAuth(req);
+    if (!auth.isAuthenticated || !auth.userId) { res.status(401).json({error:"Sign in as the auction winner to pay."}); return; }
+    const account = await clerkClient.users.getUser(auth.userId);
+    const email = account.primaryEmailAddress?.emailAddress?.toLowerCase();
+    if (!email) { res.status(403).json({error:"Verified email required."}); return; }
+    const auctionId = String(req.body?.auctionId ?? "");
+    if (!/^AUC-[A-Z0-9-]{8,}$/.test(auctionId)) { res.status(400).json({error:"Invalid auction."}); return; }
+    const row = (await db.execute(sql`SELECT * FROM auctions WHERE id = ${auctionId}`)).rows[0] as Record<string,unknown> | undefined;
+    if (!row || row.status !== "ended" || !row.winner_bid || String(row.winner_email ?? "").toLowerCase() !== email) {
+      res.status(403).json({error:"Only the confirmed winner of an ended auction can pay."}); return;
+    }
+    const existing = (await db.execute(sql`SELECT id FROM orders WHERE notes = ${"auction:" + auctionId} LIMIT 1`)).rows;
+    if (existing.length) { res.status(409).json({error:"This auction already has a paid order."}); return; }
+    // Auction amounts are stored and settled in GBP in both regions. Never silently relabel GBP as USD.
+    const priceMinor = Math.round(Number(row.winner_bid) * 100);
+    if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) { res.status(409).json({error:"Invalid stored winning bid."}); return; }
+    const seller = String(row.seller_email ?? "");
+    const sellerTypeRow = (await db.execute(sql`SELECT seller_type FROM users WHERE LOWER(email)=LOWER(${seller}) LIMIT 1`)).rows[0] as Record<string,unknown> | undefined;
+    const sellerType = String(sellerTypeRow?.seller_type ?? "private").toLowerCase();
+    const feeRows = (await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN ('buyer_protection_percent','buyer_protection_fixed_gbp','fee_rate_default')`)).rows as Array<Record<string,unknown>>;
+    const fees = Object.fromEntries(feeRows.map(f=>[String(f.key),Number(f.value)]));
+    const protectionMinor = sellerType === "private" ? Math.max(0,Math.round(priceMinor * (fees.buyer_protection_percent ?? 5) / 100) + Math.round((fees.buyer_protection_fixed_gbp ?? .7)*100)) : 0;
+    const sellerFeeMinor = sellerType === "private" ? 0 : Math.max(0,Math.round(priceMinor * (fees.fee_rate_default ?? 8) / 100));
+    const totalMinor = priceMinor + protectionMinor;
+    const stripe = await getUncachableStripeClient();
+    const session = await stripe.checkout.sessions.create({
+      mode:"payment", client_reference_id:email,
+      line_items:[
+        {price_data:{currency:"gbp",unit_amount:priceMinor,product_data:{name:String(row.title)}},quantity:1},
+        ...(protectionMinor ? [{price_data:{currency:"gbp",unit_amount:protectionMinor,product_data:{name:"Buyer Protection"}},quantity:1}] : [])
+      ],
+      metadata:{type:"auction",auctionId,email,priceMinor:String(priceMinor),protectionMinor:String(protectionMinor),sellerFeeMinor:String(sellerFeeMinor),sellerType,totalMinor:String(totalMinor)},
+      success_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=cancelled`,
+    }, { idempotencyKey: `auction-checkout-${auctionId}-${priceMinor}-${protectionMinor}-${sellerFeeMinor}` });
+    res.json({url:session.url});
+  } catch(err) { logger.error({err},"Auction checkout failed"); res.status(500).json({error:"Unable to start auction checkout."}); }
+});
+
+router.post("/stripe/confirm-auction-payment", async (req,res) => {
+  try {
+    const auth=getAuth(req);
+    if (!auth.isAuthenticated || !auth.userId) {res.status(401).json({error:"Sign in to confirm your payment."});return;}
+    const account=await clerkClient.users.getUser(auth.userId);
+    const email=account.primaryEmailAddress?.emailAddress?.toLowerCase();
+    if (!email) {res.status(403).json({error:"Verified email required."});return;}
+    const sessionId=String(req.body?.sessionId ?? "");
+    if (!/^cs_(test_|live_)/.test(sessionId)) {res.status(400).json({error:"Invalid payment session."});return;}
+    const stripe=await getUncachableStripeClient();
+    const session=await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.metadata?.type !== "auction" || String(session.client_reference_id??"").toLowerCase() !== email) {
+      res.status(403).json({error:"This is not your auction payment."});return;
+    }
+    const result=await fulfillAuctionSession(sessionId);
+    if(result==="not_paid"){res.status(409).json({error:"Payment has not completed."});return;}
+    res.json({ok:true,status:result});
+  } catch(err){logger.error({err},"Failed to confirm auction payment");res.status(500).json({error:"Could not confirm auction payment."});}
 });
 
 router.post("/stripe/checkout-cart", async (req, res) => {
