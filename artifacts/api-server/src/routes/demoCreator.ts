@@ -105,7 +105,7 @@ router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
   const ids=req.body?.ids;
   if(!Array.isArray(ids)||ids.length<1||ids.length>200||!ids.every((v:unknown)=>Number.isSafeInteger(v)&&(v as number)>0)){
     res.status(400).json({error:"Provide 1–200 valid fixture IDs"});return;}
-  try {await ensureTables();const r=await db.execute(sql`DELETE FROM demo_activity_fixtures WHERE id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) RETURNING id`);
+  try {await ensureTables();const r=await db.execute(sql`DELETE FROM demo_activity_fixtures WHERE id IN (${sql.join((ids as number[]).map((id:number)=>sql`${id}`),sql`,`)}) RETURNING id`);
     res.json({deleted:r.rows.length});
   }catch{res.status(503).json({error:"Unable to delete fixtures"});}
 });
