@@ -201,6 +201,7 @@ router.post("/stripe/checkout-auction", async (req, res) => {
     const seller = String(row.seller_email ?? "");
     const sellerTypeRow = (await db.execute(sql`SELECT seller_type FROM users WHERE LOWER(email)=LOWER(${seller}) LIMIT 1`)).rows[0] as Record<string,unknown> | undefined;
     const sellerType = String(sellerTypeRow?.seller_type ?? "private").toLowerCase();
+    if (sellerType !== "private" && sellerType !== "business") { res.status(409).json({error:"Seller account type must be reviewed before payment."}); return; }
     const feeRows = (await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN ('buyer_protection_percent','buyer_protection_fixed_gbp','fee_rate_default')`)).rows as Array<Record<string,unknown>>;
     const fees = Object.fromEntries(feeRows.map(f=>[String(f.key),Number(f.value)]));
     const protectionMinor = sellerType === "private" ? Math.max(0,Math.round(priceMinor * (fees.buyer_protection_percent ?? 5) / 100) + Math.round((fees.buyer_protection_fixed_gbp ?? .7)*100)) : 0;
@@ -216,7 +217,7 @@ router.post("/stripe/checkout-auction", async (req, res) => {
       metadata:{type:"auction",auctionId,email,priceMinor:String(priceMinor),protectionMinor:String(protectionMinor),sellerFeeMinor:String(sellerFeeMinor),sellerType,totalMinor:String(totalMinor)},
       success_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=cancelled`,
-    }, { idempotencyKey: `auction-checkout-${auctionId}-${priceMinor}-${protectionMinor}-${sellerFeeMinor}` });
+    });
     res.json({url:session.url});
   } catch(err) { logger.error({err},"Auction checkout failed"); res.status(500).json({error:"Unable to start auction checkout."}); }
 });
