@@ -59,8 +59,8 @@ router.get("/auctions", async (req, res) => {
 });
 
 router.get("/auctions/my-bids", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`
     SELECT DISTINCT a.*, b.amount AS my_latest_bid
     FROM auctions a
@@ -73,8 +73,8 @@ router.get("/auctions/my-bids", async (req, res) => {
 });
 
 router.get("/auctions/my-listings", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`SELECT * FROM auctions WHERE seller_email = ${email} ORDER BY created_at DESC LIMIT 50`);
   res.json(rows.rows);
 });
@@ -203,13 +203,16 @@ router.post("/auctions", async (req, res) => {
 });
 
 router.post("/auctions/:id/bid", async (req, res) => {
+  const bidderEmail = await authenticatedSellerEmail(req, res);
+  if (!bidderEmail) return;
   const { id } = req.params;
-  const { bidderEmail, bidderName, amount } = req.body as Record<string, string>;
-  if (!bidderEmail || !bidderName || !amount) {
-    res.status(400).json({ error: "bidderEmail, bidderName, amount are required" });
+  const { bidderName, amount } = req.body as Record<string, string>;
+  if (!bidderName || !amount) {
+    res.status(400).json({ error: "bidderName and amount are required" });
     return;
   }
-  const bidAmount = parseFloat(amount);
+  const bidAmount = Number(amount);
+  if (!Number.isFinite(bidAmount) || bidAmount <= 0) { res.status(400).json({ error: "Enter a valid positive bid" }); return; }
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0] as Record<string, unknown>;
