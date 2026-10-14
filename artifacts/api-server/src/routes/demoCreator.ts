@@ -112,25 +112,36 @@ router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
 // Neutral labelled illustrations: never imply that a stock image is the actual item.
 const demoImage = (title: string) =>
   `https://placehold.co/640x480/e8edf7/334155.png?text=${encodeURIComponent(title + " - Demo")}`;
-type PexelsPhoto = { id: number; alt?: string; photographer?: string; url?: string; src?: { large?: string; medium?: string } };
-async function findPexelsPhoto(title: string): Promise<PexelsPhoto | null> {
-  const key = process.env.PEXELS_API_KEY;
-  if (!key) return null;
+type DemoPhoto = { id: number; alt?: string; photographer?: string; url?: string; src?: { large?: string; medium?: string }; provider?: string };
+async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
+  const pixabayKey = process.env.PIXABAY_API_KEY;
+  const pexelsKey = process.env.PEXELS_API_KEY;
+  if (!pixabayKey && !pexelsKey) return null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 6500);
   try {
+    if (pixabayKey) {
+      const query = new URLSearchParams({ key: pixabayKey, q: title, image_type: "photo", per_page: "10", safesearch: "true" });
+      const response = await fetch(`https://pixabay.com/api/?${query}`, { signal: controller.signal });
+      if (!response.ok) return null;
+      const data = await response.json() as { hits?: Array<{id:number;largeImageURL?:string;webformatURL?:string;pageURL?:string;user?:string;tags?:string}> };
+      const hit = (data.hits || []).find(p => p.largeImageURL && p.pageURL);
+      return hit ? { id:hit.id, alt:hit.tags, photographer:hit.user || "Pixabay contributor", url:hit.pageURL,
+        src:{large:hit.largeImageURL,medium:hit.webformatURL}, provider:"Pixabay" } : null;
+    }
     const query = new URLSearchParams({ query: title, per_page: "8", orientation: "landscape" });
     const response = await fetch(`https://api.pexels.com/v1/search?${query}`, {
-      headers: { Authorization: key }, signal: controller.signal,
+      headers: { Authorization: pexelsKey! }, signal: controller.signal,
     });
     if (!response.ok) return null;
-    const data = await response.json() as { photos?: PexelsPhoto[] };
-    return (data.photos || []).find(p => p.src?.large && p.url && p.photographer) || null;
+    const data = await response.json() as { photos?: DemoPhoto[] };
+    const photo=(data.photos || []).find(p => p.src?.large && p.url && p.photographer);
+    return photo ? {...photo,provider:"Pexels"} : null;
   } catch { return null; }
   finally { clearTimeout(timeout); }
 }
-function photoMetadata(photo: PexelsPhoto) {
-  return { image_provider: "Pexels", image_photo_id: photo.id,
+function photoMetadata(photo: DemoPhoto) {
+  return { image_provider: photo.provider || "Pexels", image_photo_id: photo.id,
     image_credit: photo.photographer, image_source_url: photo.url };
 }
 const templates = [
@@ -144,12 +155,12 @@ const templates = [
 router.get("/admin/demo-creator/images/search", async (req, res) => {
   const title = String(req.query.q || "").trim().slice(0,120);
   if (!title) { res.status(400).json({error:"Search term required"}); return; }
-  if (!process.env.PEXELS_API_KEY) { res.status(503).json({error:"PEXELS_API_KEY not configured"}); return; }
+  if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) { res.status(503).json({error:"PIXABAY_API_KEY or PEXELS_API_KEY not configured"}); return; }
   const photo = await findPexelsPhoto(title);
   res.json({ photo: photo ? { id:photo.id, image:photo.src?.large, photographer:photo.photographer, sourceUrl:photo.url, alt:photo.alt } : null });
 });
 router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
-  if (!process.env.PEXELS_API_KEY) { res.status(503).json({error:"PEXELS_API_KEY not configured"}); return; }
+  if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) { res.status(503).json({error:"PIXABAY_API_KEY or PEXELS_API_KEY not configured"}); return; }
   try {
     await ensureTables();
     const rows=await db.execute(sql`SELECT l.id,l.title FROM listings l JOIN demo_listing_registry d ON d.listing_id=l.id
