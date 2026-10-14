@@ -195,6 +195,7 @@ router.post("/stripe/checkout-auction", async (req, res) => {
     }
     const existing = (await db.execute(sql`SELECT id FROM orders WHERE notes = ${"auction:" + auctionId} LIMIT 1`)).rows;
     if (existing.length) { res.status(409).json({error:"This auction already has a paid order."}); return; }
+    // Auction amounts are stored and settled in GBP in both regions. Never silently relabel GBP as USD.
     const priceMinor = Math.round(Number(row.winner_bid) * 100);
     if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) { res.status(409).json({error:"Invalid stored winning bid."}); return; }
     const seller = String(row.seller_email ?? "");
