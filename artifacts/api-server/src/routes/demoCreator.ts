@@ -170,6 +170,26 @@ router.get("/admin/demo-creator/images/search", async (req, res) => {
   const photo = await findPexelsPhoto(title);
   res.json({ photo: photo ? { id:photo.id, image:photo.src?.large, photographer:photo.photographer, sourceUrl:photo.url, alt:photo.alt } : null });
 });
+router.post("/admin/demo-creator/images/replace", async (req, res) => {
+  const id=Number(req.body?.listingId);
+  const image=String(req.body?.image || "");
+  const sourceUrl=String(req.body?.sourceUrl || "");
+  const credit=String(req.body?.photographer || "");
+  if (!Number.isSafeInteger(id) || id<1 || image.length>2048 || sourceUrl.length>2048 ||
+      !/^https:\/\/[^\s]+$/i.test(image) || !/^https:\/\/pixabay\.com\/[^\s]+$/i.test(sourceUrl) ||
+      !/^https:\/\/[^\s]*pixabay\.com\/[^\s]+$/i.test(image)) {
+    res.status(400).json({error:"Choose a valid Pixabay image for a demo listing"});return;
+  }
+  try {
+    await ensureTables();
+    const metadata=JSON.stringify({image_provider:"Pixabay",image_credit:credit.slice(0,150),image_source_url:sourceUrl});
+    const result=await db.execute(sql`UPDATE listings l SET image=${image},
+      specifications=(COALESCE(NULLIF(l.specifications,''),'{}')::jsonb || ${metadata}::jsonb)::text
+      FROM demo_listing_registry d WHERE d.listing_id=l.id AND l.id=${id} RETURNING l.id`);
+    if(!result.rows.length){res.status(404).json({error:"Demo listing not found"});return;}
+    res.json({updated:true,listingId:id});
+  }catch{res.status(503).json({error:"Unable to replace demo image"});}
+});
 router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
   const replaceExisting = req.body?.replaceExisting === true;
   if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) { res.status(503).json({error:"PIXABAY_API_KEY or PEXELS_API_KEY not configured"}); return; }
