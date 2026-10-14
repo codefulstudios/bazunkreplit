@@ -32,15 +32,15 @@ export function AdminDemoCreatorPage(){
       const d=await r.json();if(!r.ok)throw Error(d.error||"Request failed");setMessage("Saved successfully");await load();
     }catch(e){setError(String(e));}finally{setBusy(false);}
   }
-  async function fillMissingImages(){
+  async function fillMissingImages(replaceExisting=false){
     setBusy(true);setError("");setMessage("");
     try {
       const r=await authFetch("/api/admin/demo-creator/images/fill-missing",{
-        method:"POST",headers:{"Content-Type":"application/json"},body:"{}"
+        method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({replaceExisting})
       });
       const d=await r.json();
       if(!r.ok)throw Error(d.error||"Unable to find images");
-      setMessage(`Checked ${d.scanned} demo listings; added ${d.updated} product photographs.`);
+      setMessage(`Checked ${d.scanned} demo listings; ${d.updated} product photographs ${replaceExisting ? "refreshed" : "added"}.`);
       await load();
     }catch(e){setError(String(e));}finally{setBusy(false);}
   }
@@ -66,7 +66,7 @@ export function AdminDemoCreatorPage(){
     <section className="rounded-xl border bg-white p-4 space-y-3">
       <h2 className="font-semibold">Automatic product photographs</h2>
       <p className="text-sm text-gray-600">New generated listings search Pixabay automatically when PIXABAY_API_KEY is configured. Use this action to replace missing or generic placeholder images on existing demo listings (up to 20 at a time). Image credits and source URLs are stored with each listing.</p>
-      <button disabled={busy} onClick={fillMissingImages} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Auto-fill missing product images</button>
+      <button disabled={busy} onClick={()=>fillMissingImages(false)} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Auto-fill missing product images</button>\n      <button disabled={busy} onClick={()=>{if(window.confirm("Search again and replace existing photos on up to 20 demo listings?"))void fillMissingImages(true);}} className="ml-2 rounded border border-gray-400 bg-white px-4 py-2 text-gray-900 disabled:opacity-50">Replace existing demo photos</button>
     </section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Preview product URL</h2><input className={field} type="url" placeholder="https://example.com/product" value={url} onChange={e=>setUrl(e.target.value)}/><button disabled={busy||!url} onClick={previewUrl} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50">Prepare listing draft</button>{sourcePreview&&<p className="text-sm text-amber-800">{sourcePreview}</p>}</section>
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Create manually</h2><input className={field} placeholder="Listing title" value={title} onChange={e=>setTitle(e.target.value)}/><textarea className={field} placeholder="Description" value={description} onChange={e=>setDescription(e.target.value)}/><div className="grid gap-3 md:grid-cols-2"><input className={field} placeholder="Category" value={category} onChange={e=>setCategory(e.target.value)}/><input className={field} type="number" min="0.01" step="0.01" value={price} onChange={e=>setPrice(e.target.value)}/></div><button disabled={busy||!sellerEmail||!title||!description} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/listings",{sellerEmail,region,title,description,category,price})}>Create listing</button></section>
