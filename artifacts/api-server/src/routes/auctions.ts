@@ -28,7 +28,6 @@ const EXTEND_WINDOW_MS = 2 * 60 * 1000;
 function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
   const {
     reserve_price,
-    seller_email,
     winner_email,
     ...rest
   } = a;
