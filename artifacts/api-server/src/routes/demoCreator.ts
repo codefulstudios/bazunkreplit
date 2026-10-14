@@ -170,6 +170,25 @@ router.get("/admin/demo-creator/images/search", async (req, res) => {
   const photo = await findPexelsPhoto(title);
   res.json({ photo: photo ? { id:photo.id, image:photo.src?.large, photographer:photo.photographer, sourceUrl:photo.url, alt:photo.alt } : null });
 });
+router.get("/admin/demo-creator/images/options", async (req,res) => {
+  const title=String(req.query.q || "").trim().slice(0,120);
+  if(!title){res.status(400).json({error:"Product title required"});return;}
+  const key=process.env.PIXABAY_API_KEY;
+  if(!key){res.status(503).json({error:"PIXABAY_API_KEY not configured"});return;}
+  try {
+    const params=new URLSearchParams({key,q:title,image_type:"photo",per_page:"50",safesearch:"true"});
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),6500);
+    let response:Response;
+    try{response=await fetch(`https://pixabay.com/api/?${params}`,{signal:controller.signal});}
+    finally{clearTimeout(timeout);}
+    if(!response.ok){res.status(502).json({error:"Pixabay search unavailable"});return;}
+    const data=await response.json() as {hits?:Array<{id:number;largeImageURL?:string;webformatURL?:string;pageURL?:string;user?:string;tags?:string}>};
+    const photos=(data.hits||[]).filter(p=>p.largeImageURL&&p.pageURL&&matchesProductPhoto(title,p.tags||"")).slice(0,12)
+      .map(p=>({id:p.id,image:p.largeImageURL,preview:p.webformatURL||p.largeImageURL,sourceUrl:p.pageURL,photographer:p.user||"Pixabay contributor",tags:p.tags}));
+    res.json({photos});
+  }catch{res.status(502).json({error:"Unable to search Pixabay"});}
+});
 router.post("/admin/demo-creator/images/replace", async (req, res) => {
   const id=Number(req.body?.listingId);
   const image=String(req.body?.image || "");
