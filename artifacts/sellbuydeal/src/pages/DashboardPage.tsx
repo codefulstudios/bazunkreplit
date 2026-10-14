@@ -4779,6 +4779,7 @@ const AUCTION_STATUS_COLORS: Record<string, string> = {
 
 function MyAuctionsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<AuctionSummary[]>([]);
@@ -4786,8 +4787,11 @@ function MyAuctionsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-listings?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-listings`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -4854,6 +4858,7 @@ function MyAuctionsSection() {
 
 function MyBidsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<(AuctionSummary & { my_latest_bid: string })[]>([]);
@@ -4861,8 +4866,11 @@ function MyBidsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-bids?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-bids`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));

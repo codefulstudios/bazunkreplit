@@ -1,3 +1,4 @@
+import { minimumBid, canAcceptBid } from "../lib/auctionRules.js";
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
@@ -65,8 +66,8 @@ async function finalizeAuction(id: string): Promise<void> {
   const title = String(a["title"]);
   if (winningBid !== null && a["winner_email"]) {
     const winnerEmail = String(a["winner_email"]);
-    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was £${winningBid.toFixed(2)}.` });
-    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was GBP £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: GBP £${winningBid.toFixed(2)}.` });
     void sendAuctionWonNotification({ winnerEmail, winnerName: String(a["winner_name"] ?? winnerEmail), auctionTitle: title, auctionId: id, winningBid, sellerName: String(a["seller_name"]) });
     void sendAuctionEndedSellerNotification({ sellerEmail, sellerName: String(a["seller_name"]), auctionTitle: title, auctionId: id, winnerName: String(a["winner_name"] ?? winnerEmail), winnerEmail, winningBid });
   } else {
@@ -109,10 +110,13 @@ router.get("/auctions/my-bids", async (req, res) => {
   const email = await authenticatedSellerEmail(req, res);
   if (!email) return;
   const rows = await db.execute(sql`
-    SELECT DISTINCT a.*, b.amount AS my_latest_bid
+    SELECT a.*, b.amount AS my_latest_bid
     FROM auctions a
-    JOIN bids b ON b.auction_id = a.id
-    WHERE b.bidder_email = ${email}
+    JOIN LATERAL (
+      SELECT amount FROM bids
+      WHERE auction_id = a.id AND LOWER(bidder_email) = LOWER(${email})
+      ORDER BY created_at DESC, id DESC LIMIT 1
+    ) b ON TRUE
     ORDER BY a.end_time DESC
     LIMIT 50
   `);
@@ -124,6 +128,19 @@ router.get("/auctions/my-listings", async (req, res) => {
   if (!email) return;
   const rows = await db.execute(sql`SELECT * FROM auctions WHERE seller_email = ${email} ORDER BY created_at DESC LIMIT 50`);
   res.json(rows.rows);
+});
+
+router.get("/auctions/:id/payment-eligibility", async (req,res) => {
+  const email = await authenticatedSellerEmail(req,res);
+  if (!email) return;
+  const id = String(req.params.id);
+  const result = await db.execute(sql`SELECT status,winner_email,winner_bid FROM auctions WHERE id=${id}`);
+  const a = result.rows[0] as Record<string,unknown> | undefined;
+  if (!a) { res.status(404).json({error:"Auction not found"}); return; }
+  const eligible = a.status === "ended" && !!a.winner_bid && String(a.winner_email ?? "").toLowerCase() === email;
+  const orders = eligible ? await db.execute(sql`SELECT id FROM orders WHERE notes=${"auction:"+id} LIMIT 1`) : null;
+  res.setHeader("Cache-Control","no-store");
+  res.json({eligible:eligible && !orders?.rows.length});
 });
 
 router.get("/auctions/:id", async (req, res) => {
@@ -227,8 +244,8 @@ router.post("/auctions/:id/bid", async (req, res) => {
     if (String(auction["seller_email"]).toLowerCase() === bidderEmail) return { error: "You cannot bid on your own auction", status: 400 } as const;
     const currentBid = auction["current_bid"] == null ? null : Number(auction["current_bid"]);
     const increment = Number(auction["bid_increment"]);
-    const minBid = currentBid !== null ? currentBid + increment : Number(auction["starting_bid"]);
-    if (bidAmount < minBid) return { error: `Minimum bid is £${minBid.toFixed(2)}`, status: 400, minBid } as const;
+    const minBid = minimumBid(Number(auction["starting_bid"]), currentBid, increment);
+    if (!canAcceptBid({status:String(auction["status"]),endTime:new Date(auction["end_time"] as string).getTime(),now:Date.now(),seller:String(auction["seller_email"]),bidder:bidderEmail,amount:bidAmount,start:Number(auction["starting_bid"]),current:currentBid,increment})) return { error: `Minimum bid is GBP £${minBid.toFixed(2)}`, status: 400, minBid } as const;
 
     const prevWinnerEmail = (auction["winner_email"] as string | null) ?? null;
     const prevWinnerName = (auction["winner_name"] as string | null) ?? null;
@@ -265,7 +282,7 @@ router.post("/auctions/:id/bid", async (req, res) => {
   }
   const { auction, prevWinnerEmail, prevWinnerName, extended, newEndTime, newBidCount, nextMinBid } = outcome;
   // Notify seller by email and in-app inbox.
-  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
+  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid GBP £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
   void sendNewBidNotification({
     sellerEmail: auction["seller_email"] as string,
     sellerName: auction["seller_name"] as string,
