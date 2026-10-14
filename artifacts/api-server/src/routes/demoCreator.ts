@@ -115,15 +115,14 @@ const demoImage = (title: string) =>
 type DemoPhoto = { id: number; alt?: string; photographer?: string; url?: string; src?: { large?: string; medium?: string }; provider?: string };
 function matchesProductPhoto(title: string, tags: string): boolean {
   const text = tags.toLowerCase();
-  const groups: Array<[RegExp, RegExp]> = [
-    [/canvas.*(bag|duffel)|weekend.*bag/i, /\\b(bag|duffel|luggage|holdall|travel bag|weekender)\\b/i],
-    [/coffee.*mug|ceramic.*mug/i, /\\b(mug|mugs|coffee cup|tea cup|ceramic cup|cups)\\b/i],
-    [/bluetooth.*speaker/i, /\\b(speaker|speakers|boombox)\\b/i],
-    [/desk.*lamp/i, /\\b(lamp|desk light|table light)\\b/i],
-    [/computer.*mouse|wireless.*mouse/i, /\\b(mouse|computer mouse|pc mouse)\\b/i],
-  ];
-  const group = groups.find(([pattern]) => pattern.test(title));
-  return group ? group[1].test(text) : title.toLowerCase().split(/\\s+/).filter(w=>w.length>3).some(w=>text.includes(w));
+  const tokens = text.split(/[^a-z]+/).filter(Boolean);
+  const has = (...words: string[]) => words.some(word => tokens.includes(word));
+  if (/weekend.*bag|canvas.*bag|duffel/i.test(title)) return has("bag","bags","duffel","holdall","luggage","weekender");
+  if (/coffee.*mug|ceramic.*mug/i.test(title)) return has("mug","mugs","cup","cups") && !has("beans","bean","grounds");
+  if (/bluetooth.*speaker/i.test(title)) return has("speaker","speakers","boombox");
+  if (/desk.*lamp/i.test(title)) return has("lamp","lamps","light","lighting");
+  if (/computer.*mouse|wireless.*mouse/i.test(title)) return has("mouse","mice") && !has("animal","rodent");
+  return title.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>3).some(w=>tokens.includes(w));
 }
 async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
   const pixabayKey = process.env.PIXABAY_API_KEY;
@@ -133,7 +132,7 @@ async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
   const timeout = setTimeout(() => controller.abort(), 6500);
   try {
     if (pixabayKey) {
-      const query = new URLSearchParams({ key: pixabayKey, q: title, image_type: "photo", per_page: "10", safesearch: "true" });
+      const query = new URLSearchParams({ key: pixabayKey, q: title, image_type: "photo", per_page: "30", safesearch: "true" });
       const response = await fetch(`https://pixabay.com/api/?${query}`, { signal: controller.signal });
       if (!response.ok) return null;
       const data = await response.json() as { hits?: Array<{id:number;largeImageURL?:string;webformatURL?:string;pageURL?:string;user?:string;tags?:string}> };
@@ -172,11 +171,12 @@ router.get("/admin/demo-creator/images/search", async (req, res) => {
   res.json({ photo: photo ? { id:photo.id, image:photo.src?.large, photographer:photo.photographer, sourceUrl:photo.url, alt:photo.alt } : null });
 });
 router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
+  const replaceExisting = req.body?.replaceExisting === true;
   if (!process.env.PIXABAY_API_KEY && !process.env.PEXELS_API_KEY) { res.status(503).json({error:"PIXABAY_API_KEY or PEXELS_API_KEY not configured"}); return; }
   try {
     await ensureTables();
     const rows=await db.execute(sql`SELECT l.id,l.title FROM listings l JOIN demo_listing_registry d ON d.listing_id=l.id
-      WHERE l.status <> 'deleted' AND (l.image IS NULL OR l.image='' OR l.image LIKE 'https://placehold.co/%') ORDER BY l.id LIMIT 20`);
+      WHERE l.status <> 'deleted' AND (${sql`${replaceExisting}`} OR l.image IS NULL OR l.image='' OR l.image LIKE 'https://placehold.co/%') ORDER BY l.id LIMIT 20`);
     let updated=0;
     for(const row of rows.rows) {
       const photo=await findPexelsPhoto(String(row.title));
@@ -187,7 +187,7 @@ router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
         WHERE id=${Number(row.id)} AND EXISTS(SELECT 1 FROM demo_listing_registry d WHERE d.listing_id=${Number(row.id)})`);
       updated++;
     }
-    res.json({scanned:rows.rows.length,updated});
+    res.json({scanned:rows.rows.length,updated,replaceExisting});
   } catch {res.status(503).json({error:"Unable to fill demo images"});}
 });
 router.post("/admin/demo-creator/generate", async (req,res) => {
