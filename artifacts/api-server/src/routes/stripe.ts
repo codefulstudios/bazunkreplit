@@ -217,7 +217,7 @@ router.post("/stripe/checkout-auction", async (req, res) => {
       metadata:{type:"auction",auctionId,email,priceMinor:String(priceMinor),protectionMinor:String(protectionMinor),sellerFeeMinor:String(sellerFeeMinor),sellerType,totalMinor:String(totalMinor)},
       success_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=cancelled`,
-    });
+    }, { idempotencyKey: `auction-checkout-${auctionId}-${priceMinor}-${protectionMinor}-${sellerFeeMinor}` });
     res.json({url:session.url});
   } catch(err) { logger.error({err},"Auction checkout failed"); res.status(500).json({error:"Unable to start auction checkout."}); }
 });
