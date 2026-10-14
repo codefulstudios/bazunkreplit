@@ -16,7 +16,7 @@ type Auction = {
   category: string | null; condition: string; seller_name: string; seller_email: string;
   starting_bid: string; current_bid: string | null; bid_count: number;
   bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; extend_enabled?: boolean; end_time: string;
-  status: string; winner_name: string | null; winner_email: string | null;
+  marketplace_region?: "uk" | "us"; status: string; winner_name: string | null; winner_email: string | null;
   winner_bid: string | null; created_at: string; bids: Bid[];
 };
 
@@ -246,6 +246,7 @@ export function AuctionDetailPage() {
             </div>
 
             {canPay && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 mb-4"><p className="font-bold text-indigo-900">You won this auction</p><p className="text-sm text-indigo-700 mb-3">Complete your secure payment to confirm your order.</p><button type="button" onClick={payForAuction} disabled={paying} className="rounded-lg bg-indigo-600 text-white px-5 py-2 font-bold disabled:opacity-50">{paying ? "Opening checkout…" : "Pay for winning auction"}</button>{paymentError && <p className="text-red-600 text-sm mt-2">{paymentError}</p>}</div>}
+            {auction.marketplace_region === "us" && <p className="text-xs text-gray-500 mb-3">Bids are settled in GBP; displayed USD estimates depend on the current exchange rate.</p>}
             {/* Ended / winner */}
             {auction.status === "ended" && auction.winner_name && (
               <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5 flex items-center gap-4">
