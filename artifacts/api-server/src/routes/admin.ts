@@ -2502,6 +2502,11 @@ let scheduledEbaySyncRunning=false;
 export function startAdminEbaySyncJob():void{
   const run=async()=>{
     if(scheduledEbaySyncRunning)return;
+    // RapidAPI imports are optional in staging; don't run a doomed sync when no key exists.
+    if(!rapidApiKeyStatus().configured){
+      logger.info("Scheduled admin eBay sync skipped: RapidAPI key not configured");
+      return;
+    }
     scheduledEbaySyncRunning=true;
     try{
       // Database advisory lock prevents overlapping runs across Render instances.
