@@ -38,7 +38,7 @@ router.get("/admin/demo-creator", async (_req, res) => {
       WHERE d.listing_id=l.id AND (l.image IS NULL OR l.image='')`);
     await db.execute(sql`UPDATE listings l SET quantity=0 FROM demo_listing_registry d WHERE d.listing_id=l.id AND l.quantity<>0`);
     const [listings, settings, activities] = await Promise.all([
-      db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' ORDER BY d.created_at DESC LIMIT 500`),
+      db.execute(sql`SELECT d.*,l.title,l.price,l.status,l.image FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' ORDER BY d.created_at DESC LIMIT 500`),
       db.execute(sql`SELECT key,enabled FROM demo_creator_settings`),
       db.execute(sql`SELECT * FROM demo_activity_fixtures ORDER BY created_at DESC LIMIT 500`)
     ]);
