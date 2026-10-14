@@ -27,7 +27,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   // A missing registry table must not silently permit a demo purchase.
   const registryExists=(await db.execute(sql`SELECT to_regclass('public.demo_listing_registry') AS table_name`)).rows[0]?.table_name;
   const demoRows=registryExists ? (await db.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})`)).rows : [];
-  const legacyRows=(await db.execute(sql`SELECT id FROM listings WHERE id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)}) AND COALESCE(specifications,'') ~ '^\\s*\\{' AND (specifications::jsonb->>'demo_creator')='true'`)).rows;
+  const legacyRows=(await db.execute(sql`SELECT id FROM listings WHERE id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)}) AND (CASE WHEN COALESCE(specifications,'') ~ '^\\s*\\{' THEN specifications::jsonb->>'demo_creator' ELSE NULL END)='true'`)).rows;
   if(demoRows.length||legacyRows.length) throw new QuoteError("Demo listings are for preview only and cannot be purchased.",409);
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
