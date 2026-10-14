@@ -168,10 +168,11 @@ router.get("/listings/category-counts", async (req, res) => {
     }
     res.setHeader("Cache-Control", "public, max-age=120");
     const regionFilter = listingRegionFilter(req.query.region);
+    const demoVisibility = await categoryVisibility();
     const rows = await db.execute(sql`
       SELECT category, subcategory, COUNT(*)::int AS count
       FROM listings
-      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
+      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND ${demoVisibility} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
     res.json(rows.rows);
