@@ -63,3 +63,34 @@
 @media (min-width: 1024px) {
  .bazunk-admin main { max-width: 1800px; margin-inline: auto; }
 }
+
+/* Vivid Bazunk dark-mode dashboard: deliberately scoped to avoid affecting public storefront. */
+.dark .bazunk-admin { background: radial-gradient(ellipse at 90% 0%,#1c2850 0%,transparent 43%),radial-gradient(ellipse at 10% 64%,#122b42 0%,transparent 44%),#091021; }
+.dark .bazunk-admin main .admin-dashboard .admin-kpi {
+  color:#fff !important;
+  border:1px solid var(--kpi-border)!important;
+  background:radial-gradient(circle at 93% 12%,var(--kpi-glow),transparent 53%),linear-gradient(140deg,var(--kpi-start),#111d36 92%)!important;
+  box-shadow:0 10px 30px rgba(1,5,21,.24), inset 0 1px rgba(255,255,255,.08)!important;
+  transition:transform .2s,border-color .2s,box-shadow .2s;
+}
+.dark .bazunk-admin main .admin-kpi:hover { transform:translateY(-4px);box-shadow:0 14px 34px rgba(1,5,21,.4),0 0 22px var(--kpi-glow)!important; }
+.dark .bazunk-admin main .admin-kpi .admin-kpi-icon { background:var(--kpi-glow)!important;color:var(--kpi-accent);border:1px solid var(--kpi-border);box-shadow:0 0 20px var(--kpi-glow); }
+.dark .bazunk-admin main .admin-kpi > div:nth-child(2) { color:#fff;letter-spacing:-.04em;text-shadow:0 2px 8px #0002; }
+.dark .bazunk-admin main .admin-kpi > div:last-child {color:#d9e5fa;opacity:1; }
+.dark .bazunk-admin main .admin-kpi-0 {--kpi-start:#124b42;--kpi-accent:#55f9bb;--kpi-glow:#12c98a44;--kpi-border:#21a97e88}
+.dark .bazunk-admin main .admin-kpi-1 {--kpi-start:#153f83;--kpi-accent:#62b6ff;--kpi-glow:#2788ff55;--kpi-border:#3b85fa88}
+.dark .bazunk-admin main .admin-kpi-2 {--kpi-start:#66321b;--kpi-accent:#ffab54;--kpi-glow:#fd84234f;--kpi-border:#e9783688}
+.dark .bazunk-admin main .admin-kpi-3 {--kpi-start:#49257a;--kpi-accent:#d6a6ff;--kpi-glow:#a35aff55;--kpi-border:#9f66f188}
+.dark .bazunk-admin main .admin-kpi-4 {--kpi-start:#672447;--kpi-accent:#ff9cbe;--kpi-glow:#ff4b9a55;--kpi-border:#d6539a88}
+.dark .bazunk-admin main .admin-kpi-5 {--kpi-start:#185264;--kpi-accent:#6fecff;--kpi-glow:#14cce455;--kpi-border:#34b7d788}
+.dark .bazunk-admin main .admin-kpi-6 {--kpi-start:#5b4018;--kpi-accent:#ffe083;--kpi-glow:#efaf2055;--kpi-border:#cfa13b88}
+.dark .bazunk-admin main .admin-kpi-7 {--kpi-start:#4d307b;--kpi-accent:#d3a4ff;--kpi-glow:#9e6aff55;--kpi-border:#9470df88}
+.dark .bazunk-admin main .admin-kpi-8 {--kpi-start:#273b85;--kpi-accent:#a7b7ff;--kpi-glow:#728af555;--kpi-border:#728af588}
+.dark .bazunk-admin main .admin-kpi-9 {--kpi-start:#65223c;--kpi-accent:#ff8ca3;--kpi-glow:#fd557655;--kpi-border:#e2648588}
+.dark .bazunk-admin main .admin-kpi-10 {--kpi-start:#19507c;--kpi-accent:#8ddcff;--kpi-glow:#30a9ff55;--kpi-border:#41a4de88}
+.dark .bazunk-admin main .admin-kpi-11 {--kpi-start:#215c49;--kpi-accent:#6ff1bd;--kpi-glow:#31dca155;--kpi-border:#42b79688}
+.dark .bazunk-admin main .admin-charts > div,.dark .bazunk-admin main .admin-payments {background:linear-gradient(155deg,#1c2b4c,#121e37)!important;border:1px solid #36476b!important;box-shadow:0 10px 28px #03091555!important;}
+.dark .bazunk-admin main .admin-operations button {background:linear-gradient(130deg,#25395f,#17243e)!important;border-color:#40557c!important;color:#f6f9ff;box-shadow:0 6px 20px #0003}
+.dark .bazunk-admin main .admin-operations button:hover {background:linear-gradient(130deg,#394e7e,#203659)!important;border-color:#ff8b39!important;}
+.dark .bazunk-admin main .admin-dashboard table tbody tr:hover {background:#28426388;}
+.dark .bazunk-admin main .admin-dashboard .recharts-cartesian-grid line {stroke:#405273;stroke-dasharray:3 6;}
