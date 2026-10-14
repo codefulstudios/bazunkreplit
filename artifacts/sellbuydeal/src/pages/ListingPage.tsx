@@ -349,7 +349,7 @@ export function ListingPage() {
     );
   }
 
-  const isDemoListing = (product as typeof product & ApiListingExtra)._specifications && (product as typeof product & ApiListingExtra)._specifications && (product as typeof product & ApiListingExtra)._specifications && ((product as typeof product & ApiListingExtra)._specifications as unknown as { demo_creator?: boolean }).demo_creator === true;
+  const isDemoListing = ((product as typeof product & ApiListingExtra)._specifications as unknown as { demo_creator?: boolean } | undefined)?.demo_creator === true;
   const images = getProductImages(product.image);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
