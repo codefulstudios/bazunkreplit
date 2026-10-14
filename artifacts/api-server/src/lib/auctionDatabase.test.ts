@@ -33,7 +33,7 @@ test("PostgreSQL auction locks serialize bids and closeout, including reserve ha
     await pool.query(`UPDATE ${table} SET end_time=now()-interval '1 second' WHERE id=$1`,[id]);
     const close=()=>pool.query(`UPDATE ${table} SET status='ended',winner_bid=CASE WHEN winner_bid<reserve_price THEN NULL ELSE winner_bid END WHERE id=$1 AND status='active' AND end_time<=now() RETURNING id`,[id]);
     const closed=await Promise.all([close(),close(),close()]);
-    assert.equal(closed.reduce((n,r)=>n+r.rowCount,0),1,"only one closeout succeeds");
+    assert.equal(closed.reduce((n,r)=>n+(r.rowCount ?? 0),0),1,"only one closeout succeeds");
     const ended=await pool.query(`SELECT status,winner_bid FROM ${table} WHERE id=$1`,[id]);
     assert.equal(ended.rows[0].status,"ended");
     assert.equal(ended.rows[0].winner_bid,null);
