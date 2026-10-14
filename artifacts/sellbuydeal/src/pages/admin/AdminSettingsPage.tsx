@@ -285,7 +285,7 @@ export function AdminSettingsPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-black text-gray-900">Site Settings</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Settings</h1>
           <p className="text-sm text-gray-400 mt-0.5">Changes apply to the live site immediately after saving</p>
         </div>
         <button onClick={load} disabled={loading}
