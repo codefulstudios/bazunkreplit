@@ -275,7 +275,7 @@ router.post("/auctions/:id/bid", async (req, res) => {
     };
   });
   if ("error" in outcome) {
-    res.status(outcome.status).json({ error: outcome.error, ...("minBid" in outcome ? { minBid: outcome.minBid } : {}) });
+    res.status(outcome.status ?? 400).json({ error: outcome.error, ...("minBid" in outcome ? { minBid: outcome.minBid } : {}) });
     return;
   }
   const { auction, prevWinnerEmail, prevWinnerName, extended, newEndTime, newBidCount, nextMinBid } = outcome;
