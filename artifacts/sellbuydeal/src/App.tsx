@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
+import { AdminDemoCreatorPage } from "@/pages/admin/AdminDemoCreatorPage";
 import { useEffect, useRef } from "react";
 import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk, useAuth } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
@@ -301,6 +302,7 @@ function Router() {
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
       <Route path="/admin" component={AdminLoginPage} />
+      <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/dashboard" component={AdminDashboardPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/seller-compliance" component={AdminSellerCompliancePage} />
