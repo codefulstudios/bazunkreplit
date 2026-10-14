@@ -26,7 +26,11 @@ const EXTEND_WINDOW_MS = 2 * 60 * 1000;
  * one exists and (once there are bids) whether it has been met.
  */
 function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
-  const { reserve_price, ...rest } = a;
+  const {
+    reserve_price,
+    winner_email,
+    ...rest
+  } = a;
   const hasReserve = reserve_price !== null && reserve_price !== undefined && reserve_price !== "";
   const current = rest["current_bid"] ? parseFloat(rest["current_bid"] as string) : null;
   return {
@@ -34,6 +38,12 @@ function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
     has_reserve: hasReserve,
     reserve_met: hasReserve ? current !== null && current >= parseFloat(reserve_price as string) : null,
   };
+}
+
+/** Public auction detail never reveals bidder email addresses. */
+function publicBid(bid: Record<string, unknown>): Record<string, unknown> {
+  const { bidder_email, ...rest } = bid;
+  return rest;
 }
 
 const VALID_STATUSES = ["active", "ended", "cancelled"];
@@ -59,8 +69,8 @@ router.get("/auctions", async (req, res) => {
 });
 
 router.get("/auctions/my-bids", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`
     SELECT DISTINCT a.*, b.amount AS my_latest_bid
     FROM auctions a
@@ -73,8 +83,8 @@ router.get("/auctions/my-bids", async (req, res) => {
 });
 
 router.get("/auctions/my-listings", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`SELECT * FROM auctions WHERE seller_email = ${email} ORDER BY created_at DESC LIMIT 50`);
   res.json(rows.rows);
 });
@@ -139,7 +149,7 @@ router.get("/auctions/:id", async (req, res) => {
     }
   }
   const bidsRes = await db.execute(sql`SELECT * FROM bids WHERE auction_id = ${id} ORDER BY created_at DESC LIMIT 30`);
-  res.json({ ...publicAuction(a), bids: bidsRes.rows });
+  res.json({ ...publicAuction(a), bids: bidsRes.rows.map(b => publicBid(b as Record<string, unknown>)) });
 });
 
 router.post("/auctions", async (req, res) => {
@@ -203,13 +213,16 @@ router.post("/auctions", async (req, res) => {
 });
 
 router.post("/auctions/:id/bid", async (req, res) => {
+  const bidderEmail = await authenticatedSellerEmail(req, res);
+  if (!bidderEmail) return;
   const { id } = req.params;
-  const { bidderEmail, bidderName, amount } = req.body as Record<string, string>;
-  if (!bidderEmail || !bidderName || !amount) {
-    res.status(400).json({ error: "bidderEmail, bidderName, amount are required" });
+  const { bidderName, amount } = req.body as Record<string, string>;
+  if (!bidderName || !amount) {
+    res.status(400).json({ error: "bidderName and amount are required" });
     return;
   }
-  const bidAmount = parseFloat(amount);
+  const bidAmount = Number(amount);
+  if (!Number.isFinite(bidAmount) || bidAmount <= 0) { res.status(400).json({ error: "Enter a valid positive bid" }); return; }
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0] as Record<string, unknown>;
