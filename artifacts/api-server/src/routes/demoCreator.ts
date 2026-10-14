@@ -113,6 +113,18 @@ router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
 const demoImage = (title: string) =>
   `https://placehold.co/640x480/e8edf7/334155.png?text=${encodeURIComponent(title + " - Demo")}`;
 type DemoPhoto = { id: number; alt?: string; photographer?: string; url?: string; src?: { large?: string; medium?: string }; provider?: string };
+function matchesProductPhoto(title: string, tags: string): boolean {
+  const text = tags.toLowerCase();
+  const groups: Array<[RegExp, RegExp]> = [
+    [/canvas.*(bag|duffel)|weekend.*bag/i, /\\b(bag|duffel|luggage|holdall|travel bag|weekender)\\b/i],
+    [/coffee.*mug|ceramic.*mug/i, /\\b(mug|mugs|coffee cup|tea cup|ceramic cup|cups)\\b/i],
+    [/bluetooth.*speaker/i, /\\b(speaker|speakers|boombox)\\b/i],
+    [/desk.*lamp/i, /\\b(lamp|desk light|table light)\\b/i],
+    [/computer.*mouse|wireless.*mouse/i, /\\b(mouse|computer mouse|pc mouse)\\b/i],
+  ];
+  const group = groups.find(([pattern]) => pattern.test(title));
+  return group ? group[1].test(text) : title.toLowerCase().split(/\\s+/).filter(w=>w.length>3).some(w=>text.includes(w));
+}
 async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
   const pixabayKey = process.env.PIXABAY_API_KEY;
   const pexelsKey = process.env.PEXELS_API_KEY;
@@ -125,7 +137,7 @@ async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
       const response = await fetch(`https://pixabay.com/api/?${query}`, { signal: controller.signal });
       if (!response.ok) return null;
       const data = await response.json() as { hits?: Array<{id:number;largeImageURL?:string;webformatURL?:string;pageURL?:string;user?:string;tags?:string}> };
-      const hit = (data.hits || []).find(p => p.largeImageURL && p.pageURL);
+      const hit = (data.hits || []).find(p => p.largeImageURL && p.pageURL && matchesProductPhoto(title,p.tags || ""));
       return hit ? { id:hit.id, alt:hit.tags, photographer:hit.user || "Pixabay contributor", url:hit.pageURL,
         src:{large:hit.largeImageURL,medium:hit.webformatURL}, provider:"Pixabay" } : null;
     }
@@ -135,7 +147,7 @@ async function findPexelsPhoto(title: string): Promise<DemoPhoto | null> {
     });
     if (!response.ok) return null;
     const data = await response.json() as { photos?: DemoPhoto[] };
-    const photo=(data.photos || []).find(p => p.src?.large && p.url && p.photographer);
+    const photo=(data.photos || []).find(p => p.src?.large && p.url && p.photographer && matchesProductPhoto(title,p.alt || ""));
     return photo ? {...photo,provider:"Pexels"} : null;
   } catch { return null; }
   finally { clearTimeout(timeout); }
