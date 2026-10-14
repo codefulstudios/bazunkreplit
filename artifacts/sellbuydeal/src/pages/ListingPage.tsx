@@ -383,7 +383,7 @@ export function ListingPage() {
   function handleNextImg() { setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1)); }
 
   function handleBuyNow() {
-    if (product) { addToCart(product); openCart(); }
+    if (product && !isDemoListing) { addToCart(product); openCart(); }
   }
 
   function handleShare() {
