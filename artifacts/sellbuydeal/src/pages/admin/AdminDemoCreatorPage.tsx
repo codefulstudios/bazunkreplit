@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 
 type Activity={id:number;seller_email:string;kind:string;rating:number|null;note:string|null;quantity:number;enabled:boolean};
 type CatalogueProduct={id:number;title:string;category:string;description:string;price:number};
-type DemoListing={listing_id:number;title:string;price:string;seller_email:string;region:string;enabled:boolean};
+type DemoListing={listing_id:number;title:string;price:string;image?:string;seller_email:string;region:string;enabled:boolean};
 export function AdminDemoCreatorPage(){
   const {isAdmin,authFetch}=useAdmin();const [,go]=useLocation();
   const [listings,setListings]=useState<DemoListing[]>([]);
@@ -22,6 +22,8 @@ export function AdminDemoCreatorPage(){
   const [catalogueTotal,setCatalogueTotal]=useState(0);
   const [catalogue,setCatalogue]=useState<CatalogueProduct[]>([]);
   const [catalogueSearch,setCatalogueSearch]=useState("");
+  const [cataloguePreviews,setCataloguePreviews]=useState<Record<number,string>>({});
+  const [previewBusy,setPreviewBusy]=useState<number|null>(null);
   const [generationMode,setGenerationMode]=useState<"random"|"category"|"selected">("random");
   const [selectedProducts,setSelectedProducts]=useState<number[]>([]);
   const [preventDuplicates,setPreventDuplicates]=useState(true);
@@ -70,6 +72,15 @@ export function AdminDemoCreatorPage(){
     await send("/images/replace",{listingId:photoListing.listing_id,...photo});
     setPhotoListing(null);setPhotoOptions([]);
   }
+  async function previewCataloguePhoto(product:CatalogueProduct){
+    setPreviewBusy(product.id);setError("");
+    try {
+      const r=await authFetch("/api/admin/demo-creator/images/search?q="+encodeURIComponent(product.title));
+      const d=await r.json();if(!r.ok)throw Error(d.error||"Photo preview unavailable");
+      if(d.photo?.image)setCataloguePreviews(old=>({...old,[product.id]:d.photo.image}));
+      else setMessage("No matching photograph found for "+product.title+". You can choose a photo after generating.");
+    }catch(e){setError(String(e));}finally{setPreviewBusy(null);}
+  }
   async function remove(){
     if(!selected.length||!window.confirm(`Retire ${selected.length} selected demo listings? They will disappear from public browse and cannot be restored through Demo Creator. Genuine listings are unaffected.`))return;
     await send("/listings/batch-delete",{ids:selected});setSelected([]);
@@ -106,6 +117,8 @@ export function AdminDemoCreatorPage(){
       <p className="text-sm text-gray-600">Showing {filteredCatalogue.length} products · {selectedProducts.length} selected. Images are searched when generated; approve or replace them before enabling listings.</p>
       <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3 xl:grid-cols-4">
         {filteredCatalogue.map(p=><label key={p.id} className={`rounded-lg border p-3 text-sm ${selectedProducts.includes(p.id)?"border-orange-500 bg-orange-50":"border-gray-200"}`}>
+          {cataloguePreviews[p.id]&&<img src={cataloguePreviews[p.id]} alt={p.title} className="mb-2 h-28 w-full rounded object-cover"/>}
+          <button type="button" className="mb-2 text-xs text-blue-700 underline" disabled={previewBusy!==null} onClick={e=>{e.preventDefault();void previewCataloguePhoto(p);}}>{previewBusy===p.id?"Loading photo…":"Preview photo"}</button>
           <div className="mb-2 flex items-center gap-2"><input type="checkbox" checked={selectedProducts.includes(p.id)} disabled={!selectedProducts.includes(p.id)&&selectedProducts.length>=20} onChange={e=>setSelectedProducts(old=>e.target.checked?[...old,p.id]:old.filter(id=>id!==p.id))}/><strong>{p.title}</strong></div>
           <p className="text-xs text-gray-500">{p.category}</p><p className="font-semibold">{region==="uk"?"£":"$"}{Number(p.price).toFixed(2)}</p>
         </label>)}
@@ -135,6 +148,6 @@ export function AdminDemoCreatorPage(){
           <span className="block text-xs font-medium">Use this photo</span>
         </button>)}</div>}
     </section>}
-    <section className="rounded-xl border bg-white p-4 space-y-3"><div className="flex justify-between items-center"><h2 className="font-semibold">Demo listings ({listings.length})</h2><button disabled={busy||!selected.length} onClick={remove} className="rounded bg-red-700 px-3 py-2 text-white disabled:opacity-50">Delete selected ({selected.length})</button></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th><label><input type="checkbox" aria-label="Select all demo listings" checked={listings.length>0&&selected.length===listings.length} onChange={e=>setSelected(e.target.checked?listings.map(l=>l.listing_id):[])}/> All</label></th><th>Listing</th><th>Seller</th><th>Region</th><th>Enabled</th><th>Actions</th></tr></thead><tbody>{listings.map(l=><tr key={l.listing_id} className="border-t"><td><input type="checkbox" checked={selected.includes(l.listing_id)} onChange={e=>setSelected(old=>e.target.checked?[...old,l.listing_id]:old.filter(id=>id!==l.listing_id))}/></td><td>{l.title} (#{l.listing_id})</td><td>{l.seller_email}</td><td>{l.region.toUpperCase()}</td><td><input type="checkbox" disabled={busy} checked={l.enabled} onChange={e=>send("/listings/"+l.listing_id,{enabled:e.target.checked},"PATCH")}/></td><td><button disabled={busy} className="mr-3 text-blue-700 underline" onClick={()=>choosePhotoListing(l)}>Choose photo</button><button disabled={busy} className="text-red-700 underline" onClick={()=>{if(window.confirm(`Retire demo listing #${l.listing_id}? This cannot be undone from Demo Creator.`))void send("/listings/batch-delete",{ids:[l.listing_id]});}}>Delete</button></td></tr>)}</tbody></table></div></section>
+    <section className="rounded-xl border bg-white p-4 space-y-3"><div className="flex justify-between items-center"><h2 className="font-semibold">Demo listings ({listings.length})</h2><button disabled={busy||!selected.length} onClick={remove} className="rounded bg-red-700 px-3 py-2 text-white disabled:opacity-50">Delete selected ({selected.length})</button></div><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th><label><input type="checkbox" aria-label="Select all demo listings" checked={listings.length>0&&selected.length===listings.length} onChange={e=>setSelected(e.target.checked?listings.map(l=>l.listing_id):[])}/> All</label></th><th>Listing</th><th>Seller</th><th>Region</th><th>Enabled</th><th>Actions</th></tr></thead><tbody>{listings.map(l=><tr key={l.listing_id} className="border-t"><td><input type="checkbox" checked={selected.includes(l.listing_id)} onChange={e=>setSelected(old=>e.target.checked?[...old,l.listing_id]:old.filter(id=>id!==l.listing_id))}/></td><td><div className="flex items-center gap-2">{l.image&&<img src={l.image} alt={l.title} className="h-12 w-12 rounded object-cover"/>}<span>{l.title} (#{l.listing_id})</span></div></td><td>{l.seller_email}</td><td>{l.region.toUpperCase()}</td><td><input type="checkbox" aria-label={`Publish ${l.title}`} disabled={busy} checked={l.enabled} onChange={e=>send("/listings/"+l.listing_id,{enabled:e.target.checked},"PATCH")}/></td><td><button disabled={busy} className="mr-3 text-blue-700 underline" onClick={()=>choosePhotoListing(l)}>Choose photo</button><button disabled={busy} className="text-red-700 underline" onClick={()=>{if(window.confirm(`Retire demo listing #${l.listing_id}? This cannot be undone from Demo Creator.`))void send("/listings/batch-delete",{ids:[l.listing_id]});}}>Delete</button></td></tr>)}</tbody></table></div></section>
   </div></AdminLayout>;
 }
