@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X } from "lucide-react";
+import { CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useAdmin } from "@/context/AdminContext";
 
 const NAV = [
@@ -35,13 +36,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin } = useAdmin();
   const [location, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   useEffect(() => { setMenuOpen(false); }, [location]);
 
   useEffect(() => { if (!isAdmin) setLocation("/admin", { replace: true }); }, [isAdmin, setLocation]);
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 lg:flex">
+    <div className="bazunk-admin min-h-screen bg-[#f3f6fc] text-[#152345] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
         <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
@@ -49,7 +53,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {menuOpen && <button type="button" aria-label="Close admin menu" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
 
       {/* Sidebar — always visible */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-[#1A1D2E] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-52 lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-[#101c35] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-60 lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo */}
         <div className="px-4 pt-5 pb-4 border-b border-white/10 flex flex-col gap-2 relative">
           <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-white lg:hidden"><X className="h-5 w-5" /></button>
@@ -60,9 +64,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-slate-400"/></label></div>
         {/* Nav */}
         <nav className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-          {NAV.map(({ label, href, icon: Icon }) => {
+          {NAV.filter(({label}) => label.toLowerCase().includes(search.toLowerCase())).map(({ label, href, icon: Icon }) => {
             const active = location === href || location.startsWith(href + "/");
             return (
               <button
@@ -71,7 +76,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-medium transition-colors ${
                   active
                     ? "bg-[#F26B21] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    : "text-slate-300 hover:text-white hover:bg-white/10"
                 }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
@@ -95,7 +100,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="min-w-0 flex-1">
-        <main className="w-full min-w-0 p-3 sm:p-5">{children}</main>
+        <header className="hidden lg:flex sticky top-0 z-20 h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-6 shadow-sm backdrop-blur dark:border-white/10 dark:bg-[#111e38]/95">
+          <div className="flex items-center gap-3 text-sm font-bold"><span className="text-xl">👑</span><span className="text-[#1b2b57] dark:text-white">Bazunk Admin</span><span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">Management centre</span></div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setTheme(isDark ? "light" : "dark")} aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"} className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-white/10 dark:text-white">{isDark ? <Moon className="h-4 w-4"/> : <Sun className="h-4 w-4"/>}<span>{isDark ? "Dark" : "Light"}</span></button>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">A</span><span className="text-sm font-bold">Admin</span><ChevronDown className="h-4 w-4 text-slate-400"/>
+          </div>
+        </header>
+        <div className="flex justify-end px-4 pt-3 lg:hidden"><button type="button" onClick={() => setTheme(isDark ? "light" : "dark")} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm shadow dark:bg-[#1a2c4e]" aria-label="Toggle admin theme">{isDark ? <Moon className="h-4 w-4"/> : <Sun className="h-4 w-4"/>}{isDark ? "Dark mode" : "Light mode"}</button></div>
+        <main className="w-full min-w-0 p-3 sm:p-5 lg:p-6">{children}</main>
       </div>
     </div>
   );
