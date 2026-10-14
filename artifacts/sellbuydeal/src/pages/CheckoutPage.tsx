@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, CheckCircle2,
   Lock, ShoppingBag, Truck, Shield,
-  Package, AlertCircle, Loader2,
+  Package, AlertCircle, Loader2, Trash2,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -46,7 +46,7 @@ const CONDITION_COLORS: Record<string, string> = {
 };
 
 export function CheckoutPage() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, removeFromCart } = useCart();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
   const { formatPrice, currency } = useCurrency();
@@ -265,7 +265,14 @@ export function CheckoutPage() {
                             <span className="text-xs text-gray-400">Qty: {item.quantity}</span>
                           </div>
                         </div>
-                        <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                          <button type="button" onClick={() => removeFromCart(item.product.id)}
+                            aria-label={`Remove ${item.product.title} from cart`}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+                            <Trash2 className="h-3.5 w-3.5" /> Remove
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
