@@ -9,6 +9,11 @@ import { handleDiditWebhook } from "./routes/verification.js";
 
 const app: Express = express();
 
+// Lightweight liveness probe for Render. Does not depend on external services.
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok", service: "bazunk-api" });
+});
+
 // Render terminates TLS in front of us — trust it so req.protocol / IPs are right
 app.set("trust proxy", 1);
 
@@ -61,6 +66,7 @@ const allowedOrigins = [...new Set([
   "https://bazunk.com",
   "https://www.bazunk.com",
   "https://bazunk-web.onrender.com",
+  "https://bazunk-web-staging.onrender.com",
 ].map((o) => o.trim().replace(/\/$/, "")).filter(Boolean))];
 app.use(
   cors({
