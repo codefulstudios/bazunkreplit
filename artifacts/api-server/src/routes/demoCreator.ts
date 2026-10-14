@@ -240,7 +240,7 @@ const templates = [
   { title:"Collectable Coin Album", category:"Collectables & Art", description:"Collectable Coin Album in good quality, suitable for everyday use.", price:26.45 }
 ];
 const demoCategories = ["All categories", ...new Set(templates.map(item=>item.category))];
-router.get("/admin/demo-creator/catalogue", (_req,res)=>res.json({categories:demoCategories,total:templates.length}));
+router.get("/admin/demo-creator/catalogue", (_req,res)=>res.json({categories:demoCategories,total:templates.length,products:templates.map((item,id)=>({...item,id}))}));
 // Admin-only photo search and controlled replacement for registered demo listings.
 router.get("/admin/demo-creator/images/search", async (req, res) => {
   const title = String(req.query.q || "").trim().slice(0,120);
@@ -309,9 +309,9 @@ router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
   } catch {res.status(503).json({error:"Unable to fill demo images"});}
 });
 router.post("/admin/demo-creator/generate", async (req,res) => {
-  const { sellerEmail, region, count = 1, category = "All categories" } = req.body ?? {};
+  const { sellerEmail, region, count = 1, category = "All categories", mode = "random", productIds = [], preventDuplicates = true, requireApproval = true } = req.body ?? {};
   if (typeof sellerEmail !== "string" || !sellerEmail.includes("@") || !validRegion(region) ||
-      !Number.isInteger(count) || count < 1 || count > 20 || !demoCategories.includes(category)) {
+      !Number.isInteger(count) || count < 1 || count > 20 || !demoCategories.includes(category) || !["random","category","selected"].includes(mode) || !Array.isArray(productIds) || productIds.length > 20 || typeof preventDuplicates !== "boolean" || typeof requireApproval !== "boolean") {
     res.status(400).json({error:"Valid seller, region and count (1–20) required"}); return;
   }
   try {
@@ -320,14 +320,20 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
     if (!account.rows.length) {res.status(404).json({error:"Seller account not found"});return;}
     const email=String(account.rows[0].email);
     const currency=region==="uk"?"GBP":"USD";
-    const pool = templates.filter(item=>category==="All categories" || item.category===category);
-    if(count>pool.length){res.status(400).json({error:`Only ${pool.length} unique templates available in this category; reduce quantity or choose All categories`});return;}
+    const pool = mode==="selected" ? productIds.map((id:unknown)=>Number.isInteger(id) ? templates[id as number] : undefined).filter((item):item is typeof templates[number]=>!!item) :
+      templates.filter(item=>mode!=="category" || item.category===category);
+    if(mode==="selected" && (productIds.length!==count || new Set(productIds).size!==count || pool.length!==count)){
+      res.status(400).json({error:"Select exactly the requested number of different catalogue products"});return;
+    }
     const existing=await db.execute(sql`SELECT l.title FROM listings l JOIN demo_listing_registry d ON d.listing_id=l.id
       WHERE LOWER(d.seller_email)=LOWER(${email}) AND d.region=${region} AND l.status <> 'deleted'`);
     const used=new Set(existing.rows.map(row=>String(row.title).toLowerCase()));
     const shuffled=[...pool].sort(()=>Math.random()-0.5);
-    const fresh=shuffled.filter(item=>!used.has(item.title.toLowerCase()));
-    const chosen=[...fresh,...shuffled.filter(item=>used.has(item.title.toLowerCase()))].slice(0,count);
+    const available=preventDuplicates ? shuffled.filter(item=>!used.has(item.title.toLowerCase())) : shuffled;
+    if(count>available.length){
+      res.status(409).json({error:`Only ${available.length} unused unique products available for this seller and region. Reduce quantity, select another category, or disable duplicate prevention.`});return;
+    }
+    const chosen=available.slice(0,count);
     const photos = await Promise.all(chosen.map(item => findPexelsPhoto(item.title)));
     const created=await db.transaction(async tx => {
       const ids:number[]=[];
@@ -341,13 +347,13 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
           ${JSON.stringify({marketplace_region:region,demo_creator:true,...(photo ? photoMetadata(photo) : {})})},0) RETURNING id`);
         const id=Number(row.rows[0].id);
         await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
-        await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
-          VALUES(${id},${email},${region})`);
+        await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region,enabled)
+          VALUES(${id},${email},${region},${!requireApproval})`);
         ids.push(id);
       }
       return ids;
     });
-    res.status(201).json({listingIds:created});
+    res.status(201).json({listingIds:created,pendingApproval:requireApproval});
   } catch {res.status(503).json({error:"Unable to generate listings"});}
 });
 router.post("/admin/demo-creator/listings", async (req, res) => {
