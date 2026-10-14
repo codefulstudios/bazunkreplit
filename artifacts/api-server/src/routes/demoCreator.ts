@@ -30,6 +30,12 @@ router.use("/admin/demo-creator", requireAdmin);
 router.get("/admin/demo-creator", async (_req, res) => {
   try {
     await ensureTables();
+    // Repair only generated demo rows without an image; never touch real listings.
+    await db.execute(sql`UPDATE listings l SET image =
+      'https://placehold.co/640x480/e8edf7/334155.png?text=' ||
+      replace(replace(l.title, ' ', '+'), '&', '%26') || '+-+Demo'
+      FROM demo_listing_registry d
+      WHERE d.listing_id=l.id AND (l.image IS NULL OR l.image='')`);
     const [listings, settings, activities] = await Promise.all([
       db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' ORDER BY d.created_at DESC LIMIT 500`),
       db.execute(sql`SELECT key,enabled FROM demo_creator_settings`),
@@ -102,6 +108,9 @@ router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
     res.json({deleted:r.rows.length});
   }catch{res.status(503).json({error:"Unable to delete fixtures"});}
 });
+// Neutral labelled illustrations: never imply that a stock image is the actual item.
+const demoImage = (title: string) =>
+  `https://placehold.co/640x480/e8edf7/334155.png?text=${encodeURIComponent(title + " - Demo")}`;
 const templates = [
   { title:"Compact Bluetooth Speaker", category:"Electronics", description:"Portable rechargeable speaker with Bluetooth connectivity.", price:24.99 },
   { title:"Ceramic Coffee Mug Set", category:"Home & Garden", description:"Set of four ceramic mugs for everyday use.", price:18.50 },
@@ -126,9 +135,9 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
       for(let i=0;i<count;i++){
         const item=templates[Math.floor(Math.random()*templates.length)];
         const row=await tx.execute(sql`INSERT INTO listings
-          (title,description,category,price,condition,seller_email,currency,status,specifications,quantity)
+          (title,description,category,price,condition,image,seller_email,currency,status,specifications,quantity)
           VALUES (${item.title},${item.description},${item.category},${item.price.toFixed(2)},
-          'new',${email},${currency},'active',
+          'new',${demoImage(item.title)},${email},${currency},'active',
           ${JSON.stringify({marketplace_region:region,demo_creator:true})},1) RETURNING id`);
         const id=Number(row.rows[0].id);
         await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
