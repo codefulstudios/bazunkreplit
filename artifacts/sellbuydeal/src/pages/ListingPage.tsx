@@ -356,7 +356,10 @@ export function ListingPage() {
       return specs?.demo_creator === true;
     } catch { return false; }
   })();
-  const images = getProductImages(product.image);
+  const fallbackDemoImage = isDemoListing
+    ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480"><rect width="640" height="480" fill="#e8edf7"/><rect x="100" y="80" width="440" height="320" rx="24" fill="#d5deee"/><circle cx="240" cy="188" r="48" fill="#b4c5df"/><path d="M140 354L290 220L390 300L462 245L520 354Z" fill="#92a9ca"/></svg>`)}`
+    : "";
+  const images = getProductImages(isDemoListing ? fallbackDemoImage : product.image);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
   // old imports where a subcategory slug was mistakenly stored in the category column.
@@ -472,8 +475,10 @@ export function ListingPage() {
         </nav>
 
         {isDemoListing && (
-          <div role="status" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <strong>Demo listing — preview only.</strong> This is a simulated marketplace item, not a real product for sale. You can add it to your cart to try the interface, but checkout is blocked.
+          <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+            <strong>Temporarily out of stock</strong>
+            <span>0 available</span>
+            <span>Listing #{product._publicId || product.id}</span>
           </div>
         )}
 
