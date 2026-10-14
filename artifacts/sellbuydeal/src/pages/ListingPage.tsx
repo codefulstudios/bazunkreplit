@@ -826,6 +826,7 @@ export function ListingPage() {
               {/* Buy Now */}
               <button
                 onClick={handleBuyNow}
+                disabled={isDemoListing}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all mb-2.5 shadow-sm bg-gradient-to-r from-[#F26B21] to-[#D97706] text-white hover:opacity-90"
                 data-testid="button-buy-now"
               >
