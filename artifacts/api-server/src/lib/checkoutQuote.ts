@@ -23,6 +23,11 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
     WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
     AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
+  // Demo inventory must never be charged. Reject both registered and legacy demo items.
+  // A missing registry table must not silently permit a demo purchase.
+  const demoRows=(await db.execute(sql`SELECT listing_id FROM demo_listing_registry WHERE listing_id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})`)).rows;
+  const legacyRows=(await db.execute(sql`SELECT id FROM listings WHERE id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)}) AND COALESCE(specifications,'') ~ '^\\s*\\{' AND (specifications::jsonb->>'demo_creator')='true'`)).rows;
+  if(demoRows.length||legacyRows.length) throw new QuoteError("Demo listings are for preview only and cannot be purchased.",409);
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
   const fees=Object.fromEntries(settings.map(r=>[String(r.key),String(r.value)]));
