@@ -210,7 +210,7 @@ function SignInPage() {
         <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white"><h1 className="text-xl font-bold">Bazunk sign in</h1><p className="mt-3 text-white/70">Connecting to secure sign in…</p><p className="mt-4 text-sm text-white/60">If this stays visible, the authentication service may be unavailable.</p></div></ClerkLoading>
         <ClerkLoaded>
           <div className="mb-4 text-center text-white"><h1 className="text-2xl font-bold">Sign in to Bazunk</h1><p className="mt-2 text-sm text-white/60">Secure account access</p></div>
-          <SignIn routing="virtual" signUpUrl={`${basePath}/sign-up`} />
+          <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
         </ClerkLoaded>
       </div>
     </div>
@@ -226,7 +226,7 @@ function SignUpPage() {
         <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white">Connecting to secure sign up…</div></ClerkLoading>
         <ClerkLoaded>
           <div className="mb-4 text-center text-white"><h1 className="text-2xl font-bold">Create your Bazunk account</h1></div>
-          <SignUp routing="virtual" signInUrl={`${basePath}/sign-in`} />
+          <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
         </ClerkLoaded>
       </div>
     </div>
