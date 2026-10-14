@@ -36,7 +36,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     const id=Number(row.id);
     if(!demoIds.includes(id)) demoIds.push(id);
   }
-  if (demoIds.length) throw new QuoteError(`These items are unavailable for checkout: ${demoIds.join(", ")}. Remove them from your cart to continue.`, 409);
+  if (demoIds.length) throw new QuoteError(`Demo listings are for preview only and cannot be purchased (item IDs: ${demoIds.join(", ")}). Remove them from your cart to continue.`, 409);
   const byId=new Map(rows.map(r=>[Number(r.id),r]));
   const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%' OR key LIKE 'buyer_protection_%'`)).rows as Array<Record<string,unknown>>;
   const fees=Object.fromEntries(settings.map(r=>[String(r.key),String(r.value)]));
