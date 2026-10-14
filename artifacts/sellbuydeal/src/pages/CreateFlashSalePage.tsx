@@ -4,6 +4,7 @@ import { Zap, ChevronLeft, Loader2, CheckCircle2, AlertCircle, ImageIcon, Clock,
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { SellerListingPicker, type SellerListing } from "@/components/SellerListingPicker";
@@ -34,6 +35,7 @@ export function CreateFlashSalePage() {
   const [marketRegion] = useMarketplaceRegion();
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { currency, formatPrice } = useCurrency();
 
   const [saleType, setSaleType] = useState<SaleType>("standard");
@@ -147,6 +149,8 @@ export function CreateFlashSalePage() {
     setSubmitting(true); setError(null);
 
     try {
+      const token = await getToken();
+      if (!token) { setError("Please sign in again before creating a flash sale."); return; }
       if (isMultiListing) {
         // Create one flash sale per selected listing
         if (discountPctNum <= 0 || discountPctNum >= 100) { setError("Enter a discount % between 1 and 99"); return; }
@@ -157,7 +161,7 @@ export function CreateFlashSalePage() {
           const matchCat = CATEGORIES.find((c) => c.toLowerCase() === (listing.category ?? "").toLowerCase()) ?? "Electronics";
           const res = await fetch("/api/flash-sales", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({
           marketplaceRegion: marketRegion,
               sellerEmail: user.email,
@@ -189,7 +193,7 @@ export function CreateFlashSalePage() {
         if (sp >= op) { setError("Sale price must be less than original price"); return; }
         const res = await fetch("/api/flash-sales", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             marketplaceRegion: marketRegion,
             sellerEmail: user.email,
