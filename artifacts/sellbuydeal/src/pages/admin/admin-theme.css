@@ -23,3 +23,43 @@
  .bazunk-admin main { font-size: 13px; }
  .bazunk-admin main :is(th,td) { padding: .7rem; }
 }
+
+/* Mockup-inspired consistent component surfaces */
+.bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white {
+  border-color: #e3eaf6;
+  box-shadow: 0 3px 16px rgba(29,54,102,.045);
+}
+.bazunk-admin main :is(input,select,textarea) {
+  min-height: 38px;
+  border-radius: 10px;
+}
+.bazunk-admin main table thead {
+  background: #f0f5fc;
+  color: #475d81;
+}
+.bazunk-admin main table tbody tr {
+  border-bottom: 1px solid #e9eef7;
+}
+.bazunk-admin main table tbody tr:hover {
+  background: rgba(41,112,240,.035);
+}
+.bazunk-admin main :is(button,a) {
+  -webkit-tap-highlight-color: transparent;
+}
+.dark .bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white {
+  border-color: #30415d;
+  box-shadow: 0 3px 16px rgba(0,0,0,.12);
+}
+.dark .bazunk-admin main table thead {
+  background: #213351;
+  color: #c3d3ec;
+}
+.dark .bazunk-admin main table tbody tr {
+  border-color: #30415d;
+}
+.dark .bazunk-admin main table tbody tr:hover {
+  background: rgba(103,157,247,.08);
+}
+@media (min-width: 1024px) {
+ .bazunk-admin main { max-width: 1800px; margin-inline: auto; }
+}
