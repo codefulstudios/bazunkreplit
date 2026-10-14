@@ -10,6 +10,7 @@ import { getUncachableStripeClient, getStripePublishableKey } from "../stripeCli
 import { convertAmount, smallestUnit } from "../fxRates.js";
 import { logger } from "../lib/logger.js";
 import { sendCreditsConfirmation, sendOrderConfirmation } from "../email.js";
+import { fulfillAuctionSession } from "../lib/auctionFulfillment.js";
 import { fulfillCartSession } from "../lib/fulfillment.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
@@ -217,6 +218,26 @@ router.post("/stripe/checkout-auction", async (req, res) => {
     }, { idempotencyKey: `auction-checkout-${auctionId}-${priceMinor}-${protectionMinor}-${sellerFeeMinor}` });
     res.json({url:session.url});
   } catch(err) { logger.error({err},"Auction checkout failed"); res.status(500).json({error:"Unable to start auction checkout."}); }
+});
+
+router.post("/stripe/confirm-auction-payment", async (req,res) => {
+  try {
+    const auth=getAuth(req);
+    if (!auth.isAuthenticated || !auth.userId) {res.status(401).json({error:"Sign in to confirm your payment."});return;}
+    const account=await clerkClient.users.getUser(auth.userId);
+    const email=account.primaryEmailAddress?.emailAddress?.toLowerCase();
+    if (!email) {res.status(403).json({error:"Verified email required."});return;}
+    const sessionId=String(req.body?.sessionId ?? "");
+    if (!/^cs_(test_|live_)/.test(sessionId)) {res.status(400).json({error:"Invalid payment session."});return;}
+    const stripe=await getUncachableStripeClient();
+    const session=await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.metadata?.type !== "auction" || String(session.client_reference_id??"").toLowerCase() !== email) {
+      res.status(403).json({error:"This is not your auction payment."});return;
+    }
+    const result=await fulfillAuctionSession(sessionId);
+    if(result==="not_paid"){res.status(409).json({error:"Payment has not completed."});return;}
+    res.json({ok:true,status:result});
+  } catch(err){logger.error({err},"Failed to confirm auction payment");res.status(500).json({error:"Could not confirm auction payment."});}
 });
 
 router.post("/stripe/checkout-cart", async (req, res) => {
