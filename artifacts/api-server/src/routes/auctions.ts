@@ -1,3 +1,4 @@
+import { minimumBid, canAcceptBid } from "../lib/auctionRules.js";
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
@@ -240,8 +241,8 @@ router.post("/auctions/:id/bid", async (req, res) => {
     if (String(auction["seller_email"]).toLowerCase() === bidderEmail) return { error: "You cannot bid on your own auction", status: 400 } as const;
     const currentBid = auction["current_bid"] == null ? null : Number(auction["current_bid"]);
     const increment = Number(auction["bid_increment"]);
-    const minBid = currentBid !== null ? currentBid + increment : Number(auction["starting_bid"]);
-    if (bidAmount < minBid) return { error: `Minimum bid is GBP £${minBid.toFixed(2)}`, status: 400, minBid } as const;
+    const minBid = minimumBid(Number(auction["starting_bid"]), currentBid, increment);
+    if (!canAcceptBid({status:String(auction["status"]),endTime:new Date(auction["end_time"] as string).getTime(),now:Date.now(),seller:String(auction["seller_email"]),bidder:bidderEmail,amount:bidAmount,start:Number(auction["starting_bid"]),current:currentBid,increment})) return { error: `Minimum bid is GBP £${minBid.toFixed(2)}`, status: 400, minBid } as const;
 
     const prevWinnerEmail = (auction["winner_email"] as string | null) ?? null;
     const prevWinnerName = (auction["winner_name"] as string | null) ?? null;
