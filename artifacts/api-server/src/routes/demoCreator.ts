@@ -156,12 +156,91 @@ function photoMetadata(photo: DemoPhoto) {
     image_credit: photo.photographer, image_source_url: photo.url };
 }
 const templates = [
-  { title:"Compact Bluetooth Speaker", category:"Electronics", description:"Portable rechargeable speaker with Bluetooth connectivity.", price:24.99 },
-  { title:"Ceramic Coffee Mug Set", category:"Home & Garden", description:"Set of four ceramic mugs for everyday use.", price:18.50 },
-  { title:"Canvas Weekend Bag", category:"Fashion", description:"Durable canvas travel bag with zip fastening and handles.", price:32.00 },
-  { title:"LED Desk Lamp", category:"Home & Garden", description:"Adjustable desk light with multiple brightness levels.", price:21.95 },
-  { title:"Wireless Computer Mouse", category:"Electronics", description:"Compact wireless mouse suitable for laptop or desktop use.", price:15.00 }
+  { title:"Bluetooth Speaker", category:"Electronics", description:"Bluetooth Speaker in good quality, suitable for everyday use.", price:12.95 },
+  { title:"Wireless Headphones", category:"Electronics", description:"Wireless Headphones in good quality, suitable for everyday use.", price:17.45 },
+  { title:"USB-C Charging Cable", category:"Electronics", description:"USB-C Charging Cable in good quality, suitable for everyday use.", price:21.95 },
+  { title:"Portable Power Bank", category:"Electronics", description:"Portable Power Bank in good quality, suitable for everyday use.", price:26.45 },
+  { title:"Computer Keyboard", category:"Electronics", description:"Computer Keyboard in good quality, suitable for everyday use.", price:30.95 },
+  { title:"Wireless Computer Mouse", category:"Electronics", description:"Wireless Computer Mouse in good quality, suitable for everyday use.", price:35.45 },
+  { title:"Webcam", category:"Electronics", description:"Webcam in good quality, suitable for everyday use.", price:39.95 },
+  { title:"Tablet Stand", category:"Electronics", description:"Tablet Stand in good quality, suitable for everyday use.", price:44.45 },
+  { title:"Ceramic Coffee Mug Set", category:"Home & Garden", description:"Ceramic Coffee Mug Set in good quality, suitable for everyday use.", price:14.95 },
+  { title:"LED Desk Lamp", category:"Home & Garden", description:"LED Desk Lamp in good quality, suitable for everyday use.", price:19.45 },
+  { title:"Cotton Cushion Cover", category:"Home & Garden", description:"Cotton Cushion Cover in good quality, suitable for everyday use.", price:23.95 },
+  { title:"Glass Flower Vase", category:"Home & Garden", description:"Glass Flower Vase in good quality, suitable for everyday use.", price:28.45 },
+  { title:"Woven Storage Basket", category:"Home & Garden", description:"Woven Storage Basket in good quality, suitable for everyday use.", price:32.95 },
+  { title:"Wall Clock", category:"Home & Garden", description:"Wall Clock in good quality, suitable for everyday use.", price:37.45 },
+  { title:"Plant Pot", category:"Home & Garden", description:"Plant Pot in good quality, suitable for everyday use.", price:41.95 },
+  { title:"Kitchen Utensil Set", category:"Home & Garden", description:"Kitchen Utensil Set in good quality, suitable for everyday use.", price:46.45 },
+  { title:"Canvas Weekend Bag", category:"Fashion & Accessories", description:"Canvas Weekend Bag in good quality, suitable for everyday use.", price:8.95 },
+  { title:"Leather Wallet", category:"Fashion & Accessories", description:"Leather Wallet in good quality, suitable for everyday use.", price:13.45 },
+  { title:"Cotton Scarf", category:"Fashion & Accessories", description:"Cotton Scarf in good quality, suitable for everyday use.", price:17.95 },
+  { title:"Canvas Tote Bag", category:"Fashion & Accessories", description:"Canvas Tote Bag in good quality, suitable for everyday use.", price:22.45 },
+  { title:"Sunglasses", category:"Fashion & Accessories", description:"Sunglasses in good quality, suitable for everyday use.", price:26.95 },
+  { title:"Baseball Cap", category:"Fashion & Accessories", description:"Baseball Cap in good quality, suitable for everyday use.", price:31.45 },
+  { title:"Wristwatch", category:"Fashion & Accessories", description:"Wristwatch in good quality, suitable for everyday use.", price:35.95 },
+  { title:"Crossbody Bag", category:"Fashion & Accessories", description:"Crossbody Bag in good quality, suitable for everyday use.", price:40.45 },
+  { title:"Yoga Mat", category:"Sports & Outdoors", description:"Yoga Mat in good quality, suitable for everyday use.", price:11.95 },
+  { title:"Reusable Water Bottle", category:"Sports & Outdoors", description:"Reusable Water Bottle in good quality, suitable for everyday use.", price:16.45 },
+  { title:"Camping Lantern", category:"Sports & Outdoors", description:"Camping Lantern in good quality, suitable for everyday use.", price:20.95 },
+  { title:"Hiking Backpack", category:"Sports & Outdoors", description:"Hiking Backpack in good quality, suitable for everyday use.", price:25.45 },
+  { title:"Resistance Bands", category:"Sports & Outdoors", description:"Resistance Bands in good quality, suitable for everyday use.", price:29.95 },
+  { title:"Football", category:"Sports & Outdoors", description:"Football in good quality, suitable for everyday use.", price:34.45 },
+  { title:"Bicycle Helmet", category:"Sports & Outdoors", description:"Bicycle Helmet in good quality, suitable for everyday use.", price:38.95 },
+  { title:"Picnic Blanket", category:"Sports & Outdoors", description:"Picnic Blanket in good quality, suitable for everyday use.", price:43.45 },
+  { title:"Wooden Building Blocks", category:"Toys & Games", description:"Wooden Building Blocks in good quality, suitable for everyday use.", price:13.95 },
+  { title:"Jigsaw Puzzle", category:"Toys & Games", description:"Jigsaw Puzzle in good quality, suitable for everyday use.", price:18.45 },
+  { title:"Board Game", category:"Toys & Games", description:"Board Game in good quality, suitable for everyday use.", price:22.95 },
+  { title:"Plush Teddy Bear", category:"Toys & Games", description:"Plush Teddy Bear in good quality, suitable for everyday use.", price:27.45 },
+  { title:"Toy Racing Car", category:"Toys & Games", description:"Toy Racing Car in good quality, suitable for everyday use.", price:31.95 },
+  { title:"Playing Cards", category:"Toys & Games", description:"Playing Cards in good quality, suitable for everyday use.", price:36.45 },
+  { title:"Hardback Cookbook", category:"Books & Media", description:"Hardback Cookbook in good quality, suitable for everyday use.", price:14.95 },
+  { title:"Travel Guide Book", category:"Books & Media", description:"Travel Guide Book in good quality, suitable for everyday use.", price:19.45 },
+  { title:"Sketchbook", category:"Books & Media", description:"Sketchbook in good quality, suitable for everyday use.", price:23.95 },
+  { title:"Paperback Novel", category:"Books & Media", description:"Paperback Novel in good quality, suitable for everyday use.", price:28.45 },
+  { title:"Art Print", category:"Books & Media", description:"Art Print in good quality, suitable for everyday use.", price:32.95 },
+  { title:"Makeup Brush Set", category:"Health & Beauty", description:"Makeup Brush Set in good quality, suitable for everyday use.", price:9.95 },
+  { title:"Hair Brush", category:"Health & Beauty", description:"Hair Brush in good quality, suitable for everyday use.", price:14.45 },
+  { title:"Toiletry Bag", category:"Health & Beauty", description:"Toiletry Bag in good quality, suitable for everyday use.", price:18.95 },
+  { title:"Manicure Kit", category:"Health & Beauty", description:"Manicure Kit in good quality, suitable for everyday use.", price:23.45 },
+  { title:"Cosmetic Mirror", category:"Health & Beauty", description:"Cosmetic Mirror in good quality, suitable for everyday use.", price:27.95 },
+  { title:"Dog Lead", category:"Pet Supplies", description:"Dog Lead in good quality, suitable for everyday use.", price:13.95 },
+  { title:"Cat Scratching Post", category:"Pet Supplies", description:"Cat Scratching Post in good quality, suitable for everyday use.", price:18.45 },
+  { title:"Pet Food Bowl", category:"Pet Supplies", description:"Pet Food Bowl in good quality, suitable for everyday use.", price:22.95 },
+  { title:"Dog Toy", category:"Pet Supplies", description:"Dog Toy in good quality, suitable for everyday use.", price:27.45 },
+  { title:"Pet Bed", category:"Pet Supplies", description:"Pet Bed in good quality, suitable for everyday use.", price:31.95 },
+  { title:"Screwdriver Set", category:"DIY & Tools", description:"Screwdriver Set in good quality, suitable for everyday use.", price:12.95 },
+  { title:"Tape Measure", category:"DIY & Tools", description:"Tape Measure in good quality, suitable for everyday use.", price:17.45 },
+  { title:"Toolbox", category:"DIY & Tools", description:"Toolbox in good quality, suitable for everyday use.", price:21.95 },
+  { title:"Paint Brush Set", category:"DIY & Tools", description:"Paint Brush Set in good quality, suitable for everyday use.", price:26.45 },
+  { title:"Cordless Drill", category:"DIY & Tools", description:"Cordless Drill in good quality, suitable for everyday use.", price:30.95 },
+  { title:"Baby Blanket", category:"Baby & Kids", description:"Baby Blanket in good quality, suitable for everyday use.", price:12.95 },
+  { title:"Children's Backpack", category:"Baby & Kids", description:"Children's Backpack in good quality, suitable for everyday use.", price:17.45 },
+  { title:"Baby Bib Set", category:"Baby & Kids", description:"Baby Bib Set in good quality, suitable for everyday use.", price:21.95 },
+  { title:"Kids Lunch Box", category:"Baby & Kids", description:"Kids Lunch Box in good quality, suitable for everyday use.", price:26.45 },
+  { title:"Car Phone Holder", category:"Automotive", description:"Car Phone Holder in good quality, suitable for everyday use.", price:11.95 },
+  { title:"Car Cleaning Kit", category:"Automotive", description:"Car Cleaning Kit in good quality, suitable for everyday use.", price:16.45 },
+  { title:"Car Boot Organiser", category:"Automotive", description:"Car Boot Organiser in good quality, suitable for everyday use.", price:20.95 },
+  { title:"Tyre Pressure Gauge", category:"Automotive", description:"Tyre Pressure Gauge in good quality, suitable for everyday use.", price:25.45 },
+  { title:"Silver Pendant Necklace", category:"Jewellery", description:"Silver Pendant Necklace in good quality, suitable for everyday use.", price:10.95 },
+  { title:"Beaded Bracelet", category:"Jewellery", description:"Beaded Bracelet in good quality, suitable for everyday use.", price:15.45 },
+  { title:"Stud Earrings", category:"Jewellery", description:"Stud Earrings in good quality, suitable for everyday use.", price:19.95 },
+  { title:"Jewellery Box", category:"Jewellery", description:"Jewellery Box in good quality, suitable for everyday use.", price:24.45 },
+  { title:"Notebook Set", category:"Office & Stationery", description:"Notebook Set in good quality, suitable for everyday use.", price:13.95 },
+  { title:"Desk Organiser", category:"Office & Stationery", description:"Desk Organiser in good quality, suitable for everyday use.", price:18.45 },
+  { title:"Ballpoint Pen Set", category:"Office & Stationery", description:"Ballpoint Pen Set in good quality, suitable for everyday use.", price:22.95 },
+  { title:"Laptop Sleeve", category:"Office & Stationery", description:"Laptop Sleeve in good quality, suitable for everyday use.", price:27.45 },
+  { title:"Acoustic Guitar", category:"Music & Instruments", description:"Acoustic Guitar in good quality, suitable for everyday use.", price:13.95 },
+  { title:"Guitar Picks", category:"Music & Instruments", description:"Guitar Picks in good quality, suitable for everyday use.", price:18.45 },
+  { title:"Digital Metronome", category:"Music & Instruments", description:"Digital Metronome in good quality, suitable for everyday use.", price:22.95 },
+  { title:"Keyboard Stand", category:"Music & Instruments", description:"Keyboard Stand in good quality, suitable for everyday use.", price:27.45 },
+  { title:"Vintage Postcard Set", category:"Collectables & Art", description:"Vintage Postcard Set in good quality, suitable for everyday use.", price:12.95 },
+  { title:"Decorative Figurine", category:"Collectables & Art", description:"Decorative Figurine in good quality, suitable for everyday use.", price:17.45 },
+  { title:"Framed Landscape Print", category:"Collectables & Art", description:"Framed Landscape Print in good quality, suitable for everyday use.", price:21.95 },
+  { title:"Collectable Coin Album", category:"Collectables & Art", description:"Collectable Coin Album in good quality, suitable for everyday use.", price:26.45 }
 ];
+const demoCategories = ["All categories", ...new Set(templates.map(item=>item.category))];
+router.get("/admin/demo-creator/catalogue", (_req,res)=>res.json({categories:demoCategories,total:templates.length}));
 // Admin-only photo search and controlled replacement for registered demo listings.
 router.get("/admin/demo-creator/images/search", async (req, res) => {
   const title = String(req.query.q || "").trim().slice(0,120);
@@ -230,9 +309,9 @@ router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
   } catch {res.status(503).json({error:"Unable to fill demo images"});}
 });
 router.post("/admin/demo-creator/generate", async (req,res) => {
-  const { sellerEmail, region, count = 1 } = req.body ?? {};
+  const { sellerEmail, region, count = 1, category = "All categories" } = req.body ?? {};
   if (typeof sellerEmail !== "string" || !sellerEmail.includes("@") || !validRegion(region) ||
-      !Number.isInteger(count) || count < 1 || count > 20) {
+      !Number.isInteger(count) || count < 1 || count > 20 || !demoCategories.includes(category)) {
     res.status(400).json({error:"Valid seller, region and count (1–20) required"}); return;
   }
   try {
@@ -241,7 +320,14 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
     if (!account.rows.length) {res.status(404).json({error:"Seller account not found"});return;}
     const email=String(account.rows[0].email);
     const currency=region==="uk"?"GBP":"USD";
-    const chosen = Array.from({ length: count }, () => templates[Math.floor(Math.random()*templates.length)]);
+    const pool = templates.filter(item=>category==="All categories" || item.category===category);
+    if(count>pool.length){res.status(400).json({error:`Only ${pool.length} unique templates available in this category; reduce quantity or choose All categories`});return;}
+    const existing=await db.execute(sql`SELECT l.title FROM listings l JOIN demo_listing_registry d ON d.listing_id=l.id
+      WHERE LOWER(d.seller_email)=LOWER(${email}) AND d.region=${region} AND l.status <> 'deleted'`);
+    const used=new Set(existing.rows.map(row=>String(row.title).toLowerCase()));
+    const shuffled=[...pool].sort(()=>Math.random()-0.5);
+    const fresh=shuffled.filter(item=>!used.has(item.title.toLowerCase()));
+    const chosen=[...fresh,...shuffled.filter(item=>used.has(item.title.toLowerCase()))].slice(0,count);
     const photos = await Promise.all(chosen.map(item => findPexelsPhoto(item.title)));
     const created=await db.transaction(async tx => {
       const ids:number[]=[];
