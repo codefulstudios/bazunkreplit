@@ -112,6 +112,27 @@ router.post("/admin/demo-creator/activities/batch-delete",async(req,res)=>{
 // Neutral labelled illustrations: never imply that a stock image is the actual item.
 const demoImage = (title: string) =>
   `https://placehold.co/640x480/e8edf7/334155.png?text=${encodeURIComponent(title + " - Demo")}`;
+type PexelsPhoto = { id: number; alt?: string; photographer?: string; url?: string; src?: { large?: string; medium?: string } };
+async function findPexelsPhoto(title: string): Promise<PexelsPhoto | null> {
+  const key = process.env.PEXELS_API_KEY;
+  if (!key) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 6500);
+  try {
+    const query = new URLSearchParams({ query: title, per_page: "8", orientation: "landscape" });
+    const response = await fetch(`https://api.pexels.com/v1/search?${query}`, {
+      headers: { Authorization: key }, signal: controller.signal,
+    });
+    if (!response.ok) return null;
+    const data = await response.json() as { photos?: PexelsPhoto[] };
+    return (data.photos || []).find(p => p.src?.large && p.url && p.photographer) || null;
+  } catch { return null; }
+  finally { clearTimeout(timeout); }
+}
+function photoMetadata(photo: PexelsPhoto) {
+  return { image_provider: "Pexels", image_photo_id: photo.id,
+    image_credit: photo.photographer, image_source_url: photo.url };
+}
 const templates = [
   { title:"Compact Bluetooth Speaker", category:"Electronics", description:"Portable rechargeable speaker with Bluetooth connectivity.", price:24.99 },
   { title:"Ceramic Coffee Mug Set", category:"Home & Garden", description:"Set of four ceramic mugs for everyday use.", price:18.50 },
@@ -119,6 +140,33 @@ const templates = [
   { title:"LED Desk Lamp", category:"Home & Garden", description:"Adjustable desk light with multiple brightness levels.", price:21.95 },
   { title:"Wireless Computer Mouse", category:"Electronics", description:"Compact wireless mouse suitable for laptop or desktop use.", price:15.00 }
 ];
+// Admin-only photo search and controlled replacement for registered demo listings.
+router.get("/admin/demo-creator/images/search", async (req, res) => {
+  const title = String(req.query.q || "").trim().slice(0,120);
+  if (!title) { res.status(400).json({error:"Search term required"}); return; }
+  if (!process.env.PEXELS_API_KEY) { res.status(503).json({error:"PEXELS_API_KEY not configured"}); return; }
+  const photo = await findPexelsPhoto(title);
+  res.json({ photo: photo ? { id:photo.id, image:photo.src?.large, photographer:photo.photographer, sourceUrl:photo.url, alt:photo.alt } : null });
+});
+router.post("/admin/demo-creator/images/fill-missing", async (req, res) => {
+  if (!process.env.PEXELS_API_KEY) { res.status(503).json({error:"PEXELS_API_KEY not configured"}); return; }
+  try {
+    await ensureTables();
+    const rows=await db.execute(sql`SELECT l.id,l.title FROM listings l JOIN demo_listing_registry d ON d.listing_id=l.id
+      WHERE l.status <> 'deleted' AND (l.image IS NULL OR l.image='' OR l.image LIKE 'https://placehold.co/%') ORDER BY l.id LIMIT 20`);
+    let updated=0;
+    for(const row of rows.rows) {
+      const photo=await findPexelsPhoto(String(row.title));
+      if(!photo?.src?.large) continue;
+      const specs=JSON.stringify(photoMetadata(photo));
+      await db.execute(sql`UPDATE listings SET image=${photo.src.large},
+        specifications=(CASE WHEN COALESCE(specifications,'') ~ '^\\s*\\{' THEN specifications::jsonb ELSE '{}'::jsonb END || ${specs}::jsonb)::text
+        WHERE id=${Number(row.id)} AND EXISTS(SELECT 1 FROM demo_listing_registry d WHERE d.listing_id=${Number(row.id)})`);
+      updated++;
+    }
+    res.json({scanned:rows.rows.length,updated});
+  } catch {res.status(503).json({error:"Unable to fill demo images"});}
+});
 router.post("/admin/demo-creator/generate", async (req,res) => {
   const { sellerEmail, region, count = 1 } = req.body ?? {};
   if (typeof sellerEmail !== "string" || !sellerEmail.includes("@") || !validRegion(region) ||
@@ -131,15 +179,18 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
     if (!account.rows.length) {res.status(404).json({error:"Seller account not found"});return;}
     const email=String(account.rows[0].email);
     const currency=region==="uk"?"GBP":"USD";
+    const chosen = Array.from({ length: count }, () => templates[Math.floor(Math.random()*templates.length)]);
+    const photos = await Promise.all(chosen.map(item => findPexelsPhoto(item.title)));
     const created=await db.transaction(async tx => {
       const ids:number[]=[];
       for(let i=0;i<count;i++){
-        const item=templates[Math.floor(Math.random()*templates.length)];
+        const item=chosen[i];
+        const photo=photos[i];
         const row=await tx.execute(sql`INSERT INTO listings
           (title,description,category,price,condition,image,seller_email,currency,status,specifications,quantity)
           VALUES (${item.title},${item.description},${item.category},${item.price.toFixed(2)},
-          'new',${demoImage(item.title)},${email},${currency},'active',
-          ${JSON.stringify({marketplace_region:region,demo_creator:true})},0) RETURNING id`);
+          'new',${photo?.src?.large || demoImage(item.title)},${email},${currency},'active',
+          ${JSON.stringify({marketplace_region:region,demo_creator:true,...(photo ? photoMetadata(photo) : {})})},0) RETURNING id`);
         const id=Number(row.rows[0].id);
         await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
         await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
