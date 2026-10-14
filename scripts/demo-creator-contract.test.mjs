@@ -33,3 +33,8 @@ test('admin publishing and regional fixtures exist',()=>{
  assert.match(demo,/marketplace_region:region/);
  assert.match(demo,/pendingApproval:requireApproval/);
 });
+
+test('public category counts exclude hidden demos',()=>{
+ assert.match(listings,/const demoVisibility = await categoryVisibility\(\)/);
+ assert.match(listings,/AND \$\{demoVisibility\}/);
+});
