@@ -91,7 +91,7 @@ export function CheckoutPage() {
     // Clean the URL without reloading
     window.history.replaceState({}, "", "/checkout");
 
-    fetch(`${API_BASE}/api/stripe/confirm-cart-payment", {
+    fetch(`${API_BASE}/api/stripe/confirm-cart-payment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
@@ -127,7 +127,7 @@ export function CheckoutPage() {
     setStep("redirecting");
 
     try {
-      const res = await fetch(`${API_BASE}/api/stripe/checkout-cart", {
+      const res = await fetch(`${API_BASE}/api/stripe/checkout-cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
