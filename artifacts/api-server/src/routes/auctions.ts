@@ -110,10 +110,13 @@ router.get("/auctions/my-bids", async (req, res) => {
   const email = await authenticatedSellerEmail(req, res);
   if (!email) return;
   const rows = await db.execute(sql`
-    SELECT DISTINCT a.*, b.amount AS my_latest_bid
+    SELECT a.*, b.amount AS my_latest_bid
     FROM auctions a
-    JOIN bids b ON b.auction_id = a.id
-    WHERE b.bidder_email = ${email}
+    JOIN LATERAL (
+      SELECT amount FROM bids
+      WHERE auction_id = a.id AND LOWER(bidder_email) = LOWER(${email})
+      ORDER BY created_at DESC, id DESC LIMIT 1
+    ) b ON TRUE
     ORDER BY a.end_time DESC
     LIMIT 50
   `);
