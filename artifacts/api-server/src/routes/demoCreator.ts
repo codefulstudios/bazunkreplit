@@ -401,6 +401,19 @@ router.patch("/admin/demo-creator/listings/:id", async (req,res) => {
     res.json({ listingId:id, enabled:req.body.enabled });
   } catch { res.status(503).json({ error: "Unable to update listing" }); }
 });
+router.post("/admin/demo-creator/listings/batch-publish", async (req,res) => {
+  const ids=req.body?.ids;
+  if(!Array.isArray(ids)||ids.length<1||ids.length>200||!ids.every((id:unknown)=>Number.isSafeInteger(id)&&id>0)||typeof req.body?.enabled!=="boolean"){
+    res.status(400).json({error:"Provide valid listing IDs and visibility"});return;
+  }
+  try{
+    await ensureTables();
+    const updated=await db.execute(sql`UPDATE demo_listing_registry d SET enabled=${req.body.enabled}
+      FROM listings l WHERE l.id=d.listing_id AND l.status <> 'deleted'
+      AND d.listing_id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)}) RETURNING d.listing_id`);
+    res.json({updated:updated.rows.length,enabled:req.body.enabled});
+  }catch{res.status(503).json({error:"Unable to update demo visibility"});}
+});
 router.post("/admin/demo-creator/listings/batch-delete", async (req,res) => {
   const ids = req.body?.ids;
   if (!Array.isArray(ids) || ids.length < 1 || ids.length > 200 ||
