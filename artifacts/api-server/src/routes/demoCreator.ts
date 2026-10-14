@@ -403,7 +403,7 @@ router.patch("/admin/demo-creator/listings/:id", async (req,res) => {
 });
 router.post("/admin/demo-creator/listings/batch-publish", async (req,res) => {
   const ids=req.body?.ids;
-  if(!Array.isArray(ids)||ids.length<1||ids.length>200||!ids.every((id:unknown)=>Number.isSafeInteger(id)&&id>0)||typeof req.body?.enabled!=="boolean"){
+  if(!Array.isArray(ids)||ids.length<1||ids.length>200||!ids.every((id:unknown)=>typeof id==='number'&&Number.isSafeInteger(id)&&id>0)||typeof req.body?.enabled!=="boolean"){
     res.status(400).json({error:"Provide valid listing IDs and visibility"});return;
   }
   try{
