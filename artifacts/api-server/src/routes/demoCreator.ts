@@ -140,6 +140,7 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
           'new',${demoImage(item.title)},${email},${currency},'active',
           ${JSON.stringify({marketplace_region:region,demo_creator:true})},1) RETURNING id`);
         const id=Number(row.rows[0].id);
+        await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
         await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
           VALUES(${id},${email},${region})`);
         ids.push(id);
@@ -175,6 +176,7 @@ router.post("/admin/demo-creator/listings", async (req, res) => {
           ${JSON.stringify({ marketplace_region: region, demo_creator: true })},1)
         RETURNING id`);
       const id = Number(created.rows[0].id);
+      await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
       await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region) VALUES (${id},${email},${region})`);
       return id;
     });
