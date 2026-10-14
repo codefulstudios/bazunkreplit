@@ -7,6 +7,7 @@ const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
+  { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
   { label: "Listings & Imports", href: "/admin/importer-control", icon: Package },
   { label: "Importers", href: "/admin/imports", icon: ArrowDownToLine },
   { label: "Cashback", href: "/admin/cashback", icon: Gift },
