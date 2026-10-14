@@ -230,48 +230,55 @@ router.post("/auctions/:id/bid", async (req, res) => {
   }
   const bidAmount = Number(amount);
   if (!Number.isFinite(bidAmount) || bidAmount <= 0) { res.status(400).json({ error: "Enter a valid positive bid" }); return; }
-  const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
-  if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
-  const auction = auctionRes.rows[0] as Record<string, unknown>;
-  if (auction["status"] !== "active") { res.status(400).json({ error: "Auction is not active" }); return; }
-  if (new Date(auction["end_time"] as string) < new Date()) { res.status(400).json({ error: "Auction has ended" }); return; }
-  if (String(auction["seller_email"]).toLowerCase() === bidderEmail) { res.status(400).json({ error: "You cannot bid on your own auction" }); return; }
-  const currentBid = auction["current_bid"] ? parseFloat(auction["current_bid"] as string) : null;
-  const startingBid = parseFloat(auction["starting_bid"] as string);
-  const increment = parseFloat(auction["bid_increment"] as string);
-  const minBid = currentBid !== null ? currentBid + increment : startingBid;
-  if (bidAmount < minBid) {
-    res.status(400).json({ error: `Minimum bid is £${minBid.toFixed(2)}`, minBid });
+  const bidId = `BID-${randomUUID().slice(0, 8).toUpperCase()}`;
+  // Lock the auction row for the entire read/validate/insert/update sequence.
+  // Competing bids wait for this transaction, then see the updated minimum.
+  const outcome = await db.transaction(async (tx) => {
+    const auctionRes = await tx.execute(sql`SELECT * FROM auctions WHERE id = ${id} FOR UPDATE`);
+    if (auctionRes.rows.length === 0) return { error: "Auction not found", status: 404 } as const;
+    const auction = auctionRes.rows[0] as Record<string, unknown>;
+    if (auction["status"] !== "active") return { error: "Auction is not active", status: 400 } as const;
+    if (new Date(auction["end_time"] as string).getTime() <= Date.now()) return { error: "Auction has ended", status: 400 } as const;
+    if (String(auction["seller_email"]).toLowerCase() === bidderEmail) return { error: "You cannot bid on your own auction", status: 400 } as const;
+    const currentBid = auction["current_bid"] == null ? null : Number(auction["current_bid"]);
+    const increment = Number(auction["bid_increment"]);
+    const minBid = currentBid !== null ? currentBid + increment : Number(auction["starting_bid"]);
+    if (bidAmount < minBid) return { error: `Minimum bid is £${minBid.toFixed(2)}`, status: 400, minBid } as const;
+
+    const prevWinnerEmail = (auction["winner_email"] as string | null) ?? null;
+    const prevWinnerName = (auction["winner_name"] as string | null) ?? null;
+    await tx.execute(sql`
+      INSERT INTO bids (id, auction_id, bidder_email, bidder_name, amount, created_at)
+      VALUES (${bidId}, ${id}, ${bidderEmail}, ${bidderName}, ${bidAmount}, NOW())
+    `);
+    let extended = false;
+    let newEndTime: string | null = null;
+    if (auction["extend_enabled"] === true) {
+      const endMs = new Date(auction["end_time"] as string).getTime();
+      if (endMs - Date.now() <= EXTEND_WINDOW_MS) {
+        newEndTime = new Date(Date.now() + EXTEND_WINDOW_MS).toISOString();
+        extended = true;
+      }
+    }
+    await tx.execute(sql`
+      UPDATE auctions SET current_bid = ${bidAmount}, bid_count = COALESCE(bid_count, 0) + 1,
+        winner_email = ${bidderEmail}, winner_name = ${bidderName}, winner_bid = ${bidAmount},
+        end_time = CASE WHEN ${newEndTime}::timestamptz IS NOT NULL
+          AND end_time < ${newEndTime}::timestamptz THEN ${newEndTime}::timestamptz ELSE end_time END,
+        updated_at = NOW()
+      WHERE id = ${id}
+    `);
+    return {
+      auction, prevWinnerEmail, prevWinnerName, extended, newEndTime,
+      newBidCount: Number(auction["bid_count"] ?? 0) + 1,
+      nextMinBid: bidAmount + increment,
+    };
+  });
+  if ("error" in outcome) {
+    res.status(outcome.status).json({ error: outcome.error, ...("minBid" in outcome ? { minBid: outcome.minBid } : {}) });
     return;
   }
-  const prevWinnerEmail = auction["winner_email"] as string | null ?? null;
-  const prevWinnerName = auction["winner_name"] as string | null ?? null;
-  const bidId = `BID-${randomUUID().slice(0, 8).toUpperCase()}`;
-  await db.execute(sql`
-    INSERT INTO bids (id, auction_id, bidder_email, bidder_name, amount, created_at)
-    VALUES (${bidId}, ${id}, ${bidderEmail}, ${bidderName}, ${bidAmount}, NOW())
-  `);
-  await db.execute(sql`
-    UPDATE auctions
-    SET current_bid = ${bidAmount}, bid_count = bid_count + 1,
-        winner_email = ${bidderEmail}, winner_name = ${bidderName}, winner_bid = ${bidAmount},
-        updated_at = NOW()
-    WHERE id = ${id}
-  `);
-  // Auction Extensions: a bid in the final minutes pushes the end time out
-  let extended = false;
-  let newEndTime: string | null = null;
-  if (auction["extend_enabled"] === true) {
-    const endMs = new Date(auction["end_time"] as string).getTime();
-    if (endMs - Date.now() <= EXTEND_WINDOW_MS) {
-      const target = new Date(Date.now() + EXTEND_WINDOW_MS);
-      await db.execute(sql`UPDATE auctions SET end_time = ${target.toISOString()} WHERE id = ${id} AND end_time < ${target.toISOString()}`);
-      extended = true;
-      newEndTime = target.toISOString();
-    }
-  }
-  const newBidCount = (auction["bid_count"] as number ?? 0) + 1;
-  const nextMinBid = bidAmount + increment;
+  const { auction, prevWinnerEmail, prevWinnerName, extended, newEndTime, newBidCount, nextMinBid } = outcome;
   // Notify seller by email and in-app inbox.
   void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
   void sendNewBidNotification({
