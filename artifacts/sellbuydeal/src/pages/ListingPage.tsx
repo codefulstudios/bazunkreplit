@@ -478,7 +478,7 @@ export function ListingPage() {
           <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
             <strong>Temporarily out of stock</strong>
             <span>0 available</span>
-            <span>Listing #{product._publicId || product.id}</span>
+            <span>Listing #{product.id}</span>
           </div>
         )}
 
