@@ -265,7 +265,7 @@ export function AdminUsersPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-gray-900">Users</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Users Management</h1>
           <p className="text-sm text-gray-400 mt-0.5">{total} registered users</p>
         </div>
         <div className="flex items-center gap-2">
