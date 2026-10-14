@@ -80,6 +80,9 @@ export function AuctionDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState("");
   const [bidding, setBidding] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [canPay, setCanPay] = useState(false);
   const [bidError, setBidError] = useState<string | null>(null);
   const [bidSuccess, setBidSuccess] = useState(false);
 
@@ -98,6 +101,20 @@ export function AuctionDetailPage() {
       if (!silent) setLoading(false);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!auction || auction.status !== "ended" || !user) { setCanPay(false); return; }
+    void (async () => { try { const token=await getToken(); if (!token) return; const r=await fetch(`/api/auctions/${id}/payment-eligibility`,{headers:{Authorization:`Bearer ${token}`}}); const d=await r.json(); setCanPay(r.ok && d.eligible === true); } catch { setCanPay(false); } })();
+  },[auction?.status,auction?.id,user,getToken,id]);
+
+  async function payForAuction() {
+    setPaying(true); setPaymentError(null);
+    try { const token=await getToken(); if(!token) throw new Error("Sign in to pay.");
+      const response=await fetch("/api/stripe/checkout-auction",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({auctionId:id})});
+      const data=await response.json(); if(!response.ok || !data.url) throw new Error(data.error || "Checkout unavailable");
+      window.location.assign(data.url);
+    } catch(e) { setPaymentError(e instanceof Error ? e.message : "Unable to start payment"); setPaying(false); }
+  }
 
   // Initial load
   useEffect(() => { load(); }, [load]);
@@ -228,6 +245,7 @@ export function AuctionDetailPage() {
               </div>
             </div>
 
+            {canPay && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 mb-4"><p className="font-bold text-indigo-900">You won this auction</p><p className="text-sm text-indigo-700 mb-3">Complete your secure payment to confirm your order.</p><button type="button" onClick={payForAuction} disabled={paying} className="rounded-lg bg-indigo-600 text-white px-5 py-2 font-bold disabled:opacity-50">{paying ? "Opening checkout…" : "Pay for winning auction"}</button>{paymentError && <p className="text-red-600 text-sm mt-2">{paymentError}</p>}</div>}
             {/* Ended / winner */}
             {auction.status === "ended" && auction.winner_name && (
               <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5 flex items-center gap-4">
