@@ -1,3 +1,4 @@
+import "./admin-theme.css";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown } from "lucide-react";
