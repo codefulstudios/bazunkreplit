@@ -167,8 +167,15 @@ router.post("/auctions", async (req, res) => {
     res.status(400).json({ error: "title, sellerEmail, sellerName, startingBid, endTime are required" });
     return;
   }
+  const startAmount = Number(startingBid);
+  const incrementAmount = bidIncrement == null || bidIncrement === "" ? 1 : Number(bidIncrement);
+  const reserveAmount = reservePrice == null || reservePrice === "" ? null : Number(reservePrice);
+  const endDate = new Date(endTime);
+  if (!Number.isFinite(startAmount) || startAmount <= 0 || !Number.isFinite(incrementAmount) || incrementAmount <= 0 || (reserveAmount !== null && (!Number.isFinite(reserveAmount) || reserveAmount <= 0)) || !Number.isFinite(endDate.getTime()) || endDate.getTime() <= Date.now()) {
+    res.status(400).json({ error: "Enter positive starting bid, increment and reserve values, and a future end time" }); return;
+  }
   const wantsExtension = body["extendEnabled"] === true || body["extendEnabled"] === "true";
-  const wantsReserve = !!reservePrice && parseFloat(reservePrice) > 0;
+  const wantsReserve = reserveAmount !== null;
 
   // Optional paid add-ons (prices and availability are set in Admin → Promotions)
   const reserveCfg = await getPromoConfig("reserve-auction");
@@ -192,9 +199,9 @@ router.post("/auctions", async (req, res) => {
     VALUES (
       ${id}, ${title}, ${description ?? null}, ${JSON.stringify(images)},
       ${category ?? null}, ${condition ?? "used"}, ${sellerEmail}, ${sellerName},
-      ${parseFloat(startingBid)},
-      ${wantsReserve ? parseFloat(reservePrice) : null},
-      ${bidIncrement ? parseFloat(bidIncrement) : 1.0},
+      ${startAmount},
+      ${reserveAmount},
+      ${incrementAmount},
       ${endTime}, ${wantsExtension}, 'active', ${marketplaceRegion}, NOW(), NOW()
     )
   `);
@@ -228,7 +235,7 @@ router.post("/auctions/:id/bid", async (req, res) => {
   const auction = auctionRes.rows[0] as Record<string, unknown>;
   if (auction["status"] !== "active") { res.status(400).json({ error: "Auction is not active" }); return; }
   if (new Date(auction["end_time"] as string) < new Date()) { res.status(400).json({ error: "Auction has ended" }); return; }
-  if (auction["seller_email"] === bidderEmail) { res.status(400).json({ error: "You cannot bid on your own auction" }); return; }
+  if (String(auction["seller_email"]).toLowerCase() === bidderEmail) { res.status(400).json({ error: "You cannot bid on your own auction" }); return; }
   const currentBid = auction["current_bid"] ? parseFloat(auction["current_bid"] as string) : null;
   const startingBid = parseFloat(auction["starting_bid"] as string);
   const increment = parseFloat(auction["bid_increment"] as string);
@@ -300,7 +307,10 @@ router.patch("/auctions/:id/cancel", async (req, res) => {
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0] as Record<string, unknown>;
   if (typeof email !== "string" || email.trim().toLowerCase() !== authenticatedEmail || String(auction["seller_email"]).toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Forbidden" }); return; }
-  await db.execute(sql`UPDATE auctions SET status = 'cancelled', updated_at = NOW() WHERE id = ${id}`);
+  if (auction["status"] !== "active") { res.status(409).json({ error: "Only active auctions can be cancelled" }); return; }
+  if (Number(auction["bid_count"] ?? 0) > 0) { res.status(409).json({ error: "Auctions with bids cannot be cancelled by the seller; contact support" }); return; }
+  const changed = await db.execute(sql`UPDATE auctions SET status = 'cancelled', updated_at = NOW() WHERE id = ${id} AND status = 'active' AND COALESCE(bid_count, 0) = 0 RETURNING id`);
+  if (!changed.rows.length) { res.status(409).json({ error: "Auction has changed and can no longer be cancelled" }); return; }
   res.json({ ok: true });
 });
 
