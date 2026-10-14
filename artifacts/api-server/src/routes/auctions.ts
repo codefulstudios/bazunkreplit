@@ -46,6 +46,43 @@ function publicBid(bid: Record<string, unknown>): Record<string, unknown> {
   return rest;
 }
 
+/** Finalize an expired auction once, regardless of how many workers check it. */
+async function finalizeAuction(id: string): Promise<void> {
+  const result = await db.execute(sql`
+    UPDATE auctions
+    SET status = 'ended',
+        winner_email = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_email END,
+        winner_name = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_name END,
+        winner_bid = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_bid END,
+        updated_at = NOW()
+    WHERE id = ${id} AND status = 'active' AND end_time <= NOW()
+    RETURNING *
+  `);
+  if (!result.rows.length) return;
+  const a = result.rows[0] as Record<string, unknown>;
+  const winningBid = a["winner_bid"] == null ? null : Number(a["winner_bid"]);
+  const sellerEmail = String(a["seller_email"]);
+  const title = String(a["title"]);
+  if (winningBid !== null && a["winner_email"]) {
+    const winnerEmail = String(a["winner_email"]);
+    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: £${winningBid.toFixed(2)}.` });
+    void sendAuctionWonNotification({ winnerEmail, winnerName: String(a["winner_name"] ?? winnerEmail), auctionTitle: title, auctionId: id, winningBid, sellerName: String(a["seller_name"]) });
+    void sendAuctionEndedSellerNotification({ sellerEmail, sellerName: String(a["seller_name"]), auctionTitle: title, auctionId: id, winnerName: String(a["winner_name"] ?? winnerEmail), winnerEmail, winningBid });
+  } else {
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" ended without a sale`, body: "No qualifying winning bid was received." });
+  }
+}
+
+/** Periodic closeout works even if nobody opens the auction page. */
+const auctionCloseTimer = setInterval(() => {
+  void (async () => {
+    const expired = await db.execute(sql`SELECT id FROM auctions WHERE status = 'active' AND end_time <= NOW() ORDER BY end_time LIMIT 50`);
+    for (const row of expired.rows) await finalizeAuction(String(row["id"]));
+  })().catch(err => console.error("Auction closeout failed", err));
+}, 60_000);
+auctionCloseTimer.unref();
+
 const VALID_STATUSES = ["active", "ended", "cancelled"];
 
 router.get("/auctions", async (req, res) => {
@@ -94,60 +131,9 @@ router.get("/auctions/:id", async (req, res) => {
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0];
-  // Auto-end if past end_time
-  const a = auction as Record<string, unknown>;
-  if (a["status"] === "active" && new Date(a["end_time"] as string) < new Date()) {
-    const reserve = a["reserve_price"] ? parseFloat(a["reserve_price"] as string) : null;
-    const topBid = a["winner_bid"] ? parseFloat(a["winner_bid"] as string) : null;
-    const reserveMissed = reserve !== null && (topBid === null || topBid < reserve);
-    if (reserveMissed) {
-      // Highest bid didn't reach the hidden reserve: no sale, nobody wins.
-      const bidder = a["winner_email"] as string | null;
-      await db.execute(sql`
-        UPDATE auctions SET status = 'ended', winner_email = NULL, winner_name = NULL, winner_bid = NULL, updated_at = NOW() WHERE id = ${id}
-      `);
-      a["status"] = "ended"; a["winner_email"] = null; a["winner_name"] = null; a["winner_bid"] = null;
-      if (topBid !== null) {
-        void sendSystemMessage(a["seller_email"] as string, {
-          category: "Auctions",
-          subject: `Auction ended — reserve not met`,
-          body: `Your auction "${a["title"]}" ended with a top bid of £${topBid.toFixed(2)}, which didn't reach your reserve price, so it hasn't sold. You can relist it any time.`,
-        });
-        if (bidder) {
-          void sendSystemMessage(bidder, {
-            category: "Auctions",
-            subject: `Auction ended — reserve not met`,
-            body: `The auction "${a["title"]}" ended without meeting the seller's reserve price, so there is no winner this time.`,
-          });
-        }
-      }
-    } else {
-      await db.execute(sql`UPDATE auctions SET status = 'ended', updated_at = NOW() WHERE id = ${id}`);
-      a["status"] = "ended";
-    }
-    // Send winner/seller end notifications (fire-and-forget)
-    if (!reserveMissed && a["winner_email"] && a["winner_name"] && a["winner_bid"]) {
-      void sendSystemMessage(a["winner_email"] as string,{category:"Auctions",subject:`You won "${a["title"]}"!`,body:`Congratulations — your winning bid was £${parseFloat(a["winner_bid"] as string).toFixed(2)}.`});
-      void sendSystemMessage(a["seller_email"] as string,{category:"Auctions",subject:`Your auction "${a["title"]}" has ended`,body:`Winner: ${a["winner_name"]}. Winning bid: £${parseFloat(a["winner_bid"] as string).toFixed(2)}.`});
-      void sendAuctionWonNotification({
-        winnerEmail: a["winner_email"] as string,
-        winnerName: a["winner_name"] as string,
-        auctionTitle: a["title"] as string,
-        auctionId: id,
-        winningBid: parseFloat(a["winner_bid"] as string),
-        sellerName: a["seller_name"] as string,
-      });
-      void sendAuctionEndedSellerNotification({
-        sellerEmail: a["seller_email"] as string,
-        sellerName: a["seller_name"] as string,
-        auctionTitle: a["title"] as string,
-        auctionId: id,
-        winnerName: a["winner_name"] as string,
-        winnerEmail: a["winner_email"] as string,
-        winningBid: parseFloat(a["winner_bid"] as string),
-      });
-    }
-  }
+  await finalizeAuction(id);
+  const refreshed = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
+  const a = refreshed.rows[0] as Record<string, unknown>;
   const bidsRes = await db.execute(sql`SELECT * FROM bids WHERE auction_id = ${id} ORDER BY created_at DESC LIMIT 30`);
   res.json({ ...publicAuction(a), bids: bidsRes.rows.map(b => publicBid(b as Record<string, unknown>)) });
 });
