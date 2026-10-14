@@ -130,7 +130,6 @@ router.get("/auctions/:id", async (req, res) => {
   const { id } = req.params;
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
-  const auction = auctionRes.rows[0];
   await finalizeAuction(id);
   const refreshed = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
   const a = refreshed.rows[0] as Record<string, unknown>;
