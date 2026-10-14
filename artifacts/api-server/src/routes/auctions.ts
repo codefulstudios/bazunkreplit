@@ -65,8 +65,8 @@ async function finalizeAuction(id: string): Promise<void> {
   const title = String(a["title"]);
   if (winningBid !== null && a["winner_email"]) {
     const winnerEmail = String(a["winner_email"]);
-    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was £${winningBid.toFixed(2)}.` });
-    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was GBP £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: GBP £${winningBid.toFixed(2)}.` });
     void sendAuctionWonNotification({ winnerEmail, winnerName: String(a["winner_name"] ?? winnerEmail), auctionTitle: title, auctionId: id, winningBid, sellerName: String(a["seller_name"]) });
     void sendAuctionEndedSellerNotification({ sellerEmail, sellerName: String(a["seller_name"]), auctionTitle: title, auctionId: id, winnerName: String(a["winner_name"] ?? winnerEmail), winnerEmail, winningBid });
   } else {
@@ -241,7 +241,7 @@ router.post("/auctions/:id/bid", async (req, res) => {
     const currentBid = auction["current_bid"] == null ? null : Number(auction["current_bid"]);
     const increment = Number(auction["bid_increment"]);
     const minBid = currentBid !== null ? currentBid + increment : Number(auction["starting_bid"]);
-    if (bidAmount < minBid) return { error: `Minimum bid is £${minBid.toFixed(2)}`, status: 400, minBid } as const;
+    if (bidAmount < minBid) return { error: `Minimum bid is GBP £${minBid.toFixed(2)}`, status: 400, minBid } as const;
 
     const prevWinnerEmail = (auction["winner_email"] as string | null) ?? null;
     const prevWinnerName = (auction["winner_name"] as string | null) ?? null;
@@ -278,7 +278,7 @@ router.post("/auctions/:id/bid", async (req, res) => {
   }
   const { auction, prevWinnerEmail, prevWinnerName, extended, newEndTime, newBidCount, nextMinBid } = outcome;
   // Notify seller by email and in-app inbox.
-  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
+  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid GBP £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
   void sendNewBidNotification({
     sellerEmail: auction["seller_email"] as string,
     sellerName: auction["seller_name"] as string,
