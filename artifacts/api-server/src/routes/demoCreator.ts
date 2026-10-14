@@ -36,6 +36,7 @@ router.get("/admin/demo-creator", async (_req, res) => {
       replace(replace(l.title, ' ', '+'), '&', '%26') || '+-+Demo'
       FROM demo_listing_registry d
       WHERE d.listing_id=l.id AND (l.image IS NULL OR l.image='')`);
+    await db.execute(sql`UPDATE listings l SET quantity=0 FROM demo_listing_registry d WHERE d.listing_id=l.id AND l.quantity<>0`);
     const [listings, settings, activities] = await Promise.all([
       db.execute(sql`SELECT d.*,l.title,l.price,l.status FROM demo_listing_registry d JOIN listings l ON l.id=d.listing_id WHERE l.status <> 'deleted' ORDER BY d.created_at DESC LIMIT 500`),
       db.execute(sql`SELECT key,enabled FROM demo_creator_settings`),
@@ -138,7 +139,7 @@ router.post("/admin/demo-creator/generate", async (req,res) => {
           (title,description,category,price,condition,image,seller_email,currency,status,specifications,quantity)
           VALUES (${item.title},${item.description},${item.category},${item.price.toFixed(2)},
           'new',${demoImage(item.title)},${email},${currency},'active',
-          ${JSON.stringify({marketplace_region:region,demo_creator:true})},1) RETURNING id`);
+          ${JSON.stringify({marketplace_region:region,demo_creator:true})},0) RETURNING id`);
         const id=Number(row.rows[0].id);
         await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
         await tx.execute(sql`INSERT INTO demo_listing_registry(listing_id,seller_email,region)
@@ -173,7 +174,7 @@ router.post("/admin/demo-creator/listings", async (req, res) => {
         (title,description,category,price,condition,image,seller_email,currency,status,specifications,quantity)
         VALUES (${title.trim()},${description.trim()},${category.trim()},${amount.toFixed(2)},
           ${condition || "good"},${image || null},${email},${currency},'active',
-          ${JSON.stringify({ marketplace_region: region, demo_creator: true })},1)
+          ${JSON.stringify({ marketplace_region: region, demo_creator: true })},0)
         RETURNING id`);
       const id = Number(created.rows[0].id);
       await tx.execute(sql`UPDATE listings SET public_id=${`BZL-${id}`} WHERE id=${id}`);
