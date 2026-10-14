@@ -26,7 +26,12 @@ const EXTEND_WINDOW_MS = 2 * 60 * 1000;
  * one exists and (once there are bids) whether it has been met.
  */
 function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
-  const { reserve_price, ...rest } = a;
+  const {
+    reserve_price,
+    seller_email,
+    winner_email,
+    ...rest
+  } = a;
   const hasReserve = reserve_price !== null && reserve_price !== undefined && reserve_price !== "";
   const current = rest["current_bid"] ? parseFloat(rest["current_bid"] as string) : null;
   return {
@@ -34,6 +39,12 @@ function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
     has_reserve: hasReserve,
     reserve_met: hasReserve ? current !== null && current >= parseFloat(reserve_price as string) : null,
   };
+}
+
+/** Public auction detail never reveals bidder email addresses. */
+function publicBid(bid: Record<string, unknown>): Record<string, unknown> {
+  const { bidder_email, ...rest } = bid;
+  return rest;
 }
 
 const VALID_STATUSES = ["active", "ended", "cancelled"];
@@ -139,7 +150,7 @@ router.get("/auctions/:id", async (req, res) => {
     }
   }
   const bidsRes = await db.execute(sql`SELECT * FROM bids WHERE auction_id = ${id} ORDER BY created_at DESC LIMIT 30`);
-  res.json({ ...publicAuction(a), bids: bidsRes.rows });
+  res.json({ ...publicAuction(a), bids: bidsRes.rows.map(b => publicBid(b as Record<string, unknown>)) });
 });
 
 router.post("/auctions", async (req, res) => {
