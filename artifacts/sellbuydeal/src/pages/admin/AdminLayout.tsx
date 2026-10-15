@@ -65,11 +65,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <img src="/bazunk-logo.png" alt="Bazunk" className="h-9 w-auto object-contain self-start rounded bg-white px-2 py-0.5" />
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#F26B21]" />
-            <span className="font-semibold text-white/70 text-xs tracking-wide uppercase">Admin Panel</span>
+            <span className="font-bold text-white text-xs tracking-wide uppercase">Admin Panel</span>
           </div>
         </div>
 
-        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm outline-none placeholder:text-slate-400"/></label></div>
+        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-200"/></label></div>
         {/* Nav */}
         <nav className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {NAV.filter(({label}) => label.toLowerCase().includes(search.toLowerCase())).map(({ label, href, icon: Icon }) => {
@@ -79,7 +79,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 key={href}
                 aria-current={active ? "page" : undefined}
                 onClick={() => { setMenuOpen(false); setLocation(href); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-medium transition-colors ${
+                className={`admin-nav-link w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-[14px] font-bold transition-colors ${
                   active
                     ? "bg-[#F26B21] text-white"
                     : "text-slate-300 hover:text-white hover:bg-white/10"
@@ -115,7 +115,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="flex shrink-0 items-center gap-4">
             <button type="button" onClick={()=>setTheme(isDark?"light":"dark")} aria-label={isDark?"Switch to light mode":"Switch to dark mode"} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-2 text-sm dark:bg-white/10"><Sun className={`h-4 w-4 ${isDark?"text-slate-500":"text-amber-500"}`}/><Moon className={`h-4 w-4 ${isDark?"text-indigo-300":"text-slate-400"}`}/></button>
             <div className="relative">
-              <button type="button" onClick={()=>{setNotificationsOpen(!notificationsOpen);setProfileOpen(false);}} aria-label="Open admin activity shortcuts" aria-expanded={notificationsOpen} className="rounded-full p-2 hover:bg-slate-100 dark:hover:bg-white/10"><Bell className="h-5 w-5"/></button>
+              <button type="button" onClick={()=>{setNotificationsOpen(!notificationsOpen);setProfileOpen(false);}} aria-label="Open admin activity shortcuts" title="Review activity" aria-expanded={notificationsOpen} className="rounded-full border border-slate-200 bg-slate-50 p-2 dark:border-white/20 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/10"><Bell className="h-5 w-5"/></button>
               {notificationsOpen&&<div className="admin-header-popover absolute right-0 top-11 z-30 w-72 rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-xl dark:border-white/10 dark:bg-[#1d2d4a]">
                 <p className="px-2 pb-2 font-extrabold">Review activity</p>
                 {[[ "Orders", "/admin/orders", ShoppingCart ],[ "Disputes", "/admin/disputes", Shield ],[ "Returns", "/admin/returns", RotateCcw ],[ "Support requests", "/admin/support", LifeBuoy ],[ "Seller compliance", "/admin/seller-compliance", ShieldCheck ]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>setLocation(href)} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-semibold hover:bg-slate-100 dark:hover:bg-white/10"><Icon className="h-4 w-4 text-orange-400"/>{label}</button>)}
@@ -123,7 +123,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </div>}
             </div>
             <div className="relative">
-              <button type="button" onClick={()=>{setProfileOpen(!profileOpen);setNotificationsOpen(false);}} aria-label="Open admin account menu" aria-expanded={profileOpen} className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-white/10"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">A</span><span className="text-sm font-bold">Admin</span><ChevronDown className={`h-4 w-4 text-slate-300 transition-transform ${profileOpen?"rotate-180":""}`}/></button>
+              <button type="button" onClick={()=>{setProfileOpen(!profileOpen);setNotificationsOpen(false);}} aria-label="Open admin account menu" title="Admin account menu" aria-expanded={profileOpen} className="flex items-center gap-2 rounded-xl bg-slate-100 py-1 pr-2 dark:bg-white/10 border-l border-slate-200 pl-4 dark:border-white/10"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">A</span><span className="text-sm font-bold">Admin</span><ChevronDown className={`h-4 w-4 text-slate-300 transition-transform ${profileOpen?"rotate-180":""}`}/></button>
               {profileOpen&&<div className="admin-header-popover absolute right-0 top-12 z-30 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#1d2d4a]">
                 <button type="button" onClick={()=>setLocation("/admin/settings")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-100 dark:hover:bg-white/10"><Settings className="h-4 w-4"/>Admin settings</button>
                 <button type="button" onClick={()=>{logout();setLocation("/admin");}} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-500 hover:bg-red-500/10"><LogOut className="h-4 w-4"/>Sign out</button>
