@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth as useClerkAuth, useSession } from "@clerk/react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -3470,7 +3470,7 @@ const DISPUTE_STATUS_META: Record<string, { label: string; color: string }> = {
 // ─── Orders Section ──────────────────────────────────────────────────────────
 
 function OrdersSection() {
-  const { session } = useSession();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
   const [orders, setOrders] = useState<MockOrder[]>([]);
@@ -3481,7 +3481,7 @@ function OrdersSection() {
     let cancelled = false;
     (async () => {
       try {
-        const token = await session?.getToken();
+        const token = await getToken();
         const res = await fetch(`/api/orders`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
         if (res.ok) {
           const rows = await res.json();
@@ -4779,6 +4779,7 @@ const AUCTION_STATUS_COLORS: Record<string, string> = {
 
 function MyAuctionsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<AuctionSummary[]>([]);
@@ -4786,8 +4787,11 @@ function MyAuctionsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-listings?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-listings`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -4854,6 +4858,7 @@ function MyAuctionsSection() {
 
 function MyBidsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<(AuctionSummary & { my_latest_bid: string })[]>([]);
@@ -4861,8 +4866,11 @@ function MyBidsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-bids?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-bids`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));
