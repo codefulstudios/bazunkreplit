@@ -94,3 +94,24 @@
 .dark .bazunk-admin main .admin-operations button:hover {background:linear-gradient(130deg,#394e7e,#203659)!important;border-color:#ff8b39!important;}
 .dark .bazunk-admin main .admin-dashboard table tbody tr:hover {background:#28426388;}
 .dark .bazunk-admin main .admin-dashboard .recharts-cartesian-grid line {stroke:#405273;stroke-dasharray:3 6;}
+
+/* Accessibility fixes for the production admin shell and sign-in. */
+.bazunk-admin aside .admin-nav-link:not(.bg-\\[\\#F26B21\\]) {color:#e2eaf9 !important;}
+.bazunk-admin aside .admin-nav-link {color:#e2eaf9 !important;}
+.bazunk-admin aside .admin-nav-link.bg-\\[\\#F26B21\\] {color:#fff !important;}
+.bazunk-admin aside .admin-nav-link:hover {color:#fff !important;}
+.bazunk-admin aside .admin-sign-out {color:#e2eaf9 !important;}
+.bazunk-admin aside input,.bazunk-admin aside input::placeholder {color:#e5edff !important;opacity:1;}
+.bazunk-admin .admin-header-popover {color:#172c50;}
+.dark .bazunk-admin .admin-header-popover {color:#f5f8ff;}
+.bazunk-admin header button[aria-label="Open admin account menu"] {color:#253b60;}
+.dark .bazunk-admin header button[aria-label="Open admin account menu"] {color:#edf4ff;}
+.bazunk-admin header button[aria-label="Open admin activity shortcuts"] {color:#263f69;}
+.dark .bazunk-admin header button[aria-label="Open admin activity shortcuts"] {color:#e6f0ff;}
+.bazunk-admin-login {font-family:inherit;}
+.bazunk-admin-login .text-blue-200,.bazunk-admin-login .text-slate-100 {color:#eff6ff !important;}
+.bazunk-admin-login .text-slate-500 {color:#475569 !important;}
+.dark .bazunk-admin-login .text-slate-300,.dark .bazunk-admin-login .text-slate-500 {color:#e2e8f0 !important;}
+.bazunk-admin-login input {font-size:16px;line-height:1.5;}
+.bazunk-admin-login button[type="submit"] {opacity:1;min-height:54px;color:#fff;letter-spacing:.01em;}
+.bazunk-admin-login button[type="submit"]:disabled {opacity:.82;}
