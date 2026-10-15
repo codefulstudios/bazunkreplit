@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useAdmin } from "@/context/AdminContext";
 
 const NAV = [
+  { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },

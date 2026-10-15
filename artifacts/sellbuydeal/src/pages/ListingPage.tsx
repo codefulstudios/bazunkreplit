@@ -349,6 +349,7 @@ export function ListingPage() {
     );
   }
 
+  const isDemoListing = ((product as typeof product & ApiListingExtra)._specifications as unknown as { demo_creator?: boolean } | undefined)?.demo_creator === true;
   const images = getProductImages(product.image);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
@@ -373,7 +374,7 @@ export function ListingPage() {
   function handleNextImg() { setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1)); }
 
   function handleBuyNow() {
-    if (product) { addToCart(product); openCart(); }
+    if (product && !isDemoListing) { addToCart(product); openCart(); }
   }
 
   function handleShare() {
@@ -734,7 +735,7 @@ export function ListingPage() {
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4"><BadgeCheck className="w-5 h-5 text-orange-500 mb-2" /><p className="text-xs text-gray-500">{t("condition")}</p><p className="font-black text-gray-900 capitalize">{product.condition}</p></div>
-                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{x.quantity ?? 1}</p></div>
+                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{isDemoListing ? 0 : (x.quantity ?? 1)}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 p-4"><Box className="w-5 h-5 text-blue-500 mb-2" /><p className="text-xs text-gray-500">SKU</p><p className="font-bold text-gray-900 truncate">{x.sku || "Not specified"}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-4"><Plane className="w-5 h-5 text-emerald-500 mb-2" /><p className="text-xs text-gray-500">{t("listingCurrency")}</p><p className="font-black text-gray-900">{x.listingCurrency || "GBP"}</p></div>
                 </div>
@@ -808,11 +809,12 @@ export function ListingPage() {
               {/* Buy Now */}
               <button
                 onClick={handleBuyNow}
+                disabled={isDemoListing}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all mb-2.5 shadow-sm bg-gradient-to-r from-[#F26B21] to-[#D97706] text-white hover:opacity-90"
                 data-testid="button-buy-now"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {t("buyNow")}
+                {isDemoListing ? "Temporarily out of stock" : t("buyNow")}
               </button>
 
               {/* Make an Offer */}

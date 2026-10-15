@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health.js";
+import demoCreatorRouter from "./demoCreator.js";
 import stripeRouter from "./stripe.js";
 import adminRouter from "./admin.js";
 import setupRouter from "./setup.js";
@@ -66,5 +67,6 @@ router.use(userImporterRouter);
 router.use(userRapidApiRouter);
 router.use(referralsRouter);
 router.use(chatwootRouter);
+router.use(demoCreatorRouter);
 
 export default router;
