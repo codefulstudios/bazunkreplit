@@ -115,3 +115,15 @@
 .bazunk-admin-login input {font-size:16px;line-height:1.5;}
 .bazunk-admin-login button[type="submit"] {opacity:1;min-height:54px;color:#fff;letter-spacing:.01em;}
 .bazunk-admin-login button[type="submit"]:disabled {opacity:.82;}
+
+/* Explicit contrast contract for admin sign-in and sidebar, independent of storefront typography. */
+.bazunk-admin-login > div:nth-of-type(4) > div:first-child p,
+.bazunk-admin-login .bg-gradient-to-br p,
+.bazunk-admin-login .bg-gradient-to-br .text-sm,
+.bazunk-admin-login .bg-gradient-to-br .text-lg { color: #f5f8ff !important; opacity:1 !important; }
+.dark .bazunk-admin-login h1,.dark .bazunk-admin-login label { color:#ffffff !important; }
+.dark .bazunk-admin-login form ~ p,.dark .bazunk-admin-login h1 + p { color:#e8f0ff !important; opacity:1 !important; }
+.dark .bazunk-admin-login input { background:#182a4d !important; color:#fff !important; }
+.bazunk-admin aside .admin-nav-link:not(:hover) {opacity:1 !important;text-shadow:none;}
+.dark .bazunk-admin aside .admin-nav-link:not(:hover) {color:#eaf1ff !important;}
+.bazunk-admin aside .admin-nav-link[aria-current="page"] {color:#fff !important;}
