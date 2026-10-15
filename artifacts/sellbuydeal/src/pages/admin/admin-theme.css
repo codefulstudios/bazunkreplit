@@ -185,3 +185,46 @@
 .dark .bazunk-admin main .admin-disputes-page .bg-gray-50 {background:#243652!important;}
 .dark .bazunk-admin main .admin-disputes-page .bg-white {background:#1a2a47!important;}
 .dark .bazunk-admin main .admin-disputes-page .text-xs {opacity:1;}
+
+/* Dark-theme legibility for Emails, Feature Toggles, and Referral Rewards.
+   These pages contain legacy dark text tokens on slate panels. */
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) {
+  color:#edf4ff !important;
+}
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) :is(h1,h2,h3,h4,label,small,b,strong) {
+  color:#f5f8ff !important;
+  opacity:1 !important;
+}
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) :is(p,span,div)[class*="text-gray-"],
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) :is(p,span,div)[class*="text-slate-"] {
+  color:#d8e5fa !important;
+  opacity:1 !important;
+}
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) :is(input:not([type="checkbox"]),textarea,select) {
+  color:#f9fbff !important;
+  background-color:#15243e !important;
+  border-color:#526889 !important;
+}
+.dark .bazunk-admin main :is(.admin-emails-page,.admin-features-page,.admin-referrals-page) :is(input,textarea)::placeholder {
+  color:#b9cbe6 !important;
+}
+.dark .bazunk-admin main .admin-features-page :is(section,section > div,section > div > div) {
+  color:#eef4ff;
+}
+.dark .bazunk-admin main .admin-features-page :is(button,label,select,option) {color:#f5f9ff!important;}
+.dark .bazunk-admin main .admin-features-page option {background:#162742!important;}
+.dark .bazunk-admin main .admin-referrals-page > h1,
+.dark .bazunk-admin main .admin-referrals-page > div > .font-black {
+  color:#ffffff !important;
+}
+.dark .bazunk-admin main .admin-referrals-page label {color:#ffffff!important;}
+.dark .bazunk-admin main .admin-referrals-page .bg-white,
+.dark .bazunk-admin main .admin-emails-page .bg-white,
+.dark .bazunk-admin main .admin-features-page .bg-white {
+  color:#eaf3ff!important;
+}
+/* Preserve coloured callouts and action buttons; override only their unreadable text. */
+.dark .bazunk-admin main .admin-features-page .bg-amber-50 {color:#fff1c2!important;background:#303044!important;}
+.dark .bazunk-admin main .admin-emails-page button.bg-white {color:#f3f8ff!important;}
+.dark .bazunk-admin main .admin-emails-page button.bg-\\[\\#F26B21\\],
+.dark .bazunk-admin main .admin-referrals-page button.bg-\\[\\#4A5CE8\\] {color:#ffffff!important;}
