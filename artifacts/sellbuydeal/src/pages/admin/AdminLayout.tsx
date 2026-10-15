@@ -77,6 +77,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             return (
               <button
                 key={href}
+                aria-current={active ? "page" : undefined}
                 onClick={() => { setMenuOpen(false); setLocation(href); }}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left text-sm font-medium transition-colors ${
                   active
