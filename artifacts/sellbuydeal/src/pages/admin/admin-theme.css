@@ -166,3 +166,22 @@
 }
 .dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf1ff;}
 .dark .bazunk-admin main .admin-users-table td p[class*="text-gray-"] {color:#cddbf2;}
+
+/* Targeted production fixes: referral controls and dispute summaries. */
+.dark .bazunk-admin main .admin-referrals-page > h1,
+.dark .bazunk-admin main .admin-disputes-page h1 {color:#f8fbff!important;opacity:1!important;}
+.dark .bazunk-admin main .admin-referrals-page label,
+.dark .bazunk-admin main .admin-referrals-page .font-bold,
+.dark .bazunk-admin main .admin-referrals-page .font-black {color:#edf5ff!important;opacity:1!important;}
+.dark .bazunk-admin main .admin-referrals-page input:not([type="checkbox"]) {color:#fff!important;background:#12213b!important;border-color:#52688e!important;}
+.dark .bazunk-admin main .admin-referrals-page input[type="checkbox"] {accent-color:#f97316;}
+.dark .bazunk-admin main .admin-referrals-page button {color:#fff!important;}
+.dark .bazunk-admin main .admin-referrals-page .text-gray-500 {color:#d9e6f8!important;}
+.dark .bazunk-admin main .admin-disputes-page .text-2xl,
+.dark .bazunk-admin main .admin-disputes-page b {color:#f8fbff!important;opacity:1!important;}
+.dark .bazunk-admin main .admin-disputes-page button:not(:disabled) {color:#f7faff;opacity:1;}
+.dark .bazunk-admin main .admin-disputes-page .text-gray-500,
+.dark .bazunk-admin main .admin-disputes-page .text-gray-400 {color:#d6e4fa!important;}
+.dark .bazunk-admin main .admin-disputes-page .bg-gray-50 {background:#243652!important;}
+.dark .bazunk-admin main .admin-disputes-page .bg-white {background:#1a2a47!important;}
+.dark .bazunk-admin main .admin-disputes-page .text-xs {opacity:1;}
