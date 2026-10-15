@@ -1,5 +1,8 @@
 import "./admin-theme.css";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+// AdminLayout remounts on route changes; retain the sidebar position across pages.
+let savedAdminNavScrollTop = 0;
 import { useLocation } from "wouter";
 import { CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, Bell, CalendarDays } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -38,6 +41,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin } = useAdmin();
   const [location, setLocation] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => { if (navRef.current) navRef.current.scrollTop = savedAdminNavScrollTop; }, []);
   const [search, setSearch] = useState("");
   const [topSearch, setTopSearch] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -71,7 +76,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-200"/></label></div>
         {/* Nav */}
-        <nav className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {NAV.filter(({label}) => label.toLowerCase().includes(search.toLowerCase())).map(({ label, href, icon: Icon }) => {
             const active = location === href || location.startsWith(href + "/");
             return (
