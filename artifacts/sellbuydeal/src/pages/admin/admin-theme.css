@@ -127,3 +127,42 @@
 .bazunk-admin aside .admin-nav-link:not(:hover) {opacity:1 !important;text-shadow:none;}
 .dark .bazunk-admin aside .admin-nav-link:not(:hover) {color:#eaf1ff !important;}
 .bazunk-admin aside .admin-nav-link[aria-current="page"] {color:#fff !important;}
+
+/* 2026-10 admin: consistent readable forms, charts, headings, inactive controls. */
+.dark .bazunk-admin main { color:#f1f6ff; }
+.dark .bazunk-admin main :is(h1,h2,h3,h4) { color:#f7faff !important; }
+.dark .bazunk-admin main label { color:#e9f1ff; }
+.dark .bazunk-admin main :is(p,span,div)[class*="text-gray-"] { color:#cbd8ee; }
+.dark .bazunk-admin main :is(p,span,div)[class*="text-slate-"] { color:#cedbf0; }
+.dark .bazunk-admin main :is(p,span,div)[class*="text-[#142453"] { color:#f1f6ff; }
+.dark .bazunk-admin main .admin-cashback-page :is(label,p,span) { color:#ecf3ff; }
+.dark .bazunk-admin main .admin-cashback-page :is(input,textarea,select) { color:#fff !important; background-color:#12213b !important; border:1px solid #536889; }
+.dark .bazunk-admin main .admin-cashback-page input[type="checkbox"] { accent-color:#f97316; background-color:transparent !important; }
+.dark .bazunk-admin main :is(select,option) {color:#f7faff !important; background-color:#1b2b49 !important; }
+.dark .bazunk-admin main select:focus {border-color:#79a9ff;}
+.dark .bazunk-admin main button:not(:disabled) {opacity:1;}
+.dark .bazunk-admin main button:disabled {opacity:.65;}
+.dark .bazunk-admin main .admin-orders-page .grid > div > p.text-2xl { color:#fff !important; }
+.dark .bazunk-admin main .admin-orders-page .grid > div { color:#ecf3ff !important; }
+.dark .bazunk-admin main .admin-orders-page .grid > div > p:last-child {color:#cbd8ee !important;}
+.dark .bazunk-admin main button[class*="bg-[#"] {color:#fff;}
+/* Users: keep core records and management controls accessible without a giant horizontal table. */
+@media (min-width: 1000px) {
+  .bazunk-admin main .admin-users-table .overflow-x-auto { overflow-x:visible; }
+  .bazunk-admin main .admin-users-table table {min-width:0 !important; width:100%;table-layout:fixed;font-size:11px;}
+  .bazunk-admin main .admin-users-table :is(th,td) {padding:8px 5px !important;white-space:normal;overflow-wrap:anywhere;vertical-align:top;}
+  .bazunk-admin main .admin-users-table th:nth-child(1) {width:18%;}
+  .bazunk-admin main .admin-users-table th:nth-child(2) {width:10%;}
+  .bazunk-admin main .admin-users-table th:nth-child(3) {width:8%;}
+  .bazunk-admin main .admin-users-table th:nth-child(4) {width:8%;}
+  .bazunk-admin main .admin-users-table th:nth-child(5) {width:10%;}
+  .bazunk-admin main .admin-users-table th:nth-child(6) {width:7%;}
+  .bazunk-admin main .admin-users-table th:nth-child(7) {width:9%;}
+  .bazunk-admin main .admin-users-table th:nth-child(8) {width:17%;}
+  .bazunk-admin main .admin-users-table th:nth-child(9) {width:13%;}
+  .bazunk-admin main .admin-users-table td > div {max-width:100%;min-width:0;flex-wrap:wrap;}
+  .bazunk-admin main .admin-users-table td input {max-width:100%;min-width:0;}
+  .bazunk-admin main .admin-users-table td button {white-space:normal;line-height:1.2;}
+}
+.dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf1ff;}
+.dark .bazunk-admin main .admin-users-table td p[class*="text-gray-"] {color:#cddbf2;}
