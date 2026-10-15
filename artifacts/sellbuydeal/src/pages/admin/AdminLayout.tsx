@@ -40,9 +40,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState("");
   const [topSearch, setTopSearch] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
-  useEffect(() => { setMenuOpen(false); }, [location]);
+  useEffect(() => { setMenuOpen(false); setNotificationsOpen(false); setProfileOpen(false); }, [location]);
 
   useEffect(() => { if (!isAdmin) setLocation("/admin", { replace: true }); }, [isAdmin, setLocation]);
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
@@ -93,7 +94,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="px-2 pb-4 border-t border-white/10 pt-3">
           <button
             onClick={() => { logout(); setLocation("/admin"); }}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors font-medium"
+            className="admin-sign-out w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-200 hover:text-red-400 hover:bg-red-500/10 transition-colors font-medium"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             Sign Out
@@ -111,8 +112,21 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </form>
           <div className="flex shrink-0 items-center gap-4">
             <button type="button" onClick={()=>setTheme(isDark?"light":"dark")} aria-label={isDark?"Switch to light mode":"Switch to dark mode"} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-2 text-sm dark:bg-white/10"><Sun className={`h-4 w-4 ${isDark?"text-slate-500":"text-amber-500"}`}/><Moon className={`h-4 w-4 ${isDark?"text-indigo-300":"text-slate-400"}`}/></button>
-            <div className="relative"><button type="button" onClick={()=>setNotificationsOpen(!notificationsOpen)} aria-label="Notifications" aria-expanded={notificationsOpen} className="rounded-full p-2 hover:bg-slate-100 dark:hover:bg-white/10"><Bell className="h-5 w-5"/></button>{notificationsOpen&&<div className="absolute right-0 top-11 z-30 w-64 rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-xl dark:border-white/10 dark:bg-[#1d2d4a]">Notifications are available in their respective admin sections.</div>}</div>
-            <div className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-white/10"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">A</span><span className="text-sm font-bold">Admin</span><ChevronDown className="h-4 w-4 text-slate-400"/></div>
+            <div className="relative">
+              <button type="button" onClick={()=>{setNotificationsOpen(!notificationsOpen);setProfileOpen(false);}} aria-label="Open admin activity shortcuts" aria-expanded={notificationsOpen} className="rounded-full p-2 hover:bg-slate-100 dark:hover:bg-white/10"><Bell className="h-5 w-5"/></button>
+              {notificationsOpen&&<div className="admin-header-popover absolute right-0 top-11 z-30 w-72 rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-xl dark:border-white/10 dark:bg-[#1d2d4a]">
+                <p className="px-2 pb-2 font-extrabold">Review activity</p>
+                {[[ "Orders", "/admin/orders", ShoppingCart ],[ "Disputes", "/admin/disputes", Shield ],[ "Returns", "/admin/returns", RotateCcw ],[ "Support requests", "/admin/support", LifeBuoy ],[ "Seller compliance", "/admin/seller-compliance", ShieldCheck ]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>setLocation(href)} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-semibold hover:bg-slate-100 dark:hover:bg-white/10"><Icon className="h-4 w-4 text-orange-400"/>{label}</button>)}
+                <p className="px-2 pt-2 text-xs text-slate-600 dark:text-slate-300">Shortcuts to live admin sections, not unread-count alerts.</p>
+              </div>}
+            </div>
+            <div className="relative">
+              <button type="button" onClick={()=>{setProfileOpen(!profileOpen);setNotificationsOpen(false);}} aria-label="Open admin account menu" aria-expanded={profileOpen} className="flex items-center gap-2 border-l border-slate-200 pl-4 dark:border-white/10"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 font-bold text-white">A</span><span className="text-sm font-bold">Admin</span><ChevronDown className={`h-4 w-4 text-slate-300 transition-transform ${profileOpen?"rotate-180":""}`}/></button>
+              {profileOpen&&<div className="admin-header-popover absolute right-0 top-12 z-30 w-52 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#1d2d4a]">
+                <button type="button" onClick={()=>setLocation("/admin/settings")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-slate-100 dark:hover:bg-white/10"><Settings className="h-4 w-4"/>Admin settings</button>
+                <button type="button" onClick={()=>{logout();setLocation("/admin");}} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold text-red-500 hover:bg-red-500/10"><LogOut className="h-4 w-4"/>Sign out</button>
+              </div>}
+            </div>
           </div>
         </header>
         <div className="flex justify-end px-4 pt-3 lg:hidden"><button type="button" onClick={() => setTheme(isDark ? "light" : "dark")} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm shadow dark:bg-[#1a2c4e]" aria-label="Toggle admin theme">{isDark ? <Moon className="h-4 w-4"/> : <Sun className="h-4 w-4"/>}{isDark ? "Dark mode" : "Light mode"}</button></div>
