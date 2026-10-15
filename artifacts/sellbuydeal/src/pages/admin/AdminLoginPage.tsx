@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { Mail, Lock, Eye, EyeOff, Shield, CheckCircle2, Rocket, ArrowRight, Sun, Moon } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Shield, CheckCircle2, Rocket, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAdmin } from "@/context/AdminContext";
 
@@ -36,7 +36,7 @@ export function AdminLoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[#eff5ff] p-4 text-[#192b51] dark:bg-[#081c42] dark:text-white">
+    <div className="bazunk-admin-login relative flex min-h-screen flex-col items-center justify-center overflow-x-hidden bg-[#eff5ff] p-4 text-[#192b51] dark:bg-[#081c42] dark:text-white">
       <div className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
       <div className="pointer-events-none absolute -top-28 right-0 h-80 w-80 rounded-full bg-orange-500/10 blur-3xl" />
       <div className="relative z-10 mb-4 flex w-full max-w-6xl justify-end"><button type="button" onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")} aria-label="Toggle colour theme" className="flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-900 shadow dark:border-slate-500 dark:bg-[#20345b] dark:text-white">
@@ -63,7 +63,7 @@ export function AdminLoginPage() {
               <div><label htmlFor="admin-email" className="mb-2 block text-sm font-bold !text-[#142852] dark:!text-white">Email address</label><div className="relative"><Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"/><input id="admin-email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="username" placeholder="Admin email address" className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3.5 pl-12 pr-4 text-base text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-white/20 dark:bg-[#172d57] dark:text-white" /></div></div>
               <div><label htmlFor="admin-password" className="mb-2 block text-sm font-bold">Password</label><div className="relative"><Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"/><input id="admin-password" type={show ? "text" : "password"} value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" placeholder="Enter admin password" className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3.5 pl-12 pr-12 text-base text-slate-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-white/20 dark:bg-[#172d57] dark:text-white"/><button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={()=>setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">{show ? <EyeOff className="h-5 w-5"/> : <Eye className="h-5 w-5"/>}</button></div></div>
               {error && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">{error}</p>}
-              <button type="submit" disabled={loading || !email.trim() || !password} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff970c] to-[#ff5136] px-5 py-4 text-base font-black text-white shadow-lg transition hover:brightness-110 disabled:cursor-wait disabled:opacity-80">{loading ? "Checking credentials…" : "Sign In"} <ArrowRight className="h-5 w-5"/></button>
+              <button type="submit" disabled={loading || !email.trim() || !password} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff970c] to-[#ff5136] px-5 py-4 text-base font-black text-white shadow-lg transition hover:brightness-110 disabled:cursor-wait disabled:opacity-80">{loading ? "Checking credentials…" : "Sign In"}</button>
             </form>
           </div>
         </div>
