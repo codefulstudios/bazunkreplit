@@ -182,7 +182,7 @@ export function Navbar() {
     if (q.length < 2) { setLiveSearchResults([]); return; }
     const timer = window.setTimeout(async () => {
       try {
-        const r = await fetch(`${API_BASE}/api/listings?limit=60&offset=0&region=${marketRegion}`);
+        const r = await fetch(`${API_BASE}/api/listings?limit=5&offset=0&region=${marketRegion}&q=${encodeURIComponent(q)}`);
         if (!r.ok) return;
         const rows = await r.json();
         const needle = q.toLowerCase();
