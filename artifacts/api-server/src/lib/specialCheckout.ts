@@ -58,7 +58,8 @@ export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,
     }
     await db.execute(sql`DELETE FROM special_checkout_reservations WHERE source=${sale.source} AND fulfilled_at IS NULL`);
   }
-  const expiry = new Date(Date.now()+30*60*1000);
+  // Stripe requires at least 30 minutes from the moment its API receives the request.
+  const expiry = new Date(Date.now()+35*60*1000);
   const reserved=await db.execute(sql`INSERT INTO special_checkout_reservations(source,buyer_email,expires_at)
     VALUES(${sale.source},${buyer},${expiry.toISOString()}) ON CONFLICT DO NOTHING RETURNING source`);
   if(!reserved.rows.length) throw new Error("Another checkout is in progress");
