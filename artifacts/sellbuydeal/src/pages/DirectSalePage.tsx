@@ -1,3 +1,4 @@
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -128,6 +129,7 @@ function extractCurrencyCode(display: string): string {
 }
 
 export function DirectSalePage() {
+  const marketplaceRegion = useMarketplaceRegion();
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
@@ -168,6 +170,8 @@ export function DirectSalePage() {
   const [productVideoCredits, setProductVideoCredits] = useState(149);
   const [published, setPublished] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -197,6 +201,54 @@ export function DirectSalePage() {
       .then((cfg) => { const cost = Number(cfg?.["product-video"]?.cost); if (Number.isFinite(cost)) setProductVideoCredits(Math.round(cost * 100)); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch("/api/listings/mine", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (!res.ok) return;
+        const entries = await res.json();
+        const draft = Array.isArray(entries) ? entries.find((x: any) => x.status === "draft" && x.specifications && (() => { try { return JSON.parse(x.specifications).marketplace_region === marketplaceRegion; } catch { return false; } })()) : null;
+        if (!draft || cancelled) return;
+        const metadata = JSON.parse(draft.specifications);
+        const form = metadata.draftForm ?? {};
+        setDraftId(draft.id);
+        setTitle(form.title ?? draft.title ?? "");
+        setPrice(form.price ?? draft.price ?? "");
+        setCurrency(form.currency ?? (marketplaceRegion === "uk" ? "£ GBP" : "$ USD"));
+        setCategory(form.category ?? draft.category ?? "");
+        setSubcategory(form.subcategory ?? draft.subcategory ?? "");
+        setSubsubcategory(form.subsubcategory ?? "");
+        setDescription(form.description ?? draft.description ?? "");
+        setCondition(form.condition ?? draft.condition ?? "brand-new");
+        setPhotos(form.photos ?? (draft.image ? [draft.image] : []));
+        setQuantity(form.quantity ?? "1");
+        setSku(form.sku ?? "");
+        setShipOrigin(form.shipOrigin ?? "UK");
+        setShipZone(form.shipZone ?? "domestic");
+        setCarrier(form.carrier ?? "royal-mail");
+        setShippingPrice(form.shippingPrice ?? "");
+        setHandlingCharge(form.handlingCharge ?? "");
+        setTags(form.tags ?? draft.tags ?? "");
+        setSpecifications(form.specifications ?? metadata.details ?? []);
+        setExtraCategories(form.extraCategories ?? []);
+        setPremiumVideo(form.premiumVideo ?? false);
+      } catch (error) { console.error("Draft restore failed:", error); }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.email, marketplaceRegion, getToken]);
+
+  function draftPayload() {
+    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, photos, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
+    return { title: title.trim() || "Untitled draft", price: price || "0", currency: extractCurrencyCode(currency),
+      marketplaceRegion, category: category || "General", description, condition, image: photos[0] ?? null,
+      sellerEmail: user?.email, sellerName: user?.username ?? user?.name ?? null,
+      specifications, draftForm: form, tags, status: "draft" };
+  }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -235,11 +287,13 @@ export function DirectSalePage() {
     try {
       const token = await getToken();
       if (!token) throw new Error("Please sign in to create a listing.");
-      const res = await fetch("/api/listings", {
-        method: "POST",
+      const res = await fetch(draftId ? `/api/listings/${draftId}?email=${encodeURIComponent(user?.email ?? "")}` : "/api/listings", {
+        method: draftId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" , Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           title: title.trim(),
+          marketplaceRegion,
+          status: "active",
           price,
           currency: extractCurrencyCode(currency),
           category,
@@ -280,15 +334,25 @@ export function DirectSalePage() {
     }
   }
 
-  function handleSaveDraft() {
-    if (!title.trim() && !price && !description.trim() && !category) {
-      setValidationErrors(["Fill in at least a title or description before saving a draft"]);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    setValidationErrors([]);
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 3000);
+  async function handleSaveDraft() {
+    if (!user?.email) { setPublishError("Sign in to save your draft."); return; }
+    setSavingDraft(true);
+    setPublishError(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Sign in to save your draft.");
+      const res = await fetch(draftId ? `/api/listings/${draftId}?email=${encodeURIComponent(user.email)}` : "/api/listings", {
+        method: draftId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(draftPayload()),
+      });
+      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || "Draft save failed"); }
+      const saved = await res.json();
+      setDraftId(saved.id);
+      setDraftSaved(true);
+      setValidationErrors([]);
+    } catch (err) { setPublishError(err instanceof Error ? err.message : "Draft save failed"); }
+    finally { setSavingDraft(false); }
   }
 
   return (
@@ -1258,7 +1322,7 @@ export function DirectSalePage() {
                 data-testid="button-save-draft"
               >
                 <Save className="w-4 h-4" />
-                {draftSaved ? "Draft Saved!" : "Save as Draft"}
+                {savingDraft ? "Saving..." : draftSaved ? "Draft Saved!" : "Save as Draft"}
               </button>
               <button
                 type="submit"
