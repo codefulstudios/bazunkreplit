@@ -99,7 +99,7 @@ router.get("/listings", async (req, res) => {
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
-      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), visible, regionalVisibility));
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), eq(listingsTable.status, "active"), visible, regionalVisibility));
       res.json(rows);
       return;
     }
