@@ -1,3 +1,4 @@
+import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
@@ -5967,7 +5968,7 @@ export function DashboardPage() {
         </aside>
 
         {/* Main content */}
-        <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" className="flex-1 min-w-0 focus:outline-none">
+        <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 10 }}

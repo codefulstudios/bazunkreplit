@@ -1,0 +1,48 @@
+/* Dashboard submenu design system: matches Credits and Overview without changing business logic.
+   Scope is exclusively the dashboard main pane for sections other than overview/credits. */
+.bazunk-dashboard-subpage{--bd-text:#101d46;--bd-muted:#405473;--bd-card:#fff;--bd-border:#cfe5fb;--bd-input:#f9fcff;--bd-chip:#ecf6ff;--bd-shadow:0 10px 28px #2179c41c;color:var(--bd-text);border-radius:20px;background:radial-gradient(circle at 94% 2%,#f8dcff77,transparent 31%),radial-gradient(circle at 2% 94%,#a2f0ff66,transparent 30%);min-height:62vh}
+.bazunk-dashboard-subpage>div{max-width:100%}
+.bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50){background-color:var(--bd-card)}
+.bazunk-dashboard-subpage :is(.border-gray-100,.border-gray-200,.border-slate-100,.border-slate-200){border-color:var(--bd-border)}
+.bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"]{border:1px solid var(--bd-border);box-shadow:var(--bd-shadow)}
+.bazunk-dashboard-subpage :is(h1,h2,h3,h4){color:var(--bd-text)!important;letter-spacing:-.015em}
+.bazunk-dashboard-subpage :is(.text-gray-900,.text-gray-800,.text-gray-700,.text-slate-900,.text-slate-800,.text-slate-700){color:var(--bd-text)!important}
+.bazunk-dashboard-subpage :is(.text-gray-600,.text-gray-500,.text-gray-400,.text-slate-600,.text-slate-500,.text-slate-400){color:var(--bd-muted)!important}
+.bazunk-dashboard-subpage :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:var(--bd-input);color:var(--bd-text);border:1px solid #abcaf0;border-radius:11px;min-height:38px}
+.bazunk-dashboard-subpage :is(input,textarea,select)::placeholder{color:#415a7b;opacity:1}
+.bazunk-dashboard-subpage select option{background:var(--bd-card);color:var(--bd-text)}
+.bazunk-dashboard-subpage :is(a,button,select,input,textarea):focus-visible{outline:3px solid #ffbb37!important;outline-offset:2px}
+.bazunk-dashboard-subpage :is(table,thead,tbody,tr,th,td){border-color:var(--bd-border)}
+.bazunk-dashboard-subpage th{background:#eaf5ff;color:#183468!important;font-weight:800}
+.bazunk-dashboard-subpage td{color:var(--bd-text)}
+.bazunk-dashboard-subpage tr:hover td{background:#f1f8ff}
+.bazunk-dashboard-subpage [class*="rounded-2xl"][class*="bg-white"]{border:1px solid var(--bd-border)!important;box-shadow:var(--bd-shadow);overflow-wrap:anywhere}
+.bazunk-dashboard-subpage [class*="rounded-xl"][class*="bg-white"]{border-color:var(--bd-border)}
+.bazunk-dashboard-subpage :is(.bg-blue-50,.bg-indigo-50){background-color:#e9f3ff}
+.bazunk-dashboard-subpage :is(.bg-emerald-50,.bg-green-50){background-color:#e2fff5}
+.bazunk-dashboard-subpage .text-white{color:#fff}
+.bazunk-dashboard-subpage button:disabled{cursor:not-allowed}
+.dark .bazunk-dashboard-subpage{--bd-text:#f7faff;--bd-muted:#d8e9ff;--bd-card:#0b2141;--bd-border:#2363aa;--bd-input:#0c2341;--bd-chip:#153760;--bd-shadow:0 0 18px #057be64a;background:radial-gradient(circle at 95% 4%,#5520a650,transparent 35%),radial-gradient(circle at 0% 90%,#0755ac44,transparent 35%),#07162e}
+.dark .bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50){background-color:var(--bd-card)!important}
+.dark .bazunk-dashboard-subpage :is(.border-gray-100,.border-gray-200,.border-slate-100,.border-slate-200){border-color:var(--bd-border)!important}
+.dark .bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"]{background:linear-gradient(140deg,#0c2a4b,#0a1c37)!important;box-shadow:var(--bd-shadow)}
+.dark .bazunk-dashboard-subpage :is(.text-gray-900,.text-gray-800,.text-gray-700,.text-slate-900,.text-slate-800,.text-slate-700){color:var(--bd-text)!important}
+.dark .bazunk-dashboard-subpage :is(.text-gray-600,.text-gray-500,.text-gray-400,.text-slate-600,.text-slate-500,.text-slate-400){color:var(--bd-muted)!important}
+.dark .bazunk-dashboard-subpage :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:#0a203c!important;color:#fff!important;border:1px solid #3978bc!important}
+.dark .bazunk-dashboard-subpage :is(input,textarea)::placeholder{color:#d3e5ff!important;opacity:1}
+.dark .bazunk-dashboard-subpage select option{background:#0b2141;color:white}
+.dark .bazunk-dashboard-subpage th{background:#153763;color:#fff!important}
+.dark .bazunk-dashboard-subpage td{color:#fff}
+.dark .bazunk-dashboard-subpage tr:hover td{background:#163b68}
+.dark .bazunk-dashboard-subpage :is(.bg-blue-50,.bg-indigo-50){background-color:#123a66!important}
+.dark .bazunk-dashboard-subpage :is(.bg-emerald-50,.bg-green-50){background-color:#0d493f!important}
+.dark .bazunk-dashboard-subpage :is(.bg-amber-50,.bg-yellow-50){background-color:#554016!important}
+.dark .bazunk-dashboard-subpage :is(.bg-pink-50,.bg-purple-50){background-color:#44205e!important}
+.dark .bazunk-dashboard-subpage :is(.text-blue-700,.text-indigo-700){color:#a4d8ff!important}
+.dark .bazunk-dashboard-subpage :is(.text-emerald-700,.text-green-700){color:#8dffe1!important}
+.dark .bazunk-dashboard-subpage :is(.text-amber-700,.text-orange-700){color:#ffd08b!important}
+.dark .bazunk-dashboard-subpage :is(.text-purple-700,.text-violet-700){color:#ebc4ff!important}
+.dark .bazunk-dashboard-subpage :is(.text-red-700,.text-rose-700){color:#ffb7bf!important}
+.dark .bazunk-dashboard-subpage .text-white{color:#fff!important}
+@media(max-width:640px){.bazunk-dashboard-subpage{border-radius:14px}.bazunk-dashboard-subpage [class*="p-6"]{padding:16px}.bazunk-dashboard-subpage table{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.bazunk-dashboard-subpage *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
