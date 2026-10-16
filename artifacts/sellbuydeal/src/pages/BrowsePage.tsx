@@ -290,6 +290,10 @@ export function BrowsePage() {
   if (minPrice) browseScope.set("minPrice", minPrice);
   if (maxPrice) browseScope.set("maxPrice", maxPrice);
   browseScope.set("sort", sort);
+  if (shipFrom.length) browseScope.set("shipFrom", shipFrom.join(","));
+  if (shipTo.length) browseScope.set("shipTo", shipTo.join(","));
+  if (freeShipping) browseScope.set("freeShipping", "true");
+  if (listedWithin !== "any") browseScope.set("listedWithin", listedWithin);
   const browseScopeQuery = browseScope.toString();
 
 
@@ -378,34 +382,8 @@ export function BrowsePage() {
     if (verifiedOnly) {
       result = result.filter((p) => p.verified);
     }
-    if (shipFrom.length > 0) {
-      result = result.filter((p) => {
-        const sf = (p as unknown as unknown as Record<string, unknown>).shipOrigin as string | undefined;
-        return sf == null || shipFrom.includes(sf);
-      });
-    }
-    if (shipTo.length > 0) {
-      result = result.filter((p) => {
-        const st = (p as unknown as Record<string, unknown>).shipZone as string | undefined;
-        return st == null || shipTo.some((z) => st.includes(z));
-      });
-    }
-    if (freeShipping) {
-      result = result.filter((p) => {
-        const sp = (p as unknown as Record<string, unknown>).shippingPrice;
-        return sp == null || sp === "0" || sp === 0;
-      });
-    }
     if (minRating !== null) {
       result = result.filter((p) => ((p as unknown as Record<string, unknown>).rating as number ?? 0) >= minRating);
-    }
-    if (listedWithin !== "any") {
-      const cutoffs: Record<string, number> = {
-        today: 1, week: 7, month: 30,
-      };
-      const days = cutoffs[listedWithin] ?? 9999;
-      const cutoff = Date.now() - days * 86400000;
-      result = result.filter((p) => new Date(p.listed).getTime() >= cutoff);
     }
 
     switch (sort) {
