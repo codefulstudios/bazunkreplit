@@ -1,3 +1,4 @@
+import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
@@ -966,9 +967,17 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   };
 
   return (
-    <div className="flex-1 p-6 space-y-6">
+    <div className="bazunk-overview-v2 flex-1 p-4 sm:p-6 space-y-6">
+      <div className="overview-hero-v2">
+        <div className="overview-hero-copy">
+          <span className="overview-hero-wave" aria-hidden="true">👋</span>
+          <div><h1>Welcome back, {user.name?.split(" ")[0] || user.username || "Seller"}!</h1>
+          <p>Manage your marketplace activity, grow your sales, and reach more buyers.</p></div>
+        </div>
+        <div className="overview-hero-art" aria-hidden="true"><span>🏬</span><span>📦</span><span>✨</span><span>↗</span></div>
+      </div>
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="overview-original-heading flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Manage your account, orders, and marketplace activity</p>
@@ -994,9 +1003,9 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="overview-stat-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* User card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
           <div className="w-12 h-12 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-lg">
             {initial}
           </div>
@@ -1007,7 +1016,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
 
         {/* My Orders */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">My Orders</p>
           <p className="text-2xl font-bold text-gray-900">0</p>
           <p className="text-xs text-gray-400 mt-1">As buyer</p>
@@ -1019,7 +1028,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
 
         {/* Credit Balance — highlighted */}
-        <div className="bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
+        <div className="overview-stat-tile overview-credit-tile bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
           <p className="text-xs text-blue-200 mb-1">Credit Balance</p>
           <p className="text-2xl font-bold">£{user.balance.toFixed(2)}</p>
           <p className="text-xs text-blue-300 mt-1">Ready to use</p>
@@ -1053,6 +1062,33 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
             </div>
           </div>
         </div>
+      </div>
+
+
+      <div className="overview-showcase-grid">
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><BarChart2 className="w-6 h-6"/></div><div><h2>Sales Performance</h2><p>Track sales, orders and views from your account.</p></div><button type="button" onClick={() => onNavigate("analytics")} className="overview-view-all">View Analytics <ArrowRight className="w-4 h-4"/></button></div>
+          <div className="overview-analytics-chips">
+            <div><Coins className="w-5 h-5"/><strong>£{user.balance.toFixed(2)}</strong><span>Available Credits</span></div>
+            <div><ShoppingBag className="w-5 h-5"/><strong>{myListings.length}</strong><span>My Listings</span></div>
+            <div><Eye className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.views)||0),0).toLocaleString()}</strong><span>Listing Views</span></div>
+            <div><Heart className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.watchers)||0),0).toLocaleString()}</strong><span>Watchers</span></div>
+          </div>
+          <div className="overview-performance-visual">
+            <p>Visit Analytics for real sales and time-series charts.</p>
+            <div className="overview-visual-bars" aria-hidden="true"><i style={{height:"24%"}}/><i style={{height:"35%"}}/><i style={{height:"30%"}}/><i style={{height:"40%"}}/><i style={{height:"37%"}}/><i style={{height:"55%"}}/><i style={{height:"48%"}}/><i style={{height:"60%"}}/><i style={{height:"52%"}}/><i style={{height:"66%"}}/><i style={{height:"64%"}}/><i style={{height:"73%"}}/><i style={{height:"70%"}}/><i style={{height:"84%"}}/><i style={{height:"79%"}}/><i style={{height:"95%"}}/></div>
+          </div>
+        </section>
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
+          <div className="overview-new-actions">
+            <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button onClick={()=>onNavigate("importers")} className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></button>
+            <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
+          </div>
+          <button onClick={()=>onNavigate("promotions")} className="overview-new-promo"><Crown className="w-9 h-9"/><span><b>Boost Your Listings</b><small>Use Promotions to reach more buyers.</small></span><Megaphone className="w-9 h-9"/></button>
+        </section>
       </div>
 
       {/* Referral rewards — deliberately prominent on the dashboard */}
@@ -1091,7 +1127,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       </div>
 
       {/* Recent Listings */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="overview-section-card bg-white rounded-2xl border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900">Recent Listings</h2>
           <button className="text-xs text-[#4A5CE8] font-semibold hover:underline" onClick={() => onNavigate("my-listings")} data-testid="link-manage-all">Manage All</button>
