@@ -1,4 +1,4 @@
-import { startSpecialCheckout } from "../lib/specialCheckout.js";
+import { startSpecialCheckout, fulfillSpecialCheckout } from "../lib/specialCheckout.js";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAuth, clerkClient } from "@clerk/express";
 import { percentage, minor } from "../lib/marketplaceFees.js";
@@ -307,6 +307,16 @@ router.post("/stripe/confirm-cart-payment", async (req, res) => {
     if (!email && !sessionId) { res.status(400).json({ error: "email required" }); return; }
 
     if (sessionId) {
+      const stripe = await getUncachableStripeClient();
+      const paidSession = await stripe.checkout.sessions.retrieve(sessionId);
+      if (paidSession.metadata?.type === "special_sale") {
+        if (paidSession.client_reference_id?.toLowerCase() !== String(email ?? "").toLowerCase()) {
+          res.status(403).json({error:"Email mismatch"});return;
+        }
+        if (paidSession.payment_status !== "paid") {res.status(400).json({error:"Payment not completed"});return;}
+        await fulfillSpecialCheckout(sessionId);
+        res.json({success:true});return;
+      }
       const result = await fulfillCartSession(sessionId, email);
       if (result.status === "not_paid") { res.status(400).json({ error: "Payment not completed" }); return; }
       if (result.status === "email_mismatch") { res.status(403).json({ error: "Email mismatch" }); return; }
