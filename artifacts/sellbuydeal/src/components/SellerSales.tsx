@@ -148,7 +148,7 @@ export function SellerSales() {
                   <p className="font-bold text-gray-900 text-sm">{formatPrice(parseFloat(s.price))}</p>
                   <p className="text-xs text-gray-500">Selling fee: {formatPrice(Number(s.seller_fee ?? 0))}{Number(s.seller_fee)>0 ? " · protection & support included" : " · no seller commission"}</p>
                   <p className="text-xs font-bold text-emerald-600">Net sale amount: {formatPrice(Number(s.seller_net ?? (Number(s.price)-Number(s.seller_fee??0))))}</p>
-                  <p className="text-xs text-gray-500">{s.payout_status === "paid" ? "Transferred to your Stripe account" : "Awaiting payout release"}</p>
+                  <p className="text-xs text-gray-500">{s.status === "refunded" ? "Payment refunded — do not dispatch" : s.payout_status === "paid" ? "Transferred to your Stripe account" : "Awaiting payout release"}</p>
                   <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${st.cls}`}>{st.label}</span>
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
