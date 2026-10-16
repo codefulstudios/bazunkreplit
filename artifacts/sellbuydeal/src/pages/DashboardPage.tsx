@@ -1,3 +1,4 @@
+import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
@@ -966,9 +967,17 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   };
 
   return (
-    <div className="flex-1 p-6 space-y-6">
+    <div className="bazunk-overview-v2 flex-1 p-4 sm:p-6 space-y-6">
+      <div className="overview-hero-v2">
+        <div className="overview-hero-copy">
+          <span className="overview-hero-wave" aria-hidden="true">👋</span>
+          <div><h1>Welcome back, {user.name?.split(" ")[0] || user.username || "Seller"}!</h1>
+          <p>Manage your marketplace activity, grow your sales, and reach more buyers.</p></div>
+        </div>
+        <div className="overview-hero-art" aria-hidden="true"><span>🏬</span><span>📦</span><span>✨</span><span>↗</span></div>
+      </div>
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="overview-original-heading flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Dashboard</h1>
           <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Manage your account, orders, and marketplace activity</p>
@@ -994,9 +1003,9 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="overview-stat-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* User card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
           <div className="w-12 h-12 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-lg">
             {initial}
           </div>
@@ -1007,7 +1016,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
 
         {/* My Orders */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">My Orders</p>
           <p className="text-2xl font-bold text-gray-900">0</p>
           <p className="text-xs text-gray-400 mt-1">As buyer</p>
@@ -1019,7 +1028,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
 
         {/* Credit Balance — highlighted */}
-        <div className="bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
+        <div className="overview-stat-tile overview-credit-tile bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
           <p className="text-xs text-blue-200 mb-1">Credit Balance</p>
           <p className="text-2xl font-bold">£{user.balance.toFixed(2)}</p>
           <p className="text-xs text-blue-300 mt-1">Ready to use</p>
@@ -1091,7 +1100,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       </div>
 
       {/* Recent Listings */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="overview-section-card bg-white rounded-2xl border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900">Recent Listings</h2>
           <button className="text-xs text-[#4A5CE8] font-semibold hover:underline" onClick={() => onNavigate("my-listings")} data-testid="link-manage-all">Manage All</button>
