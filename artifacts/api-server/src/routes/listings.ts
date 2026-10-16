@@ -220,10 +220,10 @@ router.get("/listings/spotlight", async (req, res) => {
 
 router.get("/listings/mine", async (req, res) => {
   try {
-    const { email } = req.query as Record<string, string>;
-    if (!email) {
-      res.status(400).json({ error: "email required" });
-      return;
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
+    if (req.query.email && String(req.query.email).trim().toLowerCase() !== email) {
+      res.status(403).json({ error: "Seller account mismatch" }); return;
     }
 
     // Prevent 304 Caching Issues on newly posted items
@@ -303,8 +303,9 @@ router.get("/listings/:id", async (req, res) => {
     const visibility = await categoryVisibility();
     const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility)).limit(1);
     if (!publicRow.length) { res.status(404).json({ error: "Listing temporarily unavailable" }); return; }
-    if (row.status === "scheduled") {
-      const viewer = typeof req.query.email === "string" ? req.query.email.toLowerCase() : "";
+    if (row.status !== "active") {
+      const viewer = await authenticatedSellerEmail(req, res);
+      if (!viewer) return;
       if (viewer !== String(row.sellerEmail).toLowerCase()) { res.status(404).json({ error: "not found" }); return; }
     }
     const [withPromo] = await attachPromotions([row]);
@@ -365,12 +366,14 @@ router.post("/listings", async (req, res) => {
     const subcategory = typeof body.subcategory === "string" && body.subcategory ? body.subcategory : null;
     const subsubcategory = subcategory && typeof body.subsubcategory === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory) && body.subsubcategory.length <= 100 ? body.subsubcategory : null;
     const tags = typeof body.tags === "string" ? body.tags : null;
-    const specifications = Array.isArray(body.specifications) ? JSON.stringify(body.specifications) : null;
+    const region = body.marketplaceRegion ?? body.marketplace_region;
+    if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Select UK or USA marketplace region" }); return; }
+    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
     const extraCategories = Array.isArray(body.extra_categories) && body.extra_categories.length
       ? JSON.stringify(body.extra_categories)
       : null;
     const currency = typeof body.currency === "string" && body.currency ? body.currency.toUpperCase() : "GBP";
-    const status = typeof body.status === "string" ? body.status : "active";
+    const status = body.status === "draft" ? "draft" : "active";
     const premiumVideo = body.premiumVideo === true;
     const shipOrigin = typeof body.shipOrigin === "string" ? body.shipOrigin.slice(0, 80) : null;
     const shipOriginOther = typeof body.shipOriginOther === "string" ? body.shipOriginOther.slice(0, 120) : null;
@@ -384,7 +387,7 @@ router.post("/listings", async (req, res) => {
     // Product Video is priced in credits and controlled by Admin → Promotions.
     // Validate the balance before creating the listing so a failed add-on cannot create duplicates.
     let productVideoConfig: Awaited<ReturnType<typeof getPromoConfig>> = null;
-    if (premiumVideo) {
+    if (premiumVideo && status === "active") {
       productVideoConfig = await getPromoConfig("product-video");
       if (!productVideoConfig || !productVideoConfig.enabled) {
         res.status(400).json({ error: "Product Video is not currently available." });
@@ -444,7 +447,7 @@ router.post("/listings", async (req, res) => {
 
     console.log("Listing successfully created:", listing.id);
 
-    if (premiumVideo && productVideoConfig) {
+    if (status === "active" && premiumVideo && productVideoConfig) {
       const newBalance = await storage.addCredits(sellerEmail, -productVideoConfig.cost);
       await recordCreditEconomy({ email: sellerEmail, kind: "spent", credits: -productVideoConfig.cost, reason: "Product Video", referenceType: "product_video" });
       const expiresAt = new Date();
@@ -456,13 +459,13 @@ router.post("/listings", async (req, res) => {
     // First listing ever posted by this seller completes the "First
     // Listing" milestone. Safe to call on every post — completeMilestone()
     // never un-completes it.
-    storage.completeMilestone(sellerEmail, "first-listing").catch((err) => {
+    if (status === "active") storage.completeMilestone(sellerEmail, "first-listing").catch((err) => {
       console.error("Failed to record first-listing milestone:", err);
     });
 
     // Active Lister (5/month) and Inventory Master (20/month)
-    void refreshSellerMilestones(sellerEmail);
-    void sendSystemMessage(sellerEmail, {
+    if (status === "active") void refreshSellerMilestones(sellerEmail);
+    if (status === "active") void sendSystemMessage(sellerEmail, {
       category: "Listings",
       subject: "Your listing is live",
       body:
@@ -487,7 +490,7 @@ router.patch("/listings/:id", async (req, res) => {
     const { email } = req.query as Record<string, string>;
     if (!email || email.trim().toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Seller account mismatch" }); return; }
     const body = req.body as Record<string, unknown>;
-    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency"] as const;
+    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency", "specifications", "tags"] as const;
     const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
     for (const key of allowed) {
       if (typeof body[key] === "string") updates[key] = body[key] as string;
@@ -498,6 +501,12 @@ router.patch("/listings/:id", async (req, res) => {
     if (Array.isArray(body.extra_categories)) {
       updates.extraCategories = body.extra_categories.length ? JSON.stringify(body.extra_categories) : "";
     }
+    if (body.marketplaceRegion !== undefined || body.marketplace_region !== undefined || body.draftForm !== undefined) {
+      const region = body.marketplaceRegion ?? body.marketplace_region;
+      if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Invalid region" }); return; }
+      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+    }
+    if (updates.status && !["draft", "active", "inactive", "sold"].includes(updates.status)) { res.status(400).json({ error: "Invalid listing status" }); return; }
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "no fields to update" }); return; }
 
     if (updates.price || updates.currency) {
