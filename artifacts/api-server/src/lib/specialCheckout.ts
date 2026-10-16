@@ -17,7 +17,7 @@ async function schema() {
 }
 async function getSale(kind: SaleKind, id:string, buyer:string):Promise<Sale> {
   const row = kind === "auction"
-    ? (await db.execute(sql`SELECT id,title,image,category,seller_email,winner_email,winner_bid,status,end_time
+    ? (await db.execute(sql`SELECT id,title,images,category,seller_email,winner_email,winner_bid,status,end_time
         FROM auctions WHERE id=${id}`)).rows[0] as any
     : (await db.execute(sql`SELECT id,title,image,category,seller_email,sale_price,status,starts_at,ends_at
         FROM flash_sales WHERE id=${id}`)).rows[0] as any;
@@ -31,7 +31,7 @@ async function getSale(kind: SaleKind, id:string, buyer:string):Promise<Sale> {
   }
   const price = Number(kind === "auction" ? row.winner_bid : row.sale_price);
   if (!Number.isFinite(price) || price <= 0) throw new Error("Invalid sale price");
-  return {id, seller_email:String(row.seller_email), title:String(row.title),image:row.image ?? null,category:row.category ?? null, price,source:`${kind}:${id}`};
+  return {id, seller_email:String(row.seller_email), title:String(row.title),image:kind==="auction" ? (Array.isArray(row.images) ? String(row.images[0] ?? "") || null : null) : row.image ?? null,category:row.category ?? null, price,source:`${kind}:${id}`};
 }
 export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,origin:string) {
   await schema();
@@ -104,7 +104,7 @@ export async function fulfillSpecialCheckout(sessionId:string) {
   if(!reservation || reservation.buyer_email!==m.buyerEmail)throw new Error("Unrecognised sale reservation");
   const id=`ORD-${randomUUID().slice(0,8).toUpperCase()}`;
   const titleRow=m.kind==="auction"
-    ? (await db.execute(sql`SELECT title,image FROM auctions WHERE id=${m.saleId}`)).rows[0] as any
+    ? (await db.execute(sql`SELECT title, images->>0 AS image FROM auctions WHERE id=${m.saleId}`)).rows[0] as any
     : (await db.execute(sql`SELECT title,image FROM flash_sales WHERE id=${m.saleId}`)).rows[0] as any;
   await db.transaction(async tx=>{
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${m.source}))`);
