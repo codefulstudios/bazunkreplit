@@ -46,6 +46,9 @@ export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,
       if(session.status==="open") return {url:session.url};
       if(session.payment_status==="paid")throw new Error("Payment already received; order is processing");
     }
+    // A second request must not displace a reservation while its Stripe session is being created.
+    if(!existing.stripe_session_id && new Date(existing.expires_at).getTime() > Date.now())
+      throw new Error("Checkout is being prepared. Try again shortly");
     // Expired Stripe sessions must be expired at Stripe before a new reservation can be granted.
     if(existing.stripe_session_id) {
       const stripe=await getUncachableStripeClient();
