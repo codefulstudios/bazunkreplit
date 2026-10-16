@@ -78,3 +78,12 @@
 .dark .bazunk-overview-v2 .overview-performance-visual p{color:#e6f5ff}
 @media(max-width:1100px){.bazunk-overview-v2 .overview-showcase-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.bazunk-overview-v2 .overview-analytics-chips{grid-template-columns:repeat(2,1fr)}.bazunk-overview-v2 .overview-new-actions{grid-template-columns:1fr}.bazunk-overview-v2 .overview-showcase-panel{padding:13px}.bazunk-overview-v2 .overview-view-all{font-size:10px}}
+
+
+.bazunk-overview-v2 .overview-below-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:17px}
+.bazunk-overview-v2 .overview-placeholder-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;min-height:214px;background:linear-gradient(140deg,#eff9ff,#f2eaff);border:1px solid #d7e9ff;border-radius:15px;padding:19px}
+.bazunk-overview-v2 .overview-placeholder-panel h3{font-weight:900;color:#152451}.bazunk-overview-v2 .overview-placeholder-panel p{font-size:13px;color:#3b5076}
+.bazunk-overview-v2 .overview-message-open{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:800;padding:10px 15px;color:white;background:linear-gradient(110deg,#137aff,#3b3fe3);border-radius:12px}
+.dark .bazunk-overview-v2 .overview-placeholder-panel{background:linear-gradient(140deg,#0d3457,#231a58);border-color:#2d7ed1}
+.dark .bazunk-overview-v2 .overview-placeholder-panel h3,.dark .bazunk-overview-v2 .overview-placeholder-panel p{color:white}
+@media(max-width:1000px){.bazunk-overview-v2 .overview-below-grid{grid-template-columns:1fr}}
