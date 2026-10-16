@@ -936,6 +936,7 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
 function OverviewContent({ user, onNavigate }: { user: { name: string; email: string; username: string; balance: number }; onNavigate: (section: string) => void }) {
   const initial = user.name.charAt(0).toUpperCase();
   const [myListings, setMyListings] = useState<StoredListing[]>([]);
+  const [overviewOrders,setOverviewOrders] = useState<{bought:number;sold:number}>({bought:0,sold:0});
   const { getToken } = useClerkAuth();
   const [referral, setReferral] = useState<any>(null);
   const [referralCopied, setReferralCopied] = useState(false);
@@ -943,6 +944,28 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   useEffect(() => {
     fetchMyListings(user.email).then(setMyListings);
   }, [user.email]);
+  useEffect(() => {
+    let cancelled=false;
+    async function loadOrders(){
+      try {
+        const token=await getToken();
+        if(!token)return;
+        const headers={Authorization:`Bearer ${token}`};
+        const responses=await Promise.all([
+          fetch("/api/orders",{headers,cache:"no-store"}),
+          fetch("/api/orders/seller",{headers,cache:"no-store"})
+        ]);
+        if(!responses.every(r=>r.ok))throw new Error("Orders unavailable");
+        const [bought,sold]=await Promise.all(responses.map(r=>r.json()));
+        if(!cancelled)setOverviewOrders({
+          bought:Array.isArray(bought)?bought.filter((o:any)=>o.status!=="cancelled").length:0,
+          sold:Array.isArray(sold)?sold.filter((o:any)=>!["cancelled","refunded"].includes(o.status)).length:0
+        });
+      }catch(e){console.warn("Could not load dashboard order totals",e);}
+    }
+    void loadOrders();
+    return()=>{cancelled=true;};
+  },[user.email,getToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1019,7 +1042,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         {/* My Orders */}
         <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">My Orders</p>
-          <p className="text-2xl font-bold text-gray-900">0</p>
+          <p className="text-2xl font-bold text-gray-900">{overviewOrders.bought}</p>
           <p className="text-xs text-gray-400 mt-1">As buyer</p>
           <div className="mt-2 flex justify-end">
             <div className="w-9 h-9 rounded-lg bg-[#4A5CE8] flex items-center justify-center shadow-sm">
@@ -1055,7 +1078,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         {/* Sales */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Sales</p>
-          <p className="text-2xl font-bold text-gray-900">0</p>
+          <p className="text-2xl font-bold text-gray-900">{overviewOrders.sold}</p>
           <p className="text-xs text-gray-400 mt-1">As seller</p>
           <div className="mt-2 flex justify-end">
             <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
