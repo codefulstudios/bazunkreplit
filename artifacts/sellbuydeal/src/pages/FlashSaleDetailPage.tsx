@@ -285,17 +285,10 @@ export function FlashSaleDetailPage() {
                 </div>
               </div>
 
-              {isActive && !isOwnSale && !messageSent && (
-                <button onClick={() => setMessageSent(true)}
-                  className={`w-full py-3 rounded-xl text-white font-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2 ${isLightning ? "bg-red-600" : "bg-[#F26B21]"}`}>
-                  <Zap className="w-4 h-4 fill-white" /> Grab This Deal
-                </button>
-              )}
-              {messageSent && (
-                <div className="flex flex-col items-center gap-2 py-3">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                  <p className="font-bold text-gray-800">Interest registered!</p>
-                  <p className="text-xs text-gray-400 text-center">The seller will be in touch. Check your messages.</p>
+              {isActive && !isOwnSale && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-center">
+                  <p className="text-sm font-bold text-amber-900">Checkout temporarily unavailable</p>
+                  <p className="mt-1 text-xs text-amber-800">This flash sale cannot be purchased until secure Stripe checkout is enabled. No payment will be taken.</p>
                 </div>
               )}
               {isUpcoming && (
