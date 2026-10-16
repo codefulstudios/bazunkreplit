@@ -1411,11 +1411,11 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
   return (
     <div className="bazunk-credit-shell space-y-4 text-white">
       {/* Hero banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#5062f7] bg-gradient-to-r from-[#354ee1] via-[#4456e7] to-[#4455e4] p-5 text-white shadow-[0_12px_40px_rgba(37,40,166,.3)] sm:p-6">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-fuchsia-400/35 blur-3xl"/>
+      <div className="credits-hero relative overflow-hidden rounded-2xl border border-cyan-300 bg-gradient-to-r from-cyan-500 via-blue-600 to-fuchsia-600 p-5 text-white shadow-[0_12px_40px_rgba(37,40,166,.3)] sm:p-6">
+        <div aria-hidden="true" className="pointer-events-none absolute right-[20%] top-0 hidden md:block text-5xl drop-shadow-lg select-none">🪙✨💰</div><div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-fuchsia-400/35 blur-3xl"/>
         <div className="relative z-10 flex flex-wrap items-start justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl font-black sm:text-2xl">Marketplace Credits</h2>
+            <h2 className="text-2xl font-black sm:text-3xl drop-shadow-sm">⚡ Marketplace Credits</h2>
             <p className="text-white text-sm font-semibold mt-1"></p><p className="text-blue-100 text-xs mt-1">100 credits = {formatPrice(1)} · earn up to 150/week free</p>
           </div>
           <div className="text-right">
@@ -1459,24 +1459,24 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
       </div>
 
       {/* What Can Credits Do */}
-      <div className="rounded-2xl border border-[#164752] bg-[#092d39] p-5">
+      <div className="credits-features rounded-2xl border border-cyan-200 dark:border-cyan-700 bg-white dark:bg-[#092d39] p-5 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
             <Coins className="w-3.5 h-3.5 text-white" />
           </div>
-          <h3 className="text-base font-bold text-white">What Can Credits Do?</h3>
+          <h3 className="text-xl font-black text-slate-950 dark:text-white">What Can Credits Do?</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {CREDIT_FEATURES.map((f) => {
             const Icon = f.icon;
             return (
-              <div key={f.title} className={`rounded-xl border border-[#24314d] bg-[#101d35] p-4`}>
-                <div className={`w-9 h-9 rounded-xl ${f.iconBg} flex items-center justify-center mb-3`}>
-                  <Icon className={`w-4 h-4 ${f.iconColor}`} />
+              <div key={f.title} className="credits-feature-card rounded-2xl border border-indigo-200 dark:border-cyan-500/60 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-[#292060] dark:via-[#101d35] dark:to-[#08264a] p-4 shadow-sm hover:shadow-xl transition-shadow">
+                <div className={`w-16 h-16 rounded-2xl ${f.iconBg} flex items-center justify-center mb-3 shadow-md`}>
+                  <Icon className={`w-9 h-9 ${f.iconColor}`} />
                 </div>
-                <p className="text-base font-black text-white mb-1">{f.title}</p>
-                <p className="text-xs font-medium text-white mb-3 leading-relaxed">{f.desc}</p>
-                <p className="text-[11px] font-bold text-cyan-300">{f.detail}</p>
+                <p className="text-base font-black text-slate-950 dark:text-white mb-1">{f.title}</p>
+                <p className="text-xs font-semibold text-slate-800 dark:text-white mb-3 leading-relaxed">{f.desc}</p>
+                <p className="text-[11px] font-extrabold text-blue-700 dark:text-cyan-200">{f.detail}</p>
               </div>
             );
           })}
