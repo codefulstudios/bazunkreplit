@@ -1,3 +1,4 @@
+import { reconcileFullyRefundedSession } from "../lib/refundReconciliation.js";
 import { Router, type Request } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import { db } from "@workspace/db";
@@ -290,6 +291,19 @@ router.get("/orders/seller", async (req, res) => {
   try {
     const email = await authenticatedEmail(req);
     if (!email) { res.status(401).json({ error: "Please sign in to view your sales" }); return; }
+    // Repair Stripe Dashboard refunds that occurred before refund webhooks were enabled.
+    // Limit remote calls to recent, still-dispatchable orders; never block the sales page if Stripe is unavailable.
+    const candidates=(await db.execute(sql`
+      SELECT DISTINCT stripe_session_id FROM orders
+      WHERE LOWER(seller_email)=LOWER(${email}) AND stripe_session_id IS NOT NULL
+        AND status IN ('pending','confirmed','preparing')
+        AND created_at > NOW() - INTERVAL '45 days'
+      ORDER BY stripe_session_id LIMIT 20
+    `)).rows as Array<{stripe_session_id:string}>;
+    await Promise.all(candidates.map(async row=>{
+      try{await reconcileFullyRefundedSession(row.stripe_session_id);}
+      catch(err){logger.warn({err}, "Could not reconcile seller's Stripe refund");}
+    }));
     const rows = await db.execute(sql`
       SELECT o.id, o.item_title, o.item_image, o.price, o.status, o.seller_fee, o.seller_fee_rate, o.seller_type, COALESCE(o.seller_net,o.price-o.seller_fee) seller_net, o.buyer_protection_fee, o.delivery_fee, o.buyer_total, o.stripe_transfer_id, o.payout_status, o.refunded_total, o.tracking_number, o.carrier, o.tracking_status, o.tracking_last_event, o.tracking_updated_at, o.tracking_eta, o.address,
              o.created_at, o.shipped_at, split_part(o.buyer_email, '@', 1) AS buyer_name, o.buyer_email,
@@ -313,7 +327,7 @@ router.post("/orders/:id/dispatch", async (req, res) => {
       { id: string; buyer_email: string; seller_email: string | null; item_title: string; status: string } | undefined;
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
     if (!order.seller_email || order.seller_email.toLowerCase() !== sellerEmail.toLowerCase()) { res.status(403).json({ error: "That isn't your order" }); return; }
-    if (["cancelled", "delivered"].includes(order.status)) { res.status(400).json({ error: `This order is already ${order.status}.` }); return; }
+    if (["cancelled", "delivered", "refunded"].includes(order.status)) { res.status(400).json({ error: `This order is already ${order.status}.` }); return; }
     if (["shipped", "out_for_delivery"].includes(order.status)) { res.status(400).json({ error: "This order has already been dispatched." }); return; }
 
     await db.execute(sql`
