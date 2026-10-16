@@ -1,3 +1,4 @@
+import { startSpecialCheckout } from "../lib/specialCheckout.js";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAuth, clerkClient } from "@clerk/express";
 import { percentage, minor } from "../lib/marketplaceFees.js";
@@ -244,6 +245,22 @@ router.post("/stripe/quote-cart", async (req,res) => {
     res.setHeader("Cache-Control","no-store");
     res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
   } catch(err) { res.status(err instanceof QuoteError ? err.status : 500).json({error:err instanceof QuoteError ? err.message : "Could not calculate checkout fees."}); }
+});
+
+router.post("/stripe/special-checkout", async(req,res)=>{
+  try {
+    const email=await authenticatedSellerEmail(req,res);if(!email)return;
+    const kind=req.body?.kind, id=req.body?.id;
+    if((kind!=="auction"&&kind!=="flash")||typeof id!=="string"||!id.trim()||id.length>100) {
+      res.status(400).json({error:"Invalid sale reference"});return;
+    }
+    const origin=new URL(resolveOrigin(req)).origin;
+    if(!["https://bazunk.com","https://www.bazunk.com","https://bazunk-web.onrender.com","http://localhost:5173"].includes(origin)){
+      res.status(400).json({error:"Unrecognised checkout origin"});return;
+    }
+    const result=await startSpecialCheckout(kind,id,email,origin);
+    res.json(result);
+  }catch(err){logger.error({err},"Special sale checkout failed");res.status(409).json({error:err instanceof Error?err.message:"Checkout unavailable"});}
 });
 
 router.post("/stripe/checkout-cart", async (req, res) => {
