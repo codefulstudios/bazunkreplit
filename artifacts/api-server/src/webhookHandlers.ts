@@ -1,3 +1,4 @@
+import { reconcileRefundedPaymentIntent } from "./lib/refundReconciliation.js";
 import { fulfillSpecialCheckout } from "./lib/specialCheckout.js";
 import type Stripe from "stripe";
 import { getUncachableStripeClient } from "./stripeClient.js";
@@ -18,6 +19,10 @@ export class WebhookHandlers {
     }
     const stripe = await getUncachableStripeClient();
     const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    if (event.type === "charge.refunded") {
+      const charge=event.data.object as Stripe.Charge;
+      if (typeof charge.payment_intent === "string") await reconcileRefundedPaymentIntent(charge.payment_intent);
+    }
     if (
       event.type === "checkout.session.completed" ||
       event.type === "checkout.session.async_payment_succeeded"
