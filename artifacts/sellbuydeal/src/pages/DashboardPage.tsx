@@ -1183,46 +1183,6 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <h2 className="font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Link
-            href="/sell/direct"
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-create-listing"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#F59E0B] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Plus className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Create Listing</p>
-            <p className="text-xs text-gray-400 mt-0.5">Sell an item quickly</p>
-          </Link>
-          <button
-            onClick={() => onNavigate("credits")}
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-earn-credits"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#3B4FD8] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Earn Credits</p>
-            <p className="text-xs text-gray-400 mt-0.5">Complete milestones</p>
-          </button>
-          <Link
-            href="/promotions"
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-promote-items"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#7C3AED] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Megaphone className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Promote Items</p>
-            <p className="text-xs text-gray-400 mt-0.5">Increase visibility</p>
-          </Link>
-        </div>
-      </div>
-
       {/* Earn Real Rewards */}
       <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
@@ -1257,6 +1217,21 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </button>
       </div>
 
+      <div className="overview-below-grid">
+        <section className="overview-section-card bg-white rounded-2xl p-5">
+          <div className="overview-showcase-head"><MessageSquare className="w-6 h-6 text-blue-500"/><div><h2>Recent Messages</h2><p>Latest conversations from your buyers.</p></div><Link href="/messages" className="overview-view-all">View All <ArrowRight className="w-4 h-4"/></Link></div>
+          <div className="overview-placeholder-panel">
+            <MessageSquare className="w-9 h-9 text-blue-500"/>
+            <h3>Keep conversations moving</h3>
+            <p>Open your inbox to see real messages and reply to buyers.</p>
+            <Link href="/messages" className="overview-message-open">Open Inbox <ArrowRight className="w-4 h-4"/></Link>
+          </div>
+        </section>
+        <section className="overview-section-card bg-white rounded-2xl p-5">
+          <div className="overview-showcase-head"><CheckCircle2 className="w-6 h-6 text-emerald-500"/><div><h2>Seller Setup Progress</h2><p>Complete the steps to get the most from Bazunk.</p></div></div>
+          <DashboardSetupProgress fallbackName={user.name || user.username || ""}/>
+        </section>
+      </div>
       {/* Recent Activity */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <h2 className="font-bold text-gray-900 mb-4">Recent Activity</h2>
@@ -6000,7 +5975,7 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
-            {activeSection === "overview" && <><DashboardSetupProgress fallbackName={user.name || user.username || ""}/><OverviewContent user={user} onNavigate={setActiveSection} /></>}
+            {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
