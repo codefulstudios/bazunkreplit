@@ -1064,6 +1064,33 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
       </div>
 
+
+      <div className="overview-showcase-grid">
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><BarChart2 className="w-6 h-6"/></div><div><h2>Sales Performance</h2><p>Track sales, orders and views from your account.</p></div><button type="button" onClick={() => onNavigate("analytics")} className="overview-view-all">View Analytics <ArrowRight className="w-4 h-4"/></button></div>
+          <div className="overview-analytics-chips">
+            <div><Coins className="w-5 h-5"/><strong>£{user.balance.toFixed(2)}</strong><span>Available Credits</span></div>
+            <div><ShoppingBag className="w-5 h-5"/><strong>{myListings.length}</strong><span>My Listings</span></div>
+            <div><Eye className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.views)||0),0).toLocaleString()}</strong><span>Listing Views</span></div>
+            <div><Heart className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.watchers)||0),0).toLocaleString()}</strong><span>Watchers</span></div>
+          </div>
+          <div className="overview-performance-visual">
+            <p>Visit Analytics for real sales and time-series charts.</p>
+            <div className="overview-visual-bars" aria-hidden="true"><i style={{height:"24%"}}/><i style={{height:"35%"}}/><i style={{height:"30%"}}/><i style={{height:"40%"}}/><i style={{height:"37%"}}/><i style={{height:"55%"}}/><i style={{height:"48%"}}/><i style={{height:"60%"}}/><i style={{height:"52%"}}/><i style={{height:"66%"}}/><i style={{height:"64%"}}/><i style={{height:"73%"}}/><i style={{height:"70%"}}/><i style={{height:"84%"}}/><i style={{height:"79%"}}/><i style={{height:"95%"}}/></div>
+          </div>
+        </section>
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
+          <div className="overview-new-actions">
+            <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button onClick={()=>onNavigate("importers")} className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></button>
+            <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
+          </div>
+          <button onClick={()=>onNavigate("promotions")} className="overview-new-promo"><Crown className="w-9 h-9"/><span><b>Boost Your Listings</b><small>Use Promotions to reach more buyers.</small></span><Megaphone className="w-9 h-9"/></button>
+        </section>
+      </div>
+
       {/* Referral rewards — deliberately prominent on the dashboard */}
       <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#F26B21] via-[#E85D2A] to-[#4A5CE8] text-white shadow-sm">
         <div className="p-5 md:p-6 flex flex-col lg:flex-row lg:items-center gap-5">
