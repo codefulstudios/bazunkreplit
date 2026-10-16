@@ -1,3 +1,4 @@
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAuth, clerkClient } from "@clerk/express";
 import { percentage, minor } from "../lib/marketplaceFees.js";
 import { quoteCart, saveFeeSnapshot, QuoteError } from "../lib/checkoutQuote.js";
@@ -36,6 +37,74 @@ function resolveOrigin(req: import("express").Request): string {
     "https://bazunk-web.onrender.com"
   );
 }
+
+async function customerForAccount(email: string) {
+  const stripe = await getUncachableStripeClient();
+  const user = await storage.getUser(email);
+  let customerId = user?.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email });
+    await storage.setStripeCustomerId(email, customer.id);
+    customerId = customer.id;
+  }
+  return { stripe, customerId };
+}
+
+router.get("/stripe/payment-methods", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const { stripe, customerId } = await customerForAccount(email);
+    const [methods, customer] = await Promise.all([
+      stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 100 }),
+      stripe.customers.retrieve(customerId),
+    ]);
+    const defaultId = !customer.deleted && typeof customer.invoice_settings?.default_payment_method === "string"
+      ? customer.invoice_settings.default_payment_method : null;
+    res.setHeader("Cache-Control", "no-store");
+    res.json(methods.data.map(m => ({ id: m.id, brand: m.card?.brand, last4: m.card?.last4,
+      expiry: `${m.card?.exp_month}/${m.card?.exp_year}`, name: m.billing_details.name, default: m.id === defaultId })));
+  } catch(e) { logger.error({err:e}, "Payment method list failed"); res.status(500).json({error:"Could not retrieve payment methods"}); }
+});
+
+router.post("/stripe/payment-methods/setup", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const { stripe, customerId } = await customerForAccount(email);
+    const origin = new URL(resolveOrigin(req));
+    if (!["https://bazunk.com", "https://www.bazunk.com", "http://localhost:5173"].includes(origin.origin)) {
+      res.status(400).json({error:"Unrecognised return origin"}); return;
+    }
+    const session = await stripe.checkout.sessions.create({
+      mode: "setup", customer: customerId,
+      payment_method_types: ["card"],
+      success_url: `${origin.origin}/dashboard?tab=payment-cards&card_setup=success`,
+      cancel_url: `${origin.origin}/dashboard?tab=payment-cards&card_setup=cancelled`,
+    });
+    res.json({url:session.url});
+  } catch(e) { logger.error({err:e}, "Card setup failed"); res.status(500).json({error:"Could not start secure card setup"}); }
+});
+
+router.delete("/stripe/payment-methods/:id", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const {stripe, customerId} = await customerForAccount(email);
+    const method = await stripe.paymentMethods.retrieve(req.params.id);
+    if (method.customer !== customerId) {res.status(404).json({error:"Card not found"});return;}
+    await stripe.paymentMethods.detach(method.id);
+    res.json({success:true});
+  } catch(e) {logger.error({err:e},"Card removal failed");res.status(500).json({error:"Could not remove card"});}
+});
+
+router.post("/stripe/payment-methods/:id/default", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const {stripe, customerId} = await customerForAccount(email);
+    const method = await stripe.paymentMethods.retrieve(req.params.id);
+    if (method.customer !== customerId) {res.status(404).json({error:"Card not found"});return;}
+    await stripe.customers.update(customerId,{invoice_settings:{default_payment_method:method.id}});
+    res.json({success:true});
+  } catch(e) {logger.error({err:e},"Default card update failed");res.status(500).json({error:"Could not update default card"});}
+});
 
 router.get("/stripe/publishable-key", async (_req, res) => {
   try {
