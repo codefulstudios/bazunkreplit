@@ -1,3 +1,4 @@
+import { fulfillSpecialCheckout } from "./lib/specialCheckout.js";
 import type Stripe from "stripe";
 import { getUncachableStripeClient } from "./stripeClient.js";
 import { fulfillCartSession } from "./lib/fulfillment.js";
@@ -23,6 +24,7 @@ export class WebhookHandlers {
     ) {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.metadata?.type === "cart") await fulfillCartSession(session.id);
+      if (session.metadata?.type === "special_sale") await fulfillSpecialCheckout(session.id);
       if (session.metadata?.type === "shippo_postage") await fulfillPostage(session.id);
     }
   }
