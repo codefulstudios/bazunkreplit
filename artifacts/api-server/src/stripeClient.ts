@@ -9,7 +9,12 @@ function requireEnv(name: string): string {
 }
 
 export async function getUncachableStripeClient(): Promise<Stripe> {
-  return new Stripe(requireEnv("STRIPE_SECRET_KEY"), {
+  const key = requireEnv("STRIPE_SECRET_KEY");
+  // An accidentally copied production key must never be usable by staging.
+  if ((process.env.RENDER_SERVICE_NAME ?? "").toLowerCase().includes("staging") && !key.startsWith("sk_test_")) {
+    throw new Error("Staging Stripe must use a test-mode secret key");
+  }
+  return new Stripe(key, {
     apiVersion: "2025-08-27.basil" as any,
   });
 }
