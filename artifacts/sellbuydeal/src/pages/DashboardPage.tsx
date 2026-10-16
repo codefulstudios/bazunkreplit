@@ -2245,71 +2245,46 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
 function PaymentSection({ defaultTab = "payouts" }: { defaultTab?: "payouts" | "cards" }) {
   const { user } = useAuth();
   const [payTab, setPayTab] = useState<"payouts" | "cards">(defaultTab);
-  const cardsKey = user?.email ? `sbd_cards_v1_${user.email}` : null;
-  const [cardsLoadedKey, setCardsLoadedKey] = useState<string | null>(null);
-  const [cards, setCards] = useState<{ id: number; brand: string; last4: string; expiry: string; name: string; default: boolean }[]>([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newCard, setNewCard] = useState(EMPTY_CARD);
+  const { getToken } = useClerkAuth();
+  const [cards, setCards] = useState<{ id: string; brand: string; last4: string; expiry: string; name: string; default: boolean }[]>([]);
   const [cardError, setCardError] = useState("");
-  const [editCardId, setEditCardId] = useState<number | null>(null);
-  const [editCard, setEditCard] = useState(EMPTY_CARD);
-  const [editCardError, setEditCardError] = useState("");
-
-  useEffect(() => {
-    if (!cardsKey) { setCards([]); setCardsLoadedKey(null); return; }
-    try { const s = localStorage.getItem(cardsKey); setCards(s ? JSON.parse(s) : []); } catch { setCards([]); }
-    setCardsLoadedKey(cardsKey);
-  }, [cardsKey]);
-  useEffect(() => {
-    if (!cardsLoadedKey) return;
-    localStorage.setItem(cardsLoadedKey, JSON.stringify(cards));
-  }, [cards, cardsLoadedKey]);
-
-  const brandColor: Record<string, string> = {
-    Visa: "bg-blue-600",
-    Mastercard: "bg-red-500",
-  };
-
-  function removeCard(id: number) {
-    setCards((prev) => {
-      const remaining = prev.filter((c) => c.id !== id);
-      if (remaining.length > 0 && !remaining.some((c) => c.default)) {
-        remaining[0] = { ...remaining[0], default: true };
-      }
-      return remaining;
+  const [cardBusy, setCardBusy] = useState(false);
+  async function cardRequest(path: string, method = "GET") {
+    const token = await getToken();
+    if (!token) throw new Error("Sign in to manage payment cards");
+    const response = await fetch("/api/stripe/payment-methods" + path, {
+      method, headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
     });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Payment method request failed");
+    return data;
   }
-
-  function handleSaveCard() {
-    const digits = newCard.cardNumber.replace(/\s/g, "");
-    if (!newCard.holderName.trim()) { setCardError("Cardholder name is required."); return; }
-    if (digits.length < 13 || digits.length > 19) { setCardError("Enter a valid card number."); return; }
-    if (!/^\d{2}\/\d{2}$/.test(newCard.expiry.trim())) { setCardError("Enter expiry as MM/YY."); return; }
-    if (!newCard.cvv.trim()) { setCardError("CVV is required."); return; }
-
-    const brand = digits.startsWith("4") ? "Visa" : digits.startsWith("5") ? "Mastercard" : "Card";
-    setCards((prev) => [
-      ...prev,
-      { id: Date.now(), brand, last4: digits.slice(-4), expiry: newCard.expiry.trim(), name: newCard.holderName.trim(), default: prev.length === 0 },
-    ]);
-    setNewCard(EMPTY_CARD);
-    setCardError("");
-    setShowAdd(false);
+  async function refreshCards() {
+    try { setCards(await cardRequest("")); setCardError(""); }
+    catch (e) { setCardError(e instanceof Error ? e.message : "Could not load cards"); }
   }
-
-  function startEditCard(card: typeof cards[0]) {
-    setEditCardId(card.id);
-    setEditCard({ holderName: card.name, cardNumber: `•••• •••• •••• ${card.last4}`, expiry: card.expiry, cvv: "" });
-    setEditCardError("");
-    setShowAdd(false);
+  useEffect(() => {
+    if (payTab === "cards" && user?.email) void refreshCards();
+  }, [payTab, user?.email]);
+  async function addCard() {
+    setCardBusy(true);
+    try {
+      const result = await cardRequest("/setup", "POST");
+      if (!result.url) throw new Error("Stripe did not return a secure setup page");
+      window.location.assign(result.url);
+    } catch(e) { setCardError(e instanceof Error ? e.message : "Could not start card setup"); setCardBusy(false); }
   }
-
-  function handleUpdateCard() {
-    if (!editCard.holderName.trim()) { setEditCardError("Cardholder name is required."); return; }
-    if (!/^\d{2}\/\d{2}$/.test(editCard.expiry.trim())) { setEditCardError("Enter expiry as MM/YY."); return; }
-    setCards((prev) => prev.map((c) => c.id === editCardId ? { ...c, name: editCard.holderName.trim(), expiry: editCard.expiry.trim() } : c));
-    setEditCardId(null);
-    setEditCardError("");
+  async function removeCard(id: string) {
+    setCardBusy(true);
+    try { await cardRequest("/" + encodeURIComponent(id), "DELETE"); await refreshCards(); }
+    catch(e) {setCardError(e instanceof Error ? e.message : "Could not remove card");}
+    finally {setCardBusy(false);}
+  }
+  async function setDefaultCard(id: string) {
+    setCardBusy(true);
+    try { await cardRequest("/" + encodeURIComponent(id) + "/default", "POST"); await refreshCards(); }
+    catch(e) {setCardError(e instanceof Error ? e.message : "Could not update default card");}
+    finally {setCardBusy(false);}
   }
 
   return (
@@ -2335,118 +2310,33 @@ function PaymentSection({ defaultTab = "payouts" }: { defaultTab?: "payouts" | "
       )}
 
       {payTab === "cards" && (
-      <div>
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-700">{cards.length} card{cards.length !== 1 ? "s" : ""} saved</p>
-        </div>
-        <button
-          onClick={() => { setShowAdd((v) => !v); setCardError(""); setNewCard(EMPTY_CARD); }}
-          className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Card
-        </button>
-      </div>
-
-      <div className="p-5 space-y-3">
-        {cards.map((card) => (
-          <div key={card.id} className={`rounded-xl border-2 ${card.default ? "border-[#4A5CE8]/30 bg-blue-50/30" : "border-gray-100"}`}>
-            {editCardId === card.id ? (
-              <div className="p-4">
-                <p className="text-sm font-bold text-gray-900 mb-3">Edit Card</p>
-                <div className="space-y-3">
-                  <input placeholder="Cardholder name" value={editCard.holderName}
-                    onChange={(e) => setEditCard((p) => ({ ...p, holderName: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white" />
-                  <input placeholder="MM / YY" value={editCard.expiry} maxLength={5}
-                    onChange={(e) => setEditCard((p) => ({ ...p, expiry: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white" />
-                </div>
-                {editCardError && <p className="mt-2 text-xs text-red-500 font-medium">{editCardError}</p>}
-                <div className="flex gap-2 mt-3">
-                  <button onClick={handleUpdateCard} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
-                  <button onClick={() => setEditCardId(null)} className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 flex items-center gap-4">
-                <div className={`w-12 h-8 rounded-lg ${brandColor[card.brand] ?? "bg-gray-500"} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-white text-[10px] font-black">{card.brand.toUpperCase()}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-gray-900">•••• •••• •••• {card.last4}</p>
-                    {card.default && <span className="text-[10px] font-bold bg-[#4A5CE8] text-white px-2 py-0.5 rounded-full">Default</span>}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{card.name} · Expires {card.expiry}</p>
-                </div>
-                <button onClick={() => startEditCard(card)} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-                <button onClick={() => removeCard(card.id)} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-400 transition-colors" data-testid={`button-remove-card-${card.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {showAdd && (
-          <div className="rounded-xl border-2 border-dashed border-[#4A5CE8]/30 p-5 bg-blue-50/20">
-            <p className="text-sm font-bold text-gray-900 mb-3">New Card</p>
-            <div className="space-y-3">
-              <input
-                placeholder="Cardholder name"
-                value={newCard.holderName}
-                onChange={(e) => setNewCard((p) => ({ ...p, holderName: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-              />
-              <input
-                placeholder="Card number"
-                value={newCard.cardNumber}
-                onChange={(e) => setNewCard((p) => ({ ...p, cardNumber: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                maxLength={19}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  placeholder="MM / YY"
-                  value={newCard.expiry}
-                  onChange={(e) => setNewCard((p) => ({ ...p, expiry: e.target.value }))}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                  maxLength={5}
-                />
-                <input
-                  placeholder="CVV"
-                  value={newCard.cvv}
-                  onChange={(e) => setNewCard((p) => ({ ...p, cvv: e.target.value }))}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                  maxLength={4}
-                />
-              </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-gray-900">{cards.length} saved card{cards.length === 1 ? "" : "s"}</p>
+              <p className="text-xs text-gray-600">Payment methods are managed securely by Stripe, not stored in this browser.</p>
             </div>
-            {cardError && <p className="mt-2 text-xs text-red-500 font-medium">{cardError}</p>}
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleSaveCard}
-                className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90 transition-opacity"
-                data-testid="button-save-card"
-              >
-                Save Card
-              </button>
-              <button
-                onClick={() => { setShowAdd(false); setCardError(""); setNewCard(EMPTY_CARD); }}
-                className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <button type="button" disabled={cardBusy} onClick={addCard}
+              className="rounded-lg bg-[#4A5CE8] px-4 py-2 text-white font-semibold text-sm disabled:opacity-50">Add Card via Stripe</button>
           </div>
-        )}
-
-        <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
-          <Shield className="w-3.5 h-3.5 text-emerald-500" />
-          Payments are encrypted and processed securely. We never store full card details.
+          {cardError && <p role="alert" className="text-red-700 font-semibold text-sm">{cardError}</p>}
+          {cards.map(card => (
+            <div key={card.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 p-4">
+              <CreditCard className="h-6 w-6 text-[#4A5CE8]" />
+              <div className="flex-1 min-w-[150px]">
+                <p className="text-sm font-bold text-gray-900">{card.brand?.toUpperCase()} •••• {card.last4} {card.default ? "— Default" : ""}</p>
+                <p className="text-xs text-gray-600">{card.name || "Payment card"} · Expires {card.expiry}</p>
+              </div>
+              {!card.default && <button disabled={cardBusy} onClick={() => setDefaultCard(card.id)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-900">Set default</button>}
+              <button disabled={cardBusy} onClick={() => removeCard(card.id)}
+                className="rounded-lg border border-red-300 px-3 py-2 text-xs font-bold text-red-700">Remove</button>
+            </div>
+          ))}
+          <p className="text-xs text-gray-600">Card details are entered only on Stripe's secure checkout page. Existing browser-only cards are not imported.</p>
         </div>
-      </div>
-    </div>
-    )}
+      )}
+
   </div>
   );
 }
