@@ -92,7 +92,7 @@ router.get("/listings", async (req, res) => {
       res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
       return;
     }
-    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin } = req.query as Record<string, string>;
 
     if (ids) {
       const regionalVisibility = listingRegionFilter(req.query.region);
@@ -127,6 +127,13 @@ router.get("/listings", async (req, res) => {
     if (conditionValues.length) clauses.push(inArray(listingsTable.condition, conditionValues));
     if (minPrice && Number.isFinite(Number(minPrice))) clauses.push(sql`${listingsTable.price}::numeric >= ${Number(minPrice)}`);
     if (maxPrice && Number.isFinite(Number(maxPrice))) clauses.push(sql`${listingsTable.price}::numeric <= ${Number(maxPrice)}`);
+    const shippingOrigins = csv(shipFrom);
+    if (shippingOrigins.length) clauses.push(inArray(listingsTable.shipOrigin, shippingOrigins));
+    const shippingZones = csv(shipTo);
+    if (shippingZones.length) clauses.push(sql`(${sql.join(shippingZones.map(z => sql`${listingsTable.shipZone} ILIKE ${"%" + z + "%"}`), sql` OR `)})`);
+    if (freeShipping === "true") clauses.push(sql`COALESCE(NULLIF(${listingsTable.shippingPrice}, '')::numeric, 0) = 0`);
+    const days = listedWithin === "today" ? 1 : listedWithin === "week" ? 7 : listedWithin === "month" ? 30 : null;
+    if (days) clauses.push(sql`${listingsTable.createdAt} >= NOW() - ${days} * INTERVAL '1 day'`);
     const ordering = sort === "price-asc" || sort === "price-lowest" ? sql`${listingsTable.price}::numeric ASC`
       : sort === "price-desc" ? sql`${listingsTable.price}::numeric DESC`
       : sort === "views" ? sql`${listingsTable.views} DESC` : desc(listingsTable.createdAt);
