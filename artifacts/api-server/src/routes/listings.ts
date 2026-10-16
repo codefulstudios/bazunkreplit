@@ -92,7 +92,7 @@ router.get("/listings", async (req, res) => {
       res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
       return;
     }
-    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort } = req.query as Record<string, string>;
 
     if (ids) {
       const regionalVisibility = listingRegionFilter(req.query.region);
@@ -108,6 +108,28 @@ router.get("/listings", async (req, res) => {
     const parsedLimit = Math.min(isNaN(parseInt(limit)) ? 40 : parseInt(limit), 100);
     const parsedOffset = isNaN(parseInt(offset)) ? 0 : parseInt(offset);
     const regionalVisibility = listingRegionFilter(req.query.region);
+
+    // Apply browsing criteria before LIMIT/OFFSET, across the complete database.
+    const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
+    if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
+    if (q?.trim()) {
+      const escaped = q.trim().slice(0, 150).replace(/[\\%_]/g, "\\    // Browse/list views only need card fields.");
+      clauses.push(sql`(${listingsTable.title} ILIKE ${"%" + escaped + "%"} ESCAPE '\\' OR ${listingsTable.category} ILIKE ${"%" + escaped + "%"} ESCAPE '\\')`);
+    }
+    const csv = (value?: string) => value?.split(",").map(x => x.trim()).filter(Boolean).slice(0, 30) ?? [];
+    const categoryValues = csv(categories).length ? csv(categories) : category && category !== "all" ? [category] : [];
+    const subValues = csv(subcategories).length ? csv(subcategories) : sub ? [sub] : [];
+    const thirdValues = csv(thirdLevels).length ? csv(thirdLevels) : subsub ? [subsub] : [];
+    if (categoryValues.length) clauses.push(sql`LOWER(${listingsTable.category}) IN (${sql.join(categoryValues.map(x=>sql`${x.toLowerCase()}`),sql`, `)})`);
+    if (subValues.length) clauses.push(sql`LOWER(${listingsTable.subcategory}) IN (${sql.join(subValues.map(x=>sql`${x.toLowerCase()}`),sql`, `)})`);
+    if (thirdValues.length) clauses.push(inArray(listingsTable.subsubcategory, thirdValues));
+    const conditionValues = csv(conditions);
+    if (conditionValues.length) clauses.push(inArray(listingsTable.condition, conditionValues));
+    if (minPrice && Number.isFinite(Number(minPrice))) clauses.push(sql`${listingsTable.price}::numeric >= ${Number(minPrice)}`);
+    if (maxPrice && Number.isFinite(Number(maxPrice))) clauses.push(sql`${listingsTable.price}::numeric <= ${Number(maxPrice)}`);
+    const ordering = sort === "price-asc" || sort === "price-lowest" ? sql`${listingsTable.price}::numeric ASC`
+      : sort === "price-desc" ? sql`${listingsTable.price}::numeric DESC`
+      : sort === "views" ? sql`${listingsTable.views} DESC` : desc(listingsTable.createdAt);
 
     // Browse/list views only need card fields. Avoid sending large description, tags,
     // specifications and other detail-only columns for every listing.
@@ -135,16 +157,8 @@ router.get("/listings", async (req, res) => {
         createdAt: listingsTable.createdAt,
       })
       .from(listingsTable)
-      .where(
-        sellerEmail
-          ? and(visible,regionalVisibility,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
-          : category && category !== "all"
-            ? sub
-              ? and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
-              : and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
-            : and(visible,regionalVisibility,eq(listingsTable.status, "active"))
-      )
-      .orderBy(desc(listingsTable.createdAt))
+      .where(and(...clauses))
+      .orderBy(ordering)
       .limit(parsedLimit)
       .offset(parsedOffset);
 
