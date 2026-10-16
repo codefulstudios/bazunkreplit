@@ -1,3 +1,4 @@
+import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { Link, useLocation } from "wouter";
@@ -1408,7 +1409,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
   }
 
   return (
-    <div className="space-y-4 text-white">
+    <div className="bazunk-credit-shell space-y-4 text-white">
       {/* Hero banner */}
       <div className="relative overflow-hidden rounded-2xl border border-[#5062f7] bg-gradient-to-r from-[#354ee1] via-[#4456e7] to-[#4455e4] p-5 text-white shadow-[0_12px_40px_rgba(37,40,166,.3)] sm:p-6">
         <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-fuchsia-400/35 blur-3xl"/>
