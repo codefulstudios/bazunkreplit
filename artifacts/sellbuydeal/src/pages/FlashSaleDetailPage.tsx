@@ -1,3 +1,4 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import {
@@ -135,6 +136,20 @@ export function FlashSaleDetailPage() {
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
+  const [checkoutBusy,setCheckoutBusy] = useState(false);
+  const [checkoutError,setCheckoutError] = useState<string | null>(null);
+  async function buySale() {
+    if(!user){setCheckoutError("Sign in to purchase this deal");return;}
+    setCheckoutBusy(true);setCheckoutError(null);
+    try {
+      const token=await getToken();
+      const response=await fetch("/api/stripe/special-checkout",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({kind:"flash",id})});
+      const data=await response.json();
+      if(!response.ok || !data.url)throw new Error(data.error||"Checkout unavailable");
+      window.location.assign(data.url);
+    }catch(error){setCheckoutError(error instanceof Error?error.message:"Checkout unavailable");setCheckoutBusy(false);}
+  }
   const [sale, setSale] = useState<FlashSale | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -286,9 +301,11 @@ export function FlashSaleDetailPage() {
               </div>
 
               {isActive && !isOwnSale && (
-                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-center">
-                  <p className="text-sm font-bold text-amber-900">Checkout temporarily unavailable</p>
-                  <p className="mt-1 text-xs text-amber-800">This flash sale cannot be purchased until secure Stripe checkout is enabled. No payment will be taken.</p>
+                <div className="space-y-2">
+                  <button type="button" disabled={checkoutBusy} onClick={buySale} className="w-full py-3 rounded-xl bg-[#F26B21] text-white font-black disabled:opacity-50">
+                    {checkoutBusy ? "Opening secure checkout…" : "Buy now securely"}
+                  </button>
+                  {checkoutError && <p role="alert" className="text-sm font-semibold text-red-700">{checkoutError}</p>}
                 </div>
               )}
               {isUpcoming && (
