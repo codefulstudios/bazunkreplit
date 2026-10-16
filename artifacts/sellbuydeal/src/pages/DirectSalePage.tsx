@@ -129,7 +129,7 @@ function extractCurrencyCode(display: string): string {
 }
 
 export function DirectSalePage() {
-  const marketplaceRegion = useMarketplaceRegion();
+  const [marketplaceRegion] = useMarketplaceRegion();
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
