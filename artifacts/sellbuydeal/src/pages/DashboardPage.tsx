@@ -2159,7 +2159,7 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {status?.chargesEnabled
-                ? "You'll receive net payouts automatically after each sale."
+                ? "Your Stripe account is connected. Seller transfers require delivery confirmation and payout release."
                 : "Link your bank via Stripe Express to receive payouts. Free to set up — takes ~5 minutes."}
             </p>
           </div>
