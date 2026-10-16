@@ -282,6 +282,14 @@ export function BrowsePage() {
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
+  if (query.trim()) browseScope.set("q", query.trim());
+  if (selectedCategories.length) browseScope.set("categories", selectedCategories.join(","));
+  if (selectedSubcategories.length) browseScope.set("subcategories", selectedSubcategories.join(","));
+  if (selectedThirdLevels.length) browseScope.set("thirdLevels", selectedThirdLevels.join(","));
+  if (selectedConditions.length) browseScope.set("conditions", selectedConditions.join(","));
+  if (minPrice) browseScope.set("minPrice", minPrice);
+  if (maxPrice) browseScope.set("maxPrice", maxPrice);
+  browseScope.set("sort", sort);
   const browseScopeQuery = browseScope.toString();
 
 
@@ -367,38 +375,6 @@ export function BrowsePage() {
   const filtered = useMemo(() => {
     let result = [...allListings];
 
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      result = result.filter((p) => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    function parseExtras(p: unknown): { category: string; subcategory: string }[] {
-      try {
-        const raw = (p as Record<string, string | undefined>).extra_categories;
-        return raw ? JSON.parse(raw) : [];
-      } catch { return []; }
-    }
-    const matchesCategory = (category: string) => selectedCategories.includes(category)
-      || (["digital", "digital-products"].includes(category) && selectedCategories.some((selected) => ["digital", "digital-products"].includes(selected)));
-    const matchesSubcategory = (subcategory: string) => selectedSubcategories.includes(subcategory)
-      || (["software", "software-apps"].includes(subcategory) && selectedSubcategories.some((selected) => ["software", "software-apps"].includes(selected)));
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => matchesCategory(p.category) || parseExtras(p).some((e) => matchesCategory(e.category)));
-    }
-    if (selectedSubcategories.length > 0) {
-      result = result.filter((p) => (p.subcategory && matchesSubcategory(p.subcategory)) || parseExtras(p).some((e) => matchesSubcategory(e.subcategory)));
-    }
-    if (selectedThirdLevels.length > 0) {
-      result = result.filter(p => selectedThirdLevels.includes((p as unknown as { subsubcategory?: string }).subsubcategory ?? ""));
-    }
-    if (selectedConditions.length > 0) {
-      result = result.filter((p) => selectedConditions.includes(p.condition));
-    }
-    if (minPrice !== "") {
-      result = result.filter((p) => p.price >= parseFloat(minPrice));
-    }
-    if (maxPrice !== "") {
-      result = result.filter((p) => p.price <= parseFloat(maxPrice));
-    }
     if (verifiedOnly) {
       result = result.filter((p) => p.verified);
     }
