@@ -134,7 +134,7 @@ router.post("/snap-sell/quality",async(req,res)=>{
 router.get("/snap-sell/lookup/:code",async(req,res)=>{
  const email=await auth(req,res);if(!email||!await allowed(res,"snap_barcode"))return;
  const code=String(req.params.code||"").replace(/[\s-]/g,"");
- if(!/^\d{8,14}$/.test(code)){res.status(400).json({error:"Enter an 8–14 digit EAN, UPC or ISBN (hyphens allowed)."});return;}
+ if(!/^(?:\d{8}|\d{10}|\d{12}|\d{13}|\d{14}|\d{9}X)$/.test(code)){res.status(400).json({error:"Enter an 8–14 digit EAN, UPC or ISBN (hyphens allowed)."});return;}
  if(!await quota(email,"lookup",80)){res.status(429).json({error:"Daily catalogue lookup limit reached."});return;}
  const abort=new AbortController();const timer=setTimeout(()=>abort.abort(),8500);
  try{
@@ -155,7 +155,7 @@ router.get("/snap-sell/lookup/:code",async(req,res)=>{
   suggestion.brand=clean(product?.brand,90);
   suggestion.model=clean(product?.model,90);
   suggestion.tags=unique(product?.category?.split?.(" > ")||[],8);
-  suggestion.attributes=[{key:code.length===13?"EAN / ISBN-13":code.length===10?"ISBN-10":"UPC / EAN",value:code},
+  suggestion.attributes=[{key:book ? (code.length===13?"ISBN-13":"ISBN-10") : "UPC / EAN",value:code},
    ...(product?.brand?[{key:"Brand",value:clean(product.brand,90)}]:[]),
    ...(product?.model?[{key:"Model",value:clean(product.model,90)}]:[]),
    ...(book?.number_of_pages?[{key:"Pages",value:String(book.number_of_pages)}]:[])];
