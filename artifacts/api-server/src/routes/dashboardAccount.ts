@@ -96,7 +96,7 @@ router.get("/dashboard/seller-metrics",async(req,res)=>{
     COALESCE(SUM(CASE WHEN status NOT IN('cancelled','refunded') THEN seller_net ELSE 0 END),0)::numeric sales_net,
     COALESCE(SUM(CASE WHEN status='delivered' AND fee_policy='private-buyer-business-seller-v1'
       AND NOT open_dispute AND NOT open_return AND COALESCE(refunded_total,0)=0
-      AND payout_status NOT IN ('paid','refund_pending','reversal_pending','test_no_payout')
+      AND COALESCE(payout_status,'') NOT IN ('paid','refund_pending','reversal_pending','test_no_payout')
       AND stripe_transfer_id IS NULL THEN GREATEST(COALESCE(seller_net,0),0) ELSE 0 END),0)::numeric eligible,
     COALESCE(SUM(CASE WHEN status NOT IN ('cancelled','refunded','delivered') AND NOT open_dispute AND NOT open_return
       AND COALESCE(payout_status,'') NOT IN ('paid','refund_pending','reversal_pending','test_no_payout')
