@@ -4,6 +4,7 @@ import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import {
+  Camera,
   ShoppingCart,
   Layers,
   Newspaper,
@@ -27,6 +28,11 @@ import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const SELL_OPTIONS = [
+  {
+    id:"snap-sell",title:"Snap & Sell",
+    description:"Take a photo or scan a barcode to start an editable listing with AI-assisted details.",
+    icon:Camera,gradient:"from-orange-500 to-fuchsia-600",cta:"Snap an item",ctaColor:"text-orange-600",href:"/sell/snap",badge:"NEW",
+  },
   {
     id: "direct-sale",
     title: "Direct Sale",
