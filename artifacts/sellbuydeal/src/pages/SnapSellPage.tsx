@@ -91,7 +91,11 @@ export function SnapSellPage(){
     else {
      const bitmap=await createImageBitmap(file);
      try{
-      const detector=new ctor({formats:["ean_13","ean_8","upc_a","upc_e","code_128","itf"]});
+      const preferred=["ean_13","ean_8","upc_a","upc_e","code_128","itf"];
+      const supported=typeof ctor.getSupportedFormats==="function"?await ctor.getSupportedFormats():preferred;
+      const formats=preferred.filter(x=>supported.includes(x));
+      if(!formats.length)throw Error("This browser cannot decode supported barcodes. Please enter the number manually.");
+      const detector=new ctor({formats});
       const codes=await detector.detect(bitmap);
       const detected=String(codes?.[0]?.rawValue||"").replace(/[\s-]/g,"");
       if(detected){setBarcode(detected);setSource("Barcode detected: "+detected);}
