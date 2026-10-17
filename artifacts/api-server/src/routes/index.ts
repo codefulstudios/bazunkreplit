@@ -10,6 +10,8 @@ import ordersRouter from "./orders.js";
 import postageRouter from "./postage.js";
 import reviewsRouter from "./reviews.js";
 import messagesRouter from "./messages.js";
+import notificationsRouter from "./notifications.js";
+import marketplaceOffersRouter from "./marketplaceOffers.js";
 import returnsRouter from "./returns.js";
 import auctionsRouter from "./auctions.js";
 import flashSalesRouter from "./flashSales.js";
@@ -49,6 +51,8 @@ router.use(disputesRouter);
 // reviewsRouter first: its GET /orders/seller must win over ordersRouter's GET /orders/:id
 router.use(reviewsRouter);
 router.use(messagesRouter);
+router.use(marketplaceOffersRouter);
+router.use(notificationsRouter);
 router.use(ordersRouter);
 router.use(postageRouter);
 router.use(returnsRouter);
