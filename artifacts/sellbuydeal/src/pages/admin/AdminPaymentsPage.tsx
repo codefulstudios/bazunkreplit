@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { CreditCard, RefreshCw, Percent, Info } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
+import { AdminFinanceReconciliation } from "@/components/admin/AdminFinanceReconciliation";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Payment {
@@ -98,6 +99,7 @@ export function AdminPaymentsPage() {
       <p className="text-xs text-gray-500 mb-4">Gross live Stripe payments for the purchases shown (up to 50), before refunds and processing fees. Bonus credits and test payments are excluded from totals.</p>
       {error && <div role="alert" className="text-sm text-red-600 mb-4">{error} <button onClick={load} className="underline font-bold">Retry</button></div>}
       {unavailable > 0 && <p role="status" className="text-sm text-amber-700 mb-4">Totals are incomplete: Stripe amounts could not be verified for {unavailable} purchase(s). Refresh to retry.</p>}
+      <div className="mb-6"><AdminFinanceReconciliation /></div>
       {/* Sub-tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5 max-w-xs">
         {([
