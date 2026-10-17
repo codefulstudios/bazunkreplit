@@ -74,7 +74,9 @@ export function savedSearchPredicate(filters: SearchFilters) {
   if(filters.freeShipping==="true") conditions.push(sql`COALESCE(l.shipping_price,0)=0`);
   if(filters.minPrice)conditions.push(sql`l.price >= ${Number(filters.minPrice)}`);
   if(filters.maxPrice)conditions.push(sql`l.price <= ${Number(filters.maxPrice)}`);
-  // "sort" and "listedWithin" control Browse presentation, not whether an item is newly listed.
+  const days=filters.listedWithin==="today"?1:filters.listedWithin==="week"?7:filters.listedWithin==="month"?30:null;
+  if(days)conditions.push(sql`l.created_at >= NOW() - ${days} * INTERVAL '1 day'`);
+  // Sorting controls the order, not which listings qualify.
   return sql.join(conditions, sql` AND `);
 }
 
@@ -102,7 +104,7 @@ export async function refreshSavedSearchMatches(email: string) {
         VALUES(${search.id},${m.id}) ON CONFLICT DO NOTHING
       `);
     }
-    const checkedThrough=matches.length===400?String(matches[matches.length-1].created_at):cutoff.toISOString();
+    const checkedThrough=matches.length===400?new Date(matches[matches.length-1].created_at).toISOString():cutoff.toISOString();
     await db.execute(sql`
       UPDATE marketplace_saved_searches SET last_checked_at=${checkedThrough}
       WHERE id=${search.id} AND LOWER(user_email)=${email} AND alert_enabled=TRUE
