@@ -1,5 +1,6 @@
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
+import adminActionRequiredRouter from "./adminActionRequired.js";
 import { scanSellerCompliance } from "../lib/sellerComplianceScan.js";
 import { syncAllImports } from "../lib/syncJob.js";
 import { attachStripePaymentAmounts } from "../lib/adminPaymentRevenue.js";
@@ -113,6 +114,7 @@ async function readCashback(){const r=await db.execute(sql`SELECT value FROM sit
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
 router.use(adminNavigationRouter); // real alerts and global search, after admin auth
+router.use(adminActionRequiredRouter); // refund/dispute/compliance/Stripe review, also admin-only
 
 // Seller compliance: restricted to authenticated administrators by router.use above.
 // Returns only review cases, not raw private seller evidence.
