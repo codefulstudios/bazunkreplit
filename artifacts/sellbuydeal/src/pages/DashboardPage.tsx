@@ -934,6 +934,7 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
         </div>
         <div className="flex items-center gap-2">
           {selectedIds.size > 0 && <button onClick={deleteSelected} disabled={deletingBatch} className="px-3 py-2 rounded-xl border border-red-300 bg-red-50 text-red-700 text-sm font-bold disabled:opacity-50">{deletingBatch ? "Deleting…" : `Delete (${selectedIds.size})`}</button>}
+          <Link href="/sell/snap" className="flex items-center gap-1.5 rounded-xl bg-violet-700 px-3 py-2 text-sm font-bold text-white hover:bg-violet-800">📸 Snap & Sell</Link>
           <Link href="/sell/direct" className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#F26B21] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> New Listing
           </Link>
@@ -1204,6 +1205,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
           <div className="overview-new-actions">
             <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <Link href="/sell/snap" className="overview-new-action action-pink"><Camera className="w-6 h-6"/><span><b>Snap & Sell</b><small>Photo / barcode assistant</small></span><ChevronRight className="w-4 h-4"/></Link>
             <button onClick={()=>onNavigate("importers")} className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></button>
             <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
             <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
