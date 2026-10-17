@@ -43,12 +43,24 @@ router.get("/admin/feature-toggles/history",async(req,res)=>{
   await ensureHistory();
   const key=String(req.query.key||"").trim();
   if(key && !definition(key)){res.status(400).json({error:"Unknown feature key"});return;}
-  const result=await db.execute(sql`SELECT id,feature_key,environment,previous_enabled,new_enabled,reason,
-   source_change_id,actor,created_at FROM feature_toggle_changes
-   WHERE environment=${ENV} AND (${key}='' OR feature_key=${key})
-   ORDER BY id DESC LIMIT 100`);
+  const [result,legacy]=await Promise.all([
+   db.execute(sql`SELECT id,feature_key,environment,previous_enabled,new_enabled,reason,
+    source_change_id,actor,created_at FROM feature_toggle_changes
+    WHERE environment=${ENV} AND (${key}='' OR feature_key=${key})
+    ORDER BY id DESC LIMIT 100`),
+   db.execute(sql`SELECT id,target_id,actor,summary,before_data,after_data,created_at
+    FROM admin_audit_log WHERE action='feature_flag.change' AND target_type='feature'
+    AND (${key}='' OR target_id=${key}) ORDER BY id DESC LIMIT 100`)
+  ]);
+  const historic=(legacy.rows as any[]).filter(r=>definition(String(r.target_id)))
+    .map(r=>({id:-Number(r.id),feature_key:String(r.target_id),environment:"historical",
+     previous_enabled:r.before_data?.enabled===true,new_enabled:r.after_data?.enabled===true,
+     reason:String(r.summary||"Previously recorded toggle change"),source_change_id:null,
+     actor:String(r.actor||"Admin"),created_at:r.created_at,legacy:true}));
+  const changes=[...result.rows,...historic].sort((a:any,b:any)=>
+    new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,100);
   res.setHeader("Cache-Control","private,no-store");
-  res.json({environment:ENV,changes:result.rows,limit:100});
+  res.json({environment:ENV,changes,limit:100,legacyReadOnly:true});
  }catch{res.status(503).json({error:"Feature history is currently unavailable"});}
 });
 async function change(req:any,res:any,isRollback:boolean){
