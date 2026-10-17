@@ -92,9 +92,11 @@ async function change(req:any,res:any,isRollback:boolean){
    if(before===enabled)return {noop:true,current:before};
    await tx.execute(sql`INSERT INTO site_settings(key,value) VALUES(${"feature_"+key},${enabled?"true":"false"})
      ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`);
+   const identity=(await tx.execute(sql`SELECT value FROM site_settings WHERE key='admin_email' LIMIT 1`)).rows[0] as any;
+   const actor=String(identity?.value||process.env.ADMIN_EMAIL||context(req)).slice(0,320);
    const changed=await tx.execute(sql`INSERT INTO feature_toggle_changes
     (feature_key,environment,previous_enabled,new_enabled,reason,source_change_id,actor)
-    VALUES(${key},${ENV},${before},${enabled},${reason},${isRollback?sourceId:null},${context(req)})
+    VALUES(${key},${ENV},${before},${enabled},${reason},${isRollback?sourceId:null},${actor})
     RETURNING id,created_at`);
    return {ok:true,key,enabled,environment:ENV,change:changed.rows[0]};
   });
