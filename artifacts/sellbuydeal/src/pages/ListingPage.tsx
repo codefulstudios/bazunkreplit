@@ -319,6 +319,8 @@ export function ListingPage() {
   const [offerCustom, setOfferCustom] = useState("");
   const [offerMsg, setOfferMsg] = useState("");
   const [offerSent, setOfferSent] = useState(false);
+  const [offerSending,setOfferSending] = useState(false);
+  const [offerError,setOfferError] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reported, setReported] = useState(false);
@@ -415,17 +417,28 @@ export function ListingPage() {
   const offerPrice = offerPreset ?? (offerCustom ? parseFloat(offerCustom) : 0);
   const offerRatio = product ? offerPrice / product.price : 0;
 
-  function handleSendOffer() {
+  async function handleSendOffer() {
     if (!offerPrice || offerPrice <= 0 || !product) return;
-    makeOffer(product, offerPrice, offerMsg.trim() || undefined);
-    setOfferSent(true);
-    setTimeout(() => {
-      setOfferSent(false);
-      setOfferOpen(false);
-      setOfferPreset(null);
-      setOfferCustom("");
-      setOfferMsg("");
-    }, 3500);
+    if (!session) {navigate(`/sign-in?redirect=${encodeURIComponent(`/listing/${id}`)}`);return;}
+    if(!apiProduct?.id){setOfferError("Offers are available for live marketplace listings only");return;}
+    setOfferSending(true);setOfferError("");
+    try {
+      const token=await session.getToken();
+      if(!token)throw new Error("Please sign in to send an offer");
+      const response=await fetch("/api/offers",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({listingId:apiProduct.id,amount:offerPrice,message:offerMsg.trim()})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Offer could not be submitted");
+      makeOffer(product,offerPrice,offerMsg.trim()||undefined);
+      setOfferSent(true);
+      setTimeout(()=>{
+        setOfferSent(false);setOfferOpen(false);setOfferPreset(null);
+        setOfferCustom("");setOfferMsg("");
+      },3500);
+    }catch(e){setOfferError(e instanceof Error?e.message:"Could not send offer");}
+    finally{setOfferSending(false);}
   }
 
   function resetOfferModal() {
@@ -434,6 +447,7 @@ export function ListingPage() {
     setOfferCustom("");
     setOfferMsg("");
     setOfferSent(false);
+    setOfferError("");
   }
 
   return (
@@ -1079,13 +1093,14 @@ export function ListingPage() {
                         </button>
                         <button
                           onClick={handleSendOffer}
-                          disabled={!offerPrice || offerPrice <= 0}
+                          disabled={!offerPrice || offerPrice <= 0 || offerSending}
                           className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-[#3B4FD8] to-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 shadow-sm"
                           data-testid="button-send-offer">
-                          {offerPrice > 0 ? `Send Offer · £${offerPrice.toFixed(2)}` : "Send Offer"}
+                          {offerSending ? "Sending offer…" : offerPrice > 0 ? `Send Offer · £${offerPrice.toFixed(2)}` : "Send Offer"}
                         </button>
                       </div>
-                      <p className="text-center text-[10px] text-gray-400 mt-3">Offer expires in 48 hours · Seller typically responds in &lt; 1 hour</p>
+                      {offerError && <p role="alert" className="text-sm font-semibold text-red-700 mt-3">{offerError}</p>}
+                      <p className="text-center text-xs text-slate-600 mt-3">Offers are sent securely to the seller. Their response time may vary.</p>
                     </>
                   )}
                 </div>
