@@ -5,7 +5,7 @@ import { useAdmin } from "@/context/AdminContext";
 
 type Order=Record<string,any>; const statuses=["","pending","confirmed","preparing","shipped","out_for_delivery","delivered","cancelled","refunded"];
 const money=(v:any,c="GBP")=>new Intl.NumberFormat(undefined,{style:"currency",currency:c||"GBP"}).format(Number(v||0));
-export function AdminOrdersPage(){const {authFetch}=useAdmin();const [orders,setOrders]=useState<Order[]>([]),[q,setQ]=useState(""),[status,setStatus]=useState(""),[loading,setLoading]=useState(false),[selected,setSelected]=useState<string|null>(null),[detail,setDetail]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
+export function AdminOrdersPage(){const {authFetch}=useAdmin();const [orders,setOrders]=useState<Order[]>([]),[q,setQ]=useState(() => new URLSearchParams(window.location.search).get("search") || ""),[status,setStatus]=useState(""),[loading,setLoading]=useState(false),[selected,setSelected]=useState<string|null>(null),[detail,setDetail]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const [listError,setListError]=useState("");
  const [testOpen,setTestOpen]=useState(false),[testBuyer,setTestBuyer]=useState(""),[testSeller,setTestSeller]=useState(""),[testBusy,setTestBusy]=useState(false),[testError,setTestError]=useState("");
  const loadVersion=useRef(0), detailVersion=useRef(0);
