@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package } from "lucide-react";
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
+import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Listing {
@@ -53,6 +54,9 @@ export function AdminListingsPage() {
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [filter, setFilter] = useState<"all" | "imported" | "user">("all");
   const [offset, setOffset] = useState(0);
+  const [statusFilter,setStatusFilter]=useState("all");
+  const [selectedIds,setSelectedIds]=useState<string[]>([]);
+  const visibleIds=listings.map(l=>String(l.id));
   const [imageEditing, setImageEditing] = useState<number | null>(null);
   const [imageDraft, setImageDraft] = useState("");
   const [imageSaving, setImageSaving] = useState<number | null>(null);
@@ -60,20 +64,22 @@ export function AdminListingsPage() {
   const LIMIT = 50;
 
   useEffect(() => { if (!isAdmin) setLocation("/admin"); }, [isAdmin]);
-  useEffect(() => { setOffset(0); }, [search, filter]);
-  useEffect(() => { load(); }, [search, filter, offset]);
+  useEffect(() => { setOffset(0); setSelectedIds([]); }, [search, filter, statusFilter]);
+  useEffect(() => { load(); }, [search, filter, statusFilter, offset]);
 
   async function load() {
     setLoading(true);
     try {
       const params = new URLSearchParams({ limit: String(LIMIT), offset: String(offset) });
       if (search) params.set("search", search);
+      if (statusFilter!=="all") params.set("status",statusFilter);
       if (filter === "imported") params.set("imported", "1");
       if (filter === "user") params.set("imported", "0");
       const res = await authFetch(`/api/admin/listings?${params}`);
       if (res.ok) {
         const d = await res.json();
         setListings(d.listings ?? []);
+        setSelectedIds([]);
         setTotal(d.total ?? 0);
       }
     } finally {
@@ -132,12 +138,27 @@ export function AdminListingsPage() {
         </div>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <label className="text-sm font-bold text-slate-800 dark:text-white">Listing status
+          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}
+            className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-950 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            {["all","active","pending","draft","suspended","inactive","sold"].map(x=><option key={x} value={x}>{x==="all"?"All statuses":x}</option>)}
+          </select>
+        </label>
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-200">Select or export current page (up to {LIMIT} listings)</span>
+      </div>
+      <div className="mb-3"><AdminBulkSelection selected={selectedIds}
+        rows={listings.map(l=>({id:String(l.id),cells:[l.public_id??"",l.title,l.status,l.category,l.price,l.currency,l.seller_email]}))}
+        columns={["Public ID","Title","Status","Category","Price","Currency","Seller"]} filename="bazunk-admin-selected-listings" onClear={()=>setSelectedIds([])}/></div>
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
+                <th className="px-3 py-2"><input type="checkbox" aria-label="Select all listings on current page" className="h-4 w-4"
+                  checked={visibleIds.length>0&&visibleIds.every(id=>selectedIds.includes(id))}
+                  onChange={e=>setSelectedIds(e.target.checked?visibleIds:[])}/></th>
                 {["ID", "Title", "Category", "Price", "Seller", "Status", "Source listing"].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -145,12 +166,12 @@ export function AdminListingsPage() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={7} className="text-center py-16">
+                <tr><td colSpan={8} className="text-center py-16">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-300" />
                 </td></tr>
               )}
               {!loading && listings.length === 0 && (
-                <tr><td colSpan={7} className="py-16 text-center">
+                <tr><td colSpan={8} className="py-16 text-center">
                   <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />
                   <p className="text-sm text-gray-400 font-medium">No listings found</p>
                 </td></tr>
@@ -162,6 +183,9 @@ export function AdminListingsPage() {
                 const ebayUrl = specs.ebay_url ?? (ebayItemId ? `https://www.ebay.co.uk/itm/${ebayItemId}` : undefined);
                 return (
                   <tr key={l.id} className="border-t border-gray-50 hover:bg-gray-50/50">
+                    <td className="px-3 py-2"><input type="checkbox" aria-label={`Select listing ${l.public_id||l.id}`} className="h-4 w-4"
+                      checked={selectedIds.includes(String(l.id))}
+                      onChange={e=>setSelectedIds(p=>e.target.checked?[...new Set([...p,String(l.id)])]:p.filter(x=>x!==String(l.id)))}/></td>
                     {/* ID */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
