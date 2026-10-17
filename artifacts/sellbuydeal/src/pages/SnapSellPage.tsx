@@ -132,12 +132,13 @@ export function SnapSellPage(){
  }
  function continueToListing(){
   if(!draft.title.trim()){setError("Enter a product title first.");return;}
+  if(!condition){setError("Please select your item’s actual condition before continuing.");return;}
   const validCategory=CATEGORIES.find(c=>c.name===draft.category||c.slug===draft.category);
   const validSub=validCategory?.subcategories.find(x=>x.name===draft.subcategory||x.slug===draft.subcategory);
   const payload={title:draft.title.trim(),description:draft.description.trim(),photos:image?[image]:[],
-    price,condition:condition||"brand-new",category:validCategory?.name||"",
+    price,condition,category:validCategory?.name||"",
     subcategory:validSub?.name||"",tags:draft.tags.join(", "),
-    specifications:[...draft.attributes,...(barcode?[{key:"Barcode / ISBN",value:barcode}]:[])],
+    specifications:[...draft.attributes,...(draft.brand?[{key:"Brand",value:draft.brand}]:[]),...(draft.model?[{key:"Model",value:draft.model}]:[]),...(barcode?[{key:"Barcode / ISBN",value:barcode}]:[])],
     marketplaceRegion:region,source};
   try{sessionStorage.setItem(SNAP_SELL_DRAFT_KEY,JSON.stringify(payload));}
   catch{setError("Browser storage is full. Try a smaller photo or clear other tabs before continuing.");return;}
@@ -237,7 +238,8 @@ export function SnapSellPage(){
     {draft.warnings.length>0&&<div role="note" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-950 dark:bg-amber-950 dark:text-amber-100"><h3 className="mb-2 font-black">Please verify</h3><ul className="list-inside list-disc space-y-1">{draft.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul></div>}
     <button type="button" onClick={()=>void improve()} disabled={!draft.title.trim()||!!busy||!isSignedIn||!caps?.aiWriting} className={action+" w-full bg-purple-700"}><WandSparkles className="h-5 w-5"/>{busy==="write"?"Writing suggestions…":"AI: improve description and recommendations"}</button>
     <div className="border-t border-slate-200 pt-4 dark:border-slate-600">
-     <button type="button" onClick={continueToListing} disabled={!draft.title.trim()||!isSignedIn||caps?.enabled===false} className={action+" w-full bg-orange-600 hover:bg-orange-700"}>Continue to editable Direct Sale <ArrowRight className="h-5 w-5"/></button>
+     <button type="button" onClick={continueToListing} disabled={!draft.title.trim()||!condition||!isSignedIn||caps?.enabled===false} className={action+" w-full bg-orange-600 hover:bg-orange-700"}>Continue to editable Direct Sale <ArrowRight className="h-5 w-5"/></button>
+     {!condition&&<p className="mt-2 text-xs font-bold text-amber-800 dark:text-amber-200">Choose the condition of your actual item to continue.</p>}
      <p className="mt-2 flex items-start gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300"><ShieldCheck className="h-4 w-4 shrink-0"/>You'll confirm your category, shipping, photos and price before publishing. Nothing is listed by Snap & Sell automatically.</p>
     </div>
    </div>
