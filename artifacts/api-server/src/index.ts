@@ -7,6 +7,7 @@ import { startAdminEbaySyncJob } from "./routes/admin.js";
 import { loadRapidApiKeyFromDb, ensureEbayUsageLedger } from "./lib/rapidapi.js";
 import { startListingScheduler } from "./lib/scheduler.js";
 import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
+import { ensureAdminAuditLog } from "./lib/adminAudit.js";
 
 const rawPort = process.env["PORT"];
 
@@ -155,6 +156,42 @@ async function runAppMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
   `, "site_settings");
+  // Owner-requested one-time Chatwoot enablement (17 Oct 2026).
+  // Only the production Bazunk API may apply it; never stage/legacy services.
+  // The marker prevents future restarts from overriding a later admin choice.
+  if (process.env.RENDER_SERVICE_ID === "srv-davd6f3bc2fs73ce9ohg") {
+    try {
+      await ensureAdminAuditLog();
+      const result = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('bazunk-chatwoot-one-time-enable-20261017'))`);
+        const marker = await tx.execute(sql`SELECT 1 FROM site_settings
+          WHERE key='migration_chatwoot_enable_20261017' LIMIT 1`);
+        if (marker.rows.length) return "previously_applied";
+        const found = await tx.execute(sql`SELECT value FROM site_settings
+          WHERE key='feature_chatwoot_support' LIMIT 1`);
+        const oldValue = String((found.rows[0] as any)?.value ?? "true");
+        if (oldValue !== "true") {
+          await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+            VALUES('feature_chatwoot_support','true',NOW())
+            ON CONFLICT(key) DO UPDATE SET value='true',updated_at=NOW()`);
+          await tx.execute(sql`INSERT INTO admin_audit_log
+            (actor,category,action,target_type,target_id,summary,before_data,after_data,metadata)
+            VALUES ('Owner-approved production enablement','settings','feature_flag.change',
+              'feature','chatwoot_support','Owner requested Chatwoot live support re-enabled',
+              ${JSON.stringify({enabled:false})}::jsonb,
+              ${JSON.stringify({enabled:true})}::jsonb,
+              ${JSON.stringify({source:"one_time_production_migration",date:"2026-10-17"})}::jsonb)`);
+        }
+        await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+          VALUES('migration_chatwoot_enable_20261017','applied',NOW())`);
+        return oldValue === "true" ? "already_enabled" : "enabled";
+      });
+      logger.info({ result }, "Owner-approved one-time production Chatwoot toggle change");
+    } catch (err) {
+      logger.error({ err }, "One-time Chatwoot enablement failed");
+    }
+  }
+
 
   await run(sql`
     CREATE TABLE IF NOT EXISTS user_milestones (
