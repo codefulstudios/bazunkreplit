@@ -40,7 +40,7 @@ export function SellerShipping(){
  {counts.problems>0&&<button type="button" onClick={()=>setTab("problems")} className="w-full rounded-xl border-2 border-red-400 bg-red-50 p-3 text-left text-sm font-bold text-red-900 dark:bg-red-950 dark:text-red-100">
   <AlertTriangle className="mr-2 inline h-4 w-4"/> {counts.problems} shipment(s) need attention — review tracking failures, delays or label reconciliation
  </button>}
- {refreshError&&<p role="alert" className="rounded-xl bg-red-50 p-3 font-semibold text-red-800">{refreshError}</p>
+ {refreshError&&<p role="alert" className="rounded-xl bg-red-50 p-3 font-semibold text-red-800">{refreshError}</p>}
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
    {[[counts.action,"Needs action",Clock],[counts.labels,"Labels bought",Package],[counts.transit,"In transit",Truck],[counts.delivered,"Delivered",CheckCircle2]].map(([n,l,I]:any)=><div key={l} className="bg-white border border-gray-100 rounded-2xl p-4"><I className="w-5 h-5 text-[#4A5CE8] mb-3"/><p className="text-2xl font-black">{n}</p><p className="text-xs text-gray-500">{l}</p></div>)}
   </div>
