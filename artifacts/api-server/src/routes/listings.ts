@@ -526,7 +526,7 @@ router.patch("/listings/:id", async (req, res) => {
     if (body.marketplaceRegion !== undefined || body.marketplace_region !== undefined || body.draftForm !== undefined) {
       const region = body.marketplaceRegion ?? body.marketplace_region;
       if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Invalid region" }); return; }
-      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string").slice(0, 10) : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
     }
     if (updates.status && !["draft", "active", "inactive", "sold"].includes(updates.status)) { res.status(400).json({ error: "Invalid listing status" }); return; }
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "no fields to update" }); return; }
