@@ -14,7 +14,8 @@ const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
-  { label: "Listings & Imports", href: "/admin/importer-control", icon: Package },
+  { label: "Listings", href: "/admin/listings", icon: Package },
+  { label: "Importer Control", href: "/admin/importer-control", icon: Package },
   { label: "Importers", href: "/admin/imports", icon: ArrowDownToLine },
   { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
   { label: "Cashback", href: "/admin/cashback", icon: Gift },
@@ -42,7 +43,7 @@ const NAV = [
 const NAV_GROUPS = [
   { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard"] },
   { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","Reviews"] },
-  { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings & Imports","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
+  { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
   { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
   { id:"growth", label:"Growth & Rewards", icon:Megaphone, pages:["Cashback","Rewards","Credits Economy","Referrals","Promotions"] },
   { id:"support", label:"Support & Messaging", icon:LifeBuoy, pages:["Support","Chatwoot Settings","Email Templates"] },
