@@ -6,7 +6,7 @@ export type DashboardActivity = {
   title: string;
   desc: string;
   time: string;
-  type: "order" | "sale" | "offer" | "bid" | "message";
+  type: "order" | "sale" | "offer" | "bid" | "message" | "search";
   href: string;
   unread: boolean;
 };
