@@ -44,8 +44,9 @@ const CONDITION_DESC: Record<string, string> = {
   "poor":       "Significant wear, may need repair",
 };
 
-function getProductImages(image: string) {
-  return image ? [image] : [];
+function getProductImages(image: string, gallery?: string[]) {
+  return [...new Set([image, ...(gallery ?? [])].filter((src): src is string =>
+    typeof src === "string" && src.trim().length > 0))].slice(0, 10);
 }
 
 interface RelatedItem { id: number; public_id: string; title: string; price: string; image: string | null; category: string }
@@ -160,8 +161,7 @@ function SellerCard({ sellerName, sellerUsername, sellerEmail, location, verifie
             <p className="font-semibold text-gray-900 text-sm">{sellerUsername ? `@${sellerUsername}` : sellerName}</p>
             {verified && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
           </div>
-          {sellerUsername && <p className="text-xs text-gray-400 mt-0.5">Bazunk seller</p>}
-          {!sellerUsername && <p className="text-xs text-gray-400 mt-0.5">Bazunk seller</p>}
+          <p className="text-xs text-slate-600 mt-0.5">{verified ? "Identity verified" : "Bazunk seller · verification not shown"}</p>
         </div>
       </div>
 
@@ -189,7 +189,7 @@ function normaliseCondition(raw: unknown): string {
 }
 
 type SpecRow = { key: string; value: string };
-type ApiListingExtra = { _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
+type ApiListingExtra = { _gallery?: string[]; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
 
 const TAG_COLORS = [
   "bg-[#4A5CE8]/10 text-[#4A5CE8]",
@@ -203,7 +203,12 @@ const TAG_COLORS = [
 
 function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & ApiListingExtra {
   let parsedSpecs: SpecRow[] | undefined;
-  try { parsedSpecs = l.specifications ? JSON.parse(l.specifications as string) : undefined; } catch { parsedSpecs = undefined; }
+  let gallery: string[] = [];
+  try {
+    const parsed = typeof l.specifications === "string" ? JSON.parse(l.specifications) : l.specifications;
+    parsedSpecs = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.details) ? parsed.details : [];
+    gallery = Array.isArray(parsed?.photos) ? parsed.photos.filter((p: unknown) => typeof p === "string").slice(0, 10) : [];
+  } catch { parsedSpecs = []; }
   const tagsRaw = typeof l.tags === "string" && l.tags.trim() ? l.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined;
   return {
     id: l.id as number,
@@ -227,6 +232,7 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
     _promotions: Array.isArray(l.promotions) ? (l.promotions as string[]) : [],
     _tags: tagsRaw,
     _specifications: parsedSpecs,
+    _gallery: gallery,
     shipOrigin: (l.shipOrigin as string) ?? undefined,
     shipOriginOther: (l.shipOriginOther as string) ?? undefined,
     shipZone: (l.shipZone as string) ?? undefined,
@@ -350,7 +356,7 @@ export function ListingPage() {
   }
 
   const isDemoListing = ((product as typeof product & ApiListingExtra)._specifications as unknown as { demo_creator?: boolean } | undefined)?.demo_creator === true;
-  const images = getProductImages(product.image);
+  const images = getProductImages(product.image, (product as typeof product & ApiListingExtra)._gallery);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
   // old imports where a subcategory slug was mistakenly stored in the category column.
@@ -497,22 +503,22 @@ export function ListingPage() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               {/* Main image */}
               <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                <motion.img
+                {images.length ? <motion.img
                   key={activeImg}
-                  src={images[activeImg]}
+                  src={images[Math.min(activeImg, Math.max(images.length - 1, 0))]}
                   alt={product.title}
                   className="w-full h-full object-contain p-8"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
-                />
+                /> : <div className="text-center font-semibold text-slate-500">No photo available</div>}
                 {/* Nav arrows */}
                 {images.length > 1 && (
                   <>
-                    <button onClick={handlePrevImg} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-prev-image">
+                    <button onClick={handlePrevImg} aria-label="Previous product photo" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-prev-image">
                       <ChevronLeft className="w-5 h-5 text-gray-700" />
                     </button>
-                    <button onClick={handleNextImg} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-next-image">
+                    <button onClick={handleNextImg} aria-label="Next product photo" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-next-image">
                       <ChevronRight className="w-5 h-5 text-gray-700" />
                     </button>
                   </>
@@ -590,6 +596,8 @@ export function ListingPage() {
                   <button
                     key={i}
                     onClick={() => setActiveImg(i)}
+                    aria-label={`View product photo ${i + 1} of ${images.length}`}
+                    aria-pressed={activeImg === i}
                     className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors flex-shrink-0 ${activeImg === i ? "border-[#4A5CE8]" : "border-gray-200 hover:border-gray-300"}`}
                     data-testid={`button-thumbnail-${i}`}
                   >
