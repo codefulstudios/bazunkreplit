@@ -1,3 +1,4 @@
+import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
 import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
 import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
@@ -392,11 +393,12 @@ function findCategoryTop(val: string): string {
   return parent?.slug ?? SITE_CATEGORIES[0]?.slug ?? "";
 }
 
-function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
+function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }: {
   listing: StoredListing;
   userEmail: string;
   onUpdated: (updated: StoredListing) => void;
   onDeleted: (id: number) => void;
+  onCreated?: () => void;
 }) {
   const { getToken } = useClerkAuth();
   const [listingError, setListingError] = useState("");
@@ -471,13 +473,31 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
     finally { setSaving(false); }
   }
 
-  async function handleSuspend() {
-    setMenuOpen(false); setListingError("");
+  async function handleSellerAction(action: SellerToolAction) {
+    setMenuOpen(false);setListingError("");
     try {
-      const newStatus = listing.status === "active" ? "suspended" : "active";
-      const u = await updateListing({ status: newStatus });
-      onUpdated({ ...listing, status: u.status });
-    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not change listing status"); }
+      if(["duplicate","relist"].includes(action) &&
+        !window.confirm(action==="duplicate" ? "Create an editable draft copy of this listing?" : "Create a new live listing from this item? The original will remain unchanged."))return;
+      const token=await getToken();
+      if(!token)throw new Error("Sign in again to manage your listings");
+      const res=await fetch("/api/listings/seller-tools",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({action,ids:[listing.id]})
+      });
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok || !Array.isArray(data.updated) || !data.updated.length){
+        throw new Error(data.failures?.[0]?.error||data.error||"Could not update listing");
+      }
+      if(action==="duplicate"||action==="relist"){
+        if(onCreated)onCreated();else window.location.reload();
+      }else{
+        onUpdated({...listing,status:data.updated[0].status??listing.status});
+      }
+    }catch(err){setListingError(err instanceof Error?err.message:"Listing action failed");}
+  }
+
+  async function handleSuspend() {
+    return handleSellerAction(listing.status==="active"?"pause":"resume");
   }
 
   async function handleDelete() {
@@ -550,10 +570,19 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
               <button onClick={() => { setMenuOpen(false); setPromoteOpen(true); }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <TrendingUp className="w-3.5 h-3.5 text-[#F26B21]" /> Promote Listing
               </button>
-              <button onClick={handleSuspend} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <PauseCircle className="w-3.5 h-3.5 text-amber-500" />
-                {listing.status === "active" ? "Suspend Listing" : "Re-activate"}
+              {listing.status !== "sold" && <button onClick={handleSuspend} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50 transition-colors">
+                <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
+                {listing.status === "active" ? "Pause listing" : listing.status === "draft" ? "Publish draft" : "Resume listing"}
+              </button>}
+              {listing.status === "active" && <button onClick={() => void handleSellerAction("renew")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600"/> Renew listing
+              </button>}
+              <button onClick={() => void handleSellerAction("duplicate")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <Copy className="w-3.5 h-3.5 text-blue-600"/> Duplicate as draft
               </button>
+              {["sold","inactive","suspended"].includes(listing.status) && <button onClick={() => void handleSellerAction("relist")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <RotateCcw className="w-3.5 h-3.5 text-orange-600"/> Relist as new
+              </button>}
               <div className="h-px bg-gray-100 mx-3 my-1" />
               <button onClick={handleDelete} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
                 <Trash2 className="w-3.5 h-3.5" /> Delete Listing
@@ -856,6 +885,11 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deletingBatch, setDeletingBatch] = useState(false);
+  const [bulkDeleteError,setBulkDeleteError] = useState("");
+  async function reloadListings(){
+    const data=await fetchMyListings(userEmail,getToken);
+    setListings(data);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -863,17 +897,27 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
   }, [userEmail, getToken]);
 
   async function deleteSelected() {
-    if (!selectedIds.size || !confirm(`Delete ${selectedIds.size} selected listing${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
-    setDeletingBatch(true);
-    const deleted: number[] = [];
-    for (const id of selectedIds) {
-      const res = await fetch(`/api/listings/${id}?email=${encodeURIComponent(userEmail)}`, { method: "DELETE" });
-      if (res.ok) deleted.push(id);
-    }
-    setListings(prev => prev.filter(l => !deleted.includes(l.id)));
-    setSelectedIds(prev => new Set([...prev].filter(id => !deleted.includes(id))));
-    setDeletingBatch(false);
-    if (deleted.length !== selectedIds.size) alert(`${deleted.length} deleted; ${selectedIds.size - deleted.length} could not be deleted.`);
+    if (!selectedIds.size || !window.confirm(`Delete ${selectedIds.size} selected listing(s)? This cannot be undone.`))return;
+    setDeletingBatch(true);setBulkDeleteError("");
+    const deleted:number[]=[];const errors:string[]=[];
+    try {
+      const token=await getToken();
+      if(!token)throw new Error("Sign in again before deleting listings");
+      for(const id of selectedIds){
+        try{
+          const res=await fetch(`/api/listings/${id}?email=${encodeURIComponent(userEmail)}`,{
+            method:"DELETE",headers:{Authorization:`Bearer ${token}`}
+          });
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok)throw new Error(data.error||"Could not delete");
+          deleted.push(id);
+        }catch(e){errors.push(`#${id}: ${e instanceof Error?e.message:"Delete failed"}`);}
+      }
+      await reloadListings();
+      setSelectedIds(prev=>new Set([...prev].filter(id=>!deleted.includes(id))));
+      if(errors.length)setBulkDeleteError(errors.slice(0,3).join("; "));
+    }catch(e){setBulkDeleteError(e instanceof Error?e.message:"Bulk delete failed");}
+    finally{setDeletingBatch(false);}
   }
 
   return (
@@ -884,13 +928,23 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
           <p className="text-xs text-gray-400 mt-0.5">{listings.length} listing{listings.length !== 1 ? "s" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
-          {selectedIds.size > 0 && <button onClick={deleteSelected} disabled={deletingBatch} className="px-3 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-semibold disabled:opacity-50">{deletingBatch ? "Deleting…" : `Delete selected (${selectedIds.size})`}</button>}
+          {selectedIds.size > 0 && <button onClick={deleteSelected} disabled={deletingBatch} className="px-3 py-2 rounded-xl border border-red-300 bg-red-50 text-red-700 text-sm font-bold disabled:opacity-50">{deletingBatch ? "Deleting…" : `Delete (${selectedIds.size})`}</button>}
           <Link href="/sell/direct" className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#F26B21] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> New Listing
           </Link>
         </div>
       </div>
 
+      {listings.length > 0 && <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+        <label className="mb-3 flex w-max items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+          <input type="checkbox" aria-label="Select all listings" className="h-4 w-4"
+            checked={listings.length>0 && listings.every(l=>selectedIds.has(l.id))}
+            onChange={e=>setSelectedIds(e.target.checked?new Set(listings.map(l=>l.id)):new Set())}/>
+          Select all ({listings.length})
+        </label>
+        <SellerListingBulkToolbar selectedIds={[...selectedIds]} onFinished={reloadListings} onClear={()=>setSelectedIds(new Set())}/>
+        {bulkDeleteError && <p role="alert" className="mt-2 rounded-lg bg-red-50 p-2 text-sm font-semibold text-red-800">{bulkDeleteError}</p>}
+      </div>}
       {loading ? (
         <div className="flex-1 flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#F26B21] border-t-transparent rounded-full animate-spin" />
@@ -953,6 +1007,7 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
                   userEmail={userEmail}
                   onUpdated={(updated) => setListings((prev) => prev.map((l) => l.id === updated.id ? updated : l))}
                   onDeleted={(id) => setListings((prev) => prev.filter((l) => l.id !== id))}
+                  onCreated={() => {void reloadListings();}}
                 />
               </div>
             </div>
