@@ -524,6 +524,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
 
   return (
     <>
+      {listingError && !reviseOpen && <div role="alert" className="max-w-xs rounded-lg border border-red-300 bg-red-50 p-2 text-xs font-semibold text-red-800">{listingError}</div>}
       <div ref={menuRef} className="relative flex-shrink-0">
         <button
           onClick={() => setMenuOpen((o) => !o)}
@@ -583,6 +584,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
                 </button>
               </div>
 
+              {listingError && <div role="alert" className="mx-6 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">{listingError}</div>}
               {/* Scrollable body */}
               <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
                 {/* Photo */}
