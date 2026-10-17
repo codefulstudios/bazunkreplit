@@ -129,11 +129,11 @@ router.get("/admin/global-search", async (req,res)=>{
     ]);
     type Result = {id:string;title:string;subtitle:string;href:string};
     const groups: Array<{kind:string;label:string;results:Result[]}> = [
-      {kind:"users",label:"Users",results:(users.rows as any[]).map(x=>({id:String(x.email),title:x.name||x.username||x.email,subtitle:x.email,href:"/admin/users"}))},
-      {kind:"listings",label:"Listings",results:(listings.rows as any[]).map(x=>({id:String(x.id),title:x.title,subtitle:`${x.public_id||"#"+x.id} · ${x.status} · ${x.seller_email}`,href:"/admin/listings"}))},
-      {kind:"orders",label:"Orders",results:(orders.rows as any[]).map(x=>({id:String(x.id),title:x.item_title||"Order",subtitle:`${x.id} · ${x.status} · ${x.buyer_email}`,href:"/admin/orders"}))},
-      {kind:"payments",label:"Payments & credits",results:(payments.rows as any[]).map(x=>({id:String(x.id),title:`${x.kind||"Credit entry"}: ${x.email}`,subtitle:`${x.id}${x.cash_amount!=null?" · "+(x.currency||"GBP")+" "+Number(x.cash_amount).toFixed(2):""}`,href:x.source==="stripe_order"?"/admin/orders":"/admin/payments"}))},
-      {kind:"cases",label:"Cases & support",results:(cases.rows as any[]).map(x=>({id:`${x.kind}:${x.id}`,title:x.title,subtitle:`${x.status} · ${x.detail}`,href:x.kind==="Compliance"?"/admin/seller-compliance":x.kind==="Dispute"?"/admin/disputes":x.kind==="Return"?"/admin/returns":"/admin/support"}))}
+      {kind:"users",label:"Users",results:(users.rows as any[]).map(x=>({id:String(x.email),title:x.name||x.username||x.email,subtitle:x.email,href:"/admin/users?search="+encodeURIComponent(x.email)}))},
+      {kind:"listings",label:"Listings",results:(listings.rows as any[]).map(x=>({id:String(x.id),title:x.title,subtitle:`${x.public_id||"#"+x.id} · ${x.status} · ${x.seller_email}`,href:"/admin/listings?search="+encodeURIComponent(x.public_id||String(x.id))}))},
+      {kind:"orders",label:"Orders",results:(orders.rows as any[]).map(x=>({id:String(x.id),title:x.item_title||"Order",subtitle:`${x.id} · ${x.status} · ${x.buyer_email}`,href:"/admin/orders?search="+encodeURIComponent(x.id)}))},
+      {kind:"payments",label:"Payments & credits",results:(payments.rows as any[]).map(x=>({id:String(x.id),title:`${x.kind||"Credit entry"}: ${x.email}`,subtitle:`${x.id}${x.cash_amount!=null?" · "+(x.currency||"GBP")+" "+Number(x.cash_amount).toFixed(2):""}`,href:x.source==="stripe_order"?"/admin/orders?search="+encodeURIComponent(x.id):"/admin/payments"}))},
+      {kind:"cases",label:"Cases & support",results:(cases.rows as any[]).map(x=>({id:`${x.kind}:${x.id}`,title:x.title,subtitle:`${x.status} · ${x.detail}`,href:x.kind==="Compliance"?"/admin/seller-compliance":x.kind==="Dispute"?"/admin/disputes":x.kind==="Return"?"/admin/returns":"/admin/support?search="+encodeURIComponent(x.id)}))}
     ];
     res.setHeader("Cache-Control","private, no-store");
     res.json({query:q,groups,total:groups.reduce((n,g)=>n+g.results.length,0)});
