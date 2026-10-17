@@ -76,7 +76,7 @@ async function applyAction(id:number,email:string,action:Action,edit:Record<stri
   if(action==="relist" && (!regionValid(existing.specifications)||!existing.title?.trim()||Number(existing.price)<=0))throw Error("Listing needs a valid region, title and price before relisting");
   // Clone into a fresh listing ID; never copy watchers, promotions, sales, or the original public ID.
   const status=action==="duplicate"?"draft":"active";
-  const copied=await db.execute(sql`WITH inserted AS (
+  const copied=await db.execute(sql`
     INSERT INTO listings (title,price,category,subcategory,subsubcategory,description,condition,image,
       seller_email,seller_name,seller_username,currency,price_gbp,tags,extra_categories,specifications,
       ship_origin,ship_origin_other,ship_zone,carrier,shipping_price,handling_charge,quantity,sku,status)
@@ -84,12 +84,12 @@ async function applyAction(id:number,email:string,action:Action,edit:Record<stri
       seller_email,seller_name,seller_username,currency,price_gbp,tags,extra_categories,specifications,
       ship_origin,ship_origin_other,ship_zone,carrier,shipping_price,handling_charge,quantity,sku,${status}
     FROM listings WHERE id=${id} AND LOWER(seller_email)=${email}
-    RETURNING id
-  )
-  UPDATE listings SET public_id='BZL-'||id::text WHERE id IN(SELECT id FROM inserted)
-  RETURNING id,public_id,title,price,status`);
-  if(!copied.rows.length)throw Error("Could not duplicate listing");
-  return copied.rows[0];
+    RETURNING id`);
+  const newId=Number((copied.rows[0] as any)?.id);
+  if(!Number.isSafeInteger(newId))throw Error("Could not duplicate listing");
+  const result=await db.execute(sql`UPDATE listings SET public_id=${"BZL-"+newId}
+    WHERE id=${newId} AND LOWER(seller_email)=${email} RETURNING id,public_id,title,price,status`);
+  return result.rows[0];
 }
 
 router.post("/listings/seller-tools",async(req,res)=>{
