@@ -113,8 +113,8 @@ router.get("/listings", async (req, res) => {
     const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
     if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
     if (q?.trim()) {
-      const escaped = q.trim().slice(0, 150).replace(/[\\%_]/g, "\\    // Browse/list views only need card fields.");
-      clauses.push(sql`(${listingsTable.title} ILIKE ${"%" + escaped + "%"} ESCAPE '\\' OR ${listingsTable.category} ILIKE ${"%" + escaped + "%"} ESCAPE '\\')`);
+      const term = q.trim().slice(0, 150).toLowerCase();
+      clauses.push(sql`(STRPOS(LOWER(${listingsTable.title}), ${term}) > 0 OR STRPOS(LOWER(${listingsTable.category}), ${term}) > 0)`);
     }
     const csv = (value?: string) => value?.split(",").map(x => x.trim()).filter(Boolean).slice(0, 30) ?? [];
     const categoryValues = csv(categories).length ? csv(categories) : category && category !== "all" ? [category] : [];
