@@ -32,6 +32,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { SNAP_SELL_DRAFT_KEY } from "@/pages/SnapSellPage";
 import { Footer } from "@/components/Footer";
 import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import { useLanguage } from "@/context/LanguageContext";
@@ -181,6 +182,29 @@ export function DirectSalePage() {
   const steps = ["Basics", "Photos", "Details", "Shipping", "Video", "Review"];
   const goStep = (next: number) => { setStep(Math.max(1, Math.min(6, next))); window.requestAnimationFrame(() => document.getElementById("direct-sale-step-nav")?.scrollIntoView({ behavior: "smooth", block: "start" })); };
 
+  const snapDraftRef=useRef(false);
+  useEffect(()=>{
+    const raw=sessionStorage.getItem(SNAP_SELL_DRAFT_KEY);
+    if(!raw)return;
+    try{
+      const prefill=JSON.parse(raw) as {title?:string;description?:string;price?:string;condition?:string;photos?:string[];category?:string;subcategory?:string;tags?:string;specifications?:Array<{key:string;value:string}>;marketplaceRegion?:string};
+      // Prevent previously saved drafts overwriting a deliberate new Snap & Sell submission.
+      snapDraftRef.current=true;
+      setTitle(String(prefill.title||"").slice(0,150));
+      setDescription(String(prefill.description||""));
+      setPrice(String(prefill.price||""));
+      setCondition(String(prefill.condition||"brand-new"));
+      setCategory(String(prefill.category||""));
+      setSubcategory(String(prefill.subcategory||""));
+      setPhotos(Array.isArray(prefill.photos)?prefill.photos.slice(0,10):[]);
+      setTags(String(prefill.tags||""));
+      setSpecifications(Array.isArray(prefill.specifications)?prefill.specifications.slice(0,20):[]);
+      setCurrency(marketplaceRegion==="uk"?"£ GBP":"$ USD");
+      setStep(1);
+      sessionStorage.removeItem(SNAP_SELL_DRAFT_KEY);
+    }catch(err){console.error("Could not import Snap & Sell draft",err);}
+  },[]); // intentionally one-time, before asynchronous existing-draft restoration
+
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -203,7 +227,7 @@ export function DirectSalePage() {
   }, []);
 
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email || snapDraftRef.current) return;
     let cancelled = false;
     (async () => {
       try {
@@ -383,6 +407,7 @@ export function DirectSalePage() {
           {/* Header card */}
           <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
             <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sale" : "Direct Sale"}</h1>
+            <a href="/sell/snap" className="mt-3 inline-flex items-center rounded-xl border border-white/50 bg-white/20 px-4 py-2 text-sm font-bold text-white hover:bg-white/30">📸 Snap & Sell — photo & barcode assistant</a>
             <p className="text-white text-sm mt-1">{quickMode ? "List in under a minute. Add more details from your dashboard later." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
           </div>
 
