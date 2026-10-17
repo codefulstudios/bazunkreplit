@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { Store, useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
 import { Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, Package, ChevronLeft, ChevronRight } from "lucide-react";
@@ -222,7 +222,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                     <img
                       src={listing.image}
                       alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-50">
@@ -232,9 +232,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                   <PromoBadge promotions={listing.promotions} />
 
-                  <button className="absolute top-2.5 right-2.5 w-7 h-7 bg-white rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors shadow-sm opacity-0 group-hover:opacity-100 z-10">
-                    <Heart className="w-3.5 h-3.5" />
-                  </button>
+
 
                   <div className="absolute bottom-2.5 left-2.5">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${CONDITION_COLORS[listing.condition] ?? CONDITION_COLORS["Good"]}`}>
@@ -260,8 +258,8 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Verified Seller")}
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-200">
+                    <Store className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Bazunk seller")}
                   </div>
                 </div>
               </motion.div>
