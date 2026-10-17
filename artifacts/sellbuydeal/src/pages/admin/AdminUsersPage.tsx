@@ -44,7 +44,7 @@ export function AdminUsersPage() {
   const [sellerFilter,setSellerFilter]=useState<"all"|"private"|"business">("all");
   const [selectedUserIds,setSelectedUserIds]=useState<string[]>([]);
   const visibleUsers=users.filter(u=>(accountFilter==="all"||(accountFilter==="suspended"?u.banned:!u.banned))
-    &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):u.seller_type!=="private")));
+    &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):(u.seller_type==="business"||u.seller_type==="sole_trader"))));
   const visibleUserIds=visibleUsers.map(u=>u.email);
 
   // Credits
