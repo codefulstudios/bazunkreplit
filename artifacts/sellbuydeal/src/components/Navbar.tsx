@@ -301,7 +301,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src="/bazunk-logo-header.png" alt="Bazunk" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
+              <img src="/bazunk-logo-header.png" alt="Bazunk" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
             </Link>
             <Link
               href="/"
@@ -707,7 +707,7 @@ export function Navbar() {
             <button
               onClick={() => setMobileOpen(true)}
               className="xl:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
-              aria-label="Open menu"
+              aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="bazunk-mobile-menu"
               data-testid="button-mobile-menu"
             >
               <Menu className="w-5 h-5 text-gray-700" />
@@ -761,6 +761,7 @@ export function Navbar() {
             />
             <motion.div
               key="drawer"
+              id="bazunk-mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
