@@ -11,17 +11,36 @@ type Shipment = {
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 type Tab="all"|"action"|"labels"|"transit"|"delivered"|"returns"|"problems";
 const returnOpen=(s:Shipment)=>!!s.return_status&&!["closed","declined","refund_issued","completed"].includes(String(s.return_status).toLowerCase());
-const problem=(s:Shipment)=>s.label_status==="needs_review"||/exception|failure|failed|error|returned|undeliver/i.test(String(s.tracking_status||"")+" "+String(s.tracking_last_event||""));
+const overdue=(s:Shipment)=>!!s.tracking_eta && s.status!=="delivered" && ["shipped","out_for_delivery"].includes(s.status) && Date.parse(s.tracking_eta)<Date.now()-24*60*60*1000;
+const problem=(s:Shipment)=>s.label_status==="needs_review"||overdue(s)||/exception|failure|failed|error|returned|undeliver/i.test(String(s.tracking_status||"")+" "+String(s.tracking_last_event||""));
 const inTransit=(s:Shipment)=>["shipped","out_for_delivery"].includes(s.status)&&s.status!=="delivered";
 export function SellerShipping(){
- const {session}=useSession(); const [rows,setRows]=useState<Shipment[]|null>(null); const [error,setError]=useState(""); const [tab,setTab]=useState<Tab>("all"); const [q,setQ]=useState("");
+ const {session}=useSession(); const [rows,setRows]=useState<Shipment[]|null>(null); const [error,setError]=useState(""); const [tab,setTab]=useState<Tab>("all"); const [q,setQ]=useState(""); const [refreshing,setRefreshing]=useState<string|null>(null);const [refreshError,setRefreshError]=useState("");
  const load=useCallback(async()=>{if(!session)return;setError("");try{const token=await session.getToken();const r=await fetch(API_BASE+"/api/shipping/seller",{headers:{Authorization:"Bearer "+token}});const d=await r.json().catch(()=>[]);if(!r.ok)throw new Error(d.error||"Could not load shipments");setRows(d);}catch(e:any){setError(e.message||"Could not load shipments");}},[session]);
+ async function refreshTracking(id:string){
+   if(!session)return;setRefreshing(id);setRefreshError("");
+   try{
+     const token=await session.getToken();
+     const r=await fetch(API_BASE+"/api/orders/"+encodeURIComponent(id)+"/tracking/refresh",{
+       method:"POST",headers:{Authorization:"Bearer "+token}
+     });
+     const d=await r.json().catch(()=>({}));
+     if(!r.ok)throw new Error(d.error||"Shippo tracking refresh failed");
+     await load();
+   }catch(e){setRefreshError(e instanceof Error?e.message:"Unable to refresh tracking");}
+   finally{setRefreshing(null);}
+ }
  useEffect(()=>{void load();},[load]);
  const counts=useMemo(()=>{const a=rows||[];return{all:a.length,action:a.filter(s=>["pending","confirmed","preparing"].includes(s.status)&&!s.label_url).length,labels:a.filter(s=>!!s.label_url).length,transit:a.filter(inTransit).length,delivered:a.filter(s=>s.status==="delivered").length,returns:a.filter(returnOpen).length,problems:a.filter(problem).length}},[rows]);
  const filtered=useMemo(()=>{let a=rows||[];if(tab==="action")a=a.filter(s=>["pending","confirmed","preparing"].includes(s.status)&&!s.label_url);if(tab==="labels")a=a.filter(s=>!!s.label_url);if(tab==="transit")a=a.filter(inTransit);if(tab==="delivered")a=a.filter(s=>s.status==="delivered");if(tab==="returns")a=a.filter(returnOpen);if(tab==="problems")a=a.filter(problem);const z=q.trim().toLowerCase();return z?a.filter(s=>[s.id,s.item_title,s.buyer_email,s.tracking_number,s.carrier].some(v=>String(v||"").toLowerCase().includes(z))):a},[rows,tab,q]);
  const tabs:[Tab,string,number][]=[["all","All shipments",counts.all],["action","Needs action",counts.action],["labels","Labels bought",counts.labels],["transit","In transit",counts.transit],["delivered","Delivered",counts.delivered],["returns","Returns",counts.returns],["problems","Problems",counts.problems]];
  return <div className="space-y-5">
-  <div><h2 className="text-xl font-black text-gray-900">Shipping Centre</h2><p className="text-sm text-gray-500 mt-1">Labels, dispatch, tracking, delivery and returns in one place.</p></div>
+  <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black text-slate-950 dark:text-white">Shipping Centre</h2><p className="text-sm text-slate-600 dark:text-slate-300 mt-1">Shippo labels, live tracking, delivery exceptions and returns.</p></div>
+ <button type="button" onClick={()=>void load()} className="rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-bold text-slate-900 hover:bg-orange-50 dark:bg-slate-800 dark:text-white">Refresh shipments</button></div>
+ {counts.problems>0&&<button type="button" onClick={()=>setTab("problems")} className="w-full rounded-xl border-2 border-red-400 bg-red-50 p-3 text-left text-sm font-bold text-red-900 dark:bg-red-950 dark:text-red-100">
+  <AlertTriangle className="mr-2 inline h-4 w-4"/> {counts.problems} shipment(s) need attention — review tracking failures, delays or label reconciliation
+ </button>}
+ {refreshError&&<p role="alert" className="rounded-xl bg-red-50 p-3 font-semibold text-red-800">{refreshError}</p>
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
    {[[counts.action,"Needs action",Clock],[counts.labels,"Labels bought",Package],[counts.transit,"In transit",Truck],[counts.delivered,"Delivered",CheckCircle2]].map(([n,l,I]:any)=><div key={l} className="bg-white border border-gray-100 rounded-2xl p-4"><I className="w-5 h-5 text-[#4A5CE8] mb-3"/><p className="text-2xl font-black">{n}</p><p className="text-xs text-gray-500">{l}</p></div>)}
   </div>
@@ -33,8 +52,8 @@ export function SellerShipping(){
    {filtered.map(s=><div key={s.id} className="p-4 border-t first:border-t-0 flex flex-wrap gap-4 items-center">
     <div className="w-12 h-12 rounded-xl border bg-gray-50 overflow-hidden flex items-center justify-center">{s.item_image?<img src={s.item_image} className="w-full h-full object-contain" alt=""/>:<Package className="text-gray-300"/>}</div>
     <div className="min-w-0 flex-1"><p className="font-bold text-sm truncate">{s.item_title}</p><p className="text-xs text-gray-400">Order {s.id} · {s.buyer_email}</p><p className="text-xs mt-1 text-gray-600">{s.carrier||"Carrier not set"}{s.tracking_number?" · "+s.tracking_number:" · No tracking yet"}</p>{s.tracking_last_event&&<p className="text-xs text-blue-600 mt-1">{s.tracking_last_event}</p>}</div>
-    <div className="text-xs min-w-[150px]"><p className="font-bold capitalize">{s.return_status?"Return: "+s.return_status.replaceAll("_"," "):(s.tracking_status||s.status).replaceAll("_"," ")}</p>{s.tracking_eta&&<p className="text-gray-400 mt-1">ETA {new Date(s.tracking_eta).toLocaleDateString("en-GB")}</p>}{s.label_url&&<p className="text-emerald-600 mt-1">Label bought{s.label_amount_pence!=null?" · £"+(Number(s.label_amount_pence)/100).toFixed(2):""}</p>}{problem(s)&&<p className="text-red-600 mt-1 flex gap-1 items-center"><AlertTriangle className="w-3 h-3"/>Needs attention</p>}</div>
-    <div className="flex gap-2">{s.label_url&&<a href={s.label_url} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-lg border text-xs font-bold flex gap-1 items-center">Label <ExternalLink className="w-3 h-3"/></a>}{returnOpen(s)&&<span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold flex gap-1 items-center"><RotateCcw className="w-3 h-3"/>Return active</span>}</div>
+    <div className="text-xs min-w-[150px]"><p className="font-bold capitalize">{s.return_status?"Return: "+s.return_status.replaceAll("_"," "):(s.tracking_status||s.status).replaceAll("_"," ")}</p>{s.tracking_eta&&<p className="text-gray-400 mt-1">ETA {new Date(s.tracking_eta).toLocaleDateString("en-GB")}</p>}{s.label_url&&<p className="text-emerald-600 mt-1">Label bought{s.label_amount_pence!=null?" · £"+(Number(s.label_amount_pence)/100).toFixed(2):""}</p>}{problem(s)&&<p className="text-red-700 font-bold mt-1 flex gap-1 items-center"><AlertTriangle className="w-3 h-3"/>{overdue(s)?"Past estimated delivery":s.label_status==="needs_review"?"Label purchase needs manual review":"Delivery exception — investigate"}</p>}{s.tracking_updated_at&&<p className="text-slate-600 mt-1">Shippo updated {new Date(s.tracking_updated_at).toLocaleString("en-GB")}</p>}{s.label_error&&<p className="text-red-700 mt-1">{s.label_error}</p>}</div>
+    <div className="flex flex-wrap gap-2">{s.tracking_number&&s.carrier&&<button type="button" disabled={refreshing===s.id} onClick={()=>void refreshTracking(s.id)} className="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-900 hover:bg-blue-100 disabled:opacity-50">{refreshing===s.id?"Checking Shippo…":"Refresh tracking"}</button>}{problem(s)&&<a href={"/support?order="+encodeURIComponent(s.id)} className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-900">Report exception</a>}{s.label_url&&<a href={s.label_url} target="_blank" rel="noreferrer" className="px-3 py-2 rounded-lg border text-xs font-bold flex gap-1 items-center">Label <ExternalLink className="w-3 h-3"/></a>}{returnOpen(s)&&<span className="px-3 py-2 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold flex gap-1 items-center"><RotateCcw className="w-3 h-3"/>Return active</span>}</div>
    </div>)}
   </div>
  </div>;
