@@ -86,24 +86,28 @@ router.get("/dashboard/seller-metrics",async(req,res)=>{
   db.execute(sql`SELECT COUNT(*) FILTER (WHERE status NOT IN ('cancelled','refunded'))::int sales,
     COUNT(*) FILTER (WHERE status='delivered')::int delivered,
     COALESCE(SUM(CASE WHEN status NOT IN('cancelled','refunded') THEN seller_net ELSE 0 END),0)::numeric sales_net,
-    COALESCE(SUM(CASE WHEN payout_status='paid' OR stripe_transfer_id IS NOT NULL THEN 0
+    COALESCE(SUM(CASE WHEN payout_status='paid' OR stripe_transfer_id IS NOT NULL OR payout_status IN ('refund_pending','reversal_pending')
+          OR status IN ('disputed','return_requested') THEN 0
         WHEN status='delivered' AND fee_policy='private-buyer-business-seller-v1'
          AND COALESCE(refunded_total,0)=0 THEN GREATEST(COALESCE(seller_net,0),0) ELSE 0 END),0)::numeric eligible,
-    COALESCE(SUM(CASE WHEN payout_status='paid' OR stripe_transfer_id IS NOT NULL OR status IN ('cancelled','refunded') THEN 0
+    COALESCE(SUM(CASE WHEN payout_status='paid' OR stripe_transfer_id IS NOT NULL OR status IN ('cancelled','refunded')
+          OR payout_status IN ('refund_pending','reversal_pending') OR status IN ('disputed','return_requested') THEN 0
         WHEN status NOT IN ('delivered') THEN GREATEST(COALESCE(seller_net,0),0) ELSE 0 END),0)::numeric pending,
     COALESCE(SUM(CASE WHEN (payout_status IN ('refund_pending','reversal_pending') OR status IN('disputed','return_requested'))
       AND stripe_transfer_id IS NULL THEN GREATEST(COALESCE(seller_net,0),0) ELSE 0 END),0)::numeric held,
     COALESCE(SUM(CASE WHEN payout_status='paid' OR stripe_transfer_id IS NOT NULL THEN GREATEST(COALESCE(seller_net,0),0) ELSE 0 END),0)::numeric transferred
     FROM orders WHERE LOWER(seller_email)=${email}`),
-  db.execute(sql`SELECT COUNT(DISTINCT listing_id)::int promoted_listings,
-      COUNT(*) FILTER(WHERE expires_at>NOW())::int active_promotions
-    FROM listing_promotions WHERE listing_id IN (SELECT id FROM listings WHERE LOWER(seller_email)=${email})`)
+  db.execute(sql`SELECT COUNT(DISTINCT p.listing_id)::int promoted_listings,
+      COUNT(*) FILTER(WHERE p.expires_at>NOW())::int active_promotions,
+      COUNT(DISTINCT CASE WHEN l.views>0 THEN p.listing_id END)::int promoted_listings_with_views
+    FROM listing_promotions p JOIN listings l ON l.id=p.listing_id
+    WHERE LOWER(l.seller_email)=${email}`)
  ]);
  const listings=l.rows[0] as any,orders=s.rows[0] as any,promotions=p.rows[0] as any;
  const views=Number(listings.views)||0,sales=Number(orders.sales)||0;
  res.setHeader("Cache-Control","private,no-store");
- res.json({listings,orders,promotions,conversionPct:views?Math.round(sales/views*10000)/100:0,
-   note:"Eligible is a delivery/fee-based estimate pending admin review; pending and held funds are not withdrawable. Transferred means sent to Stripe Connect, not necessarily paid to your bank."});
+ res.json({listings,orders,promotions,salesPer100Views:views?Math.round(sales/views*10000)/100:0,
+   note:"Balances use order snapshots, not a Stripe bank balance: eligible means delivered and awaiting admin approval, pending means awaiting delivery, held means order dispute/refund restrictions, transferred means sent to Stripe Connect. Sales per 100 views is an indicative ratio, not unique-buyer conversion or promotion attribution."});
  }catch(e){console.error("Seller metrics error",e);res.status(500).json({error:"Could not load seller metrics"});}
 });
 export default router;
