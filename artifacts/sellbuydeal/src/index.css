@@ -729,3 +729,21 @@ html.bazunk-chatwoot-disabled .woot--bubble-holder,
 html.bazunk-chatwoot-disabled .woot-widget-bubble,
 html.bazunk-chatwoot-disabled .woot--bubble-holder,
 html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
+
+
+/* Shared accessible controls: applies to public pages in both themes. */
+:where(main, [role="dialog"]) :where(button, [role="button"], a, input, textarea, select, [role="combobox"]):focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 3px;
+}
+:where(main, [role="dialog"]) :where(input, textarea, select):not(:disabled) {
+  min-height: 38px;
+}
+:where(main, [role="dialog"]) :where(input, textarea)::placeholder {
+  opacity: 1;
+}
+:root :where(main, [role="dialog"]) :where(input,textarea)::placeholder { color: #64748b; }
+.dark :where(main, [role="dialog"]) :where(input,textarea)::placeholder { color: #cbd5e1; }
+:where(main, [role="dialog"]) :where(button, [role="button"]):disabled {
+  cursor: not-allowed;
+}
