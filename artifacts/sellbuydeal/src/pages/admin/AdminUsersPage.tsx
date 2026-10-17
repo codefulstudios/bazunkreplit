@@ -37,7 +37,7 @@ export function AdminUsersPage() {
 
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [loading, setLoading] = useState(true);
 
   // Credits
