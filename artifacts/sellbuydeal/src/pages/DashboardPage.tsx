@@ -1,3 +1,4 @@
+import { useDashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
@@ -5586,7 +5587,13 @@ export function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   const [savedSearches, setSavedSearches] = useState(MOCK_SAVED_SEARCHES);
-  const [notifs, setNotifs] = useState(MOCK_NOTIFICATIONS);
+  const { notifications: activity, loading: activityLoading, error: activityError, markRead } = useDashboardActivity(user?.email);
+  const notifs = activity.map(n=>({
+    ...n, icon: n.type === "sale" ? ShoppingBag : ShoppingCart,
+    iconBg: n.type === "sale" ? "bg-orange-100" : "bg-blue-100",
+    iconColor: n.type === "sale" ? "text-orange-700" : "text-blue-700",
+    time: n.time ? new Date(n.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "Recently"
+  }));
   const [profileEdit, setProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState(() => {
     try {
@@ -5935,7 +5942,7 @@ export function DashboardPage() {
                   </div>
                   {notifs.some(n => n.unread) && (
                     <button
-                      onClick={() => setNotifs(prev => prev.map(n => ({ ...n, unread: false })))}
+                      onClick={() => markRead(activity.map(n => n.id))}
                       className="text-xs text-[#4A5CE8] font-semibold hover:underline"
                       data-testid="button-mark-all-read"
                     >
@@ -5943,13 +5950,15 @@ export function DashboardPage() {
                     </button>
                   )}
                 </div>
+                {activityError && <p role="alert" className="px-5 py-3 font-semibold text-red-700">{activityError}</p>}
+                {activityLoading && <p className="px-5 py-3 text-sm text-slate-600">Loading marketplace activity…</p>}
                 {notifs.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-16 text-center px-6">
                     <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
                       <Bell className="w-8 h-8 text-gray-200" />
                     </div>
                     <p className="font-semibold text-gray-700 mb-1">No notifications</p>
-                    <p className="text-sm text-gray-400">We'll notify you about price drops, messages, and order updates</p>
+                    <p className="text-sm text-gray-400">Order and sale updates will appear here. Offer, bid and message notifications are being integrated.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-50">
@@ -5959,7 +5968,7 @@ export function DashboardPage() {
                         <div
                           key={n.id}
                           className={`flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}
-                          onClick={() => setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, unread: false } : x))}
+                          onClick={() => markRead([n.id])}
                         >
                           <div className={`w-9 h-9 rounded-full ${n.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             <Icon className={`w-4 h-4 ${n.iconColor}`} />
