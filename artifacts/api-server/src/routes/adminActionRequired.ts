@@ -15,19 +15,19 @@ function item(id:unknown,title:unknown,detail:unknown,status:unknown,at:unknown,
 router.get("/admin/action-required", async (_req,res)=>{
   try{
     const [refundOrders,refundReturns,disputes,compliance,appeals] = await Promise.all([
-      db.execute(sql`SELECT id,item_title,buyer_email,payout_status,updated_at
+      db.execute(sql`SELECT id,item_title,buyer_email,payout_status,updated_at,COUNT(*) OVER()::int AS full_count
         FROM orders WHERE payout_status IN ('refund_pending','reversal_pending')
         ORDER BY updated_at DESC LIMIT 60`),
-      db.execute(sql`SELECT id,item_title,buyer_email,status,updated_at
+      db.execute(sql`SELECT id,item_title,buyer_email,status,updated_at,COUNT(*) OVER()::int AS full_count
         FROM returns WHERE COALESCE(NULLIF(TRIM(refund_amount),''),'0') NOT IN ('0','0.00')
           AND status NOT IN ('closed','completed','refund_issued','declined','rejected','cancelled')
         ORDER BY updated_at DESC LIMIT 60`),
-      db.execute(sql`SELECT id,item_title,buyer_email,status,created_at
+      db.execute(sql`SELECT id,item_title,buyer_email,status,created_at,COUNT(*) OVER()::int AS full_count
         FROM disputes WHERE status NOT IN ('closed','resolved_refund','resolved_no_action','resolved','rejected')
         ORDER BY created_at DESC LIMIT 60`),
-      db.execute(sql`SELECT id,seller_email,status,opened_at FROM seller_compliance_cases
+      db.execute(sql`SELECT id,seller_email,status,opened_at,COUNT(*) OVER()::int AS full_count FROM seller_compliance_cases
         WHERE status NOT IN ('closed','resolved','dismissed') ORDER BY opened_at DESC LIMIT 60`),
-      db.execute(sql`SELECT id,seller_email,status,created_at FROM seller_compliance_appeals
+      db.execute(sql`SELECT id,seller_email,status,created_at,COUNT(*) OVER()::int AS full_count FROM seller_compliance_appeals
         WHERE status='pending' ORDER BY created_at DESC LIMIT 60`)
     ]);
     const refunds=[
@@ -40,11 +40,11 @@ router.get("/admin/action-required", async (_req,res)=>{
       ...(appeals.rows as any[]).map(x=>item(x.id,"Seller appeal #"+x.id,x.seller_email,x.status,x.created_at,"/admin/seller-compliance"))
     ];
     const queues:Queue[]=[
-      {key:"refunds",label:"Refunds & reconciliations",count:refunds.length,href:"/admin/orders",
+      {key:"refunds",label:"Refunds & reconciliations",count:Number((refundOrders.rows[0] as any)?.full_count||0)+Number((refundReturns.rows[0] as any)?.full_count||0),href:"/admin/orders",
         description:"Unresolved payout reversals, refund processing and return refund requests",items:refunds.slice(0,6)},
-      {key:"disputes",label:"Open disputes",count:disputeItems.length,href:"/admin/disputes",
+      {key:"disputes",label:"Open disputes",count:Number((disputes.rows[0] as any)?.full_count||0),href:"/admin/disputes",
         description:"Buyer-protection cases awaiting review or resolution",items:disputeItems.slice(0,6)},
-      {key:"compliance",label:"Seller compliance",count:caseItems.length,href:"/admin/seller-compliance",
+      {key:"compliance",label:"Seller compliance",count:Number((compliance.rows[0] as any)?.full_count||0)+Number((appeals.rows[0] as any)?.full_count||0),href:"/admin/seller-compliance",
         description:"Open seller-risk reviews and pending appeals",items:caseItems.slice(0,6)}
     ];
 
