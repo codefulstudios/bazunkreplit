@@ -1895,9 +1895,13 @@ const COUNTRIES = [
 
 function AddressesSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const addrKey = user?.email ? `sbd_addresses_v1_${user.email}` : null;
-  const [addrLoadedKey, setAddrLoadedKey] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<{ id: number; label: string; name: string; line1: string; line2: string; city: string; postcode: string; country: string; default: boolean }[]>([]);
+  type Addr={ id:number; label:string; name:string; line1:string; line2:string; city:string; postcode:string; country:string; default:boolean };
+  const [addresses, setAddresses] = useState<Addr[]>([]);
+  const [loadingAddresses,setLoadingAddresses] = useState(true);
+  const [savingAddress,setSavingAddress] = useState(false);
+  const [syncError,setSyncError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newAddr, setNewAddr] = useState(EMPTY_ADDR);
   const [addrError, setAddrError] = useState("");
@@ -1905,53 +1909,72 @@ function AddressesSection() {
   const [editAddr, setEditAddr] = useState(EMPTY_ADDR);
   const [editError, setEditError] = useState("");
 
-  useEffect(() => {
-    if (!addrKey) { setAddresses([]); setAddrLoadedKey(null); return; }
-    try { const s = localStorage.getItem(addrKey); setAddresses(s ? JSON.parse(s) : []); } catch { setAddresses([]); }
-    setAddrLoadedKey(addrKey);
-  }, [addrKey]);
-  useEffect(() => {
-    if (!addrLoadedKey) return;
-    localStorage.setItem(addrLoadedKey, JSON.stringify(addresses));
-  }, [addresses, addrLoadedKey]);
-
-  function removeAddress(id: number) {
-    setAddresses((prev) => {
-      const remaining = prev.filter((a) => a.id !== id);
-      if (remaining.length > 0 && !remaining.some((a) => a.default)) remaining[0] = { ...remaining[0], default: true };
-      return remaining;
+  async function request(method:string,path:string,body?:unknown):Promise<Addr[]>{
+    const token=await getToken();
+    if(!token)throw new Error("Sign in to manage saved addresses");
+    const r=await fetch("/api/account/addresses"+path,{
+      method,headers:{"Authorization":`Bearer ${token}`,...(body===undefined?{}:{"Content-Type":"application/json"})},
+      ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:"no-store"
     });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||"Address update failed");
+    if(!Array.isArray(data))throw new Error("Invalid server response");
+    return data as Addr[];
   }
-  function setDefault(id: number) {
-    setAddresses((prev) => prev.map((a) => ({ ...a, default: a.id === id })));
+  useEffect(()=>{
+    if(!addrKey){setAddresses([]);setLoadingAddresses(false);return;}
+    let cancelled=false;
+    setLoadingAddresses(true);setSyncError("");
+    (async()=>{
+      try{
+        let rows=await request("GET","");
+        // One-time import from this browser's older local-only address book. Never overwrite server data.
+        if(rows.length===0){
+          const local=localStorage.getItem(addrKey);
+          const legacy=local ? JSON.parse(local) : [];
+          if(Array.isArray(legacy)&&legacy.length){
+            for(const address of legacy.slice(0,25)){
+              if(!address||typeof address!=="object")continue;
+              const payload={label:String(address.label||""),name:String(address.name||""),line1:String(address.line1||""),
+                line2:String(address.line2||""),city:String(address.city||""),postcode:String(address.postcode||""),country:String(address.country||"")};
+              if(!payload.label||!payload.name||!payload.line1||!payload.city||!payload.postcode||!payload.country)continue;
+              rows=await request("POST","",payload);
+            }
+            if(rows.length)localStorage.removeItem(addrKey);
+          }
+        }
+        if(!cancelled)setAddresses(rows);
+      }catch(e){if(!cancelled)setSyncError(e instanceof Error?e.message:"Could not synchronise addresses");}
+      finally{if(!cancelled)setLoadingAddresses(false);}
+    })();
+    return()=>{cancelled=true};
+  },[addrKey,getToken]);
+  async function updateServer(method:string,path:string,body?:unknown){
+    setSavingAddress(true);setSyncError("");
+    try{
+      const result=await request(method,path,body);
+      setAddresses(result);return true;
+    }catch(e){setSyncError(e instanceof Error?e.message:"Could not save address");return false;}
+    finally{setSavingAddress(false);}
   }
-  function handleSaveAddress() {
-    if (!newAddr.label.trim() || !newAddr.name.trim() || !newAddr.line1.trim() || !newAddr.city.trim() || !newAddr.postcode.trim() || !newAddr.country.trim()) {
-      setAddrError("Please fill in all required fields.");
-      return;
+  async function removeAddress(id:number){await updateServer("DELETE",`/${id}`);}
+  async function setDefault(id:number){await updateServer("PATCH",`/${id}`,{makeDefault:true});}
+  async function handleSaveAddress(){
+    if(!newAddr.label.trim()||!newAddr.name.trim()||!newAddr.line1.trim()||!newAddr.city.trim()||!newAddr.postcode.trim()||!newAddr.country.trim()){
+      setAddrError("Please fill in all required fields.");return;
     }
-    setAddresses((prev) => [
-      ...prev,
-      { id: Date.now(), ...newAddr, default: prev.length === 0 },
-    ]);
-    setNewAddr(EMPTY_ADDR);
-    setAddrError("");
-    setShowAdd(false);
+    if(await updateServer("POST","",newAddr)){setNewAddr(EMPTY_ADDR);setAddrError("");setShowAdd(false);}
   }
-  function startEdit(addr: typeof addresses[0]) {
+  function startEdit(addr:Addr){
     setEditId(addr.id);
-    setEditAddr({ label: addr.label, name: addr.name, line1: addr.line1, line2: addr.line2, city: addr.city, postcode: addr.postcode, country: addr.country });
-    setEditError("");
-    setShowAdd(false);
+    setEditAddr({label:addr.label,name:addr.name,line1:addr.line1,line2:addr.line2,city:addr.city,postcode:addr.postcode,country:addr.country});
+    setEditError("");setShowAdd(false);
   }
-  function handleUpdateAddress() {
-    if (!editAddr.label.trim() || !editAddr.name.trim() || !editAddr.line1.trim() || !editAddr.city.trim() || !editAddr.postcode.trim() || !editAddr.country.trim()) {
-      setEditError("Please fill in all required fields.");
-      return;
+  async function handleUpdateAddress(){
+    if(!editAddr.label.trim()||!editAddr.name.trim()||!editAddr.line1.trim()||!editAddr.city.trim()||!editAddr.postcode.trim()||!editAddr.country.trim()){
+      setEditError("Please fill in all required fields.");return;
     }
-    setAddresses((prev) => prev.map((a) => a.id === editId ? { ...a, ...editAddr } : a));
-    setEditId(null);
-    setEditError("");
+    if(await updateServer("PATCH",`/${editId}`,editAddr)){setEditId(null);setEditError("");}
   }
 
   return (
@@ -1959,7 +1982,7 @@ function AddressesSection() {
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900">Addresses</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{addresses.length} saved address{addresses.length !== 1 ? "es" : ""}</p>
+          <p className="text-xs text-slate-600 mt-0.5">Securely synced to your Bazunk account · {addresses.length} saved address{addresses.length !== 1 ? "es" : ""}</p>
         </div>
         <button
           onClick={() => { setShowAdd(true); setAddrError(""); setNewAddr(EMPTY_ADDR); }}
@@ -1970,6 +1993,9 @@ function AddressesSection() {
       </div>
 
       <div className="p-5 space-y-3">
+        {loadingAddresses && <p role="status" className="text-sm font-semibold text-slate-700">Synchronising saved addresses…</p>}
+        {syncError && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{syncError}</p>}
+        {!loadingAddresses && addresses.length===0 && <p className="text-sm text-slate-600">No addresses saved to your account yet.</p>}
         {addresses.map((addr) => (
           <div key={addr.id} className={`rounded-xl border-2 ${addr.default ? "border-[#4A5CE8]/30 bg-blue-50/30" : "border-gray-100"}`}>
             {editId === addr.id ? (
@@ -1992,7 +2018,7 @@ function AddressesSection() {
                 </div>
                 {editError && <p className="mt-2 text-xs text-red-500 font-medium">{editError}</p>}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={handleUpdateAddress} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
+                  <button disabled={savingAddress} onClick={handleUpdateAddress} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
                   <button onClick={() => setEditId(null)} className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
                 </div>
               </div>
@@ -2053,7 +2079,7 @@ function AddressesSection() {
             {addrError && <p className="mt-2 text-xs text-red-500 font-medium">{addrError}</p>}
             <div className="flex gap-2 mt-3">
               <button
-                onClick={handleSaveAddress}
+                disabled={savingAddress} onClick={handleSaveAddress}
                 className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90 transition-opacity"
                 data-testid="button-save-address"
               >
