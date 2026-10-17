@@ -1,3 +1,4 @@
+import { refreshSavedSearchMatches } from "../lib/savedSearches.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
@@ -5,7 +6,7 @@ import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { ensureMarketplaceOffers } from "./marketplaceOffers.js";
 
 const router=Router();
-type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message";title:string;desc:string;time:string;href:string};
+type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search";title:string;desc:string;time:string;href:string};
 async function ensureReads(){
   await db.execute(sql`CREATE TABLE IF NOT EXISTS marketplace_notification_reads (
     recipient_email text NOT NULL, event_id text NOT NULL, read_at timestamptz NOT NULL DEFAULT NOW(),
@@ -18,8 +19,8 @@ function event(id:string,type:Event["type"],title:string,desc:string,time:unknow
 router.get("/notifications",async(req,res)=>{
   try{
     const email=await authenticatedSellerEmail(req,res);if(!email)return;
-    await Promise.all([ensureReads(),ensureMarketplaceOffers()]);
-    const [orders,bids,outbid,wins,offers,messages,reads]=await Promise.all([
+    await Promise.all([ensureReads(),ensureMarketplaceOffers(),refreshSavedSearchMatches(email)]);
+    const [orders,bids,outbid,wins,offers,messages,reads,searchMatches]=await Promise.all([
       db.execute(sql`SELECT id,buyer_email,seller_email,item_title,status,updated_at FROM orders
         WHERE LOWER(buyer_email)=${email} OR LOWER(seller_email)=${email}
         ORDER BY updated_at DESC LIMIT 80`),
@@ -46,7 +47,13 @@ router.get("/notifications",async(req,res)=>{
         AND LOWER(m.sender_email)<>${email}
         ORDER BY m.created_at DESC LIMIT 60`),
       db.execute(sql`SELECT event_id FROM marketplace_notification_reads
-        WHERE recipient_email=${email} ORDER BY read_at DESC LIMIT 500`)
+        WHERE recipient_email=${email} ORDER BY read_at DESC LIMIT 500`),
+      db.execute(sql`SELECT m.search_id,m.listing_id,m.matched_at,s.name,l.title,l.public_id
+        FROM marketplace_saved_search_matches m
+        JOIN marketplace_saved_searches s ON s.id=m.search_id
+        JOIN listings l ON l.id=m.listing_id
+        WHERE LOWER(s.user_email)=${email} AND s.alert_enabled=TRUE AND l.status='active'
+        ORDER BY m.matched_at DESC LIMIT 80`)
     ]);
     const events:Event[]=[];
     for(const o of orders.rows as any[]){
@@ -72,6 +79,10 @@ router.get("/notifications",async(req,res)=>{
     }
     for(const m of messages.rows as any[])events.push(event(`message:${m.id}`,"message","New message",
       `About ${m.listing_title}`,m.created_at,`/messages?conversation=${m.conversation_id}`));
+    for(const m of searchMatches.rows as any[])events.push(event(
+      `search:${m.search_id}:${m.listing_id}`,"search","Saved search match",
+      `${m.name}: ${m.title}`,m.matched_at,`/listing/${encodeURIComponent(String(m.public_id||m.listing_id))}`
+    ));
     const seen=new Set((reads.rows as any[]).map(r=>String(r.event_id)));
     const filtered=events.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,100)
       .map(e=>({...e,unread:!seen.has(e.id)}));
