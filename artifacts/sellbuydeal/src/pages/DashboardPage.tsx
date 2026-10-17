@@ -1,4 +1,4 @@
-import { useDashboardActivity } from "@/hooks/useDashboardActivity";
+import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
@@ -962,7 +962,7 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
   );
 }
 
-function OverviewContent({ user, onNavigate }: { user: { name: string; email: string; username: string; balance: number }; onNavigate: (section: string) => void }) {
+function OverviewContent({ user, onNavigate, recentEvents, activityLoading, activityError }: { user: { name: string; email: string; username: string; balance: number }; onNavigate: (section: string) => void; recentEvents: DashboardActivity[]; activityLoading: boolean; activityError: string }) {
   const initial = user.name.charAt(0).toUpperCase();
   const [myListings, setMyListings] = useState<StoredListing[]>([]);
   const [overviewOrders,setOverviewOrders] = useState<{bought:number;sold:number}>({bought:0,sold:0});
@@ -1288,26 +1288,30 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       {/* Recent Activity */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <h2 className="font-bold text-gray-900 mb-4">Recent Activity</h2>
-        {RECENT_ACTIVITY.length === 0 ? (
-          <div className="py-8 text-center text-gray-400">
-            <BarChart2 className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-            <p className="text-sm font-medium">No activity yet</p>
-            <p className="text-xs mt-1">Actions like listing items and purchases will appear here</p>
+        {activityError && <p role="alert" className="mb-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{activityError}</p>}
+        {activityLoading && <p className="text-sm font-semibold text-slate-600">Loading your activity…</p>}
+        {!activityLoading && recentEvents.length === 0 ? (
+          <div className="py-8 text-center text-slate-600">
+            <BarChart2 className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+            <p className="text-sm font-semibold">No marketplace activity yet</p>
+            <p className="text-xs mt-1">Orders, sales, offers, bids and messages will appear here.</p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {RECENT_ACTIVITY.map((activity) => (
-              <div key={activity.id} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-3.5 h-3.5 text-orange-500" />
+          <div className="space-y-1" aria-live="polite">
+            {recentEvents.slice(0, 8).map((activity) => {
+              const Icon = activity.type === "sale" ? ShoppingBag : activity.type === "offer" ? Handshake : activity.type === "bid" ? Gavel : activity.type === "message" ? MessageSquare : ShoppingCart;
+              return <Link key={activity.id} href={activity.href} className="flex items-center gap-3 rounded-lg px-2 py-3 border-b border-slate-200 dark:border-slate-700 last:border-0 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
+                <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-orange-700 dark:text-orange-200" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">New Listing Created</p>
-                  <p className="text-xs text-gray-400 line-clamp-1">{activity.title} — £{activity.price.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">{activity.title}{activity.unread ? " · New" : ""}</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-2">{activity.desc}</p>
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">{activity.date}</span>
-              </div>
-            ))}
+                <time dateTime={activity.time} className="text-xs text-slate-600 dark:text-slate-300 flex-shrink-0">{activity.time ? new Date(activity.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : ""}</time>
+              </Link>;
+            })}
+            {recentEvents.length > 8 && <button type="button" onClick={() => onNavigate("notifications")} className="mt-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all activity →</button>}
           </div>
         )}
       </div>
@@ -5588,12 +5592,14 @@ export function DashboardPage() {
   }, []);
   const [savedSearches, setSavedSearches] = useState(MOCK_SAVED_SEARCHES);
   const { notifications: activity, loading: activityLoading, error: activityError, markRead } = useDashboardActivity(user?.email);
+  const [notificationFilter,setNotificationFilter] = useState<"all"|"order"|"sale"|"offer"|"bid"|"message">("all");
   const notifs = activity.map(n=>({
-    ...n, icon: n.type === "sale" ? ShoppingBag : ShoppingCart,
-    iconBg: n.type === "sale" ? "bg-orange-100" : "bg-blue-100",
-    iconColor: n.type === "sale" ? "text-orange-700" : "text-blue-700",
+    ...n,
+    icon: n.type === "sale" ? ShoppingBag : n.type === "offer" ? Handshake : n.type === "bid" ? Gavel : n.type === "message" ? MessageSquare : ShoppingCart,
+    iconBg: n.type === "sale" ? "bg-orange-100" : n.type === "offer" ? "bg-purple-100" : n.type === "bid" ? "bg-amber-100" : n.type === "message" ? "bg-emerald-100" : "bg-blue-100",
+    iconColor: n.type === "sale" ? "text-orange-700" : n.type === "offer" ? "text-purple-700" : n.type === "bid" ? "text-amber-700" : n.type === "message" ? "text-emerald-700" : "text-blue-700",
     time: n.time ? new Date(n.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "Recently"
-  }));
+  })).filter(n=>notificationFilter==="all"||notificationFilter===n.type);
   const [profileEdit, setProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState(() => {
     try {
@@ -5932,7 +5938,7 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
-            {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} />}
+            {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -5950,6 +5956,11 @@ export function DashboardPage() {
                     </button>
                   )}
                 </div>
+                <div className="flex flex-wrap gap-2 px-5 py-3" role="group" aria-label="Filter notification types">
+                  {(["all","order","sale","offer","bid","message"] as const).map(k=>
+                    <button key={k} type="button" aria-pressed={notificationFilter===k} onClick={()=>setNotificationFilter(k)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${notificationFilter===k?"bg-blue-700 text-white border-blue-700":"bg-white text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-500"}`}>{k==="all"?"All activity":k+"s"}</button>)}
+                </div>
                 {activityError && <p role="alert" className="px-5 py-3 font-semibold text-red-700">{activityError}</p>}
                 {activityLoading && <p className="px-5 py-3 text-sm text-slate-600">Loading marketplace activity…</p>}
                 {notifs.length === 0 ? (
@@ -5958,7 +5969,7 @@ export function DashboardPage() {
                       <Bell className="w-8 h-8 text-gray-200" />
                     </div>
                     <p className="font-semibold text-gray-700 mb-1">No notifications</p>
-                    <p className="text-sm text-gray-400">Order and sale updates will appear here. Offer, bid and message notifications are being integrated.</p>
+                    <p className="text-sm text-gray-400">Order, sale, offer, bid and message activity will appear here when it occurs.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-50">
@@ -5968,7 +5979,7 @@ export function DashboardPage() {
                         <div
                           key={n.id}
                           className={`flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}
-                          onClick={() => markRead([n.id])}
+                          onClick={() => { markRead([n.id]); if(n.href) window.location.assign(n.href); }}
                         >
                           <div className={`w-9 h-9 rounded-full ${n.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             <Icon className={`w-4 h-4 ${n.iconColor}`} />
