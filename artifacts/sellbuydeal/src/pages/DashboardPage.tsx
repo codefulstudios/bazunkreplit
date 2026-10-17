@@ -351,7 +351,7 @@ function OffersSection() {
 }
 
 type ExtraCat = { category: string; subcategory: string };
-type StoredListing = { id: number; publicId?: string | null; title: string; price: number; views: number; watchers: number; image: string; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; sellerEmail?: string; specifications?: string };
+type StoredListing = { id: number; publicId?: string | null; title: string; price: number; views: number; watchers: number; image: string; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; sellerEmail?: string; specifications?: string; createdAt?: string };
 
 async function fetchMyListings(email: string, getToken: () => Promise<string | null>): Promise<StoredListing[]> {
   if (!email) return [];
@@ -360,7 +360,7 @@ async function fetchMyListings(email: string, getToken: () => Promise<string | n
     if (!token) return [];
     const res = await fetch(`/api/listings/mine?email=${encodeURIComponent(email)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
     if (!res.ok) return [];
-    const data: Array<{ id: number; publicId?: string | null; title: string; price: string; views: number; watchers: number; image: string | null; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; seller_email?: string; sellerEmail?: string; specifications?: string }> = await res.json();
+    const data: Array<{ id: number; publicId?: string | null; title: string; price: string; views: number; watchers: number; image: string | null; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; seller_email?: string; sellerEmail?: string; specifications?: string; createdAt?: string }> = await res.json();
     return data.map((l) => ({
       id: l.id,
       publicId: l.publicId ?? null,
@@ -377,6 +377,7 @@ async function fetchMyListings(email: string, getToken: () => Promise<string | n
       extraCategories: l.extraCategories ?? "",
       sellerEmail: l.seller_email ?? l.sellerEmail,
       specifications: l.specifications ?? "",
+      createdAt: l.createdAt,
     }));
   } catch { return []; }
 }
@@ -1012,6 +1013,13 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
   }, [getToken]);
 
   const referralLink = referral?.code ? `${window.location.origin}/rewards/referrals?ref=${referral.code}` : '';
+  const recentListingEvents = myListings.filter(l=>l.createdAt).slice(0,12).map(l=>({
+    id:`listing:${l.id}`, type:"listing" as const, title:"Listing created",
+    desc:l.title, time:l.createdAt!, unread:false,
+    href:l.status==="active" ? `/listing/${l.publicId||l.id}` : "/dashboard?section=my-listings"
+  }));
+  const recentActivity = [...recentEvents, ...recentListingEvents]
+    .sort((a,b)=>new Date(b.time).getTime()-new Date(a.time).getTime()).slice(0,12);
   const copyReferralLink = async () => {
     if (!referralLink) return;
     await navigator.clipboard.writeText(referralLink);
@@ -1290,7 +1298,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
         <h2 className="font-bold text-gray-900 mb-4">Recent Activity</h2>
         {activityError && <p role="alert" className="mb-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{activityError}</p>}
         {activityLoading && <p className="text-sm font-semibold text-slate-600">Loading your activity…</p>}
-        {!activityLoading && recentEvents.length === 0 ? (
+        {!activityLoading && recentActivity.length === 0 ? (
           <div className="py-8 text-center text-slate-600">
             <BarChart2 className="w-8 h-8 mx-auto mb-2 text-slate-400" />
             <p className="text-sm font-semibold">No marketplace activity yet</p>
@@ -1298,8 +1306,8 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           </div>
         ) : (
           <div className="space-y-1" aria-live="polite">
-            {recentEvents.slice(0, 8).map((activity) => {
-              const Icon = activity.type === "sale" ? ShoppingBag : activity.type === "offer" ? Handshake : activity.type === "bid" ? Gavel : activity.type === "message" ? MessageSquare : ShoppingCart;
+            {recentActivity.slice(0, 8).map((activity) => {
+              const Icon = activity.type === "sale" ? ShoppingBag : activity.type === "offer" ? Handshake : activity.type === "bid" ? Gavel : activity.type === "message" ? MessageSquare : activity.type === "listing" ? Store : ShoppingCart;
               return <Link key={activity.id} href={activity.href} className="flex items-center gap-3 rounded-lg px-2 py-3 border-b border-slate-200 dark:border-slate-700 last:border-0 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
                 <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
                   <Icon className="w-4 h-4 text-orange-700 dark:text-orange-200" />
@@ -1311,7 +1319,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
                 <time dateTime={activity.time} className="text-xs text-slate-600 dark:text-slate-300 flex-shrink-0">{activity.time ? new Date(activity.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : ""}</time>
               </Link>;
             })}
-            {recentEvents.length > 8 && <button type="button" onClick={() => onNavigate("notifications")} className="mt-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all activity →</button>}
+            {recentActivity.length > 8 && <button type="button" onClick={() => onNavigate("notifications")} className="mt-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all activity →</button>}
           </div>
         )}
       </div>
