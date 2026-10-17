@@ -93,7 +93,7 @@ async function auth(req:any,res:any){return await authenticatedSellerEmail(req,r
 router.get("/snap-sell/capabilities",async (_req,res)=>{
  const [enabled,barcode,writing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing")]);
  res.setHeader("Cache-Control","no-store");
- res.json({enabled,barcode:enabled&&barcode,aiWriting:enabled&&writing,aiPhoto:enabled&&writing&&!!key(),
+ res.json({enabled,barcode:enabled&&barcode,aiWriting:enabled&&writing&&!!key(),aiPhoto:enabled&&writing&&!!key(),
   recognitionConfigured:!!key(),limits:{photoMb:2,aiRequests24h:20,lookups24h:80},
   note:"Photo analysis is sent to the configured AI provider only on request. All generated content must be checked by the seller."});
 });
