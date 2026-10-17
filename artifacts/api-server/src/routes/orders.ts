@@ -1,3 +1,5 @@
+import { recordWebhookDelivery } from "../lib/webhookMonitoring.js";
+import { randomUUID as webhookReceiptId } from "node:crypto";
 import { refundOrder, releaseOrderPayout } from "../lib/orderSettlement.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
@@ -91,8 +93,10 @@ router.post("/webhooks/shippo/tracking", async (req, res) => {
       }
       updated++;
     }
+    await recordWebhookDelivery("shippo",webhookReceiptId(),"track_updated","processed");
     res.json({ok:true,updated});
   } catch (err) {
+    await recordWebhookDelivery("shippo",webhookReceiptId(),"track_updated","failed",err instanceof Error?err.message:"Tracking failed");
     res.status(500).json({error:"Tracking update failed"});
   }
 });
