@@ -16,7 +16,7 @@ router.get("/admin/importers/monitor",async(_req,res)=>{
          OR LOWER(specifications) LIKE '%shopify%')
       ORDER BY updated_at DESC LIMIT 500`),
     db.execute(sql`SELECT si.listing_id,si.supplier_source,si.sync_status,si.sync_error,
-      si.last_synced_at,si.updated_at,l.title,l.public_id
+      si.last_synced_at,si.updated_at,l.title,l.public_id,l.status
       FROM supplier_imports si JOIN listings l ON l.id=si.listing_id
       ORDER BY COALESCE(si.last_synced_at,si.updated_at) DESC LIMIT 300`),
     db.execute(sql`SELECT COUNT(*)::int calls,
