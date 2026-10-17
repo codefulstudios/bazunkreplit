@@ -5979,7 +5979,7 @@ export function DashboardPage() {
                         <div
                           key={n.id}
                           className={`flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}
-                          onClick={() => { markRead([n.id]); if(n.href) window.location.assign(n.href); }}
+                          onClick={async () => { await markRead([n.id]); if(n.href) window.location.assign(n.href); }}
                         >
                           <div className={`w-9 h-9 rounded-full ${n.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             <Icon className={`w-4 h-4 ${n.iconColor}`} />
