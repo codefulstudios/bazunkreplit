@@ -249,19 +249,19 @@ export function Navbar() {
               <motion.div initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.15, type: "spring" }}
                 className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-4xl">🌍</motion.div>
               <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-black text-slate-900">Welcome to Bazunk!</h2>
-              <p className="mt-2 text-sm sm:text-base text-slate-600">Choose your marketplace to discover local listings. You can switch anytime at the top of the page.</p>
+              <p className="mt-2 text-sm sm:text-base text-slate-600">Choose which listings to browse. Your account works in both markets, and you can switch anytime.</p>
               <div className="mt-7 grid grid-cols-2 gap-3">
                 {(["uk", "us"] as const).map(region => (
                   <motion.button key={region} type="button" whileHover={{ y: -5, scale: 1.03 }} whileTap={{ scale: 0.96 }}
                     onClick={() => selectMarket(region)}
                     className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-3 py-6 text-slate-900 transition-colors hover:border-orange-500 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">
                     <span className="block text-5xl">{region === "uk" ? "🇬🇧" : "🇺🇸"}</span>
-                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "USA / Canada"}</span>
+                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "United States"}</span>
                     <span className="mt-1 block text-sm font-semibold text-slate-500">{region === "uk" ? "GBP · £" : "USD · $"}</span>
                   </motion.button>
                 ))}
               </div>
-              <p className="mt-5 text-xs text-slate-500">One Bazunk account works in both marketplaces.</p>
+              <p className="mt-5 text-xs text-slate-500">Currency changes the displayed price. International shipping depends on the seller and the listing.</p>
             </motion.div>
           </motion.div>
         )}
@@ -273,7 +273,7 @@ export function Navbar() {
             transition={{ duration: 0.4 }} className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-gradient-to-br from-fuchsia-600/80 via-indigo-600/80 to-orange-500/80 backdrop-blur-md">
             <motion.div initial={{ y: 16 }} animate={{ y: 0 }} className="relative overflow-hidden rounded-[2rem] border-4 border-white/80 bg-gradient-to-br from-white via-amber-50 to-pink-100 px-12 py-10 text-center shadow-[0_25px_90px_rgba(0,0,0,.35)]">
               <motion.div aria-hidden="true" className="absolute inset-0 opacity-40" style={{background:"radial-gradient(circle at 15% 20%,#facc15 0,transparent 35%),radial-gradient(circle at 85% 80%,#f472b6 0,transparent 35%)"}} animate={{rotate:[0,8,-8,0],scale:[1,1.15,1]}} transition={{duration:2.3}} />\n              <motion.div className="relative text-7xl drop-shadow-xl" initial={{scale:.2,rotate:-35,y:70}} animate={{scale:[.2,1.35,1],rotate:[-35,12,-8,0],y:[70,-18,0]}} transition={{duration:1.5,ease:"easeOut"}}>{marketRegion === "uk" ? "🇬🇧" : "🇺🇸"}</motion.div>\n              <motion.div aria-hidden="true" className="relative text-2xl mt-1" initial={{opacity:0,scale:.5}} animate={{opacity:[0,1,1],scale:[.5,1.25,1]}} transition={{delay:.45,duration:1.3}}>✨ 🎉 ✨</motion.div>
-              <div className="relative mt-3 text-2xl font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA / Canada Marketplace"}</div>
+              <div className="relative mt-3 text-2xl font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
               <div className="relative mt-2 text-base font-bold text-indigo-700">{marketRegion === "uk" ? "Prices in GBP" : "Prices in USD"}</div>
             </motion.div>
           </motion.div>
@@ -281,7 +281,7 @@ export function Navbar() {
       </AnimatePresence>
       <nav className="sticky top-0 z-50 w-full bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
-          <span className="text-xs font-semibold text-gray-600">Shop in:</span>
+          <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
           <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
             <motion.div layout initial={false} transition={{ type: "spring", stiffness: 420, damping: 30 }}
               className="absolute top-1 bottom-1 rounded-full bg-[#F26B21] shadow-sm"
@@ -290,7 +290,7 @@ export function Navbar() {
               <button key={region} type="button" aria-pressed={marketRegion === region}
                 onClick={() => selectMarket(region)}
                 className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-bold transition-colors duration-200 ${marketRegion === region ? "text-white" : "text-gray-700 hover:text-[#F26B21]"}`}>
-                <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "GBP" : "USD"}</span></span>
+                <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "UK" : "USA"}</span></span>
               </button>
             ))}
           </div>
