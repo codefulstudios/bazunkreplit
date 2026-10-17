@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { featureEnabled } from "../lib/featureFlags.js";
+import { requireAdmin } from "../middlewares/adminAuth.js";
 
 const router=Router();
 type Suggestion={title:string;description:string;category:string;subcategory:string;brand:string;model:string;tags:string[];attributes:Array<{key:string;value:string}>;warnings:string[]};
@@ -164,7 +165,7 @@ router.get("/snap-sell/lookup/:code",async(req,res)=>{
  }catch(e){const x=errorResult(e);await log(email,"lookup_result","error","catalogue",x.code);res.status(x.status).json({error:"Catalogue lookup temporarily unavailable. Enter details manually.",code:x.code});}
  finally{clearTimeout(timer);}
 });
-router.get("/admin/snap-sell/monitor",async(_req,res)=>{
+router.get("/admin/snap-sell/monitor",requireAdmin,async(_req,res)=>{
  try{
   await setup();
   const [usage,latest,failures]=await Promise.all([
