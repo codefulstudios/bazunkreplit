@@ -97,10 +97,19 @@ router.get("/admin/global-search", async (req,res)=>{
           OR COALESCE(stripe_session_id,'') ILIKE ${like}
           OR COALESCE(stripe_transfer_id,'') ILIKE ${like}
         ORDER BY created_at DESC LIMIT 8`),
-      db.execute(sql`SELECT id,email,kind,cash_amount,currency,created_at
-        FROM credit_economy_ledger WHERE id ILIKE ${like} OR email ILIKE ${like}
-          OR COALESCE(reference_id,'') ILIKE ${like}
-        ORDER BY created_at DESC LIMIT 8`),
+      db.execute(sql`SELECT source,id,email,kind,cash_amount,currency,created_at FROM (
+        SELECT 'credits_ledger'::text source,id,email,kind,cash_amount,currency,created_at
+          FROM credit_economy_ledger
+          WHERE id ILIKE ${like} OR email ILIKE ${like} OR COALESCE(reference_id,'') ILIKE ${like}
+        UNION ALL
+        SELECT 'credit_purchase',id,email,'Credit purchase',NULL::numeric,'GBP',created_at
+          FROM credit_transactions WHERE id ILIKE ${like} OR email ILIKE ${like}
+        UNION ALL
+        SELECT 'stripe_order',id,buyer_email,'Stripe checkout',buyer_total,'GBP',created_at
+          FROM orders WHERE COALESCE(stripe_session_id,'')<>'' AND
+            (id ILIKE ${like} OR buyer_email ILIKE ${like} OR stripe_session_id ILIKE ${like}
+             OR COALESCE(stripe_transfer_id,'') ILIKE ${like})
+      ) p ORDER BY created_at DESC LIMIT 8`),
       db.execute(sql`
         SELECT kind,id,title,detail,status FROM (
           SELECT 'Compliance'::text kind,id::text id,
@@ -121,9 +130,9 @@ router.get("/admin/global-search", async (req,res)=>{
     type Result = {id:string;title:string;subtitle:string;href:string};
     const groups: Array<{kind:string;label:string;results:Result[]}> = [
       {kind:"users",label:"Users",results:(users.rows as any[]).map(x=>({id:String(x.email),title:x.name||x.username||x.email,subtitle:x.email,href:"/admin/users"}))},
-      {kind:"listings",label:"Listings",results:(listings.rows as any[]).map(x=>({id:String(x.id),title:x.title,subtitle:`${x.public_id||"#"+x.id} · ${x.status} · ${x.seller_email}`,href:"/admin/importer-control"}))},
+      {kind:"listings",label:"Listings",results:(listings.rows as any[]).map(x=>({id:String(x.id),title:x.title,subtitle:`${x.public_id||"#"+x.id} · ${x.status} · ${x.seller_email}`,href:"/admin/listings"}))},
       {kind:"orders",label:"Orders",results:(orders.rows as any[]).map(x=>({id:String(x.id),title:x.item_title||"Order",subtitle:`${x.id} · ${x.status} · ${x.buyer_email}`,href:"/admin/orders"}))},
-      {kind:"payments",label:"Payments & credits",results:(payments.rows as any[]).map(x=>({id:String(x.id),title:`${x.kind||"Credit entry"}: ${x.email}`,subtitle:`${x.id} · ${x.currency||"GBP"} ${x.cash_amount||0}`,href:"/admin/payments"}))},
+      {kind:"payments",label:"Payments & credits",results:(payments.rows as any[]).map(x=>({id:String(x.id),title:`${x.kind||"Credit entry"}: ${x.email}`,subtitle:`${x.id}${x.cash_amount!=null?" · "+(x.currency||"GBP")+" "+Number(x.cash_amount).toFixed(2):""}`,href:x.source==="stripe_order"?"/admin/orders":"/admin/payments"}))},
       {kind:"cases",label:"Cases & support",results:(cases.rows as any[]).map(x=>({id:`${x.kind}:${x.id}`,title:x.title,subtitle:`${x.status} · ${x.detail}`,href:x.kind==="Compliance"?"/admin/seller-compliance":x.kind==="Dispute"?"/admin/disputes":x.kind==="Return"?"/admin/returns":"/admin/support"}))}
     ];
     res.setHeader("Cache-Control","private, no-store");
