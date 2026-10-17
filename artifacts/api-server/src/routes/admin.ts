@@ -1,6 +1,7 @@
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
 import adminFeatureControlsRouter from "./adminFeatureControls.js";
+import adminOperationsRouter from "./adminOperations.js";
 import adminActionRequiredRouter from "./adminActionRequired.js";
 import adminFinanceMonitorRouter from "./adminFinanceMonitor.js";
 import adminComplianceReviewRouter from "./adminComplianceReview.js";
@@ -118,6 +119,7 @@ async function readCashback(){const r=await db.execute(sql`SELECT value FROM sit
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
 router.use(adminFeatureControlsRouter);
+router.use(adminOperationsRouter);
 router.use(adminNavigationRouter); // real alerts and global search, after admin auth
 router.use(adminFinanceMonitorRouter);
 router.use(adminComplianceReviewRouter);
