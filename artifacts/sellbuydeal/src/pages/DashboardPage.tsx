@@ -396,6 +396,8 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
   onUpdated: (updated: StoredListing) => void;
   onDeleted: (id: number) => void;
 }) {
+  const { getToken } = useClerkAuth();
+  const [listingError, setListingError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [reviseOpen, setReviseOpen] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -436,41 +438,62 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
     setNewExtraCatTop("");
     setNewExtraCatSub("");
     setMenuOpen(false);
+    setListingError("");
     setReviseOpen(true);
   }
 
+  async function updateListing(body: Record<string,unknown>) {
+    const token = await getToken();
+    if (!token) throw new Error("Please sign in again to edit this listing");
+    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.message || "Could not update listing");
+    return data;
+  }
+
   async function handleSave() {
-    setSaving(true);
+    setSaving(true); setListingError("");
     try {
-      const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: draft.title, price: draft.price, description: draft.description, condition: draft.condition, category: draft.categoryTop, subcategory: draft.category, image: draft.image, extra_categories: draft.extraCategories }),
-      });
-      if (res.ok) {
-        const u = await res.json();
-        onUpdated({ ...listing, title: u.title, price: parseFloat(u.price), description: u.description, condition: u.condition, category: u.category, image: u.image ?? "" });
-        setReviseOpen(false);
-      }
-    } finally { setSaving(false); }
+      const u = await updateListing({ title: draft.title, price: draft.price,
+        description: draft.description, condition: draft.condition,
+        category: draft.categoryTop, subcategory: draft.category,
+        image: draft.image, extra_categories: draft.extraCategories });
+      onUpdated({ ...listing, title: u.title, price: parseFloat(u.price), description: u.description,
+        condition: u.condition, category: u.category, subcategory: u.subcategory,
+        extraCategories: u.extraCategories, image: u.image ?? "" });
+      setReviseOpen(false);
+    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not save changes"); }
+    finally { setSaving(false); }
   }
 
   async function handleSuspend() {
-    setMenuOpen(false);
-    const newStatus = listing.status === "active" ? "suspended" : "active";
-    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) { const u = await res.json(); onUpdated({ ...listing, status: u.status }); }
+    setMenuOpen(false); setListingError("");
+    try {
+      const newStatus = listing.status === "active" ? "suspended" : "active";
+      const u = await updateListing({ status: newStatus });
+      onUpdated({ ...listing, status: u.status });
+    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not change listing status"); }
   }
 
   async function handleDelete() {
     setMenuOpen(false);
     if (!confirm("Delete this listing? This cannot be undone.")) return;
-    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, { method: "DELETE" });
-    if (res.ok) onDeleted(listing.id);
+    setListingError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again to delete listings");
+      const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
+        method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Could not delete listing");
+      }
+      onDeleted(listing.id);
+    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not delete listing"); }
   }
 
   async function handlePromote(type: string) {
