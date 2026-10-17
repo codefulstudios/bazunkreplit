@@ -1,7 +1,7 @@
-import { Store, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
-import { Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Store, Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
