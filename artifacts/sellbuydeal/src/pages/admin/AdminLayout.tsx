@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 // AdminLayout remounts on route changes; retain the sidebar position across pages.
 let savedAdminNavScrollTop = 0;
 import { useLocation } from "wouter";
-import { CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, Bell, CalendarDays } from "lucide-react";
+import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, Bell, CalendarDays } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { AdminAlertsPopover } from "@/components/admin/AdminAlertsPopover";
@@ -16,6 +16,7 @@ const NAV = [
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "Listings", href: "/admin/listings", icon: Package },
   { label: "Importer Control", href: "/admin/importer-control", icon: Package },
+  { label: "Snap & Sell AI", href: "/admin/snap-sell", icon: Camera },
   { label: "Importers", href: "/admin/imports", icon: ArrowDownToLine },
   { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
   { label: "Cashback", href: "/admin/cashback", icon: Gift },
@@ -43,7 +44,7 @@ const NAV = [
 const NAV_GROUPS = [
   { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard"] },
   { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","Reviews"] },
-  { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
+  { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Snap & Sell AI","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
   { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
   { id:"growth", label:"Growth & Rewards", icon:Megaphone, pages:["Cashback","Rewards","Credits Economy","Referrals","Promotions"] },
   { id:"support", label:"Support & Messaging", icon:LifeBuoy, pages:["Support","Chatwoot Settings","Email Templates"] },
