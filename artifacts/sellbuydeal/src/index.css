@@ -747,3 +747,20 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 :where(main, [role="dialog"]) :where(button, [role="button"]):disabled {
   cursor: not-allowed;
 }
+
+
+/* Honour reduced-motion preference for marketing, carousels and overlays. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* Prevent mobile controls overlapping or shrinking below usable tap sizes. */
+@media (max-width: 767px) {
+  :where(main,nav,[role="dialog"]) :where(button, select, [role="combobox"]) {
+    min-height: 36px;
+  }
+}
