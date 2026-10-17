@@ -8,6 +8,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import { useRawSettings } from "@/context/SiteSettingsContext";
@@ -79,6 +80,7 @@ const HERO_CATS = [
 
 export function Hero() {
   const { currency, country } = useCurrency();
+  const [marketRegion] = useMarketplaceRegion();
   const { t } = useLanguage();
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -129,6 +131,16 @@ export function Hero() {
               </a>
             </Link>
 
+            <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-black">
+                <span>{marketRegion === "uk" ? "🇬🇧 UK marketplace" : "🇺🇸 USA marketplace"}</span>
+                <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs text-white">Showing {currency.code}</span>
+              </div>
+              <p className="mt-1 text-sm leading-relaxed text-slate-100">
+                The region switch selects which listings you browse, while the currency controls displayed prices.
+                International delivery is available only when an individual seller offers it; check shipping destinations and costs on each listing.
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <Link href="/browse">
                 <button className="flex items-center justify-center gap-2 px-7 py-3.5 bg-[#F26B21] text-white font-black rounded-2xl hover:opacity-90 transition-opacity shadow-xl shadow-[#F26B21]/25 text-sm w-full sm:w-auto">
@@ -152,6 +164,17 @@ export function Hero() {
               </button>
               <Link href="/rewards" className="flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-yellow-300 bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 !text-slate-950 font-black rounded-2xl hover:from-yellow-200 hover:to-orange-300 hover:scale-[1.03] transition-all shadow-lg shadow-amber-500/30 text-sm w-full sm:w-auto" style={{ color: "#111827" }}>
                 <Gamepad2 className="w-4 h-4" /> Earn Free Credits
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <Link href="/sell/quick" className="rounded-xl bg-white px-4 py-2 font-bold text-slate-950 hover:bg-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
+                ⚡ Quick Sale — list the basics
+              </Link>
+              <Link href="/sell/direct" className="rounded-xl border border-white/40 px-4 py-2 font-bold text-white hover:bg-white/10">
+                Full Direct Sale listing →
+              </Link>
+              <Link href="/categories" className="px-2 py-2 font-semibold text-orange-200 underline underline-offset-4 hover:text-white">
+                Explore categories
               </Link>
             </div>
 
