@@ -352,10 +352,12 @@ function OffersSection() {
 type ExtraCat = { category: string; subcategory: string };
 type StoredListing = { id: number; publicId?: string | null; title: string; price: number; views: number; watchers: number; image: string; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; sellerEmail?: string; specifications?: string };
 
-async function fetchMyListings(email: string): Promise<StoredListing[]> {
+async function fetchMyListings(email: string, getToken: () => Promise<string | null>): Promise<StoredListing[]> {
   if (!email) return [];
   try {
-    const res = await fetch(`/api/listings/mine?email=${encodeURIComponent(email)}`);
+    const token = await getToken();
+    if (!token) return [];
+    const res = await fetch(`/api/listings/mine?email=${encodeURIComponent(email)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
     if (!res.ok) return [];
     const data: Array<{ id: number; publicId?: string | null; title: string; price: string; views: number; watchers: number; image: string | null; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; seller_email?: string; sellerEmail?: string; specifications?: string }> = await res.json();
     return data.map((l) => ({
@@ -822,6 +824,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
 
 // ── My Listings Section ───────────────────────────────────────────────────────
 function MyListingsSection({ userEmail }: { userEmail: string }) {
+  const { getToken } = useClerkAuth();
   const [listings, setListings] = useState<StoredListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -829,8 +832,8 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
 
   useEffect(() => {
     setLoading(true);
-    fetchMyListings(userEmail).then((data) => { setListings(data); setLoading(false); });
-  }, [userEmail]);
+    fetchMyListings(userEmail, getToken).then((data) => { setListings(data); setLoading(false); });
+  }, [userEmail, getToken]);
 
   async function deleteSelected() {
     if (!selectedIds.size || !confirm(`Delete ${selectedIds.size} selected listing${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
@@ -942,8 +945,8 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   const [referralCopied, setReferralCopied] = useState(false);
 
   useEffect(() => {
-    fetchMyListings(user.email).then(setMyListings);
-  }, [user.email]);
+    fetchMyListings(user.email, getToken).then(setMyListings);
+  }, [user.email, getToken]);
   useEffect(() => {
     let cancelled=false;
     async function loadOrders(){
@@ -2546,6 +2549,7 @@ const LOGO_COLORS = [
 
 function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (section: string) => void; settingsPage?: boolean }) {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [ratingText, setRatingText] = useState("New");
   useEffect(() => {
     if (!user?.email) return;
@@ -2559,7 +2563,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
       .catch(() => {});
   }, [user?.email]);
   const [myListings, setMyListings] = useState<StoredListing[]>([]);
-  useEffect(() => { fetchMyListings(user?.email ?? '').then(setMyListings); }, [user?.email]);
+  useEffect(() => { fetchMyListings(user?.email ?? '', getToken).then(setMyListings); }, [user?.email, getToken]);
 
   const storeKey = user?.email ? `sbd_my_store_${user.email}` : null;
   const [storeLoadedKey, setStoreLoadedKey] = useState<string | null>(null);
@@ -4211,15 +4215,22 @@ function GoLiveSection() {
   useEffect(() => {
     if (!user?.email) return;
     setListingsLoading(true);
-    fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`)
-      .then((r) => r.json())
+    getToken().then(token => {
+      if (!token) throw new Error("Please sign in to load your listings");
+      return fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
+      });
+    }).then((r) => {
+      if (!r.ok) throw new Error("Could not load your listings");
+      return r.json();
+    })
       .then((data) => {
         const items: GoLiveListing[] = Array.isArray(data) ? data : (data.listings ?? []);
         setMyListings(items);
       })
       .catch(() => {})
       .finally(() => setListingsLoading(false));
-  }, [user?.email]);
+  }, [user?.email, getToken]);
 
   function toggleProduct(id: number) {
     setSelectedIds((prev) =>
@@ -6396,7 +6407,8 @@ export function MyStorePage({ settingsPage = false }: { settingsPage?: boolean }
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [listings, setListings] = useState<StoredListing[]>([]);
-  useEffect(() => { fetchMyListings(user?.email ?? "").then(setListings); }, [user?.email]);
+  const { getToken } = useClerkAuth();
+  useEffect(() => { fetchMyListings(user?.email ?? "", getToken).then(setListings); }, [user?.email, getToken]);
   const activeListings = listings.filter(l => l.status === "active" || l.status === "published");
   return <div className="min-h-screen bg-[#f3f4f6] dark:bg-[#080d20]">
     <Navbar />
