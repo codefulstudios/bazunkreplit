@@ -1116,6 +1116,9 @@ router.get("/admin/listings", async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
     const offset = parseInt(req.query.offset as string) || 0;
     const search = (req.query.search as string) ?? "";
+    const requestedStatus=String(req.query.status??"").trim();
+    const allowedStatuses=new Set(["active","inactive","suspended","pending","draft","sold"]);
+    const statusFilter=allowedStatuses.has(requestedStatus)?sql`status=${requestedStatus}`:sql`TRUE`;
     const imported = req.query.imported as string;
     const source = String(req.query.source ?? "").toLowerCase();
     const sourceFilter = source === "amazon-uk" ? sql`(specifications LIKE '%"source":"Amazon UK"%' OR (public_id LIKE 'BZK-AMZ-%' AND specifications NOT LIKE '%"source":"Amazon US"%'))` : source === "amazon-us" ? sql`(specifications LIKE '%"source":"Amazon US"%' OR public_id LIKE 'BZK-AMZ-US-%')` : source === "ebay-uk" ? sql`(specifications LIKE '%"source":"eBay UK"%' OR public_id LIKE 'BZK-EBY-UK-%')` : source === "ebay-us" ? sql`(specifications LIKE '%"source":"eBay US"%' OR public_id LIKE 'BZK-EBY-US-%')` : source === "amazon" ? sql`(specifications LIKE '%"source":"Amazon UK"%' OR specifications LIKE '%"source":"Amazon US"%' OR public_id LIKE 'BZK-AMZ-%')` : source === "ebay" ? sql`(specifications LIKE '%"source":"eBay UK"%' OR specifications LIKE '%"source":"eBay US"%' OR public_id LIKE 'BZK-EBY-%')` : sql`TRUE`;
@@ -1135,6 +1138,7 @@ router.get("/admin/listings", async (req, res) => {
       WHERE (${search ? sql`(title ILIKE ${'%' + search + '%'} OR public_id ILIKE ${'%' + search + '%'} OR seller_email ILIKE ${'%' + search + '%'})` : sql`TRUE`})
       AND (${importedFilter})
       AND (${sourceFilter})
+      AND (${statusFilter})
       ORDER BY created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `).then(r => r.rows);
@@ -1144,6 +1148,7 @@ router.get("/admin/listings", async (req, res) => {
       WHERE (${search ? sql`(title ILIKE ${'%' + search + '%'} OR public_id ILIKE ${'%' + search + '%'} OR seller_email ILIKE ${'%' + search + '%'})` : sql`TRUE`})
       AND (${importedFilter})
       AND (${sourceFilter})
+      AND (${statusFilter})
     `).then(r => r.rows as { cnt: string }[]);
 
     res.json({ listings: rows, total: parseInt(cnt) });
