@@ -1,5 +1,6 @@
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
+import adminFeatureControlsRouter from "./adminFeatureControls.js";
 import adminActionRequiredRouter from "./adminActionRequired.js";
 import adminFinanceMonitorRouter from "./adminFinanceMonitor.js";
 import adminComplianceReviewRouter from "./adminComplianceReview.js";
@@ -116,6 +117,7 @@ const cashbackDefaults={enabled:false,payoutPolicy:"Cashback payouts are not yet
 async function readCashback(){const r=await db.execute(sql`SELECT value FROM site_settings WHERE key='cashback_program_settings'`);try{return JSON.parse(String(r.rows[0]?.value))||cashbackDefaults}catch{return cashbackDefaults}}
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
+router.use(adminFeatureControlsRouter);
 router.use(adminNavigationRouter); // real alerts and global search, after admin auth
 router.use(adminFinanceMonitorRouter);
 router.use(adminComplianceReviewRouter);
@@ -234,25 +236,6 @@ await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES('cas
 res.json(next);
 }catch{res.status(500).json({error:"Save failed"})}
 });
-// ── Feature Flags ───────────────────────────────────────────────────────────
-router.get("/admin/feature-flags", async (_req,res)=>{
-  const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'feature_%'`);
-  const values=Object.fromEntries((rows.rows as any[]).map(r=>[String(r.key).replace(/^feature_/,""),String(r.value)]));
-  res.json(FEATURE_DEFINITIONS.map(([key,label,group])=>({key,label,group,enabled:values[key]!=="false"})));
-});
-router.patch("/admin/feature-flags/:key", async(req,res)=>{
-  const key=String(req.params.key); const def=FEATURE_DEFINITIONS.find(x=>x[0]===key);
-  if(!def){res.status(404).json({error:"Unknown feature flag"});return;}
-  const enabled=Boolean(req.body.enabled); const settingKey=`feature_${key}`;
-  const old=await db.execute(sql`SELECT value FROM site_settings WHERE key=${settingKey}`);
-  const before=(old.rows[0] as any)?.value == null ? true : String((old.rows[0] as any).value)!=="false";
-  await db.execute(sql`INSERT INTO site_settings (key,value) VALUES (${settingKey},${enabled?"true":"false"}) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`);
-  await recordAdminAudit({req,actor:String(req.body.adminEmail||"Admin"),category:"settings",action:"feature_flag.change",targetType:"feature",targetId:key,summary:`Admin ${enabled?"enabled":"disabled"} ${def[1]}`,before:{enabled:before},after:{enabled}});
-  res.json({ok:true,key,enabled});
-});
-
-
-
 // Category visibility defaults to ON. Settings affect public discovery, never delete listings.
 router.get("/admin/category-visibility",async(_req,res)=>{
  try {const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'category_visible_%'`);
