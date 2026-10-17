@@ -89,7 +89,7 @@ router.post("/notifications/read",async(req,res)=>{
     await ensureReads();
     if(ids.length){
       await db.execute(sql`INSERT INTO marketplace_notification_reads(recipient_email,event_id)
-        SELECT ${email},x FROM UNNEST(${ids}::text[]) AS x
+        VALUES ${sql.join(ids.map((id:string)=>sql`(${email},${id})`),sql`,`)}
         ON CONFLICT(recipient_email,event_id) DO NOTHING`);
     }
     res.json({ok:true});
