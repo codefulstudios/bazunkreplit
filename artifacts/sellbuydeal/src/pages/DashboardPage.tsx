@@ -1,3 +1,4 @@
+import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
 import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
@@ -205,7 +206,6 @@ const MOCK_ORDERS: MockOrder[] = MOCK_ORDERS_DATA;
 
 const MOCK_SALES: { id: string; title: string; price: number; date: string; status: string; statusColor: string; buyer: string; image: string; fee: number }[] = [];
 
-const MOCK_SAVED_SEARCHES: { id: number; query: string; filters: string; count: number; lastRun: string; alert: boolean }[] = [];
 
 function BuyerProtectionDashSection() {
   const [, setLocation] = useLocation();
@@ -5610,14 +5610,13 @@ export function DashboardPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const [savedSearches, setSavedSearches] = useState(MOCK_SAVED_SEARCHES);
   const { notifications: activity, loading: activityLoading, error: activityError, markRead } = useDashboardActivity(user?.email);
-  const [notificationFilter,setNotificationFilter] = useState<"all"|"order"|"sale"|"offer"|"bid"|"message">("all");
+  const [notificationFilter,setNotificationFilter] = useState<"all"|"order"|"sale"|"offer"|"bid"|"message"|"search">("all");
   const notifs = activity.map(n=>({
     ...n,
-    icon: n.type === "sale" ? ShoppingBag : n.type === "offer" ? Handshake : n.type === "bid" ? Gavel : n.type === "message" ? MessageSquare : ShoppingCart,
-    iconBg: n.type === "sale" ? "bg-orange-100" : n.type === "offer" ? "bg-purple-100" : n.type === "bid" ? "bg-amber-100" : n.type === "message" ? "bg-emerald-100" : "bg-blue-100",
-    iconColor: n.type === "sale" ? "text-orange-700" : n.type === "offer" ? "text-purple-700" : n.type === "bid" ? "text-amber-700" : n.type === "message" ? "text-emerald-700" : "text-blue-700",
+    icon: n.type === "sale" ? ShoppingBag : n.type === "offer" ? Handshake : n.type === "bid" ? Gavel : n.type === "message" ? MessageSquare : n.type === "search" ? Search : ShoppingCart,
+    iconBg: n.type === "sale" ? "bg-orange-100" : n.type === "offer" ? "bg-purple-100" : n.type === "bid" ? "bg-amber-100" : n.type === "message" ? "bg-emerald-100" : n.type === "search" ? "bg-sky-100" : "bg-blue-100",
+    iconColor: n.type === "sale" ? "text-orange-700" : n.type === "offer" ? "text-purple-700" : n.type === "bid" ? "text-amber-700" : n.type === "message" ? "text-emerald-700" : n.type === "search" ? "text-sky-700" : "text-blue-700",
     time: n.time ? new Date(n.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "Recently"
   })).filter(n=>notificationFilter==="all"||notificationFilter===n.type);
   const [profileEdit, setProfileEdit] = useState(false);
@@ -5977,7 +5976,7 @@ export function DashboardPage() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 px-5 py-3" role="group" aria-label="Filter notification types">
-                  {(["all","order","sale","offer","bid","message"] as const).map(k=>
+                  {(["all","order","sale","offer","bid","message","search"] as const).map(k=>
                     <button key={k} type="button" aria-pressed={notificationFilter===k} onClick={()=>setNotificationFilter(k)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${notificationFilter===k?"bg-blue-700 text-white border-blue-700":"bg-white text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-500"}`}>{k==="all"?"All activity":k+"s"}</button>)}
                 </div>
@@ -6134,57 +6133,7 @@ export function DashboardPage() {
                 )}
               </div>
             )}
-            {activeSection === "saved-searches" && (
-              <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-gray-900">Saved Searches</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">{savedSearches.length} saved · {savedSearches.filter(s => s.alert).length} with alerts</p>
-                  </div>
-                  <Link href="/browse" className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                    <Plus className="w-3.5 h-3.5" /> New Search
-                  </Link>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {savedSearches.length === 0 ? (
-                    <div className="py-14 text-center text-gray-400">
-                      <Search className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                      <p className="text-sm font-medium">No saved searches</p>
-                      <Link href="/browse" className="mt-3 inline-flex items-center gap-1 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                        <Plus className="w-3 h-3" /> Start a search
-                      </Link>
-                    </div>
-                  ) : savedSearches.map((s) => (
-                    <div key={s.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
-                      <div className="w-9 h-9 rounded-xl bg-[#4A5CE8]/10 flex items-center justify-center flex-shrink-0">
-                        <Search className="w-4 h-4 text-[#4A5CE8]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900">{s.query}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{s.filters}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Last run {s.lastRun} · <span className="font-semibold text-[#4A5CE8]">{s.count} results</span></p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s.alert ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-400"}`}>
-                          {s.alert ? "🔔 Alert on" : "Alert off"}
-                        </span>
-                        <Link href="/browse" className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-[#4A5CE8] hover:border-[#4A5CE8] transition-colors" title="Run search">
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                        <button
-                          onClick={() => setSavedSearches(prev => prev.filter(x => x.id !== s.id))}
-                          className="p-1.5 rounded-lg border border-gray-200 text-gray-300 hover:text-red-400 hover:border-red-200 transition-colors"
-                          title="Delete saved search"
-                          data-testid={`button-delete-saved-search-${s.id}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeSection === "saved-searches" && <SavedSearchesSection />}
             {activeSection === "messages" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
