@@ -226,5 +226,36 @@
 /* Preserve coloured callouts and action buttons; override only their unreadable text. */
 .dark .bazunk-admin main .admin-features-page .bg-amber-50 {color:#fff1c2!important;background:#303044!important;}
 .dark .bazunk-admin main .admin-emails-page button.bg-white {color:#f3f8ff!important;}
-.dark .bazunk-admin main .admin-emails-page button.bg-\\[\\#F26B21\\],
-.dark .bazunk-admin main .admin-referrals-page button.bg-\\[\\#4A5CE8\\] {color:#ffffff!important;}
+.dark .bazunk-admin main .admin-emails-page button[class*="bg-[#F26B21]"],
+.dark .bazunk-admin main .admin-referrals-page button[class*="bg-[#4A5CE8]"] {color:#ffffff!important;}
+
+/* Admin tables and checkbox refinements: readable in both approved themes. */
+.bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table thead th {
+  background-color:#eaf1fc;
+  color:#23365d;
+  font-weight:800;
+}
+.dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table thead th {
+  background-color:#233759;
+  color:#f0f6ff;
+}
+.bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table tbody td {
+  color:#223354;
+}
+.dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table tbody td {
+  color:#eef5ff;
+}
+.bazunk-admin main input[type="checkbox"],
+.bazunk-admin main input[type="radio"] {
+  min-height:16px!important;
+  width:16px;height:16px;
+  accent-color:#f97316;
+  flex-shrink:0;
+}
+.bazunk-admin main table tr:focus-within {
+  outline:2px solid #f97316;
+  outline-offset:-2px;
+}
+@media(max-width:640px){
+  .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table :is(th,td){padding:.65rem;}
+}
