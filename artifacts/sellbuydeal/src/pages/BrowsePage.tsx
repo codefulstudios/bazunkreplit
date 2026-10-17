@@ -1,9 +1,10 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSearch, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
+  Search, Bell, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
   Grid3X3, List, ChevronDown, ChevronUp, ArrowUpDown, Users,
   MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag,
 } from "lucide-react";
@@ -228,7 +229,8 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 }
 
 export function BrowsePage() {
-  const [marketRegion] = useMarketplaceRegion();
+  const [marketRegion, setMarketRegion] = useMarketplaceRegion();
+  const { getToken } = useClerkAuth();
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
@@ -241,30 +243,56 @@ export function BrowsePage() {
   const urlCategory = params.get("category") ?? "";
   const urlSub = params.get("sub") ?? "";
   const urlSubsub = params.get("subsub") ?? "";
+  const urlList=(name:string)=>params.get(name)?.split(",").filter(Boolean)??[];
 
   const [query, setQuery] = useState(urlQuery);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlCategory ? [urlCategory] : []);
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlSub ? [urlSub] : []);
-  const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlSubsub ? [urlSubsub] : []);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlList("categories").length ? urlList("categories") : urlCategory ? [urlCategory] : []);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlList("subcategories").length ? urlList("subcategories") : urlSub ? [urlSub] : []);
+  const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlList("thirdLevels").length ? urlList("thirdLevels") : urlSubsub ? [urlSubsub] : []);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(urlList("conditions"));
+  const [minPrice, setMinPrice] = useState(params.get("minPrice")??"");
+  const [maxPrice, setMaxPrice] = useState(params.get("maxPrice")??"");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<SortKey>((params.get("sort") as SortKey)||"newest");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [listingTypes, setListingTypes] = useState<string[]>([]);
-  const [shipFrom, setShipFrom] = useState<string[]>([]);
-  const [shipTo, setShipTo] = useState<string[]>([]);
-  const [freeShipping, setFreeShipping] = useState(false);
+  const [shipFrom, setShipFrom] = useState<string[]>(urlList("shipFrom"));
+  const [shipTo, setShipTo] = useState<string[]>(urlList("shipTo"));
+  const [freeShipping, setFreeShipping] = useState(params.get("freeShipping")==="true");
   const [minRating, setMinRating] = useState<number | null>(null);
-  const [listedWithin, setListedWithin] = useState("any");
+  const [listedWithin, setListedWithin] = useState(params.get("listedWithin")||"any");
   const [apiListings, setApiListings] = useState<(typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] })[]>([]);
   const [hasMoreListings, setHasMoreListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingListings, setLoadingListings] = useState(true);
   const [listingError, setListingError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
+  const [saveOpen,setSaveOpen] = useState(false);
+  const [saveName,setSaveName] = useState("");
+  const [saveAlert,setSaveAlert] = useState(true);
+  const [savingSearch,setSavingSearch] = useState(false);
+  const [saveFeedback,setSaveFeedback] = useState("");
+  const [saveSuccess,setSaveSuccess] = useState(false);
+  async function saveCurrentSearch() {
+    setSavingSearch(true);setSaveFeedback("");setSaveSuccess(false);
+    try{
+      const token=await getToken();
+      if(!token)throw new Error("Sign in to save searches and receive alerts.");
+      const name=saveName.trim()||query.trim()||"My saved search";
+      const filters=Object.fromEntries(browseScope.entries());
+      const response=await fetch("/api/saved-searches",{
+        method:"POST",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},
+        body:JSON.stringify({name,filters,alertEnabled:saveAlert})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Could not save search");
+      setSaveSuccess(true);setSaveOpen(false);setSaveName("");
+      setSaveFeedback("Saved to your dashboard. Alerts will appear when newly listed items match.");
+    }catch(err){setSaveFeedback(err instanceof Error?err.message:"Could not save search");}
+    finally{setSavingSearch(false);}
+  }
+
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [countsLoaded, setCountsLoaded] = useState(false);
@@ -361,6 +389,23 @@ export function BrowsePage() {
       setLoadingMore(false);
     }
   }
+
+  useEffect(() => {
+    const url = new URLSearchParams(rawSearch);
+    const r=url.get("region");
+    if(r==="uk"||r==="us")setMarketRegion(r);
+    setSelectedCategories(url.get("categories")?.split(",").filter(Boolean)??(url.get("category")?[url.get("category")!]:[]));
+    setSelectedSubcategories(url.get("subcategories")?.split(",").filter(Boolean)??(url.get("sub")?[url.get("sub")!]:[]));
+    setSelectedThirdLevels(url.get("thirdLevels")?.split(",").filter(Boolean)??(url.get("subsub")?[url.get("subsub")!]:[]));
+    setSelectedConditions(url.get("conditions")?.split(",").filter(Boolean)??[]);
+    setMinPrice(url.get("minPrice")||"");setMaxPrice(url.get("maxPrice")||"");
+    setShipFrom(url.get("shipFrom")?.split(",").filter(Boolean)??[]);
+    setShipTo(url.get("shipTo")?.split(",").filter(Boolean)??[]);
+    setFreeShipping(url.get("freeShipping")==="true");
+    setListedWithin(url.get("listedWithin")||"any");
+    const sorting=url.get("sort");
+    if(sorting&&["newest","price-asc","price-desc","price-lowest","views"].includes(sorting))setSort(sorting as SortKey);
+  },[rawSearch]);
 
   // Keep query in sync with URL
   useEffect(() => {
@@ -790,6 +835,18 @@ export function BrowsePage() {
             </button>
           </div>
 
+          {saveOpen && <form onSubmit={e=>{e.preventDefault();void saveCurrentSearch();}} className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-2 border-orange-300 bg-orange-50 p-4 text-slate-950">
+            <label className="min-w-[190px] flex-1 text-sm font-bold">Search name
+              <input maxLength={80} required value={saveName} onChange={e=>setSaveName(e.target.value)} placeholder={query||"e.g. Vintage games"} className="mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 font-semibold text-slate-950"/>
+            </label>
+            <label className="flex items-center gap-2 pb-2 text-sm font-bold">
+              <input type="checkbox" checked={saveAlert} onChange={e=>setSaveAlert(e.target.checked)}/> Alert on new matching listings
+            </label>
+            <button type="submit" disabled={savingSearch} className="rounded-lg bg-orange-600 px-4 py-2.5 font-black text-white disabled:opacity-50">{savingSearch?"Saving…":"Save"}</button>
+          </form>}
+          {saveFeedback && <div role="status" className={`mb-3 rounded-lg border p-3 text-sm font-semibold ${saveSuccess?"border-green-300 bg-green-50 text-green-900":"border-red-300 bg-red-50 text-red-900"}`}>
+            {saveFeedback}{saveSuccess && <Link href="/dashboard?section=saved-searches" className="ml-2 font-black underline">View saved searches</Link>}
+          </div>}
           {/* Active filter chips */}
           {activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -898,6 +955,10 @@ export function BrowsePage() {
               <p className="text-sm text-gray-400">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
             </div>
             <div className="flex items-center gap-2">
+              <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-3 py-2 font-black text-sm text-white hover:bg-orange-700" data-testid="button-save-search">
+                <Bell className="h-4 w-4"/> Save search
+              </button>
               {/* Sort */}
               <div className="relative">
                 <select
