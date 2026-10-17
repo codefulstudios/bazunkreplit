@@ -131,7 +131,7 @@ router.get("/listings", async (req, res) => {
     if (shippingOrigins.length) clauses.push(inArray(listingsTable.shipOrigin, shippingOrigins));
     const shippingZones = csv(shipTo);
     if (shippingZones.length) clauses.push(sql`(${sql.join(shippingZones.map(z => sql`${listingsTable.shipZone} ILIKE ${"%" + z + "%"}`), sql` OR `)})`);
-    if (freeShipping === "true") clauses.push(sql`COALESCE(NULLIF(${listingsTable.shippingPrice}, '')::numeric, 0) = 0`);
+    if (freeShipping === "true") clauses.push(sql`COALESCE(${listingsTable.shippingPrice}::numeric, 0) = 0`);
     const days = listedWithin === "today" ? 1 : listedWithin === "week" ? 7 : listedWithin === "month" ? 30 : null;
     if (days) clauses.push(sql`${listingsTable.createdAt} >= NOW() - ${days} * INTERVAL '1 day'`);
     const ordering = sort === "price-asc" || sort === "price-lowest" ? sql`${listingsTable.price}::numeric ASC`
