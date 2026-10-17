@@ -104,6 +104,7 @@ export function AdminListingsPage() {
 
   return (
     <AdminLayout>
+      <div className="admin-listings-page">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-black text-gray-900">Listings</h1>
@@ -277,6 +278,7 @@ export function AdminListingsPage() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </AdminLayout>
   );
