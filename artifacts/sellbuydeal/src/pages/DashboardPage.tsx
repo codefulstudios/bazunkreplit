@@ -1,3 +1,4 @@
+import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
 import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
 import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
 import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
@@ -84,6 +85,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     items: [
       { id: "my-listings",   label: "My Listings",   icon: Package,   iconBg: "bg-[#F26B21]" },
       { id: "sales",         label: "Sales",         icon: BarChart2, iconBg: "bg-[#F26B21]" },
+      { id: "seller-analytics", label: "Analytics", icon: TrendingUp, iconBg: "bg-orange-600" },
       { id: "shipping-centre", label: "Shipping", icon: Truck, iconBg: "bg-[#4A5CE8]" },
       { id: "my-auctions",   label: "My Auctions",   icon: Gavel,     iconBg: "bg-[#F26B21]" },
       { id: "my-flash-sales",label: "Flash Sales",   icon: Zap,       iconBg: "bg-[#F26B21]" },
@@ -2282,6 +2284,7 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
 
   return (
     <div className="space-y-4 p-5">
+      <SellerAnalyticsPanel financeOnly />
       {/* Connect status card */}
       <div className={`rounded-2xl border-2 p-5 ${status?.chargesEnabled ? "border-emerald-200 bg-emerald-50/40" : "border-gray-100 bg-gray-50/40"}`}>
         <div className="flex items-start gap-4">
@@ -6104,6 +6107,7 @@ export function DashboardPage() {
             )}
             {activeSection === "orders" && <OrdersSection />}
             {activeSection === "sales" && <SellerSales />}
+            {activeSection === "seller-analytics" && <div className="p-4 sm:p-6"><SellerAnalyticsPanel /></div>}
             {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
