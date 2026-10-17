@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import {
   Tag, Clock, CheckCircle2, XCircle, ChevronRight,
@@ -40,9 +41,12 @@ function StatusBadge({ status }: { status: OfferStatus }) {
   );
 }
 
-function OfferCard({ offer }: { offer: Offer }) {
+type RemoteOffer = Offer & { buyerEmail?: string; sellerEmail?: string; publicId?: string | null; fromServer?: boolean };
+function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; currentEmail?: string; onRespond: (id:string, action:string, counterPrice?:number)=>Promise<void> }) {
   const { formatPrice } = useCurrency();
   const { respondToCounter } = useOffers();
+  const isSeller = !!offer.sellerEmail && offer.sellerEmail.toLowerCase() === currentEmail?.toLowerCase();
+  const [counterInput,setCounterInput] = useState("");
   const [, setLocation] = useLocation();
   const cfg = STATUS_CONFIG[offer.status];
 
@@ -70,7 +74,7 @@ function OfferCard({ offer }: { offer: Offer }) {
             <StatusBadge status={offer.status} />
           </div>
 
-          <p className="text-xs text-gray-400 mb-2">Seller: {offer.sellerName}</p>
+          <p className="text-xs text-slate-600 mb-2">{isSeller ? `Buyer: ${offer.buyerEmail?.split("@")[0] || "Bazunk buyer"}` : `Seller: ${offer.sellerName}`}</p>
 
           <div className="flex flex-wrap gap-3 text-sm">
             <div>
@@ -78,7 +82,7 @@ function OfferCard({ offer }: { offer: Offer }) {
               <p className="font-bold text-gray-600 line-through">{formatPrice(offer.listingPrice)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-400">Your offer</p>
+              <p className="text-xs text-slate-600">{isSeller ? "Buyer offered" : "Your offer"}</p>
               <p className="font-black text-[#F26B21]">{formatPrice(offer.offerPrice)}</p>
             </div>
             {savings > 0 && (
@@ -101,8 +105,20 @@ function OfferCard({ offer }: { offer: Offer }) {
         </div>
       </div>
 
+      {isSeller && offer.status === "pending" && (
+        <div className="border-t border-blue-100 bg-blue-50 p-4 space-y-2">
+          <p className="text-sm font-bold text-slate-900">Respond to this buyer's offer</p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => void onRespond(offer.id,"accept")} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Accept</button>
+            <button onClick={() => void onRespond(offer.id,"decline")} className="rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white">Decline</button>
+            <input aria-label="Counter-offer price" type="number" min="0.01" step="0.01" value={counterInput} onChange={e=>setCounterInput(e.target.value)} placeholder="Counter price" className="w-32 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-900"/>
+            <button disabled={Number(counterInput)<=0} onClick={() => void onRespond(offer.id,"counter",Number(counterInput))}
+              className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-40">Counter</button>
+          </div>
+        </div>
+      )}
       {/* Counter offer section */}
-      {offer.status === "countered" && offer.counterPrice && (
+      {!isSeller && offer.status === "countered" && offer.counterPrice && (
         <div className="border-t border-blue-100 bg-blue-50/60 px-4 py-3">
           <div className="flex items-start gap-2 mb-3">
             <MessageSquare className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -116,13 +132,13 @@ function OfferCard({ offer }: { offer: Offer }) {
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <button
-              onClick={() => respondToCounter(offer.id, true)}
+              onClick={() => offer.fromServer ? void onRespond(offer.id,"accept-counter") : respondToCounter(offer.id, true)}
               className="flex-1 py-2 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-colors"
             >
               Accept {formatPrice(offer.counterPrice)}
             </button>
             <button
-              onClick={() => respondToCounter(offer.id, false)}
+              onClick={() => offer.fromServer ? void onRespond(offer.id,"decline-counter") : respondToCounter(offer.id, false)}
               className="flex-1 py-2 rounded-xl bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition-colors"
             >
               Decline
@@ -134,7 +150,7 @@ function OfferCard({ offer }: { offer: Offer }) {
       {/* View listing button */}
       <div className="border-t border-gray-50 px-4 py-2.5 flex justify-end">
         <button
-          onClick={() => setLocation(`/listing/${offer.productId}`)}
+          onClick={() => setLocation(`/listing/${offer.publicId || offer.productId}`)}
           className="flex items-center gap-1.5 text-xs font-medium text-[#4A5CE8] hover:text-[#3a4cc8] transition-colors"
         >
           View listing <ChevronRight className="w-3.5 h-3.5" />
@@ -147,7 +163,46 @@ function OfferCard({ offer }: { offer: Offer }) {
 export function OffersPage() {
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
-  const { offers } = useOffers();
+  const { offers: localOffers } = useOffers();
+  const { getToken } = useClerkAuth();
+  const [remoteOffers,setRemoteOffers] = useState<RemoteOffer[]>([]);
+  const [loaded,setLoaded] = useState(false);
+  const [offerApiError,setOfferApiError] = useState("");
+  const refreshOffers=useCallback(async()=>{
+    const token=await getToken();
+    if(!token)return;
+    const response=await fetch("/api/offers",{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+    const data=await response.json().catch(()=>[]);
+    if(!response.ok)throw new Error(data.error || "Offers unavailable");
+    setRemoteOffers((Array.isArray(data)?data:[]).map((o:any)=>({
+      id:String(o.id), productId:Number(o.listing_id), productTitle:String(o.product_title),
+      productImage:String(o.product_image||""), listingPrice:Number(o.listing_price),
+      sellerName:String(o.seller_name||"Bazunk seller"), sellerId:0, offerPrice:Number(o.offer_price),
+      message:o.message||undefined, status:o.status as OfferStatus, counterPrice:o.counter_price?Number(o.counter_price):undefined,
+      counterMessage:o.counter_message||undefined, createdAt:String(o.created_at),
+      respondedAt:o.updated_at, buyerEmail:String(o.buyer_email),sellerEmail:String(o.seller_email),
+      publicId:o.public_id,fromServer:true
+    })));
+    setOfferApiError("");setLoaded(true);
+  },[getToken]);
+  useEffect(()=>{
+    if(!user?.email)return;
+    void refreshOffers().catch(e=>{setOfferApiError(e instanceof Error?e.message:"Could not load offers");setLoaded(true);});
+  },[user?.email,refreshOffers]);
+  async function respond(id:string,action:string,counterPrice?:number){
+    try{
+      const token=await getToken();
+      if(!token)throw new Error("Please sign in");
+      const response=await fetch(`/api/offers/${encodeURIComponent(id)}`,{
+        method:"PATCH",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({action,counterPrice})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Could not respond to offer");
+      await refreshOffers();
+    }catch(e){setOfferApiError(e instanceof Error?e.message:"Could not respond to offer");}
+  }
+  const offers = loaded ? remoteOffers : localOffers;
   const [, setLocation] = useLocation();
   const [tab, setTab] = useState<TabKey>("all");
 
@@ -212,6 +267,7 @@ export function OffersPage() {
           </div>
         </section>
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-4">
+          {offerApiError && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{offerApiError}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label:"Pending Offers", value:counts.pending, detail:"Waiting for a response", icon:Hourglass, cls:"from-orange-500 via-orange-600 to-amber-700" },
@@ -235,7 +291,7 @@ export function OffersPage() {
                 <h2 className="text-2xl font-black text-white">{tab==="all"?"No offers yet":`No ${tab} offers`}</h2>
                 <p className="mt-2 text-blue-100">{tab==="all"?"Browse listings and make an offer on something you like.":"Switch tabs to see your other offers."}</p>
                 <button onClick={() => tab==="all"?setLocation("/browse"):setTab("all")} className="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-6 py-3 text-white font-black"><Search className="w-4 h-4"/>{tab==="all"?"Browse Listings":"All Offers"} <ChevronRight className="w-4 h-4"/></button>
-              </div> : <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{filtered.map(offer=><OfferCard key={offer.id} offer={offer}/>)}</div>}
+              </div> : <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{filtered.map(offer=><OfferCard key={offer.id} offer={offer} currentEmail={user.email} onRespond={respond}/>)}</div>}
             </div>
             <aside className="rounded-2xl border border-blue-400/60 bg-gradient-to-br from-[#092d80] to-[#111060] p-5">
               <h2 className="text-xl font-black text-white flex items-center gap-2 mb-4"><Lightbulb className="w-6 h-6 text-yellow-300"/> Tips for Getting Great Deals</h2>
