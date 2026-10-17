@@ -46,3 +46,12 @@
 .dark .bazunk-dashboard-subpage .text-white{color:#fff!important}
 @media(max-width:640px){.bazunk-dashboard-subpage{border-radius:14px}.bazunk-dashboard-subpage [class*="p-6"]{padding:16px}.bazunk-dashboard-subpage table{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.bazunk-dashboard-subpage *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Shared action and feedback polish for dashboard light/dark modes. */
+.bazunk-dashboard-theme :is(button,[role="button"],[role="tab"]):not(:disabled){transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
+.bazunk-dashboard-theme :is(button,[role="button"],[role="tab"]):focus-visible{outline:3px solid #ffad33!important;outline-offset:3px}
+.bazunk-dashboard-subpage :is(button,input,select,textarea){font-size:max(13px,1em)}
+.bazunk-dashboard-subpage :is(.text-gray-400,.text-slate-400){font-weight:500}
+.dark .bazunk-dashboard-subpage :is(button,[role="tab"])[aria-selected="true"]{box-shadow:0 0 0 2px #60a5fa}
+@media(max-width:640px){.bazunk-dashboard-theme :is(button,select,[role="combobox"]){min-height:38px}}
