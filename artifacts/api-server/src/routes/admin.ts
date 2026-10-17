@@ -143,12 +143,21 @@ router.post("/admin/seller-compliance/appeals/:id/decision",async(req,res)=>{
     if(!Number.isSafeInteger(id)||id<1||!["accepted","rejected"].includes(decision)||reason.length<20){
       res.status(400).json({error:"Valid appeal decision and reason (20+ characters) required."});return;
     }
-    const result=await db.execute(sql`UPDATE seller_compliance_appeals SET status=${decision},decision_reason=${reason},
-      decided_by='admin',decided_at=NOW() WHERE id=${id} AND status='pending' RETURNING id,case_id,seller_email,status`);
-    if(!result.rows.length){res.status(409).json({error:"Appeal not found or already decided"});return;}
-    const appeal=result.rows[0] as any;
-    await db.execute(sql`UPDATE seller_compliance_cases SET status=${decision==="accepted"?"under_review":"resolved"},
-      updated_at=NOW() WHERE id=${Number(appeal.case_id)}`);
+    const appeal=await db.transaction(async tx=>{
+      const result=await tx.execute(sql`UPDATE seller_compliance_appeals SET status=${decision},decision_reason=${reason},
+        decided_by='admin',decided_at=NOW() WHERE id=${id} AND status='pending'
+        RETURNING id,case_id,seller_email,status`);
+      if(!result.rows.length)return null;
+      const a=result.rows[0] as any;
+      const nextStatus=decision==="accepted"?"under_review":"resolved";
+      await tx.execute(sql`UPDATE seller_compliance_cases SET status=${nextStatus},updated_at=NOW(),
+        closed_at=CASE WHEN ${nextStatus}='resolved' THEN NOW() ELSE NULL END WHERE id=${Number(a.case_id)}`);
+      await tx.execute(sql`INSERT INTO seller_compliance_events(case_id,actor_type,actor_id,action,details)
+        VALUES(${Number(a.case_id)},'admin','admin','appeal_decided',
+        ${JSON.stringify({appealId:id,decision,reason})}::jsonb)`);
+      return a;
+    });
+    if(!appeal){res.status(409).json({error:"Appeal not found or already decided"});return;}
     await recordAdminAudit({req,category:"users",action:"seller_compliance.appeal",targetType:"seller_compliance_appeal",
       targetId:String(id),summary:`Appeal ${id} ${decision}: ${reason}`,after:appeal});
     void sendSystemMessage(String(appeal.seller_email),{category:"Seller Compliance",subject:"Appeal decision",body:`Your appeal for compliance case #${appeal.case_id} has been ${decision}. Please check your seller compliance page for the case status.`});
@@ -192,13 +201,20 @@ router.post("/admin/seller-compliance/cases/:id/status", async (req, res) => {
     if (!Number.isSafeInteger(id) || id < 1 || !["open","awaiting_information","under_review","resolved","appealed"].includes(status) || reason.length < 20) {
       res.status(400).json({error:"Valid case, status and a review reason of at least 20 characters required."}); return;
     }
-    const updated = await db.execute(sql`UPDATE seller_compliance_cases SET status=${status},updated_at=NOW(),
-      closed_at=CASE WHEN ${status}='resolved' THEN NOW() ELSE NULL END WHERE id=${id} RETURNING id,seller_email,status`);
-    if (!updated.rows.length) {res.status(404).json({error:"Case not found"});return;}
+    const saved=await db.transaction(async tx=>{
+      const result=await tx.execute(sql`UPDATE seller_compliance_cases SET status=${status},updated_at=NOW(),
+        closed_at=CASE WHEN ${status}='resolved' THEN NOW() ELSE NULL END WHERE id=${id}
+        RETURNING id,seller_email,status`);
+      if(!result.rows.length)return null;
+      await tx.execute(sql`INSERT INTO seller_compliance_events(case_id,actor_type,actor_id,action,details)
+        VALUES(${id},'admin','admin','status_updated',${JSON.stringify({status,reason})}::jsonb)`);
+      return result.rows[0];
+    });
+    if (!saved) {res.status(404).json({error:"Case not found"});return;}
     await recordAdminAudit({req,category:"users",action:"seller_compliance.status",targetType:"seller_compliance_case",targetId:String(id),
-      summary:`Compliance case ${id}: ${status}; reason: ${reason}`,after:updated.rows[0]});
-    void sendSystemMessage(String((updated.rows[0] as any).seller_email),{category:"Seller Compliance",subject:"Compliance case updated",body:`Your compliance case #${id} is now ${status.replaceAll("_"," ")}. Check Seller Compliance in your dashboard for details.`});
-    res.json({case:updated.rows[0]});
+      summary:`Compliance case ${id}: ${status}; reason: ${reason}`,after:saved});
+    void sendSystemMessage(String((saved as any).seller_email),{category:"Seller Compliance",subject:"Compliance case updated",body:`Your compliance case #${id} is now ${status.replaceAll("_"," ")}. Check Seller Compliance in your dashboard for details.`});
+    res.json({case:saved});
   } catch (err) {
     logger.error({err},"Seller compliance status update failed");
     res.status(503).json({error:"Could not update compliance case."});
