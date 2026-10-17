@@ -50,7 +50,7 @@ export function AdminListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [filter, setFilter] = useState<"all" | "imported" | "user">("all");
   const [offset, setOffset] = useState(0);
   const [imageEditing, setImageEditing] = useState<number | null>(null);
