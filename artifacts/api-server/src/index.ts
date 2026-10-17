@@ -813,6 +813,7 @@ app.listen(port, (err?: Error) => {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
+  logger.info({configured:Boolean(process.env.OPENAI_API_KEY),model:process.env.SNAP_SELL_AI_MODEL||"gpt-4o-mini"},"Snap Sell AI readiness");
   const shippoToken = process.env.SHIPPO_API_TOKEN?.trim() || "";
   logger.info({
     port,
