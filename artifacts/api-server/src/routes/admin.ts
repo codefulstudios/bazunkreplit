@@ -1,4 +1,5 @@
 import { Router } from "express";
+import adminNavigationRouter from "./adminNavigation.js";
 import { scanSellerCompliance } from "../lib/sellerComplianceScan.js";
 import { syncAllImports } from "../lib/syncJob.js";
 import { attachStripePaymentAmounts } from "../lib/adminPaymentRevenue.js";
@@ -111,6 +112,7 @@ const cashbackDefaults={enabled:false,payoutPolicy:"Cashback payouts are not yet
 async function readCashback(){const r=await db.execute(sql`SELECT value FROM site_settings WHERE key='cashback_program_settings'`);try{return JSON.parse(String(r.rows[0]?.value))||cashbackDefaults}catch{return cashbackDefaults}}
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
 router.use("/admin", requireAdmin);
+router.use(adminNavigationRouter); // real alerts and global search, after admin auth
 
 // Seller compliance: restricted to authenticated administrators by router.use above.
 // Returns only review cases, not raw private seller evidence.
