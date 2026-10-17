@@ -151,7 +151,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   if (displayListings.length === 0) return null;
 
   return (
-    <section className="py-12 bg-white border-b border-gray-100">
+    <section className="py-12 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
       <div className="max-w-6xl mx-auto px-4">
 
         {/* Header */}
@@ -169,7 +169,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl md:text-3xl font-black text-white"
+              className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white"
             >
               {mode === "promoted" ? t("homepageSpotlight") : t("featuredListings")}
             </motion.h2>
