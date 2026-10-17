@@ -200,7 +200,7 @@ router.get("/admin/support/tickets", async (req, res) => {
 
     let whereClause = sql`WHERE 1=1`;
     if (status && status !== "all") whereClause = sql`${whereClause} AND t.status = ${status}`;
-    if (search) whereClause = sql`${whereClause} AND (t.email ILIKE ${"%" + search + "%"} OR t.subject ILIKE ${"%" + search + "%"})`;
+    if (search) whereClause = sql`${whereClause} AND (t.email ILIKE ${"%" + search + "%"} OR t.subject ILIKE ${"%" + search + "%"} OR t.id::text ILIKE ${"%" + search + "%"})`;
 
     const tickets = await db.execute(
       sql`SELECT t.id, t.email, t.subject, t.category, t.status, t.priority,
