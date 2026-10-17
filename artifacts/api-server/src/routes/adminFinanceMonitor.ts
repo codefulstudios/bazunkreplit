@@ -41,8 +41,8 @@ router.get("/admin/finance/reconciliation",async (_req,res)=>{
           if(session.payment_status!=="paid" && rows.some(o=>["confirmed","processing","shipped","delivered","completed"].includes(String(o.status)))){
             issues.push({id:"payment:"+sessionId,kind:"payment_mismatch",severity:"critical",title:"Order recorded without a paid Stripe session",detail:`Stripe: ${session.payment_status}; Bazunk orders: ${rows.map(o=>o.id).join(", ")}`,href});
           }
-          if(got!==null&&expected>0&&Math.abs(got-expected)>.02){
-            issues.push({id:"total:"+sessionId,kind:"total_mismatch",severity:"warning",title:"Checkout total differs from order snapshots",detail:`Stripe checkout ${session.currency?.toUpperCase()} ${got.toFixed(2)}; Bazunk recorded sum ${expected.toFixed(2)} (GBP equivalent not verified)`,href});
+          if(got!==null&&expected>0&&session.currency?.toLowerCase()==="gbp"&&Math.abs(got-expected)>.02){
+            issues.push({id:"total:"+sessionId,kind:"total_mismatch",severity:"warning",title:"Checkout total differs from order snapshots",detail:`Stripe GBP ${got.toFixed(2)}; Bazunk order snapshots GBP ${expected.toFixed(2)}`,href});
           }
         }catch(e){unverified++;issues.push({id:"unverified:"+sessionId,kind:"stripe_unverified",severity:"warning",title:"Cannot verify checkout session",detail:`${sessionId} — ${e instanceof Error?e.message.slice(0,120):"Stripe lookup failed"}`,href:"/admin/orders?search="+encodeURIComponent(rows[0].id)});}
       }));
@@ -67,7 +67,7 @@ router.get("/admin/finance/reconciliation",async (_req,res)=>{
     const report={generatedAt:new Date().toISOString(),stripeAvailable,stripeError:stripeAvailable?null:stripeError,
       totals,scope:{ordersSampled:orders.length,totalOrderCount:Number(totals?.total||0),sessionsSampled:sessions.length,sessionsVerified:confirmed,sessionsUnverified:unverified,transfersChecked:checkedTransfers,transferChecksFailed:failedTransfers},
       issues:issues.sort((a,b)=>(a.severity==="critical"?0:1)-(b.severity==="critical"?0:1)).slice(0,90),
-      limits:"Read-only snapshot: latest 180 marketplace orders, 25 Stripe sessions and 15 transfers (60-second cache). Currency conversion and Stripe bank-payout availability are not inferred; unverified amounts must be reviewed in Stripe."};
+      limits:"Read-only snapshot: latest 180 marketplace orders, 25 Stripe sessions and 15 transfers (60-second cache). Only GBP checkout totals are compared; other currencies and Stripe bank-payout availability are not inferred; unverified amounts must be reviewed in Stripe."};
     cache={at:Date.now(),value:report};res.setHeader("Cache-Control","private,no-store");res.json(report);
   }catch(err){console.error("Finance reconciliation monitor failed",err);res.status(503).json({error:"Reconciliation unavailable; review Stripe and order records before taking action"});}
 });
