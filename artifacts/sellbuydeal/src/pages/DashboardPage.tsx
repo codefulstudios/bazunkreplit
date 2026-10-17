@@ -1281,12 +1281,24 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
       <div className="overview-below-grid">
         <section className="overview-section-card bg-white rounded-2xl p-5">
           <div className="overview-showcase-head"><MessageSquare className="w-6 h-6 text-blue-500"/><div><h2>Recent Messages</h2><p>Latest conversations from your buyers.</p></div><Link href="/messages" className="overview-view-all">View All <ArrowRight className="w-4 h-4"/></Link></div>
-          <div className="overview-placeholder-panel">
-            <MessageSquare className="w-9 h-9 text-blue-500"/>
-            <h3>Keep conversations moving</h3>
-            <p>Open your inbox to see real messages and reply to buyers.</p>
-            <Link href="/messages" className="overview-message-open">Open Inbox <ArrowRight className="w-4 h-4"/></Link>
-          </div>
+          {recentEvents.some(e=>e.type==="message") ? (
+            <div className="space-y-2" aria-live="polite">
+              {recentEvents.filter(e=>e.type==="message").slice(0,3).map(e=>(
+                <Link key={e.id} href={e.href} className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900">
+                  <MessageSquare className="h-5 w-5 shrink-0 text-blue-700 dark:text-blue-200"/>
+                  <div className="min-w-0"><p className="font-bold text-slate-950 dark:text-white">{e.title}{e.unread?" · New":""}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-2">{e.desc}</p></div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="overview-placeholder-panel">
+              <MessageSquare className="w-9 h-9 text-blue-500"/>
+              <h3>No recent conversations</h3>
+              <p>Messages from buyers and sellers will appear here.</p>
+              <Link href="/messages" className="overview-message-open">Open Inbox <ArrowRight className="w-4 h-4"/></Link>
+            </div>
+          )}
         </section>
         <section className="overview-section-card bg-white rounded-2xl p-5">
           <div className="overview-showcase-head"><CheckCircle2 className="w-6 h-6 text-emerald-500"/><div><h2>Seller Setup Progress</h2><p>Complete the steps to get the most from Bazunk.</p></div></div>
