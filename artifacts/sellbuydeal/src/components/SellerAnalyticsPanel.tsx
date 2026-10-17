@@ -5,7 +5,7 @@ import { Eye, Heart, ShoppingBag, BarChart3, Megaphone, Banknote, Clock, ShieldA
 type Metrics={
   listings:{listing_count:number;active_listings:number;views:number;watchers:number};
   orders:{sales:number;delivered:number;sales_net:string;eligible:string;pending:string;held:string;transferred:string};
-  promotions:{promoted_listings:number;active_promotions:number;promoted_listings_with_views:number};
+  promotions:{promoted_listings:number;active_promotions:number;views_during_promotions:number;visitors_during_promotions:number};
   salesPer100Views:number;note:string;
 };
 const pound=(v:unknown)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(v)||0);
@@ -38,6 +38,8 @@ export function SellerAnalyticsPanel({financeOnly=false}:{financeOnly?:boolean})
     {label:"Sales per 100 views",value:`${data?.salesPer100Views??0}`,icon:BarChart3},
     {label:"Promoted listings",value:data?.promotions.promoted_listings??0,icon:Megaphone},
     {label:"Active promotions",value:data?.promotions.active_promotions??0,icon:Megaphone},
+    {label:"Views during promotions",value:data?.promotions.views_during_promotions??0,icon:Eye},
+    {label:"Visitors during promotions",value:data?.promotions.visitors_during_promotions??0,icon:Heart},
   ];
   return <section className="space-y-4" aria-label={financeOnly?"Seller payout balances":"Seller analytics"}>
     <div className="flex flex-wrap items-center justify-between gap-2">
