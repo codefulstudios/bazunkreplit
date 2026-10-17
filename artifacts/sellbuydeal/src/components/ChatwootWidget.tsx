@@ -109,21 +109,27 @@ export function ChatwootWidget() {
         if (cancelled || !data.identifier_hash) return;
         const apply = () => {
           if (cancelled || !window.$chatwoot?.setUser) return;
-          if (identifiedUser.current !== data.identifier) {
-            identifiedUser.current = data.identifier;
-            if (window.$chatwoot.reset) {
-              window.addEventListener("chatwoot:ready", () => {
-                if (!cancelled) window.$chatwoot?.setUser?.(data.identifier, {
-                  name: data.name, email: data.email, identifier_hash: data.identifier_hash,
-                });
-              }, { once: true });
-              window.$chatwoot.reset();
-              return;
-            }
+          const previous = identifiedUser.current;
+          const details = {
+            name: String(data.name||"").slice(0,120),
+            email: String(data.email||""),
+            identifier_hash: String(data.identifier_hash||""),
+          };
+          // A new session is anonymous. Set it directly rather than reset()
+          // and wait for a second "ready" event that may never be emitted.
+          if (previous && previous !== data.identifier && window.$chatwoot.reset) {
+            identifiedUser.current = null;
+            window.$chatwoot.reset();
+            const reIdentify = () => {
+              if (cancelled) return;
+              window.$chatwoot?.setUser?.(data.identifier, details);
+              identifiedUser.current = data.identifier;
+            };
+            window.addEventListener("chatwoot:ready",reIdentify,{once:true});
+            return;
           }
-          window.$chatwoot.setUser(data.identifier, {
-            name: data.name, email: data.email, identifier_hash: data.identifier_hash,
-          });
+          window.$chatwoot.setUser(data.identifier,details);
+          identifiedUser.current = data.identifier;
         };
         if (window.$chatwoot?.setUser) apply();
         else window.addEventListener("chatwoot:ready", apply, { once: true });
