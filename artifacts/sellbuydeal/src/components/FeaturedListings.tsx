@@ -221,6 +221,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                   {listing.image ? (
                     <img
                       src={listing.image}
+                      loading="lazy" decoding="async"
                       alt={listing.title}
                       className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500"
                     />
