@@ -740,7 +740,7 @@ router.patch("/listings/profile/me", async (req, res) => {
         VALUES(${email},${sellerType},${"2026-10-11-v1"},${"seller_onboarding"})`);
     }
     const step = Number.isInteger(b.onboardingStep) ? Math.max(1,Math.min(6,b.onboardingStep)) : null;
-    const completed = b.onboardingCompleted === true ? true : null;
+    const completed = null; // Completion is validated server-side after profile fields are saved.
     const prefs = b.notificationPreferences && typeof b.notificationPreferences === "object" ? b.notificationPreferences : null;
 
     // JSON is stringified and cast server-side so it is never interpolated as SQL text.
@@ -757,6 +757,24 @@ router.patch("/listings/profile/me", async (req, res) => {
       notification_preferences=COALESCE(${prefsJson}::jsonb,notification_preferences),
       onboarding_step=COALESCE(${step},onboarding_step), onboarding_completed=COALESCE(${completed},onboarding_completed)
       WHERE LOWER(email)=LOWER(${email})`);
+    if (b.onboardingCompleted === true) {
+      // The browser cannot make itself payout-eligible by simply setting a boolean.
+      const candidate=(await db.execute(sql`SELECT name,username,address_line1,city,postcode,country,seller_type,notification_preferences
+        FROM users WHERE LOWER(email)=LOWER(${email}) LIMIT 1`)).rows[0] as any;
+      const required=[candidate?.name,candidate?.username,candidate?.address_line1,candidate?.city,candidate?.postcode,candidate?.country,candidate?.seller_type];
+      if(required.some(x=>!String(x||"").trim()) || !/^[A-Za-z0-9._-]{3,30}$/.test(String(candidate?.username||"")) ||
+          !["private","sole_trader","business"].includes(String(candidate?.seller_type)) ||
+          !candidate?.notification_preferences || typeof candidate.notification_preferences!=="object"){
+        res.status(409).json({error:"Complete your profile, address, seller classification and notification preferences before finishing account setup."});return;
+      }
+      const declarations=await db.execute(sql`SELECT 1 FROM seller_declarations
+        WHERE LOWER(seller_email)=LOWER(${email}) AND declared_type=${candidate.seller_type}
+        AND declaration_version='2026-10-11-v1' LIMIT 1`);
+      if(!declarations.rows.length){
+        res.status(409).json({error:"Accept the current seller compliance declaration before completing setup."});return;
+      }
+      await db.execute(sql`UPDATE users SET onboarding_completed=TRUE,onboarding_step=6 WHERE LOWER(email)=LOWER(${email})`);
+    }
     // The profile update above is authoritative. Older deployments can have
     // different optional seller-name columns on individual selling surfaces.
     // Propagate retrospectively where supported, but never make onboarding fail
