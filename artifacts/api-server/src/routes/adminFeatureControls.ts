@@ -6,7 +6,8 @@ const router=Router();
 const ENV=process.env.RENDER_SERVICE_ID==="srv-db732i2d0e5s73asr0kg" ? "staging":
  process.env.RENDER_SERVICE_ID==="srv-davd6f3bc2fs73ce9ohg" ? "production" :
  process.env.RENDER_SERVICE_ID==="srv-dal8qm6k1f9s73e37f2g" ? "legacy" :
- process.env.BAZUNK_DEPLOYMENT_ENV==="staging" ? "staging":"production";
+ process.env.BAZUNK_DEPLOYMENT_ENV==="staging" ? "staging":
+ process.env.BAZUNK_DEPLOYMENT_ENV==="production" ? "production":"unknown";
 async function ensureHistory(){
  await db.execute(sql`CREATE TABLE IF NOT EXISTS feature_toggle_changes(
   id BIGSERIAL PRIMARY KEY,feature_key TEXT NOT NULL,environment TEXT NOT NULL,
@@ -31,8 +32,10 @@ router.get("/admin/feature-toggles/meta",async (_req,res)=>{
   await ensureHistory();
   res.setHeader("Cache-Control","private,no-store");
   res.json({environment:ENV,serviceId:process.env.RENDER_SERVICE_ID||null,
-   environmentsIndependent:true,readOnly:ENV==="legacy",
-   warning:ENV==="legacy"?"Legacy service is read-only. Use the active production API for toggles.":"Changes apply only to this service's configured database. Staging and production must be changed separately."});
+   environmentsIndependent:true,readOnly:ENV==="legacy"||ENV==="unknown",
+   warning:ENV==="legacy"?"Legacy service is read-only. Use the active production API for toggles.":
+    ENV==="unknown"?"Unrecognised service environment: changes are disabled.":
+    "Changes apply only to this service's database. Staging and production must be changed separately."});
  }catch{res.status(503).json({error:"Cannot verify toggle history database"});}
 });
 router.get("/admin/feature-toggles/history",async(req,res)=>{
@@ -52,7 +55,7 @@ async function change(req:any,res:any,isRollback:boolean){
  const key=String(req.params.key||"");
  if(!definition(key)){res.status(404).json({error:"Unknown feature"});return;}
  const body=req.body||{};
- if(ENV==="legacy"){res.status(403).json({error:"Feature changes on the legacy service are disabled"});return;}
+ if(ENV==="legacy"||ENV==="unknown"){res.status(403).json({error:"Feature changes are disabled for an unverified or legacy service"});return;}
  if(body.environment!==ENV){res.status(409).json({error:`Environment mismatch: connected to ${ENV}. Refresh the page before changing a toggle.`});return;}
  if(typeof body.expectedEnabled!=="boolean"){res.status(400).json({error:"Expected current state is required to prevent stale updates"});return;}
  const reason=String(body.reason||"").trim();
