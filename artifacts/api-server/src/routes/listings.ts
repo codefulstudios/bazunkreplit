@@ -619,6 +619,35 @@ async function authenticatedEmail(req: any): Promise<string | null> {
   return clerkUser.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
 }
 
+// Only seller-visible events and appeal decisions are returned; private admin
+// reviewer notes and risk-scan internals are never exposed to the seller.
+router.get("/listings/seller-compliance/:id/history",async(req,res)=>{
+ try{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in required"});return;}
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid case"});return;}
+  const owned=await db.execute(sql`SELECT id,status,opened_at FROM seller_compliance_cases
+   WHERE id=${id} AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+  if(!owned.rows.length){res.status(404).json({error:"Case not found"});return;}
+  const [events,appeals]=await Promise.all([
+   db.execute(sql`SELECT id,action,details,created_at FROM seller_compliance_events WHERE case_id=${id}
+     AND action IN ('evidence_submitted','appeal_decided','status_updated') ORDER BY created_at DESC LIMIT 40`),
+   db.execute(sql`SELECT id,status,explanation,decision_reason,created_at,decided_at
+     FROM seller_compliance_appeals WHERE case_id=${id} AND LOWER(seller_email)=LOWER(${email})
+     ORDER BY created_at DESC LIMIT 20`)
+  ]);
+  const filtered=(events.rows as any[]).map(e=>({
+   id:e.id,action:e.action,created_at:e.created_at,
+   details:e.action==='evidence_submitted' ? {explanation:e.details?.explanation||""}
+     :e.action==='appeal_decided'?{decision:e.details?.decision||""}
+     :{status:e.details?.status||""}
+  }));
+  res.setHeader("Cache-Control","private,no-store");
+  res.json({case:owned.rows[0],events:filtered,appeals:appeals.rows});
+ }catch(e){console.error("Seller case history failed",e);res.status(503).json({error:"Could not load your case history"});}
+});
+
 // Seller-owned compliance cases and text evidence; identity is always taken from Clerk.
 router.get("/listings/seller-compliance/me", async(req,res)=>{
   try {
