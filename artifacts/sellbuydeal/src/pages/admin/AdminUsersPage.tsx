@@ -6,6 +6,7 @@ import {
   Mail, UserPlus, Download,
 } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
+import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { useAdmin } from "@/context/AdminContext";
 
 interface User {
@@ -39,6 +40,12 @@ export function AdminUsersPage() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [loading, setLoading] = useState(true);
+  const [accountFilter,setAccountFilter]=useState<"all"|"active"|"suspended">("all");
+  const [sellerFilter,setSellerFilter]=useState<"all"|"private"|"business">("all");
+  const [selectedUserIds,setSelectedUserIds]=useState<string[]>([]);
+  const visibleUsers=users.filter(u=>(accountFilter==="all"||(accountFilter==="suspended"?u.banned:!u.banned))
+    &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):u.seller_type!=="private")));
+  const visibleUserIds=visibleUsers.map(u=>u.email);
 
   // Credits
   const [creditInput, setCreditInput] = useState<Record<string, string>>({});
@@ -90,7 +97,7 @@ export function AdminUsersPage() {
   const [milestoneSaved, setMilestoneSaved] = useState<Record<string, boolean>>({});
 
   useEffect(() => { if (!isAdmin) setLocation("/admin"); }, [isAdmin]);
-  useEffect(() => { load(); }, [search]);
+  useEffect(() => { load(); setSelectedUserIds([]); }, [search]);
 
   async function load() {
     setLoading(true);
@@ -305,11 +312,29 @@ export function AdminUsersPage() {
         />
       </div>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <label className="text-sm font-bold text-slate-800 dark:text-white">Account
+          <select value={accountFilter} onChange={e=>{setAccountFilter(e.target.value as typeof accountFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            <option value="all">All accounts</option><option value="active">Active</option><option value="suspended">Suspended</option>
+          </select>
+        </label>
+        <label className="text-sm font-bold text-slate-800 dark:text-white">Seller
+          <select value={sellerFilter} onChange={e=>{setSellerFilter(e.target.value as typeof sellerFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
+            <option value="all">All types</option><option value="private">Private</option><option value="business">Business / trader</option>
+          </select>
+        </label>
+        <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">{visibleUsers.length} shown (up to 200 loaded)</span>
+      </div>
+      <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
+        columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
       <div className="admin-users-table bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50">
+                <th className="px-3 py-2"><input type="checkbox" aria-label="Select all visible users" className="h-4 w-4"
+                  checked={visibleUserIds.length>0&&visibleUserIds.every(id=>selectedUserIds.includes(id))}
+                  onChange={e=>setSelectedUserIds(e.target.checked?visibleUserIds:[])}/></th>
                 {["User", "Selling", "Buying", "Messages", "Reputation / Risk", "Credits", "Last activity", "Adjust Credits", "Actions"].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
@@ -317,16 +342,19 @@ export function AdminUsersPage() {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={9} className="text-center text-gray-400 py-10">Loading…</td></tr>
+                <tr><td colSpan={10} className="text-center text-gray-400 py-10">Loading…</td></tr>
               )}
               {!loading && users.length === 0 && (
-                <tr><td colSpan={9} className="text-center text-gray-400 py-10">
+                <tr><td colSpan={10} className="text-center text-gray-400 py-10">
                   No users found{!search && " — press “Sync users” above to import your existing accounts."}
                 </td></tr>
               )}
-              {users.map((u) => (
+              {visibleUsers.map((u) => (
                 <>
                   <tr key={u.email} className={`border-t border-gray-50 ${u.banned ? "bg-red-50/40" : "hover:bg-gray-50/40"}`}>
+                    <td className="px-3 py-2"><input type="checkbox" className="h-4 w-4" aria-label={`Select user ${u.email}`}
+                      checked={selectedUserIds.includes(u.email)}
+                      onChange={e=>setSelectedUserIds(p=>e.target.checked?[...new Set([...p,u.email])]:p.filter(id=>id!==u.email))}/></td>
                     {/* User */}
                     <td className="px-4 py-3">
                       <p className="font-semibold text-gray-800 text-xs">{u.email}</p>
@@ -473,7 +501,7 @@ export function AdminUsersPage() {
 
                   {expandedEmail === u.email && (
                     <tr key={`${u.email}-milestones`} className="bg-[#4A5CE8]/3 border-t border-[#4A5CE8]/10">
-                      <td colSpan={9} className="px-4 py-5">
+                      <td colSpan={10} className="px-4 py-5">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-[#4A5CE8]" />
