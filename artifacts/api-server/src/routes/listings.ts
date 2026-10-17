@@ -389,7 +389,8 @@ router.post("/listings", async (req, res) => {
     const tags = typeof body.tags === "string" ? body.tags : null;
     const region = body.marketplaceRegion ?? body.marketplace_region;
     if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Select UK or USA marketplace region" }); return; }
-    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+    const gallery = Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string" && p.length > 0).slice(0, 10) : [];
+    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: gallery, draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
     const extraCategories = Array.isArray(body.extra_categories) && body.extra_categories.length
       ? JSON.stringify(body.extra_categories)
       : null;
