@@ -4,7 +4,7 @@ import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
 import { Flag, Search, ShieldCheck, RotateCcw, History, RefreshCw } from "lucide-react";
 type F={key:string;label:string;group:string;enabled:boolean};
-type Change={id:number;feature_key:string;environment:string;previous_enabled:boolean;new_enabled:boolean;reason:string;source_change_id:number|null;actor:string;created_at:string};
+type Change={id:number;feature_key:string;environment:string;previous_enabled:boolean;new_enabled:boolean;reason:string;source_change_id:number|null;actor:string;created_at:string;legacy?:boolean};
 type Meta={environment:string;readOnly:boolean;warning:string;serviceId:string|null};
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 export function AdminFeatureFlagsPage(){
@@ -76,11 +76,11 @@ export function AdminFeatureFlagsPage(){
  <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-200">Latest 100 changes in this environment. Rollback restores the historical prior state and creates a new record.</p>
  <div className="mt-3 max-h-96 space-y-2 overflow-y-auto">{filteredHistory.length===0?<p className="py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">No recorded changes yet.</p>:filteredHistory.map(h=>{
  const current=flags.find(f=>f.key===h.feature_key);
- const canUndo=!!current&&current.enabled!==h.previous_enabled&&!meta?.readOnly&&reason.trim().length>=8;
+ const canUndo=!h.legacy&&!!current&&current.enabled!==h.previous_enabled&&!meta?.readOnly&&reason.trim().length>=8;
  return <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
  <div className="min-w-0"><p className="text-sm font-black text-slate-950 dark:text-white">{current?.label||h.feature_key} · {h.previous_enabled?"ON":"OFF"} → {h.new_enabled?"ON":"OFF"}</p>
  <p className="text-xs text-slate-700 dark:text-slate-200">{new Date(h.created_at).toLocaleString("en-GB")} · {h.actor} · {h.environment}</p>
  <p className="mt-1 break-words text-xs text-slate-700 dark:text-slate-200">{h.reason}</p></div>
- <button type="button" disabled={!canUndo||busy!==null} onClick={()=>current&&void change(current,h)} className="flex min-h-9 items-center gap-1 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-900 disabled:opacity-50 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-100"><RotateCcw className="h-4 w-4"/>Rollback to {h.previous_enabled?"ON":"OFF"}</button></div>;
+ <button type="button" disabled={!canUndo||busy!==null} onClick={()=>current&&void change(current,h)} className="flex min-h-9 items-center gap-1 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2 text-xs font-bold text-orange-900 disabled:opacity-50 dark:border-orange-700 dark:bg-orange-950 dark:text-orange-100"><RotateCcw className="h-4 w-4"/>{h.legacy?"Historical audit (view only)":`Rollback to ${h.previous_enabled?"ON":"OFF"}`}</button></div>;
  })}</div></section></div></AdminLayout>
 }
