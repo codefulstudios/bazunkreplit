@@ -402,6 +402,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
 }) {
   const { getToken } = useClerkAuth();
   const [listingError, setListingError] = useState("");
+  const [listingSuccess, setListingSuccess] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [reviseOpen, setReviseOpen] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -474,7 +475,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
   }
 
   async function handleSellerAction(action: SellerToolAction) {
-    setMenuOpen(false);setListingError("");
+    setMenuOpen(false);setListingError("");setListingSuccess("");
     try {
       if(["duplicate","relist"].includes(action) &&
         !window.confirm(action==="duplicate" ? "Create an editable draft copy of this listing?" : "Create a new live listing from this item? The original will remain unchanged."))return;
@@ -492,6 +493,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
         if(onCreated)onCreated();else window.location.reload();
       }else{
         onUpdated({...listing,status:data.updated[0].status??listing.status});
+        setListingSuccess(action==="renew"?"Listing renewed and moved to newest results":action==="pause"?"Listing paused":"Listing activated");
       }
     }catch(err){setListingError(err instanceof Error?err.message:"Listing action failed");}
   }
@@ -546,6 +548,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
 
   return (
     <>
+      {listingSuccess && !reviseOpen && <p role="status" className="max-w-xs rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs font-semibold text-emerald-800">{listingSuccess}</p>}
       {listingError && !reviseOpen && <div role="alert" className="max-w-xs rounded-lg border border-red-300 bg-red-50 p-2 text-xs font-semibold text-red-800">{listingError}</div>}
       <div ref={menuRef} className="relative flex-shrink-0">
         <button
