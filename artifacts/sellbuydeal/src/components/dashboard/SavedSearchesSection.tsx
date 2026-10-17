@@ -1,3 +1,4 @@
+import { CATEGORIES } from "@/data/categories";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
@@ -92,7 +93,9 @@ export function SavedSearchesSection() {
       <label className="text-sm font-bold">Search name<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)} className={field} placeholder="e.g. Retro consoles"/></label>
       <label className="text-sm font-bold">Search terms<input value={term} maxLength={150} onChange={e=>setTerm(e.target.value)} className={field} placeholder="e.g. PlayStation"/></label>
       <label className="text-sm font-bold">Marketplace<select value={region} onChange={e=>setNewRegion(e.target.value as "uk"|"us")} className={field}><option value="uk">🇬🇧 United Kingdom</option><option value="us">🇺🇸 United States</option></select></label>
-      <label className="text-sm font-bold">Category (optional)<input value={category} onChange={e=>setCategory(e.target.value)} className={field} placeholder="Category slug"/></label>
+      <label className="text-sm font-bold">Category (optional)<select value={category} onChange={e=>setCategory(e.target.value)} className={field}>
+        <option value="">All categories</option>{CATEGORIES.map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}
+      </select></label>
       <label className="text-sm font-bold">Minimum price<input type="number" min="0" step="0.01" value={minPrice} onChange={e=>setMinPrice(e.target.value)} className={field}/></label>
       <label className="text-sm font-bold">Maximum price<input type="number" min="0" step="0.01" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} className={field}/></label>
       <label className="flex items-center gap-2 text-sm font-bold sm:col-span-2"><input type="checkbox" checked={alertEnabled} onChange={e=>setAlertEnabled(e.target.checked)} className="h-4 w-4"/>Alert me when new matching listings appear</label>
