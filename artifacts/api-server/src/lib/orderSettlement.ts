@@ -73,6 +73,14 @@ export async function releaseOrderPayout(id:string) {
     if(reconciled.netMinor<=0)throw new Error("No seller proceeds remain to transfer.");
     const seller=(await tx.execute(sql`SELECT stripe_account_id,onboarding_completed FROM users WHERE LOWER(email)=LOWER(${order.seller_email}) LIMIT 1`)).rows[0] as any;
     if(seller?.onboarding_completed!==true)throw new Error("Seller must complete all account setup steps before payouts can be released.");
+    // Re-check the seller declaration at the actual money-movement boundary,
+    // not only at wizard completion.
+    const declaration=(await tx.execute(sql`SELECT 1 FROM seller_declarations d
+      JOIN users u ON LOWER(u.email)=LOWER(d.seller_email)
+      WHERE LOWER(u.email)=LOWER(${order.seller_email})
+        AND d.declared_type=u.seller_type AND d.declaration_version='2026-10-11-v1'
+      LIMIT 1`)).rows;
+    if(!declaration.length)throw new Error("Accept the current seller declaration before payouts can be released.");
     if(!seller?.stripe_account_id)throw new Error("Seller must connect a Stripe payout account first.");
     // Sellers are onboarded using Accounts v2 recipient configuration. Validate
     // the same capabilities used by the onboarding status route, rather than
