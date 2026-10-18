@@ -51,7 +51,7 @@ function getProductImages(image: string, gallery?: string[]) {
     typeof src === "string" && src.trim().length > 0))].slice(0, 10);
 }
 
-interface RelatedItem { id: number; public_id: string; title: string; price: string; image: string | null; category: string }
+interface RelatedItem { id: number; public_id: string; title: string; price: string; image: string | null; category: string; sponsored?: boolean; currency?: string; price_gbp?: string | number }
 
 function RelatedListingsBox({ category, excludeId }: { category: string; excludeId: number | string }) {
   const [items, setItems] = useState<RelatedItem[]>([]);
@@ -59,13 +59,13 @@ function RelatedListingsBox({ category, excludeId }: { category: string; exclude
     fetch(`/api/promotions/related?category=${encodeURIComponent(category)}&exclude=${excludeId}`)
       .then(r => r.ok ? r.json() : [])
       .then((data: RelatedItem[]) => {
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setItems(shuffled.slice(0, 3));
+        setItems((Array.isArray(data) ? data : []).slice(0, 3));
       })
       .catch(() => {});
   }, [category, excludeId]);
 
   if (items.length === 0) return null;
+  const sponsored = items.some(item => item.sponsored === true);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -73,7 +73,7 @@ function RelatedListingsBox({ category, excludeId }: { category: string; exclude
         <div className="w-7 h-7 rounded-lg bg-[#F26B21]/10 flex items-center justify-center flex-shrink-0">
           <Flame className="w-3.5 h-3.5 text-[#F26B21]" />
         </div>
-        <h3 className="text-sm font-bold text-gray-900">Featured in this Category</h3>
+        <h3 className="text-sm font-bold text-gray-900">{sponsored ? "Sponsored listings in this category" : "More in this category"}</h3>
       </div>
       <div className="space-y-3">
         {items.map(item => (
@@ -84,15 +84,15 @@ function RelatedListingsBox({ category, excludeId }: { category: string; exclude
                 : <Package className="w-5 h-5 text-gray-300" />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors">{item.title}</p>
+              <p className="text-sm font-semibold text-slate-900 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors">{item.title}</p>
               <p className="text-sm font-bold text-gray-900 mt-0.5">£{Number(item.price).toFixed(2)}</p>
             </div>
           </Link>
         ))}
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-        <p className="text-xs text-slate-600">Sponsored · <Link href="/promotions" className="hover:text-[#4A5CE8] transition-colors">Promote your listing</Link></p>
-      </div>
+      {sponsored && <div className="mt-3 pt-3 border-t border-gray-100 text-center">
+        <p className="text-xs text-slate-600">Paid placement · <Link href="/promotions" className="font-semibold text-orange-700 hover:underline">Promote your listing</Link></p>
+      </div>}
     </div>
   );
 }
