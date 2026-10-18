@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { requireAdmin } from "../middlewares/adminAuth.js";
-import { sendSystemMessage } from "../lib/systemMessages.js";
+
 import { featureEnabled } from "../lib/featureFlags.js";
 const router=Router();
 async function ensure(){
@@ -62,7 +62,14 @@ router.post("/admin/checkout-recovery/:id/remind",requireAdmin,async(req,res)=>{
    RETURNING buyer_email`)).rows[0] as {buyer_email:string}|undefined;
   if(!claim){res.status(409).json({error:"Checkout is ineligible, already purchased, or reminder already sent"});return;}
   try{
-   await sendSystemMessage(claim.buyer_email,{category:"Checkout",subject:"Your Bazunk basket is ready when you are",body:"You left items in your basket. If you still want them, sign in to Bazunk and open your basket to review current availability and checkout prices. No payment has been taken. You can disregard this message if you have changed your mind."});
+   // System notices intentionally swallow failures. Write directly here so an
+   // unsuccessful notification never gets reported as delivered.
+   const kind="checkout-recovery-"+id;
+   const ticket=(await db.execute(sql`INSERT INTO support_tickets(email,subject,category,status,kind)
+    VALUES(${claim.buyer_email},'Your Bazunk basket is ready when you are','Checkout','closed',${kind})
+    ON CONFLICT (email,kind) WHERE kind IS NOT NULL DO NOTHING RETURNING id`)).rows[0] as {id:number}|undefined;
+   if(ticket)await db.execute(sql`INSERT INTO support_ticket_messages(ticket_id,author,author_type,body,read_by_user)
+    VALUES(${ticket.id},'Bazunk','admin','You left items in your basket. Sign in and review availability and prices before checking out. No payment has been taken. You can ignore this message if you have changed your mind.',FALSE)`);
   }catch(err){
    await db.execute(sql`UPDATE checkout_recovery SET reminder_count=0,last_reminder_at=NULL WHERE id=${id}`);
    throw err;
