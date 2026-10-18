@@ -278,3 +278,12 @@
 .dark .bazunk-admin main .admin-users-table button.bg-gray-100 {background:#334866!important;color:#fff!important;}
 .dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf2ff;}
 .dark .bazunk-admin main .admin-users-table td .text-\\[\\#4A5CE8\\] {color:#adbaff!important;}
+
+
+/* Admin typography contract: labels, table metadata, KPI figures and help copy. */
+.dark .bazunk-admin main :is(label,legend,dt) {color:var(--bz-text-primary);}
+.dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) :is(td,th) {opacity:1;}
+.dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) tbody :is(p,small)[class*="text-gray-"] {color:var(--bz-text-secondary)!important;}
+.dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) thead th {color:var(--bz-text-primary);}
+.dark .bazunk-admin main .admin-dashboard .admin-kpi > div:last-child {color:var(--bz-text-secondary);opacity:1;}
+.dark .bazunk-admin main :is(input,textarea)::placeholder {color:var(--bz-text-muted)!important;opacity:1;}
