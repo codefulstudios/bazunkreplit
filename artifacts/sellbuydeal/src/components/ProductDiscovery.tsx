@@ -17,14 +17,14 @@ export function ProductDiscovery({ currentId }: {currentId?:number}) {
     let active=true;
     const ids:number[]=(()=>{try {const a=JSON.parse(localStorage.getItem(KEY)||"[]");return Array.isArray(a)?a.filter((v:unknown)=>Number.isSafeInteger(v)&&Number(v)>0).slice(0,20):[];}catch{return [];}})();
     const params=new URLSearchParams(window.location.search);
-    const region=params.get("region")?.toUpperCase();
+    const region=params.get("region")?.toLowerCase();
     const query=new URLSearchParams({viewed:ids.join(",")});
-    if(region==="UK"||region==="US")query.set("region",region);
+    if(region==="uk"||region==="us")query.set("region",region);
     fetch("/api/discovery/recommendations?"+query)
       .then(r=>r.ok?r.json():Promise.reject())
       .then(d=>{if(active)setSuggested(Array.isArray(d.items)?d.items:[]);}).catch(()=>{});
     if(ids.length) {
-      fetch("/api/listings?limit=100")
+      fetch("/api/listings?ids="+ids.join(",")+(region?"&region="+region:""))
         .then(r=>r.ok?r.json():Promise.reject())
         .then(d=>{
           const rows=Array.isArray(d)?d:Array.isArray(d.listings)?d.listings:[];
