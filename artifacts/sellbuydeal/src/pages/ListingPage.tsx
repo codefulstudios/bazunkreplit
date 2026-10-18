@@ -89,7 +89,7 @@ function RelatedListingsBox({ category, excludeId }: { category: string; exclude
         ))}
       </div>
       <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-        <p className="text-[10px] text-gray-400">Sponsored · <Link href="/promotions" className="hover:text-[#4A5CE8] transition-colors">Promote your listing</Link></p>
+        <p className="text-xs text-slate-600">Sponsored · <Link href="/promotions" className="hover:text-[#4A5CE8] transition-colors">Promote your listing</Link></p>
       </div>
     </div>
   );
@@ -112,7 +112,7 @@ function FollowSellerButton({ sellerEmail }: { sellerEmail: string }) {
   }, [sellerEmail, user?.email]);
 
   if (user?.email && user.email.toLowerCase() === sellerEmail.toLowerCase()) {
-    return <p className="text-xs text-gray-400">{followers} follower{followers === 1 ? "" : "s"}</p>;
+    return <p className="text-xs text-slate-600">{followers} follower{followers === 1 ? "" : "s"}</p>;
   }
 
   async function toggle() {
@@ -130,7 +130,7 @@ function FollowSellerButton({ sellerEmail }: { sellerEmail: string }) {
 
   return (
     <div className="flex items-center justify-between gap-3">
-      <p className="text-xs text-gray-400">{followers} follower{followers === 1 ? "" : "s"}</p>
+      <p className="text-xs text-slate-600">{followers} follower{followers === 1 ? "" : "s"}</p>
       <button
         onClick={toggle}
         disabled={busy}
@@ -150,7 +150,7 @@ function SellerCard({ sellerName, sellerUsername, sellerEmail, location, verifie
     <div className="bg-white rounded-2xl border border-violet-200 shadow-sm p-5 min-w-0">
       <div className="-mx-5 -mt-5 mb-5 rounded-t-2xl bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-5 py-4 text-white">
         <h3 className="text-sm font-bold flex items-center gap-2"><Users className="w-4 h-4" /> Meet the seller</h3>
-        <p className="mt-1 text-xs text-white/80">Profile, reviews and seller updates</p>
+        <p className="mt-1 text-sm text-white">Profile, reviews and seller updates</p>
       </div>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
@@ -161,12 +161,12 @@ function SellerCard({ sellerName, sellerUsername, sellerEmail, location, verifie
             <p className="font-semibold text-gray-900 text-sm">{sellerUsername ? `@${sellerUsername}` : sellerName}</p>
             {verified && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
           </div>
-          <p className="text-xs text-slate-600 mt-0.5">{verified ? "Identity verified" : "Bazunk seller · verification not shown"}</p>
+          <p className="text-sm text-slate-600 mt-0.5">{verified ? "Identity verified" : "Bazunk seller · verification not shown"}</p>
         </div>
       </div>
 
       <div className="space-y-2 mb-4 text-xs text-gray-500">
-        <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" />{location}</div>
+        <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-slate-600" />{location}</div>
         {verified && (
           <div className="flex items-center gap-2 text-emerald-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />ID Verified Seller</div>
         )}
@@ -347,7 +347,7 @@ export function ListingPage() {
             <Package className="w-10 h-10 text-gray-300" />
           </div>
           <h2 className="text-xl font-bold text-gray-800">Listing not found</h2>
-          <p className="text-gray-400 text-sm">This item may have been removed or sold.</p>
+          <p className="text-slate-600 text-sm">This item may have been removed or sold.</p>
           <Link href="/browse" className="px-6 py-2.5 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity">
             Browse Listings
           </Link>
@@ -465,7 +465,7 @@ export function ListingPage() {
         </button>
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
+        <nav className="flex items-center gap-1.5 text-xs text-slate-600 mb-5 flex-wrap">
           <Link href="/" className="hover:text-[#4A5CE8] transition-colors">Home</Link>
           <ChevronRight className="w-3 h-3" />
           <Link href="/browse" className="hover:text-[#4A5CE8] transition-colors">Browse</Link>
@@ -600,7 +600,7 @@ export function ListingPage() {
                   className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:scale-110 transition-transform"
                   data-testid="button-wishlist"
                 >
-                  <Heart className={`w-4 h-4 ${product && isWatched(product.id) ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                  <Heart className={`w-4 h-4 ${product && isWatched(product.id) ? "fill-red-500 text-red-500" : "text-slate-600"}`} />
                 </button>
               </div>
 
@@ -710,7 +710,7 @@ export function ListingPage() {
                     </div>
 
                     {/* Stats row */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                    <div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
                       <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{product.views.toLocaleString()} views</span>
                       <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                       <button onClick={handleShare} className={`flex items-center gap-1.5 ml-auto transition-colors ${copied ? "text-emerald-600" : "hover:text-[#4A5CE8]"}`} data-testid="button-share">
@@ -741,10 +741,10 @@ export function ListingPage() {
                     <p className="text-xs text-white/85 mt-1">Check where this item is coming from before you buy</p>
                   </div>
                   <div className="p-5 grid sm:grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
-                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
-                    {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
+                    <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
+                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
+                    {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
                 </div>
@@ -779,7 +779,7 @@ export function ListingPage() {
                         <Icon className="w-4 h-4 text-[#4A5CE8]" />
                       </div>
                       <p className="text-xs font-semibold text-gray-800">{t.title}</p>
-                      <p className="text-[10px] text-gray-400">{t.desc}</p>
+                      <p className="text-xs text-slate-600">{t.desc}</p>
                     </div>
                   );
                 })}
@@ -877,7 +877,7 @@ export function ListingPage() {
               </p>
 
               {/* Meta */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-slate-600">
                 <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views} views</span>
                 <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
@@ -944,7 +944,7 @@ export function ListingPage() {
                   >
                     <div className="aspect-square bg-gray-50 p-3 relative">
                       <img src={p.image} alt={p.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                      <span className={`absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${CONDITION_COLORS[p.condition]}`}>{p.condition}</span>
+                      <span className={`absolute bottom-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${CONDITION_COLORS[p.condition]}`}>{p.condition}</span>
                     </div>
                     <div className="p-3">
                       <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors">{p.title}</p>
@@ -999,7 +999,7 @@ export function ListingPage() {
                         <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                       </motion.div>
                       <p className="font-bold text-gray-900 text-lg">Offer Sent! 🎉</p>
-                      <p className="text-sm text-gray-400 mt-1 mb-4">The seller is reviewing your offer of <span className="font-bold text-gray-700">£{offerPrice.toFixed(2)}</span>.</p>
+                      <p className="text-sm text-slate-600 mt-1 mb-4">The seller is reviewing your offer of <span className="font-bold text-gray-700">£{offerPrice.toFixed(2)}</span>.</p>
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={resetOfferModal}
@@ -1035,7 +1035,7 @@ export function ListingPage() {
                               <span className={`text-xs font-bold ${active ? "text-[#4A5CE8]" : "text-gray-800"}`}>
                                 £{price.toFixed(0)}
                               </span>
-                              <span className="text-[9px] text-gray-400 mt-0.5">−{pct}%</span>
+                              <span className="text-[9px] text-slate-600 mt-0.5">−{pct}%</span>
                             </button>
                           );
                         })}
@@ -1083,7 +1083,7 @@ export function ListingPage() {
                         maxLength={200}
                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] resize-none mb-1"
                       />
-                      <p className="text-right text-[10px] text-gray-400 mb-4">{offerMsg.length}/200</p>
+                      <p className="text-right text-xs text-slate-600 mb-4">{offerMsg.length}/200</p>
 
                       <div className="flex gap-3">
                         <button onClick={resetOfferModal}
