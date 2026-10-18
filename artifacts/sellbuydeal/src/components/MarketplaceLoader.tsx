@@ -14,9 +14,9 @@ export const LOADER_AREAS = [
  {id:"categories",label:"Categories"},
  {id:"listing",label:"Listing details"},
 ] as const;
-export function MarketplaceLoader({area="homepage",label="Loading listings…"}:{area?:string;label?:string}) {
+export function MarketplaceLoader({area="homepage",label="Loading listings…",variantOverride}:{area?:string;label?:string;variantOverride?:string}) {
  const config=useRawSettings();
- const variant=LOADER_VARIANTS.find(v=>v.id===config.marketplace_loader_variant)?.id||"logo";
+ const variant=LOADER_VARIANTS.find(v=>v.id===(variantOverride||config.marketplace_loader_variant))?.id||"logo";
  const enabled=config[`marketplace_loader_area_${area}`]!=="false";
  if(!enabled)return <div role="status" className="py-8 text-center text-base text-slate-700 dark:text-slate-200">{label}</div>;
  const Icon=({rocket:Rocket,bag:ShoppingBag,tag:Tag,cart:ShoppingCart,mark:Sparkles,logo:Package} as const)[variant];
