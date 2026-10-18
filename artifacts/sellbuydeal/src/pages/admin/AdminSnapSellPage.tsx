@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { AdminLayout } from "./AdminLayout";
+import { AdminListingAlertsPanel } from "@/components/admin/AdminListingAlertsPanel";
 import { useAdmin } from "@/context/AdminContext";
 import { Camera, ScanBarcode, WandSparkles, ShieldCheck, RefreshCw, AlertTriangle, Activity, Settings2 } from "lucide-react";
 type Event={operation:string;provider:string;result:string;total:number};
 type Failure={operation:string;provider:string;error_code:string;created_at:string};
-type Report={status:{enabled:boolean;barcode:boolean;writing:boolean;aiConfigured:boolean;model:string};summary:{sellers:number;ai_attempts:number;catalogue_attempts:number};usage:Event[];failures:Failure[];updatedAt:string;note:string};
+type Report={status:{enabled:boolean;barcode:boolean;writing:boolean;background:boolean;backgroundConfigured:boolean;pricing:boolean;aiConfigured:boolean;model:string};summary:{sellers:number;ai_attempts:number;catalogue_attempts:number};usage:Event[];failures:Failure[];updatedAt:string;note:string};
 export function AdminSnapSellPage(){
  const {authFetch,isAdmin}=useAdmin();
  const [report,setReport]=useState<Report|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState("");
@@ -33,12 +34,14 @@ export function AdminSnapSellPage(){
   {error&&<p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm font-bold text-red-900 dark:bg-red-950 dark:text-red-100">{error}</p>}
   {loading&&!report&&<p role="status" className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-bold text-slate-800 dark:bg-slate-800 dark:text-white">Checking Snap & Sell service readiness…</p>}
   {report&&<>
-   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
     {[
      {title:"Snap & Sell",value:v?.enabled?"Enabled":"Disabled",icon:Camera,ok:v?.enabled},
      {title:"ISBN & barcode catalogue",value:v?.barcode?"Enabled":"Disabled",icon:ScanBarcode,ok:v?.enabled&&v?.barcode},
      {title:"AI writing",value:v?.writing?"Enabled":"Disabled",icon:WandSparkles,ok:v?.writing},
-     {title:"AI provider key",value:v?.aiConfigured?"Configured":"Missing",icon:ShieldCheck,ok:v?.aiConfigured}
+     {title:"AI provider key",value:v?.aiConfigured?"Configured":"Missing",icon:ShieldCheck,ok:v?.aiConfigured},
+     {title:"Background cleanup",value:v?.backgroundConfigured?"Provider configured":"Provider key missing",icon:Camera,ok:v?.background&&v?.backgroundConfigured},
+     {title:"Seller pricing insights",value:v?.pricing?"Enabled":"Disabled",icon:Activity,ok:v?.pricing}
     ].map(x=>{const Icon=x.icon;return <div key={x.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-600 dark:bg-[#172541]">
       <Icon className="h-5 w-5 text-orange-600"/><p className="mt-3 text-sm font-bold text-slate-600 dark:text-slate-300">{x.title}</p>
       <p className={`mt-1 text-xl font-black ${x.ok?"text-emerald-700 dark:text-emerald-300":"text-amber-800 dark:text-amber-200"}`}>{x.value}</p>
@@ -54,8 +57,10 @@ export function AdminSnapSellPage(){
       <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">Control each capability from existing audited Feature Toggles; no keys or customer photos are shown here.</p></div>
      <Link href="/admin/feature-toggles" className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white">Open Feature Toggles →</Link>
     </div>
-    <p className="text-sm text-slate-700 dark:text-slate-200">Model: <strong>{v?.model}</strong>. Default AI limit: 20 photo and 20 writing attempts per account in 24 hours. Catalogue lookup: 80 per account per 24 hours. Generated text always requires seller review before publishing.</p>
+    <p className="text-sm text-slate-700 dark:text-slate-200">Model: <strong>{v?.model}</strong>. Limits per account: 20 photo and 20 writing attempts, 10 background cleanups and 80 catalogue lookups in 24 hours. Generated content always requires seller review.</p>
+    {!v?.backgroundConfigured&&<p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-100">Optional photo background cleanup needs a REMOVE_BG_API_KEY set securely on the production Render API. Pricing suggestions do not require this key.</p>}
    </section>
+   <AdminListingAlertsPanel />
    <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-[#172541]">
     <h2 className={`flex items-center gap-2 text-lg font-black ${text}`}><Activity className="h-5 w-5 text-orange-600"/>Last 7 days — real usage</h2>
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
