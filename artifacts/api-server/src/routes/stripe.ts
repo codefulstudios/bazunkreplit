@@ -243,7 +243,7 @@ router.post("/stripe/quote-cart", async (req,res) => {
   try {
     const quote=await quoteCart(req.body.items);
     res.setHeader("Cache-Control","no-store");
-    res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,bundleDiscount: (quote.bundleDiscountMinor??0)/100,bundleBreakdown:quote.bundleBreakdown??[],total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
+    res.json({currency:quote.currency,subtotal:(quote.subtotalMinor+(quote.bundleDiscountMinor??0))/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,bundleDiscount: (quote.bundleDiscountMinor??0)/100,bundleBreakdown:quote.bundleBreakdown??[],total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
   } catch(err) { res.status(err instanceof QuoteError ? err.status : 500).json({error:err instanceof QuoteError ? err.message : "Could not calculate checkout fees."}); }
 });
 
