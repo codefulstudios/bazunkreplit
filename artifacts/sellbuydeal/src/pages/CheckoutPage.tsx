@@ -28,7 +28,7 @@ function StepIndicator({ step }: { step: Step }) {
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
             i < idx  ? "bg-emerald-100 text-emerald-700" :
             i === idx ? "bg-[#4A5CE8] text-white shadow-sm" :
-                        "bg-gray-100 text-gray-400"
+                        "bg-gray-100 text-slate-600"
           }`}>
             {i < idx ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[9px]">{i + 1}</span>}
             {s.label}
@@ -184,7 +184,7 @@ export function CheckoutPage() {
             <ShoppingBag className="w-10 h-10 text-gray-300" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
-          <p className="text-gray-400 text-sm mb-6">Add items before checking out</p>
+          <p className="text-slate-600 text-sm mb-6">Add items before checking out</p>
           <Link href="/browse" className="px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity">
             Browse Listings
           </Link>
@@ -205,7 +205,7 @@ export function CheckoutPage() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Placed!</h2>
-            <p className="text-gray-500 text-sm mb-2">Thank you for your purchase. You'll receive a confirmation shortly.</p>
+            <p className="text-slate-600 text-sm mb-2">Thank you for your purchase. You'll receive a confirmation shortly.</p>
             <div className="flex gap-3 justify-center mt-6">
               <Link href="/dashboard" className="px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity">
                 View Dashboard
@@ -226,7 +226,7 @@ export function CheckoutPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
-        <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-6">
+        <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-gray-700 transition-colors mb-6">
           <ChevronLeft className="w-4 h-4" /> Back to browsing
         </button>
 
@@ -261,8 +261,8 @@ export function CheckoutPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.product.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
-                            <span className="text-xs text-gray-400">Qty: {item.quantity}</span>
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
+                            <span className="text-xs text-slate-600">Qty: {item.quantity}</span>
                           </div>
                         </div>
                         <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
@@ -303,7 +303,7 @@ export function CheckoutPage() {
                 </button>
 
                 {!user && (
-                  <p className="text-center text-xs text-gray-400 mt-2">
+                  <p className="text-center text-xs text-slate-600 mt-2">
                     Checkout as a guest. After purchase, create or sign in to a Bazunk account using this same email address to see and track this order.
                   </p>
                 )}
@@ -318,13 +318,13 @@ export function CheckoutPage() {
                     <Loader2 className="w-8 h-8 text-[#4A5CE8] animate-spin" />
                   </div>
                   <h2 className="font-bold text-gray-900 text-lg mb-1">Redirecting to secure checkout</h2>
-                  <p className="text-sm text-gray-400 mb-6">You're being taken to Stripe's secure payment page…</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <p className="text-sm text-slate-600 mb-6">You're being taken to Stripe's secure payment page…</p>
+                  <div className="flex items-center gap-2 text-sm text-slate-700">
                     <Lock className="w-3.5 h-3.5 text-emerald-500" />
                     256-bit SSL encryption · Powered by Stripe
                   </div>
                 </div>
-                <button onClick={() => setStep("summary")} className="w-full mt-3 py-3 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-gray-300 transition-colors flex items-center justify-center gap-1.5">
+                <button onClick={() => setStep("summary")} className="w-full mt-3 py-3 rounded-xl border-2 border-gray-200 text-slate-600 font-semibold text-sm hover:border-gray-300 transition-colors flex items-center justify-center gap-1.5">
                   <ChevronLeft className="w-4 h-4" /> Cancel and go back
                 </button>
               </motion.div>
@@ -334,7 +334,7 @@ export function CheckoutPage() {
           {/* Right: order summary (sticky) */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm">Order Summary</h3>
+              <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
@@ -344,14 +344,14 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1">Buyer Protection <Link href="/buyer-protection" className="text-[#4A5CE8] underline text-xs">Learn more</Link></span>
                   <span className="font-semibold text-gray-900">{quoteLoading ? "Calculating…" : !quote ? "Unavailable" : buyerProtectionFee>0 ? formatPrice(buyerProtectionFee) : "Included"}</span>
                 </div>
-                <p className="text-xs text-gray-500">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
+                <p className="text-xs text-slate-600">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery</span>
                   <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
                     {delivery === 0 ? "FREE" : formatPrice(delivery)}
                   </span>
                 </div>
-                <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
+                <div className="flex justify-between font-bold text-gray-900 text-xl pt-3 border-t border-gray-200">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
@@ -364,7 +364,7 @@ export function CheckoutPage() {
                   { icon: Truck,   text: "Shipping arranged by seller" },
                   { icon: Package, text: "Track orders from your Dashboard" },
                 ].map(({ icon: Icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 text-xs text-gray-400">
+                  <div key={text} className="flex items-center gap-2 text-xs text-slate-600">
                     <Icon className="w-3.5 h-3.5 text-[#4A5CE8] flex-shrink-0" />
                     {text}
                   </div>
