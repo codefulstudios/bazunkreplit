@@ -37,11 +37,11 @@ export function AdminImporterMonitoring(){
         {[["Tracked",s.imported],["Active",s.active],["Problems",s.failed]].map(([k,v])=><div key={String(k)} className="rounded-lg bg-slate-100 p-2 dark:bg-slate-800"><p className="text-xl font-black text-slate-950 dark:text-white">{v}</p><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{k}</p></div>)}
        </div>
        <p className="mt-3 text-xs font-semibold text-slate-700 dark:text-slate-200">Last synced: {s.lastSync?new Date(s.lastSync).toLocaleString("en-GB"):"Not recorded"}</p>
-       {s.health.length?<div className="mt-2 space-y-1">{s.health.map(h=><p key={h.source} className={`rounded-lg p-2 text-xs font-bold ${h.status==="connected"?"bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100":"bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100"}`}>{h.source}: {h.status} · {h.lastCheck?new Date(h.lastCheck).toLocaleString("en-GB"):"not checked"}</p>)}</div>
+       {s.health.length?<div className="mt-2 space-y-1">{s.health.map(h=><p key={h.source} className={`rounded-lg p-2 text-xs font-bold ${h.status==="connected"?"bg-[#a7f3d0] text-[#052e24] dark:!bg-[#a7f3d0] dark:!text-[#052e24]":"bg-[#ffd078] text-[#35200a] dark:!bg-[#ffd078] dark:!text-[#35200a]"}`}>{h.source}: {h.status} · {h.lastCheck?new Date(h.lastCheck).toLocaleString("en-GB"):"not checked"}</p>)}</div>
        :<p className="mt-2 rounded-lg bg-amber-100 p-2 text-xs font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-100">External provider health: not checked</p>}
        <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">{s.coverage}</p>
-       {s.failures.length>0&&<details className="mt-3 rounded-lg border border-red-200 p-2 dark:border-red-700">
-         <summary className="flex cursor-pointer items-center gap-1 text-xs font-bold text-red-800 dark:text-red-200"><AlertTriangle className="h-4 w-4"/>Show {s.failures.length} recent problems</summary>
+       {s.failures.length>0&&<details className="mt-3 rounded-lg border border-amber-400 p-2 dark:border-amber-500">
+         <summary className="flex min-h-9 cursor-pointer items-center gap-2 rounded-lg bg-[#ffd078] px-3 py-2 text-sm font-extrabold text-[#35200a] hover:bg-[#ffde9d] dark:!bg-[#ffd078] dark:!text-[#35200a] dark:hover:!bg-[#ffde9d]"><AlertTriangle className="h-4 w-4"/>Show {s.failures.length} recent problems</summary>
          <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">{s.failures.map(x=><div key={x.id} className="border-t border-red-200 pt-2 text-xs text-slate-900 dark:border-red-800 dark:text-slate-100">
           <p className="font-bold">{x.title||x.publicId||x.id}</p><p className="break-words text-red-700 dark:text-red-200">{x.error}</p>
           <p className="text-slate-600 dark:text-slate-300">{x.lastChecked?new Date(x.lastChecked).toLocaleString("en-GB"):"Never synced"}</p>
