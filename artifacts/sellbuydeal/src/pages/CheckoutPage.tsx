@@ -56,6 +56,7 @@ export function CheckoutPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
+  const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
@@ -101,10 +102,11 @@ export function CheckoutPage() {
           refreshBalance();
           setPlaced(true);
         } else {
-          setCheckoutError(data.error ?? "Payment verification failed. Please contact support.");
+          setPaymentReturnFailed(true);
+          setCheckoutError(data.error ?? "Payment verification failed. Check your order history before attempting another payment.");
         }
       })
-      .catch(() => setCheckoutError("Payment verification is not available yet. Your payment may have succeeded: check your orders or contact support before trying again."))
+      .catch(() => { setPaymentReturnFailed(true); setCheckoutError("Payment verification is not available yet. Your payment may have succeeded: check your orders or contact support before trying again."); })
       .finally(() => setConfirming(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -173,6 +175,22 @@ export function CheckoutPage() {
         <Footer />
       </div>
     );
+  }
+
+  if (paymentReturnFailed) {
+    return <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
+      <main role="alert" className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16">
+        <AlertCircle className="w-12 h-12 text-amber-600 mb-4" />
+        <h1 className="text-2xl font-bold text-slate-900">We couldn't verify your payment yet</h1>
+        <p className="max-w-xl mt-3 text-base text-slate-700">{checkoutError}</p>
+        <p className="max-w-xl mt-2 text-sm text-slate-700">Do not pay again until you've checked whether the order was completed.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link href="/dashboard" className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white">Check your orders</Link>
+          <Link href="/contact" className="rounded-xl border border-slate-400 bg-white px-5 py-3 text-sm font-semibold text-slate-900">Contact support</Link>
+        </div>
+      </main><Footer />
+    </div>;
   }
 
   if (items.length === 0 && !placed) {
