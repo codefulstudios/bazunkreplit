@@ -1,3 +1,4 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useEffect, useState, useRef } from "react";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useLanguage } from "@/context/LanguageContext";
@@ -67,6 +68,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
   const [recentListings, setRecentListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "homepage");
   const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -129,7 +131,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     scrollRef.current?.scrollBy({ left: delta, behavior: "smooth" });
   }
 
-  if (loading) {
+  if (delayedLoading) {
     return (
       <section aria-busy="true" aria-label="Loading marketplace listings" className="py-9 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4">
