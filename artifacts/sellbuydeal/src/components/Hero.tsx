@@ -116,7 +116,7 @@ export function Hero() {
             transition={{ duration: 0.55 }}
           >
             <div className="mb-4">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-orange-300">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
               <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">Great finds. Better deals. <span className="text-orange-400">All in one place.</span></h1>
               <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200">Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer.</p>
             </div>
@@ -161,7 +161,7 @@ export function Hero() {
                     >
                       <span className="text-3xl leading-none" aria-hidden="true">{emoji}</span>
                     </div>
-                    <p className="text-white text-[11px] font-semibold text-center leading-tight group-hover:text-white transition-colors">
+                    <p className="text-white text-sm font-medium text-center leading-tight group-hover:text-white transition-colors">
                       {name}
                     </p>
                   </div>
@@ -173,7 +173,7 @@ export function Hero() {
             {/* Marketplace type pills — aligned under categories */}
             <div className="hidden sm:flex flex-wrap gap-2 pt-1">
               {visiblePills.map(({ icon: Icon, label }) => (
-                <span key={label} className="flex items-center gap-1.5 text-white/50 text-xs font-medium bg-white/5 border border-white/10 px-3 py-1.5 rounded-full hover:border-white/20 hover:text-white/70 transition-colors">
+                <span key={label} className="flex items-center gap-1.5 text-slate-200 text-sm font-medium bg-white/5 border border-white/10 px-3 py-1.5 rounded-full hover:border-white/20 hover:text-white transition-colors">
                   <Icon className="w-3 h-3" /> {t(label, label)}
                 </span>
               ))}
@@ -211,7 +211,7 @@ export function Hero() {
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                   <div>
                     <h2 className="text-lg font-black text-gray-900">How do you want to sell?</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">Pick a listing type — all are free to post</p>
+                    <p className="text-sm text-gray-600 mt-0.5">Pick a listing type — all are free to post</p>
                   </div>
                   <button
                     onClick={() => setSellOpen(false)}
@@ -241,7 +241,7 @@ export function Hero() {
 
                 {/* Footer */}
                 <div className="px-6 pb-5 pt-1 text-center">
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-sm text-gray-600">
                     No fees to list · Bazunk only earns when you sell
                   </p>
                 </div>
