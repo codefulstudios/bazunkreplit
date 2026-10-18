@@ -459,7 +459,7 @@ export function DirectSalePage() {
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-7 text-sm text-slate-100 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                      className="appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-7 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                       data-testid="select-currency"
                     >
                       {CURRENCIES.map((c) => (
@@ -492,7 +492,7 @@ export function DirectSalePage() {
                     required
                     value={category}
                     onChange={(e) => { setCategory(e.target.value); setSubcategory(""); setSubsubcategory(""); }}
-                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-100 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="select-category"
                   >
                     <option value="">Select a category</option>
@@ -510,7 +510,7 @@ export function DirectSalePage() {
                       <select
                         value={subcategory}
                         onChange={(e) => { setSubcategory(e.target.value); setSubsubcategory(""); }}
-                        className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-100 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                        className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                         data-testid="select-subcategory"
                       >
                         <option value="">All subcategories</option>
