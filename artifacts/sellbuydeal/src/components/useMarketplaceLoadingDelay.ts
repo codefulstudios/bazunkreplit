@@ -6,7 +6,7 @@ export function useMarketplaceLoadingDelay(loading: boolean, area: string) {
  const settings=useRawSettings();
  const duration=Number(settings.marketplace_loader_min_ms || "0");
  const minimum=[0,500,1000,2000].includes(duration)?duration:0;
- const enabled=settings["marketplace_loader_area_"+area]!=="false";
+ const enabled=settings["marketplace_loader_area_"+area]==="true";
  const [visible,setVisible]=useState(loading);
  const started=useRef<number|null>(loading?Date.now():null);
  useEffect(()=>{
