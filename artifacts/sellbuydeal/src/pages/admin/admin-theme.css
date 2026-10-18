@@ -330,3 +330,12 @@
 .bazunk-admin aside button[aria-controls^="admin-nav-"] :is(span,svg) {color:inherit!important;opacity:1!important;}
 .dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
 .dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\]:hover {background:#47668f!important;}
+
+
+/* Keep semantic error/status labels legible on dark admin panels, including
+   importer history rows and legacy pages without dark-specific text utilities. */
+.dark .bazunk-admin main :is(.text-red-700,.text-red-800,.text-red-900):not([class*="dark:text-"]) {color:#ffb4b4!important;}
+.dark .bazunk-admin main :is(.text-orange-700,.text-orange-800,.text-orange-900):not([class*="dark:text-"]) {color:#ffcf98!important;}
+.dark .bazunk-admin main :is(.text-emerald-700,.text-emerald-800,.text-emerald-900,.text-green-700,.text-green-800,.text-green-900):not([class*="dark:text-"]) {color:#a7f3d0!important;}
+.dark .bazunk-admin main .admin-importer-monitor details .text-red-700,
+.dark .bazunk-admin main .admin-importer-monitor details .text-red-200 {color:#ffb4b4!important;}
