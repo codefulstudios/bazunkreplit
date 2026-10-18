@@ -853,3 +853,37 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark :where(main, [role="dialog"]) .bz-light-surface :is(p,span,small,label,li,td,th) {
   color: inherit;
 }
+
+
+/* Dark-mode text legibility. Restrict neutral text corrections to readable content,
+   not buttons, badges, alerts, or intentionally coloured foregrounds. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-400"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-400"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-500"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-500"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)) {
+  color:var(--bz-text-muted);
+  opacity:1;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-600"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-600"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-700"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-700"]:not(:is(button *,[role="button"] *)) {
+  color:var(--bz-text-secondary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(input,textarea)::placeholder {
+  color:var(--bz-text-muted);
+  opacity:1;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(input,textarea):disabled::placeholder {
+  color:var(--bz-text-muted);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(table, [role="table"]) :is(th,[role="columnheader"]) {
+  color:var(--bz-text-primary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(table, [role="table"]) :is(td,[role="cell"]) {
+  color:var(--bz-text-secondary);
+}
+/* Scoped opt-in semantics for future UI, including seller dashboard summary figures. */
+.bz-figure {color:var(--bz-text-primary);font-weight:700;}
+.bz-help-text {color:var(--bz-text-secondary);}
+.bz-caption {color:var(--bz-text-muted);}
