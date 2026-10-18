@@ -233,6 +233,7 @@ export function Navbar() {
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   const primaryLinks = [
+    { href: "/", label: "Home" },
     { href: "/browse", label: "Shop" },
     { href: "/categories", label: "Categories" },
     { href: "/auctions", label: "Auctions" },
