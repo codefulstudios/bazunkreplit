@@ -1083,3 +1083,12 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 @keyframes bz-loader-pulse{50%{transform:scale(.85);opacity:.65}}
 @keyframes bz-loader-lift{50%{transform:rotate(-35deg) translateY(-6px)}}
 @media(prefers-reduced-motion:reduce){.bz-loader *{animation:none!important}}
+
+/* Slightly more relaxed marketplace loader cycle; do not delay completed requests. */
+.bz-loader-ring{animation-duration:2.2s}
+.bz-loader--rocket .bz-loader-ring{animation-duration:3.4s}
+.bz-loader--rocket .bz-loader-inner{animation-duration:2.5s}
+.bz-loader--tag .bz-loader-inner,.bz-loader--mark .bz-loader-inner{animation-duration:2.4s}
+.bz-loader--cart .bz-loader-ring{animation-duration:2.7s}
+.bz-loader--mark .bz-loader-ring{animation-duration:3s}
+.bz-loader-orbit{animation-duration:4.2s}
