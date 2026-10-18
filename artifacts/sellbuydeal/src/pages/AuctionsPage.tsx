@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
@@ -128,9 +129,7 @@ export function AuctionsPage() {
         {endingOnly && <div className="mb-4 flex items-center justify-between rounded-xl border border-orange-400/50 bg-orange-500/15 px-4 py-2 text-sm font-bold text-white"><span>Showing auctions ending in the next 24 hours</span><button onClick={() => setEndingOnly(false)} className="rounded-lg bg-white px-3 py-1.5 font-bold text-[#09325b]">Show all</button></div>}
         {/* Content */}
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-[#4A5CE8]" />
-          </div>
+          <MarketplaceLoader area="auctions" label="Loading auctions…" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-[#2463a0] bg-gradient-to-br from-[#0b3266] to-[#191d59] py-20 text-white">
             <AlertCircle className="w-10 h-10 mb-3 text-red-300" />
