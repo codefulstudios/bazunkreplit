@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -994,14 +995,7 @@ export function BrowsePage() {
 
           {/* Results */}
           {loadingListings ? (
-            <div role="status" aria-live="polite" className="bg-white rounded-2xl border border-blue-100 py-20 px-6 flex flex-col items-center text-center overflow-hidden">
-              <div className="relative mb-6 rounded-full bg-gradient-to-br from-blue-50 to-orange-50 p-8">
-                <div aria-hidden="true" className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-[#F26B21] animate-spin motion-reduce:animate-none" />
-                <img src="/bazunk-logo-header.png" alt="Bazunk" className="relative w-40 h-auto object-contain animate-pulse motion-reduce:animate-none" />
-              </div>
-              <p className="font-bold text-gray-900">Finding your next great deal…</p>
-              <p className="mt-2 text-sm text-gray-500">Loading Bazunk listings</p>
-            </div>
+            <MarketplaceLoader area="browse" label="Finding your next great deal…" />
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Listings couldn’t load</h3>
