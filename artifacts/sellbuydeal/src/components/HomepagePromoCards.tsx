@@ -16,16 +16,16 @@ export function HomepagePromoCards() {
   const secondary=visible.slice(1);
   return <section className="bg-slate-50 dark:bg-slate-950 py-7 border-b border-slate-200 dark:border-slate-800" aria-label="Explore Bazunk">
     <div className="max-w-6xl mx-auto px-4 grid gap-3 lg:grid-cols-[1.35fr_2fr]">
-      <Link href={primary.href} className="group flex flex-col justify-between gap-5 rounded-2xl p-6 min-h-[180px] transition-all hover:brightness-110" style={{backgroundColor:"#17253C",color:"#FFFFFF"}}>
+      <Link href={primary.href} className="group flex flex-col justify-between gap-5 rounded-2xl p-6 min-h-[180px] transition-all hover:shadow-lg" style={{backgroundColor:"#17253C",color:"#FFFFFF"}}>
         <div><div className="flex items-center gap-2 text-sm font-semibold" style={{color:"#FDBA74"}}><primary.icon className="w-5 h-5"/> Featured</div>
           <h2 className="mt-3 text-2xl font-bold tracking-tight" style={{color:"#FFFFFF"}}>{primary.title}</h2>
           <p className="mt-2 text-base leading-relaxed" style={{color:"#E2E8F0"}}>{primary.description}</p></div>
         <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{color:"#FFFFFF"}}>Start shopping <ArrowRight className="w-4 h-4"/></span>
       </Link>
       <div className="grid gap-3 sm:grid-cols-3">
-        {secondary.map(({title,description,icon:Icon,href})=><Link key={title} href={href} className="group flex min-h-[160px] flex-col rounded-2xl border p-5 hover:brightness-110 hover:shadow-md transition-all" style={{backgroundColor:"#1D2C44",borderColor:"#475569",color:"#FFFFFF"}}>
+        {secondary.map(({title,description,icon:Icon,href})=><Link key={title} href={href} className="group flex min-h-[160px] flex-col rounded-2xl border p-5 hover:shadow-md hover:border-orange-400 transition-all" style={{backgroundColor:"#1D2C44",borderColor:"#64748B",color:"#FFFFFF"}}>
           <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:"#35445B",color:"#FDBA74"}}><Icon className="h-5 w-5"/></div>
-          <h3 className="text-base font-semibold" style={{color:"#FFFFFF"}}>{title}</h3>
+          <h3 className="text-lg font-semibold" style={{color:"#FFFFFF"}}>{title}</h3>
           <p className="mt-2 text-sm leading-relaxed" style={{color:"#E2E8F0"}}>{description}</p>
           <span className="mt-auto pt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{color:"#FDBA74"}}>Explore <ArrowRight className="h-4 w-4"/></span>
         </Link>)}
