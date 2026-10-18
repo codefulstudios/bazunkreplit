@@ -361,7 +361,7 @@ export function CheckoutPage() {
                     {delivery === 0 ? "FREE" : formatPrice(delivery)}
                   </span>
                 </div>
-                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>setRecoveryConsent(e.target.checked)}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
+                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
