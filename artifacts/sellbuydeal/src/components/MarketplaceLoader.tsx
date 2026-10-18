@@ -13,6 +13,9 @@ export const LOADER_AREAS = [
  {id:"browse",label:"Browse/search results"},
  {id:"categories",label:"Categories"},
  {id:"listing",label:"Listing details"},
+ {id:"auctions",label:"Auction listings"},
+ {id:"flash",label:"Flash sale listings"},
+ {id:"seller",label:"Seller profiles"},
 ] as const;
 export function MarketplaceLoader({area="homepage",label="Loading listings…",variantOverride}:{area?:string;label?:string;variantOverride?:string}) {
  const config=useRawSettings();
