@@ -22,7 +22,7 @@ import {
   Globe, Edit, Pencil, Users, Package, Menu, X, Radio, Link2,
   RotateCcw, Truck, Clock, PackageCheck, XCircle, ChevronDown, Gavel, Handshake,
   MoreVertical, PauseCircle, Image as ImageIcon,
-  LifeBuoy, Send, Inbox, AlertCircle, Percent, RefreshCw, ArrowDownToLine,
+  LifeBuoy, Send, Inbox, AlertCircle, Percent, RefreshCw, ArrowDownToLine, Camera,
 } from "lucide-react";
 import { useCurrency, countryToCurrency } from "@/context/CurrencyContext";
 import { COUNTRY_STORAGE_KEY } from "@/components/CountrySetupModal";
