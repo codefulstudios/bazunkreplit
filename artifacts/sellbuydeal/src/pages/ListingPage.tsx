@@ -1,3 +1,4 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
@@ -327,7 +328,8 @@ export function ListingPage() {
   const [reported, setReported] = useState(false);
   const [watchToast, setWatchToast] = useState<"added" | "removed" | null>(null);
 
-  if (loading) {
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "listing");
+  if (delayedLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
