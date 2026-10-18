@@ -16,6 +16,7 @@ export const LOADER_AREAS = [
  {id:"auctions",label:"Auction listings"},
  {id:"flash",label:"Flash sale listings"},
  {id:"seller",label:"Seller profiles"},
+ {id:"admin",label:"Admin loading states"},
 ] as const;
 export function MarketplaceLoader({area="homepage",label="Loading listings…",variantOverride}:{area?:string;label?:string;variantOverride?:string}) {
  const config=useRawSettings();
@@ -23,7 +24,7 @@ export function MarketplaceLoader({area="homepage",label="Loading listings…",v
  const enabled=config[`marketplace_loader_area_${area}`]!=="false";
  if(!enabled)return <div role="status" className="py-8 text-center text-base text-slate-700 dark:text-slate-200">{label}</div>;
  const Icon=({rocket:Rocket,bag:ShoppingBag,tag:Tag,cart:ShoppingCart,mark:Sparkles,logo:Package} as const)[variant];
- return <div role="status" aria-label={label} className="flex flex-col items-center justify-center gap-3 py-8">
+ return <div role="status" aria-live="polite" aria-label={label} className="bz-loader-overlay">\n  <div className="bz-loader-overlay-content">
    <div className={`bz-loader bz-loader--${variant}`} aria-hidden="true">
      <span className="bz-loader-ring"/>
      <span className="bz-loader-inner">{variant==="logo"?<b className="text-4xl font-bold">B</b>:<Icon size={36} strokeWidth={2.4}/>}</span>
