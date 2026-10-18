@@ -1054,3 +1054,13 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 :where(main) :is(input,textarea)::placeholder {opacity:1;color:#64748b;}
 .dark :where(main) :is(input,textarea)::placeholder {color:#cbd5e1;}
 :where(main) :is(a,button,input,select,textarea):focus-visible {outline:2px solid #f26b21;outline-offset:2px;}
+
+
+/* Category cards: pair every label foreground with its actual footer surface.
+   In particular, never inherit white text on the light image-card caption. */
+.bz-category-card .bz-category-label,
+.dark .bz-category-card .bz-category-label {background-color:#17243a !important;color:#fff !important;}
+.bz-category-card .bz-category-label span,
+.dark .bz-category-card .bz-category-label span {color:#fff !important;opacity:1 !important;}
+.bz-category-feature :is(h3,p,span),
+.dark .bz-category-feature :is(h3,p,span) {color:#fff !important;opacity:1 !important;}
