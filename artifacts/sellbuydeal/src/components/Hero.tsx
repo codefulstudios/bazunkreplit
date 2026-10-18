@@ -128,9 +128,9 @@ export function Hero() {
                 Explore categories
               </Link>
             </div>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-200">
-              <Link href="/buyer-protection" className="hover:text-white">✓ Buyer Protection on eligible orders</Link>
-              <Link href="/sell" className="hover:text-white">✓ Sell your items on Bazunk</Link>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm !text-white">
+              <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
+              <Link href="/sell" className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
             </div>
             <Link href="/welcome-new-buyers" className="mt-7 flex items-center justify-between gap-3 rounded-xl border border-orange-200/25 bg-white/10 px-4 py-3 text-sm text-white transition-colors hover:bg-white/15">
               <span><span className="font-bold text-orange-300">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
@@ -173,8 +173,8 @@ export function Hero() {
             {/* Marketplace type pills — aligned under categories */}
             <div className="hidden sm:flex flex-wrap gap-2 pt-1">
               {visiblePills.map(({ icon: Icon, label }) => (
-                <span key={label} className="flex items-center gap-1.5 text-slate-200 text-sm font-medium bg-white/5 border border-white/10 px-3 py-1.5 rounded-full hover:border-white/20 hover:text-white transition-colors">
-                  <Icon className="w-3 h-3" /> {t(label, label)}
+                <span key={label} className="flex items-center gap-1.5 !text-white text-sm font-semibold bg-slate-700/90 border border-slate-500/80 px-3 py-2 rounded-full hover:bg-slate-600 hover:border-orange-300 transition-colors">
+                  <Icon className="w-4 h-4 !text-white" /> {t(label, label)}
                 </span>
               ))}
             </div>
