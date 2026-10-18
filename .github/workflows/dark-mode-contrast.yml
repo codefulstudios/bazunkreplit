@@ -7,6 +7,10 @@ on:
       - "artifacts/sellbuydeal/src/pages/admin/**"
       - "artifacts/sellbuydeal/src/components/ui/**"
       - "scripts/dark-mode-contrast.test.mjs"
+      - "scripts/storefront-contrast.test.mjs"
+      - "artifacts/sellbuydeal/src/pages/BrowsePage.tsx"
+      - "artifacts/sellbuydeal/src/components/CategorySection.tsx"
+      - "artifacts/sellbuydeal/src/components/FeaturedListings.tsx"
       - ".github/workflows/dark-mode-contrast.yml"
   pull_request:
     paths:
@@ -14,6 +18,10 @@ on:
       - "artifacts/sellbuydeal/src/pages/admin/**"
       - "artifacts/sellbuydeal/src/components/ui/**"
       - "scripts/dark-mode-contrast.test.mjs"
+      - "scripts/storefront-contrast.test.mjs"
+      - "artifacts/sellbuydeal/src/pages/BrowsePage.tsx"
+      - "artifacts/sellbuydeal/src/components/CategorySection.tsx"
+      - "artifacts/sellbuydeal/src/components/FeaturedListings.tsx"
   workflow_dispatch:
 jobs:
   contrast:
@@ -24,4 +32,4 @@ jobs:
         with:
           node-version: "22"
       - name: Test light and dark semantic contrast
-        run: node --test scripts/dark-mode-contrast.test.mjs
+        run: node --test scripts/dark-mode-contrast.test.mjs scripts/storefront-contrast.test.mjs
