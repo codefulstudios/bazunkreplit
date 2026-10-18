@@ -816,3 +816,40 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
     min-height: 36px;
   }
 }
+
+
+/* Dark-mode content legibility — content only, never recolour CTAs, badges or
+   semantic warning/success chips. Tokens are defined above for every app area. */
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-300"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-400"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-500"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-400"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-500"] {
+  color: var(--bz-text-muted);
+  opacity: 1;
+}
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-600"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-700"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-600"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-700"] {
+  color: var(--bz-text-secondary);
+}
+/* Default table content stays clear unless a component explicitly supplies a
+   semantic status colour. These rules do not change text on action buttons. */
+.dark :where(main, [role="dialog"]) :is(table td,table th) {
+  text-shadow: none;
+}
+.dark :where(main, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]),textarea)::placeholder {
+  color: var(--bz-text-muted);
+  opacity: 1;
+}
+.dark :where(main, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select):not(:disabled) {
+  caret-color: var(--bz-text-primary);
+}
+/* Light surfaces deliberately retained inside dark pages must keep dark ink. */
+.dark :where(main, [role="dialog"]) :is(.bz-light-surface) {
+  color: #172a49;
+}
+.dark :where(main, [role="dialog"]) .bz-light-surface :is(p,span,small,label,li,td,th) {
+  color: inherit;
+}
