@@ -78,6 +78,8 @@ const SELL_OPTIONS: Array<{
 ];
 
 const MORE_NAV = [
+  { href: "/rewards",          label: "Rewards", icon: Trophy, color: "text-amber-700", bg: "bg-amber-50" },
+  { href: "/live",             label: "Live Shopping", icon: Radio, color: "text-red-600", bg: "bg-red-50" },
   { href: "/auctions",          label: "Auctions",         icon: Gavel,           color: "text-amber-600",   bg: "bg-amber-50" },
   { href: "/flash-sales",       label: "Flash Sales",      icon: Flame,           color: "text-red-500",     bg: "bg-red-50" },
   { href: "/classifieds",       label: "Classifieds",      icon: Newspaper,       color: "text-purple-600",  bg: "bg-purple-50" },
@@ -89,15 +91,15 @@ const MORE_NAV = [
 ];
 
 const MOBILE_NAV_LINKS = [
+  { href: "/",            label: "Home",        icon: Home },
+  { href: "/browse",      label: "Shop",        icon: Grid3X3 },
+  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/rewards", label: "Daily Rewards", icon: Gift },
   { href: "/dashboard?section=credits", label: "Credits & Milestones", icon: Trophy },
   { href: "/promotions", label: "Promotions", icon: Zap },
-  { href: "/",            label: "Home",        icon: Home },
-  { href: "/browse",      label: "Browse",      icon: Grid3X3 },
   { href: "/auctions",    label: "Auctions",    icon: Gavel },
   { href: "/flash-sales", label: "Flash Sales", icon: Zap },
   { href: "/live",        label: "Live",        icon: Radio,  live: true },
-  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/classifieds", label: "Classifieds", icon: Newspaper },
   { href: "/sell/direct",  label: "Direct Sale",  icon: Tag },
   { href: "/bundle",      label: "Bundle Deal", icon: Package },
@@ -231,9 +233,9 @@ export function Navbar() {
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   const primaryLinks = [
-    { href: "/browse", label: t("browse") },
-    { href: "/categories", label: t("categories") },
-    { href: "/live", label: t("live"), live: true },
+    { href: "/browse", label: "Shop" },
+    { href: "/categories", label: "Categories" },
+    { href: "/auctions", label: "Auctions" },
   ].filter(x => visibleHref(x.href));
 
   return (
@@ -342,55 +344,6 @@ export function Navbar() {
                 </Link>
               );
             })}
-
-            {/* Rewards — highlighted, guest-visible */}
-            <div ref={rewardsRef} className="relative">
-              <button
-                onClick={handleRewardsClick}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap text-amber-700 font-semibold bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200"
-                data-testid="link-rewards"
-              >
-                <Trophy className="w-3 h-3 text-amber-500" />
-                {t("rewards")}
-              </button>
-              <AnimatePresence>
-                {rewardsPopover && !user && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                  >
-                    <div className="px-5 pt-5 pb-4 text-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3">
-                        <Trophy className="w-6 h-6 text-amber-500" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-sm">Earn Rewards on Bazunk</p>
-                      <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-                        Complete milestones, earn credits & badges. Free to join — your rewards build up from your first listing.
-                      </p>
-                    </div>
-                    <div className="px-5 pb-5 flex flex-col gap-2">
-                      <Link
-                        href="/sign-up"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors"
-                      >
-                        <Gift className="w-4 h-4" /> Join Free & Start Earning
-                      </Link>
-                      <Link
-                        href="/sign-in"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
-                      >
-                        Already have an account? Sign in
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
             {/* More dropdown */}
             <div ref={moreRef} className="relative">
