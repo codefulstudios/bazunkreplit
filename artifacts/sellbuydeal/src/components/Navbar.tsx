@@ -297,7 +297,7 @@ export function Navbar() {
             ))}
           </div>
         </div>
-        <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-3">
+        <div className="mx-auto w-full max-w-[1600px] px-4 h-16 md:h-20 flex items-center gap-3 lg:gap-4">
 
           {/* Theme + Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -310,14 +310,14 @@ export function Navbar() {
               aria-label="Home"
               title="Home"
               data-testid="link-home-icon"
-              className="hidden md:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
+              className="hidden 2xl:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
             >
               <Home className="w-4 h-4" />
             </Link>
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-1 text-[13px] font-medium flex-shrink-0 mr-1">
+          <div className="hidden xl:flex items-center gap-1 text-[13px] font-medium flex-shrink-0">
 
             {/* Primary links */}
             {primaryLinks.map(({ href, label, live }) => {
@@ -397,10 +397,10 @@ export function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+          <div className="flex flex-1 min-w-0 items-center gap-2 justify-end">
 
             {/* Desktop search */}
-            <div ref={searchRef} className="relative w-[190px] 2xl:w-[240px] flex-none hidden lg:block ml-1">
+            <div ref={searchRef} className="relative hidden lg:block flex-1 min-w-[180px] max-w-[680px] mr-2">
               <form onSubmit={handleSubmit}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Input
@@ -409,7 +409,7 @@ export function Navbar() {
                   onChange={(e) => { setQuery(e.target.value); setSearchOpen(true); }}
                   onFocus={() => query.trim() && setSearchOpen(true)}
                   placeholder="Search listings..."
-                  className="w-full pl-10 pr-9 rounded-full bg-gray-100 border border-transparent focus-visible:border-[#4A5CE8]/30 focus-visible:ring-2 focus-visible:ring-[#4A5CE8]/20 h-10 text-sm"
+                  className="w-full min-w-0 pl-10 pr-9 rounded-full bg-gray-100 border border-gray-200 focus-visible:border-[#F26B21]/50 focus-visible:ring-2 focus-visible:ring-[#F26B21]/20 h-11 text-sm"
                   data-testid="input-search"
                 />
                 {query && (
@@ -496,13 +496,13 @@ export function Navbar() {
             {/* Logged OUT actions */}
             {!user && (
               <>
-                <Link href="/sell" className="hidden 2xl:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
+                <Link href="/sell" className="hidden 2xl:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
                   <Tag className="w-3.5 h-3.5" /> Start Selling
                 </Link>
-                <Link href="/sign-in" className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
+                <Link href="/sign-in" className="hidden md:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
+                <Link href="/sign-up" className="hidden sm:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
                   Join Free
                 </Link>
               </>
