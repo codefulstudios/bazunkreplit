@@ -10,8 +10,8 @@ router.get("/discovery/recommendations", async (req, res) => {
   const ids = String(req.query.viewed ?? "").split(",").slice(0, 20)
     .map(Number).filter((id) => Number.isSafeInteger(id) && id > 0);
   const unique = [...new Set(ids)];
-  const region = String(req.query.region ?? "").toUpperCase();
-  if (region && !["UK", "US"].includes(region)) {
+  const region = String(req.query.region ?? "").toLowerCase();
+  if (region && !["uk", "us"].includes(region)) {
     res.status(400).json({ error: "Invalid region" }); return;
   }
   try {
@@ -25,7 +25,7 @@ router.get("/discovery/recommendations", async (req, res) => {
       SELECT id, public_id, title, image, price, currency, category
       FROM listings
       WHERE status = 'active'
-        AND (${region} = '' OR marketplace_region = ${region})
+        AND (${region} = '' OR (CASE WHEN COALESCE(specifications,'') ~ '^\\s*\\{' THEN specifications::jsonb->>'marketplace_region' ELSE NULL END) = ${region})
         AND (${unique.length === 0} OR id NOT IN (${sql.join((unique.length ? unique : [0]).map(id => sql`${id}`),sql`, `)}))
         AND NOT EXISTS (SELECT 1 FROM site_settings s WHERE s.value='false'
           AND s.key = 'category_visible_' || listings.category)
