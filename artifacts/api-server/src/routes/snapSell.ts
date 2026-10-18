@@ -91,10 +91,10 @@ function errorResult(err:unknown){const e=err as {message?:string;status?:number
  return {status:e?.status||503,code:e?.code||"PROVIDER_UNAVAILABLE",error:e?.message||"Snap & Sell provider unavailable"};}
 async function auth(req:any,res:any){return await authenticatedSellerEmail(req,res);}
 router.get("/snap-sell/capabilities",async (_req,res)=>{
- const [enabled,barcode,writing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing")]);
+ const [enabled,barcode,writing,background,pricing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing"),featureEnabled("snap_background"),featureEnabled("snap_pricing")]);
  res.setHeader("Cache-Control","no-store");
  res.json({enabled,barcode:enabled&&barcode,aiWriting:enabled&&writing&&!!key(),aiPhoto:enabled&&writing&&!!key(),
-  recognitionConfigured:!!key(),limits:{photoMb:2,aiRequests24h:20,lookups24h:80},
+  backgroundCleanup:enabled&&background&&!!process.env.REMOVE_BG_API_KEY,pricingInsights:enabled&&pricing,recognitionConfigured:!!key(),limits:{photoMb:2,aiRequests24h:20,lookups24h:80,cleanup24h:10},
   note:"Photo analysis is sent to the configured AI provider only on request. All generated content must be checked by the seller."});
 });
 router.post("/snap-sell/analyse",async(req,res)=>{
@@ -165,6 +165,88 @@ router.get("/snap-sell/lookup/:code",async(req,res)=>{
  }catch(e){const x=errorResult(e);await log(email,"lookup_result","error","catalogue",x.code);res.status(x.status).json({error:"Catalogue lookup temporarily unavailable. Enter details manually.",code:x.code});}
  finally{clearTimeout(timer);}
 });
+
+router.post("/snap-sell/background",async(req,res)=>{
+ const email=await auth(req,res);if(!email||!await allowed(res,"snap_background"))return;
+ if(!process.env.REMOVE_BG_API_KEY){res.status(503).json({error:"Optional background cleanup is not configured. Your original photo is unchanged.",code:"BACKGROUND_NOT_CONFIGURED"});return;}
+ const photo=req.body?.photo;
+ if(typeof photo!=="string"||photo.length>2.8e6||!/^data:image\\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)){
+  res.status(400).json({error:"Please choose a photo smaller than 2MB before cleaning its background."});return;
+ }
+ if(!await quota(email,"background",10)){res.status(429).json({error:"You have reached the background-cleanup limit (10 attempts per 24 hours)."});return;}
+ await log(email,"background","started","remove.bg");
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+ try{
+  const bytes=Buffer.from(photo.slice(photo.indexOf(",")+1),"base64");
+  if(bytes.length>2*1024*1024)throw Object.assign(Error("Photo is over the 2MB limit"),{status:400,code:"PHOTO_TOO_LARGE"});
+  const body=new FormData();
+  body.append("image_file",new Blob([new Uint8Array(bytes)],{type:"image/jpeg"}),"item.jpg");
+  body.append("size","preview");
+  const response=await fetch("https://api.remove.bg/v1.0/removebg",{method:"POST",signal:controller.signal,
+    headers:{"X-Api-Key":process.env.REMOVE_BG_API_KEY},body});
+  if(!response.ok)throw Object.assign(Error(response.status===402?"Background cleanup provider has no remaining credits.":response.status===429?"Background cleanup is busy; try later.":"Photo cleanup provider is currently unavailable."),{status:503,code:"BACKGROUND_PROVIDER_"+response.status});
+  const output=Buffer.from(await response.arrayBuffer());
+  if(output.length>4*1024*1024)throw Object.assign(Error("Cleaned result is too large. Keep the original photo."),{status:413,code:"OUTPUT_TOO_LARGE"});
+  await log(email,"background_result","success","remove.bg");
+  res.setHeader("Cache-Control","private,no-store");
+  res.json({photo:"data:image/png;base64,"+output.toString("base64"),format:"png",transparent:true,
+    note:"Optional background cleanup. Review edges and colours before using the edited photo."});
+ }catch(e){const x=errorResult(e);await log(email,"background_result","error","remove.bg",x.code);res.status(x.status).json(x);}
+ finally{clearTimeout(timer);}
+});
+router.post("/snap-sell/pricing",async(req,res)=>{
+ const email=await auth(req,res);if(!email||!await allowed(res,"snap_pricing"))return;
+ const category=clean(req.body?.category,90),currency=clean(req.body?.currency,3).toUpperCase(),
+  region=clean(req.body?.region,2),price=safeNumber(req.body?.price);
+ if(!category||!["GBP","USD"].includes(currency)||!["uk","us"].includes(region)){res.status(400).json({error:"Choose a valid category, marketplace and currency to compare current listing prices."});return;}
+ try{
+  // Asking-price comparables only, never claim these listings actually sold.
+  const result=await db.execute(sql`SELECT price,views,watchers,created_at,updated_at FROM listings
+   WHERE status='active' AND LOWER(category)=LOWER(${category})
+    AND UPPER(currency)=${currency}
+    AND (CASE WHEN COALESCE(specifications,'') ~ '^\\s*\\{' THEN specifications::jsonb->>'marketplace_region' ELSE NULL END)=${region}
+    AND LOWER(seller_email)<>LOWER(${email}) AND price>0
+   ORDER BY updated_at DESC LIMIT 160`);
+  const rows=(result.rows as any[]).map(x=>Number(x.price)).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b);
+  const median=rows.length?rows[Math.floor((rows.length-1)/2)]:null;
+  const low=rows.length>=5?rows[Math.floor((rows.length-1)*.25)]:null;
+  const high=rows.length>=5?rows[Math.floor((rows.length-1)*.75)]:null;
+  const suggestions:string[]=[];
+  if(rows.length<5)suggestions.push("Too few comparable active listings for a reliable price range. Research similar sold items and the condition of yours.");
+  else{
+   if(price>high!*1.2)suggestions.push("Your asking price is above the upper quarter of similar active listings; review condition, accessories and value.");
+   if(price>0&&price<low!*.8)suggestions.push("Your price is below most comparable active listings. Check that it reflects the item's actual condition.");
+   if(!price)suggestions.push("Enter your own price to compare it with these marketplace asking prices.");
+  }
+  res.setHeader("Cache-Control","private,no-store");
+  res.json({category,currency,region,count:rows.length,median,range:low===null?null:{low,high},
+   suggestions,method:"Recent active Bazunk listings with the same category, currency and marketplace; not confirmed sales or a valuation.",
+   note:"Only the seller can set or change their listing price. No automatic repricing."});
+ }catch(e){console.error("Snap pricing lookup failed",e);res.status(503).json({error:"Pricing comparisons are unavailable; you can still list manually."});}
+});
+router.get("/snap-sell/performance",async(req,res)=>{
+ const email=await auth(req,res);if(!email||!await allowed(res,"snap_pricing"))return;
+ try{
+  const r=await db.execute(sql`SELECT l.id,l.title,l.public_id,l.price,l.currency,l.category,l.status,
+    COALESCE(l.views,0)::int views,COALESCE(l.watchers,0)::int watchers,
+    COUNT(DISTINCT o.id)::int sales
+    FROM listings l LEFT JOIN orders o ON LOWER(o.seller_email)=LOWER(l.seller_email)
+      AND LOWER(o.item_title)=LOWER(l.title) AND o.status NOT IN ('cancelled','refunded')
+      AND o.created_at >= l.created_at
+    WHERE LOWER(l.seller_email)=${email} GROUP BY l.id ORDER BY l.updated_at DESC LIMIT 60`);
+  const rows=(r.rows as any[]).map(x=>{
+   const views=Number(x.views)||0,watchers=Number(x.watchers)||0;
+   const recommendations=[
+    ...(x.status==="active"&&views>=20&&watchers===0?["Many views but no watchers: improve the first photograph and product title."]:[]),
+    ...(x.status==="active"&&watchers>=3&&Number(x.sales)===0?["Watchers show interest but no matched sales: compare similar listings and review your asking price."]:[]),
+    ...(x.status==="active"&&views===0?["No recorded views yet: check the category and listing visibility."]:[])
+   ];
+   return {...x,views,watchers,sales:Number(x.sales)||0,recommendations};
+  });
+  res.setHeader("Cache-Control","private,no-store");
+  res.json({listings:rows,limits:"Up to 60 owned listings. Sales counts are approximate title-matched order records, not guaranteed listing-level attribution. Views and watchers are recorded marketplace activity."});
+ }catch(e){console.error("Seller listing performance failed",e);res.status(503).json({error:"Seller performance insights are currently unavailable."});}
+});
 router.get("/admin/snap-sell/monitor",requireAdmin,async(_req,res)=>{
  try{
   await setup();
@@ -181,7 +263,7 @@ router.get("/admin/snap-sell/monitor",requireAdmin,async(_req,res)=>{
   ]);
   const [enabled,barcode,writing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing")]);
   res.setHeader("Cache-Control","private,no-store");
-  res.json({status:{enabled,barcode,writing,aiConfigured:!!key(),model:process.env.SNAP_SELL_AI_MODEL||"gpt-4o-mini"},
+  res.json({status:{enabled,barcode,writing,background,backgroundConfigured:!!process.env.REMOVE_BG_API_KEY,pricing,aiConfigured:!!key(),model:process.env.SNAP_SELL_AI_MODEL||"gpt-4o-mini"},
    summary:latest.rows[0],usage:usage.rows,failures:failures.rows,updatedAt:new Date().toISOString(),
    note:"Records count attempts, not estimated billable tokens. Item photos, prompts and descriptions are not stored in usage logs."});
  }catch(e){console.error("Snap admin monitoring error",e);res.status(503).json({error:"Cannot load Snap & Sell monitoring"});}
