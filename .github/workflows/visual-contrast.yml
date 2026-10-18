@@ -1,6 +1,11 @@
 name: Bazunk visual contrast regression
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/dark-mode-browser-check.mjs"
+      - ".github/workflows/visual-contrast.yml"
   pull_request:
     paths:
       - "artifacts/sellbuydeal/src/**"
@@ -22,6 +27,18 @@ jobs:
         env:
           BAZUNK_TEST_URL: https://www.bazunk.com
           BAZUNK_TEST_ROUTES: /,/login,/sell
+      - name: Check authenticated admin and seller routes
+        if: ${{ github.event_name == 'workflow_dispatch' && env.BAZUNK_AUTH_STATE_B64 != '' }}
+        env:
+          BAZUNK_AUTH_STATE_B64: ${{ secrets.BAZUNK_AUTH_STATE_B64 }}
+          BAZUNK_AUTH_STATE_PATH: auth-state.json
+          BAZUNK_TEST_URL: https://www.bazunk.com
+          BAZUNK_TEST_ROUTES: /login
+          BAZUNK_AUTH_ROUTES: /dashboard,/admin,/admin/users,/admin/listings,/admin/orders
+        run: |
+          printf '%s' "$BAZUNK_AUTH_STATE_B64" | base64 -d > auth-state.json
+          node scripts/dark-mode-browser-check.mjs
+          rm -f auth-state.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
