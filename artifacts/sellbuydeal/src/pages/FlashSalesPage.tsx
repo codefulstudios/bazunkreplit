@@ -191,7 +191,7 @@ export function FlashSalesPage() {
             <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-xl border border-purple-200/40 bg-[#5c32e9] px-4 py-2.5 text-sm font-bold text-white shadow-lg"><Calendar className="h-4 w-4 shrink-0"/>{isWeekend() ? "Weekend Mega Sales are on — explore this weekend's deals!" : "Limited-time offers — check back for upcoming deals!"}</div>
             {user && <Link href="/flash-sales/create" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-[#ff711f] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8b42]"><Plus className="h-5 w-5"/> Run a Flash Sale</Link>}
           </div>
-          <div aria-hidden="true" className="relative flex min-h-[155px] items-center justify-center sm:min-h-[195px]">
+          <div aria-hidden="true" className="relative hidden min-h-[155px] items-center justify-center sm:flex sm:min-h-[195px]">
             <div className="absolute left-[8%] top-[12%] rotate-[-18deg] text-4xl drop-shadow-2xl">🎮</div>
             <div className="absolute right-[5%] top-[8%] rotate-[18deg] text-4xl drop-shadow-2xl">⚡</div>
             <div className="absolute left-[8%] bottom-[5%] rotate-[-12deg] text-7xl drop-shadow-2xl">📦</div>
@@ -207,7 +207,7 @@ export function FlashSalesPage() {
       <div className="mx-auto w-full max-w-7xl px-5 pt-4 sm:px-8"><AdSlot slotKey="flash_sales_mid" /></div>
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 sm:px-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">{TYPE_FILTERS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setSaleTypeFilter(value)} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-extrabold transition-all ${saleTypeFilter===value?"border-[#248bff] bg-[#066af3] text-white shadow-lg shadow-blue-950/50":"border-[#2463a3] bg-[#092b55] text-white hover:bg-[#174a85]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
+          <div className="flex max-w-full flex-wrap gap-2">{TYPE_FILTERS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setSaleTypeFilter(value)} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-extrabold transition-all ${saleTypeFilter===value?"border-[#248bff] bg-[#066af3] text-white shadow-lg shadow-blue-950/50":"border-[#2463a3] bg-[#092b55] text-white hover:bg-[#174a85]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
           <span className="inline-flex items-center gap-2 rounded-xl border border-[#2562aa] bg-[#08254c] px-4 py-3 text-sm font-bold text-white"><Timer className="h-5 w-5 text-[#ff5473]"/> Live deals update automatically when refreshed</span>
         </div>
         <div className="mb-5 flex flex-wrap items-center gap-3">
