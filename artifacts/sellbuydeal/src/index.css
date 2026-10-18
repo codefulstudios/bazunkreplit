@@ -1025,3 +1025,20 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .bz-store-card .bz-store-tag { background-color:#374358 !important; color:#fed7aa !important; }
 .bz-store-feature-icon { background-color:#f26b21 !important; color:#fff !important; }
 .bz-store-feature-icon svg { color:#fff !important; }
+
+
+/* Shared public marketplace card contract — theme-paired surfaces and explicit readable text. */
+.bz-product-card, .dark .bz-product-card {
+  border-style:solid;
+  overflow:hidden;
+}
+.bz-product-card {background:#fff !important;color:#0f172a !important;border-color:#cbd5e1;}
+.bz-product-card :is(h2,h3,.bz-store-title) {color:#0f172a !important;}
+.bz-product-card :is(.bz-store-description,[data-product-meta]) {color:#475569 !important;}
+.dark .bz-product-card {background:#17243a !important;color:#f8fafc !important;border-color:#52627b;}
+.dark .bz-product-card :is(h2,h3,.bz-store-title) {color:#f8fafc !important;}
+.dark .bz-product-card :is(.bz-store-description,[data-product-meta]) {color:#d7e0ed !important;}
+.bz-product-card img {max-width:100%;}
+/* Storefront reassurance and description text should never fade below readable contrast. */
+.bz-store-card .bz-store-description {font-size:0.875rem;line-height:1.45;}
+.dark .bz-store-card .bz-store-description {color:#d7e0ed !important;}
