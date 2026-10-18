@@ -11,7 +11,6 @@ import { Footer } from "@/components/Footer";
 import { BuyerProtectionBadge } from "@/components/BuyerProtectionBadge";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { useCurrency } from "@/context/CurrencyContext";
 
 type Step = "summary" | "redirecting";
 
@@ -49,7 +48,6 @@ export function CheckoutPage() {
   const { items, clearCart } = useCart();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
-  const { currency } = useCurrency();
   // Cart checkout is charged in GBP by the Stripe API; never show converted totals as the amount payable.
   const formatPrice = (amount: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
