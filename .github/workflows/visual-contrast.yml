@@ -1,0 +1,30 @@
+name: Bazunk visual contrast regression
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "artifacts/sellbuydeal/src/**"
+      - "scripts/dark-mode-browser-check.mjs"
+      - ".github/workflows/visual-contrast.yml"
+jobs:
+  screenshots-and-contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright && npx playwright install --with-deps chromium
+      - name: Screenshot and inspect public pages
+        run: node scripts/dark-mode-browser-check.mjs
+        env:
+          BAZUNK_TEST_URL: https://www.bazunk.com
+          BAZUNK_TEST_ROUTES: /,/login,/sell
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dark-mode-screenshots
+          path: artifacts/contrast-*.png
+          if-no-files-found: warn
