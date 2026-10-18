@@ -947,3 +947,45 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
   background-color:#334d73;
   color:#fff;
 }
+
+
+/* Shared readable menus and inputs. Avoid restyling third-party portals outside Bazunk. */
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(select,[role="combobox"],[role="listbox"],[cmdk-input]) {
+  background-color:var(--bz-surface-field);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+  color-scheme:dark;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(select,[role="combobox"],[role="listbox"]):focus-visible {
+  outline:3px solid var(--bz-focus);outline-offset:2px;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"],[cmdk-item])[data-highlighted],
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"],[cmdk-item])[data-selected="true"],
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"])[aria-selected="true"] {
+  background-color:#334d73;color:#fff;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea)[aria-invalid="true"] {
+  border:2px solid #fca5a5;
+  color:var(--bz-text-primary);
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input[type="checkbox"],input[type="radio"]) {
+  accent-color:#ea580c;
+  outline-offset:3px;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input[type="checkbox"],input[type="radio"]):focus-visible {
+  outline:3px solid var(--bz-focus);
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="alert"],[aria-live="assertive"]) {
+  opacity:1;
+}
+/* Opt-in semantics for metric cards, empty states and status tiles; no global
+   recolouring of branded warning/error backgrounds. */
+.bz-metric-card,.bz-empty-state {
+  background:var(--bz-surface-card);color:var(--bz-text-primary);
+  border:1px solid var(--bz-border);
+}
+.bz-metric-card .bz-metric-value {color:var(--bz-text-primary);font-weight:800;}
+.bz-metric-card .bz-metric-label,.bz-empty-state .bz-help-text {color:var(--bz-text-secondary);}
+.dark .bz-status-success {background:#124b3b;color:#d1fae5;border-color:#348769;}
+.dark .bz-status-warning {background:#503616;color:#ffefbc;border-color:#a67b36;}
+.dark .bz-status-error {background:#522530;color:#ffe4e6;border-color:#aa5969;}
