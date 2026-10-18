@@ -1124,3 +1124,24 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bz-loader-dots i:nth-child(2){animation-delay:.2s;background:#55c7ff;}
 .bz-loader-dots i:nth-child(3){animation-delay:.4s;}
 @media(prefers-reduced-motion:reduce){.bz-loader-overlay *{animation:none!important;}}
+
+
+/* Listing detail redesign: paired colour surfaces in both themes. */
+.listing-details-section > div:not(:first-child),.listing-delivery-section > div:not(:first-child){color:#334155}
+.dark .listing-details-section,.dark .listing-delivery-section,.dark .listing-purchase-section{color:#f8fafc}
+.dark .listing-details-section .text-gray-900,.dark .listing-details-section .text-gray-800,
+.dark .listing-delivery-section .text-gray-900,.dark .listing-purchase-section .text-gray-900,
+.dark .listing-purchase-section .text-gray-800{color:#f8fafc!important}
+.dark .listing-details-section .text-gray-600,.dark .listing-details-section .text-gray-500,
+.dark .listing-purchase-section .text-gray-500,.dark .listing-delivery-section .text-gray-600{color:#cbd5e1!important}
+.dark .listing-details-section .bg-white,.dark .listing-purchase-section .bg-white,
+.dark .listing-delivery-section .bg-white{background-color:#111f36!important}
+.dark .listing-details-section .bg-blue-50,.dark .listing-details-section .bg-violet-50,
+.dark .listing-details-section .bg-orange-50,.dark .listing-details-section .bg-emerald-50,
+.dark .listing-delivery-section .bg-cyan-50,.dark .listing-delivery-section .bg-indigo-50,
+.dark .listing-delivery-section .bg-violet-50,.dark .listing-delivery-section .bg-emerald-50,
+.dark .listing-purchase-section .bg-orange-50,.dark .listing-purchase-section .bg-blue-50{background-color:#1b3052!important}
+.dark .listing-details-section .text-gray-600,.dark .listing-details-section .text-gray-900,
+.dark .listing-delivery-section .text-gray-900,.dark .listing-purchase-section .text-gray-900{opacity:1}
+.listing-details-section p,.listing-delivery-section p,.listing-purchase-section p{line-height:1.55}
+@media(max-width:639px){.listing-details-section .p-6{padding:1rem}.listing-details-section .w-36{width:7rem}.listing-purchase-section .text-3xl{font-size:1.75rem}}
