@@ -44,7 +44,7 @@ const FEATURE_BLOCKS = [
     description: "See something you like? Name your price. Sellers can accept, counter, or decline — it's all negotiable.",
     cta: "Browse Listings",
     href: "/browse",
-    bg: "bg-gray-900",
+    bg: "bg-white dark:bg-slate-900",
     border: "border-slate-200 dark:border-slate-700",
     tagColor: "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-slate-800",
     ctaColor: "text-orange-700 dark:text-orange-300 hover:underline",
@@ -80,7 +80,7 @@ export function FeaturedFeatures() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight"
+            className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
           >
             Everything in one place
           </motion.h2>
@@ -113,7 +113,7 @@ export function FeaturedFeatures() {
 
               <div className="relative z-10 mt-5">
                 <Link href={href}>
-                  <button className={`flex items-center gap-1.5 text-sm font-semibold px-0 py-2.5 rounded-xl transition-all ${ctaColor}`}>
+                  <button className={`flex items-center gap-1.5 text-base font-semibold px-0 py-2.5 rounded-xl transition-all ${ctaColor}`}>
                     {cta} <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </Link>
