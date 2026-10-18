@@ -34,7 +34,7 @@ export function LoaderSettingsPanel() {
    <label key={x.id} className="cursor-pointer rounded-xl border border-slate-300 p-3 dark:border-slate-600">
     <input type="radio" name="marketplace-loader" checked={variant===x.id} onChange={()=>setVariant(x.id)} />
     <span className="ml-2 text-sm font-semibold text-slate-900 dark:text-white">{x.label}</span>
-    <div className="mt-2 flex justify-center"><LoaderPreview variant={x.id}/></div>
+    <div className="mt-2 flex justify-center"><MarketplaceLoader variantOverride={x.id} label="" /></div>
    </label>)}</div>
   <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">Page placement</h3>
   <div className="mt-2 grid gap-2 sm:grid-cols-2">{LOADER_AREAS.map(x=>
