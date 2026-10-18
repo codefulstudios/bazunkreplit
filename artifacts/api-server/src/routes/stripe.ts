@@ -323,7 +323,7 @@ router.post("/stripe/confirm-cart-payment", async (req, res) => {
       // A verified paid session closes matching abandoned-checkout candidates.
       // Recovery tracking is optional and must not make fulfilment fail.
       try {
-        if(result.status !== "not_paid") {
+        {
           const registry=(await db.execute(sql`SELECT to_regclass('public.checkout_recovery') AS name`)).rows[0]?.name;
           if(registry) await db.execute(sql`UPDATE checkout_recovery SET status='completed',updated_at=NOW()
            WHERE LOWER(buyer_email)=LOWER(${paidSession.customer_email || paidSession.customer_details?.email || paidSession.client_reference_id || email})
