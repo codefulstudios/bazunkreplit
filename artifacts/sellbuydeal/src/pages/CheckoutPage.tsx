@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -47,6 +48,7 @@ const CONDITION_COLORS: Record<string, string> = {
 
 export function CheckoutPage() {
   const { items, clearCart } = useCart();
+  const {getToken}=useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
   const { formatPrice, currency } = useCurrency();
@@ -57,6 +59,7 @@ export function CheckoutPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [recoveryConsent,setRecoveryConsent]=useState(false);
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
   const [quoteError,setQuoteError]=useState("");
@@ -124,7 +127,14 @@ export function CheckoutPage() {
     setCheckoutLoading(true);
     setStep("redirecting");
 
+
     try {
+      if(user?.email) {
+        try {
+          const token=await getToken();
+          if(token) await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:recoveryConsent})});
+        }catch{ /* recovery is optional; never block payment */ }
+      }
       const res = await fetch("/api/stripe/checkout-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -351,6 +361,7 @@ export function CheckoutPage() {
                     {delivery === 0 ? "FREE" : formatPrice(delivery)}
                   </span>
                 </div>
+                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>setRecoveryConsent(e.target.checked)}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
