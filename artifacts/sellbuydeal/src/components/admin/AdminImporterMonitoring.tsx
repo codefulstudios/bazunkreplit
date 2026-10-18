@@ -43,7 +43,7 @@ export function AdminImporterMonitoring(){
        {s.failures.length>0&&<details className="mt-3 rounded-lg border border-amber-400 p-2 dark:border-amber-500">
          <summary className="flex min-h-9 cursor-pointer items-center gap-2 rounded-lg bg-[#ffd078] px-3 py-2 text-sm font-extrabold text-[#35200a] hover:bg-[#ffde9d] dark:!bg-[#ffd078] dark:!text-[#35200a] dark:hover:!bg-[#ffde9d]"><AlertTriangle className="h-4 w-4"/>Show {s.failures.length} recent problems</summary>
          <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">{s.failures.map(x=><div key={x.id} className="border-t border-red-200 pt-2 text-xs text-slate-900 dark:border-red-800 dark:text-slate-100">
-          <p className="font-bold">{x.title||x.publicId||x.id}</p><p className="break-words text-red-700 dark:text-red-200">{x.error}</p>
+          <p className="font-bold">{x.title||x.publicId||x.id}</p><p className="break-words font-bold text-red-700 dark:!text-[#ffb4b4]">{x.error}</p>
           <p className="text-slate-600 dark:text-slate-300">{x.lastChecked?new Date(x.lastChecked).toLocaleString("en-GB"):"Never synced"}</p>
          </div>)}</div>
        </details>}
