@@ -95,25 +95,25 @@ export function FeaturedFeatures() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12 }}
-              className={`${bg} ${border} border rounded-3xl p-6 flex flex-col justify-between min-h-[260px] shadow-sm ${glow} relative overflow-hidden`}
+              className={`bz-store-card ${bg} ${border} border rounded-3xl p-6 flex flex-col justify-between min-h-[260px] shadow-sm ${glow} relative overflow-hidden`}
             >
               {/* Subtle glow circle */}
               <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-orange-500/5 pointer-events-none" />
 
               <div className="relative z-10">
-                <span className={`inline-flex text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-4 ${tagColor}`}>
+                <span className={`bz-store-tag inline-flex text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-4 ${tagColor}`}>
                   {tag}
                 </span>
-                <div className={`w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center mb-4`}>
+                <div className={`bz-store-feature-icon w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center mb-4`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">{title}</h3>
-                <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed">{description}</p>
+                <h3 className="bz-store-title text-xl font-semibold mb-2">{title}</h3>
+                <p className="bz-store-description text-base leading-relaxed">{description}</p>
               </div>
 
               <div className="relative z-10 mt-5">
                 <Link href={href}>
-                  <button className={`flex items-center gap-1.5 text-base font-semibold px-0 py-2.5 rounded-xl transition-all ${ctaColor}`}>
+                  <button className={`bz-store-action flex items-center gap-1.5 text-base font-semibold px-0 py-2.5 rounded-xl transition-all ${ctaColor}`}>
                     {cta} <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </Link>
@@ -131,14 +131,14 @@ export function FeaturedFeatures() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 + i * 0.1 }}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex items-center gap-4"
+              className="bz-store-card rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex items-center gap-4"
             >
               <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5 text-gray-500" />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-base">{label}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{sub}</p>
+                <p className="bz-store-title font-semibold text-base">{label}</p>
+                <p className="bz-store-description text-sm">{sub}</p>
               </div>
             </motion.div>
           ))}
