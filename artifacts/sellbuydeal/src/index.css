@@ -989,3 +989,24 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .bz-status-success {background:#124b3b;color:#d1fae5;border-color:#348769;}
 .dark .bz-status-warning {background:#503616;color:#ffefbc;border-color:#a67b36;}
 .dark .bz-status-error {background:#522530;color:#ffe4e6;border-color:#aa5969;}
+
+/* Readable admin/seller data tables: preserve column widths; scrolling is local. */
+.bz-table-scroll {max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
+.bz-data-table {width:100%;min-width:780px;border-collapse:separate;border-spacing:0;font-size:13px;line-height:1.5;}
+.bz-data-table :is(th,td) {padding:12px 14px;vertical-align:middle;text-align:left;}
+.bz-data-table th {font-weight:750;white-space:nowrap;background:var(--bz-surface-raised);color:var(--bz-text-primary);}
+.bz-data-table td {color:var(--bz-text-secondary);border-bottom:1px solid var(--bz-border);}
+.bz-data-table tbody tr:nth-child(even){background-color:color-mix(in srgb,var(--bz-surface-raised) 38%,transparent);}
+.bz-data-table tbody tr:hover{background-color:color-mix(in srgb,var(--bz-surface-raised) 72%,transparent);}
+.bz-data-table :is(td,th)[data-long-value]{min-width:180px;max-width:340px;overflow-wrap:anywhere;white-space:normal;}
+.bz-data-table td[data-actions]{min-width:160px;white-space:nowrap;}
+.bz-data-table td[data-actions] :is(button,a){min-height:34px;}
+.bz-data-table tbody tr:focus-within{outline:2px solid var(--bz-focus);outline-offset:-2px;}
+/* Overlay surfaces and content inherit the shared dark palette, including portals. */
+.dark :is([data-radix-popper-content-wrapper] [role="dialog"],[data-radix-menu-content], [data-radix-select-content], [role="alertdialog"]) {
+  color:var(--bz-text-primary);
+}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(h1,h2,h3,[data-dialog-title]) {color:var(--bz-text-primary);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(label,legend) {color:var(--bz-text-secondary);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(input,textarea,select) {border-color:var(--bz-border);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(button,a):focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
