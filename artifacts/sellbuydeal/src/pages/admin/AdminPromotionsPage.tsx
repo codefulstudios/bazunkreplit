@@ -64,6 +64,52 @@ function daysLeft(expiresAt: string) {
   return days > 0 ? `${days}d left` : "Expired";
 }
 
+
+function HomepageMerchandisingControls({ authFetch }: { authFetch: (url: string, options?: RequestInit) => Promise<Response> }) {
+  const keys = ["shop", "flash", "offer", "rewards"];
+  const labels: Record<string,string> = { shop:"Shop the marketplace", flash:"Flash Sales", offer:"Make an Offer", rewards:"Rewards Arcade" };
+  const [order,setOrder] = useState<string[]>(keys);
+  const [shown,setShown] = useState<Record<string,boolean>>({shop:true,flash:true,offer:true,rewards:true});
+  const [saving,setSaving] = useState(false);
+  const [message,setMessage] = useState("");
+  useEffect(() => {
+    let active=true;
+    authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Unable to load merchandising settings");return r.json();}).then((data:Record<string,string>)=>{
+      if(!active)return;
+      const parsed=(data.homepage_promotion_order||keys.join(",")).split(",").filter(k=>keys.includes(k));
+      setOrder([...new Set([...parsed,...keys])]);
+      setShown(Object.fromEntries(keys.map(k=>[k,data[`homepage_promotion_${k}_visible`]!=="false"])));
+    }).catch(()=>{if(active)setMessage("Unable to load saved settings. Changes are not yet applied.")});
+    return()=>{active=false};
+  },[authFetch]);
+  const move=(key:string,by:number)=>setOrder(prev=>{const next=[...prev],i=next.indexOf(key),to=i+by;if(to<0||to>=next.length)return prev;[next[i],next[to]]=[next[to],next[i]];return next});
+  async function save(){
+    setSaving(true);setMessage("");
+    try {
+      const original=await authFetch("/api/admin/settings");
+      if(!original.ok)throw Error("Could not read existing settings");
+      const data=await original.json();
+      const payload={...data,homepage_promotion_order:order.join(","),...Object.fromEntries(keys.map(k=>[`homepage_promotion_${k}_visible`,String(shown[k])]))};
+      const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(payload)});
+      if(!response.ok)throw Error("Settings could not be saved");
+      window.dispatchEvent(new Event("bazunk-settings-updated"));
+      setMessage("Homepage promotion layout saved.");
+    }catch(e){setMessage(e instanceof Error?e.message:"Unable to save")}
+    finally{setSaving(false)}
+  }
+  return <section className="rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 p-5 mb-6" aria-label="Homepage merchandising">
+    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Homepage merchandising</h2>
+    <p className="mt-1 mb-4 text-sm text-slate-700 dark:text-slate-200">Choose which promotional cards appear and their order. The first visible card is featured. Seller-paid listing promotions are unaffected.</p>
+    <div className="space-y-2">{order.map((key,i)=><div key={key} className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+      <label className="flex flex-1 items-center gap-2 text-sm font-medium text-slate-900 dark:text-white"><input type="checkbox" checked={shown[key]} onChange={e=>setShown(s=>({...s,[key]:e.target.checked}))}/>{labels[key]}</label>
+      <button type="button" disabled={i===0} onClick={()=>move(key,-1)} aria-label={`Move ${labels[key]} up`} className="rounded-lg border px-3 py-1 text-sm text-slate-900 dark:text-white disabled:opacity-40">↑</button>
+      <button type="button" disabled={i===order.length-1} onClick={()=>move(key,1)} aria-label={`Move ${labels[key]} down`} className="rounded-lg border px-3 py-1 text-sm text-slate-900 dark:text-white disabled:opacity-40">↓</button>
+    </div>)}</div>
+    <button type="button" disabled={saving} onClick={save} className="mt-4 rounded-xl bg-orange-600 px-5 py-2.5 text-white font-semibold disabled:opacity-50">{saving?"Saving…":"Save homepage layout"}</button>
+    {message&&<p role="status" className="mt-3 text-sm text-slate-900 dark:text-white">{message}</p>}
+  </section>;
+}
+
 export function AdminPromotionsPage() {
   const { authFetch } = useAdmin();
   const [promos, setPromos] = useState<PromoRow[]>([]);
@@ -122,6 +168,7 @@ export function AdminPromotionsPage() {
           </button>
         </div>
 
+        <HomepageMerchandisingControls authFetch={authFetch} />
         <PromotionPricingPanel />
 
         <h2 className="text-sm font-black uppercase tracking-wider text-gray-400 mb-3">Live promotions</h2>
