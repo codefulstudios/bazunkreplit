@@ -140,12 +140,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+        className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
-        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden relative">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
@@ -153,7 +153,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
             data-testid={`button-wishlist-${product.id}`}
           >
-            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-red-500 text-red-500" : "text-slate-600 dark:text-slate-300"}`} />
           </button>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -161,15 +161,15 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
               {hasPromo && <PromoBadge promotions={promotions} />}
             </div>
-            <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors text-sm">{product.title}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 group-hover:text-[#4A5CE8] transition-colors text-sm">{product.title}</h3>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
-              <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+              <span className="flex items-center gap-0.5 text-xs text-slate-600 dark:text-slate-300"><MapPin className="w-3 h-3" />{product.location}</span>
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
               {product.verified && <span className="flex items-center gap-1 text-emerald-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>}
@@ -185,12 +185,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+      <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -203,23 +203,23 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
           data-testid={`button-wishlist-${product.id}`}
         >
-          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-slate-600 dark:text-slate-300"}`} />
         </button>
         <div className="absolute bottom-2.5 left-2.5">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-[#4A5CE8] transition-colors mb-auto">{product.title}</h3>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] group-hover:text-[#4A5CE8] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <span className="flex items-center gap-1 text-xs text-gray-400"><Eye className="w-3 h-3" />{product.views}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300"><Eye className="w-3 h-3" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+            <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300"><MapPin className="w-3 h-3" />{product.location}</span>
             {product.verified && (
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
+              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
             )}
           </div>
         </div>
