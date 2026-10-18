@@ -1,6 +1,7 @@
 import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
 import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
 import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
+import { WatchAlertsManager } from "@/components/dashboard/WatchAlertsManager";
 import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
@@ -6112,6 +6113,7 @@ export function DashboardPage() {
             {activeSection === "seller-analytics" && <div className="p-4 sm:p-6"><SellerAnalyticsPanel /></div>}
             {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (
+              <>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -6203,7 +6205,7 @@ export function DashboardPage() {
                             </div>
                             {hasDrop && item.alertEnabled && (
                               <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-0.5">
-                                <BellIcon className="w-3 h-3" /> Price drop alert sent
+                                <BellIcon className="w-3 h-3" /> Price-drop alerts enabled
                               </span>
                             )}
                           </div>
@@ -6217,11 +6219,13 @@ export function DashboardPage() {
                   <div className="p-5 border-t border-gray-100 bg-gray-50/50">
                     <p className="text-xs text-gray-400 flex items-center gap-1.5">
                       <BellIcon className="w-3.5 h-3.5 text-amber-500" />
-                      Price alerts are active for {watchlistItems.filter(i => i.alertEnabled).length} item{watchlistItems.filter(i => i.alertEnabled).length !== 1 ? "s" : ""}. We'll notify you when prices drop.
+                      Price alerts are active for {watchlistItems.filter(i => i.alertEnabled).length} item{watchlistItems.filter(i => i.alertEnabled).length !== 1 ? "s" : ""}. Persistent price-drop and restock preferences can be managed below.
                     </p>
                   </div>
                 )}
               </div>
+              <WatchAlertsManager />
+              </>
             )}
             {activeSection === "saved-searches" && <SavedSearchesSection />}
             {activeSection === "messages" && (
