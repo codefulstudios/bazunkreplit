@@ -160,9 +160,9 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white"
+              className="text-2xl md:text-3xl font-bold !text-slate-950 dark:!text-white"
             >
-              {mode === "promoted" ? t("homepageSpotlight") : "Recently listed"}
+              {mode === "promoted" ? "Spotlight listings" : "Recently listed"}
             </motion.h2>
           </div>
 
@@ -205,7 +205,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                 viewport={{ once: true }}
                 transition={{ delay: Math.min(index * 0.04, 0.3) }}
                 style={{ scrollSnapAlign: "start" }}
-                className="w-52 shrink-0 group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                className="w-52 shrink-0 group !bg-white dark:!bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
@@ -235,7 +235,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="text-base font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors leading-snug">
+                  <p className="text-base font-semibold !text-slate-950 dark:!text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:!text-orange-700 dark:group-hover:!text-orange-300 transition-colors leading-snug">
                     {listing.title}
                   </p>
 
