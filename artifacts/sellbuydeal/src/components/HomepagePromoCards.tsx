@@ -23,11 +23,11 @@ export function HomepagePromoCards() {
         <span className="inline-flex items-center gap-2 text-sm font-semibold !text-white">Start shopping <ArrowRight className="w-4 h-4"/></span>
       </Link>
       <div className="grid gap-3 sm:grid-cols-3">
-        {secondary.map(({title,description,icon:Icon,href})=><Link key={title} href={href} className="group flex min-h-[160px] flex-col rounded-2xl border border-slate-200 dark:border-slate-600 !bg-white dark:!bg-slate-900 p-5 hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-sm transition-all">
+        {secondary.map(({title,description,icon:Icon,href})=><Link key={title} href={href} className="bz-store-card group flex min-h-[160px] flex-col rounded-2xl border border-slate-200 dark:border-slate-600 !bg-white dark:!bg-slate-900 p-5 hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-sm transition-all">
           <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 dark:bg-slate-800 text-orange-700 dark:text-orange-300"><Icon className="h-5 w-5"/></div>
-          <h3 className="text-base font-semibold !text-slate-950 dark:!text-white">{title}</h3>
-          <p className="mt-2 text-sm leading-relaxed !text-slate-700 dark:!text-slate-200">{description}</p>
-          <span className="mt-auto pt-4 inline-flex items-center gap-1 text-sm font-semibold !text-orange-800 dark:!text-orange-300">Explore <ArrowRight className="h-4 w-4"/></span>
+          <h3 className="bz-store-title text-base font-semibold">{title}</h3>
+          <p className="bz-store-description mt-2 text-sm leading-relaxed">{description}</p>
+          <span className="bz-store-action mt-auto pt-4 inline-flex items-center gap-1 text-sm font-semibold">Explore <ArrowRight className="h-4 w-4"/></span>
         </Link>)}
       </div>
     </div>
