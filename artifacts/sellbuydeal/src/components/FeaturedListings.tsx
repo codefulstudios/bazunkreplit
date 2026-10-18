@@ -66,6 +66,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
   const [recentListings, setRecentListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -73,6 +74,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(false);
     setSpotlightListings([]);
     setRecentListings([]);
     const fetchAll = async () => {
@@ -90,6 +92,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
           setRecentListings(Array.isArray(data) ? data : []);
         }
       } catch (error) {
+        if (!cancelled) setLoadError(true);
         console.error("Homepage listings failed to load", error);
       } finally {
         if (!cancelled) setLoading(false);
@@ -127,7 +130,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
   if (loading) {
     return (
-      <section className="py-9 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+      <section aria-busy="true" aria-label="Loading marketplace listings" className="py-9 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -139,7 +142,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     );
   }
 
-  if (displayListings.length === 0) return null;
+  if (displayListings.length === 0) return <section className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 py-10"><div className="max-w-6xl mx-auto px-4"><div className="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center"><Package className="mx-auto h-9 w-9 text-orange-600 dark:text-orange-300" /><h2 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">{mode === "promoted" ? "Spotlight listings" : "Recently listed"}</h2><p className="mt-2 text-base text-slate-700 dark:text-slate-200">{loadError ? "Listings could not be loaded right now. Please try again shortly." : mode === "promoted" ? "No spotlight listings are available at the moment." : "No listings are available in this region yet."}</p><Link href="/browse" className="mt-4 inline-flex text-sm font-semibold text-orange-700 dark:text-orange-300">Browse the marketplace <ArrowRight className="ml-1 h-4 w-4" /></Link></div></div></section>;
 
   return (
     <section className="py-12 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
