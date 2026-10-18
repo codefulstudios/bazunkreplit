@@ -34,6 +34,7 @@ import chatwootRouter from "./chatwoot.js";
 import snapSellRouter from "./snapSell.js";
 import listingAlertsRouter from "./listingAlerts.js";
 import discoveryRouter from "./discovery.js";
+import sellerBundlesRouter from "./sellerBundles.js";
 import { featureEnabled } from "../lib/featureFlags.js";
 import { featureGate } from "../middlewares/featureGate.js";
 
@@ -83,6 +84,7 @@ router.use(chatwootRouter);
 router.use(snapSellRouter);
 router.use(listingAlertsRouter);
 router.use(discoveryRouter);
+router.use(sellerBundlesRouter);
 router.use(demoCreatorRouter);
 
 export default router;
