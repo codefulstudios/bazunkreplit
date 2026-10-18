@@ -45,6 +45,3 @@ export function LoaderSettingsPanel() {
   {message&&<p role="status" className="mt-2 text-sm text-slate-900 dark:text-white">{message}</p>}
  </section>;
 }
-function LoaderPreview({variant}:{variant:string}){
- return <div className={"bz-loader bz-loader--"+variant} aria-hidden="true"><span className="bz-loader-ring"/><span className="bz-loader-inner">{variant==="logo"?"B":"●"}</span></div>;
-}
