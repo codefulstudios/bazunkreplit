@@ -170,7 +170,7 @@ router.post("/snap-sell/background",async(req,res)=>{
  const email=await auth(req,res);if(!email||!await allowed(res,"snap_background"))return;
  if(!process.env.REMOVE_BG_API_KEY){res.status(503).json({error:"Optional background cleanup is not configured. Your original photo is unchanged.",code:"BACKGROUND_NOT_CONFIGURED"});return;}
  const photo=req.body?.photo;
- if(typeof photo!=="string"||photo.length>2.8e6||!/^data:image\\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)){
+ if(typeof photo!=="string"||photo.length>2.8e6||!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(photo)){
   res.status(400).json({error:"Please choose a photo smaller than 2MB before cleaning its background."});return;
  }
  if(!await quota(email,"background",10)){res.status(429).json({error:"You have reached the background-cleanup limit (10 attempts per 24 hours)."});return;}
