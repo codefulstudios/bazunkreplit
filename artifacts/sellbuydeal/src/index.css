@@ -887,3 +887,63 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bz-figure {color:var(--bz-text-primary);font-weight:700;}
 .bz-help-text {color:var(--bz-text-secondary);}
 .bz-caption {color:var(--bz-text-muted);}
+
+
+/* Shared control contrast: avoid white-on-white and pale-on-pale interactive states.
+   Applies to storefront, dashboard, and admin without overriding branded solid buttons. */
+@layer components {
+  .bz-action-primary, .bz-action-secondary {
+    color-scheme:light; font-weight:700; transition:background-color .15s,border-color .15s,color .15s;
+  }
+  .dark .bz-action-primary,.dark .bz-action-secondary {color-scheme:dark;}
+  .bz-action-primary:disabled,.bz-action-secondary:disabled {opacity:.68;cursor:not-allowed;filter:none;}
+  .bz-action-primary[aria-busy="true"],.bz-action-secondary[aria-busy="true"] {cursor:progress;}
+  .bz-action-primary[aria-pressed="true"],.bz-action-secondary[aria-pressed="true"] {outline:2px solid var(--bz-focus);outline-offset:1px;}
+  .bz-select {background:var(--bz-surface-field);color:var(--bz-text-primary);border:1px solid var(--bz-border);}
+  .bz-select :is(option,optgroup) {background:var(--bz-surface-card);color:var(--bz-text-primary);}
+  .bz-select:focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
+}
+/* Explicit light buttons must carry a dark foreground even if they inherit text-white. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white\/90.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white\/95.text-white {
+  background-color:var(--bz-surface-card);
+  color:var(--bz-text-primary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-100.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-slate-100.text-white {
+  background-color:var(--bz-surface-raised);
+  color:var(--bz-text-primary);
+}
+/* Standard inactive neutral buttons, including hover, consistently read on dark panels. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-white:not([class*="dark:bg-"]),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-50:not([class*="dark:bg-"]) {
+  background-color:var(--bz-surface-raised);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-white:not([class*="dark:bg-"]):hover,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-50:not([class*="dark:bg-"]):hover {
+  background-color:#354d70;
+  color:#fff;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],[role="option"],[role="menuitem"]):disabled,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],[role="option"],[role="menuitem"])[aria-disabled="true"] {
+  opacity:.7;
+  cursor:not-allowed;
+}
+/* Native and ARIA dropdown text/selection must be distinct from their menu surfaces. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(select,[role="combobox"],[role="listbox"]) {
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) select option,
+.dark :is(main,[role="dialog"],.bazunk-admin) select optgroup {
+  background-color:var(--bz-surface-card)!important;
+  color:var(--bz-text-primary)!important;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is([role="option"],[role="menuitem"])[data-highlighted],
+.dark :is(main,[role="dialog"],.bazunk-admin) :is([role="option"],[role="menuitem"])[aria-selected="true"] {
+  background-color:#334d73;
+  color:#fff;
+}
