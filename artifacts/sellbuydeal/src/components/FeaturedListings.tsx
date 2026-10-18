@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useLanguage } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
 import { Store, Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, Package, ChevronLeft, ChevronRight } from "lucide-react";
@@ -132,11 +133,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     return (
       <section aria-busy="true" aria-label="Loading marketplace listings" className="py-9 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="w-52 shrink-0 rounded-2xl bg-gray-100 animate-pulse aspect-[3/4]" />
-            ))}
-          </div>
+          <MarketplaceLoader area="homepage" label={mode === "promoted" ? "Loading spotlight listings…" : "Loading recent listings…"} />
         </div>
       </section>
     );
