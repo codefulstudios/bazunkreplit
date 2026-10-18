@@ -26,12 +26,12 @@ export function AdminImporterMonitoring(){
   {error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-bold text-red-800 dark:bg-red-950 dark:text-red-100">{error}</p>}
   {data&&<>
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-      {[["Recorded eBay calls this month",data.usage.ebayRequestsThisMonth],["Recorded API errors this month",data.usage.ebayErrorsThisMonth],["Last recorded call",data.usage.ebayLastCall?new Date(data.usage.ebayLastCall).toLocaleString("en-GB"):"Never"]].map(([k,v])=><div key={String(k)} className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-slate-900">
+      {[["Recorded eBay calls this month",data.usage.ebayRequestsThisMonth],["Recorded API errors this month",data.usage.ebayErrorsThisMonth],["Last recorded call",data.usage.ebayLastCall?new Date(data.usage.ebayLastCall).toLocaleString("en-GB"):"Never"]].map(([k,v])=><div key={String(k)} className="bz-metric-card rounded-xl p-3">
        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{k}</p><p className="mt-1 text-lg font-black text-slate-950 dark:text-white">{v}</p>
       </div>)}
     </div>
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-     {data.sources.map(s=><div key={s.key} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-slate-900">
+     {data.sources.map(s=><div key={s.key} className="bz-metric-card rounded-xl p-4">
        <h3 className="text-lg font-black text-slate-950 dark:text-white">{s.label}</h3>
        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
         {[["Tracked",s.imported],["Active",s.active],["Problems",s.failed]].map(([k,v])=><div key={String(k)} className="rounded-lg bg-slate-100 p-2 dark:bg-slate-800"><p className="text-xl font-black text-slate-950 dark:text-white">{v}</p><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{k}</p></div>)}
