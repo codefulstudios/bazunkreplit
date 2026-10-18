@@ -92,11 +92,11 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
         ]);
         if (!cancelled && spotlightRes.ok) {
           const data = await spotlightRes.json();
-          setSpotlightListings(Array.isArray(data) ? shuffle(data) : []);
+          setSpotlightListings(Array.isArray(data) ? data : []);
         }
         if (!cancelled && recentRes.ok) {
           const data = await recentRes.json();
-          setRecentListings(Array.isArray(data) ? shuffle(data) : []);
+          setRecentListings(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error("Homepage listings failed to load", error);
@@ -136,7 +136,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
   if (loading) {
     return (
-      <section className={`py-9 border-b border-white/10 ${mode === "promoted" ? "bg-gradient-to-r from-[#2a1050] via-[#1a1d4c] to-[#3a145c]" : "bg-[#091a33]"}`}>
+      <section className="py-9 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -193,7 +193,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
             </button>
 
             <Link href="/browse">
-              <button className="flex items-center gap-1.5 text-sm font-bold text-sky-300 hover:text-[#3B4DD6] transition-colors ml-1">
+              <button className="flex items-center gap-1.5 text-sm font-bold text-orange-700 dark:text-orange-300 hover:text-orange-600 transition-colors ml-1">
                 {t("browseAll")} <ArrowRight className="w-4 h-4" />
               </button>
             </Link>
@@ -214,7 +214,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                 viewport={{ once: true }}
                 transition={{ delay: Math.min(index * 0.04, 0.3) }}
                 style={{ scrollSnapAlign: "start" }}
-                className="w-52 shrink-0 group bg-[#132543] rounded-2xl border border-sky-400/20 hover:border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                className="w-52 shrink-0 group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
@@ -244,7 +244,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="text-sm font-medium text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-sky-300 transition-colors leading-snug">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors leading-snug">
                     {listing.title}
                   </p>
 
@@ -253,13 +253,13 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                       {formatPrice(parseFloat(listing.price))}
                     </span>
                     {listing.views > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-300">
+                      <span className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
                         <Eye className="w-3 h-3" /> {listing.views.toLocaleString()}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-200">
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                     <Store className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Bazunk seller")}
                   </div>
                 </div>
@@ -269,11 +269,11 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
           {/* Browse All end card */}
           <Link href="/browse">
-            <div className="w-52 shrink-0 rounded-2xl border-2 border-dashed border-sky-400/40 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[#4A5CE8] hover:bg-[#4A5CE8]/5 transition-all group" style={{ minHeight: "280px" }}>
+            <div className="w-52 shrink-0 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-[#4A5CE8] hover:bg-[#4A5CE8]/5 transition-all group" style={{ minHeight: "280px" }}>
               <div className="w-12 h-12 rounded-full bg-[#4A5CE8]/10 flex items-center justify-center group-hover:bg-[#4A5CE8]/20 transition-colors">
                 <ArrowRight className="w-5 h-5 text-[#4A5CE8]" />
               </div>
-              <p className="text-sm font-bold text-gray-500 group-hover:text-[#4A5CE8] transition-colors text-center px-4">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 group-hover:text-[#4A5CE8] transition-colors text-center px-4">
                 {t("browseAllListings")}
               </p>
             </div>
