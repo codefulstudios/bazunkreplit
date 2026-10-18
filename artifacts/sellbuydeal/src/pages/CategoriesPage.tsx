@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -133,6 +134,7 @@ export function CategoriesPage() {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [counts, setCounts] = useState<CategoryCount[]>([]);
+  const [countsLoading,setCountsLoading] = useState(true);
   const [hidden, setHidden] = useState<string[]>([]);
   const [display, setDisplay] = useState<Record<string,string>>({});
 
@@ -141,7 +143,7 @@ export function CategoriesPage() {
     fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {}).finally(()=>setCountsLoading(false));
   }, []);
 
   const statusFor=(category:string,sub?:string)=>{const key=category+(sub?"__"+sub:"");return display[key]||(hidden.includes(key)?"coming_soon":"active");};
@@ -181,6 +183,7 @@ export function CategoriesPage() {
   return (
     <div className="min-h-screen bg-[#f7f9fd] text-slate-950 dark:bg-[#071426] dark:text-white flex flex-col transition-colors">
       <Navbar />
+      {countsLoading && <MarketplaceLoader area="categories" label="Loading categories…" />}
 
       <div className="border-b border-slate-200 bg-white dark:border-white/[0.06] dark:bg-[#071426]">
         <div className="container mx-auto px-4 py-5 lg:py-7">
