@@ -146,7 +146,7 @@ export function Hero() {
             className="flex flex-col gap-4 self-start"
           >
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: Icon, color, emoji, href }, i) => (
+            {HERO_CATS.map(({ name, icon: Icon, href }, i) => (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -154,12 +154,11 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-gradient-to-br from-white/20 to-white/5 border border-white/25 rounded-2xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
+                  <div className="bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
                     <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
-                      style={{ backgroundColor: color }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
                     >
-                      <span className="text-3xl leading-none" aria-hidden="true">{emoji}</span>
+                      <Icon className="w-6 h-6 text-orange-200" aria-hidden="true" />
                     </div>
                     <p className="text-white text-sm font-medium text-center leading-tight group-hover:text-white transition-colors">
                       {name}
