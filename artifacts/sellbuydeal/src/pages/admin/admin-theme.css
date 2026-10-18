@@ -146,24 +146,19 @@
 .dark .bazunk-admin main .admin-orders-page .grid > div { color:#ecf3ff !important; }
 .dark .bazunk-admin main .admin-orders-page .grid > div > p:last-child {color:#cbd8ee !important;}
 .dark .bazunk-admin main button[class*="bg-[#"] {color:#fff;}
-/* Users: keep core records and management controls accessible without a giant horizontal table. */
-@media (min-width: 1000px) {
-  .bazunk-admin main .admin-users-table .overflow-x-auto { overflow-x:visible; }
-  .bazunk-admin main .admin-users-table table {min-width:0 !important; width:100%;table-layout:fixed;font-size:11px;}
-  .bazunk-admin main .admin-users-table :is(th,td) {padding:8px 5px !important;white-space:normal;overflow-wrap:anywhere;vertical-align:top;}
-  .bazunk-admin main .admin-users-table th:nth-child(1) {width:18%;}
-  .bazunk-admin main .admin-users-table th:nth-child(2) {width:10%;}
-  .bazunk-admin main .admin-users-table th:nth-child(3) {width:8%;}
-  .bazunk-admin main .admin-users-table th:nth-child(4) {width:8%;}
-  .bazunk-admin main .admin-users-table th:nth-child(5) {width:10%;}
-  .bazunk-admin main .admin-users-table th:nth-child(6) {width:7%;}
-  .bazunk-admin main .admin-users-table th:nth-child(7) {width:9%;}
-  .bazunk-admin main .admin-users-table th:nth-child(8) {width:17%;}
-  .bazunk-admin main .admin-users-table th:nth-child(9) {width:13%;}
-  .bazunk-admin main .admin-users-table td > div {max-width:100%;min-width:0;flex-wrap:wrap;}
-  .bazunk-admin main .admin-users-table td input {max-width:100%;min-width:0;}
-  .bazunk-admin main .admin-users-table td button {white-space:normal;line-height:1.2;}
-}
+/* Users: allow a real, legible table rather than compressing ten columns into tiny vertical strips. */
+.bazunk-admin main .admin-users-table { max-width:100%; }
+.bazunk-admin main .admin-users-table .overflow-x-auto { overflow-x:auto; }
+.bazunk-admin main .admin-users-table table { min-width:1420px; width:100%; table-layout:auto; font-size:13px; }
+.bazunk-admin main .admin-users-table :is(th,td) { padding:12px 10px; vertical-align:middle; overflow-wrap:normal; }
+.bazunk-admin main .admin-users-table tbody tr { height:auto; }
+.bazunk-admin main .admin-users-table td:nth-child(2) { min-width:185px; max-width:255px; overflow-wrap:anywhere; }
+.bazunk-admin main .admin-users-table td:nth-child(9) { min-width:225px; }
+.bazunk-admin main .admin-users-table td:nth-child(10) { min-width:175px; }
+.bazunk-admin main .admin-users-table td:nth-child(9) > div > div { flex-wrap:nowrap; }
+.bazunk-admin main .admin-users-table td:nth-child(9) input[type="number"] { width:78px; min-width:72px; }
+.bazunk-admin main .admin-users-table td button { white-space:nowrap; min-height:30px; }
+@media(max-width:900px) { .bazunk-admin main .admin-users-table table { min-width:1300px; } }
 .dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf1ff;}
 .dark .bazunk-admin main .admin-users-table td p[class*="text-gray-"] {color:#cddbf2;}
 
@@ -259,3 +254,27 @@
 @media(max-width:640px){
   .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) table :is(th,td){padding:.65rem;}
 }
+
+/* Admin readability contract — scoped to the admin only, both themes. */
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) { color:#172b4d; border-color:#94a3b8; }
+.bazunk-admin main :is(input,textarea)::placeholder { color:#64748b; opacity:1; }
+.dark .bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) { background:#172944!important;color:#f8fbff!important;border-color:#627897!important; }
+.dark .bazunk-admin main :is(input,textarea)::placeholder { color:#bdcce2!important;opacity:1; }
+.dark .bazunk-admin main :is(option,optgroup) {background:#172944!important;color:#fff!important;}
+.bazunk-admin main :is(button,select,input,textarea):focus-visible { outline:3px solid #60a5fa!important;outline-offset:2px; }
+.bazunk-admin main button:disabled {cursor:not-allowed;}
+/* Metric tiles had light slate backgrounds with inherited near-white text in dark mode. */
+.dark .bazunk-admin main .admin-alerts-panel .bg-slate-50,
+.dark .bazunk-admin main .admin-importer-monitor .bg-slate-100,
+.dark .bazunk-admin main .admin-importer-monitor .bg-white {background:#233856!important;border-color:#526987!important;}
+.dark .bazunk-admin main .admin-alerts-panel :is(.text-slate-950,.text-slate-700),
+.dark .bazunk-admin main .admin-importer-monitor :is(.text-slate-950,.text-slate-700) {color:#f5f9ff!important;}
+.dark .bazunk-admin main .admin-alerts-panel .text-slate-600,
+.dark .bazunk-admin main .admin-importer-monitor .text-slate-600 {color:#d0e0f5!important;}
+.dark .bazunk-admin main .admin-users-table button.bg-emerald-50 {background:#174d40!important;color:#d1fae5!important;}
+.dark .bazunk-admin main .admin-users-table button.bg-orange-50 {background:#693919!important;color:#ffdfc3!important;}
+.dark .bazunk-admin main .admin-users-table button.bg-red-50 {background:#632c37!important;color:#ffe0e3!important;}
+.dark .bazunk-admin main .admin-users-table button.bg-sky-50 {background:#194c69!important;color:#d5f1ff!important;}
+.dark .bazunk-admin main .admin-users-table button.bg-gray-100 {background:#334866!important;color:#fff!important;}
+.dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf2ff;}
+.dark .bazunk-admin main .admin-users-table td .text-\\[\\#4A5CE8\\] {color:#adbaff!important;}
