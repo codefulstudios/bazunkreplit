@@ -23,7 +23,7 @@ const FEATURE_BLOCKS = [
   {
     feature: "quick_sell",
     icon: BadgePoundSterling,
-    iconBg: "bg-[#4A5CE8]",
+    iconBg: "bg-[#F26B21]",
     tag: "Private Sellers",
     title: "Sell for FREE",
     description: "List for free. No final value fees. Keep 100% of your sale price — no commission taken from private sellers.",
@@ -38,7 +38,7 @@ const FEATURE_BLOCKS = [
   {
     feature: "offers",
     icon: Handshake,
-    iconBg: "bg-white/15",
+    iconBg: "bg-[#F26B21]",
     tag: "Unique to Bazunk",
     title: "Make an Offer",
     description: "See something you like? Name your price. Sellers can accept, counter, or decline — it's all negotiable.",
@@ -63,7 +63,7 @@ export function FeaturedFeatures() {
   const blocks = FEATURE_BLOCKS.filter(x => isFeatureEnabled(flags, x.feature));
   const trustItems = TRUST_ITEMS.filter(x => isFeatureEnabled(flags, x.feature));
   return (
-    <section className="bg-gray-50 py-16 border-t border-gray-100">
+    <section className="bg-slate-50 dark:bg-slate-950 py-14 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-6xl mx-auto px-4">
 
         {/* Section header */}
@@ -98,7 +98,7 @@ export function FeaturedFeatures() {
               className={`${bg} ${border} border rounded-3xl p-6 flex flex-col justify-between min-h-[260px] shadow-sm ${glow} relative overflow-hidden`}
             >
               {/* Subtle glow circle */}
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-orange-500/5 pointer-events-none" />
 
               <div className="relative z-10">
                 <span className={`inline-flex text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-4 ${tagColor}`}>
@@ -131,14 +131,14 @@ export function FeaturedFeatures() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3 + i * 0.1 }}
-              className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 flex items-center gap-4"
             >
               <div className="w-10 h-10 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5 text-gray-500" />
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-sm">{label}</p>
-                <p className="text-xs text-gray-600">{sub}</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-base">{label}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300">{sub}</p>
               </div>
             </motion.div>
           ))}
