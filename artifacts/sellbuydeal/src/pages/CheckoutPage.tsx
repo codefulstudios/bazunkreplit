@@ -57,7 +57,7 @@ export function CheckoutPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
-  type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
+  type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
   const [quoteError,setQuoteError]=useState("");
   const [quoteLoading,setQuoteLoading]=useState(true);
@@ -76,6 +76,7 @@ export function CheckoutPage() {
   },[cartKey,quoteRevision]);
   const subtotal=quote?.subtotal??0;
   const delivery=quote?.delivery??0;
+  const bundleDiscount=quote?.bundleDiscount??0;
   const buyerProtectionFee=quote?.buyerProtectionFee??0;
   const total=quote?.total??0;
 
@@ -346,11 +347,12 @@ export function CheckoutPage() {
                 </div>
                 <p className="text-xs text-gray-500">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
                 <div className="flex justify-between text-gray-600">
-                  <span>Delivery</span>
+                  <span>Delivery (combined by seller where offered)</span>
                   <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
                     {delivery === 0 ? "FREE" : formatPrice(delivery)}
                   </span>
                 </div>
+                {quote?.bundleBreakdown?.filter(b=>b.discountMinor>0||b.shippingMinor>0).map(b=><p key={b.sellerEmail} className="text-xs font-semibold text-slate-700">{b.itemCount} item(s) from one seller · shipping {formatPrice(b.shippingMinor/100)}{b.discountMinor>0?` · saved ${formatPrice(b.discountMinor/100)}`:""}</p>)}
                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
