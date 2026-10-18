@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { ensureListingAlerts,listWatchedAlerts } from "../lib/listingAlerts.js";
+import { requireAdmin } from "../middlewares/adminAuth.js";
 const router=Router();
 
 router.get("/watch-alerts",async(req,res)=>{
@@ -29,7 +30,7 @@ router.patch("/watch-alerts/:id",async(req,res)=>{
   res.json({id,priceDrop,restock});
  }catch(e){console.error("Watch preferences update failed",e);res.status(503).json({error:"Could not save your notification preferences"});}
 });
-router.get("/admin/listing-alerts/monitor",async(_req,res)=>{
+router.get("/admin/listing-alerts/monitor",requireAdmin,async(_req,res)=>{
  try{
   await ensureListingAlerts();
   const [ev,prefs,searches]=await Promise.all([
