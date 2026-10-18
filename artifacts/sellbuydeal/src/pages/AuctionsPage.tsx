@@ -106,7 +106,7 @@ export function AuctionsPage() {
             </div>
             {user && <Link href="/auctions/create" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#ff711d] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8c3b]" data-testid="button-create-auction"><Plus className="h-5 w-5"/> List an Auction</Link>}
           </div>
-          <div className="relative flex min-h-[150px] items-center justify-center sm:min-h-[190px]">
+          <div className="relative hidden min-h-[150px] items-center justify-center sm:flex sm:min-h-[190px]">
             <div className="pointer-events-none absolute inset-4 rounded-full bg-[#ff56c7]/30 blur-3xl" />
             <img src="/auction-mascot.svg" alt="Smiling Bazunk auction mascot in a blue hoodie holding a gold coin and auction gavel" className="relative z-10 h-[160px] w-full max-w-[280px] object-contain drop-shadow-[0_20px_25px_rgba(3,5,46,.45)] sm:h-[205px]" />
             <span className="absolute bottom-[1%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-2 border-[#ffe94a] bg-[#f20a9b] px-3 py-1 text-sm font-black text-white shadow-2xl sm:text-lg">BID NOW!</span>
@@ -116,7 +116,7 @@ export function AuctionsPage() {
       <div className="mx-auto w-full max-w-7xl px-5 pt-4 lg:px-8"><AdSlot slotKey="auctions_mid" /></div>
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
+          <div className="flex max-w-full flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
             {CATEGORIES.map(cat => <button key={cat} onClick={() => { setCategory(cat); setEndingOnly(false); }} className={`rounded-xl px-3 py-2.5 text-xs font-extrabold transition-colors sm:text-sm ${category===cat?"bg-[#0878fa] text-white shadow-lg":"text-white hover:bg-[#15538d]"}`}>{cat}</button>)}
           </div>
           <div className="ml-auto flex items-center gap-2">
