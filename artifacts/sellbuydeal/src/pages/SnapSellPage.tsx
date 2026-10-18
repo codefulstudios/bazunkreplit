@@ -5,11 +5,11 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CATEGORIES } from "@/data/categories";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
-import { Camera, ScanBarcode, WandSparkles, ArrowRight, CheckCircle2, AlertTriangle, ShieldCheck, ImagePlus, Star, Trash2, BookOpen } from "lucide-react";
+import { Camera, ScanBarcode, WandSparkles, ArrowRight, CheckCircle2, AlertTriangle, ShieldCheck, ImagePlus, Star, Trash2, BookOpen, Eraser, Undo2, TrendingUp } from "lucide-react";
 
 type Suggestion={title:string;description:string;category:string;subcategory:string;brand:string;model:string;tags:string[];attributes:Array<{key:string;value:string}>;warnings:string[]};
 type Quality={score:number;recommendations:string[];checks:Array<{label:string;ok:boolean}>};
-type Capabilities={enabled:boolean;barcode:boolean;aiWriting:boolean;aiPhoto:boolean;recognitionConfigured:boolean;limits:{photoMb:number;aiRequests24h:number;lookups24h:number};note:string};
+type Capabilities={enabled:boolean;barcode:boolean;aiWriting:boolean;aiPhoto:boolean;recognitionConfigured:boolean;backgroundCleanup?:boolean;pricingInsights?:boolean;limits:{photoMb:number;aiRequests24h:number;lookups24h:number;cleanup24h?:number};note:string};
 export const SNAP_SELL_DRAFT_KEY="bazunk:snap-sell:draft:v1";
 const empty=():Suggestion=>({title:"",description:"",category:"",subcategory:"",brand:"",model:"",tags:[],attributes:[],warnings:[]});
 const field="block w-full min-h-11 rounded-xl border-2 border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-950 placeholder:text-slate-500 focus:border-orange-500 focus:outline-none dark:border-slate-600 dark:bg-[#182b49] dark:text-white dark:placeholder:text-slate-300";
@@ -36,11 +36,12 @@ export function SnapSellPage(){
  const {getToken,isSignedIn}=useClerkAuth();
  const [region]=useMarketplaceRegion();
  const [caps,setCaps]=useState<Capabilities|null>(null);
- const [image,setImage]=useState(""),[barcode,setBarcode]=useState(""),[notes,setNotes]=useState("");
+ const [image,setImage]=useState(""),[originalPhoto,setOriginalPhoto]=useState(""),[barcode,setBarcode]=useState(""),[notes,setNotes]=useState("");
  const [draft,setDraft]=useState<Suggestion>(empty);
  const [price,setPrice]=useState(""),[condition,setCondition]=useState("");
  const [shipping,setShipping]=useState(false),[quality,setQuality]=useState<Quality|null>(null);
  const [source,setSource]=useState(""),[error,setError]=useState(""),[busy,setBusy]=useState("");
+ const [marketPricing,setMarketPricing]=useState<{count:number;currency:string;median:number|null;range:{low:number;high:number}|null;suggestions:string[];method:string}|null>(null);
  const [cameraSupported,setCameraSupported]=useState(false);
  const upload=useRef<HTMLInputElement>(null);
  const scanned=useRef<HTMLInputElement>(null);
@@ -102,8 +103,28 @@ export function SnapSellPage(){
       else setError("No readable barcode found. Try a closer image or enter the number manually.");
      }finally{bitmap.close();}
     }
-   }else setImage(data);
+   }else {setImage(data);setOriginalPhoto("");setMarketPricing(null);}
   }catch(e){setError(e instanceof Error?e.message:"Unable to read the image");}
+  finally{setBusy("");}
+ }
+ async function cleanBackground(){
+  if(!image)return;
+  setBusy("background");setError("");
+  try{
+   const data=await request("/api/snap-sell/background",{method:"POST",body:JSON.stringify({photo:image})});
+   if(typeof data.photo!=="string"||!data.photo.startsWith("data:image/png;base64,"))throw Error("Photo cleanup returned an invalid result.");
+   setOriginalPhoto(image);setImage(data.photo);setSource("Optional background cleanup — verify the edges and colours");
+  }catch(e){setError(e instanceof Error?e.message:"Background cleanup unavailable");}
+  finally{setBusy("");}
+ }
+ async function checkPricing(){
+  if(!draft.category)return;
+  setBusy("pricing");setError("");
+  try{
+   const data=await request("/api/snap-sell/pricing",{method:"POST",body:JSON.stringify({
+    category:draft.category,price:Number(price)||0,region,currency:region==="uk"?"GBP":"USD"})});
+   setMarketPricing(data);
+  }catch(e){setError(e instanceof Error?e.message:"Pricing suggestions are unavailable");}
   finally{setBusy("");}
  }
  async function photoAnalyse(){
@@ -169,8 +190,14 @@ export function SnapSellPage(){
       <input ref={upload} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={e=>void imageChange(e.target.files)} aria-label="Upload item photo"/>
       {image?<div className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100 dark:border-slate-600">
         <img src={image} alt="Your item photograph" className="mx-auto max-h-80 w-full object-contain"/>
-        <button type="button" onClick={()=>setImage("")} className="absolute right-2 top-2 flex gap-1 rounded-lg bg-red-700 p-2 text-sm font-bold text-white"><Trash2 className="h-4 w-4"/>Remove photo</button>
+        <button type="button" onClick={()=>{setImage("");setOriginalPhoto("");}} className="absolute right-2 top-2 flex gap-1 rounded-lg bg-red-700 p-2 text-sm font-bold text-white"><Trash2 className="h-4 w-4"/>Remove photo</button>
       </div>:<button type="button" onClick={()=>upload.current?.click()} disabled={!!busy||caps?.enabled===false} className="flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-orange-400 bg-orange-50 p-4 text-center font-bold text-orange-900 hover:bg-orange-100 disabled:opacity-50 dark:bg-orange-950 dark:text-orange-100"><Camera className="h-10 w-10"/>Tap to take or upload a product photo<span className="text-xs font-semibold">JPEG, PNG or WebP. Your image is resized before analysis.</span></button>}
+      {image&&<div className="flex flex-wrap gap-2">
+       <button type="button" disabled={!isSignedIn||!caps?.backgroundCleanup||!!busy} onClick={()=>void cleanBackground()}
+         className={action+" bg-indigo-700"}><Eraser className="h-4 w-4"/>{busy==="background"?"Cleaning…":"Remove photo background (optional)"}</button>
+       {originalPhoto&&<button type="button" onClick={()=>{setImage(originalPhoto);setOriginalPhoto("");}} className="flex min-h-11 items-center gap-2 rounded-xl border-2 border-slate-300 px-4 py-2 text-sm font-bold text-slate-950 dark:border-slate-500 dark:text-white"><Undo2 className="h-4 w-4"/>Restore original</button>}
+       {!caps?.backgroundCleanup&&<p className="w-full text-xs font-semibold text-slate-600 dark:text-slate-300">Background cleanup requires provider setup in admin; the original photograph remains available.</p>}
+      </div>}
       <label className={label}>Optional product details to help recognition
        <textarea rows={2} maxLength={600} value={notes} onChange={e=>setNotes(e.target.value)} className={field} placeholder="e.g. Used game console, includes two controllers; scratches on case"/>
       </label>
@@ -214,6 +241,19 @@ export function SnapSellPage(){
      <label className={label}>Price ({region==="uk"?"£":"$"}) — you decide
       <input type="number" step="0.01" min="0" inputMode="decimal" value={price} onChange={e=>setPrice(e.target.value)} placeholder="Enter asking price" className={field}/>
      </label>
+    </div>
+    <div className="space-y-3 rounded-xl border border-orange-200 bg-orange-50 p-3 dark:border-orange-700 dark:bg-orange-950/30">
+     <div className="flex flex-wrap items-center justify-between gap-2">
+      <h3 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><TrendingUp className="h-4 w-4"/>Marketplace pricing ideas</h3>
+      <button type="button" onClick={()=>void checkPricing()} disabled={!caps?.pricingInsights||!draft.category||!!busy||!isSignedIn}
+       className="rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{busy==="pricing"?"Comparing…":"Compare active listings"}</button>
+     </div>
+     {marketPricing?<div className="space-y-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+       <p>{marketPricing.count} active comparisons · median asking price: <strong>{marketPricing.median===null?"Not enough data":(region==="uk"?"£":"$")+marketPricing.median.toFixed(2)}</strong></p>
+       {marketPricing.range&&<p>Middle asking-price range: {(region==="uk"?"£":"$")+marketPricing.range.low.toFixed(2)}–{(region==="uk"?"£":"$")+marketPricing.range.high.toFixed(2)}</p>}
+       {marketPricing.suggestions.map((tip,i)=><p key={i} className="rounded-lg bg-white/80 p-2 dark:bg-slate-900">{tip}</p>)}
+       <p className="text-xs text-slate-600 dark:text-slate-300">{marketPricing.method} Asking prices are not confirmed sales.</p>
+      </div>:<p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Compare similar active Bazunk listings in this marketplace. You make the final pricing decision.</p>}
     </div>
     <label className={label}>Your item's actual condition
       <select value={condition} onChange={e=>setCondition(e.target.value)} className={field}>
