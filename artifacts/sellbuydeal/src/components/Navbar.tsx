@@ -250,7 +250,7 @@ export function Navbar() {
               className="w-full max-w-lg rounded-3xl border border-white/20 bg-white p-6 sm:p-9 shadow-2xl text-center">
               <motion.div initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.15, type: "spring" }}
                 className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-4xl">🌍</motion.div>
-              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-black text-slate-900">Welcome to Bazunk!</h2>
+              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-bold text-slate-900">Welcome to Bazunk!</h2>
               <p className="mt-2 text-sm sm:text-base text-slate-600">Choose which listings to browse. Your account works in both markets, and you can switch anytime.</p>
               <div className="mt-7 grid grid-cols-2 gap-3">
                 {(["uk", "us"] as const).map(region => (
@@ -258,7 +258,7 @@ export function Navbar() {
                     onClick={() => selectMarket(region)}
                     className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-3 py-6 text-slate-900 transition-colors hover:border-orange-500 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">
                     <span className="block text-5xl">{region === "uk" ? "🇬🇧" : "🇺🇸"}</span>
-                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "United States"}</span>
+                    <span className="mt-3 block font-bold">{region === "uk" ? "United Kingdom" : "United States"}</span>
                     <span className="mt-1 block text-sm font-semibold text-slate-500">{region === "uk" ? "GBP · £" : "USD · $"}</span>
                   </motion.button>
                 ))}
@@ -275,7 +275,7 @@ export function Navbar() {
             transition={{ duration: 0.4 }} className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-gradient-to-br from-fuchsia-600/80 via-indigo-600/80 to-orange-500/80 backdrop-blur-md">
             <motion.div initial={{ y: 16 }} animate={{ y: 0 }} className="relative overflow-hidden rounded-[2rem] border-4 border-white/80 bg-gradient-to-br from-white via-amber-50 to-pink-100 px-12 py-10 text-center shadow-[0_25px_90px_rgba(0,0,0,.35)]">
               <motion.div aria-hidden="true" className="absolute inset-0 opacity-40" style={{background:"radial-gradient(circle at 15% 20%,#facc15 0,transparent 35%),radial-gradient(circle at 85% 80%,#f472b6 0,transparent 35%)"}} animate={{rotate:[0,8,-8,0],scale:[1,1.15,1]}} transition={{duration:2.3}} />\n              <motion.div className="relative text-7xl drop-shadow-xl" initial={{scale:.2,rotate:-35,y:70}} animate={{scale:[.2,1.35,1],rotate:[-35,12,-8,0],y:[70,-18,0]}} transition={{duration:1.5,ease:"easeOut"}}>{marketRegion === "uk" ? "🇬🇧" : "🇺🇸"}</motion.div>\n              <motion.div aria-hidden="true" className="relative text-2xl mt-1" initial={{opacity:0,scale:.5}} animate={{opacity:[0,1,1],scale:[.5,1.25,1]}} transition={{delay:.45,duration:1.3}}>✨ 🎉 ✨</motion.div>
-              <div className="relative mt-3 text-2xl font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
+              <div className="relative mt-3 text-2xl font-bold text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
               <div className="relative mt-2 text-base font-bold text-indigo-700">{marketRegion === "uk" ? "Prices in GBP" : "Prices in USD"}</div>
             </motion.div>
           </motion.div>
@@ -402,7 +402,7 @@ export function Navbar() {
             {/* Desktop search */}
             <div ref={searchRef} className="relative hidden lg:block flex-1 min-w-[180px] max-w-[680px] mr-2">
               <form onSubmit={handleSubmit}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                 <Input
                   type="search"
                   value={query}
@@ -413,7 +413,7 @@ export function Navbar() {
                   data-testid="input-search"
                 />
                 {query && (
-                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -421,12 +421,12 @@ export function Navbar() {
               {searchOpen && query.trim() && (
                 <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                   {!hasResults ? (
-                    <div className="px-4 py-6 text-center text-sm text-gray-400">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
+                    <div className="px-4 py-6 text-center text-sm text-gray-600">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
                   ) : (
                     <>
                       {liveSearchResults.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
                           {liveSearchResults.map((product:any) => (
                             <Link key={product.id} href={`/listing/${product.publicId || product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group">
@@ -444,7 +444,7 @@ export function Navbar() {
                       )}
                       {matchedProducts.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
                           {matchedProducts.map((product) => (
                             <Link key={product.id} href={`/listing/${product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-product-${product.id}`}>
@@ -455,8 +455,8 @@ export function Navbar() {
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{product.title}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs font-bold text-green-600">{formatPrice(product.price)}</span>
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
-                                  <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><Eye className="w-2.5 h-2.5" />{product.views}</span>
+                                  <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
+                                  <span className="flex items-center gap-0.5 text-xs text-gray-600"><Eye className="w-2.5 h-2.5" />{product.views}</span>
                                 </div>
                               </div>
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
@@ -466,7 +466,7 @@ export function Navbar() {
                       )}
                       {matchedCategories.length > 0 && (
                         <div className={matchedProducts.length > 0 ? "border-t border-gray-100" : ""}>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
                           {matchedCategories.map((cat) => (
                             <Link key={cat.slug} href={`/browse?category=${encodeURIComponent(cat.slug)}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-category-${cat.slug}`}>
@@ -475,7 +475,7 @@ export function Navbar() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{cat.name}</p>
-                                <p className="text-[10px] text-gray-400">{cat.subcategories.length} subcategories</p>
+                                <p className="text-xs text-gray-600">{cat.subcategories.length} subcategories</p>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#4A5CE8] transition-colors" />
                             </Link>
@@ -532,7 +532,7 @@ export function Navbar() {
                         className="absolute right-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
                       >
                         <div className="px-4 pt-3 pb-2">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">How do you want to sell?</p>
+                          <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">How do you want to sell?</p>
                         </div>
                         {SELL_OPTIONS.filter(x => visibleHref(x.href)).map((opt) => {
                           const Icon = opt.icon;
@@ -551,12 +551,12 @@ export function Navbar() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-bold text-gray-900 group-hover:text-[#F26B21] transition-colors">{opt.label}</span>
                                   {opt.badge && (
-                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
+                                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
                                       {opt.badge}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[11px] text-gray-400 mt-0.5">{opt.desc}</p>
+                                <p className="text-xs text-gray-600 mt-0.5">{opt.desc}</p>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#F26B21] transition-colors flex-shrink-0" />
                             </Link>
@@ -600,7 +600,7 @@ export function Navbar() {
                 >
                   <ShoppingCart className="w-4 h-4" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-xs font-bold flex items-center justify-center leading-none">
                       {itemCount > 9 ? "9+" : itemCount}
                     </span>
                   )}
@@ -630,19 +630,19 @@ export function Navbar() {
                       >
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-600 truncate">{user.email}</p>
                         </div>
                         <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <LayoutDashboard className="w-4 h-4 text-gray-400" /> My Dashboard
+                          <LayoutDashboard className="w-4 h-4 text-gray-600" /> My Dashboard
                         </Link>
                         <Link href="/offers" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Handshake className="w-4 h-4 text-gray-400" /> My Offers
+                          <Handshake className="w-4 h-4 text-gray-600" /> My Offers
                         </Link>
                         <button onClick={() => { setUserMenuOpen(false); setMessageCenterOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <MessageSquare className="w-4 h-4 text-gray-400" /> Messages
+                          <MessageSquare className="w-4 h-4 text-gray-600" /> Messages
                         </button>
                         <Link href="/sell/direct" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Tag className="w-4 h-4 text-gray-400" /> Create Listing
+                          <Tag className="w-4 h-4 text-gray-600" /> Create Listing
                         </Link>
                         <div className="border-t border-gray-100">
                           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors" data-testid="button-logout">
@@ -679,22 +679,22 @@ export function Navbar() {
       {isFeatureEnabled(featureSettings, "currency_selector") && <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
         <button onClick={() => setCurrencyOpen(!currencyOpen)}
           className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 bg-white shadow-lg hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors">
-          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-400">·</span><span>{currency.code} {currency.symbol}</span>
+          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-600">·</span><span>{currency.code} {currency.symbol}</span>
           <ChevronDown className={`w-3 h-3 transition-transform ${currencyOpen ? "rotate-180" : ""}`} />
         </button>
         {currencyOpen && (
           <div className="absolute right-0 bottom-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 p-3">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("country")}</label>
+            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("country")}</label>
             <select value={country.code} onChange={e => changeCountry(e.target.value)}
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 mb-3">
               {MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
             </select>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("currency")}</label>
+            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("currency")}</label>
             <select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)}
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800">
               {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map(c => <option key={c.code} value={c.code}>{c.flag} {c.name} ({c.symbol})</option>)}
             </select>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
+            <p className="mt-2 text-xs leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
           </div>
         )}
       </div>}
@@ -738,7 +738,7 @@ export function Navbar() {
               {/* Search */}
               <div className="px-5 py-3 border-b border-gray-100">
                 <form onSubmit={handleSubmit} className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                   <input
                     type="search"
                     value={query}
@@ -758,7 +758,7 @@ export function Navbar() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                    <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
+                    <p className="text-xs text-gray-600 truncate max-w-[180px]">{user.email}</p>
                   </div>
                 </div>
               )}
@@ -769,12 +769,12 @@ export function Navbar() {
                   <Trophy className="w-5 h-5 text-amber-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-amber-800">Earn Rewards</p>
-                    <p className="text-[11px] text-amber-600">Credits, badges & perks</p>
+                    <p className="text-xs text-amber-600">Credits, badges & perks</p>
                   </div>
                   <Link
                     href="/sign-up"
                     onClick={() => setMobileOpen(false)}
-                    className="text-[11px] font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                   >
                     Join Free
                   </Link>
@@ -806,7 +806,7 @@ export function Navbar() {
                     className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#4A5CE8] transition-colors text-left"
                     data-testid={`mobile-link-${label.toLowerCase().replace(/\s/g, "-")}`}
                   >
-                    <Icon className="w-4 h-4 text-gray-400" />
+                    <Icon className="w-4 h-4 text-gray-600" />
                     {label}
                     {live && (
                       <span className="relative flex h-2 w-2 ml-1">
