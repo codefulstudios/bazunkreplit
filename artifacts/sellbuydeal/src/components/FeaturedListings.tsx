@@ -30,15 +30,6 @@ const CONDITION_COLORS: Record<string, string> = {
   "Poor":     "bg-red-50 text-red-700",
 };
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 function PromoBadge({ promotions }: { promotions: string[] }) {
   if (promotions.includes("homepage-spotlight") || promotions.includes("spotlight")) {
     return (
@@ -56,7 +47,7 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
   }
   if (promotions.includes("featured-badge") || promotions.includes("featured")) {
     return (
-      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-amber-400 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-amber-300 text-slate-900 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
         <Star className="w-2.5 h-2.5 fill-white" /> FEATURED
       </div>
     );
@@ -161,9 +152,9 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-sm font-semibold text-[#F26B21] uppercase tracking-widest mb-1"
+              className="text-sm font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-widest mb-1"
             >
-              {mode === "promoted" ? t("promotedListings") : t("trendingToday")}
+              {mode === "promoted" ? t("promotedListings") : "Latest arrivals"}
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 10 }}
@@ -171,7 +162,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
               viewport={{ once: true }}
               className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white"
             >
-              {mode === "promoted" ? t("homepageSpotlight") : t("featuredListings")}
+              {mode === "promoted" ? t("homepageSpotlight") : "Recently listed"}
             </motion.h2>
           </div>
 
