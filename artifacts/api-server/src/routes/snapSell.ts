@@ -257,7 +257,7 @@ router.get("/admin/snap-sell/monitor",requireAdmin,async(_req,res)=>{
    db.execute(sql`SELECT operation,provider,error_code,created_at FROM snap_sell_events
     WHERE result='error' ORDER BY created_at DESC LIMIT 25`)
   ]);
-  const [enabled,barcode,writing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing")]);
+  const [enabled,barcode,writing,background,pricing]=await Promise.all([featureEnabled("snap_sell"),featureEnabled("snap_barcode"),featureEnabled("snap_ai_writing"),featureEnabled("snap_background"),featureEnabled("snap_pricing")]);
   res.setHeader("Cache-Control","private,no-store");
   res.json({status:{enabled,barcode,writing,background,backgroundConfigured:!!process.env.REMOVE_BG_API_KEY,pricing,aiConfigured:!!key(),model:process.env.SNAP_SELL_AI_MODEL||"gpt-4o-mini"},
    summary:latest.rows[0],usage:usage.rows,failures:failures.rows,updatedAt:new Date().toISOString(),
