@@ -30,7 +30,7 @@ function StepIndicator({ step }: { step: Step }) {
             i === idx ? "bg-[#4A5CE8] text-white shadow-sm" :
                         "bg-gray-100 text-slate-600"
           }`}>
-            {i < idx ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[9px]">{i + 1}</span>}
+            {i < idx ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-xs">{i + 1}</span>}
             {s.label}
           </div>
           {i < steps.length - 1 && <div className={`w-6 h-0.5 ${i < idx ? "bg-emerald-300" : "bg-gray-200"}`} />}
@@ -49,13 +49,15 @@ export function CheckoutPage() {
   const { items, clearCart } = useCart();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
-  const { formatPrice, currency } = useCurrency();
+  const { currency } = useCurrency();
+  // Cart checkout is charged in GBP by the Stripe API; never show converted totals as the amount payable.
+  const formatPrice = (amount: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
   const [step, setStep] = useState<Step>("summary");
   const [placed, setPlaced] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [guestEmail, setGuestEmail] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
@@ -94,8 +96,8 @@ export function CheckoutPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
     })
-      .then((r) => r.json())
-      .then((data: { success?: boolean; error?: string }) => {
+      .then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error || "Payment verification unavailable"); return data as { success?: boolean; error?: string }; })
+      .then((data) => {
         if (data.success) {
           clearCart();
           refreshBalance();
@@ -104,7 +106,7 @@ export function CheckoutPage() {
           setCheckoutError(data.error ?? "Payment verification failed. Please contact support.");
         }
       })
-      .catch(() => setCheckoutError("Could not verify payment. Please contact support."))
+      .catch(() => setCheckoutError("Payment verification is not available yet. Your payment may have succeeded: check your orders or contact support before trying again."))
       .finally(() => setConfirming(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -231,6 +233,7 @@ export function CheckoutPage() {
         </button>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout</h1>
+        <p className="mb-4 text-sm font-semibold text-slate-700">Payments are charged in GBP (£). Your bank may convert the amount if your account uses another currency.</p>
         <StepIndicator step={step} />
 
         {checkoutError && (
@@ -334,7 +337,7 @@ export function CheckoutPage() {
           {/* Right: order summary (sticky) */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary</h3>
+              <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary · GBP</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
