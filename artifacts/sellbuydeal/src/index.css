@@ -1092,3 +1092,14 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bz-loader--cart .bz-loader-ring{animation-duration:2.7s}
 .bz-loader--mark .bz-loader-ring{animation-duration:3s}
 .bz-loader-orbit{animation-duration:4.2s}
+
+
+/* Buyer Protection seller-info modal: protect white-on-navy content from
+   global dark-mode neutral utility overrides (modal is portalless). */
+.buyer-protection-info-modal .buyer-protection-info-body,
+.buyer-protection-info-modal .buyer-protection-info-body :is(p,h3,li,span) {
+  color:#f8fafc !important;
+}
+.buyer-protection-info-modal .buyer-protection-info-body :is(.text-sky-200,.text-emerald-200) {
+  color:#dbeafe !important;
+}
