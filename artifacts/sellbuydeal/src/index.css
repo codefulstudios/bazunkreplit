@@ -1064,3 +1064,22 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .bz-category-card .bz-category-label span {color:#fff !important;opacity:1 !important;}
 .bz-category-feature :is(h3,p,span),
 .dark .bz-category-feature :is(h3,p,span) {color:#fff !important;opacity:1 !important;}
+
+/* Six reduced-motion-aware Bazunk loading animations. Shared across selected routes. */
+.bz-loader{--loader-orange:#f97316;--loader-blue:#2879ef;position:relative;width:90px;height:90px;display:grid;place-items:center;color:var(--loader-orange)}
+.bz-loader-ring{position:absolute;inset:7px;border:6px solid #334155;border-top-color:var(--loader-orange);border-right-color:var(--loader-blue);border-radius:50%;animation:bz-loader-spin 1.25s linear infinite}
+.bz-loader-inner{display:grid;place-items:center;width:55px;height:55px;border-radius:16px;color:#f97316}
+.bz-loader--rocket .bz-loader-ring{border-style:dotted;border-width:4px;animation-duration:2.3s}
+.bz-loader--rocket .bz-loader-inner{transform:rotate(-35deg);color:#60a5fa;animation:bz-loader-lift 1.8s ease-in-out infinite}
+.bz-loader--bag .bz-loader-ring{border-left-color:#60a5fa}
+.bz-loader--tag .bz-loader-ring{border-width:0;border-top:6px dotted #f97316;border-bottom:6px dotted #60a5fa}
+.bz-loader--tag .bz-loader-inner{animation:bz-loader-pulse 1.5s ease-in-out infinite}
+.bz-loader--cart .bz-loader-ring{filter:drop-shadow(0 0 8px #f9731660);animation-duration:1.65s}
+.bz-loader--cart .bz-loader-inner{color:#60a5fa}
+.bz-loader--mark .bz-loader-ring{border-top-color:transparent;border-bottom-color:transparent;animation-duration:2s}
+.bz-loader--mark .bz-loader-inner{animation:bz-loader-pulse 1.8s ease-in-out infinite}
+.bz-loader-orbit{position:absolute;inset:2px;border-radius:50%;border:2px dotted #60a5fa;animation:bz-loader-spin 3s linear infinite}
+@keyframes bz-loader-spin{to{transform:rotate(360deg)}}
+@keyframes bz-loader-pulse{50%{transform:scale(.85);opacity:.65}}
+@keyframes bz-loader-lift{50%{transform:rotate(-35deg) translateY(-6px)}}
+@media(prefers-reduced-motion:reduce){.bz-loader *{animation:none!important}}
