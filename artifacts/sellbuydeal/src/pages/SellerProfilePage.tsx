@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { Calendar, CheckCircle2, Clock, Flag, Package, Repeat2, ShieldCheck, ShoppingBag, Star, Trophy } from "lucide-react";
@@ -98,7 +99,7 @@ export function SellerProfilePage() {
     <Navbar />
     <main className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {loading && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">Loading seller profile…</div>}
+        {loading && <MarketplaceLoader area="seller" label="Loading seller profile…" />}
         {!loading && error && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center"><h1 className="font-black text-xl text-gray-900">Seller profile unavailable</h1><p className="text-sm text-gray-500 mt-2">{error}</p></div>}
         {!loading && rep && <>
           <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-6">
