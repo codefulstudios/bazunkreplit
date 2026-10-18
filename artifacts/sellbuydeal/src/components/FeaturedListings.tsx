@@ -204,7 +204,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: Math.min(index * 0.04, 0.3) }}
-                className="bz-store-card w-52 shrink-0 group rounded-2xl border border-slate-200 hover:border-orange-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer" style={{ backgroundColor: "#ffffff", color: "#0f172a", scrollSnapAlign: "start" }}
+                className="bz-store-card bz-product-card w-52 shrink-0 group rounded-2xl border border-slate-200 hover:border-orange-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer" style={{ scrollSnapAlign: "start" }}
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
@@ -234,7 +234,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="bz-store-title text-base font-semibold line-clamp-2 min-h-[2.5rem] mb-2 leading-snug" style={{ color: "#0f172a" }}>
+                  <p className="bz-store-title text-base font-semibold line-clamp-2 min-h-[2.5rem] mb-2 leading-snug">
                     {listing.title}
                   </p>
 
