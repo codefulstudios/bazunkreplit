@@ -1,3 +1,4 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useMemo, useEffect } from "react";
@@ -267,6 +268,7 @@ export function BrowsePage() {
   const [hasMoreListings, setHasMoreListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingListings, setLoadingListings] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loadingListings, "browse");
   const [listingError, setListingError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
   const [saveOpen,setSaveOpen] = useState(false);
@@ -994,7 +996,7 @@ export function BrowsePage() {
           </div>
 
           {/* Results */}
-          {loadingListings ? (
+          {delayedLoading ? (
             <MarketplaceLoader area="browse" label="Finding your next great deal…" />
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
