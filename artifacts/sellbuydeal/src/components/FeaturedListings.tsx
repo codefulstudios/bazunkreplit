@@ -42,27 +42,27 @@ function shuffle<T>(arr: T[]): T[] {
 function PromoBadge({ promotions }: { promotions: string[] }) {
   if (promotions.includes("homepage-spotlight") || promotions.includes("spotlight")) {
     return (
-      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#F26B21] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm z-10">
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#F26B21] text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
         <Zap className="w-2.5 h-2.5 fill-white" /> SPOTLIGHT
       </div>
     );
   }
   if (promotions.includes("premium-placement")) {
     return (
-      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-pink-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm z-10">
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-pink-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
         <Crown className="w-2.5 h-2.5" /> PREMIUM
       </div>
     );
   }
   if (promotions.includes("featured-badge") || promotions.includes("featured")) {
     return (
-      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm z-10">
+      <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-amber-400 text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
         <Star className="w-2.5 h-2.5 fill-white" /> FEATURED
       </div>
     );
   }
   return (
-    <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#F26B21] text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm z-10">
+    <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-[#F26B21] text-white text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm z-10">
       <Flame className="w-2.5 h-2.5 fill-white" /> HOT
     </div>
   );
@@ -161,7 +161,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="text-xs font-black text-[#F26B21] uppercase tracking-widest mb-1"
+              className="text-sm font-semibold text-[#F26B21] uppercase tracking-widest mb-1"
             >
               {mode === "promoted" ? t("promotedListings") : t("trendingToday")}
             </motion.p>
@@ -236,7 +236,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
 
                   <div className="absolute bottom-2.5 left-2.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${CONDITION_COLORS[listing.condition] ?? CONDITION_COLORS["Good"]}`}>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${CONDITION_COLORS[listing.condition] ?? CONDITION_COLORS["Good"]}`}>
                       {listing.condition}
                     </span>
                   </div>
@@ -244,22 +244,22 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors leading-snug">
+                  <p className="text-base font-medium text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors leading-snug">
                     {listing.title}
                   </p>
 
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-base font-black text-[#F26B21]">
+                    <span className="text-lg font-bold text-[#F26B21]">
                       {formatPrice(parseFloat(listing.price))}
                     </span>
                     {listing.views > 0 && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
                         <Eye className="w-3 h-3" /> {listing.views.toLocaleString()}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  <div className="flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                     <Store className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Bazunk seller")}
                   </div>
                 </div>
