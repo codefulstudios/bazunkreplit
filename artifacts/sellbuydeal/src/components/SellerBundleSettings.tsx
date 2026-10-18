@@ -12,7 +12,7 @@ export function SellerBundleSettings(){
    const token=await getToken();
    const r=await fetch("/api/seller/bundle-policy",{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({enabled:policy.enabled,combinedShippingMinor:policy.combined_shipping_minor,multiItemDiscountPercent:policy.multi_item_discount_percent,minItems:policy.min_items})});
    if(!r.ok)throw Error((await r.json()).error||"Could not save");
-   setNotice("Bundle preferences saved. Discounts and delivery changes require checkout activation before buyers can use them.");
+   setNotice("Bundle preferences saved. Eligible buyers will see the combined delivery and discount in their checkout quote when the marketplace feature toggles are enabled.");
   }catch(e){setError(e instanceof Error?e.message:"Save failed");}finally{setSaving(false);}
  }
  return <section className="rounded-2xl border-2 border-orange-300 bg-white p-5 text-slate-950 dark:border-orange-700 dark:bg-[#172541] dark:text-white">
