@@ -24,12 +24,16 @@ export function MarketplaceLoader({area="homepage",label="Loading listings…",v
  const enabled=config[`marketplace_loader_area_${area}`]!=="false";
  if(!enabled)return <div role="status" className="py-8 text-center text-base text-slate-700 dark:text-slate-200">{label}</div>;
  const Icon=({rocket:Rocket,bag:ShoppingBag,tag:Tag,cart:ShoppingCart,mark:Sparkles,logo:Package} as const)[variant];
- return <div role="status" aria-live="polite" aria-label={label} className="bz-loader-overlay">\n  <div className="bz-loader-overlay-content">
+ return <div role="status" aria-live="polite" aria-label={label} className="bz-loader-overlay">
+  <div className="bz-loader-overlay-content">
    <div className={`bz-loader bz-loader--${variant}`} aria-hidden="true">
-     <span className="bz-loader-ring"/>
-     <span className="bz-loader-inner">{variant==="logo"?<b className="text-4xl font-bold">B</b>:<Icon size={36} strokeWidth={2.4}/>}</span>
-     {variant==="rocket"&&<i className="bz-loader-orbit"/>}
+    <span className="bz-loader-ring"/>
+    <span className="bz-loader-inner">{variant==="logo"?<b className="text-4xl font-bold">B</b>:<Icon size={36} strokeWidth={2.4}/>}</span>
+    {variant==="rocket"&&<i className="bz-loader-orbit"/>}
    </div>
-   <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{label}</span>
+   <span className="bz-loader-title">{label}</span>
+   <span className="bz-loader-subtitle">Please wait while we prepare this page.</span>
+   <span className="bz-loader-dots" aria-hidden="true"><i/><i/><i/></span>
+  </div>
  </div>;
 }
