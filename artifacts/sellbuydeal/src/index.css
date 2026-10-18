@@ -68,6 +68,58 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Shared Bazunk semantic palette — storefront, seller dashboard and admin.
+   Prefer these variables / utility classes over raw colour pairs for new UI. */
+:root {
+  --bz-surface-page:#f5f8fd;
+  --bz-surface-card:#ffffff;
+  --bz-surface-raised:#eef3fa;
+  --bz-surface-field:#ffffff;
+  --bz-text-primary:#172a49;
+  --bz-text-secondary:#405574;
+  --bz-text-muted:#526782;
+  --bz-border:#bdcadb;
+  --bz-action-primary:#c84806;
+  --bz-action-primary-text:#ffffff;
+  --bz-action-secondary:#263f69;
+  --bz-action-secondary-text:#ffffff;
+  --bz-action-hover:#a83b05;
+  --bz-focus:#2563eb;
+}
+.dark {
+  --bz-surface-page:#0b1426;
+  --bz-surface-card:#192b47;
+  --bz-surface-raised:#243956;
+  --bz-surface-field:#243956;
+  --bz-text-primary:#ffffff;
+  --bz-text-secondary:#d6e4f5;
+  --bz-text-muted:#c2d4ed;
+  --bz-border:#7188aa;
+  --bz-action-primary:#c84806;
+  --bz-action-primary-text:#ffffff;
+  --bz-action-secondary:#334d73;
+  --bz-action-secondary-text:#ffffff;
+  --bz-action-hover:#a83b05;
+  --bz-focus:#93c5fd;
+}
+@layer components {
+  .bz-surface-page {background-color:var(--bz-surface-page);color:var(--bz-text-primary);}
+  .bz-surface-card {background-color:var(--bz-surface-card);color:var(--bz-text-primary);border:1px solid var(--bz-border);}
+  .bz-surface-raised {background-color:var(--bz-surface-raised);color:var(--bz-text-primary);}
+  .bz-text-primary {color:var(--bz-text-primary);}
+  .bz-text-secondary {color:var(--bz-text-secondary);}
+  .bz-text-muted {color:var(--bz-text-muted);}
+  .bz-border {border-color:var(--bz-border);}
+  .bz-field {background-color:var(--bz-surface-field);border:1px solid var(--bz-border);color:var(--bz-text-primary);color-scheme:light;}
+  .dark .bz-field {color-scheme:dark;}
+  .bz-field::placeholder {color:var(--bz-text-muted);opacity:1;}
+  .bz-action-primary {background-color:var(--bz-action-primary);color:var(--bz-action-primary-text);border:1px solid transparent;}
+  .bz-action-primary:not(:disabled):hover {background-color:var(--bz-action-hover);}
+  .bz-action-secondary {background-color:var(--bz-action-secondary);color:var(--bz-action-secondary-text);border:1px solid var(--bz-border);}
+  .bz-action-secondary:not(:disabled):hover {filter:brightness(1.12);}
+  :is(.bz-action-primary,.bz-action-secondary,.bz-field):focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);
