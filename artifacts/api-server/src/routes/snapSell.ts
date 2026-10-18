@@ -208,7 +208,7 @@ router.post("/snap-sell/pricing",async(req,res)=>{
     AND LOWER(seller_email)<>LOWER(${email}) AND price>0
    ORDER BY updated_at DESC LIMIT 160`);
   const rows=(result.rows as any[]).map(x=>Number(x.price)).filter(x=>Number.isFinite(x)&&x>0).sort((a,b)=>a-b);
-  const median=rows.length?rows[Math.floor((rows.length-1)/2)]:null;
+  const median=rows.length?(rows.length%2?rows[Math.floor(rows.length/2)]:(rows[rows.length/2-1]+rows[rows.length/2])/2):null;
   const low=rows.length>=5?rows[Math.floor((rows.length-1)*.25)]:null;
   const high=rows.length>=5?rows[Math.floor((rows.length-1)*.75)]:null;
   const suggestions:string[]=[];
