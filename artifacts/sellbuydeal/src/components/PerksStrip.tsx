@@ -49,8 +49,8 @@ export function PerksStrip() {
                 <Icon className={`w-4.5 h-4.5 ${color}`} style={{ width: "18px", height: "18px" }} />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-sm leading-tight">{title}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300 leading-snug mt-0.5">{sub}</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-base leading-tight">{title}</p>
+                <p className="text-sm !text-slate-700 dark:!text-slate-100 leading-snug mt-0.5">{sub}</p>
               </div>
             </div>
           ))}
