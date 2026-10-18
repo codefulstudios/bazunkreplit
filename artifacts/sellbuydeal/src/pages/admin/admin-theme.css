@@ -8,15 +8,15 @@
 .bazunk-admin main th { font-weight: 800; letter-spacing: .025em; }
 .bazunk-admin main td { vertical-align: middle; }
 .bazunk-admin main :is(th,td) { padding-top: .75rem; padding-bottom: .75rem; }
-.dark .bazunk-admin main .bg-white { background-color: #172541; }
-.dark .bazunk-admin main .bg-gray-50 { background-color: #20314f; }
-.dark .bazunk-admin main .bg-gray-100 { background-color: #253653; }
-.dark .bazunk-admin main .text-gray-900, .dark .bazunk-admin main .text-gray-800 { color: #f3f7ff; }
-.dark .bazunk-admin main .text-gray-700, .dark .bazunk-admin main .text-gray-600 { color: #d4e0f3; }
-.dark .bazunk-admin main .text-gray-500, .dark .bazunk-admin main .text-gray-400 { color: #b5c4dc; }
-.dark .bazunk-admin main .border-gray-100, .dark .bazunk-admin main .border-gray-200, .dark .bazunk-admin main .border-gray-300 { border-color: #354766; }
-.dark .bazunk-admin main :is(input,select,textarea) { background-color: #1b2b49; color: #f3f7ff; border-color: #425573; }
-.dark .bazunk-admin main :is(input,textarea)::placeholder { color: #9dadc7; }
+.dark .bazunk-admin main .bg-white { background-color: var(--bz-surface-card); }
+.dark .bazunk-admin main .bg-gray-50 { background-color: var(--bz-surface-raised); }
+.dark .bazunk-admin main .bg-gray-100 { background-color: var(--bz-surface-raised); }
+.dark .bazunk-admin main .text-gray-900, .dark .bazunk-admin main .text-gray-800 { color: var(--bz-text-primary); }
+.dark .bazunk-admin main .text-gray-700, .dark .bazunk-admin main .text-gray-600 { color: var(--bz-text-secondary); }
+.dark .bazunk-admin main .text-gray-500, .dark .bazunk-admin main .text-gray-400 { color: var(--bz-text-muted); }
+.dark .bazunk-admin main .border-gray-100, .dark .bazunk-admin main .border-gray-200, .dark .bazunk-admin main .border-gray-300 { border-color: var(--bz-border); }
+.dark .bazunk-admin main :is(input,select,textarea) { background-color: var(--bz-surface-field); color: var(--bz-text-primary); border-color: var(--bz-border); }
+.dark .bazunk-admin main :is(input,textarea)::placeholder { color: var(--bz-text-muted); }
 .dark .bazunk-admin main .recharts-cartesian-grid line { stroke: #3f506a; }
 .dark .bazunk-admin main .recharts-text { fill: #d4e0f3; }
 @media (max-width: 640px) {
