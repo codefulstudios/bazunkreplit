@@ -3,7 +3,7 @@ import { MarketplaceLoader, LOADER_VARIANTS, LOADER_AREAS } from "./MarketplaceL
 import { useAdmin } from "@/context/AdminContext";
 
 export function LoaderSettingsPanel() {
- const { authFetch } = useAdmin();
+ const { authFetch, token } = useAdmin();
  const [variant,setVariant] = useState("logo");
  const [minimum,setMinimum] = useState("0");
  const [areas,setAreas] = useState<Record<string,boolean>>({});
@@ -15,14 +15,14 @@ export function LoaderSettingsPanel() {
    if(!active)return;
    setVariant(data.marketplace_loader_variant||"logo");
    setMinimum(["0","500","1000","2000"].includes(data.marketplace_loader_min_ms)?data.marketplace_loader_min_ms:"0");
-   setAreas(Object.fromEntries(LOADER_AREAS.map(x=>[x.id,data["marketplace_loader_area_"+x.id]!=="false"])));
+   setAreas(Object.fromEntries(LOADER_AREAS.map(x=>[x.id,data["marketplace_loader_area_"+x.id]==="true"])));
   }).catch(()=>{if(active)setMessage("Loader settings unavailable.")});
   return ()=>{active=false};
- },[authFetch]);
+ },[token]);
  async function save(){
   setSaving(true);setMessage("");
   try{
-   const payload={marketplace_loader_variant:variant,marketplace_loader_min_ms:minimum,...Object.fromEntries(LOADER_AREAS.map(x=>["marketplace_loader_area_"+x.id,String(areas[x.id]!==false)]))};
+   const payload={marketplace_loader_variant:variant,marketplace_loader_min_ms:minimum,...Object.fromEntries(LOADER_AREAS.map(x=>["marketplace_loader_area_"+x.id,String(areas[x.id]===true)]))};
    const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(payload)});
    if(!response.ok)throw Error("Unable to save loader settings");
    window.dispatchEvent(new Event("bazunk-settings-updated"));
@@ -36,7 +36,7 @@ export function LoaderSettingsPanel() {
    <label key={x.id} className="cursor-pointer rounded-xl border border-slate-300 p-3 dark:border-slate-600">
     <input type="radio" name="marketplace-loader" checked={variant===x.id} onChange={()=>setVariant(x.id)} />
     <span className="ml-2 text-sm font-semibold text-slate-900 dark:text-white">{x.label}</span>
-    <div className="mt-2 flex justify-center"><MarketplaceLoader variantOverride={x.id} label="" /></div>
+    <div className="mt-2 flex justify-center"><MarketplaceLoader variantOverride={x.id} preview label="" /></div>
    </label>)}</div>
   <label className="mt-5 flex flex-col gap-2 text-sm font-semibold text-slate-900 dark:text-white">Minimum loader display time
    <select className="max-w-xs rounded-lg border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" value={minimum} onChange={e=>setMinimum(e.target.value)}>
@@ -47,7 +47,7 @@ export function LoaderSettingsPanel() {
   <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">Page placement</h3>
   <div className="mt-2 grid gap-2 sm:grid-cols-2">{LOADER_AREAS.map(x=>
    <label key={x.id} className="flex items-center gap-2 text-sm text-slate-900 dark:text-white">
-    <input type="checkbox" checked={areas[x.id]!==false} onChange={e=>setAreas(v=>({...v,[x.id]:e.target.checked}))}/>{x.label}
+    <input type="checkbox" checked={areas[x.id]===true} onChange={e=>setAreas(v=>({...v,[x.id]:e.target.checked}))}/>{x.label}
    </label>)}</div>
   <button type="button" onClick={save} disabled={saving} className="mt-4 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{saving?"Saving…":"Save loading animation"}</button>
   {message&&<p role="status" className="mt-2 text-sm text-slate-900 dark:text-white">{message}</p>}
