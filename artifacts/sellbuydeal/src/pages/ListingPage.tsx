@@ -1,3 +1,4 @@
+import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDiscovery";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -263,6 +264,7 @@ export function ListingPage() {
   }, [id, staticProduct]);
 
   const product = staticProduct ?? apiProduct;
+  useEffect(() => { if (apiProduct?.id) rememberViewedListing(Number(apiProduct.id)); }, [apiProduct?.id]);
   const { user: viewer } = useAuth();
   const { session } = useSession();
   const [startingMessage, setStartingMessage] = useState(false);
@@ -1110,6 +1112,7 @@ export function ListingPage() {
         )}
       </AnimatePresence>
 
+      <div className="container mx-auto px-4"><ProductDiscovery currentId={Number(product?.id)} /></div>
       <Footer />
     </div>
   );
