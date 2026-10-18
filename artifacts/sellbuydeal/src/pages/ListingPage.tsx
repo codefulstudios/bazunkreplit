@@ -1,3 +1,5 @@
+import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
+import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, type ReactNode } from "react";
@@ -457,7 +459,7 @@ export function ListingPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-5 max-w-7xl">
 
         {/* Back link */}
         <button
@@ -511,37 +513,15 @@ export function ListingPage() {
           );
         })()}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(315px,1fr)] gap-4 lg:gap-5 items-start">
 
           {/* Left: Image gallery + details */}
-          <div className="lg:col-span-2 space-y-5 min-w-0">
+          <div className="space-y-4 min-w-0">
 
-            {/* Image gallery */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              {/* Main image */}
-              <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                {images.length ? <motion.img
-                  key={activeImg}
-                  src={images[Math.min(activeImg, Math.max(images.length - 1, 0))]}
-                  alt={product.title}
-                  className="w-full h-full object-contain p-8"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                /> : <div className="text-center font-semibold text-slate-500">No photo available</div>}
-                {/* Nav arrows */}
-                {images.length > 1 && (
-                  <>
-                    <button onClick={handlePrevImg} aria-label="Previous product photo" className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-prev-image">
-                      <ChevronLeft className="w-5 h-5 text-gray-700" />
-                    </button>
-                    <button onClick={handleNextImg} aria-label="Next product photo" className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-next-image">
-                      <ChevronRight className="w-5 h-5 text-gray-700" />
-                    </button>
-                  </>
-                )}
-                {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            <ListingProductGallery images={images} title={product.title} active={activeImg} onSelect={setActiveImg}
+              watched={isWatched(product.id)}
+              onWatch={() => product && (isWatched(product.id) ? removeFromWatchlist(product.id) : addToWatchlist(product))}
+              badges={<><div className="flex flex-col gap-1.5">
                   <div className="flex gap-2 flex-wrap">
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full border capitalize ${CONDITION_COLORS[product.condition]}`}>
                       {product.condition}
@@ -596,33 +576,7 @@ export function ListingPage() {
                     );
                     return null;
                   })()}
-                </div>
-                {/* Wishlist */}
-                <button
-                  onClick={() => product && (isWatched(product.id) ? removeFromWatchlist(product.id) : addToWatchlist(product))}
-                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:scale-110 transition-transform"
-                  data-testid="button-wishlist"
-                >
-                  <Heart className={`w-4 h-4 ${product && isWatched(product.id) ? "fill-red-500 text-red-500" : "text-slate-600"}`} />
-                </button>
-              </div>
-
-              {/* Thumbnails */}
-              <div className="flex gap-2 p-3 bg-white border-t border-gray-100">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    aria-label={`View product photo ${i + 1} of ${images.length}`}
-                    aria-pressed={activeImg === i}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors flex-shrink-0 ${activeImg === i ? "border-[#4A5CE8]" : "border-gray-200 hover:border-gray-300"}`}
-                    data-testid={`button-thumbnail-${i}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-contain p-1.5 bg-gray-50" />
-                  </button>
-                ))}
-              </div>
-            </div>
+                </div></>} />
 
             {/* {t("descriptionDetails")} */}
             {(() => {
@@ -630,7 +584,7 @@ export function ListingPage() {
               const specs = extra._specifications ?? [];
               const tags = extra._tags ?? [];
               return (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <ListingDetailsSection>
                   {/* Gradient header */}
                   <div className="bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-6 py-4 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -724,7 +678,7 @@ export function ListingPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </ListingDetailsSection>
               );
             })()}
 
@@ -738,7 +692,7 @@ export function ListingPage() {
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
               return (
-                <div className="rounded-2xl overflow-hidden border border-cyan-200 shadow-sm bg-white">
+                <ListingDeliverySection>
                   <div className="bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-4 text-white">
                     <h3 className="font-black flex items-center gap-2"><Globe2 className="w-5 h-5" /> {t("deliveryLocation")}</h3>
                     <p className="text-xs text-white/85 mt-1">Check where this item is coming from before you buy</p>
@@ -750,7 +704,7 @@ export function ListingPage() {
                     <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
-                </div>
+                </ListingDeliverySection>
               );
             })()}
 
@@ -792,10 +746,10 @@ export function ListingPage() {
           </div>
 
           {/* Right: Price + actions + seller */}
-          <div className="space-y-5 min-w-0 self-start" data-testid="listing-purchase-panel">
+          <div className="space-y-4 min-w-0 self-start" data-testid="listing-purchase-panel">
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
-            <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-5 min-w-0">
+            <ListingPurchaseSection>
               <div className="-mx-5 -mt-5 mb-5 rounded-t-2xl bg-gradient-to-r from-[#F26B21] to-[#EAA008] px-5 py-4 text-white">
                 <p className="text-sm font-black flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> Make it yours</p>
                 <p className="mt-1 text-xs text-white/90">Buy now or agree a price with the seller</p>
@@ -885,16 +839,16 @@ export function ListingPage() {
                 <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
               </div>
-            </div>
+            </ListingPurchaseSection>
 
             {/* Seller card */}
-            <SellerCard
+            <ListingSellerSection><SellerCard
               sellerName={(product as typeof product & ApiListingExtra)._sellerName ?? product.title.split(" ")[0]}
               sellerUsername={(product as typeof product & ApiListingExtra)._sellerUsername}
               sellerEmail={(product as typeof product & ApiListingExtra)._sellerEmail}
               location={product.location}
               verified={product.verified}
-            />
+            /></ListingSellerSection>
 
             {/* Engagement contact buttons — shown when seller has engagement-boost promo */}
             {(() => {
@@ -921,10 +875,10 @@ export function ListingPage() {
             })()}
 
             {/* Related listings sidebar — randomly rotated featured listings in same category */}
-            <RelatedListingsBox
+            <ListingRelatedSection><RelatedListingsBox
               category={product.category}
               excludeId={product.id}
-            />
+            /></ListingRelatedSection>
           </div>
         </div>
 
