@@ -3,41 +3,42 @@ import { motion } from "framer-motion";
 import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
 
 const categories = [
-  {name:"Electronics",slug:"electronics",icon:Smartphone,emoji:"📱",gradient:"from-blue-600 to-sky-500"},
-  {name:"Fashion",slug:"fashion",icon:Shirt,emoji:"🧥",gradient:"from-pink-600 to-fuchsia-500"},
-  {name:"Gaming",slug:"gaming",icon:Gamepad2,emoji:"🎮",gradient:"from-violet-700 to-indigo-500"},
-  {name:"Home & Garden",slug:"home",icon:Armchair,emoji:"🪴",gradient:"from-teal-600 to-emerald-500"},
-  {name:"Sports",slug:"sports",icon:Dumbbell,emoji:"👟",gradient:"from-emerald-600 to-green-500"},
-  {name:"Books",slug:"books",icon:BookOpen,emoji:"📚",gradient:"from-amber-600 to-yellow-500"},
-  {name:"Collectibles",slug:"collectibles",icon:Gem,emoji:"🧸",gradient:"from-orange-600 to-rose-500"},
-  {name:"Automotive",slug:"automotive",icon:CarFront,emoji:"🚙",gradient:"from-slate-600 to-blue-600"},
-  {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,emoji:"🧩",gradient:"from-orange-500 to-amber-400"},
-  {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,emoji:"💄",gradient:"from-pink-600 to-red-400"},
-  {name:"Jewellery & Watches",slug:"jewellery-watches",icon:Watch,emoji:"⌚",gradient:"from-amber-600 to-orange-400"},
-  {name:"Business & Office",slug:"office-products",icon:BriefcaseBusiness,emoji:"📦",gradient:"from-slate-600 to-cyan-600"},
+  {name:"Electronics",slug:"electronics",icon:Smartphone,image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80"},
+  {name:"Fashion",slug:"fashion",icon:Shirt,image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80"},
+  {name:"Gaming",slug:"gaming",icon:Gamepad2,image:"https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80"},
+  {name:"Home & Garden",slug:"home",icon:Armchair,image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80"},
+  {name:"Sports",slug:"sports",icon:Dumbbell,image:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80"},
+  {name:"Books",slug:"books",icon:BookOpen,image:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=400&q=80"},
+  {name:"Collectibles",slug:"collectibles",icon:Gem,image:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80"},
+  {name:"Automotive",slug:"automotive",icon:CarFront,image:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=400&q=80"},
+  {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,image:"https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=80"},
+  {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,image:"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80"},
+  {name:"Jewellery & Watches",slug:"jewellery-watches",icon:Watch,image:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80"},
+  {name:"Business & Office",slug:"office-products",icon:BriefcaseBusiness,image:"https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=400&q=80"},
 ];
 const bento = [
-  {title:"Time for an upgrade?",subtitle:"Electronics · Gaming · Cameras · Tablets",emoji:"💻",gradient:"from-blue-700 to-indigo-500",href:"/browse?category=electronics"},
-  {title:"Fresh style, better prices",subtitle:"Trainers · Denim · Accessories · Outerwear",emoji:"👟",gradient:"from-orange-600 to-amber-500",href:"/browse?category=fashion"},
-  {title:"Home & Garden",subtitle:"Furniture · Lighting · Garden Tools · Décor",emoji:"🛋️",gradient:"from-teal-700 to-emerald-500",href:"/browse?category=home"},
+  {title:"Explore technology",subtitle:"Electronics, cameras and everyday tech",image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=80",href:"/browse?category=electronics"},
+  {title:"Find your next style",subtitle:"Clothing, trainers and accessories",image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80",href:"/browse?category=fashion"},
+  {title:"Refresh your space",subtitle:"Furniture, homewares and garden",image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",href:"/browse?category=home"},
 ];
 export function CategorySection() {
- return <section className="bg-[#08182e] text-white py-10 border-y border-sky-400/10">
+ return <section className="bg-white dark:bg-slate-950 py-12 border-y border-slate-200 dark:border-slate-800">
   <div className="max-w-6xl mx-auto px-4">
-   <div className="flex justify-between items-center gap-3 mb-5"><h2 className="text-2xl font-black">Shop by Category</h2><Link href="/categories" className="inline-flex items-center justify-center gap-2 text-sm font-extrabold text-slate-950 bg-[#FFD21F] border-2 border-[#FFE77A] rounded-xl px-5 py-3 shadow-[0_5px_20px_rgba(255,210,31,0.35)] hover:bg-[#FFE66A] hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-all">View All Categories →</Link></div>
-   <div className="flex gap-2.5 overflow-x-auto pb-4 mb-7 [scrollbar-width:thin]">
-    {categories.map(({name,slug,icon:Icon,emoji,gradient},i)=><motion.div key={slug} initial={{opacity:0,y:12}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.035,.3)}} className="shrink-0">
-      <Link href={`/browse?category=${slug}`} className="group flex w-[104px] h-[124px] flex-col items-center justify-between rounded-xl border border-sky-300/15 bg-[#132743] hover:border-sky-400/70 hover:-translate-y-1 transition-all overflow-hidden pb-3">
-       <div className={`w-full h-[84px] flex items-center justify-center bg-gradient-to-br ${gradient} relative`}><span aria-hidden="true" className="text-5xl drop-shadow-xl group-hover:scale-110 transition-transform">{emoji}</span><Icon className="absolute bottom-1 left-2 w-4 h-4 text-white/80"/></div>
-       <span className="text-[11px] text-center font-bold leading-tight px-1">{name}</span>
+   <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Shop by Category</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-300 hover:underline">All categories <ArrowRight className="w-4 h-4"/></Link></div>
+   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+    {categories.map(({name,slug,icon:Icon,image},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
+      <Link href={`/browse?category=${slug}`} className="group block overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all">
+       <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden"><img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onError={e=>{e.currentTarget.style.display="none";}}/><Icon aria-hidden="true" className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-white/95 p-1 text-slate-700 shadow-sm"/></div>
+       <div className="min-h-[48px] flex items-center justify-center px-2 py-2"><span className="text-center text-xs sm:text-sm font-semibold leading-tight text-slate-800 dark:text-slate-100">{name}</span></div>
       </Link>
      </motion.div>)}
    </div>
-   <div className="grid md:grid-cols-3 gap-4">
-    {bento.map(({title,subtitle,emoji,gradient,href})=><Link key={title} href={href} className={`group relative min-h-[155px] overflow-hidden rounded-2xl p-5 flex flex-col justify-between bg-gradient-to-br ${gradient} hover:brightness-110 transition-all`}>
-      <div className="relative z-10 max-w-[75%]"><h3 className="font-black text-lg">{title}</h3><p className="mt-2 text-xs text-white/85 leading-relaxed">{subtitle}</p></div>
-      <span className="relative z-10 font-bold text-xs">Shop Now <ArrowRight className="inline w-3 h-3"/></span>
-      <span aria-hidden="true" className="absolute right-3 bottom-1 text-[92px] leading-none drop-shadow-2xl group-hover:scale-110 transition-transform">{emoji}</span>
+   <div className="grid md:grid-cols-3 gap-4 mt-8">
+    {bento.map(({title,subtitle,image,href})=><Link key={title} href={href} className="group relative min-h-[160px] overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900 p-5 flex flex-col justify-between">
+      <img src={image} loading="lazy" alt="" className="absolute inset-0 h-full w-full object-cover opacity-45 group-hover:scale-105 transition-transform duration-300"/>
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 to-slate-950/20"/>
+      <div className="relative z-10 max-w-[88%]"><h3 className="font-bold text-lg text-white">{title}</h3><p className="mt-2 text-sm text-white/90 leading-relaxed">{subtitle}</p></div>
+      <span className="relative z-10 font-semibold text-sm text-white">Shop now <ArrowRight className="inline w-4 h-4"/></span>
      </Link>)}
    </div>
   </div>
