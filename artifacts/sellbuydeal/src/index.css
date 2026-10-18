@@ -1145,3 +1145,11 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .listing-delivery-section .text-gray-900,.dark .listing-purchase-section .text-gray-900{opacity:1}
 .listing-details-section p,.listing-delivery-section p,.listing-purchase-section p{line-height:1.55}
 @media(max-width:639px){.listing-details-section .p-6{padding:1rem}.listing-details-section .w-36{width:7rem}.listing-purchase-section .text-3xl{font-size:1.75rem}}
+
+/* Feature Toggles shows small nonblocking previews, never a full-screen loading overlay. */
+.bz-loader-preview{position:relative!important;inset:auto!important;z-index:auto!important;width:100%;min-height:112px;display:flex;align-items:center;justify-content:center;background:transparent!important;backdrop-filter:none!important;pointer-events:none;isolation:auto!important}
+.bz-loader-preview .bz-loader-overlay-content{gap:0}
+.bz-loader-preview .bz-loader{width:76px;height:76px;filter:none}
+.bz-loader-preview .bz-loader-ring{inset:6px;border-width:5px}
+.bz-loader-preview .bz-loader-inner{width:52px;height:52px;background:transparent;box-shadow:none}
+.bz-loader-preview .bz-loader-inner b{font-size:36px;color:#f97316}
