@@ -19,15 +19,8 @@ interface WatchlistContextValue {
 
 const WatchlistContext = createContext<WatchlistContextValue | null>(null);
 
-const PRICE_DROPS: Record<number, number> = {
-  2: 849.00,
-  5: 459.00,
-  7: 649.00,
-};
-
-export function getCurrentPrice(product: Product): number {
-  return PRICE_DROPS[product.id] ?? product.price;
-}
+// Never simulate price drops with hard-coded data. Real events come from the API.
+export function getCurrentPrice(product: Product): number { return Number(product.price)||0; }
 
 export function WatchlistProvider({ children }: { children: ReactNode }) {
   const { user: clerkUser } = useUser();
@@ -80,6 +73,15 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
   }
 
   function toggleAlert(id: number) {
+    const item=items.find(i=>i.product.id===id);
+    if(item){
+      void getToken().then(async token=>{
+        if(!token)return;
+        const r=await fetch("/api/watch-alerts/"+id,{method:"PATCH",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
+         body:JSON.stringify({priceDrop:!item.alertEnabled,restock:!item.alertEnabled})});
+        if(!r.ok)console.warn("Watch preference was not saved; retry from the Watch Alerts panel.");
+      }).catch(()=>console.warn("Watch preference could not sync"));
+    }
     setItems((prev) =>
       prev.map((i) => i.product.id === id ? { ...i, alertEnabled: !i.alertEnabled } : i)
     );
