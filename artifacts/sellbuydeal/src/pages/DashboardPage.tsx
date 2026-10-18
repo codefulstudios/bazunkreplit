@@ -1135,7 +1135,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-sm">{user.username}</p>
-            <p className="text-xs text-gray-400 truncate max-w-[120px]">{user.email}</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-200">Seller account</p>
           </div>
         </div>
 
