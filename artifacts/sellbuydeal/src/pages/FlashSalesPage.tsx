@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import {
@@ -211,7 +212,7 @@ export function FlashSalesPage() {
           <div className="flex gap-1 rounded-xl border border-[#2869b4] bg-[#08264b] p-1">{TABS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setTab(value)} className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-extrabold ${tab===value?"bg-[#0669ef] text-white":"text-white hover:bg-[#19487b]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
           <div className="flex flex-wrap gap-1 rounded-xl border border-[#2869b4] bg-[#08264b] p-1">{CATEGORIES.map(cat=><button key={cat} onClick={()=>setCategory(cat)} className={`rounded-lg px-3 py-2 text-xs font-bold sm:text-sm ${category===cat?"bg-[#0669ef] text-white":"text-white hover:bg-[#19487b]"}`}>{cat}</button>)}</div>
         </div>
-        {loading ? <div className="flex justify-center py-20"><Loader2 className="h-9 w-9 animate-spin text-[#ff751f]"/></div>
+        {loading ? <MarketplaceLoader area="flash" label="Loading flash sales…" />
         : error ? <div className="flex flex-col items-center rounded-2xl border border-red-500/40 bg-[#12294c] py-20 text-white"><AlertCircle className="mb-3 h-10 w-10 text-red-400"/><p className="font-bold">{error}</p><button onClick={load} className="mt-4 rounded-xl bg-[#1767f5] px-6 py-3 font-bold text-white">Retry</button></div>
         : sales.length===0 ? <div className="flex flex-col items-center rounded-3xl border border-[#1e508d] bg-gradient-to-br from-[#092a59] to-[#17225d] px-5 py-16 text-center"><span className="text-7xl">⏰</span><h2 className="mt-4 text-2xl font-black text-white">{tab==="active"?"No flash sales running right now":"No upcoming flash sales scheduled"}</h2><p className="mt-2 max-w-lg text-sm font-medium text-sky-100">Real seller deals will appear here as soon as they are available. Check back soon, or launch the next great deal!</p>{user&&<Link href="/flash-sales/create" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#ff721e] px-6 py-3 font-black !text-white hover:bg-[#ff8d3d]"><Zap className="h-5 w-5"/> Create Flash Sale</Link>}</div>
         : <div className="space-y-7">
