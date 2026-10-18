@@ -8,6 +8,7 @@ import { loadRapidApiKeyFromDb, ensureEbayUsageLedger } from "./lib/rapidapi.js"
 import { startListingScheduler } from "./lib/scheduler.js";
 import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
 import { ensureAdminAuditLog } from "./lib/adminAudit.js";
+import { ensureListingAlerts } from "./lib/listingAlerts.js";
 
 const rawPort = process.env["PORT"];
 
@@ -823,6 +824,10 @@ app.listen(port, (err?: Error) => {
 });
 
 runAppMigrations()
+  // Install price-drop/restock change tracking before routine listing edits.
+  // Failure is logged without interrupting unrelated storefront services.
+  .then(async () => { try { await ensureListingAlerts(); logger.info("Persistent listing alert tracking ready"); }
+    catch (err) { logger.error({err},"Persistent listing alert initialization failed"); } })
   .then(() => ensureEbayUsageLedger())
   .then(() => loadRapidApiKeyFromDb())
   .then(() => {
