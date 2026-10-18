@@ -1,3 +1,4 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
@@ -54,6 +55,7 @@ export function AuctionsPage() {
   const { user } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "auctions");
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("ending");
@@ -128,7 +130,7 @@ export function AuctionsPage() {
         </div>
         {endingOnly && <div className="mb-4 flex items-center justify-between rounded-xl border border-orange-400/50 bg-orange-500/15 px-4 py-2 text-sm font-bold text-white"><span>Showing auctions ending in the next 24 hours</span><button onClick={() => setEndingOnly(false)} className="rounded-lg bg-white px-3 py-1.5 font-bold text-[#09325b]">Show all</button></div>}
         {/* Content */}
-        {loading ? (
+        {delayedLoading ? (
           <MarketplaceLoader area="auctions" label="Loading auctions…" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-[#2463a0] bg-gradient-to-br from-[#0b3266] to-[#191d59] py-20 text-white">
