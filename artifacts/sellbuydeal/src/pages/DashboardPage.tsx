@@ -1,4 +1,5 @@
 import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
+import { SellerPricingInsightsPanel } from "@/components/SellerPricingInsightsPanel";
 import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
 import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
 import { WatchAlertsManager } from "@/components/dashboard/WatchAlertsManager";
@@ -6110,7 +6111,7 @@ export function DashboardPage() {
             )}
             {activeSection === "orders" && <OrdersSection />}
             {activeSection === "sales" && <SellerSales />}
-            {activeSection === "seller-analytics" && <div className="p-4 sm:p-6"><SellerAnalyticsPanel /></div>}
+            {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
             {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (
               <>
