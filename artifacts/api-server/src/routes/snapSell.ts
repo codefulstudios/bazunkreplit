@@ -228,23 +228,19 @@ router.get("/snap-sell/performance",async(req,res)=>{
  const email=await auth(req,res);if(!email||!await allowed(res,"snap_pricing"))return;
  try{
   const r=await db.execute(sql`SELECT l.id,l.title,l.public_id,l.price,l.currency,l.category,l.status,
-    COALESCE(l.views,0)::int views,COALESCE(l.watchers,0)::int watchers,
-    COUNT(DISTINCT o.id)::int sales
-    FROM listings l LEFT JOIN orders o ON LOWER(o.seller_email)=LOWER(l.seller_email)
-      AND LOWER(o.item_title)=LOWER(l.title) AND o.status NOT IN ('cancelled','refunded')
-      AND o.created_at >= l.created_at
-    WHERE LOWER(l.seller_email)=${email} GROUP BY l.id ORDER BY l.updated_at DESC LIMIT 60`);
+    COALESCE(l.views,0)::int views,COALESCE(l.watchers,0)::int watchers
+    FROM listings l WHERE LOWER(l.seller_email)=${email} ORDER BY l.updated_at DESC LIMIT 60`);
   const rows=(r.rows as any[]).map(x=>{
    const views=Number(x.views)||0,watchers=Number(x.watchers)||0;
    const recommendations=[
     ...(x.status==="active"&&views>=20&&watchers===0?["Many views but no watchers: improve the first photograph and product title."]:[]),
-    ...(x.status==="active"&&watchers>=3&&Number(x.sales)===0?["Watchers show interest but no matched sales: compare similar listings and review your asking price."]:[]),
+    ...(x.status==="active"&&watchers>=3?["This item has multiple watchers: consider comparing your price to similar active listings."]:[]),
     ...(x.status==="active"&&views===0?["No recorded views yet: check the category and listing visibility."]:[])
    ];
-   return {...x,views,watchers,sales:Number(x.sales)||0,recommendations};
+   return {...x,views,watchers,recommendations};
   });
   res.setHeader("Cache-Control","private,no-store");
-  res.json({listings:rows,limits:"Up to 60 owned listings. Sales counts are approximate title-matched order records, not guaranteed listing-level attribution. Views and watchers are recorded marketplace activity."});
+  res.json({listings:rows,limits:"Up to 60 owned listings. Views and watchers use recorded marketplace counters. No individual sale-conversion rate is inferred without a reliable listing-to-order link."});
  }catch(e){console.error("Seller listing performance failed",e);res.status(503).json({error:"Seller performance insights are currently unavailable."});}
 });
 router.get("/admin/snap-sell/monitor",requireAdmin,async(_req,res)=>{
