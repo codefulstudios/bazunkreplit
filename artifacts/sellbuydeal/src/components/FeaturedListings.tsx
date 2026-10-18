@@ -204,8 +204,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: Math.min(index * 0.04, 0.3) }}
-                style={{ scrollSnapAlign: "start" }}
-                className="bz-store-card w-52 shrink-0 group !bg-white dark:!bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer"
+                className="bz-store-card w-52 shrink-0 group rounded-2xl border border-slate-200 hover:border-orange-400 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden cursor-pointer" style={{ backgroundColor: "#ffffff", color: "#0f172a", scrollSnapAlign: "start" }}
               >
                 {/* Image */}
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
@@ -235,7 +234,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
                 {/* Body */}
                 <div className="p-3.5 pt-3">
-                  <p className="bz-store-title text-base font-semibold !text-slate-950 dark:!text-white line-clamp-2 min-h-[2.5rem] mb-2 group-hover:!text-orange-700 dark:group-hover:!text-orange-300 transition-colors leading-snug">
+                  <p className="bz-store-title text-base font-semibold line-clamp-2 min-h-[2.5rem] mb-2 leading-snug" style={{ color: "#0f172a" }}>
                     {listing.title}
                   </p>
 
@@ -244,13 +243,13 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
                       {formatPrice(parseFloat(listing.price))}
                     </span>
                     {listing.views > 0 && (
-                      <span className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                      <span className="flex items-center gap-1 text-xs" style={{ color: "#475569" }}>
                         <Eye className="w-3 h-3" /> {listing.views.toLocaleString()}
                       </span>
                     )}
                   </div>
 
-                  <div className="bz-store-description flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <div className="bz-store-description flex items-center gap-1 text-xs font-semibold" style={{ color: "#475569" }}>
                     <Store className="w-3.5 h-3.5" /> {listing.sellerUsername ? `@${listing.sellerUsername}` : (listing.sellerName || "Bazunk seller")}
                   </div>
                 </div>
