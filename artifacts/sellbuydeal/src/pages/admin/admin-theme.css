@@ -287,3 +287,39 @@
 .dark .bazunk-admin main :is(.admin-users-table,.admin-listings-page,.admin-orders-page) thead th {color:var(--bz-text-primary);}
 .dark .bazunk-admin main .admin-dashboard .admin-kpi > div:last-child {color:var(--bz-text-secondary);opacity:1;}
 .dark .bazunk-admin main :is(input,textarea)::placeholder {color:var(--bz-text-muted)!important;opacity:1;}
+
+
+/* Production admin dark-mode compatibility layer.
+   Existing admin pages still use older light-only neutral utility classes.
+   Apply real dark surfaces to those components, but defer to explicit dark:bg-* classes
+   and preserve semantic warning/success/error cards. */
+.dark .bazunk-admin main :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100):not([class*="dark:bg-"]) {
+  background-color:var(--bz-surface-card);
+  border-color:var(--bz-border);
+}
+.dark .bazunk-admin main :is(.text-slate-950,.text-slate-900,.text-slate-800,.text-gray-950,.text-gray-900,.text-gray-800):not(:is(button,[role="button"],button *,[role="button"] *)) {
+  color:var(--bz-text-primary);
+}
+.dark .bazunk-admin main :is(.text-slate-700,.text-slate-600,.text-slate-500,.text-slate-400,.text-gray-700,.text-gray-600,.text-gray-500,.text-gray-400):not(:is(button,[role="button"],button *,[role="button"] *)) {
+  color:var(--bz-text-secondary);
+}
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-white:not([class*="dark:bg-"]),
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-slate-100:not([class*="dark:bg-"]),
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-gray-100:not([class*="dark:bg-"]) {
+  background:var(--bz-surface-raised);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-white:not([class*="dark:bg-"]):hover,
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-slate-100:not([class*="dark:bg-"]):hover,
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-gray-100:not([class*="dark:bg-"]):hover {
+  background:#354d70;color:#fff;
+}
+.dark .bazunk-admin main :is(select,[role="combobox"],input:not([type="checkbox"]):not([type="radio"]),textarea) {
+  background-color:var(--bz-surface-field);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark .bazunk-admin main :is(option,optgroup) {background-color:var(--bz-surface-field);color:var(--bz-text-primary);}
+.dark .bazunk-admin main :is(input,textarea)::placeholder {color:var(--bz-text-muted);opacity:1;}
+.dark .bazunk-admin main :is(th,td) {opacity:1;}
