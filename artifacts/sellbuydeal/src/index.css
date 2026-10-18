@@ -1042,3 +1042,15 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 /* Storefront reassurance and description text should never fade below readable contrast. */
 .bz-store-card .bz-store-description {font-size:0.875rem;line-height:1.45;}
 .dark .bz-store-card .bz-store-description {color:#d7e0ed !important;}
+
+
+/* Shared readability floor. Scoped to ordinary marketplace surface text; leave intentional text-on-brand buttons and badges untouched. */
+:root { --bz-readable-muted:#475569; }
+.dark { --bz-readable-muted:#d1d9e6; }
+.bz-store-card :is(p,span,small) { text-wrap:pretty; }
+.bz-product-card :is(h2,h3,.bz-store-title) {font-size:1rem;line-height:1.45;font-weight:600;}
+.bz-product-card :is(.bz-store-description,[data-product-meta]) {font-size:.875rem;line-height:1.45;}
+:where(main) :is(input,textarea,select) {font-size:max(1rem, 16px);}
+:where(main) :is(input,textarea)::placeholder {opacity:1;color:#64748b;}
+.dark :where(main) :is(input,textarea)::placeholder {color:#cbd5e1;}
+:where(main) :is(a,button,input,select,textarea):focus-visible {outline:2px solid #f26b21;outline-offset:2px;}
