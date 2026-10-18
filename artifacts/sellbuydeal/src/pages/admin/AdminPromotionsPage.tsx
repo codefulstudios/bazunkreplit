@@ -86,10 +86,7 @@ function HomepageMerchandisingControls({ authFetch }: { authFetch: (url: string,
   async function save(){
     setSaving(true);setMessage("");
     try {
-      const original=await authFetch("/api/admin/settings");
-      if(!original.ok)throw Error("Could not read existing settings");
-      const data=await original.json();
-      const payload={...data,homepage_promotion_order:order.join(","),...Object.fromEntries(keys.map(k=>[`homepage_promotion_${k}_visible`,String(shown[k])]))};
+      const payload={homepage_promotion_order:order.join(","),...Object.fromEntries(keys.map(k=>[`homepage_promotion_${k}_visible`,String(shown[k])]))};
       const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(payload)});
       if(!response.ok)throw Error("Settings could not be saved");
       window.dispatchEvent(new Event("bazunk-settings-updated"));
