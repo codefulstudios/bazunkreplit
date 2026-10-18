@@ -14,11 +14,11 @@ const FEATURE_BLOCKS = [
     description: "Sellers set time-limited discounts — you see the countdown, grab the deal before it's gone. Updated constantly.",
     cta: "Browse Flash Sales",
     href: "/flash-sales",
-    bg: "bg-[#1A1D2E]",
-    border: "border-[#F26B21]/20",
-    tagColor: "text-[#F26B21] bg-[#F26B21]/10",
-    ctaColor: "bg-[#F26B21] text-white hover:opacity-90",
-    glow: "shadow-[#F26B21]/10",
+    bg: "bg-white dark:bg-slate-900",
+    border: "border-slate-200 dark:border-slate-700",
+    tagColor: "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-slate-800",
+    ctaColor: "text-orange-700 dark:text-orange-300 hover:underline",
+    glow: "",
   },
   {
     feature: "quick_sell",
@@ -29,11 +29,11 @@ const FEATURE_BLOCKS = [
     description: "List for free. No final value fees. Keep 100% of your sale price — no commission taken from private sellers.",
     cta: "Start Selling",
     href: "/sell",
-    bg: "bg-[#4A5CE8]",
-    border: "border-white/10",
-    tagColor: "text-white/80 bg-white/15",
-    ctaColor: "bg-white text-[#4A5CE8] hover:bg-white/90",
-    glow: "shadow-[#4A5CE8]/20",
+    bg: "bg-white dark:bg-slate-900",
+    border: "border-slate-200 dark:border-slate-700",
+    tagColor: "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-slate-800",
+    ctaColor: "text-orange-700 dark:text-orange-300 hover:underline",
+    glow: "",
   },
   {
     feature: "offers",
@@ -45,10 +45,10 @@ const FEATURE_BLOCKS = [
     cta: "Browse Listings",
     href: "/browse",
     bg: "bg-gray-900",
-    border: "border-white/10",
-    tagColor: "text-white/60 bg-white/10",
-    ctaColor: "border border-white/20 text-white hover:bg-white/5",
-    glow: "shadow-gray-900/20",
+    border: "border-slate-200 dark:border-slate-700",
+    tagColor: "text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-slate-800",
+    ctaColor: "text-orange-700 dark:text-orange-300 hover:underline",
+    glow: "",
   },
 ];
 
@@ -72,7 +72,7 @@ export function FeaturedFeatures() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-[#F26B21] text-xs font-black uppercase tracking-widest mb-2"
+            className="text-[#F26B21] text-sm font-semibold uppercase tracking-widest mb-2"
           >
             Why Bazunk?
           </motion.p>
@@ -80,7 +80,7 @@ export function FeaturedFeatures() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-black text-gray-900 leading-tight"
+            className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight"
           >
             Everything in one place
           </motion.h2>
@@ -95,25 +95,25 @@ export function FeaturedFeatures() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.12 }}
-              className={`${bg} ${border} border rounded-3xl p-6 flex flex-col justify-between min-h-[280px] shadow-xl ${glow} relative overflow-hidden`}
+              className={`${bg} ${border} border rounded-3xl p-6 flex flex-col justify-between min-h-[260px] shadow-sm ${glow} relative overflow-hidden`}
             >
               {/* Subtle glow circle */}
               <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/5 pointer-events-none" />
 
               <div className="relative z-10">
-                <span className={`inline-flex text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full mb-4 ${tagColor}`}>
+                <span className={`inline-flex text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full mb-4 ${tagColor}`}>
                   {tag}
                 </span>
                 <div className={`w-11 h-11 rounded-2xl ${iconBg} flex items-center justify-center mb-4`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-white font-black text-xl mb-2">{title}</h3>
-                <p className="text-white/55 text-sm leading-relaxed">{description}</p>
+                <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">{title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed">{description}</p>
               </div>
 
               <div className="relative z-10 mt-5">
                 <Link href={href}>
-                  <button className={`flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl transition-all ${ctaColor}`}>
+                  <button className={`flex items-center gap-1.5 text-sm font-semibold px-0 py-2.5 rounded-xl transition-all ${ctaColor}`}>
                     {cta} <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </Link>
@@ -138,7 +138,7 @@ export function FeaturedFeatures() {
               </div>
               <div>
                 <p className="font-bold text-gray-900 text-sm">{label}</p>
-                <p className="text-xs text-gray-400">{sub}</p>
+                <p className="text-xs text-gray-600">{sub}</p>
               </div>
             </motion.div>
           ))}
