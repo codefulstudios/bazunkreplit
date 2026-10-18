@@ -243,7 +243,7 @@ router.post("/stripe/quote-cart", async (req,res) => {
   try {
     const quote=await quoteCart(req.body.items);
     res.setHeader("Cache-Control","no-store");
-    res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
+    res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,bundleDiscount: (quote.bundleDiscountMinor??0)/100,bundleBreakdown:quote.bundleBreakdown??[],total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
   } catch(err) { res.status(err instanceof QuoteError ? err.status : 500).json({error:err instanceof QuoteError ? err.message : "Could not calculate checkout fees."}); }
 });
 
@@ -277,9 +277,14 @@ router.post("/stripe/checkout-cart", async (req, res) => {
       throw new QuoteError("Your cart price or fees changed. Refresh the fee breakdown before paying.",409);
     await storage.upsertUser(email,name);
     const snapshotId=await saveFeeSnapshot(quote);
-    const grouped=new Map<number,{title:string;priceMinor:number;quantity:number}>();
+    // Discounts can leave different per-unit prices for the same listing.
+    // Group by listing AND final discounted unit price to match the frozen quote.
+    const grouped=new Map<string,{title:string;priceMinor:number;quantity:number}>();
     for(const unit of quote.units) {
-      const prev=grouped.get(unit.id);if(prev) prev.quantity++;else grouped.set(unit.id,{title:unit.title,priceMinor:unit.priceMinor,quantity:1});
+      const key=unit.id+":"+unit.priceMinor;
+      const prev=grouped.get(key);
+      if(prev)prev.quantity++;
+      else grouped.set(key,{title:unit.title,priceMinor:unit.priceMinor,quantity:1});
     }
     const lineItems=[...grouped.values()].map(item=>({price_data:{currency:"gbp",unit_amount:item.priceMinor,product_data:{name:item.title}},quantity:item.quantity}));
     if(quote.buyerProtectionMinor) lineItems.push({price_data:{currency:"gbp",unit_amount:quote.buyerProtectionMinor,product_data:{name:"Buyer Protection — personal seller items"}},quantity:1});
