@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -331,7 +332,7 @@ export function ListingPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-[#F26B21] border-t-transparent rounded-full animate-spin" />
+          <MarketplaceLoader area="listing" label="Loading listing details…" />
         </div>
         <Footer />
       </div>
