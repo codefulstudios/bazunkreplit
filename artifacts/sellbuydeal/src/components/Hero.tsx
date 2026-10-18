@@ -173,8 +173,8 @@ export function Hero() {
             {/* Marketplace type pills — aligned under categories */}
             <div className="hidden sm:flex flex-wrap gap-2 pt-1">
               {visiblePills.map(({ icon: Icon, label }) => (
-                <span key={label} className="flex items-center gap-1.5 !text-white text-sm font-semibold bg-slate-700/90 border border-slate-500/80 px-3 py-2 rounded-full hover:bg-slate-600 hover:border-orange-300 transition-colors">
-                  <Icon className="w-4 h-4 !text-white" /> {t(label, label)}
+                <span key={label} className="flex items-center gap-1.5 text-sm font-semibold border px-3 py-2 rounded-full hover:brightness-125 transition-all" style={{backgroundColor:"#334155",borderColor:"#64748B",color:"#FFFFFF"}}>
+                  <Icon className="w-4 h-4" style={{color:"#FFFFFF"}} /> {t(label, label)}
                 </span>
               ))}
             </div>
