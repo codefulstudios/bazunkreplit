@@ -17,7 +17,7 @@ export function AdminImporterMonitoring(){
   finally{setLoading(false);}
  },[]);
  useEffect(()=>{void refresh();},[refresh]);
- return <section className="space-y-4 rounded-2xl border-2 border-orange-200 bg-orange-50/40 p-4 dark:border-orange-800 dark:bg-[#172541]" aria-label="Unified importer monitoring">
+ return <section className="admin-importer-monitor space-y-4 rounded-2xl border-2 border-orange-200 bg-orange-50/40 p-4 dark:border-orange-800 dark:bg-[#172541]" aria-label="Unified importer monitoring">
   <div className="flex flex-wrap items-start justify-between gap-3">
     <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-950 dark:text-white"><Activity className="h-5 w-5 text-orange-600"/>Unified importer monitoring</h2>
     <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Source health, sync freshness, request usage and exceptions in one view.</p></div>
