@@ -5,6 +5,7 @@ import { useAdmin } from "@/context/AdminContext";
 export function LoaderSettingsPanel() {
  const { authFetch } = useAdmin();
  const [variant,setVariant] = useState("logo");
+ const [minimum,setMinimum] = useState("0");
  const [areas,setAreas] = useState<Record<string,boolean>>({});
  const [saving,setSaving] = useState(false);
  const [message,setMessage] = useState("");
@@ -13,6 +14,7 @@ export function LoaderSettingsPanel() {
   authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Unable to read settings");return r.json()}).then(data=>{
    if(!active)return;
    setVariant(data.marketplace_loader_variant||"logo");
+   setMinimum(["0","500","1000","2000"].includes(data.marketplace_loader_min_ms)?data.marketplace_loader_min_ms:"0");
    setAreas(Object.fromEntries(LOADER_AREAS.map(x=>[x.id,data["marketplace_loader_area_"+x.id]!=="false"])));
   }).catch(()=>{if(active)setMessage("Loader settings unavailable.")});
   return ()=>{active=false};
@@ -20,7 +22,7 @@ export function LoaderSettingsPanel() {
  async function save(){
   setSaving(true);setMessage("");
   try{
-   const payload={marketplace_loader_variant:variant,...Object.fromEntries(LOADER_AREAS.map(x=>["marketplace_loader_area_"+x.id,String(areas[x.id]!==false)]))};
+   const payload={marketplace_loader_variant:variant,marketplace_loader_min_ms:minimum,...Object.fromEntries(LOADER_AREAS.map(x=>["marketplace_loader_area_"+x.id,String(areas[x.id]!==false)]))};
    const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(payload)});
    if(!response.ok)throw Error("Unable to save loader settings");
    window.dispatchEvent(new Event("bazunk-settings-updated"));
@@ -36,6 +38,12 @@ export function LoaderSettingsPanel() {
     <span className="ml-2 text-sm font-semibold text-slate-900 dark:text-white">{x.label}</span>
     <div className="mt-2 flex justify-center"><MarketplaceLoader variantOverride={x.id} label="" /></div>
    </label>)}</div>
+  <label className="mt-5 flex flex-col gap-2 text-sm font-semibold text-slate-900 dark:text-white">Minimum loader display time
+   <select className="max-w-xs rounded-lg border border-slate-400 bg-white px-3 py-2 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white" value={minimum} onChange={e=>setMinimum(e.target.value)}>
+    <option value="0">No extra delay (default)</option><option value="500">0.5 seconds</option><option value="1000">1 second</option><option value="2000">2 seconds</option>
+   </select>
+   <span className="font-normal text-slate-700 dark:text-slate-200">Only adds time when enabled for a page. A real request that takes longer is never interrupted.</span>
+  </label>
   <h3 className="mt-5 text-base font-semibold text-slate-900 dark:text-white">Page placement</h3>
   <div className="mt-2 grid gap-2 sm:grid-cols-2">{LOADER_AREAS.map(x=>
    <label key={x.id} className="flex items-center gap-2 text-sm text-slate-900 dark:text-white">
