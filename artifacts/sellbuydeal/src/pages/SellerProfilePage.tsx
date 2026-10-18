@@ -1,3 +1,4 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
@@ -44,6 +45,7 @@ export function SellerProfilePage() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "seller");
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState<number | null>(null);
 
@@ -99,9 +101,9 @@ export function SellerProfilePage() {
     <Navbar />
     <main className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {loading && <MarketplaceLoader area="seller" label="Loading seller profile…" />}
-        {!loading && error && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center"><h1 className="font-black text-xl text-gray-900">Seller profile unavailable</h1><p className="text-sm text-gray-500 mt-2">{error}</p></div>}
-        {!loading && rep && <>
+        {delayedLoading && <MarketplaceLoader area="seller" label="Loading seller profile…" />}
+        {!delayedLoading && error && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center"><h1 className="font-black text-xl text-gray-900">Seller profile unavailable</h1><p className="text-sm text-gray-500 mt-2">{error}</p></div>}
+        {!delayedLoading && rep && <>
           <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-6">
             <div className="flex flex-col md:flex-row md:items-start gap-6">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] text-white text-3xl font-black flex items-center justify-center flex-shrink-0">{rep.profile.name.charAt(0).toUpperCase()}</div>
