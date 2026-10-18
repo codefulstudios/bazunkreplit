@@ -16,7 +16,7 @@ export function AdminListingAlertsPanel(){
  }
  useEffect(()=>{if(isAdmin)void refresh();},[isAdmin]);
  const totals=report?.events||[];
- return <section className="space-y-4 rounded-2xl border-2 border-orange-200 bg-white p-5 dark:border-orange-700 dark:bg-[#172541]">
+ return <section className="admin-alerts-panel space-y-4 rounded-2xl border-2 border-orange-200 bg-white p-5 dark:border-orange-700 dark:bg-[#172541]">
   <div className="flex flex-wrap items-center justify-between gap-3">
     <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-950 dark:text-white"><Bell className="h-5 w-5 text-orange-600"/>Persistent buyer alerts</h2>
       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Database-backed price drops, restocks, watcher preferences and saved searches</p></div>
