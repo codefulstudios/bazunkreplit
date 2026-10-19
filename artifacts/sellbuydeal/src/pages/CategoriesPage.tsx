@@ -185,79 +185,32 @@ export function CategoriesPage() {
       <Navbar />
       {countsLoading && <MarketplaceLoader area="categories" label="Loading categories…" />}
 
-      <div className="border-b border-slate-200 bg-white dark:border-white/[0.06] dark:bg-[#071426]">
-        <div className="container mx-auto px-4 py-5 lg:py-7">
-          <div className="grid lg:grid-cols-[0.78fr_1.22fr] gap-5 items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6548ff] to-[#4936d9] flex items-center justify-center shadow-lg shadow-indigo-900/20">
-                <Grid3X3 className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-950 dark:text-white">Categories</h1>
-                <p className="text-slate-600 dark:text-slate-300 font-medium mt-1">
-                  Explore all categories and find exactly what you're looking for.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/sell"
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#5b56f5] via-[#7845f4] to-[#ed42c7] px-5 py-4 shadow-xl shadow-purple-950/15 group"
-            >
-              <div className="absolute right-0 inset-y-0 w-[38%] bg-[radial-gradient(circle_at_center,_rgba(255,210,60,.45),_transparent_58%)]" />
-              <div className="relative flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
-                  <Tag className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xl lg:text-2xl font-black text-white">Private Sellers Sell for <span className="text-3xl">{formatPrice(0)}</span></p>
-                  <p className="text-white text-sm font-semibold mt-0.5">No listing fees. No final value fees. Keep 100% of your sale price.</p>
-                </div>
-                <span className="hidden sm:inline-flex bg-white text-indigo-700 font-black rounded-xl px-5 py-3 items-center gap-1 shadow-lg group-hover:translate-x-1 transition-transform">
-                  Start Selling <ChevronRight className="w-4 h-4" />
-                </span>
-              </div>
-            </Link>
-          </div>
-
-          <div className="relative max-w-md mt-5">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search categories..."
-              className="pl-11 h-10 rounded-xl border-slate-200 bg-slate-50 text-slate-950 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
-            />
-          </div>
-        </div>
-      </div>
-
-      <main className="flex-1 bg-[#071426] text-white">
-        <div className="container mx-auto px-4 py-7 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[290px_minmax(0,1fr)] gap-5 items-start">
-          <aside className="lg:sticky lg:top-24 rounded-2xl border border-sky-300/20 bg-[#0d203b] p-3 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto [scrollbar-width:thin]" aria-label="Browse categories">
+      <main className="bazunk-categories flex-1 bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
+        <div className="container mx-auto max-w-7xl px-4 py-5 grid lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[230px_minmax(0,1fr)] gap-4 items-start">
+          <aside className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#10213d] lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto [scrollbar-width:thin]" aria-label="Browse categories">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-200" />
-              <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." className="pl-9 bg-[#07172e] border-sky-300/25 text-white placeholder:text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 dark:text-sky-200" />
+              <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." className="pl-9 bg-slate-50 border-slate-300 text-slate-950 placeholder:text-slate-500 dark:bg-[#07172e] dark:border-slate-600 dark:text-white" />
             </div>
             <nav className="space-y-1">
-              <button type="button" onClick={()=>{setOpenSlug(null);setSearch("");}} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-3 text-left font-extrabold transition-colors ${!selected?"bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg":"bg-[#193353] text-white hover:bg-[#255082]"}`}>
+              <button type="button" onClick={()=>{setOpenSlug(null);setSearch("");}} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-3 text-left font-extrabold transition-colors ${!selected?"bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg":"bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-[#193353] dark:text-white dark:hover:bg-[#255082]"}`}>
                 <span className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-white/20"><Grid3X3 className="w-5 h-5 text-white"/></span>
-                <span className="flex-1 text-sm">Category Dashboard</span><ChevronRight className="w-4 h-4"/>
+                <span className="flex-1 text-sm">All Categories</span><ChevronRight className="w-4 h-4"/>
               </button>
-              <div className="my-3 border-t border-sky-300/20"/>
+              <div className="my-3 border-t border-slate-200 dark:border-sky-300/20"/>
               {filtered.map(category=>{
                 const state=statusFor(category.slug), active=selected?.slug===category.slug;
                 const disabled=state!=="active";
-                return <button key={category.slug} type="button" disabled={disabled} onClick={()=>setOpenSlug(category.slug)} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors ${active?"bg-blue-600 text-white shadow-lg shadow-blue-900/30":disabled?"bg-[#172941] text-slate-300 cursor-not-allowed":"bg-[#142c4b] text-white hover:bg-[#235187]"}`}>
+                return <button key={category.slug} type="button" disabled={disabled} onClick={()=>setOpenSlug(category.slug)} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors ${active?"bg-blue-600 text-white shadow-lg shadow-blue-900/30":disabled?"bg-slate-100 text-slate-500 cursor-not-allowed dark:bg-[#172941] dark:text-slate-300":"bg-white text-slate-900 hover:bg-blue-50 dark:bg-[#142c4b] dark:text-white dark:hover:bg-[#235187]"}`}>
                   <span className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(category.slug)}`}><CategoryIcon name={category.icon} className="w-4 h-4 text-white"/></span>
-                  <span className="flex-1 min-w-0 text-sm font-bold text-white">{category.name}</span>
-                  {disabled?<LucideIcons.LockKeyhole className="w-3.5 h-3.5 text-slate-200"/>:<span className="flex items-center gap-1 text-xs font-bold text-white">{catCount(category.slug)>0?catCount(category.slug).toLocaleString():""}<ChevronRight className="w-3.5 h-3.5"/></span>}
+                  <span className="flex-1 min-w-0 text-sm font-bold">{category.name}</span>
+                  {disabled?<LucideIcons.LockKeyhole className="w-3.5 h-3.5 text-slate-200"/>:<span className="flex items-center gap-1 text-xs font-bold">{catCount(category.slug)>0?catCount(category.slug).toLocaleString():""}<ChevronRight className="w-3.5 h-3.5"/></span>}
                 </button>;
               })}
               {!filtered.length&&<p className="p-3 text-sm text-slate-300">No categories match your search.</p>}
             </nav>
           </aside>
-          <div className="min-w-0 space-y-7">
+          <div className="min-w-0 space-y-5">
             {selected ? <>
               <section className={`relative min-h-[190px] sm:min-h-[215px] overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r ${themeFor(selected.slug)}`}>
                 {CATEGORY_ART[selected.slug]&&<img src={CATEGORY_ART[selected.slug]} alt="" className="absolute right-0 inset-y-0 h-full w-[65%] object-cover object-bottom opacity-90"/>}
@@ -288,19 +241,20 @@ export function CategoriesPage() {
                 </div>
               </section>
               {selected.subcategories.some(sub=>suggestedThirdLevel(selected.slug,sub.slug).length>0)&&<section className="rounded-2xl border border-sky-300/30 bg-[#142e50] p-5"><h3 className="font-black text-lg text-white mb-4">Explore more specific categories</h3><div className="flex flex-wrap gap-2">{selected.subcategories.flatMap(sub=>suggestedThirdLevel(selected.slug,sub.slug).map(name=><Link key={sub.slug+name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="inline-flex items-center rounded-lg bg-[#1765dc] border border-[#65b4ff] px-4 py-2.5 text-sm font-extrabold !text-white hover:bg-[#287cf3] shadow-sm shadow-blue-950/40 transition-colors">{name}</Link>))}</div></section>}
-              <section><h3 className="text-xl font-black mb-4">Browse Other Categories</h3><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">{ordered.filter(c=>c.slug!==selected.slug&&statusFor(c.slug)==="active").slice(0,8).map(c=><button type="button" key={c.slug} onClick={()=>{setOpenSlug(c.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`relative min-h-[105px] rounded-xl overflow-hidden text-left p-3 bg-gradient-to-br ${themeFor(c.slug)} hover:brightness-110 transition-all`}>{CATEGORY_ART[c.slug]&&<img src={CATEGORY_ART[c.slug]} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom opacity-65"/>}<div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent"/><span className="relative z-10 text-sm font-black">{c.name}</span></button>)}</div></section>
+              <section><h3 className="text-xl font-black mb-4">Browse Other Categories</h3><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">{ordered.filter(c=>c.slug!==selected.slug&&statusFor(c.slug)==="active").slice(0,8).map(c=><button type="button" key={c.slug} onClick={()=>{setOpenSlug(c.slug);}} className={`relative min-h-[105px] rounded-xl overflow-hidden text-left p-3 bg-gradient-to-br ${themeFor(c.slug)} hover:brightness-110 transition-all`}>{CATEGORY_ART[c.slug]&&<img src={CATEGORY_ART[c.slug]} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom opacity-65"/>}<div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent"/><span className="relative z-10 text-sm font-black">{c.name}</span></button>)}</div></section>
             </>:<>
-<section className="relative overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r from-[#1045a4] via-[#4031a5] to-[#9a278e] p-6 sm:p-8">
-<div className="relative z-10"><p className="text-xs uppercase font-black tracking-widest text-amber-300">Explore Bazunk</p><h2 className="text-3xl sm:text-4xl font-black mt-2">Category Dashboard</h2><p className="mt-2 text-sm text-white font-medium max-w-xl">Discover something brilliant. Choose a category below to explore subcategories and listings from our sellers.</p><p className="mt-4 text-xs font-bold text-sky-100">{ordered.filter(c=>statusFor(c.slug)==="active").length} categories to explore</p></div>
-<Grid3X3 className="absolute -right-4 -bottom-8 w-52 h-52 text-white/10 rotate-12"/>
-</section>
-<section><div className="flex items-center justify-between gap-3 mb-4"><h3 className="text-xl font-black">Shop by Category</h3><span className="text-sm font-semibold text-sky-200">Select a category</span></div>
-<div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+<section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1947b5] via-[#7135c9] to-[#e23b97] px-6 py-7 text-white sm:px-8 sm:py-8">
+ <div className="relative z-10 max-w-xl"><p className="text-xs font-bold uppercase tracking-widest text-blue-100">Explore Bazunk</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">Shop by Category</h1><p className="mt-2 text-sm font-medium text-white">Browse categories and discover listings from Bazunk sellers.</p>
+ <div className="relative mt-5 max-w-lg"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600"/><Input value={search} onChange={e=>setSearch(e.target.value)} aria-label="Search all categories" placeholder="Search in all categories…" className="h-11 rounded-full border-white bg-white pl-10 text-slate-950 placeholder:text-slate-500"/></div>
+ <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-white"><span>✓ Easy browsing</span><span>✓ Verified sellers</span><span>✓ UK &amp; USA</span></div></div>
+ <Grid3X3 aria-hidden="true" className="pointer-events-none absolute -bottom-10 -right-8 h-52 w-52 rotate-12 text-white/15"/></section>
+<section><div className="flex items-center justify-between gap-3 mb-4"><h3 className="text-xl font-black">Popular categories</h3><span className="text-sm font-semibold text-slate-600 dark:text-sky-200">{filtered.length} categories</span></div>
+<div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
 {filtered.map((category,index)=>{
 const state=statusFor(category.slug),unavailable=state!=="active",art=CATEGORY_ART[category.slug];
-return <button key={category.slug} type="button" disabled={unavailable} onClick={()=>{setOpenSlug(category.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`group relative overflow-hidden rounded-2xl border border-sky-300/20 bg-[#112846] text-left transition-all ${unavailable?"opacity-55 cursor-not-allowed":"hover:border-sky-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/40"}`}>
-<div className={`relative h-28 sm:h-36 bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{art&&<img src={art} alt="" className="absolute inset-0 h-full w-full object-cover object-bottom"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#061426]/80 via-transparent to-transparent"/><div className="absolute bottom-2 left-3 rounded-lg bg-black/45 p-2"><CategoryIcon name={category.icon} className="w-5 h-5 text-white"/></div></div>
-<div className="p-3 sm:p-4"><h4 className="text-sm sm:text-base font-black leading-tight text-white">{category.name}</h4><p className="mt-1 text-xs font-semibold text-sky-200">{unavailable?labelFor(state):category.subcategories.length+" subcategories"+(catCount(category.slug)>0?" · "+catCount(category.slug)+" listings":"")}</p></div>
+return <button key={category.slug} type="button" disabled={unavailable} onClick={()=>{setOpenSlug(category.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`group relative overflow-hidden rounded-2xl border border-sky-300/20 bg-white dark:bg-[#112846] text-left transition-colors ${unavailable?"opacity-55 cursor-not-allowed":"hover:border-blue-500 hover:shadow-md"}`}>
+<div className={`relative h-28 sm:h-32 bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{art&&<img src={art} alt="" className="absolute inset-0 h-full w-full object-cover object-bottom"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#061426]/80 via-transparent to-transparent"/><div className="absolute bottom-2 left-3 rounded-lg bg-black/45 p-2"><CategoryIcon name={category.icon} className="w-5 h-5 text-white"/></div></div>
+<div className="p-3 sm:p-4"><h4 className="text-sm font-black leading-tight text-slate-950 dark:text-white">{category.name}</h4><p className="mt-1 text-xs font-semibold text-slate-600 dark:text-sky-200">{unavailable?labelFor(state):category.subcategories.length+" subcategories"+(catCount(category.slug)>0?" · "+catCount(category.slug)+" listings":"")}</p></div>
 </button>;
 })}
 </div></section></>}
