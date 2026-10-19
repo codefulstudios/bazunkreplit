@@ -207,16 +207,26 @@ export function CategoriesPage() {
       <div className="grid gap-4 lg:grid-cols-[205px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)] items-start">
         <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24" aria-label="Category navigation">
           <button type="button" onClick={()=>setOpenSlug(null)} className={`mb-2 w-full rounded-xl px-3 py-3 text-left text-sm font-extrabold ${!selected?"bg-gradient-to-r from-pink-500 to-orange-400 text-white":"text-slate-900 dark:text-white"}`}>All Categories</button>
-          <nav className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
-            {filtered.map(cat=>{const available=statusFor(cat.slug)==="active",active=selected?.slug===cat.slug;return <button key={cat.slug} type="button" disabled={!available} onClick={()=>setOpenSlug(cat.slug)} aria-current={active?"page":undefined} className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span><span className="min-w-0 flex-1 leading-snug text-sm font-bold">{cat.name}</span></button>})}
+          <nav className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" aria-label="Browse category departments">
+            {filtered.map(cat=>{
+              const available=statusFor(cat.slug)==="active";
+              const active=selected?.slug===cat.slug;
+              const subcategories=cat.subcategories.filter(sub=>statusFor(cat.slug,sub.slug)==="active");
+              return <div key={cat.slug} className="min-w-0">
+                <button type="button" disabled={!available} onClick={()=>setOpenSlug(active?null:cat.slug)}
+                  aria-expanded={active} aria-controls={"category-subs-"+cat.slug}
+                  className={`flex w-full min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span>
+                  <span className="min-w-0 flex-1 leading-snug font-bold">{cat.name}</span>
+                  {active?<ChevronDown className="h-4 w-4 shrink-0"/>:<ChevronRight className="h-4 w-4 shrink-0"/>}
+                </button>
+                {active&&<div id={"category-subs-"+cat.slug} className="my-1 ml-3 max-h-80 space-y-0.5 overflow-y-auto border-l-2 border-blue-400 pl-2" aria-label={cat.name+" subcategories"}>
+                  {subcategories.length?subcategories.map(sub=><Link key={sub.slug} href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)} className="flex min-h-10 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]"><span>{sub.name}</span><ChevronRight className="h-4 w-4 shrink-0"/></Link>):<p className="px-2 py-3 text-xs text-slate-700 dark:text-slate-200">No subcategories available.</p>}
+                  <Link href={"/browse?category="+encodeURIComponent(cat.slug)} className="block px-2.5 py-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all {cat.name} listings →</Link>
+                </div>}
+              </div>;
+            })}
           </nav>
-          {selected && <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
-            <p className="mb-2 px-2 text-xs font-black text-slate-700 dark:text-slate-200">Subcategories of {selected.name}</p>
-            <div className="max-h-80 space-y-1 overflow-y-auto">
-              {selected.subcategories.filter(sub=>statusFor(selected.slug,sub.slug)==="active").map(sub=><Link key={sub.slug} href={"/browse?category="+encodeURIComponent(selected.slug)+"&sub="+encodeURIComponent(sub.slug)} className="flex min-h-10 items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-blue-50 dark:text-white dark:hover:bg-[#1f3b68]"><span>{sub.name}</span><ChevronRight className="h-4 w-4"/></Link>)}
-            </div>
-          </div>}
           {!filtered.length&&<p className="p-3 text-sm text-slate-700 dark:text-slate-200">No matching categories.</p>}
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-[#172945]"><p className="text-xs font-bold text-slate-900 dark:text-white">Shop by marketplace</p><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">{marketRegion==="uk"?"🇬🇧 UK marketplace":"🇺🇸 USA marketplace"}</p></div>
         </aside>
