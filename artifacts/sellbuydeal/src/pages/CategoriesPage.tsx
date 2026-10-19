@@ -41,32 +41,32 @@ const CATEGORY_THEMES = [
 ];
 
 const CATEGORY_ART: Record<string, string> = {
-  "electronics": "/category-art/modern-electronics.svg",
-  "home-kitchen": "/category-art/modern-home-kitchen.svg",
-  "clothing-shoes-jewelry": "/category-art/modern-clothing-shoes-jewelry.svg",
-  "health-household": "/category-art/modern-health-household.svg",
-  "sports-outdoors": "/category-art/modern-sports-outdoors.svg",
-  "toys-games": "/category-art/modern-toys-games.svg",
-  "automotive": "/category-art/modern-automotive.svg",
-  "books": "/category-art/modern-books.svg",
-  "pet-supplies": "/category-art/modern-pet-supplies.svg",
-  "cell-phones": "/category-art/modern-cell-phones.svg",
-  "adult": "/category-art/modern-adult.svg",
-  "digital": "/category-art/modern-digital.svg",
-  "musical-instruments": "/category-art/modern-musical-instruments.svg",
-  "office-products": "/category-art/modern-office-products.svg",
-  "patio-lawn-garden": "/category-art/modern-patio-lawn-garden.svg",
-  "tools-home-improvement": "/category-art/modern-tools-home-improvement.svg",
-  "video-games": "/category-art/modern-video-games.svg",
-  "baby-products": "/category-art/modern-baby-products.svg",
-  "cds-vinyl": "/category-art/modern-cds-vinyl.svg",
-  "arts-crafts-sewing": "/category-art/modern-arts-crafts-sewing.svg",
-  "industrial-scientific": "/category-art/modern-industrial-scientific.svg",
-  "appliances": "/category-art/modern-appliances.svg",
-  "beauty-personal-care": "/category-art/modern-beauty-personal-care.svg",
-  "eco-friendly": "/category-art/modern-eco-friendly.svg",
-  "movies-tv": "/category-art/modern-movies-tv.svg",
-  "jewellery-watches": "/category-art/modern-jewellery-watches.svg",
+  "electronics": "/category-art/electronics.webp",
+  "home-kitchen": "/category-art/home-kitchen.webp",
+  "clothing-shoes-jewelry": "/category-art/clothing-shoes-jewelry.webp",
+  "health-household": "/category-art/health-household.webp",
+  "sports-outdoors": "/category-art/sports-outdoors.webp",
+  "toys-games": "/category-art/toys-games.webp",
+  "automotive": "/category-art/automotive.webp",
+  "books": "/category-art/books.webp",
+  "pet-supplies": "/category-art/pet-supplies.png",
+  "cell-phones": "/category-art/electronics.webp",
+  "adult": "/category-art/adult.png",
+  "digital": "/category-art/digital.png",
+  "musical-instruments": "/category-art/musical-instruments.png",
+  "office-products": "/category-art/office-products.png",
+  "patio-lawn-garden": "/category-art/patio-lawn-garden.png",
+  "tools-home-improvement": "/category-art/tools-home-improvement.png",
+  "video-games": "/category-art/video-games.png",
+  "baby-products": "/category-art/baby-products.webp",
+  "cds-vinyl": "/category-art/cds-vinyl.webp",
+  "arts-crafts-sewing": "/category-art/arts-crafts-sewing.webp",
+  "industrial-scientific": "/category-art/industrial-scientific.webp",
+  "appliances": "/category-art/home-kitchen.webp",
+  "beauty-personal-care": "/category-art/health-household.webp",
+  "eco-friendly": "/category-art/health-household.webp",
+  "movies-tv": "/category-art/electronics.webp",
+  "jewellery-watches": "/category-art/clothing-shoes-jewelry.webp",
 };
 
 // Distinct, lightweight subcategory illustrations. Each card uses its own
@@ -223,12 +223,12 @@ export function CategoriesPage() {
           </section>
           <section aria-label="Popular categories"><div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-xl font-extrabold">Popular categories</h2><button onClick={()=>{setSearch("");setOpenSlug(null)}} className="rounded-full border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 dark:border-blue-800 dark:text-blue-200">View all categories →</button></div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{filtered.filter(cat=>statusFor(cat.slug)==="active").map((cat,i)=><button key={cat.slug} onClick={()=>setOpenSlug(cat.slug)} type="button" className="bz-category-modern-card group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-colors hover:border-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 dark:border-[#304461] dark:bg-[#111f36] dark:hover:border-blue-400">
-              <div className="relative aspect-[5/4] w-full overflow-hidden bg-gradient-to-br from-blue-50 to-purple-100 dark:from-[#1a345a] dark:to-[#22244b]">{CATEGORY_ART[cat.slug]?<img src={CATEGORY_ART[cat.slug]} alt="" loading="lazy" className="h-full w-full object-cover" />:<div className={`grid h-full place-items-center bg-gradient-to-br ${CATEGORY_THEMES[i%CATEGORY_THEMES.length]}`}><CategoryIcon name={cat.icon} className="h-12 w-12 text-white"/></div>}</div>
+              <div className="relative aspect-[5/4] w-full overflow-hidden bg-[#f6f8fc] dark:bg-[#ebeff7]">{CATEGORY_ART[cat.slug]?<img src={CATEGORY_ART[cat.slug]} alt={`${cat.name} products`} loading="lazy" decoding="async" className="h-full w-full object-contain p-3 sm:p-4" />:<div className={`grid h-full place-items-center bg-gradient-to-br ${CATEGORY_THEMES[i%CATEGORY_THEMES.length]}`}><CategoryIcon name={cat.icon} className="h-12 w-12 text-white"/></div>}</div>
               <div className="flex min-h-[68px] flex-1 flex-col justify-center px-3 py-2"><h3 className="text-sm font-extrabold leading-tight text-slate-950 dark:text-white">{cat.name}</h3><p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{catCount(cat.slug)>0?`${catCount(cat.slug)} listings`:`${cat.subcategories.length} subcategories`}</p></div></button>)}</div>
             {!activeCategories.length&&<p className="rounded-xl bg-white p-5 text-slate-700 dark:bg-[#111f36] dark:text-slate-200">No active categories match your search.</p>}
           </section>
           {featuredCategory&&<section aria-label="Featured subcategories"><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-extrabold">Featured subcategories {selected ? `in ${selected.name}` : ""}</h2><Link href={`/browse?category=${encodeURIComponent(featuredCategory.slug)}`} className="text-sm font-bold text-blue-700 dark:text-blue-200">Browse all →</Link></div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{curated.map((sub,i)=>{const art=subcategoryArtwork(featuredCategory.slug,sub.name,i);return <Link key={sub.slug} href={`/browse?category=${encodeURIComponent(featuredCategory.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="bz-category-modern-card flex min-w-0 flex-col items-center rounded-xl border border-slate-200 bg-white p-3 text-center transition-colors hover:border-blue-500 dark:border-[#304461] dark:bg-[#111f36]"><div className="mb-2 grid aspect-square w-full max-w-[140px] place-items-center rounded-xl text-5xl" style={{background:`linear-gradient(135deg,${art.colors[0]}22,${art.colors[1]}55)`}} aria-hidden="true">{art.subject}</div><span className="text-sm font-bold text-slate-950 dark:text-white">{sub.name}</span></Link>})}</div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{curated.map((sub)=>{return <Link key={sub.slug} href={`/browse?category=${encodeURIComponent(featuredCategory.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="bz-category-modern-card flex min-w-0 flex-col items-center rounded-xl border border-slate-200 bg-white p-3 text-center transition-colors hover:border-blue-500 dark:border-[#304461] dark:bg-[#111f36]"><div className="mb-2 grid aspect-[5/4] w-full place-items-center overflow-hidden rounded-xl bg-[#f6f8fc] dark:bg-[#ebeff7]"><img src={CATEGORY_ART[featuredCategory.slug]} alt="" loading="lazy" decoding="async" className="h-full w-full object-contain p-3" /></div><span className="text-sm font-bold text-slate-950 dark:text-white">{sub.name}</span></Link>})}</div>
           </section>}
           <section aria-label="Marketplace listings"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-extrabold">{categoryListings.length&&featuredCategory?`Popular items in ${featuredCategory.name}`:"Explore marketplace listings"}</h2><Link href={featuredCategory?`/browse?category=${encodeURIComponent(featuredCategory.slug)}`:"/browse"} className="text-sm font-bold text-blue-700 dark:text-blue-200">View listings →</Link></div>
             {featuredLoading?<p role="status" className="py-8 text-sm text-slate-700 dark:text-slate-200">Loading marketplace listings…</p>:products.length?<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{products.map(item=><Link key={item.id} href={`/listing/${item.public_id??item.publicId??item.id}`} className="bz-category-modern-card overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#304461] dark:bg-[#111f36]"><div className="aspect-[4/3] bg-slate-100 p-3 dark:bg-[#1b3052]">{item.image?<img src={item.image} alt="" loading="lazy" className="h-full w-full object-contain"/>:<div className="grid h-full place-items-center text-slate-500">No photo</div>}</div><div className="p-3"><h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold text-slate-950 dark:text-white">{item.title}</h3><p className="mt-2 text-base font-extrabold text-slate-950 dark:text-white">{formatPrice(Number(item.price))}</p></div></Link>)}</div>:<div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#304461] dark:bg-[#111f36]"><p className="text-sm text-slate-700 dark:text-slate-200">No products are currently available. Explore categories or browse all listings.</p><Link href="/browse" className="mt-2 inline-block font-bold text-blue-700 dark:text-blue-300">Browse marketplace →</Link></div>}
