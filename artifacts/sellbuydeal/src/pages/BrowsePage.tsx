@@ -41,6 +41,7 @@ interface ApiListing {
   promotions?: string[];
   publicId?: string | null;
   public_id?: string | null;
+  marketplaceRegion?: string | null;
   shipOrigin?: string | null;
   shipOriginOther?: string | null;
   shipZone?: string | null;
@@ -66,7 +67,7 @@ function mapApiListing(l: ApiListing): typeof ALL_PRODUCTS[0] & { subcategory?: 
     views: l.views ?? 0,
     watchers: l.watchers ?? 0,
     verified: false,
-    location: l.shipOriginOther || l.shipOrigin || "UK",
+    location: l.shipOriginOther || l.shipOrigin || (l.marketplaceRegion === "us" ? "USA" : l.marketplaceRegion === "uk" ? "UK" : "Location not specified"),
     listed: l.created_at ?? new Date().toISOString(),
     seller: { name: l.seller_name ?? "Seller", verified: false, rating: 4.5, reviews: 0 },
     description: "",
