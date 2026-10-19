@@ -1,6 +1,6 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { AdminDemoCreatorPage } from "@/pages/admin/AdminDemoCreatorPage";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk, useAuth } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 
@@ -312,6 +312,26 @@ function Home() {
   );
 }
 
+class ListingErrorBoundary extends React.Component<{children: React.ReactNode}, {failed:boolean}> {
+  state = {failed:false};
+  static getDerivedStateFromError() { return {failed:true}; }
+  componentDidCatch(error: Error) { console.error("Listing page render failed:", error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Navbar />
+      <main className="mx-auto max-w-xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">We couldn't display this listing</h1>
+        <p className="mt-3 text-slate-700 dark:text-slate-200">Please try again. Your cart and account are safe.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button onClick={()=>window.location.reload()} className="rounded-xl bg-orange-600 px-5 py-3 font-bold text-white">Retry listing</button>
+          <a href="/browse" className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-900 dark:text-white">Browse products</a>
+        </div>
+      </main>
+    </div>;
+  }
+}
+
 // ─── Router ───────────────────────────────────────────────────────────────────
 
 const queryClient = new QueryClient();
@@ -340,7 +360,7 @@ function Router() {
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
       <Route path="/browse" component={BrowsePage} />
       <Route path="/search" component={BrowsePage} />
-      <Route path="/listing/:id" component={ListingPage} />
+      <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/bundle">{() => <FeatureGate feature="bundles" name="Bundles"><BundlePage /></FeatureGate>}</Route>
       <Route path="/classifieds">{() => <FeatureGate feature="classifieds" name="Classifieds"><ClassifiedsPage /></FeatureGate>}</Route>
