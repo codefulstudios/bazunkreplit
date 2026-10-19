@@ -146,6 +146,7 @@ export function Navbar() {
   const [rewardsPopover, setRewardsPopover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [messageCenterOpen, setMessageCenterOpen] = useState(false);
+  useEffect(() => { const openInbox = () => setMessageCenterOpen(true); window.addEventListener("bazunk-open-inbox", openInbox); return () => window.removeEventListener("bazunk-open-inbox", openInbox); }, []);
   const [location, setLocation] = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
