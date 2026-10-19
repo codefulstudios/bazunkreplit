@@ -1153,3 +1153,10 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bz-loader-preview .bz-loader-ring{inset:6px;border-width:5px}
 .bz-loader-preview .bz-loader-inner{width:52px;height:52px;background:transparent;box-shadow:none}
 .bz-loader-preview .bz-loader-inner b{font-size:36px;color:#f97316}
+
+/* Categories redesign: stable card geometry with paired theme surfaces. */
+.bazunk-categories .grid > button{min-width:0}
+.bazunk-categories .grid > button img{display:block}
+.bazunk-categories .grid > button:focus-visible,.bazunk-categories aside button:focus-visible{outline:3px solid #f97316;outline-offset:2px}
+.bazunk-categories .grid > button{transform:none!important}
+@media(max-width:1023px){.bazunk-categories aside{position:static;max-height:280px;overflow-y:auto}}
