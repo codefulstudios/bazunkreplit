@@ -1,4 +1,6 @@
 import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDiscovery";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
