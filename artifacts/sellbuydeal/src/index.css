@@ -1160,3 +1160,13 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bazunk-categories .grid > button:focus-visible,.bazunk-categories aside button:focus-visible{outline:3px solid #f97316;outline-offset:2px}
 .bazunk-categories .grid > button{transform:none!important}
 @media(max-width:1023px){.bazunk-categories aside{position:static;max-height:280px;overflow-y:auto}}
+
+/* Category navigation: high contrast in both themes, including coming-soon entries. */
+.bz-category-redesign .bz-category-sidebar nav button{font-size:14px!important;line-height:1.4!important;opacity:1!important}
+.bz-category-redesign .bz-category-sidebar nav button:not([aria-current="page"]){color:#243248!important}
+.dark .bz-category-redesign .bz-category-sidebar nav button:not([aria-current="page"]){color:#e2e8f0!important}
+.bz-category-redesign .bz-category-sidebar nav button:disabled{color:#53657c!important;opacity:1!important}
+.dark .bz-category-redesign .bz-category-sidebar nav button:disabled{color:#b6c6dc!important;opacity:1!important}
+.bz-category-redesign .bz-category-sidebar nav button[aria-current="page"]{color:#fff!important}
+.bz-category-redesign .bz-category-sidebar nav button:focus-visible{outline:3px solid #fb923c;outline-offset:2px}
+.bz-category-redesign .bz-category-modern-card:hover{transform:none!important}
