@@ -325,13 +325,24 @@ router.post("/stripe/confirm-cart-payment", async (req, res) => {
       const result = await fulfillCartSession(sessionId, email);
       if (result.status === "not_paid") { res.status(400).json({ error: "Payment not completed" }); return; }
       if (result.status === "email_mismatch") { res.status(403).json({ error: "Email mismatch" }); return; }
+      // A verified paid session closes matching abandoned-checkout candidates.
+      // Recovery tracking is optional and must not make fulfilment fail.
+      try {
+        {
+          const registry=(await db.execute(sql`SELECT to_regclass('public.checkout_recovery') AS name`)).rows[0]?.name;
+          if(registry) await db.execute(sql`UPDATE checkout_recovery SET status='completed',updated_at=NOW()
+           WHERE LOWER(buyer_email)=LOWER(${paidSession.customer_email || paidSession.customer_details?.email || paidSession.client_reference_id || email})
+           AND status='open'`);
+        }
+      } catch(err) { logger.warn({err},"Could not close checkout recovery record"); }
+
     } else { res.status(400).json({error:"A paid checkout session is required."}); return; }
 
 
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, "Failed to confirm cart payment");
-    res.status(500).json({ error: "Failed to confirm payment", message: String(err) });
+    res.status(500).json({ error: "Payment verification is temporarily unavailable. Your payment may have succeeded; check your order history before trying again." });
   }
 });
 

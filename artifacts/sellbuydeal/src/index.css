@@ -68,6 +68,58 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Shared Bazunk semantic palette — storefront, seller dashboard and admin.
+   Prefer these variables / utility classes over raw colour pairs for new UI. */
+:root {
+  --bz-surface-page:#f5f8fd;
+  --bz-surface-card:#ffffff;
+  --bz-surface-raised:#eef3fa;
+  --bz-surface-field:#ffffff;
+  --bz-text-primary:#172a49;
+  --bz-text-secondary:#405574;
+  --bz-text-muted:#526782;
+  --bz-border:#bdcadb;
+  --bz-action-primary:#c84806;
+  --bz-action-primary-text:#ffffff;
+  --bz-action-secondary:#263f69;
+  --bz-action-secondary-text:#ffffff;
+  --bz-action-hover:#a83b05;
+  --bz-focus:#2563eb;
+}
+.dark {
+  --bz-surface-page:#0b1426;
+  --bz-surface-card:#192b47;
+  --bz-surface-raised:#243956;
+  --bz-surface-field:#243956;
+  --bz-text-primary:#ffffff;
+  --bz-text-secondary:#d6e4f5;
+  --bz-text-muted:#c2d4ed;
+  --bz-border:#7188aa;
+  --bz-action-primary:#c84806;
+  --bz-action-primary-text:#ffffff;
+  --bz-action-secondary:#334d73;
+  --bz-action-secondary-text:#ffffff;
+  --bz-action-hover:#a83b05;
+  --bz-focus:#93c5fd;
+}
+@layer components {
+  .bz-surface-page {background-color:var(--bz-surface-page);color:var(--bz-text-primary);}
+  .bz-surface-card {background-color:var(--bz-surface-card);color:var(--bz-text-primary);border:1px solid var(--bz-border);}
+  .bz-surface-raised {background-color:var(--bz-surface-raised);color:var(--bz-text-primary);}
+  .bz-text-primary {color:var(--bz-text-primary);}
+  .bz-text-secondary {color:var(--bz-text-secondary);}
+  .bz-text-muted {color:var(--bz-text-muted);}
+  .bz-border {border-color:var(--bz-border);}
+  .bz-field {background-color:var(--bz-surface-field);border:1px solid var(--bz-border);color:var(--bz-text-primary);color-scheme:light;}
+  .dark .bz-field {color-scheme:dark;}
+  .bz-field::placeholder {color:var(--bz-text-muted);opacity:1;}
+  .bz-action-primary {background-color:var(--bz-action-primary);color:var(--bz-action-primary-text);border:1px solid transparent;}
+  .bz-action-primary:not(:disabled):hover {background-color:var(--bz-action-hover);}
+  .bz-action-secondary {background-color:var(--bz-action-secondary);color:var(--bz-action-secondary-text);border:1px solid var(--bz-border);}
+  .bz-action-secondary:not(:disabled):hover {filter:brightness(1.12);}
+  :is(.bz-action-primary,.bz-action-secondary,.bz-field):focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);
@@ -764,3 +816,357 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
     min-height: 36px;
   }
 }
+
+
+/* Dark-mode content legibility — content only, never recolour CTAs, badges or
+   semantic warning/success chips. Tokens are defined above for every app area. */
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-300"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-400"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-500"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-400"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-500"] {
+  color: var(--bz-text-muted);
+  opacity: 1;
+}
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-600"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-gray-700"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-600"],
+.dark :where(main, [role="dialog"], .bazunk-admin) :is(p,span,small,label,li,td,th,dd,dt,figcaption)[class~="text-slate-700"] {
+  color: var(--bz-text-secondary);
+}
+/* Default table content stays clear unless a component explicitly supplies a
+   semantic status colour. These rules do not change text on action buttons. */
+.dark :where(main, [role="dialog"]) :is(table td,table th) {
+  text-shadow: none;
+}
+.dark :where(main, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]),textarea)::placeholder {
+  color: var(--bz-text-muted);
+  opacity: 1;
+}
+.dark :where(main, [role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select):not(:disabled) {
+  caret-color: var(--bz-text-primary);
+}
+/* Light surfaces deliberately retained inside dark pages must keep dark ink. */
+.dark :where(main, [role="dialog"]) :is(.bz-light-surface) {
+  color: #172a49;
+}
+.dark :where(main, [role="dialog"]) .bz-light-surface :is(p,span,small,label,li,td,th) {
+  color: inherit;
+}
+
+
+/* Dark-mode text legibility. Restrict neutral text corrections to readable content,
+   not buttons, badges, alerts, or intentionally coloured foregrounds. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-400"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-400"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-500"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-500"]:not(:is(button *,[role="button"] *,[class*="bg-red-"] *,[class*="bg-amber-"] *)) {
+  color:var(--bz-text-muted);
+  opacity:1;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-600"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-600"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-gray-700"]:not(:is(button *,[role="button"] *)),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(p,span,small,label,li,td,th,dt,dd,figcaption)[class~="text-slate-700"]:not(:is(button *,[role="button"] *)) {
+  color:var(--bz-text-secondary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(input,textarea)::placeholder {
+  color:var(--bz-text-muted);
+  opacity:1;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(input,textarea):disabled::placeholder {
+  color:var(--bz-text-muted);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(table, [role="table"]) :is(th,[role="columnheader"]) {
+  color:var(--bz-text-primary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(table, [role="table"]) :is(td,[role="cell"]) {
+  color:var(--bz-text-secondary);
+}
+/* Scoped opt-in semantics for future UI, including seller dashboard summary figures. */
+.bz-figure {color:var(--bz-text-primary);font-weight:700;}
+.bz-help-text {color:var(--bz-text-secondary);}
+.bz-caption {color:var(--bz-text-muted);}
+
+
+/* Shared control contrast: avoid white-on-white and pale-on-pale interactive states.
+   Applies to storefront, dashboard, and admin without overriding branded solid buttons. */
+@layer components {
+  .bz-action-primary, .bz-action-secondary {
+    color-scheme:light; font-weight:700; transition:background-color .15s,border-color .15s,color .15s;
+  }
+  .dark .bz-action-primary,.dark .bz-action-secondary {color-scheme:dark;}
+  .bz-action-primary:disabled,.bz-action-secondary:disabled {opacity:.68;cursor:not-allowed;filter:none;}
+  .bz-action-primary[aria-busy="true"],.bz-action-secondary[aria-busy="true"] {cursor:progress;}
+  .bz-action-primary[aria-pressed="true"],.bz-action-secondary[aria-pressed="true"] {outline:2px solid var(--bz-focus);outline-offset:1px;}
+  .bz-select {background:var(--bz-surface-field);color:var(--bz-text-primary);border:1px solid var(--bz-border);}
+  .bz-select :is(option,optgroup) {background:var(--bz-surface-card);color:var(--bz-text-primary);}
+  .bz-select:focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
+}
+/* Explicit light buttons must carry a dark foreground even if they inherit text-white. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white\/90.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a.bg-white).bg-white\/95.text-white {
+  background-color:var(--bz-surface-card);
+  color:var(--bz-text-primary);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-100.text-white,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-slate-100.text-white {
+  background-color:var(--bz-surface-raised);
+  color:var(--bz-text-primary);
+}
+/* Standard inactive neutral buttons, including hover, consistently read on dark panels. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-white:not([class*="dark:bg-"]),
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-50:not([class*="dark:bg-"]) {
+  background-color:var(--bz-surface-raised);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-white:not([class*="dark:bg-"]):hover,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],a).bg-gray-50:not([class*="dark:bg-"]):hover {
+  background-color:#354d70;
+  color:#fff;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],[role="option"],[role="menuitem"]):disabled,
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(button,[role="button"],[role="option"],[role="menuitem"])[aria-disabled="true"] {
+  opacity:.7;
+  cursor:not-allowed;
+}
+/* Native and ARIA dropdown text/selection must be distinct from their menu surfaces. */
+.dark :is(main,[role="dialog"],.bazunk-admin) :is(select,[role="combobox"],[role="listbox"]) {
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) select option,
+.dark :is(main,[role="dialog"],.bazunk-admin) select optgroup {
+  background-color:var(--bz-surface-card)!important;
+  color:var(--bz-text-primary)!important;
+}
+.dark :is(main,[role="dialog"],.bazunk-admin) :is([role="option"],[role="menuitem"])[data-highlighted],
+.dark :is(main,[role="dialog"],.bazunk-admin) :is([role="option"],[role="menuitem"])[aria-selected="true"] {
+  background-color:#334d73;
+  color:#fff;
+}
+
+
+/* Shared readable menus and inputs. Avoid restyling third-party portals outside Bazunk. */
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(select,[role="combobox"],[role="listbox"],[cmdk-input]) {
+  background-color:var(--bz-surface-field);
+  color:var(--bz-text-primary);
+  border-color:var(--bz-border);
+  color-scheme:dark;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(select,[role="combobox"],[role="listbox"]):focus-visible {
+  outline:3px solid var(--bz-focus);outline-offset:2px;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"],[cmdk-item])[data-highlighted],
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"],[cmdk-item])[data-selected="true"],
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="option"],[role="menuitem"])[aria-selected="true"] {
+  background-color:#334d73;color:#fff;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea)[aria-invalid="true"] {
+  border:2px solid #fca5a5;
+  color:var(--bz-text-primary);
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input[type="checkbox"],input[type="radio"]) {
+  accent-color:#ea580c;
+  outline-offset:3px;
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is(input[type="checkbox"],input[type="radio"]):focus-visible {
+  outline:3px solid var(--bz-focus);
+}
+.dark :is(main,.bazunk-admin,[role="dialog"]) :is([role="alert"],[aria-live="assertive"]) {
+  opacity:1;
+}
+/* Opt-in semantics for metric cards, empty states and status tiles; no global
+   recolouring of branded warning/error backgrounds. */
+.bz-metric-card,.bz-empty-state {
+  background:var(--bz-surface-card);color:var(--bz-text-primary);
+  border:1px solid var(--bz-border);
+}
+.bz-metric-card .bz-metric-value {color:var(--bz-text-primary);font-weight:800;}
+.bz-metric-card .bz-metric-label,.bz-empty-state .bz-help-text {color:var(--bz-text-secondary);}
+.dark .bz-status-success {background:#124b3b;color:#d1fae5;border-color:#348769;}
+.dark .bz-status-warning {background:#503616;color:#ffefbc;border-color:#a67b36;}
+.dark .bz-status-error {background:#522530;color:#ffe4e6;border-color:#aa5969;}
+
+/* Readable admin/seller data tables: preserve column widths; scrolling is local. */
+.bz-table-scroll {max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;}
+.bz-data-table {width:100%;min-width:780px;border-collapse:separate;border-spacing:0;font-size:13px;line-height:1.5;}
+.bz-data-table :is(th,td) {padding:12px 14px;vertical-align:middle;text-align:left;}
+.bz-data-table th {font-weight:750;white-space:nowrap;background:var(--bz-surface-raised);color:var(--bz-text-primary);}
+.bz-data-table td {color:var(--bz-text-secondary);border-bottom:1px solid var(--bz-border);}
+.bz-data-table tbody tr:nth-child(even){background-color:color-mix(in srgb,var(--bz-surface-raised) 38%,transparent);}
+.bz-data-table tbody tr:hover{background-color:color-mix(in srgb,var(--bz-surface-raised) 72%,transparent);}
+.bz-data-table :is(td,th)[data-long-value]{min-width:180px;max-width:340px;overflow-wrap:anywhere;white-space:normal;}
+.bz-data-table td[data-actions]{min-width:160px;white-space:nowrap;}
+.bz-data-table td[data-actions] :is(button,a){min-height:34px;}
+.bz-data-table tbody tr:focus-within{outline:2px solid var(--bz-focus);outline-offset:-2px;}
+/* Overlay surfaces and content inherit the shared dark palette, including portals. */
+.dark :is([data-radix-popper-content-wrapper] [role="dialog"],[data-radix-menu-content], [data-radix-select-content], [role="alertdialog"]) {
+  color:var(--bz-text-primary);
+}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(h1,h2,h3,[data-dialog-title]) {color:var(--bz-text-primary);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(label,legend) {color:var(--bz-text-secondary);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(input,textarea,select) {border-color:var(--bz-border);}
+.dark :is([role="dialog"],[role="alertdialog"]) :is(button,a):focus-visible {outline:3px solid var(--bz-focus);outline-offset:2px;}
+
+/* Storefront contrast system: independent of legacy dark-mode palette remapping.
+   Opt in with bz-store-card on public product, trust and promotional cards. */
+.bz-store-card { background-color:#fff !important; color:#172033 !important; border-color:#d3dce8; }
+.bz-store-card .bz-store-title { color:#172033 !important; }
+.bz-store-card .bz-store-description { color:#475569 !important; }
+.bz-store-card .bz-store-action { color:#9a3412 !important; }
+.bz-store-card .bz-store-tag { background-color:#ffedd5 !important; color:#9a3412 !important; }
+.dark .bz-store-card { background-color:#17243a !important; color:#f8fafc !important; border-color:#46546b; }
+.dark .bz-store-card .bz-store-title { color:#f8fafc !important; }
+.dark .bz-store-card .bz-store-description { color:#d1d9e6 !important; }
+.dark .bz-store-card .bz-store-action { color:#fdba74 !important; }
+.dark .bz-store-card .bz-store-tag { background-color:#374358 !important; color:#fed7aa !important; }
+.bz-store-feature-icon { background-color:#f26b21 !important; color:#fff !important; }
+.bz-store-feature-icon svg { color:#fff !important; }
+
+
+/* Shared public marketplace card contract — theme-paired surfaces and explicit readable text. */
+.bz-product-card, .dark .bz-product-card {
+  border-style:solid;
+  overflow:hidden;
+}
+.bz-product-card {background:#fff !important;color:#0f172a !important;border-color:#cbd5e1;}
+.bz-product-card :is(h2,h3,.bz-store-title) {color:#0f172a !important;}
+.bz-product-card :is(.bz-store-description,[data-product-meta]) {color:#475569 !important;}
+.dark .bz-product-card {background:#17243a !important;color:#f8fafc !important;border-color:#52627b;}
+.dark .bz-product-card :is(h2,h3,.bz-store-title) {color:#f8fafc !important;}
+.dark .bz-product-card :is(.bz-store-description,[data-product-meta]) {color:#d7e0ed !important;}
+.bz-product-card img {max-width:100%;}
+/* Storefront reassurance and description text should never fade below readable contrast. */
+.bz-store-card .bz-store-description {font-size:0.875rem;line-height:1.45;}
+.dark .bz-store-card .bz-store-description {color:#d7e0ed !important;}
+
+
+/* Shared readability floor. Scoped to ordinary marketplace surface text; leave intentional text-on-brand buttons and badges untouched. */
+:root { --bz-readable-muted:#475569; }
+.dark { --bz-readable-muted:#d1d9e6; }
+.bz-store-card :is(p,span,small) { text-wrap:pretty; }
+.bz-product-card :is(h2,h3,.bz-store-title) {font-size:1rem;line-height:1.45;font-weight:600;}
+.bz-product-card :is(.bz-store-description,[data-product-meta]) {font-size:.875rem;line-height:1.45;}
+:where(main) :is(input,textarea,select) {font-size:max(1rem, 16px);}
+:where(main) :is(input,textarea)::placeholder {opacity:1;color:#64748b;}
+.dark :where(main) :is(input,textarea)::placeholder {color:#cbd5e1;}
+:where(main) :is(a,button,input,select,textarea):focus-visible {outline:2px solid #f26b21;outline-offset:2px;}
+
+
+/* Category cards: pair every label foreground with its actual footer surface.
+   In particular, never inherit white text on the light image-card caption. */
+.bz-category-card .bz-category-label,
+.dark .bz-category-card .bz-category-label {background-color:#17243a !important;color:#fff !important;}
+.bz-category-card .bz-category-label span,
+.dark .bz-category-card .bz-category-label span {color:#fff !important;opacity:1 !important;}
+.bz-category-feature :is(h3,p,span),
+.dark .bz-category-feature :is(h3,p,span) {color:#fff !important;opacity:1 !important;}
+
+/* Six reduced-motion-aware Bazunk loading animations. Shared across selected routes. */
+.bz-loader{--loader-orange:#f97316;--loader-blue:#2879ef;position:relative;width:90px;height:90px;display:grid;place-items:center;color:var(--loader-orange)}
+.bz-loader-ring{position:absolute;inset:7px;border:6px solid #334155;border-top-color:var(--loader-orange);border-right-color:var(--loader-blue);border-radius:50%;animation:bz-loader-spin 1.25s linear infinite}
+.bz-loader-inner{display:grid;place-items:center;width:55px;height:55px;border-radius:16px;color:#f97316}
+.bz-loader--rocket .bz-loader-ring{border-style:dotted;border-width:4px;animation-duration:2.3s}
+.bz-loader--rocket .bz-loader-inner{transform:rotate(-35deg);color:#60a5fa;animation:bz-loader-lift 1.8s ease-in-out infinite}
+.bz-loader--bag .bz-loader-ring{border-left-color:#60a5fa}
+.bz-loader--tag .bz-loader-ring{border-width:0;border-top:6px dotted #f97316;border-bottom:6px dotted #60a5fa}
+.bz-loader--tag .bz-loader-inner{animation:bz-loader-pulse 1.5s ease-in-out infinite}
+.bz-loader--cart .bz-loader-ring{filter:drop-shadow(0 0 8px #f9731660);animation-duration:1.65s}
+.bz-loader--cart .bz-loader-inner{color:#60a5fa}
+.bz-loader--mark .bz-loader-ring{border-top-color:transparent;border-bottom-color:transparent;animation-duration:2s}
+.bz-loader--mark .bz-loader-inner{animation:bz-loader-pulse 1.8s ease-in-out infinite}
+.bz-loader-orbit{position:absolute;inset:2px;border-radius:50%;border:2px dotted #60a5fa;animation:bz-loader-spin 3s linear infinite}
+@keyframes bz-loader-spin{to{transform:rotate(360deg)}}
+@keyframes bz-loader-pulse{50%{transform:scale(.85);opacity:.65}}
+@keyframes bz-loader-lift{50%{transform:rotate(-35deg) translateY(-6px)}}
+@media(prefers-reduced-motion:reduce){.bz-loader *{animation:none!important}}
+
+/* Slightly more relaxed marketplace loader cycle; do not delay completed requests. */
+.bz-loader-ring{animation-duration:2.2s}
+.bz-loader--rocket .bz-loader-ring{animation-duration:3.4s}
+.bz-loader--rocket .bz-loader-inner{animation-duration:2.5s}
+.bz-loader--tag .bz-loader-inner,.bz-loader--mark .bz-loader-inner{animation-duration:2.4s}
+.bz-loader--cart .bz-loader-ring{animation-duration:2.7s}
+.bz-loader--mark .bz-loader-ring{animation-duration:3s}
+.bz-loader-orbit{animation-duration:4.2s}
+
+
+/* Buyer Protection seller-info modal: protect white-on-navy content from
+   global dark-mode neutral utility overrides (modal is portalless). */
+.buyer-protection-info-modal .buyer-protection-info-body,
+.buyer-protection-info-modal .buyer-protection-info-body :is(p,h3,li,span) {
+  color:#f8fafc !important;
+}
+.buyer-protection-info-modal .buyer-protection-info-body :is(.text-sky-200,.text-emerald-200) {
+  color:#dbeafe !important;
+}
+
+
+/* Full-screen marketplace loader: consistent across buyer and admin views. */
+.bz-loader-overlay {
+  position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;
+  background:rgba(3,10,28,.84);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  color:#fff;padding:20px;isolation:isolate;
+}
+.bz-loader-overlay-content {display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;max-width:calc(100vw - 40px);}
+.bz-loader-overlay .bz-loader {width:clamp(175px,22vw,260px);height:clamp(175px,22vw,260px);--loader-orange:#8b5cf6;--loader-blue:#45baff;filter:drop-shadow(0 0 22px #2563eb88);}
+.bz-loader-overlay .bz-loader-ring {inset:8px;border-width:12px;border-color:#30437188;border-top-color:#45baff;border-right-color:#8b5cf6;border-bottom-color:#2563eb;}
+.bz-loader-overlay .bz-loader-inner {width:55%;height:55%;border-radius:28%;color:#68bcff;background:#101e42;box-shadow:inset 0 0 25px #2859cc44;}
+.bz-loader-overlay .bz-loader-inner svg {width:55%;height:55%;}
+.bz-loader-overlay .bz-loader-inner b {font-size:clamp(54px,7vw,88px);background:linear-gradient(135deg,#53c5ff,#9a6aff);background-clip:text;-webkit-background-clip:text;color:transparent;}
+.bz-loader-title {font-size:clamp(22px,3.2vw,34px);font-weight:800;color:#fff;line-height:1.2;}
+.bz-loader-subtitle {font-size:clamp(14px,1.8vw,17px);color:#dae7ff;}
+.bz-loader-dots {display:flex;gap:12px;margin-top:8px;}
+.bz-loader-dots i {width:11px;height:11px;border-radius:50%;background:#5a93ff;animation:bz-loader-pulse 1.4s ease-in-out infinite;}
+.bz-loader-dots i:nth-child(2){animation-delay:.2s;background:#55c7ff;}
+.bz-loader-dots i:nth-child(3){animation-delay:.4s;}
+@media(prefers-reduced-motion:reduce){.bz-loader-overlay *{animation:none!important;}}
+
+
+/* Listing detail redesign: paired colour surfaces in both themes. */
+.listing-details-section > div:not(:first-child),.listing-delivery-section > div:not(:first-child){color:#334155}
+.dark .listing-details-section,.dark .listing-delivery-section,.dark .listing-purchase-section{color:#f8fafc}
+.dark .listing-details-section .text-gray-900,.dark .listing-details-section .text-gray-800,
+.dark .listing-delivery-section .text-gray-900,.dark .listing-purchase-section .text-gray-900,
+.dark .listing-purchase-section .text-gray-800{color:#f8fafc!important}
+.dark .listing-details-section .text-gray-600,.dark .listing-details-section .text-gray-500,
+.dark .listing-purchase-section .text-gray-500,.dark .listing-delivery-section .text-gray-600{color:#cbd5e1!important}
+.dark .listing-details-section .bg-white,.dark .listing-purchase-section .bg-white,
+.dark .listing-delivery-section .bg-white{background-color:#111f36!important}
+.dark .listing-details-section .bg-blue-50,.dark .listing-details-section .bg-violet-50,
+.dark .listing-details-section .bg-orange-50,.dark .listing-details-section .bg-emerald-50,
+.dark .listing-delivery-section .bg-cyan-50,.dark .listing-delivery-section .bg-indigo-50,
+.dark .listing-delivery-section .bg-violet-50,.dark .listing-delivery-section .bg-emerald-50,
+.dark .listing-purchase-section .bg-orange-50,.dark .listing-purchase-section .bg-blue-50{background-color:#1b3052!important}
+.dark .listing-details-section .text-gray-600,.dark .listing-details-section .text-gray-900,
+.dark .listing-delivery-section .text-gray-900,.dark .listing-purchase-section .text-gray-900{opacity:1}
+.listing-details-section p,.listing-delivery-section p,.listing-purchase-section p{line-height:1.55}
+@media(max-width:639px){.listing-details-section .p-6{padding:1rem}.listing-details-section .w-36{width:7rem}.listing-purchase-section .text-3xl{font-size:1.75rem}}
+
+/* Feature Toggles shows small nonblocking previews, never a full-screen loading overlay. */
+.bz-loader-preview{position:relative!important;inset:auto!important;z-index:auto!important;width:100%;min-height:112px;display:flex;align-items:center;justify-content:center;background:transparent!important;backdrop-filter:none!important;pointer-events:none;isolation:auto!important}
+.bz-loader-preview .bz-loader-overlay-content{gap:0}
+.bz-loader-preview .bz-loader{width:76px;height:76px;filter:none}
+.bz-loader-preview .bz-loader-ring{inset:6px;border-width:5px}
+.bz-loader-preview .bz-loader-inner{width:52px;height:52px;background:transparent;box-shadow:none}
+.bz-loader-preview .bz-loader-inner b{font-size:36px;color:#f97316}
+
+/* Categories redesign: stable card geometry with paired theme surfaces. */
+.bazunk-categories .grid > button{min-width:0}
+.bazunk-categories .grid > button img{display:block}
+.bazunk-categories .grid > button:focus-visible,.bazunk-categories aside button:focus-visible{outline:3px solid #f97316;outline-offset:2px}
+.bazunk-categories .grid > button{transform:none!important}
+@media(max-width:1023px){.bazunk-categories aside{position:static;max-height:280px;overflow-y:auto}}
+
+/* Category navigation: high contrast in both themes, including coming-soon entries. */
+.bz-category-redesign .bz-category-sidebar nav button{font-size:14px!important;line-height:1.4!important;opacity:1!important}
+.bz-category-redesign .bz-category-sidebar nav button:not([aria-current="page"]){color:#243248!important}
+.dark .bz-category-redesign .bz-category-sidebar nav button:not([aria-current="page"]){color:#e2e8f0!important}
+.bz-category-redesign .bz-category-sidebar nav button:disabled{color:#53657c!important;opacity:1!important}
+.dark .bz-category-redesign .bz-category-sidebar nav button:disabled{color:#b6c6dc!important;opacity:1!important}
+.bz-category-redesign .bz-category-sidebar nav button[aria-current="page"]{color:#fff!important}
+.bz-category-redesign .bz-category-sidebar nav button:focus-visible{outline:3px solid #fb923c;outline-offset:2px}
+.bz-category-redesign .bz-category-modern-card:hover{transform:none!important}

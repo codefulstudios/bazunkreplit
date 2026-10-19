@@ -78,6 +78,8 @@ const SELL_OPTIONS: Array<{
 ];
 
 const MORE_NAV = [
+  { href: "/rewards",          label: "Rewards", icon: Trophy, color: "text-amber-700", bg: "bg-amber-50" },
+  { href: "/live",             label: "Live Shopping", icon: Radio, color: "text-red-600", bg: "bg-red-50" },
   { href: "/auctions",          label: "Auctions",         icon: Gavel,           color: "text-amber-600",   bg: "bg-amber-50" },
   { href: "/flash-sales",       label: "Flash Sales",      icon: Flame,           color: "text-red-500",     bg: "bg-red-50" },
   { href: "/classifieds",       label: "Classifieds",      icon: Newspaper,       color: "text-purple-600",  bg: "bg-purple-50" },
@@ -89,15 +91,15 @@ const MORE_NAV = [
 ];
 
 const MOBILE_NAV_LINKS = [
+  { href: "/",            label: "Home",        icon: Home },
+  { href: "/browse",      label: "Shop",        icon: Grid3X3 },
+  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/rewards", label: "Daily Rewards", icon: Gift },
   { href: "/dashboard?section=credits", label: "Credits & Milestones", icon: Trophy },
   { href: "/promotions", label: "Promotions", icon: Zap },
-  { href: "/",            label: "Home",        icon: Home },
-  { href: "/browse",      label: "Browse",      icon: Grid3X3 },
   { href: "/auctions",    label: "Auctions",    icon: Gavel },
   { href: "/flash-sales", label: "Flash Sales", icon: Zap },
   { href: "/live",        label: "Live",        icon: Radio,  live: true },
-  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/classifieds", label: "Classifieds", icon: Newspaper },
   { href: "/sell/direct",  label: "Direct Sale",  icon: Tag },
   { href: "/bundle",      label: "Bundle Deal", icon: Package },
@@ -144,6 +146,7 @@ export function Navbar() {
   const [rewardsPopover, setRewardsPopover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [messageCenterOpen, setMessageCenterOpen] = useState(false);
+  useEffect(() => { const openInbox = () => setMessageCenterOpen(true); window.addEventListener("bazunk-open-inbox", openInbox); return () => window.removeEventListener("bazunk-open-inbox", openInbox); }, []);
   const [location, setLocation] = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -231,9 +234,10 @@ export function Navbar() {
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   const primaryLinks = [
-    { href: "/browse", label: t("browse") },
-    { href: "/categories", label: t("categories") },
-    { href: "/live", label: t("live"), live: true },
+    { href: "/", label: "Home" },
+    { href: "/browse", label: "Shop" },
+    { href: "/categories", label: "Categories" },
+    { href: "/auctions", label: "Auctions" },
   ].filter(x => visibleHref(x.href));
 
   return (
@@ -248,7 +252,7 @@ export function Navbar() {
               className="w-full max-w-lg rounded-3xl border border-white/20 bg-white p-6 sm:p-9 shadow-2xl text-center">
               <motion.div initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.15, type: "spring" }}
                 className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-4xl">🌍</motion.div>
-              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-black text-slate-900">Welcome to Bazunk!</h2>
+              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-bold text-slate-900">Welcome to Bazunk!</h2>
               <p className="mt-2 text-sm sm:text-base text-slate-600">Choose which listings to browse. Your account works in both markets, and you can switch anytime.</p>
               <div className="mt-7 grid grid-cols-2 gap-3">
                 {(["uk", "us"] as const).map(region => (
@@ -256,7 +260,7 @@ export function Navbar() {
                     onClick={() => selectMarket(region)}
                     className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-3 py-6 text-slate-900 transition-colors hover:border-orange-500 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">
                     <span className="block text-5xl">{region === "uk" ? "🇬🇧" : "🇺🇸"}</span>
-                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "United States"}</span>
+                    <span className="mt-3 block font-bold">{region === "uk" ? "United Kingdom" : "United States"}</span>
                     <span className="mt-1 block text-sm font-semibold text-slate-500">{region === "uk" ? "GBP · £" : "USD · $"}</span>
                   </motion.button>
                 ))}
@@ -273,7 +277,7 @@ export function Navbar() {
             transition={{ duration: 0.4 }} className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-gradient-to-br from-fuchsia-600/80 via-indigo-600/80 to-orange-500/80 backdrop-blur-md">
             <motion.div initial={{ y: 16 }} animate={{ y: 0 }} className="relative overflow-hidden rounded-[2rem] border-4 border-white/80 bg-gradient-to-br from-white via-amber-50 to-pink-100 px-12 py-10 text-center shadow-[0_25px_90px_rgba(0,0,0,.35)]">
               <motion.div aria-hidden="true" className="absolute inset-0 opacity-40" style={{background:"radial-gradient(circle at 15% 20%,#facc15 0,transparent 35%),radial-gradient(circle at 85% 80%,#f472b6 0,transparent 35%)"}} animate={{rotate:[0,8,-8,0],scale:[1,1.15,1]}} transition={{duration:2.3}} />\n              <motion.div className="relative text-7xl drop-shadow-xl" initial={{scale:.2,rotate:-35,y:70}} animate={{scale:[.2,1.35,1],rotate:[-35,12,-8,0],y:[70,-18,0]}} transition={{duration:1.5,ease:"easeOut"}}>{marketRegion === "uk" ? "🇬🇧" : "🇺🇸"}</motion.div>\n              <motion.div aria-hidden="true" className="relative text-2xl mt-1" initial={{opacity:0,scale:.5}} animate={{opacity:[0,1,1],scale:[.5,1.25,1]}} transition={{delay:.45,duration:1.3}}>✨ 🎉 ✨</motion.div>
-              <div className="relative mt-3 text-2xl font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
+              <div className="relative mt-3 text-2xl font-bold text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
               <div className="relative mt-2 text-base font-bold text-indigo-700">{marketRegion === "uk" ? "Prices in GBP" : "Prices in USD"}</div>
             </motion.div>
           </motion.div>
@@ -295,7 +299,7 @@ export function Navbar() {
             ))}
           </div>
         </div>
-        <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-3">
+        <div className="mx-auto w-full max-w-[1600px] px-4 h-16 md:h-20 flex items-center gap-3 lg:gap-4">
 
           {/* Theme + Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -308,14 +312,14 @@ export function Navbar() {
               aria-label="Home"
               title="Home"
               data-testid="link-home-icon"
-              className="hidden md:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
+              className="hidden 2xl:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
             >
               <Home className="w-4 h-4" />
             </Link>
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-1 text-[13px] font-medium flex-shrink-0 mr-1">
+          <div className="hidden xl:flex items-center gap-1 text-sm font-medium flex-shrink-0">
 
             {/* Primary links */}
             {primaryLinks.map(({ href, label, live }) => {
@@ -342,55 +346,6 @@ export function Navbar() {
                 </Link>
               );
             })}
-
-            {/* Rewards — highlighted, guest-visible */}
-            <div ref={rewardsRef} className="relative">
-              <button
-                onClick={handleRewardsClick}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap text-amber-700 font-semibold bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200"
-                data-testid="link-rewards"
-              >
-                <Trophy className="w-3 h-3 text-amber-500" />
-                {t("rewards")}
-              </button>
-              <AnimatePresence>
-                {rewardsPopover && !user && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                  >
-                    <div className="px-5 pt-5 pb-4 text-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3">
-                        <Trophy className="w-6 h-6 text-amber-500" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-sm">Earn Rewards on Bazunk</p>
-                      <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-                        Complete milestones, earn credits & badges. Free to join — your rewards build up from your first listing.
-                      </p>
-                    </div>
-                    <div className="px-5 pb-5 flex flex-col gap-2">
-                      <Link
-                        href="/sign-up"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors"
-                      >
-                        <Gift className="w-4 h-4" /> Join Free & Start Earning
-                      </Link>
-                      <Link
-                        href="/sign-in"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
-                      >
-                        Already have an account? Sign in
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
             {/* More dropdown */}
             <div ref={moreRef} className="relative">
@@ -444,23 +399,23 @@ export function Navbar() {
           </div>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
+          <div className="flex flex-1 min-w-0 items-center gap-2 justify-end">
 
             {/* Desktop search */}
-            <div ref={searchRef} className="relative w-[190px] 2xl:w-[240px] flex-none hidden lg:block ml-1">
+            <div ref={searchRef} className="relative hidden lg:block flex-1 min-w-0 max-w-[680px] mr-1">
               <form onSubmit={handleSubmit}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                 <Input
                   type="search"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSearchOpen(true); }}
                   onFocus={() => query.trim() && setSearchOpen(true)}
                   placeholder="Search listings..."
-                  className="w-full pl-10 pr-9 rounded-full bg-gray-100 border border-transparent focus-visible:border-[#4A5CE8]/30 focus-visible:ring-2 focus-visible:ring-[#4A5CE8]/20 h-10 text-sm"
+                  className="w-full min-w-0 pl-10 pr-9 rounded-full bg-gray-100 border border-gray-200 focus-visible:border-[#F26B21]/50 focus-visible:ring-2 focus-visible:ring-[#F26B21]/20 h-11 text-sm"
                   data-testid="input-search"
                 />
                 {query && (
-                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -468,12 +423,12 @@ export function Navbar() {
               {searchOpen && query.trim() && (
                 <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                   {!hasResults ? (
-                    <div className="px-4 py-6 text-center text-sm text-gray-400">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
+                    <div className="px-4 py-6 text-center text-sm text-gray-600">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
                   ) : (
                     <>
                       {liveSearchResults.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
                           {liveSearchResults.map((product:any) => (
                             <Link key={product.id} href={`/listing/${product.publicId || product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group">
@@ -491,7 +446,7 @@ export function Navbar() {
                       )}
                       {matchedProducts.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
                           {matchedProducts.map((product) => (
                             <Link key={product.id} href={`/listing/${product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-product-${product.id}`}>
@@ -502,8 +457,8 @@ export function Navbar() {
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{product.title}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs font-bold text-green-600">{formatPrice(product.price)}</span>
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
-                                  <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><Eye className="w-2.5 h-2.5" />{product.views}</span>
+                                  <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
+                                  <span className="flex items-center gap-0.5 text-xs text-gray-600"><Eye className="w-2.5 h-2.5" />{product.views}</span>
                                 </div>
                               </div>
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
@@ -513,7 +468,7 @@ export function Navbar() {
                       )}
                       {matchedCategories.length > 0 && (
                         <div className={matchedProducts.length > 0 ? "border-t border-gray-100" : ""}>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
                           {matchedCategories.map((cat) => (
                             <Link key={cat.slug} href={`/browse?category=${encodeURIComponent(cat.slug)}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-category-${cat.slug}`}>
@@ -522,7 +477,7 @@ export function Navbar() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{cat.name}</p>
-                                <p className="text-[10px] text-gray-400">{cat.subcategories.length} subcategories</p>
+                                <p className="text-xs text-gray-600">{cat.subcategories.length} subcategories</p>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#4A5CE8] transition-colors" />
                             </Link>
@@ -543,13 +498,13 @@ export function Navbar() {
             {/* Logged OUT actions */}
             {!user && (
               <>
-                <Link href="/sell" className="hidden 2xl:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
+                <Link href="/sell" className="hidden 2xl:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
                   <Tag className="w-3.5 h-3.5" /> Start Selling
                 </Link>
-                <Link href="/sign-in" className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
+                <Link href="/sign-in" className="hidden md:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
+                <Link href="/sign-up" className="hidden sm:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
                   Join Free
                 </Link>
               </>
@@ -579,7 +534,7 @@ export function Navbar() {
                         className="absolute right-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
                       >
                         <div className="px-4 pt-3 pb-2">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">How do you want to sell?</p>
+                          <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">How do you want to sell?</p>
                         </div>
                         {SELL_OPTIONS.filter(x => visibleHref(x.href)).map((opt) => {
                           const Icon = opt.icon;
@@ -598,12 +553,12 @@ export function Navbar() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-bold text-gray-900 group-hover:text-[#F26B21] transition-colors">{opt.label}</span>
                                   {opt.badge && (
-                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
+                                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
                                       {opt.badge}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-[11px] text-gray-400 mt-0.5">{opt.desc}</p>
+                                <p className="text-xs text-gray-600 mt-0.5">{opt.desc}</p>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#F26B21] transition-colors flex-shrink-0" />
                             </Link>
@@ -647,7 +602,7 @@ export function Navbar() {
                 >
                   <ShoppingCart className="w-4 h-4" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-xs font-bold flex items-center justify-center leading-none">
                       {itemCount > 9 ? "9+" : itemCount}
                     </span>
                   )}
@@ -677,19 +632,19 @@ export function Navbar() {
                       >
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-600 truncate">{user.email}</p>
                         </div>
                         <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <LayoutDashboard className="w-4 h-4 text-gray-400" /> My Dashboard
+                          <LayoutDashboard className="w-5 h-5 text-slate-700" /> My Dashboard
                         </Link>
                         <Link href="/offers" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Handshake className="w-4 h-4 text-gray-400" /> My Offers
+                          <Handshake className="w-4 h-4 text-gray-600" /> My Offers
                         </Link>
                         <button onClick={() => { setUserMenuOpen(false); setMessageCenterOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <MessageSquare className="w-4 h-4 text-gray-400" /> Messages
+                          <MessageSquare className="w-4 h-4 text-gray-600" /> Messages
                         </button>
                         <Link href="/sell/direct" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Tag className="w-4 h-4 text-gray-400" /> Create Listing
+                          <Tag className="w-4 h-4 text-gray-600" /> Create Listing
                         </Link>
                         <div className="border-t border-gray-100">
                           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors" data-testid="button-logout">
@@ -726,22 +681,22 @@ export function Navbar() {
       {isFeatureEnabled(featureSettings, "currency_selector") && <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
         <button onClick={() => setCurrencyOpen(!currencyOpen)}
           className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 bg-white shadow-lg hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors">
-          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-400">·</span><span>{currency.code} {currency.symbol}</span>
+          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-600">·</span><span>{currency.code} {currency.symbol}</span>
           <ChevronDown className={`w-3 h-3 transition-transform ${currencyOpen ? "rotate-180" : ""}`} />
         </button>
         {currencyOpen && (
           <div className="absolute right-0 bottom-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 p-3">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("country")}</label>
+            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("country")}</label>
             <select value={country.code} onChange={e => changeCountry(e.target.value)}
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 mb-3">
               {MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
             </select>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("currency")}</label>
+            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("currency")}</label>
             <select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)}
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800">
               {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map(c => <option key={c.code} value={c.code}>{c.flag} {c.name} ({c.symbol})</option>)}
             </select>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
+            <p className="mt-2 text-xs leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
           </div>
         )}
       </div>}
@@ -766,7 +721,7 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
-              className="fixed top-0 right-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 flex flex-col xl:hidden shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 flex flex-col xl:hidden shadow-2xl text-slate-900"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -785,13 +740,13 @@ export function Navbar() {
               {/* Search */}
               <div className="px-5 py-3 border-b border-gray-100">
                 <form onSubmit={handleSubmit} className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                   <input
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search listings..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-gray-100 border-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
+                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-100 border border-slate-300 text-base text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
                     data-testid="input-search-mobile"
                   />
                 </form>
@@ -805,7 +760,7 @@ export function Navbar() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                    <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
+                    <p className="text-xs text-gray-600 truncate max-w-[180px]">{user.email}</p>
                   </div>
                 </div>
               )}
@@ -816,12 +771,12 @@ export function Navbar() {
                   <Trophy className="w-5 h-5 text-amber-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-amber-800">Earn Rewards</p>
-                    <p className="text-[11px] text-amber-600">Credits, badges & perks</p>
+                    <p className="text-xs text-amber-600">Credits, badges & perks</p>
                   </div>
                   <Link
                     href="/sign-up"
                     onClick={() => setMobileOpen(false)}
-                    className="text-[11px] font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                   >
                     Join Free
                   </Link>
@@ -850,10 +805,10 @@ export function Navbar() {
                   <button
                     key={href}
                     onClick={() => navTo(href)}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#4A5CE8] transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-5 py-3.5 text-base font-medium text-slate-900 hover:bg-orange-50 hover:text-orange-800 transition-colors text-left"
                     data-testid={`mobile-link-${label.toLowerCase().replace(/\s/g, "-")}`}
                   >
-                    <Icon className="w-4 h-4 text-gray-400" />
+                    <Icon className="w-4 h-4 text-gray-600" />
                     {label}
                     {live && (
                       <span className="relative flex h-2 w-2 ml-1">
@@ -861,7 +816,7 @@ export function Navbar() {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                       </span>
                     )}
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-slate-500 ml-auto" />
                   </button>
                 ))}
               </nav>

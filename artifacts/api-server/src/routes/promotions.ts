@@ -262,10 +262,11 @@ router.get("/promotions/analytics/:listingId", async (req, res) => {
 
 router.get("/promotions/related", async (req, res) => {
   const category = typeof req.query.category === "string" ? req.query.category : undefined;
-  const exclude = typeof req.query.exclude === "string" ? req.query.exclude : undefined;
+  const rawExclude = typeof req.query.exclude === "string" ? Number(req.query.exclude) : null;
+  const exclude = rawExclude !== null && Number.isSafeInteger(rawExclude) && rawExclude > 0 ? rawExclude : null;
   try {
     const promoted = await db.execute(sql`
-      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category
+      SELECT DISTINCT ON (l.id) l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category, TRUE AS sponsored
       FROM listings l
       JOIN listing_promotions lp ON lp.listing_id = l.id
       WHERE lp.type IN ('related-listings-5d', 'related-listings-10d')
@@ -273,8 +274,8 @@ router.get("/promotions/related", async (req, res) => {
         AND l.status = 'active'
         AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
-        ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
-      ORDER BY RANDOM()
+        ${exclude ? sql`AND l.id != ${exclude}` : sql``}
+      ORDER BY l.id DESC
       LIMIT 6
     `);
 
@@ -284,13 +285,13 @@ router.get("/promotions/related", async (req, res) => {
     }
 
     const fallback = await db.execute(sql`
-      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category
+      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category, FALSE AS sponsored
       FROM listings l
       WHERE l.status = 'active'
         AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
-        ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
-      ORDER BY l.created_at DESC
+        ${exclude ? sql`AND l.id != ${exclude}` : sql``}
+      ORDER BY l.created_at DESC, l.id DESC
       LIMIT 6
     `);
     res.json(fallback.rows);

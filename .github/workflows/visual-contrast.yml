@@ -1,0 +1,51 @@
+name: Bazunk visual contrast regression
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/dark-mode-browser-check.mjs"
+      - ".github/workflows/visual-contrast.yml"
+  pull_request:
+    paths:
+      - "artifacts/sellbuydeal/src/**"
+      - "scripts/dark-mode-browser-check.mjs"
+      - ".github/workflows/visual-contrast.yml"
+jobs:
+  screenshots-and-contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright && npx playwright install --with-deps chromium
+      - name: Screenshot and inspect public pages
+        run: node scripts/dark-mode-browser-check.mjs
+        env:
+          BAZUNK_TEST_URL: https://www.bazunk.com
+          BAZUNK_TEST_ROUTES: /,/login,/sell
+      - name: Check authenticated admin and seller routes
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          BAZUNK_AUTH_STATE_B64: ${{ secrets.BAZUNK_AUTH_STATE_B64 }}
+          BAZUNK_AUTH_STATE_PATH: auth-state.json
+          BAZUNK_TEST_URL: https://www.bazunk.com
+          BAZUNK_TEST_ROUTES: /login
+          BAZUNK_AUTH_ROUTES: /dashboard,/admin,/admin/users,/admin/listings,/admin/orders
+        run: |
+          if [ -z "$BAZUNK_AUTH_STATE_B64" ]; then
+            echo "Authenticated visual tests skipped: BAZUNK_AUTH_STATE_B64 not configured"
+            exit 0
+          fi
+          trap 'rm -f auth-state.json' EXIT
+          printf '%s' "$BAZUNK_AUTH_STATE_B64" | base64 -d > auth-state.json
+          node scripts/dark-mode-browser-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dark-mode-screenshots
+          path: artifacts/contrast-*.png
+          if-no-files-found: warn

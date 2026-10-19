@@ -41,7 +41,7 @@ export function AdminOperationalHealth(){
    </div>}
    <div className="grid gap-3 md:grid-cols-3">{data.webhooks.map(h=><div key={h.key} className="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
      <h3 className="flex items-center gap-2 text-sm font-black text-slate-950 dark:text-white"><Webhook className="h-4 w-4 text-orange-600"/>{h.name}</h3>
-     <span className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-black capitalize ${h.state==="receiving"?"bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100":h.state==="attention"?"bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100":"bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-100"}`}>{h.state.replaceAll("_"," ")}</span>
+     <span className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-black capitalize ${h.state==="receiving"?"bg-emerald-100 text-emerald-900 dark:!bg-[#a7f3d0] dark:!text-[#052e24]":h.state==="attention"?"bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-100":"bg-amber-100 text-amber-900 dark:!bg-[#ffd078] dark:!text-[#35200a]"}`}>{h.state.replaceAll("_"," ")}</span>
      <p className="mt-2 text-sm font-bold text-slate-900 dark:text-white">{h.received24h} deliveries · {h.failed24h} failures (24h)</p>
      <p className="mt-1 text-xs text-slate-700 dark:text-slate-200">{h.detail}</p>
      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">Last processed: {h.lastSuccess?new Date(h.lastSuccess).toLocaleString("en-GB"):"Not recorded"}</p>

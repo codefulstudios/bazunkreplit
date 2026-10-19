@@ -1,3 +1,5 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useMemo, useEffect } from "react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -123,7 +125,7 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
   const key = ["spotlight", "featured", "flash"].find((k) => promotions.includes(k));
   if (!key) return null;
   const { label, cls } = PROMO_BADGE[key];
-  return <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
+  return <span className={`text-xs font-black px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
 }
 
 function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_PRODUCTS[0]; view: "grid" | "list"; promotions?: string[] }) {
@@ -140,20 +142,20 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+        className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
-        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden relative">
+        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
-            onClick={() => setWishlisted(!wishlisted)}
-            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+            aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-1.5 right-1.5 w-9 h-9 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
             data-testid={`button-wishlist-${product.id}`}
           >
-            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
           </button>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -161,18 +163,18 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
               {hasPromo && <PromoBadge promotions={promotions} />}
             </div>
-            <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors text-sm">{product.title}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 text-base transition-colors">{product.title}</h3>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
-              <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+              <span className="flex items-center gap-0.5 text-sm text-slate-700 dark:text-slate-200"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
-              {product.verified && <span className="flex items-center gap-1 text-emerald-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>}
+              {product.verified && <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>}
             </div>
           </div>
         </div>
@@ -185,12 +187,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+      <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -199,27 +201,27 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           </div>
         )}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+          onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+          aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-2.5 right-2.5 w-10 h-10 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
           data-testid={`button-wishlist-${product.id}`}
         >
-          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
         </button>
         <div className="absolute bottom-2.5 left-2.5">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-[#4A5CE8] transition-colors mb-auto">{product.title}</h3>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <span className="flex items-center gap-1 text-xs text-gray-400"><Eye className="w-3 h-3" />{product.views}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><Eye className="w-3.5 h-3.5" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+            <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
             {product.verified && (
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
+              <span className="flex items-center gap-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
             )}
           </div>
         </div>
@@ -266,6 +268,7 @@ export function BrowsePage() {
   const [hasMoreListings, setHasMoreListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadingListings, setLoadingListings] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loadingListings, "browse");
   const [listingError, setListingError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
   const [saveOpen,setSaveOpen] = useState(false);
@@ -579,7 +582,7 @@ export function BrowsePage() {
                             />
                             <span className="text-xs text-gray-600 group-hover:text-[#4A5CE8] transition-colors">{sub.name}</span>
                           </div>
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{subCount}</span>
+                          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{subCount}</span>
                         </label>
                         {selectedSubcategories.includes(sub.slug) && suggestedThirdLevel(cat.slug, sub.slug).length > 0 && (
                           <div className="ml-5 space-y-1 border-l border-orange-200 pl-2">
@@ -831,7 +834,7 @@ export function BrowsePage() {
               data-testid="button-mobile-filters"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters {activeFilterCount > 0 && <span className="w-5 h-5 rounded-full bg-[#4A5CE8] text-white text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
+              Filters {activeFilterCount > 0 && <span className="w-5 h-5 rounded-full bg-[#4A5CE8] text-white text-xs font-bold flex items-center justify-center">{activeFilterCount}</span>}
             </button>
           </div>
 
@@ -939,7 +942,7 @@ export function BrowsePage() {
                 <SlidersHorizontal className="w-4 h-4 text-[#4A5CE8]" /> Filters
               </h2>
               {activeFilterCount > 0 && (
-                <span className="text-[10px] font-bold bg-[#4A5CE8] text-white px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>
+                <span className="text-xs font-bold bg-[#4A5CE8] text-white px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>
               )}
             </div>
             {filterPanel}
@@ -993,15 +996,8 @@ export function BrowsePage() {
           </div>
 
           {/* Results */}
-          {loadingListings ? (
-            <div role="status" aria-live="polite" className="bg-white rounded-2xl border border-blue-100 py-20 px-6 flex flex-col items-center text-center overflow-hidden">
-              <div className="relative mb-6 rounded-full bg-gradient-to-br from-blue-50 to-orange-50 p-8">
-                <div aria-hidden="true" className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-[#F26B21] animate-spin motion-reduce:animate-none" />
-                <img src="/bazunk-logo-header.png" alt="Bazunk" className="relative w-40 h-auto object-contain animate-pulse motion-reduce:animate-none" />
-              </div>
-              <p className="font-bold text-gray-900">Finding your next great deal…</p>
-              <p className="mt-2 text-sm text-gray-500">Loading Bazunk listings</p>
-            </div>
+          {delayedLoading ? (
+            <MarketplaceLoader area="browse" label="Finding your next great deal…" />
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Listings couldn’t load</h3>

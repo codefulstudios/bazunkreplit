@@ -40,17 +40,17 @@ const PERKS = [
 
 export function PerksStrip() {
   return (
-    <div className="bg-white border-b border-gray-100">
+    <div className="bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center overflow-x-auto scrollbar-none divide-x divide-gray-100">
+        <div className="flex items-center overflow-x-auto scrollbar-none divide-x divide-slate-200 dark:divide-slate-800">
           {PERKS.map(({ icon: Icon, title, sub, color, bg }) => (
-            <div key={title} className="flex items-center gap-3 px-6 py-4 shrink-0 flex-1 min-w-[180px]">
+            <div key={title} className="flex items-center gap-3 px-6 py-4 shrink-0 flex-1 min-w-[215px]">
               <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
                 <Icon className={`w-4.5 h-4.5 ${color}`} style={{ width: "18px", height: "18px" }} />
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-xs leading-tight">{title}</p>
-                <p className="text-[11px] text-gray-400 leading-tight mt-0.5">{sub}</p>
+                <p className="font-semibold text-slate-900 dark:text-white text-base leading-tight">{title}</p>
+                <p className="text-sm !text-slate-700 dark:!text-slate-100 leading-snug mt-0.5">{sub}</p>
               </div>
             </div>
           ))}

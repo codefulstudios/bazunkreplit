@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,7 +12,6 @@ import { Footer } from "@/components/Footer";
 import { BuyerProtectionBadge } from "@/components/BuyerProtectionBadge";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { useCurrency } from "@/context/CurrencyContext";
 
 type Step = "summary" | "redirecting";
 
@@ -28,9 +28,9 @@ function StepIndicator({ step }: { step: Step }) {
           <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
             i < idx  ? "bg-emerald-100 text-emerald-700" :
             i === idx ? "bg-[#4A5CE8] text-white shadow-sm" :
-                        "bg-gray-100 text-gray-400"
+                        "bg-gray-100 text-slate-600"
           }`}>
-            {i < idx ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[9px]">{i + 1}</span>}
+            {i < idx ? <CheckCircle2 className="w-3 h-3" /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-xs">{i + 1}</span>}
             {s.label}
           </div>
           {i < steps.length - 1 && <div className={`w-6 h-0.5 ${i < idx ? "bg-emerald-300" : "bg-gray-200"}`} />}
@@ -47,17 +47,22 @@ const CONDITION_COLORS: Record<string, string> = {
 
 export function CheckoutPage() {
   const { items, clearCart } = useCart();
+  const { getToken } = useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
-  const { formatPrice, currency } = useCurrency();
+  // Cart checkout is charged in GBP by the Stripe API; never show converted totals as the amount payable.
+  const formatPrice = (amount: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
 
   const [step, setStep] = useState<Step>("summary");
   const [placed, setPlaced] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
+  const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
+  const [recoveryConsent, setRecoveryConsent] = useState(false);
+  type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
   const [quoteError,setQuoteError]=useState("");
   const [quoteLoading,setQuoteLoading]=useState(true);
@@ -95,17 +100,18 @@ export function CheckoutPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId }),
     })
-      .then((r) => r.json())
-      .then((data: { success?: boolean; error?: string }) => {
+      .then(async (r) => { const data = await r.json(); if (!r.ok) throw new Error(data.error || "Payment verification unavailable"); return data as { success?: boolean; error?: string }; })
+      .then((data) => {
         if (data.success) {
           clearCart();
           refreshBalance();
           setPlaced(true);
         } else {
-          setCheckoutError(data.error ?? "Payment verification failed. Please contact support.");
+          setPaymentReturnFailed(true);
+          setCheckoutError(data.error ?? "Payment verification failed. Check your order history before attempting another payment.");
         }
       })
-      .catch(() => setCheckoutError("Could not verify payment. Please contact support."))
+      .catch(() => { setPaymentReturnFailed(true); setCheckoutError("Payment verification is not available yet. Your payment may have succeeded: check your orders or contact support before trying again."); })
       .finally(() => setConfirming(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -126,6 +132,12 @@ export function CheckoutPage() {
     setStep("redirecting");
 
     try {
+      if (user?.email) {
+        try {
+          const token = await getToken();
+          if (token) await fetch("/api/checkout-recovery/save", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({items:JSON.parse(cartKey),consent:recoveryConsent}) });
+        } catch { /* Optional recovery never blocks payment. */ }
+      }
       const res = await fetch("/api/stripe/checkout-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,6 +188,22 @@ export function CheckoutPage() {
     );
   }
 
+  if (paymentReturnFailed) {
+    return <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar />
+      <main role="alert" className="flex-1 flex flex-col items-center justify-center text-center px-4 py-16">
+        <AlertCircle className="w-12 h-12 text-amber-600 mb-4" />
+        <h1 className="text-2xl font-bold text-slate-900">We couldn't verify your payment yet</h1>
+        <p className="max-w-xl mt-3 text-base text-slate-700">{checkoutError}</p>
+        <p className="max-w-xl mt-2 text-sm text-slate-700">Do not pay again until you've checked whether the order was completed.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link href="/dashboard" className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white">Check your orders</Link>
+          <Link href="/contact" className="rounded-xl border border-slate-400 bg-white px-5 py-3 text-sm font-semibold text-slate-900">Contact support</Link>
+        </div>
+      </main><Footer />
+    </div>;
+  }
+
   if (items.length === 0 && !placed) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -185,7 +213,7 @@ export function CheckoutPage() {
             <ShoppingBag className="w-10 h-10 text-gray-300" />
           </div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
-          <p className="text-gray-400 text-sm mb-6">Add items before checking out</p>
+          <p className="text-slate-600 text-sm mb-6">Add items before checking out</p>
           <Link href="/browse" className="px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity">
             Browse Listings
           </Link>
@@ -206,7 +234,7 @@ export function CheckoutPage() {
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Placed!</h2>
-            <p className="text-gray-500 text-sm mb-2">Thank you for your purchase. You'll receive a confirmation shortly.</p>
+            <p className="text-slate-600 text-sm mb-2">Thank you for your purchase. You'll receive a confirmation shortly.</p>
             <div className="flex gap-3 justify-center mt-6">
               <Link href="/dashboard" className="px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity">
                 View Dashboard
@@ -227,11 +255,12 @@ export function CheckoutPage() {
       <Navbar />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
-        <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mb-6">
+        <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-gray-700 transition-colors mb-6">
           <ChevronLeft className="w-4 h-4" /> Back to browsing
         </button>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout</h1>
+        <p className="mb-4 text-sm font-semibold text-slate-700">Payments are charged in GBP (£). Your bank may convert the amount if your account uses another currency.</p>
         <StepIndicator step={step} />
 
         {checkoutError && (
@@ -262,8 +291,8 @@ export function CheckoutPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.product.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
-                            <span className="text-xs text-gray-400">Qty: {item.quantity}</span>
+                            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
+                            <span className="text-xs text-slate-600">Qty: {item.quantity}</span>
                           </div>
                         </div>
                         <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
@@ -304,7 +333,7 @@ export function CheckoutPage() {
                 </button>
 
                 {!user && (
-                  <p className="text-center text-xs text-gray-400 mt-2">
+                  <p className="text-center text-xs text-slate-600 mt-2">
                     Checkout as a guest. After purchase, create or sign in to a Bazunk account using this same email address to see and track this order.
                   </p>
                 )}
@@ -319,13 +348,13 @@ export function CheckoutPage() {
                     <Loader2 className="w-8 h-8 text-[#4A5CE8] animate-spin" />
                   </div>
                   <h2 className="font-bold text-gray-900 text-lg mb-1">Redirecting to secure checkout</h2>
-                  <p className="text-sm text-gray-400 mb-6">You're being taken to Stripe's secure payment page…</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <p className="text-sm text-slate-600 mb-6">You're being taken to Stripe's secure payment page…</p>
+                  <div className="flex items-center gap-2 text-sm text-slate-700">
                     <Lock className="w-3.5 h-3.5 text-emerald-500" />
                     256-bit SSL encryption · Powered by Stripe
                   </div>
                 </div>
-                <button onClick={() => setStep("summary")} className="w-full mt-3 py-3 rounded-xl border-2 border-gray-200 text-gray-500 font-semibold text-sm hover:border-gray-300 transition-colors flex items-center justify-center gap-1.5">
+                <button onClick={() => setStep("summary")} className="w-full mt-3 py-3 rounded-xl border-2 border-gray-200 text-slate-600 font-semibold text-sm hover:border-gray-300 transition-colors flex items-center justify-center gap-1.5">
                   <ChevronLeft className="w-4 h-4" /> Cancel and go back
                 </button>
               </motion.div>
@@ -335,7 +364,7 @@ export function CheckoutPage() {
           {/* Right: order summary (sticky) */}
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
-              <h3 className="font-bold text-gray-900 mb-4 text-sm">Order Summary</h3>
+              <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary · GBP</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
@@ -345,7 +374,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1">Buyer Protection <Link href="/buyer-protection" className="text-[#4A5CE8] underline text-xs">Learn more</Link></span>
                   <span className="font-semibold text-gray-900">{quoteLoading ? "Calculating…" : !quote ? "Unavailable" : buyerProtectionFee>0 ? formatPrice(buyerProtectionFee) : "Included"}</span>
                 </div>
-                <p className="text-xs text-gray-500">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
+                <p className="text-xs text-slate-600">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery (combined by seller where offered)</span>
                   <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
@@ -354,6 +383,8 @@ export function CheckoutPage() {
                 </div>
                 {quote?.bundleBreakdown?.filter(b=>b.discountMinor>0||b.shippingMinor>0).map(b=><p key={b.sellerEmail} className="text-xs font-semibold text-slate-700">{b.itemCount} item(s) from one seller · shipping {formatPrice(b.shippingMinor/100)}{b.discountMinor>0?` · saved ${formatPrice(b.discountMinor/100)}`:""}</p>)}
                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
+                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
+                <div className="flex justify-between font-bold text-gray-900 text-xl pt-3 border-t border-gray-200">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
@@ -366,7 +397,7 @@ export function CheckoutPage() {
                   { icon: Truck,   text: "Shipping arranged by seller" },
                   { icon: Package, text: "Track orders from your Dashboard" },
                 ].map(({ icon: Icon, text }) => (
-                  <div key={text} className="flex items-center gap-2 text-xs text-gray-400">
+                  <div key={text} className="flex items-center gap-2 text-xs text-slate-600">
                     <Icon className="w-3.5 h-3.5 text-[#4A5CE8] flex-shrink-0" />
                     {text}
                   </div>
