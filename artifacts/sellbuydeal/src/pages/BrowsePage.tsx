@@ -145,9 +145,9 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
         className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
-        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden relative">
+        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-[#f5f7fa] dark:bg-[#18253a] flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
@@ -164,13 +164,14 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
               {hasPromo && <PromoBadge promotions={promotions} />}
             </div>
             <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 text-base transition-colors">{product.title}</h3>
+            <p className="mt-1 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">Sold by {product.seller?.name || "Marketplace seller"}</p>
             <div className="flex items-center gap-2 mt-1.5">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
               <span className="flex items-center gap-0.5 text-sm text-slate-700 dark:text-slate-200"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
             <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
@@ -187,12 +188,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
+      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-square bg-slate-100 dark:bg-slate-800 overflow-hidden">
+      <div className="relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -215,7 +216,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
         <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-lg font-bold text-slate-900 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
             <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><Eye className="w-3.5 h-3.5" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
@@ -1053,7 +1054,7 @@ export function BrowsePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-40 md:hidden"
+              className="fixed inset-0 bg-black/60 z-[90] md:hidden" aria-hidden="true"
               onClick={() => setShowMobileFilters(false)}
             />
             <motion.div
@@ -1061,16 +1062,17 @@ export function BrowsePage() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 overflow-y-auto overscroll-contain shadow-2xl md:hidden"
+              role="dialog" aria-modal="true" aria-label="Filter marketplace listings" className="fixed left-0 top-0 bottom-0 w-[min(360px,90vw)] bg-white dark:bg-[#101e33] z-[100] flex flex-col shadow-2xl md:hidden"
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900">{t("filters")}</h2>
-                <button onClick={() => setShowMobileFilters(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="font-bold text-slate-900 dark:text-white">{t("filters")} ({activeFilterCount})</h2>
+                <button aria-label="Close filters" onClick={() => setShowMobileFilters(false)} className="rounded-lg p-2 text-slate-700 dark:text-slate-200">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="px-5 pb-6">{filterPanel}</div>
-              <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3">
+              <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6">{filterPanel}</div>
+              <div className="shrink-0 bg-white dark:bg-[#101e33] border-t border-slate-200 dark:border-slate-700 px-5 py-3">
+                {activeFilterCount > 0 && <button type="button" onClick={clearAll} className="mb-2 w-full py-2 text-sm font-bold text-slate-800 dark:text-white underline">Reset all filters</button>}
                 <button
                   onClick={() => setShowMobileFilters(false)}
                   className="w-full py-3 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
