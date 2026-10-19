@@ -643,6 +643,27 @@ export function ListingPage() {
                 );
               })()}
 
+              {/* Buyer's essentials: price, condition, stock and delivery together. */}
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5">
+                <div className="flex justify-between gap-3">
+                  <span className="font-semibold text-slate-600">Availability</span>
+                  <span className="font-bold">{isDemoListing ? "Unavailable" : (product as typeof product & ApiListingExtra).quantity != null ? (product as typeof product & ApiListingExtra).quantity! > 0 ? `${(product as typeof product & ApiListingExtra).quantity} available` : "Out of stock" : "Check with seller"}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="font-semibold text-slate-600">Condition</span>
+                  <span className="font-bold capitalize">{product.condition}</span>
+                </div>
+                <p className="text-xs text-slate-600">{CONDITION_DESC[product.condition] || "See description for item details."}</p>
+                <div className="border-t border-slate-200 pt-2.5">
+                  <div className="flex justify-between gap-3">
+                    <span className="font-semibold text-slate-600">Postage</span>
+                    <span className="font-bold">{(product as typeof product & ApiListingExtra).shippingPrice == null ? "Confirm at checkout" : (product as typeof product & ApiListingExtra).shippingPrice === 0 ? "Free" : formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-600">Ships from {(product as typeof product & ApiListingExtra).shipOriginOther || (product as typeof product & ApiListingExtra).shipOrigin || product.location}. Delivery timing depends on seller and destination.</p>
+                  <p className="mt-1 text-xs text-slate-600">Final totals are confirmed before payment.</p>
+                </div>
+              </div>
+
               {/* Variants */}
               {product.variants && product.variants.length > 0 && (
                 <div className="mb-5 pb-5 border-b border-gray-100">
@@ -665,7 +686,7 @@ export function ListingPage() {
                 data-testid="button-buy-now"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {isDemoListing ? "Temporarily out of stock" : t("buyNow")}
+                {isDemoListing || ((product as typeof product & ApiListingExtra).quantity != null && (product as typeof product & ApiListingExtra).quantity! <= 0) ? "Currently unavailable" : t("buyNow")}
               </button>
 
               {/* Make an Offer */}
