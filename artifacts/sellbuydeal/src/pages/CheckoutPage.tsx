@@ -62,7 +62,6 @@ export function CheckoutPage() {
   const [guestEmail, setGuestEmail] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [recoveryConsent, setRecoveryConsent] = useState(false);
-  type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
   const [quoteError,setQuoteError]=useState("");
   const [quoteLoading,setQuoteLoading]=useState(true);
@@ -388,10 +387,10 @@ export function CheckoutPage() {
               </div>
 
 
-              <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              {user?.email && <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 <summary className="cursor-pointer font-semibold">Optional checkout reminder</summary>
-                {user?.email&&<label className="flex items-start gap-2 mt-3 flex items-start gap-2 text-xs text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one reminder if I leave checkout unfinished. This does not affect payment.</span></label>}
-              </details>
+                {user?.email&&<label className="mt-3 flex items-start gap-2 text-xs text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one reminder if I leave checkout unfinished. This does not affect payment.</span></label>}
+              </details>}
               <div className="mt-4 space-y-2">
                 {[
                   { icon: Shield,  text: "Buyer Protection on eligible orders" },
