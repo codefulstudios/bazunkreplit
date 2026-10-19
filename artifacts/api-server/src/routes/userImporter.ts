@@ -407,7 +407,7 @@ router.post("/user/import-ebay", async (req, res) => {
       : (c || "used").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
     const specs       = JSON.stringify({
-      source, item_id: p.item_id, ebay_url: p.ebay_url,
+      source, marketplace_region: site, item_id: p.item_id, ebay_url: p.ebay_url,
       ebay_price: p.price, ebay_currency: currency, ebay_site: site,
       shipping: shippingAmt, markup_pct: markupPct,
       source_condition: originalCondition || null,
