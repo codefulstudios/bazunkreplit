@@ -1,4 +1,6 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect } from "react";
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, Search, Grid3X3, Tag } from "lucide-react";
@@ -39,32 +41,32 @@ const CATEGORY_THEMES = [
 ];
 
 const CATEGORY_ART: Record<string, string> = {
-  "adult": "/category-art/adult.png",
-  "digital": "/category-art/digital.png",
-  "musical-instruments": "/category-art/musical-instruments.png",
-  "office-products": "/category-art/office-products.png",
-  "patio-lawn-garden": "/category-art/patio-lawn-garden.png",
-  "pet-supplies": "/category-art/pet-supplies.png",
-  "tools-home-improvement": "/category-art/tools-home-improvement.png",
-  "video-games": "/category-art/video-games.png",
-
-  electronics: "/category-art/electronics.webp",
-  "home-kitchen": "/category-art/home-kitchen.webp",
-  "clothing-shoes-jewelry": "/category-art/clothing-shoes-jewelry.webp",
-  "health-household": "/category-art/health-household.webp",
-  "toys-games": "/category-art/toys-games.webp",
-  automotive: "/category-art/automotive.webp",
-  "baby-products": "/category-art/baby-products.webp",
-  "sports-outdoors": "/category-art/sports-outdoors.webp",
-  books: "/category-art/books.webp",
-  "cds-vinyl": "/category-art/cds-vinyl.webp",
-  "arts-crafts-sewing": "/category-art/arts-crafts-sewing.webp",
-  "industrial-scientific": "/category-art/industrial-scientific.webp",
-  appliances: "/category-art/home-kitchen.webp",
-  "beauty-personal-care": "/category-art/health-household.webp",
-  "cell-phones": "/category-art/electronics.webp",
-  "eco-friendly": "/category-art/health-household.webp",
-  "movies-tv": "/category-art/electronics.webp",
+  "electronics": "/category-art/modern-electronics.svg",
+  "home-kitchen": "/category-art/modern-home-kitchen.svg",
+  "clothing-shoes-jewelry": "/category-art/modern-clothing-shoes-jewelry.svg",
+  "health-household": "/category-art/modern-health-household.svg",
+  "sports-outdoors": "/category-art/modern-sports-outdoors.svg",
+  "toys-games": "/category-art/modern-toys-games.svg",
+  "automotive": "/category-art/modern-automotive.svg",
+  "books": "/category-art/modern-books.svg",
+  "pet-supplies": "/category-art/modern-pet-supplies.svg",
+  "cell-phones": "/category-art/modern-cell-phones.svg",
+  "adult": "/category-art/modern-adult.svg",
+  "digital": "/category-art/modern-digital.svg",
+  "musical-instruments": "/category-art/modern-musical-instruments.svg",
+  "office-products": "/category-art/modern-office-products.svg",
+  "patio-lawn-garden": "/category-art/modern-patio-lawn-garden.svg",
+  "tools-home-improvement": "/category-art/modern-tools-home-improvement.svg",
+  "video-games": "/category-art/modern-video-games.svg",
+  "baby-products": "/category-art/modern-baby-products.svg",
+  "cds-vinyl": "/category-art/modern-cds-vinyl.svg",
+  "arts-crafts-sewing": "/category-art/modern-arts-crafts-sewing.svg",
+  "industrial-scientific": "/category-art/modern-industrial-scientific.svg",
+  "appliances": "/category-art/modern-appliances.svg",
+  "beauty-personal-care": "/category-art/modern-beauty-personal-care.svg",
+  "eco-friendly": "/category-art/modern-eco-friendly.svg",
+  "movies-tv": "/category-art/modern-movies-tv.svg",
+  "jewellery-watches": "/category-art/modern-jewellery-watches.svg",
 };
 
 // Distinct, lightweight subcategory illustrations. Each card uses its own
@@ -129,10 +131,14 @@ export function CategoriesPage() {
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice } = useCurrency();
+  const [marketRegion] = useMarketplaceRegion();
+  const [featuredListings, setFeaturedListings] = useState<Array<{id:number;public_id?:string|null;publicId?:string|null;title:string;price:string|number;image:string|null;category:string}>>([]);
+  const [featuredLoading,setFeaturedLoading]=useState(true);
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [counts, setCounts] = useState<CategoryCount[]>([]);
+  const [countsLoading,setCountsLoading] = useState(true);
   const [hidden, setHidden] = useState<string[]>([]);
   const [display, setDisplay] = useState<Record<string,string>>({});
 
@@ -141,8 +147,19 @@ export function CategoriesPage() {
     fetch(`${API_BASE}/api/listings/category-counts`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => {}).finally(()=>setCountsLoading(false));
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setFeaturedLoading(true);
+    fetch(`/api/listings?limit=12&region=${marketRegion}`, {signal:controller.signal})
+      .then(r=>r.ok?r.json():[])
+      .then(data=>setFeaturedListings(Array.isArray(data)?data:[]))
+      .catch(()=>{if(!controller.signal.aborted)setFeaturedListings([])})
+      .finally(()=>{if(!controller.signal.aborted)setFeaturedLoading(false)});
+    return ()=>controller.abort();
+  },[marketRegion]);
 
   const statusFor=(category:string,sub?:string)=>{const key=category+(sub?"__"+sub:"");return display[key]||(hidden.includes(key)?"coming_soon":"active");};
   const labelFor=(state:string)=>state==="maintenance"?"Under Maintenance":"Coming Soon";
@@ -178,137 +195,46 @@ export function CategoriesPage() {
     return CATEGORY_THEMES[(i < 0 ? 0 : i) % CATEGORY_THEMES.length];
   }
 
-  return (
-    <div className="min-h-screen bg-[#f7f9fd] text-slate-950 dark:bg-[#071426] dark:text-white flex flex-col transition-colors">
-      <Navbar />
-
-      <div className="border-b border-slate-200 bg-white dark:border-white/[0.06] dark:bg-[#071426]">
-        <div className="container mx-auto px-4 py-5 lg:py-7">
-          <div className="grid lg:grid-cols-[0.78fr_1.22fr] gap-5 items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6548ff] to-[#4936d9] flex items-center justify-center shadow-lg shadow-indigo-900/20">
-                <Grid3X3 className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-black tracking-tight text-slate-950 dark:text-white">Categories</h1>
-                <p className="text-slate-600 dark:text-slate-300 font-medium mt-1">
-                  Explore all categories and find exactly what you're looking for.
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/sell"
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#5b56f5] via-[#7845f4] to-[#ed42c7] px-5 py-4 shadow-xl shadow-purple-950/15 group"
-            >
-              <div className="absolute right-0 inset-y-0 w-[38%] bg-[radial-gradient(circle_at_center,_rgba(255,210,60,.45),_transparent_58%)]" />
-              <div className="relative flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
-                  <Tag className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xl lg:text-2xl font-black text-white">Private Sellers Sell for <span className="text-3xl">{formatPrice(0)}</span></p>
-                  <p className="text-white text-sm font-semibold mt-0.5">No listing fees. No final value fees. Keep 100% of your sale price.</p>
-                </div>
-                <span className="hidden sm:inline-flex bg-white text-indigo-700 font-black rounded-xl px-5 py-3 items-center gap-1 shadow-lg group-hover:translate-x-1 transition-transform">
-                  Start Selling <ChevronRight className="w-4 h-4" />
-                </span>
-              </div>
-            </Link>
-          </div>
-
-          <div className="relative max-w-md mt-5">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search categories..."
-              className="pl-11 h-10 rounded-xl border-slate-200 bg-slate-50 text-slate-950 dark:border-white/10 dark:bg-white/[0.06] dark:text-white"
-            />
-          </div>
+  const activeCategories = filtered.filter(cat=>statusFor(cat.slug)==="active");
+  const featuredCategory = selected ?? activeCategories.find(cat=>cat.slug==="electronics") ?? activeCategories[0];
+  const curated = featuredCategory?.subcategories.filter(sub=>statusFor(featuredCategory.slug,sub.slug)==="active").slice(0,5) ?? [];
+  const categoryListings = featuredCategory ? featuredListings.filter(item => resolveCategory(item.category).category===featuredCategory.slug).slice(0,4) : [];
+  const products = categoryListings.length ? categoryListings : featuredListings.slice(0,4);
+  return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
+    <Navbar />
+    <main className="bz-category-redesign flex-1 mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6">
+      <nav aria-label="Breadcrumb" className="mb-4 flex gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"><Link href="/">Home</Link><span>›</span><span>Categories</span></nav>
+      <div className="grid gap-4 lg:grid-cols-[205px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)] items-start">
+        <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24" aria-label="Category navigation">
+          <button type="button" onClick={()=>setOpenSlug(null)} className={`mb-2 w-full rounded-xl px-3 py-3 text-left text-sm font-extrabold ${!selected?"bg-gradient-to-r from-pink-500 to-orange-400 text-white":"text-slate-900 dark:text-white"}`}>All Categories</button>
+          <nav className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
+            {filtered.map(cat=>{const available=statusFor(cat.slug)==="active",active=selected?.slug===cat.slug;return <button key={cat.slug} type="button" disabled={!available} onClick={()=>setOpenSlug(cat.slug)} aria-current={active?"page":undefined} className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span><span className="min-w-0 flex-1 leading-snug text-sm font-bold">{cat.name}</span></button>})}
+          </nav>
+          {!filtered.length&&<p className="p-3 text-sm text-slate-700 dark:text-slate-200">No matching categories.</p>}
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-[#172945]"><p className="text-xs font-bold text-slate-900 dark:text-white">Shop by marketplace</p><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">{marketRegion==="uk"?"🇬🇧 UK marketplace":"🇺🇸 USA marketplace"}</p></div>
+        </aside>
+        <div className="min-w-0 space-y-6">
+          <section className="bz-category-hero relative overflow-hidden rounded-2xl border border-purple-200 bg-gradient-to-br from-[#f52994] via-[#a535d9] to-[#185be7] px-5 py-7 text-white dark:border-purple-600/40 dark:from-[#232ab1] dark:via-[#9234db] dark:to-[#ee368c] sm:px-8 sm:py-9">
+            <div className="relative z-10 max-w-[600px]"><h1 className="text-3xl font-black tracking-tight sm:text-4xl">{selected ? selected.name : "Shop by Category"}</h1><p className="mt-2 text-sm font-semibold text-white">Discover new and pre-loved finds from Bazunk sellers.</p>
+              <div className="relative mt-4"><Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600"/><input value={search} onChange={e=>setSearch(e.target.value)} aria-label="Search categories" placeholder="Search in all categories…" className="h-11 w-full rounded-full border border-white bg-white px-11 text-sm font-medium text-slate-950 placeholder:text-slate-500 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-orange-500 dark:bg-[#111f36] dark:border-indigo-300 dark:text-white dark:placeholder:text-slate-300"/></div>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs font-bold text-white"><span>✦ Great deals</span><span>✓ Trusted sellers</span><span>♢ Buyer Protection</span><span>🇬🇧 UK &amp; 🇺🇸 USA</span></div>
+            </div><div aria-hidden="true" className="pointer-events-none absolute -bottom-12 right-2 hidden text-[120px] opacity-30 sm:block">🛍️</div>
+          </section>
+          <section aria-label="Popular categories"><div className="mb-3 flex items-center justify-between gap-2"><h2 className="text-xl font-extrabold">Popular categories</h2><button onClick={()=>{setSearch("");setOpenSlug(null)}} className="rounded-full border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 dark:border-blue-800 dark:text-blue-200">View all categories →</button></div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{filtered.filter(cat=>statusFor(cat.slug)==="active").map((cat,i)=><button key={cat.slug} onClick={()=>setOpenSlug(cat.slug)} type="button" className="bz-category-modern-card group flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-colors hover:border-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 dark:border-[#304461] dark:bg-[#111f36] dark:hover:border-blue-400">
+              <div className="relative aspect-[5/4] w-full overflow-hidden bg-gradient-to-br from-blue-50 to-purple-100 dark:from-[#1a345a] dark:to-[#22244b]">{CATEGORY_ART[cat.slug]?<img src={CATEGORY_ART[cat.slug]} alt="" loading="lazy" className="h-full w-full object-cover" />:<div className={`grid h-full place-items-center bg-gradient-to-br ${CATEGORY_THEMES[i%CATEGORY_THEMES.length]}`}><CategoryIcon name={cat.icon} className="h-12 w-12 text-white"/></div>}</div>
+              <div className="flex min-h-[68px] flex-1 flex-col justify-center px-3 py-2"><h3 className="text-sm font-extrabold leading-tight text-slate-950 dark:text-white">{cat.name}</h3><p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">{catCount(cat.slug)>0?`${catCount(cat.slug)} listings`:`${cat.subcategories.length} subcategories`}</p></div></button>)}</div>
+            {!activeCategories.length&&<p className="rounded-xl bg-white p-5 text-slate-700 dark:bg-[#111f36] dark:text-slate-200">No active categories match your search.</p>}
+          </section>
+          {featuredCategory&&<section aria-label="Featured subcategories"><div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-extrabold">Featured subcategories {selected ? `in ${selected.name}` : ""}</h2><Link href={`/browse?category=${encodeURIComponent(featuredCategory.slug)}`} className="text-sm font-bold text-blue-700 dark:text-blue-200">Browse all →</Link></div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">{curated.map((sub,i)=>{const art=subcategoryArtwork(featuredCategory.slug,sub.name,i);return <Link key={sub.slug} href={`/browse?category=${encodeURIComponent(featuredCategory.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="bz-category-modern-card flex min-w-0 flex-col items-center rounded-xl border border-slate-200 bg-white p-3 text-center transition-colors hover:border-blue-500 dark:border-[#304461] dark:bg-[#111f36]"><div className="mb-2 grid aspect-square w-full max-w-[140px] place-items-center rounded-xl text-5xl" style={{background:`linear-gradient(135deg,${art.colors[0]}22,${art.colors[1]}55)`}} aria-hidden="true">{art.subject}</div><span className="text-sm font-bold text-slate-950 dark:text-white">{sub.name}</span></Link>})}</div>
+          </section>}
+          <section aria-label="Marketplace listings"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-extrabold">{categoryListings.length&&featuredCategory?`Popular items in ${featuredCategory.name}`:"Explore marketplace listings"}</h2><Link href={featuredCategory?`/browse?category=${encodeURIComponent(featuredCategory.slug)}`:"/browse"} className="text-sm font-bold text-blue-700 dark:text-blue-200">View listings →</Link></div>
+            {featuredLoading?<p role="status" className="py-8 text-sm text-slate-700 dark:text-slate-200">Loading marketplace listings…</p>:products.length?<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{products.map(item=><Link key={item.id} href={`/listing/${item.public_id??item.publicId??item.id}`} className="bz-category-modern-card overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#304461] dark:bg-[#111f36]"><div className="aspect-[4/3] bg-slate-100 p-3 dark:bg-[#1b3052]">{item.image?<img src={item.image} alt="" loading="lazy" className="h-full w-full object-contain"/>:<div className="grid h-full place-items-center text-slate-500">No photo</div>}</div><div className="p-3"><h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-bold text-slate-950 dark:text-white">{item.title}</h3><p className="mt-2 text-base font-extrabold text-slate-950 dark:text-white">{formatPrice(Number(item.price))}</p></div></Link>)}</div>:<div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#304461] dark:bg-[#111f36]"><p className="text-sm text-slate-700 dark:text-slate-200">No products are currently available. Explore categories or browse all listings.</p><Link href="/browse" className="mt-2 inline-block font-bold text-blue-700 dark:text-blue-300">Browse marketplace →</Link></div>}
+          </section>
         </div>
       </div>
-
-      <main className="flex-1 bg-[#071426] text-white">
-        <div className="container mx-auto px-4 py-7 grid lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[290px_minmax(0,1fr)] gap-5 items-start">
-          <aside className="lg:sticky lg:top-24 rounded-2xl border border-sky-300/20 bg-[#0d203b] p-3 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto [scrollbar-width:thin]" aria-label="Browse categories">
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sky-200" />
-              <Input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." className="pl-9 bg-[#07172e] border-sky-300/25 text-white placeholder:text-slate-400" />
-            </div>
-            <nav className="space-y-1">
-              <button type="button" onClick={()=>{setOpenSlug(null);setSearch("");}} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-3 text-left font-extrabold transition-colors ${!selected?"bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg":"bg-[#193353] text-white hover:bg-[#255082]"}`}>
-                <span className="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-white/20"><Grid3X3 className="w-5 h-5 text-white"/></span>
-                <span className="flex-1 text-sm">Category Dashboard</span><ChevronRight className="w-4 h-4"/>
-              </button>
-              <div className="my-3 border-t border-sky-300/20"/>
-              {filtered.map(category=>{
-                const state=statusFor(category.slug), active=selected?.slug===category.slug;
-                const disabled=state!=="active";
-                return <button key={category.slug} type="button" disabled={disabled} onClick={()=>setOpenSlug(category.slug)} className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors ${active?"bg-blue-600 text-white shadow-lg shadow-blue-900/30":disabled?"bg-[#172941] text-slate-300 cursor-not-allowed":"bg-[#142c4b] text-white hover:bg-[#235187]"}`}>
-                  <span className={`w-8 h-8 shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(category.slug)}`}><CategoryIcon name={category.icon} className="w-4 h-4 text-white"/></span>
-                  <span className="flex-1 min-w-0 text-sm font-bold text-white">{category.name}</span>
-                  {disabled?<LucideIcons.LockKeyhole className="w-3.5 h-3.5 text-slate-200"/>:<span className="flex items-center gap-1 text-xs font-bold text-white">{catCount(category.slug)>0?catCount(category.slug).toLocaleString():""}<ChevronRight className="w-3.5 h-3.5"/></span>}
-                </button>;
-              })}
-              {!filtered.length&&<p className="p-3 text-sm text-slate-300">No categories match your search.</p>}
-            </nav>
-          </aside>
-          <div className="min-w-0 space-y-7">
-            {selected ? <>
-              <section className={`relative min-h-[190px] sm:min-h-[215px] overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r ${themeFor(selected.slug)}`}>
-                {CATEGORY_ART[selected.slug]&&<img src={CATEGORY_ART[selected.slug]} alt="" className="absolute right-0 inset-y-0 h-full w-[65%] object-cover object-bottom opacity-90"/>}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#06132e]/95 via-[#071d43]/75 to-transparent"/>
-                <div className="relative z-10 p-6 sm:p-8 max-w-[85%]">
-                  <p className="text-xs text-sky-100 mb-3"><Link href="/" className="hover:underline">Home</Link> › Categories › {selected.name}</p>
-                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{selected.name}</h2>
-                  <p className="mt-2 text-sm font-semibold text-slate-100">{selected.subcategories.length} subcategories{catCount(selected.slug)>0?` · ${catCount(selected.slug).toLocaleString()} listings`:""}</p>
-                  <p className="mt-3 text-xs sm:text-sm text-white">Explore {selected.name.toLowerCase()} products from Bazunk sellers.</p>
-                  <Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="inline-flex mt-4 items-center gap-1 rounded-lg bg-white px-4 py-2 text-xs font-black text-[#08204a] hover:bg-sky-100">View all listings <ChevronRight className="w-4 h-4"/></Link>
-                </div>
-              </section>
-              <section>
-                <div className="flex flex-wrap justify-between items-center gap-2 mb-4"><h3 className="text-xl font-black">Subcategories</h3><Link href={`/browse?category=${encodeURIComponent(selected.slug)}`} className="text-sm font-bold text-amber-300 hover:text-white">View All {selected.name} →</Link></div>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                  {selected.subcategories.map((sub,index)=>{
-                    const state=statusFor(selected.slug,sub.slug),disabled=state!=="active",subTotal=subCount(selected.slug,sub.slug),art=subcategoryArtwork(selected.slug,sub.name,index);
-                    const body=<><div className="relative h-36 sm:h-44 overflow-hidden" style={{background:`linear-gradient(125deg, ${art.colors[0]}, ${art.colors[1]})`}}>
-                      <div aria-hidden="true" className="absolute -right-7 -top-10 h-36 w-36 rounded-full bg-white/20 blur-xl"/>
-                      <div aria-hidden="true" className="absolute -left-8 -bottom-12 h-36 w-36 rounded-full bg-black/10"/>
-                      <span aria-hidden="true" className="absolute right-3 bottom-0 text-[100px] sm:text-[120px] leading-none drop-shadow-[0_12px_12px_rgba(0,0,0,0.24)] transition-transform duration-300 group-hover:scale-110" style={{transform:`rotate(${art.angle}deg)`}}>{art.subject}</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent"/>
-                      <div className="absolute left-3 top-3 right-3"><h4 className="max-w-[88%] text-base sm:text-lg font-black leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">{sub.name}</h4><p className="text-xs font-bold text-white mt-1 drop-shadow">{disabled?labelFor(state):subTotal>0?`${subTotal.toLocaleString()} listings`:"Explore listings"}</p></div>
-                      <span className="absolute bottom-2 right-2 flex items-center justify-center w-8 h-8 rounded-full bg-[#092243]/85 border border-white/40 text-white"><ChevronRight className="w-5 h-5"/></span>
-                    </div></>;
-                    return disabled?<div key={sub.slug} className="rounded-xl overflow-hidden border border-white/10 bg-[#102541] opacity-60">{body}</div>:<Link key={sub.slug} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}`} className="group rounded-xl overflow-hidden border border-sky-300/20 bg-[#102541] hover:border-sky-400 hover:-translate-y-1 hover:shadow-lg hover:shadow-fuchsia-900/30 transition-all">{body}</Link>;
-                  })}
-                </div>
-              </section>
-              {selected.subcategories.some(sub=>suggestedThirdLevel(selected.slug,sub.slug).length>0)&&<section className="rounded-2xl border border-sky-300/30 bg-[#142e50] p-5"><h3 className="font-black text-lg text-white mb-4">Explore more specific categories</h3><div className="flex flex-wrap gap-2">{selected.subcategories.flatMap(sub=>suggestedThirdLevel(selected.slug,sub.slug).map(name=><Link key={sub.slug+name} href={`/browse?category=${encodeURIComponent(selected.slug)}&sub=${encodeURIComponent(sub.slug)}&subsub=${encodeURIComponent(thirdLevelSlug(name))}`} className="inline-flex items-center rounded-lg bg-[#1765dc] border border-[#65b4ff] px-4 py-2.5 text-sm font-extrabold !text-white hover:bg-[#287cf3] shadow-sm shadow-blue-950/40 transition-colors">{name}</Link>))}</div></section>}
-              <section><h3 className="text-xl font-black mb-4">Browse Other Categories</h3><div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">{ordered.filter(c=>c.slug!==selected.slug&&statusFor(c.slug)==="active").slice(0,8).map(c=><button type="button" key={c.slug} onClick={()=>{setOpenSlug(c.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`relative min-h-[105px] rounded-xl overflow-hidden text-left p-3 bg-gradient-to-br ${themeFor(c.slug)} hover:brightness-110 transition-all`}>{CATEGORY_ART[c.slug]&&<img src={CATEGORY_ART[c.slug]} alt="" className="absolute inset-0 w-full h-full object-cover object-bottom opacity-65"/>}<div className="absolute inset-0 bg-gradient-to-r from-black/65 to-transparent"/><span className="relative z-10 text-sm font-black">{c.name}</span></button>)}</div></section>
-            </>:<>
-<section className="relative overflow-hidden rounded-2xl border border-sky-400/25 bg-gradient-to-r from-[#1045a4] via-[#4031a5] to-[#9a278e] p-6 sm:p-8">
-<div className="relative z-10"><p className="text-xs uppercase font-black tracking-widest text-amber-300">Explore Bazunk</p><h2 className="text-3xl sm:text-4xl font-black mt-2">Category Dashboard</h2><p className="mt-2 text-sm text-white font-medium max-w-xl">Discover something brilliant. Choose a category below to explore subcategories and listings from our sellers.</p><p className="mt-4 text-xs font-bold text-sky-100">{ordered.filter(c=>statusFor(c.slug)==="active").length} categories to explore</p></div>
-<Grid3X3 className="absolute -right-4 -bottom-8 w-52 h-52 text-white/10 rotate-12"/>
-</section>
-<section><div className="flex items-center justify-between gap-3 mb-4"><h3 className="text-xl font-black">Shop by Category</h3><span className="text-sm font-semibold text-sky-200">Select a category</span></div>
-<div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-{filtered.map((category,index)=>{
-const state=statusFor(category.slug),unavailable=state!=="active",art=CATEGORY_ART[category.slug];
-return <button key={category.slug} type="button" disabled={unavailable} onClick={()=>{setOpenSlug(category.slug);window.scrollTo({top:0,behavior:"smooth"});}} className={`group relative overflow-hidden rounded-2xl border border-sky-300/20 bg-[#112846] text-left transition-all ${unavailable?"opacity-55 cursor-not-allowed":"hover:border-sky-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/40"}`}>
-<div className={`relative h-28 sm:h-36 bg-gradient-to-br ${CATEGORY_THEMES[index%CATEGORY_THEMES.length]}`}>{art&&<img src={art} alt="" className="absolute inset-0 h-full w-full object-cover object-bottom"/>}<div className="absolute inset-0 bg-gradient-to-t from-[#061426]/80 via-transparent to-transparent"/><div className="absolute bottom-2 left-3 rounded-lg bg-black/45 p-2"><CategoryIcon name={category.icon} className="w-5 h-5 text-white"/></div></div>
-<div className="p-3 sm:p-4"><h4 className="text-sm sm:text-base font-black leading-tight text-white">{category.name}</h4><p className="mt-1 text-xs font-semibold text-sky-200">{unavailable?labelFor(state):category.subcategories.length+" subcategories"+(catCount(category.slug)>0?" · "+catCount(category.slug)+" listings":"")}</p></div>
-</button>;
-})}
-</div></section></>}
-          </div>
-        </div>
-      </main>
-
-      {/* Keep the existing admin-managed categories_top placement and its saved advert settings. */}
-      <AdSlot slotKey="categories_top" />
-
-      <Footer />
-    </div>
-  );
+    </main><AdSlot slotKey="categories_top"/><Footer/>
+  </div>;
 }

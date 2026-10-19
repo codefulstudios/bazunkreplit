@@ -16,7 +16,7 @@ export function AdminListingAlertsPanel(){
  }
  useEffect(()=>{if(isAdmin)void refresh();},[isAdmin]);
  const totals=report?.events||[];
- return <section className="space-y-4 rounded-2xl border-2 border-orange-200 bg-white p-5 dark:border-orange-700 dark:bg-[#172541]">
+ return <section className="admin-alerts-panel space-y-4 rounded-2xl border-2 border-orange-200 bg-white p-5 dark:border-orange-700 dark:bg-[#172541]">
   <div className="flex flex-wrap items-center justify-between gap-3">
     <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-950 dark:text-white"><Bell className="h-5 w-5 text-orange-600"/>Persistent buyer alerts</h2>
       <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Database-backed price drops, restocks, watcher preferences and saved searches</p></div>
@@ -29,7 +29,7 @@ export function AdminListingAlertsPanel(){
      {label:"Restocks (7d)",value:totals.find(x=>x.event_type==="restock")?.total||0,icon:PackageCheck},
      {label:"Saved search alerts on",value:report.searches?.search_alerts||0,icon:Search},
      {label:"Explicit alert preferences",value:report.watchers?.subscriptions||0,icon:Bell}
-    ].map(x=>{const Icon=x.icon;return <div key={x.label} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-600 dark:bg-slate-800">
+    ].map(x=>{const Icon=x.icon;return <div key={x.label} className="bz-metric-card rounded-xl p-3">
       <Icon className="mb-2 h-5 w-5 text-orange-600"/><p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{x.label}</p>
       <p className="mt-1 text-2xl font-black text-slate-950 dark:text-white">{x.value}</p>
     </div>})}

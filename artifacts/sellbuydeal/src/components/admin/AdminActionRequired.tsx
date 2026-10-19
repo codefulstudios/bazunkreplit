@@ -46,13 +46,13 @@ export function AdminActionRequired(){
             className="w-full p-4 text-left hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 dark:hover:bg-[#22375b]">
             <div className="flex items-start justify-between gap-3">
               <div className="rounded-xl bg-orange-100 p-2.5 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200"><Icon className="h-5 w-5"/></div>
-              <span className={`rounded-full px-3 py-1 text-lg font-black tabular-nums ${q.count===null?"bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white":q.count>0?"bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-white":"bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100"}`}>{q.count===null?"—":q.count}</span>
+              <span className={`rounded-full px-3 py-1 text-lg font-black tabular-nums ${q.count===null?"bg-slate-200 text-slate-900 dark:bg-slate-700 dark:text-white":q.count>0?"bg-amber-100 text-amber-900 dark:!bg-[#ffd078] dark:!text-[#35200a]":"bg-emerald-100 text-emerald-900 dark:!bg-[#a7f3d0] dark:!text-[#052e24]"}`}>{q.count===null?"—":q.count}</span>
             </div>
             <h3 className="mt-3 font-black text-slate-950 dark:text-white">{q.label}</h3>
             <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-700 dark:text-slate-200">{q.description}</p>
             <p className="mt-3 text-xs font-bold text-blue-700 dark:text-blue-200">{open?"Hide latest items":"View latest items"} ↓</p>
           </button>
-          {q.warning&&<p className="mx-3 mb-3 rounded-lg bg-amber-50 p-2 text-xs font-semibold text-amber-950 dark:bg-amber-950 dark:text-amber-100">{q.warning}</p>}
+          {q.warning&&<p className="mx-3 mb-3 rounded-lg bg-amber-50 p-2 text-xs font-semibold text-amber-950 dark:!bg-[#ffd078] dark:!text-[#35200a]">{q.warning}</p>}
           {open&&<div id={`admin-review-${q.key}`} className="border-t border-slate-200 p-3 dark:border-slate-700">
             {q.items.length?q.items.map(item=><button key={q.key+item.id} type="button" onClick={()=>navigate(item.href)}
                 className="block w-full rounded-lg px-2 py-2 text-left hover:bg-orange-50 dark:hover:bg-slate-700">

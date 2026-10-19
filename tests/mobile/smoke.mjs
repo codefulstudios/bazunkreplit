@@ -19,7 +19,7 @@ const authRoutes = [
   ['Admin dashboard', '/admin/dashboard'],
   ['Admin products', '/admin/products'],
 ];
-const sizes = [{name:'phone-360',width:360,height:780},{name:'phone-390',width:390,height:844},{name:'tablet-768',width:768,height:1024},{name:'tablet-1024',width:1024,height:768}];
+const sizes = [{name:'phone-320',width:320,height:720},{name:'phone-360',width:360,height:780},{name:'phone-390',width:390,height:844},{name:'tablet-768',width:768,height:1024},{name:'tablet-1024',width:1024,height:768}];
 await mkdir('mobile-results',{recursive:true});
 const browser = await chromium.launch({headless:true});
 const results=[];
@@ -28,7 +28,7 @@ try {
   for(const size of sizes) {
     const context=await browser.newContext({viewport:{width:size.width,height:size.height},deviceScaleFactor:1,isMobile:size.width<768,hasTouch:true});
     for(const [label,path] of routes) {
-      if (skipProtectedWithoutSession && !authenticated && ['Checkout','Importers','Offers','Admin','Sell'].includes(label)) {
+      if (skipProtectedWithoutSession && !authenticated && ['Importers','Offers','Admin','Sell'].includes(label)) {
         results.push({size:size.name,label,path,skipped:'Requires an authenticated test session'});
         continue;
       }
@@ -58,7 +58,7 @@ try {
         const pageNotFound=/page not found|404 not found/i.test((await page.locator('body').innerText().catch(()=>'' )).slice(0,3000));
         const outcome={size:size.name,label,path,status,overflow,darkOverflow:darkWidth-size.width,loadMs:Date.now()-started,errors,blocked,pageNotFound, ...data};
         results.push(outcome);
-        if(overflow>3||darkWidth-size.width>3||errors.length||status>=400) {
+        if(overflow>3||darkWidth-size.width>3||errors.length||status>=400||data.unnamedButtons>0) {
           await page.screenshot({path:`mobile-results/${size.name}-${label.toLowerCase().replace(/[^a-z0-9]+/g,'-')}.png`,fullPage:true}).catch(()=>{});
         }
       } catch(e) {results.push({size:size.name,label,path,error:String(e)});}

@@ -1,3 +1,4 @@
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package } from "lucide-react";
@@ -104,6 +105,7 @@ export function AdminListingsPage() {
 
   return (
     <AdminLayout>
+      {loading && <MarketplaceLoader area="admin" label="Loading admin listings…" />}
       <div className="admin-listings-page">
       <div className="flex items-center justify-between mb-6">
         <div>

@@ -115,69 +115,27 @@ export function Hero() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.55 }}
           >
-            <h1 className="sr-only">Buy, Sell, Deal, Get Rewarded on Bazunk</h1>
-            <Link href="/welcome-new-buyers">
-              <a className="block group rounded-2xl overflow-hidden mb-4 shadow-2xl shadow-black/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FACC15] bg-gradient-to-br from-[#0652c8] via-[#283fd0] to-[#8c1cb0] text-white p-6 sm:p-8 min-h-[235px] flex items-center" aria-label="New buyer offer — learn more">
-                <div className="max-w-xl">
-                  <p className="text-xs sm:text-sm font-black tracking-[0.2em] text-yellow-300 uppercase">New buyers · {country.flag} {country.name}</p>
-                  <h2 className="mt-2 text-3xl sm:text-4xl font-black leading-tight">Get {currency.symbol}5 credit on us</h2>
-                  <p className="mt-2 text-white/80 font-semibold">For your 1st or 2nd qualifying purchase.</p>
-                  <div className="mt-5 space-y-2 text-sm sm:text-base text-white/90">
-                    <p>✓ Bazunk covers your Buyer Protection fee on your first qualifying purchase.</p>
-                    <p>✓ Buyer Protection applies if an eligible item doesn't arrive or isn't as described.</p>
-                  </div>
-                  <span className="inline-flex mt-6 rounded-full bg-yellow-400 text-slate-950 font-black px-5 py-2.5 group-hover:bg-yellow-300 transition-colors">Learn more →</span>
-                </div>
-              </a>
-            </Link>
-
-            <div className="mb-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white">
-              <div className="flex flex-wrap items-center gap-2 text-sm font-black">
-                <span>{marketRegion === "uk" ? "🇬🇧 UK marketplace" : "🇺🇸 USA marketplace"}</span>
-                <span className="rounded-full bg-white/15 px-2 py-0.5 text-xs text-white">Showing {currency.code}</span>
-              </div>
-              <p className="mt-1 text-sm leading-relaxed text-slate-100">
-                The region switch selects which listings you browse, while the currency controls displayed prices.
-                International delivery is available only when an individual seller offers it; check shipping destinations and costs on each listing.
-              </p>
+            <div className="mb-4">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
+              <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">Great finds. Better deals. <span className="text-orange-400">All in one place.</span></h1>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200">Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer.</p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <Link href="/browse">
-                <button className="flex items-center justify-center gap-2 px-7 py-3.5 bg-[#F26B21] text-white font-black rounded-2xl hover:opacity-90 transition-opacity shadow-xl shadow-[#F26B21]/25 text-sm w-full sm:w-auto">
-                  <ShoppingCart className="w-4 h-4" /> {t("browse", "Start Shopping")}
-                </button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
+                <ShoppingCart className="h-5 w-5" /> Shop all listings <ArrowRight className="h-4 w-4" />
               </Link>
-
-
-              {/* Sell — flyout trigger */}
-              <button
-                onClick={handleSellClick}
-                className="flex items-center justify-center gap-2 px-7 py-3.5 border border-white/20 text-white font-bold rounded-2xl hover:bg-white/5 transition-colors text-sm w-full sm:w-auto"
-              >
-                <Store className="w-4 h-4" /> Start Selling
-                <svg
-                  className={`w-3.5 h-3.5 ml-0.5 transition-transform duration-200 ${sellOpen ? "rotate-180" : ""}`}
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <Link href="/rewards" className="flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-yellow-300 bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 !text-slate-950 font-black rounded-2xl hover:from-yellow-200 hover:to-orange-300 hover:scale-[1.03] transition-all shadow-lg shadow-amber-500/30 text-sm w-full sm:w-auto" style={{ color: "#111827" }}>
-                <Gamepad2 className="w-4 h-4" /> Earn Free Credits
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <Link href="/sell/quick" className="rounded-xl bg-white px-4 py-2 font-bold text-slate-950 hover:bg-orange-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
-                ⚡ Quick Sale — list the basics
-              </Link>
-              <Link href="/sell/direct" className="rounded-xl border border-white/40 px-4 py-2 font-bold text-white hover:bg-white/10">
-                Full Direct Sale listing →
-              </Link>
-              <Link href="/categories" className="px-2 py-2 font-semibold text-orange-200 underline underline-offset-4 hover:text-white">
+              <Link href="/categories" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
                 Explore categories
               </Link>
             </div>
-
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm !text-white">
+              <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
+              <Link href="/sell" className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
+            </div>
+            <Link href="/welcome-new-buyers" className="mt-7 flex items-center justify-between gap-3 rounded-xl border border-orange-200/25 bg-white/10 px-4 py-3 text-sm text-white transition-colors hover:bg-white/15">
+              <span><span className="font-bold text-orange-300">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
+              <ArrowRight className="h-4 w-4 shrink-0" />
+            </Link>
           </motion.div>
 
           {/* ── Right panel — top categories ──────────── */}
@@ -185,10 +143,10 @@ export function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden lg:flex flex-col gap-4 self-start"
+            className="flex flex-col gap-4 self-start"
           >
-            <div className="grid grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: Icon, color, emoji, href }, i) => (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            {HERO_CATS.map(({ name, icon: Icon, href }, i) => (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -196,14 +154,13 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-gradient-to-br from-white/20 to-white/5 border border-white/25 rounded-2xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-white/12 hover:border-white/25 hover:scale-[1.03] transition-all duration-300 cursor-pointer group">
+                  <div className="bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
                     <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center shadow-lg"
-                      style={{ backgroundColor: color }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
                     >
-                      <span className="text-3xl leading-none" aria-hidden="true">{emoji}</span>
+                      <Icon className="w-6 h-6 text-orange-200" aria-hidden="true" />
                     </div>
-                    <p className="text-white text-[11px] font-semibold text-center leading-tight group-hover:text-white transition-colors">
+                    <p className="text-white text-sm font-medium text-center leading-tight group-hover:text-white transition-colors">
                       {name}
                     </p>
                   </div>
@@ -213,10 +170,10 @@ export function Hero() {
             </div>
 
             {/* Marketplace type pills — aligned under categories */}
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="hidden sm:flex flex-wrap gap-2 pt-1">
               {visiblePills.map(({ icon: Icon, label }) => (
-                <span key={label} className="flex items-center gap-1.5 text-white/50 text-xs font-medium bg-white/5 border border-white/10 px-3 py-1.5 rounded-full hover:border-white/20 hover:text-white/70 transition-colors">
-                  <Icon className="w-3 h-3" /> {t(label, label)}
+                <span key={label} className="flex items-center gap-1.5 text-sm font-semibold border px-3 py-2 rounded-full hover:brightness-125 transition-all" style={{backgroundColor:"#334155",borderColor:"#64748B",color:"#FFFFFF"}}>
+                  <Icon className="w-4 h-4" style={{color:"#FFFFFF"}} /> {t(label, label)}
                 </span>
               ))}
             </div>
@@ -253,7 +210,7 @@ export function Hero() {
                 <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                   <div>
                     <h2 className="text-lg font-black text-gray-900">How do you want to sell?</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">Pick a listing type — all are free to post</p>
+                    <p className="text-sm text-gray-600 mt-0.5">Pick a listing type — all are free to post</p>
                   </div>
                   <button
                     onClick={() => setSellOpen(false)}
@@ -283,7 +240,7 @@ export function Hero() {
 
                 {/* Footer */}
                 <div className="px-6 pb-5 pt-1 text-center">
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-sm text-gray-600">
                     No fees to list · Bazunk only earns when you sell
                   </p>
                 </div>

@@ -27,7 +27,7 @@ export function AdminFinanceReconciliation(){
   </div>
   {error&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-900 dark:bg-red-950 dark:text-red-100">{error}</p>}
   {report&&<>
-   {!report.stripeAvailable&&<p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:bg-amber-950 dark:text-amber-100">Stripe unavailable — cross-check incomplete. {report.stripeError}</p>}
+   {!report.stripeAvailable&&<p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-bold text-amber-900 dark:!bg-[#ffd078] dark:!text-[#35200a]">Stripe unavailable — cross-check incomplete. {report.stripeError}</p>}
    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
     {[
       ["Exceptions flagged",report.issues.length],

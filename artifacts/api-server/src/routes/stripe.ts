@@ -337,7 +337,7 @@ router.post("/stripe/confirm-cart-payment", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, "Failed to confirm cart payment");
-    res.status(500).json({ error: "Failed to confirm payment", message: String(err) });
+    res.status(500).json({ error: "Payment verification is temporarily unavailable. Your payment may have succeeded; check your order history before trying again." });
   }
 });
 

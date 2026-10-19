@@ -63,10 +63,10 @@ export function SellerProfileCard({ sellerEmail }: { sellerEmail: string }) {
   rows.push({
     icon: "",
     text: pct !== null
-      ? <><b>{pct}% positive</b> <span className="text-gray-400">({total} review{total === 1 ? "" : "s"})</span></>
+      ? <><b>{pct}% positive</b> <span className="text-slate-600">({total} review{total === 1 ? "" : "s"})</span></>
       : total > 0
-        ? <span className="text-gray-500">{total} review{total === 1 ? "" : "s"} so far — percentage shows after 3</span>
-        : <span className="text-gray-500">No reviews yet</span>,
+        ? <span className="text-slate-600">{total} review{total === 1 ? "" : "s"} so far — percentage shows after 3</span>
+        : <span className="text-slate-600">No reviews yet</span>,
   });
   if (rep.replyMedianHours !== null) rows.push({ icon: "⚡", text: replyLabel(rep.replyMedianHours) });
   if (rep.dispatchMedianHours !== null) rows.push({ icon: "📦", text: dispatchLabel(rep.dispatchMedianHours) });
@@ -75,9 +75,9 @@ export function SellerProfileCard({ sellerEmail }: { sellerEmail: string }) {
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100">
-      <p className="text-[11px] font-black uppercase tracking-wider text-gray-400 mb-2.5">Seller profile</p>
-      {sellerEmail.toLowerCase() === "cczslater@gmail.com" && <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-black text-[#4A5CE8]"><ShieldCheck className="w-3.5 h-3.5" /> Bazunk Official Store</div>}
-      <ul className="space-y-1.5 text-[13px] text-gray-700">
+      <p className="text-sm font-semibold uppercase tracking-wider text-slate-600 mb-2.5">Seller profile</p>
+      {sellerEmail.toLowerCase() === "cczslater@gmail.com" && <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-sm font-semibold text-[#4A5CE8]"><ShieldCheck className="w-3.5 h-3.5" /> Bazunk Official Store</div>}
+      <ul className="space-y-1.5 text-sm text-gray-700">
         {rows.map((r, i) => (
           <li key={i} className="flex items-center gap-2">
             {i === 0 ? <span className={`w-3 h-3 rounded-full ${dot} flex-shrink-0 mx-0.5`} /> : <span className="w-4 text-center flex-shrink-0">{r.icon}</span>}
@@ -87,7 +87,7 @@ export function SellerProfileCard({ sellerEmail }: { sellerEmail: string }) {
       </ul>
       {total > 0 && (
         <>
-          <div className="flex items-center gap-2 mt-3 text-[11px] text-gray-400">
+          <div className="flex items-center gap-2 mt-3 text-sm text-slate-600">
             <Stars n={Math.round(rep.reviews.average)} />
             <span>{rep.reviews.average.toFixed(1)} average · {rep.reviews.positive} positive · {rep.reviews.neutral} neutral · {rep.reviews.negative} negative</span>
           </div>
@@ -101,19 +101,19 @@ export function SellerProfileCard({ sellerEmail }: { sellerEmail: string }) {
       </Link>
       {showReviews && (
         <div className="mt-3 space-y-3">
-          {!reviews && <p className="text-xs text-gray-400">Loading…</p>}
+          {!reviews && <p className="text-xs text-slate-600">Loading…</p>}
           {reviews?.map(r => (
             <div key={r.id} className="rounded-xl bg-gray-50 p-3">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5"><Stars n={r.rating} />{r.verified_purchase && <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700"><ShieldCheck className="w-3 h-3" /> Verified purchase</span>}</div>
-                <span className="text-[10px] text-gray-400">{new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                <div className="flex items-center gap-1.5"><Stars n={r.rating} />{r.verified_purchase && <span className="inline-flex items-center gap-0.5 text-xs font-bold text-emerald-700"><ShieldCheck className="w-3 h-3" /> Verified purchase</span>}</div>
+                <span className="text-xs text-slate-600">{new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
               </div>
-              {r.comment && <p className="text-xs text-gray-700 mt-1.5 leading-relaxed">{r.comment}</p>}
-              {r.seller_reply && <div className="mt-2 border-l-2 border-[#4A5CE8] pl-2"><p className="text-[9px] font-bold text-gray-500">Seller response</p><p className="text-[11px] text-gray-600 mt-0.5">{r.seller_reply}</p></div>}
-              <p className="text-[10px] text-gray-400 mt-1.5">{r.reviewer} · {r.item_title ?? "Purchase"}</p>
+              {r.comment && <p className="text-sm text-slate-700 mt-1.5 leading-relaxed">{r.comment}</p>}
+              {r.seller_reply && <div className="mt-2 border-l-2 border-[#4A5CE8] pl-2"><p className="text-xs font-bold text-slate-600">Seller response</p><p className="text-sm text-gray-600 mt-0.5">{r.seller_reply}</p></div>}
+              <p className="text-xs text-slate-600 mt-1.5">{r.reviewer} · {r.item_title ?? "Purchase"}</p>
             </div>
           ))}
-          {reviews && reviews.length === 0 && <p className="text-xs text-gray-400">No written reviews yet.</p>}
+          {reviews && reviews.length === 0 && <p className="text-xs text-slate-600">No written reviews yet.</p>}
         </div>
       )}
     </div>

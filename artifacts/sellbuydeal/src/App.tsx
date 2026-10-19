@@ -1,15 +1,63 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { AdminDemoCreatorPage } from "@/pages/admin/AdminDemoCreatorPage";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk, useAuth } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 
 function ScrollToTop() {
   const [location] = useLocation();
+  const firstRoute = useRef(true);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    // Don't restore an old scroll offset when the storefront is opened or refreshed.
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    const reset = () => {
+      if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+    reset();
+    const frame = window.requestAnimationFrame(reset);
+    const onPageshow = (event: PageTransitionEvent) => {
+      if (event.persisted) reset();
+    };
+    window.addEventListener("pageshow", onPageshow);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("pageshow", onPageshow);
+      if ("scrollRestoration" in window.history) window.history.scrollRestoration = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location]);
   return null;
+}
+
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const update = () => setVisible(window.scrollY > 360);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  if (!visible) return null;
+  return (
+    <button
+      type="button"
+      aria-label="Back to top"
+      title="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })}
+      className="fixed bottom-6 left-4 sm:left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#F26B21] text-white shadow-lg border border-orange-300 hover:bg-[#d95512] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
+      data-testid="button-back-to-top"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="m6 12 6-6 6 6"/><path d="M12 6v12"/></svg>
+    </button>
+  );
 }
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -386,6 +434,7 @@ function InnerApp() {
                 <LiveStreamProvider>
                   <OfferProvider>
                     <ScrollToTop />
+                    <BackToTop />
                     <Router />
                     <CartDrawer />
                     <ChatwootWidget />

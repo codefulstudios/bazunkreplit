@@ -328,8 +328,8 @@ export function AdminUsersPage() {
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
       <div className="admin-users-table bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto bz-table-scroll">
+          <table className="w-full text-sm bz-data-table">
             <thead>
               <tr className="bg-gray-50">
                 <th className="px-3 py-2"><input type="checkbox" aria-label="Select all visible users" className="h-4 w-4"

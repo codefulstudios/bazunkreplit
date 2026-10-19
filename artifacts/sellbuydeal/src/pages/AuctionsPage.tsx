@@ -1,3 +1,5 @@
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
@@ -53,6 +55,7 @@ export function AuctionsPage() {
   const { user } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [loading, setLoading] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "auctions");
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("ending");
@@ -87,33 +90,33 @@ export function AuctionsPage() {
   return (
     <div className="min-h-screen bg-[#04152f] text-white flex flex-col">
       <Navbar />
-      <section className="relative isolate overflow-hidden border-b-4 border-[#19a4ff] bg-gradient-to-r from-[#003bb8] via-[#1057fa] to-[#9620df]">
-        <div className="pointer-events-none absolute -top-28 right-[-5%] h-[430px] w-[540px] rounded-full bg-[#f52dbf]/45 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-[-160px] left-[24%] h-[320px] w-[420px] rounded-full bg-[#01b9f8]/45 blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl gap-4 px-5 py-8 md:grid-cols-2 md:items-center md:py-12 lg:px-8">
+      <section className="relative isolate overflow-hidden border-b border-[#2864a1] bg-gradient-to-r from-[#082e61] via-[#154b91] to-[#263b79]">
+        <div className="pointer-events-none absolute -top-28 right-[-5%] h-[280px] w-[380px] rounded-full bg-[#f52dbf]/45 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-[-160px] left-[24%] h-[210px] w-[320px] rounded-full bg-[#01b9f8]/45 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl gap-4 px-5 py-5 md:grid-cols-[1.3fr_.7fr] md:items-center md:py-6 lg:px-8">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4c58] to-[#f20c55] px-4 py-2 text-sm font-black text-white shadow-lg"><Gavel className="h-5 w-5"/> LIVE AUCTIONS</div>
-            <h1 className="mt-4 text-5xl font-black leading-[.98] tracking-tight text-white sm:text-6xl">Bid on Unique <span className="block text-[#ffe341]">Items</span></h1>
-            <p className="mt-4 max-w-xl text-base font-semibold text-white sm:text-lg">Place bids on one-of-a-kind listings. The highest bid wins when the timer hits zero.</p>
-            <div className="mt-5 flex flex-wrap gap-3 text-xs font-bold text-white sm:text-sm">
+            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bid on Unique <span className="block text-[#ffe341]">Items</span></h1>
+            <p className="mt-3 max-w-xl text-sm font-medium text-slate-100 sm:text-base">Place bids on one-of-a-kind listings. The highest bid wins when the timer hits zero.</p>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-white sm:text-sm">
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#ffbd27] p-2 text-[#052253]"><Trophy className="h-4 w-4"/></span> Great deals</span>
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#a22fff] p-2"><Gem className="h-4 w-4"/></span> Unique items</span>
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#00bc82] p-2"><ShieldCheck className="h-4 w-4"/></span> Safe &amp; secure</span>
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#ff299d] p-2"><Globe2 className="h-4 w-4"/></span> Worldwide buyers</span>
             </div>
-            {user && <Link href="/auctions/create" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#ff711d] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8c3b]" data-testid="button-create-auction"><Plus className="h-5 w-5"/> List an Auction</Link>}
+            {user && <Link href="/auctions/create" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#ff711d] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8c3b]" data-testid="button-create-auction"><Plus className="h-5 w-5"/> List an Auction</Link>}
           </div>
-          <div className="relative flex min-h-[235px] items-center justify-center sm:min-h-[310px]">
+          <div className="relative hidden min-h-[150px] items-center justify-center sm:flex sm:min-h-[190px]">
             <div className="pointer-events-none absolute inset-4 rounded-full bg-[#ff56c7]/30 blur-3xl" />
-            <img src="/auction-mascot.svg" alt="Smiling Bazunk auction mascot in a blue hoodie holding a gold coin and auction gavel" className="relative z-10 h-[290px] w-full max-w-[470px] object-contain drop-shadow-[0_20px_25px_rgba(3,5,46,.45)] sm:h-[370px]" />
-            <span className="absolute bottom-[7%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-4 border-[#ffe94a] bg-[#f20a9b] px-4 py-2 text-xl font-black text-white shadow-2xl sm:text-2xl">BID NOW!</span>
+            <img src="/auction-mascot.svg" alt="Smiling Bazunk auction mascot in a blue hoodie holding a gold coin and auction gavel" className="relative z-10 h-[160px] w-full max-w-[280px] object-contain drop-shadow-[0_20px_25px_rgba(3,5,46,.45)] sm:h-[205px]" />
+            <span className="absolute bottom-[1%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-2 border-[#ffe94a] bg-[#f20a9b] px-3 py-1 text-sm font-black text-white shadow-2xl sm:text-lg">BID NOW!</span>
           </div>
         </div>
       </section>
       <div className="mx-auto w-full max-w-7xl px-5 pt-4 lg:px-8"><AdSlot slotKey="auctions_mid" /></div>
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
+          <div className="flex max-w-full flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
             {CATEGORIES.map(cat => <button key={cat} onClick={() => { setCategory(cat); setEndingOnly(false); }} className={`rounded-xl px-3 py-2.5 text-xs font-extrabold transition-colors sm:text-sm ${category===cat?"bg-[#0878fa] text-white shadow-lg":"text-white hover:bg-[#15538d]"}`}>{cat}</button>)}
           </div>
           <div className="ml-auto flex items-center gap-2">
@@ -127,10 +130,8 @@ export function AuctionsPage() {
         </div>
         {endingOnly && <div className="mb-4 flex items-center justify-between rounded-xl border border-orange-400/50 bg-orange-500/15 px-4 py-2 text-sm font-bold text-white"><span>Showing auctions ending in the next 24 hours</span><button onClick={() => setEndingOnly(false)} className="rounded-lg bg-white px-3 py-1.5 font-bold text-[#09325b]">Show all</button></div>}
         {/* Content */}
-        {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-[#4A5CE8]" />
-          </div>
+        {delayedLoading ? (
+          <MarketplaceLoader area="auctions" label="Loading auctions…" />
         ) : error ? (
           <div className="flex flex-col items-center justify-center rounded-3xl border border-[#2463a0] bg-gradient-to-br from-[#0b3266] to-[#191d59] py-20 text-white">
             <AlertCircle className="w-10 h-10 mb-3 text-red-300" />
@@ -164,9 +165,9 @@ export function AuctionsPage() {
                 return (
                   <div key={a.id} className="bg-gradient-to-b from-[#0b3566] to-[#061b39] rounded-2xl border border-[#2469b2] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
                     {/* Image */}
-                    <div className="relative aspect-[4/3] bg-gradient-to-br from-[#1355c6] via-[#6228cf] to-[#e42eac] overflow-hidden">
+                    <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       {img ? (
-                        <img src={img} alt={a.title} className="w-full h-full object-cover" />
+                        <img src={img} alt={a.title} className="w-full h-full object-contain p-3" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Gavel className="w-12 h-12 text-gray-200" />
