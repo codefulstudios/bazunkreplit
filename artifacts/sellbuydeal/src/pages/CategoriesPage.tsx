@@ -197,7 +197,7 @@ export function CategoriesPage() {
 
   const activeCategories = filtered.filter(cat=>statusFor(cat.slug)==="active");
   const featuredCategory = selected ?? activeCategories.find(cat=>cat.slug==="electronics") ?? activeCategories[0];
-  const curated = featuredCategory?.subcategories.filter(sub=>statusFor(featuredCategory.slug,sub.slug)==="active").slice(0,5) ?? [];
+  const curated = featuredCategory?.subcategories.filter(sub=>statusFor(featuredCategory.slug,sub.slug)==="active") ?? [];
   const categoryListings = featuredCategory ? featuredListings.filter(item => resolveCategory(item.category).category===featuredCategory.slug).slice(0,4) : [];
   const products = categoryListings.length ? categoryListings : featuredListings.slice(0,4);
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
@@ -211,6 +211,12 @@ export function CategoriesPage() {
             {filtered.map(cat=>{const available=statusFor(cat.slug)==="active",active=selected?.slug===cat.slug;return <button key={cat.slug} type="button" disabled={!available} onClick={()=>setOpenSlug(cat.slug)} aria-current={active?"page":undefined} className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
               <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span><span className="min-w-0 flex-1 leading-snug text-sm font-bold">{cat.name}</span></button>})}
           </nav>
+          {selected && <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
+            <p className="mb-2 px-2 text-xs font-black text-slate-700 dark:text-slate-200">Subcategories of {selected.name}</p>
+            <div className="max-h-80 space-y-1 overflow-y-auto">
+              {selected.subcategories.filter(sub=>statusFor(selected.slug,sub.slug)==="active").map(sub=><Link key={sub.slug} href={"/browse?category="+encodeURIComponent(selected.slug)+"&sub="+encodeURIComponent(sub.slug)} className="flex min-h-10 items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-blue-50 dark:text-white dark:hover:bg-[#1f3b68]"><span>{sub.name}</span><ChevronRight className="h-4 w-4"/></Link>)}
+            </div>
+          </div>}
           {!filtered.length&&<p className="p-3 text-sm text-slate-700 dark:text-slate-200">No matching categories.</p>}
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-[#172945]"><p className="text-xs font-bold text-slate-900 dark:text-white">Shop by marketplace</p><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">{marketRegion==="uk"?"🇬🇧 UK marketplace":"🇺🇸 USA marketplace"}</p></div>
         </aside>
