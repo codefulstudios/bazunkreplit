@@ -4,22 +4,22 @@ import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, 
 
 const categories = [
   {name:"Electronics",slug:"electronics",icon:Smartphone,image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80"},
-  {name:"Fashion",slug:"fashion",icon:Shirt,image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80"},
-  {name:"Gaming",slug:"gaming",icon:Gamepad2,image:"https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80"},
-  {name:"Home & Garden",slug:"home",icon:Armchair,image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80"},
-  {name:"Sports",slug:"sports",icon:Dumbbell,image:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80"},
+  {name:"Fashion",slug:"clothing-shoes-jewelry",icon:Shirt,image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80"},
+  {name:"Gaming",slug:"video-games",icon:Gamepad2,image:"https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80"},
+  {name:"Home & Garden",slug:"home-kitchen",icon:Armchair,image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80"},
+  {name:"Sports",slug:"sports-outdoors",icon:Dumbbell,image:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80"},
   {name:"Books",slug:"books",icon:BookOpen,image:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=400&q=80"},
-  {name:"Collectibles",slug:"collectibles",icon:Gem,image:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80"},
+  {name:"Arts & Crafts",slug:"arts-crafts-sewing",icon:Gem,image:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80"},
   {name:"Automotive",slug:"automotive",icon:CarFront,image:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=400&q=80"},
   {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,image:"https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=80"},
   {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,image:"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80"},
-  {name:"Jewellery & Watches",slug:"jewellery-watches",icon:Watch,image:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80"},
+  {name:"Beauty & Care",slug:"beauty-personal-care",icon:Watch,image:"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80"},
   {name:"Business & Office",slug:"office-products",icon:BriefcaseBusiness,image:"https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=400&q=80"},
 ];
 const bento = [
   {title:"Explore technology",subtitle:"Electronics, cameras and everyday tech",image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=900&q=80",href:"/browse?category=electronics"},
-  {title:"Find your next style",subtitle:"Clothing, trainers and accessories",image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80",href:"/browse?category=fashion"},
-  {title:"Refresh your space",subtitle:"Furniture, homewares and garden",image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",href:"/browse?category=home"},
+  {title:"Find your next style",subtitle:"Clothing, trainers and accessories",image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80",href:"/browse?category=clothing-shoes-jewelry"},
+  {title:"Refresh your space",subtitle:"Furniture, homewares and garden",image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",href:"/browse?category=home-kitchen"},
 ];
 export function CategorySection() {
  return <section className="bg-white dark:bg-slate-950 py-12 border-y border-slate-200 dark:border-slate-800">
