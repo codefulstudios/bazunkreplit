@@ -92,13 +92,34 @@ async function sellerReputation(email: string) {
       return x.n>=3 && x.median_hours!==null ? Math.round(x.median_hours*10)/10 : null;
     })(),
     memberSince: seller?.created_at ?? null,
+    publicId: (await db.execute(sql`SELECT md5(LOWER(${email})) AS id`)).rows[0]?.id,
     profile: {
-      name: seller?.name || email.split("@")[0],
+      name: seller?.username || "Bazunk Seller",
       username: seller?.username ?? null,
       verified: seller?.verification_status === "verified",
     },
   };
 }
+
+// Public seller IDs are opaque, stable and never include email addresses.
+router.get("/sellers/public/:id", async (req,res) => {
+ const id=String(req.params.id||"").toLowerCase();
+ if(!/^[a-f0-9]{32}$/.test(id)){res.status(404).json({error:"Seller not found"});return;}
+ try {
+  const match=await db.execute(sql`SELECT email FROM users WHERE md5(LOWER(email))=${id} LIMIT 1`);
+  const email=String(match.rows[0]?.email||"");
+  if(!email){res.status(404).json({error:"Seller not found"});return;}
+  const region=String(req.query.region||"uk").toLowerCase();
+  if(!["uk","us"].includes(region)){res.status(400).json({error:"Invalid region"});return;}
+  const [reputation,reviewRows,listingRows]=await Promise.all([
+   sellerReputation(email),
+   db.execute(sql`SELECT r.id,r.rating,r.comment,r.item_title,r.created_at,r.seller_reply,r.seller_replied_at,r.item_as_described,r.dispatch_rating,r.packaging_rating,r.edited_at,TRUE AS verified_purchase,LEFT(split_part(r.reviewer_email,'@',1),2)||'••••' AS reviewer FROM reviews r WHERE r.role='buyer_to_seller' AND r.removed_at IS NULL AND r.deleted_by_reviewer_at IS NULL AND LOWER(r.reviewee_email)=LOWER(${email}) ORDER BY r.created_at DESC LIMIT 50`),
+   db.execute(sql`SELECT l.id,l.public_id,l.title,l.price,l.price_gbp,l.image,l.condition FROM listings l WHERE LOWER(l.seller_email)=LOWER(${email}) AND l.status='active' AND LOWER(COALESCE(l.marketplace_region,'uk'))=${region} ORDER BY l.created_at DESC LIMIT 24`)
+  ]);
+  res.setHeader("Cache-Control","public,max-age=60");
+  res.json({reputation,reviews:reviewRows.rows,listings:listingRows.rows});
+ }catch(err){logger.error({err},"Public seller profile failed");res.status(500).json({error:"Unable to load seller profile"});}
+});
 
 router.get("/sellers/reputation", async (req, res) => {
   const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
