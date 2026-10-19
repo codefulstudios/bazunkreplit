@@ -51,32 +51,22 @@ const CATEGORY_ART: Record<string, string> = {
   "books": "/category-art/modern-books.svg",
   "pet-supplies": "/category-art/modern-pet-supplies.svg",
   "cell-phones": "/category-art/modern-cell-phones.svg",
-  "adult": "/category-art/adult.png",
-  "digital": "/category-art/digital.png",
-  "musical-instruments": "/category-art/musical-instruments.png",
-  "office-products": "/category-art/office-products.png",
-  "patio-lawn-garden": "/category-art/patio-lawn-garden.png",
-  "pet-supplies": "/category-art/modern-pet-supplies.svg",
-  "tools-home-improvement": "/category-art/tools-home-improvement.png",
-  "video-games": "/category-art/video-games.png",
-
-  electronics: "/category-art/electronics.webp",
-  "home-kitchen": "/category-art/modern-home-kitchen.svg",
-  "clothing-shoes-jewelry": "/category-art/modern-clothing-shoes-jewelry.svg",
-  "health-household": "/category-art/modern-health-household.svg",
-  "toys-games": "/category-art/modern-toys-games.svg",
-  automotive: "/category-art/automotive.webp",
-  "baby-products": "/category-art/baby-products.webp",
-  "sports-outdoors": "/category-art/modern-sports-outdoors.svg",
-  books: "/category-art/books.webp",
-  "cds-vinyl": "/category-art/cds-vinyl.webp",
-  "arts-crafts-sewing": "/category-art/arts-crafts-sewing.webp",
-  "industrial-scientific": "/category-art/industrial-scientific.webp",
-  appliances: "/category-art/home-kitchen.webp",
-  "beauty-personal-care": "/category-art/health-household.webp",
-  "cell-phones": "/category-art/modern-cell-phones.svg",
-  "eco-friendly": "/category-art/health-household.webp",
-  "movies-tv": "/category-art/electronics.webp",
+  "adult": "/category-art/modern-adult.svg",
+  "digital": "/category-art/modern-digital.svg",
+  "musical-instruments": "/category-art/modern-musical-instruments.svg",
+  "office-products": "/category-art/modern-office-products.svg",
+  "patio-lawn-garden": "/category-art/modern-patio-lawn-garden.svg",
+  "tools-home-improvement": "/category-art/modern-tools-home-improvement.svg",
+  "video-games": "/category-art/modern-video-games.svg",
+  "baby-products": "/category-art/modern-baby-products.svg",
+  "cds-vinyl": "/category-art/modern-cds-vinyl.svg",
+  "arts-crafts-sewing": "/category-art/modern-arts-crafts-sewing.svg",
+  "industrial-scientific": "/category-art/modern-industrial-scientific.svg",
+  "appliances": "/category-art/modern-appliances.svg",
+  "beauty-personal-care": "/category-art/modern-beauty-personal-care.svg",
+  "eco-friendly": "/category-art/modern-eco-friendly.svg",
+  "movies-tv": "/category-art/modern-movies-tv.svg",
+  "jewellery-watches": "/category-art/modern-jewellery-watches.svg",
 };
 
 // Distinct, lightweight subcategory illustrations. Each card uses its own
@@ -218,8 +208,8 @@ export function CategoriesPage() {
         <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24" aria-label="Category navigation">
           <button type="button" onClick={()=>setOpenSlug(null)} className={`mb-2 w-full rounded-xl px-3 py-3 text-left text-sm font-extrabold ${!selected?"bg-gradient-to-r from-pink-500 to-orange-400 text-white":"text-slate-900 dark:text-white"}`}>All Categories</button>
           <nav className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
-            {filtered.map(cat=>{const available=statusFor(cat.slug)==="active",active=selected?.slug===cat.slug;return <button key={cat.slug} type="button" disabled={!available} onClick={()=>setOpenSlug(cat.slug)} aria-current={active?"page":undefined} className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed"}`}>
-              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span><span className="min-w-0 flex-1 leading-tight">{cat.name}</span></button>})}
+            {filtered.map(cat=>{const available=statusFor(cat.slug)==="active",active=selected?.slug===cat.slug;return <button key={cat.slug} type="button" disabled={!available} onClick={()=>setOpenSlug(cat.slug)} aria-current={active?"page":undefined} className={`flex min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
+              <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span><span className="min-w-0 flex-1 leading-snug text-sm font-bold">{cat.name}</span></button>})}
           </nav>
           {!filtered.length&&<p className="p-3 text-sm text-slate-700 dark:text-slate-200">No matching categories.</p>}
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-[#172945]"><p className="text-xs font-bold text-slate-900 dark:text-white">Shop by marketplace</p><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">{marketRegion==="uk"?"🇬🇧 UK marketplace":"🇺🇸 USA marketplace"}</p></div>
