@@ -8,7 +8,8 @@ import { Footer } from "@/components/Footer";
 export function MessagesPage() {
  useEffect(() => {
    // Navbar installs the handler during the same commit before this child effect runs.
-   window.dispatchEvent(new Event("bazunk-open-inbox"));
+   const timer = window.setTimeout(() => window.dispatchEvent(new Event("bazunk-open-inbox")), 0);
+   return () => window.clearTimeout(timer);
  }, []);
  return <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-[#0b1425] dark:text-white">
   <Navbar />
