@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -46,6 +47,7 @@ const CONDITION_COLORS: Record<string, string> = {
 
 export function CheckoutPage() {
   const { items, clearCart } = useCart();
+  const { getToken } = useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
   // Cart checkout is charged in GBP by the Stripe API; never show converted totals as the amount payable.
@@ -58,6 +60,7 @@ export function CheckoutPage() {
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [recoveryConsent, setRecoveryConsent] = useState(false);
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [quote,setQuote]=useState<Quote|null>(null);
   const [quoteError,setQuoteError]=useState("");
@@ -127,6 +130,12 @@ export function CheckoutPage() {
     setStep("redirecting");
 
     try {
+      if (user?.email) {
+        try {
+          const token = await getToken();
+          if (token) await fetch("/api/checkout-recovery/save", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({items:JSON.parse(cartKey),consent:recoveryConsent}) });
+        } catch { /* Optional recovery never blocks payment. */ }
+      }
       const res = await fetch("/api/stripe/checkout-cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -370,6 +379,7 @@ export function CheckoutPage() {
                     {delivery === 0 ? "FREE" : formatPrice(delivery)}
                   </span>
                 </div>
+                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
                 <div className="flex justify-between font-bold text-gray-900 text-xl pt-3 border-t border-gray-200">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>

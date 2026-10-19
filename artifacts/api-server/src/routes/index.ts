@@ -33,6 +33,7 @@ import referralsRouter from "./referrals.js";
 import chatwootRouter from "./chatwoot.js";
 import snapSellRouter from "./snapSell.js";
 import listingAlertsRouter from "./listingAlerts.js";
+import checkoutRecoveryRouter from "./checkoutRecovery.js";
 import { featureEnabled } from "../lib/featureFlags.js";
 import { featureGate } from "../middlewares/featureGate.js";
 
@@ -81,6 +82,7 @@ router.use(referralsRouter);
 router.use(chatwootRouter);
 router.use(snapSellRouter);
 router.use(listingAlertsRouter);
+router.use(checkoutRecoveryRouter);
 router.use(demoCreatorRouter);
 
 export default router;

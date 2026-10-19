@@ -1,6 +1,7 @@
 import { useEffect,useState,useRef } from "react";
 import { Search,RefreshCw,Package,Truck,ShieldCheck,RotateCcw,XCircle,ChevronRight,CreditCard } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
+import { CheckoutRecoveryAdmin } from "@/components/admin/CheckoutRecoveryAdmin";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { useAdmin } from "@/context/AdminContext";
 
@@ -45,7 +46,7 @@ export function AdminOrdersPage(){const {authFetch}=useAdmin();const [orders,set
  const visibleOrders=orders.filter(o=>paymentFilter==="all"||String(o.payment_status||"unknown")===paymentFilter);
  const visibleOrderIds=visibleOrders.map(o=>String(o.id));
  const active=orders.filter(o=>!["delivered","cancelled","refunded"].includes(o.status)).length, paid=orders.filter(o=>o.payment_status==="paid").length, disputes=orders.filter(o=>o.dispute_status&&!["closed","resolved_no_action","resolved_refund"].includes(o.dispute_status)).length, deliveryExceptions=orders.filter(o=>["RETURNED","FAILURE"].includes(String(o.tracking_status||"").toUpperCase())).length;
- return <AdminLayout><div className="admin-orders-page space-y-5"><div className="flex items-center justify-between"><div><h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Orders</h1><p className="text-sm text-gray-500">Payments, fulfilment, tracking, Buyer Protection, disputes, cancellations and refunds.</p></div><div className="flex gap-2"><button onClick={()=>{setTestOpen(true);setTestError("")}} className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-bold">Create Test Sale</button><button onClick={load} className="flex gap-2 items-center text-sm font-bold"><RefreshCw className={`w-4 h-4 ${loading?'animate-spin':''}`}/>Refresh</button></div></div>
+ return <AdminLayout><CheckoutRecoveryAdmin /><div className="admin-orders-page space-y-5"><div className="flex items-center justify-between"><div><h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Orders</h1><p className="text-sm text-gray-500">Payments, fulfilment, tracking, Buyer Protection, disputes, cancellations and refunds.</p></div><div className="flex gap-2"><button onClick={()=>{setTestOpen(true);setTestError("")}} className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-bold">Create Test Sale</button><button onClick={load} className="flex gap-2 items-center text-sm font-bold"><RefreshCw className={`w-4 h-4 ${loading?'animate-spin':''}`}/>Refresh</button></div></div>
  {listError&&<div role="alert" className="bg-red-50 text-red-700 p-3 rounded-xl text-sm">{listError}</div>}
  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[["Orders",orders.length,Package],["Active fulfilment",active,Truck],["Paid",paid,CreditCard],["Open disputes",disputes,ShieldCheck],["Delivery problems",deliveryExceptions,Truck]].map(([a,b,I]:any)=><div className="bg-white border rounded-2xl p-4" key={a}><I className="w-5 h-5 text-orange-500"/><p className="text-2xl font-black mt-2">{b}</p><p className="text-xs text-gray-500">{a}</p></div>)}</div>
  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#172541]">
