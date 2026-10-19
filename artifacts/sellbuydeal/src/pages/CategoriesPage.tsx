@@ -153,13 +153,13 @@ export function CategoriesPage() {
   useEffect(() => {
     const controller = new AbortController();
     setFeaturedLoading(true);
-    fetch(`/api/listings?limit=100&region=${marketRegion}`, {signal:controller.signal})
+    fetch(`${API_BASE}/api/listings?limit=24&region=${encodeURIComponent(marketRegion)}&category=${encodeURIComponent(openSlug || "electronics")}`, {signal:controller.signal})
       .then(r=>r.ok?r.json():[])
       .then(data=>setFeaturedListings(Array.isArray(data)?data:[]))
       .catch(()=>{if(!controller.signal.aborted)setFeaturedListings([])})
       .finally(()=>{if(!controller.signal.aborted)setFeaturedLoading(false)});
     return ()=>controller.abort();
-  },[marketRegion]);
+  },[marketRegion,openSlug]);
 
   const statusFor=(category:string,sub?:string)=>{const key=category+(sub?"__"+sub:"");return display[key]||(hidden.includes(key)?"coming_soon":"active");};
   const labelFor=(state:string)=>state==="maintenance"?"Under Maintenance":"Coming Soon";
@@ -199,7 +199,7 @@ export function CategoriesPage() {
   const featuredCategory = selected ?? activeCategories.find(cat=>cat.slug==="electronics") ?? activeCategories[0];
   const curated = featuredCategory?.subcategories.filter(sub=>statusFor(featuredCategory.slug,sub.slug)==="active") ?? [];
   const categoryListings = featuredCategory ? featuredListings.filter(item => resolveCategory(item.category).category===featuredCategory.slug).slice(0,4) : [];
-  const products = categoryListings.length ? categoryListings : featuredListings.slice(0,4);
+  const products = categoryListings;
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
     <Navbar />
     <main className="bz-category-redesign flex-1 mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6">
