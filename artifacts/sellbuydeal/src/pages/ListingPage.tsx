@@ -2,7 +2,8 @@ import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDis
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
 import { SellerCard } from "@/components/listing/ListingSellerCard";
-import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection } from "@/components/listing/ListingSections";
+import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
+import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
