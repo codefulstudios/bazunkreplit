@@ -290,18 +290,21 @@ function Home() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <IntroSplash />
-      <AnnouncementBanner />
       <Navbar />
-      <PerksStrip />
       <main className="flex-1">
+        {/* Shopping first: find an item, explore categories, then see current stock. */}
         <Hero />
-        <HomepagePromoCards />
         <CategorySection />
         <FeaturedListings mode="recent" />
+
+        {/* Secondary discovery and marketing content stays below real listings. */}
         <FeaturedListings mode="promoted" />
         <FeatureVisible feature="live"><LiveNowStrip /></FeatureVisible>
+        <HomepagePromoCards />
+        <PerksStrip />
         <FeaturedFeatures />
         <RewardsTeaser />
+        <AnnouncementBanner />
         <AdSlot slotKey="home_bottom" />
       </main>
       <Footer />
