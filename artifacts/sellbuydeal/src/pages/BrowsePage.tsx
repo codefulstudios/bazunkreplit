@@ -151,11 +151,11 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
-            onClick={() => setWishlisted(!wishlisted)}
-            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+            aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-1.5 right-1.5 w-9 h-9 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
             data-testid={`button-wishlist-${product.id}`}
           >
-            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-red-500 text-red-500" : "text-slate-700 dark:text-slate-200"}`} />
+            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
           </button>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -201,11 +201,11 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           </div>
         )}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+          onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+          aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-2.5 right-2.5 w-10 h-10 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
           data-testid={`button-wishlist-${product.id}`}
         >
-          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-slate-700 dark:text-slate-200"}`} />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
         </button>
         <div className="absolute bottom-2.5 left-2.5">
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
