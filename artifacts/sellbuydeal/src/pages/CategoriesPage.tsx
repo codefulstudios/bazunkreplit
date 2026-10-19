@@ -144,11 +144,11 @@ export function CategoriesPage() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/settings/category-visibility`, {cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>(setHidden(Array.isArray(d.hidden)?d.hidden:[]),setDisplay(d.display||{}))).catch(()=>{});
-    fetch(`${API_BASE}/api/listings/category-counts`)
+    fetch(`${API_BASE}/api/listings/category-counts?region=${encodeURIComponent(marketRegion)}`)
       .then((r) => r.json())
       .then((data: CategoryCount[]) => setCounts(Array.isArray(data) ? data : []))
       .catch(() => {}).finally(()=>setCountsLoading(false));
-  }, []);
+  }, [marketRegion]);
 
   useEffect(() => {
     const controller = new AbortController();
