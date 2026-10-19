@@ -1,5 +1,8 @@
 import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDiscovery";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
+import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
+import { SellerCard } from "@/components/listing/ListingSellerCard";
+import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
