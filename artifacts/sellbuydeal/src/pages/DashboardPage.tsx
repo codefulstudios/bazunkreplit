@@ -44,6 +44,7 @@ import { DashboardSetupProgress } from "@/components/DashboardSetupProgress";
 import { StoreToolkit } from "@/components/StoreToolkit";
 import { SellerSales } from "@/components/SellerSales";
 import { SellerShipping } from "@/components/SellerShipping";
+import { SellerBundleSettings } from "@/components/SellerBundleSettings";
 import { ReviewModal } from "@/components/ReviewModal";
 import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
 
@@ -6111,6 +6112,8 @@ export function DashboardPage() {
             )}
             {activeSection === "orders" && <OrdersSection />}
             {activeSection === "sales" && <SellerSales />}
+            {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
+            {activeSection === "shipping-centre" && <div className="space-y-6 p-4 sm:p-6"><SellerBundleSettings /><SellerShipping /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerTrustInsights /><SellerPricingInsightsPanel /></div>}
             {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (

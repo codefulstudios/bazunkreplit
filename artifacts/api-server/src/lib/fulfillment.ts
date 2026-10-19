@@ -68,6 +68,8 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
     const rows: Array<Record<string,unknown>> = feeSnapshot ? [...new Map(feeSnapshot.units.map(u=>[u.id,{id:u.id,title:u.title,image:u.image,price:u.priceMinor/100,price_gbp:u.priceMinor/100,seller_email:u.sellerEmail,category:u.category}])).values()] : liveRows;
     const byId = new Map(rows.map((r) => [Number(r.id), r]));
 
+    const frozenById=new Map<number,NonNullable<typeof feeSnapshot>["units"]>();
+    feeSnapshot?.units.forEach(u=>frozenById.set(u.id,[...(frozenById.get(u.id)||[]),u]));
     let lineNo = 0;
     const buyerProtectionTotal = parseFloat(session.metadata?.buyerProtectionFee ?? "0") || 0;
     const totalItemValue = rows.reduce((sum, r) => sum + Number(r.price_gbp ?? r.price ?? 0) * (lines.find(l => l.id === Number(r.id))?.qty ?? 0), 0);
@@ -89,7 +91,8 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
       for (let u = 0; u < l.qty; u++) {
         lineNo++;
         const orderId = `ORD-${randomUUID().slice(0, 8).toUpperCase()}`;
-        const frozen = feeSnapshot?.units[lineNo-1];
+        const frozen = frozenById.get(l.id)?.shift();
+        if(feeSnapshot && !frozen)throw new Error("Fee snapshot line mismatch");
         const sellerTypeRow = !frozen && seller ? (await db.execute(sql`SELECT seller_type FROM users WHERE LOWER(email)=LOWER(${seller}) LIMIT 1`)).rows[0] as any : null;
         const sellerType = frozen?.sellerType ?? String(sellerTypeRow?.seller_type ?? "private");
         const categorySlug = String(row.category ?? "").toLowerCase();
@@ -98,13 +101,14 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
         const sellerFee = frozen ? frozen.sellerFeeMinor/100 : price * (businessRate/100);
         const protectionShare = frozen ? frozen.protectionMinor/100 : totalItemValue > 0 ? buyerProtectionTotal*(price/totalItemValue) : 0;
         const deliveryShare = frozen ? frozen.deliveryMinor/100 : 0;
-        const net = frozen ? frozen.sellerNetMinor/100 : price-sellerFee;
-        const buyerTotal = frozen ? frozen.buyerTotalMinor/100 : price+protectionShare;
+        const unitPrice = frozen ? frozen.priceMinor/100 : price;
+        const net = frozen ? frozen.sellerNetMinor/100 : unitPrice-sellerFee;
+        const buyerTotal = frozen ? frozen.buyerTotalMinor/100 : unitPrice+protectionShare;
         await db.execute(sql`
           INSERT INTO orders (id, buyer_email, seller_email, item_title, item_image, price, status,
                               stripe_session_id, line_no, buyer_protection_fee, seller_fee, seller_type, seller_fee_rate, seller_net, delivery_fee, buyer_total, fee_policy, created_at, updated_at)
           VALUES (${orderId}, ${buyerEmail}, ${seller}, ${row.title as string}, ${(row.image as string | null) ?? null},
-                  ${price}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, NOW(), NOW())
+                  ${unitPrice}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, NOW(), NOW())
           ON CONFLICT (stripe_session_id, line_no) DO NOTHING
         `);
       }
