@@ -31,7 +31,6 @@ import { useRawSettings } from "@/context/SiteSettingsContext";
 import { isFeatureEnabled } from "@/components/FeatureGate";
 import { useWatchlist, getCurrentPrice } from "@/context/WatchlistContext";
 import { useCart } from "@/context/CartContext";
-import { MOCK_CONVERSATIONS } from "@/data/messages";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useLiveStream } from "@/context/LiveStreamContext";
@@ -6230,78 +6229,13 @@ export function DashboardPage() {
             )}
             {activeSection === "saved-searches" && <SavedSearchesSection />}
             {activeSection === "messages" && (
-              <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-gray-900">Messages</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {MOCK_CONVERSATIONS.reduce((s, c) => s + c.unread, 0)} unread · {MOCK_CONVERSATIONS.length} conversations
-                    </p>
-                  </div>
-                  <Link href="/messages" className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                    Open Inbox <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {MOCK_CONVERSATIONS.map((convo) => {
-                    const last = convo.messages[convo.messages.length - 1];
-                    const initials = convo.with.avatar;
-                    const avatarColors: Record<string, string> = {
-                      MD: "bg-blue-500", SM: "bg-emerald-500", PK: "bg-purple-500",
-                      JT: "bg-amber-500", TA: "bg-[#4A5CE8]",
-                    };
-                    const color = avatarColors[initials] ?? "bg-gray-400";
-                    return (
-                      <Link
-                        key={convo.id}
-                        href="/messages"
-                        className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="relative flex-shrink-0">
-                          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center text-white text-sm font-bold`}>
-                            {initials}
-                          </div>
-                          {convo.unread > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#F26B21] text-white text-[9px] font-bold flex items-center justify-center">
-                              {convo.unread}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <p className={`text-sm ${convo.unread > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-700"}`}>
-                              {convo.with.name}
-                            </p>
-                            <span className="text-[10px] text-gray-400 flex-shrink-0 ml-2">
-                              {new Date(last.timestamp).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#F26B21] font-medium truncate mb-0.5">{convo.listingTitle}</p>
-                          <p className={`text-xs truncate ${convo.unread > 0 ? "text-gray-700 font-medium" : "text-gray-400"}`}>
-                            {last.senderId === "me" ? "You: " : ""}{last.text}
-                          </p>
-                        </div>
-                        {last.senderId === "me" && (
-                          <div className="flex-shrink-0">
-                            {last.read
-                              ? <CheckCheck className="w-3.5 h-3.5 text-[#4A5CE8]" />
-                              : <Check className="w-3.5 h-3.5 text-gray-400" />}
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-                <div className="p-4 border-t border-gray-100">
-                  <Link
-                    href="/messages"
-                    className="w-full py-2.5 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                  >
-                    <MessageSquare className="w-4 h-4" /> Open Full Inbox
-                  </Link>
-                </div>
-              </div>
-            )}
+  <section className="rounded-2xl border border-blue-300 bg-white p-6 text-center dark:border-blue-700 dark:bg-[#111f36]">
+    <MessageSquare className="mx-auto h-10 w-10 text-indigo-500" />
+    <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Messages</h2>
+    <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">Your messages are available in the Bazunk message centre.</p>
+    <Link href="/messages" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white">Open Inbox <ArrowRight className="h-4 w-4" /></Link>
+  </section>
+)}
             {activeSection === "credits" && <CreditsSection user={user} />}
             {activeSection === "promotions" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
