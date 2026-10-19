@@ -259,7 +259,7 @@ export function CheckoutPage() {
           <ChevronLeft className="w-4 h-4" /> Back to browsing
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Checkout</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Secure checkout</h1>
         <p className="mb-4 text-sm font-semibold text-slate-700">Payments are charged in GBP (£). Your bank may convert the amount if your account uses another currency.</p>
         <StepIndicator step={step} />
 
@@ -301,9 +301,7 @@ export function CheckoutPage() {
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-900">
-                  Personal sellers pay no selling fee. Buyer Protection is added only to personal-seller items, with one fixed fee per checkout. Business purchases include protection with no extra buyer fee.
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">Eligible purchases include Buyer Protection. Your exact fee and delivery costs appear in the order summary before payment.</p>
                 {quoteLoading && <p role="status" className="mt-4 text-sm text-muted-foreground">Calculating your checkout fees…</p>}
                 {quoteError && <div role="alert" className="mt-4 text-sm text-red-600">{quoteError}<button onClick={()=>setQuoteRevision(v=>v+1)} className="ml-3 underline font-bold">Retry fee calculation</button></div>}
                 {!user && (
@@ -323,7 +321,7 @@ export function CheckoutPage() {
                 <button
                   onClick={handleContinueToPayment}
                   disabled={checkoutLoading || quoteLoading || !quote || quotedKey!==cartKey}
-                  className="w-full mt-4 py-4 rounded-xl bg-gradient-to-r from-[#F26B21] to-[#D97706] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="w-full mt-4 py-4 rounded-xl bg-[#E66A20] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
                   data-testid="button-continue-payment"
                 >
                   {checkoutLoading
@@ -382,14 +380,18 @@ export function CheckoutPage() {
                   </span>
                 </div>
                 {quote?.bundleBreakdown?.filter(b=>b.discountMinor>0||b.shippingMinor>0).map(b=><p key={b.sellerEmail} className="text-xs font-semibold text-slate-700">{b.itemCount} item(s) from one seller · shipping {formatPrice(b.shippingMinor/100)}{b.discountMinor>0?` · saved ${formatPrice(b.discountMinor/100)}`:""}</p>)}
-                {user?.email&&<label className="flex items-start gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one Bazunk reminder if I leave this checkout unfinished. Optional; you can continue without reminders.</span></label>}
+                {bundleDiscount > 0 && <div className="flex justify-between gap-2 text-emerald-700"><span>Multi-item savings</span><span className="font-bold">−{formatPrice(bundleDiscount)}</span></div>}
                 <div className="flex justify-between font-bold text-gray-900 text-xl pt-3 border-t border-gray-200">
                   <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>{quoteLoading || !quote || quotedKey !== cartKey ? "Calculating…" : formatPrice(total)}</span>
                 </div>
               </div>
 
 
+              <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                <summary className="cursor-pointer font-semibold">Optional checkout reminder</summary>
+                {user?.email&&<label className="flex items-start gap-2 mt-3 flex items-start gap-2 text-xs text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one reminder if I leave checkout unfinished. This does not affect payment.</span></label>}
+              </details>
               <div className="mt-4 space-y-2">
                 {[
                   { icon: Shield,  text: "Buyer Protection on eligible orders" },
