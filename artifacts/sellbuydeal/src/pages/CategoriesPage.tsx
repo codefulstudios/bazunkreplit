@@ -220,9 +220,9 @@ export function CategoriesPage() {
                   <span className="min-w-0 flex-1 leading-snug font-bold">{cat.name}</span>
                   {active?<ChevronDown className="h-4 w-4 shrink-0"/>:<ChevronRight className="h-4 w-4 shrink-0"/>}
                 </button>
-                {active&&<div id={"category-subs-"+cat.slug} className="my-1 ml-3 max-h-80 space-y-0.5 overflow-y-auto border-l-2 border-blue-400 pl-2" aria-label={cat.name+" subcategories"}>
-                  {subcategories.length?subcategories.map(sub=><Link key={sub.slug} href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)} className="flex min-h-10 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-800 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]"><span>{sub.name}</span><ChevronRight className="h-4 w-4 shrink-0"/></Link>):<p className="px-2 py-3 text-xs text-slate-700 dark:text-slate-200">No subcategories available.</p>}
-                  <Link href={"/browse?category="+encodeURIComponent(cat.slug)} className="block px-2.5 py-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all {cat.name} listings →</Link>
+                {active&&<div id={"category-subs-"+cat.slug} className="my-1 ml-3 max-h-80 space-y-0.5 overflow-y-auto rounded-lg border-l-2 border-blue-400 bg-[#172c4b] pl-2 pr-1 py-1" aria-label={cat.name+" subcategories"}>
+                  {subcategories.length?subcategories.map(sub=><Link key={sub.slug} href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)} className="flex min-h-10 items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm font-semibold !text-white hover:!text-white hover:bg-[#294b79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400"><span>{sub.name}</span><ChevronRight className="h-4 w-4 shrink-0"/></Link>):<p className="px-2 py-3 text-xs text-slate-700 dark:text-slate-200">No subcategories available.</p>}
+                  <Link href={"/browse?category="+encodeURIComponent(cat.slug)} className="block px-2.5 py-2 text-sm font-bold !text-sky-200 hover:!text-white hover:underline">View all {cat.name} listings →</Link>
                 </div>}
               </div>;
             })}
