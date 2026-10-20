@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { designSettingKey, parseDesignPalette, type DesignArea, type DesignMode } from "@/design-system/palette";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -102,6 +103,29 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     root.style.setProperty("--brand-secondary", settings.secondary_color);
     if (settings.seo_title) document.title = settings.seo_title;
   }, [settings.primary_color, settings.secondary_color, settings.seo_title]);
+
+  useEffect(() => {
+    const apply=()=>{
+      const area:DesignArea=window.location.pathname.startsWith("/admin")?"admin":"storefront";
+      const mode:DesignMode=document.documentElement.classList.contains("dark")?"dark":"light";
+      const p=parseDesignPalette(rawSettings[designSettingKey(area,mode)],area,mode);
+      const root=document.documentElement;
+      root.dataset.bzDesignArea=area;
+      root.style.setProperty("--bz-protected-page",p.background);
+      root.style.setProperty("--bz-protected-card",p.surface);
+      root.style.setProperty("--bz-protected-text",p.text);
+      root.style.setProperty("--bz-protected-secondary",p.secondaryText);
+      root.style.setProperty("--bz-protected-field",p.field);
+      root.style.setProperty("--bz-protected-button",p.action);
+      root.style.setProperty("--bz-protected-button-text",p.actionText);
+    };
+    apply();
+    const observer=new MutationObserver(apply);
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
+    window.addEventListener("popstate",apply);
+    window.addEventListener("bazunk-settings-updated",apply);
+    return ()=>{observer.disconnect();window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-settings-updated",apply)};
+  },[rawSettings]);
 
   return (
     <SiteSettingsContext.Provider value={{ settings, rawSettings, settingsLoaded }}>
