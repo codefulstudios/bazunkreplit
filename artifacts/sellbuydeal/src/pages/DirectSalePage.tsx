@@ -274,7 +274,7 @@ export function DirectSalePage() {
         setSubsubcategory(form.subsubcategory ?? "");
         setDescription(form.description ?? draft.description ?? "");
         setCondition(form.condition ?? draft.condition ?? "brand-new");
-        setPhotos(form.photos ?? (draft.image ? [draft.image] : []));
+        setPhotos(form.photos ?? (Array.isArray(metadata.photos) ? metadata.photos : (draft.image ? [draft.image] : [])));
         setQuantity(form.quantity ?? "1");
         setSku(form.sku ?? "");
         setShipOrigin(form.shipOrigin ?? "UK");
@@ -292,7 +292,7 @@ export function DirectSalePage() {
   }, [user?.email, marketplaceRegion, getToken]);
 
   function draftPayload() {
-    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, photos, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
+    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
     return { title: title.trim() || "Untitled draft", price: price || "0", currency: extractCurrencyCode(currency),
       marketplaceRegion, category: category || "General", description, condition, image: photos[0] ?? null, photos,
       sellerEmail: user?.email, sellerName: user?.username ?? user?.name ?? null,
