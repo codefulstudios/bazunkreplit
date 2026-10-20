@@ -8,6 +8,7 @@ export function FeatureVisible({feature,children}:{feature:string;children:React
 export function featureForHref(href:string):string|undefined {
   const path=href.split("?")[0];
   if(path.startsWith("/deal-pilot")) return "deal_pilot";
+  if(path.startsWith("/find-it")) return "find_it";
   if(path.startsWith("/live")) return "live";
   if(path.startsWith("/auctions")) return "auctions";
   if(path.startsWith("/flash-sales")) return "flash_sales";
