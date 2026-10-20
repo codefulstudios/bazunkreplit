@@ -66,6 +66,7 @@ const SELL_OPTIONS = [
   },
 ];
 
+const APPROVED_CATEGORY_ICONS = { smartphone:Smartphone,shirt:Shirt,gaming:Gamepad2,home:Armchair,sports:Dumbbell,books:BookOpen,collectibles:Gem,automotive:CarFront,package:Package2 } as const;
 const HERO_CATS = [
   { name: "Electronics",   icon: Smartphone, color: "#3B82F6", emoji:"💻", href: "/browse?category=electronics" },
   { name: "Fashion",       icon: Shirt,      color: "#EC4899", emoji:"🧥", href: "/browse?category=fashion"     },
@@ -86,6 +87,8 @@ export function Hero() {
   const [, setLocation] = useLocation();
   const [sellOpen, setSellOpen] = useState(false);
   const featureSettings = useRawSettings();
+  const heroGraphic = featureSettings.design_hero_image_url || "";
+  const safeHeroGraphic = /^https:\/\/[^\\s?#]+\\.(png|jpe?g|webp)(\\?[^\\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
@@ -145,8 +148,9 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex flex-col gap-4 self-start"
           >
+            {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: Icon, href }, i) => (
+            {HERO_CATS.map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -166,7 +170,7 @@ export function Hero() {
                   </div>
                 </Link>
               </motion.div>
-            ))}
+            ); })}
             </div>
 
             {/* Marketplace type pills — aligned under categories */}
