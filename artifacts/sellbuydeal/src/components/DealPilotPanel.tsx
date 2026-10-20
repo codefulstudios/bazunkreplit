@@ -74,7 +74,7 @@ export function DealPilotPanel() {
  };
  const pilots=data?.pilots||[];
  const matches=data?.matches||[];
- return <div className="mx-auto max-w-7xl space-y-5 pb-12 text-slate-900 dark:text-white" data-testid="deal-pilot-panel">
+ return <div className="mx-auto max-w-7xl space-y-5 pb-12 text-slate-900 dark:!text-white" data-testid="deal-pilot-panel">
   <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-800 via-violet-700 to-orange-600 px-6 py-8 text-white shadow-lg sm:px-9">
    <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
     <div className="max-w-2xl">
@@ -115,8 +115,8 @@ export function DealPilotPanel() {
         <option value="any">Any condition</option><option value="good">Good or better</option><option value="excellent">Excellent or better</option><option value="new">New only</option></select></label>
      </div>
      <div className="flex flex-wrap gap-5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-      <label className="inline-flex items-center gap-2"><input type="checkbox" checked={alerts} onChange={e=>setAlerts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Notify me about matches</label>
-      <label className="inline-flex items-center gap-2"><input type="checkbox" checked={drafts} onChange={e=>setDrafts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Suggest offers for my approval</label>
+      <label className="inline-flex items-center gap-2 text-slate-900 dark:!text-white"><input type="checkbox" checked={alerts} onChange={e=>setAlerts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Notify me about matches</label>
+      <label className="inline-flex items-center gap-2 text-slate-900 dark:!text-white"><input type="checkbox" checked={drafts} onChange={e=>setDrafts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Suggest offers for my approval</label>
      </div>
      <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="max-w-xl text-xs text-slate-700 dark:text-slate-200">Budget includes Bazunk's current single-item checkout quote: item, delivery and applicable buyer protection. Actual totals are recalculated at checkout.</p>

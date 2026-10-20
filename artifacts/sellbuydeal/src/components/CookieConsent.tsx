@@ -172,8 +172,8 @@ export function CookieConsentBanner() {
         aria-modal={settingsOpen ? true : undefined}
         aria-labelledby="bazunk-cookie-heading"
         className={settingsOpen
-          ? "fixed left-1/2 top-1/2 z-[100] w-[min(96vw,600px)] max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-600 bg-[#10223e] p-5 text-white shadow-2xl sm:p-7"
-          : "fixed bottom-0 left-0 right-0 z-[90] border-t-2 border-orange-500 bg-[#07172c] px-4 py-4 text-white shadow-[0_-8px_35px_rgba(0,0,0,.35)] sm:px-6"}
+          ? "bazunk-cookie-consent fixed left-1/2 top-1/2 z-[100] w-[min(96vw,600px)] max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-600 bg-[#10223e] p-5 text-white shadow-2xl sm:p-7"
+          : "bazunk-cookie-consent fixed bottom-0 left-0 right-0 z-[90] border-t-2 border-orange-500 bg-[#07172c] px-4 py-4 text-white shadow-[0_-8px_35px_rgba(0,0,0,.35)] sm:px-6"}
       >
         <div className={settingsOpen ? "" : "mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"}>
           <div className="min-w-0 flex-1">
@@ -189,7 +189,7 @@ export function CookieConsentBanner() {
                 </button>
               )}
             </div>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-100">
+            <p className="bz-cookie-description mt-2 max-w-3xl text-sm leading-6 text-slate-100">
               We use essential cookies and browser storage for shopping, security and accounts.
               With your permission, we can enable optional live chat, analytics and advertising.
               You can refuse optional cookies and still browse and buy.
@@ -221,7 +221,7 @@ export function CookieConsentBanner() {
           </div>
           <div className={settingsOpen ? "mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3" : "flex shrink-0 flex-col gap-2 sm:flex-row lg:justify-end"}>
             <button type="button" onClick={reject}
-              className={choiceButton + " border-white bg-white text-slate-950 hover:bg-slate-100"}>
+              className={choiceButton + " bz-cookie-reject border-white bg-white text-slate-950 hover:bg-slate-100"}>
               Reject optional
             </button>
             {settingsOpen ? (
@@ -231,12 +231,12 @@ export function CookieConsentBanner() {
               </button>
             ) : (
               <button type="button" onClick={openSettings}
-                className={choiceButton + " inline-flex items-center justify-center gap-2 border-white/50 bg-[#253958] text-white hover:bg-[#334969]"}>
+                className={choiceButton + " bz-cookie-customise inline-flex items-center justify-center gap-2 border-white/50 bg-[#253958] text-white hover:bg-[#334969]"}>
                 <Settings2 className="h-4 w-4" aria-hidden="true" /> Customise
               </button>
             )}
             <button type="button" onClick={accept}
-              className={choiceButton + " border-orange-500 bg-orange-500 text-slate-950 hover:bg-orange-400"}>
+              className={choiceButton + " bz-cookie-accept border-orange-500 bg-orange-500 text-slate-950 hover:bg-orange-400"}>
               Accept all
             </button>
           </div>

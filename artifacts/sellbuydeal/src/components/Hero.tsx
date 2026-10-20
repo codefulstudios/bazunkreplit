@@ -116,9 +116,9 @@ export function Hero() {
             transition={{ duration: 0.55 }}
           >
             <div className="mb-4">
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300 bz-hero-kicker">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
               <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">Great finds. Better deals. <span className="text-orange-400">All in one place.</span></h1>
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200">Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer.</p>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">

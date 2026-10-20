@@ -253,7 +253,7 @@ export function OffersPage() {
           <div className="relative max-w-7xl mx-auto px-5 py-9 md:py-12 flex items-center justify-between gap-5">
             <div className="relative z-10">
               <button onClick={() => setLocation("/dashboard")} className="mb-4 flex items-center gap-2 text-white font-bold text-sm hover:text-yellow-200"><ArrowLeft className="w-4 h-4"/> Back to Dashboard</button>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-yellow-300">Offers</span></h1>
+              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-[#fff0a8]">Offers</span></h1>
               <p className="text-base md:text-xl font-semibold mt-3 text-white">Track and manage all your price negotiations</p>
               <div className="flex gap-2 mt-5 flex-wrap"><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">✨ Make a deal</span><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">💸 Save money</span></div>
             </div>
@@ -270,9 +270,9 @@ export function OffersPage() {
           {offerApiError && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{offerApiError}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { label:"Pending Offers", value:counts.pending, detail:"Waiting for a response", icon:Hourglass, cls:"from-orange-500 via-orange-600 to-amber-700" },
-              { label:"Accepted Offers", value:counts.accepted, detail:"Great deals!", icon:CheckCircle2, cls:"from-emerald-500 via-teal-600 to-emerald-800" },
-              { label:"Declined Offers", value:counts.declined, detail:"Keep trying!", icon:XCircle, cls:"from-pink-500 via-fuchsia-700 to-purple-800" },
+              { label:"Pending Offers", value:counts.pending, detail:"Waiting for a response", icon:Hourglass, cls:"from-[#9a3412] via-[#b45309] to-[#78350f]" },
+              { label:"Accepted Offers", value:counts.accepted, detail:"Great deals!", icon:CheckCircle2, cls:"from-[#065f46] via-[#047857] to-[#064e3b]" },
+              { label:"Declined Offers", value:counts.declined, detail:"Keep trying!", icon:XCircle, cls:"from-[#9d174d] via-[#86198f] to-[#581c87]" },
             ].map(item => <div key={item.label} className={`flex items-center gap-4 rounded-2xl border border-white/20 bg-gradient-to-br ${item.cls} p-4 shadow-lg`}>
               <div className="p-3 rounded-xl bg-white/20"><item.icon className="w-8 h-8 text-white"/></div>
               <div><p className="text-3xl font-black text-white">{item.value}</p><p className="font-extrabold text-white">{item.label}</p><p className="text-white/90 text-sm">{item.detail}</p></div>
