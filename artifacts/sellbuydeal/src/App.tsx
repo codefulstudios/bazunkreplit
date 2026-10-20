@@ -323,6 +323,26 @@ function Home() {
   );
 }
 
+// Route-local recovery keeps a Cashback data/runtime error from blanking the entire app.
+class CashbackErrorBoundary extends React.Component<{children: React.ReactNode; admin?: boolean},{failed:boolean}> {
+  state={failed:false};
+  static getDerivedStateFromError(){return {failed:true};}
+  componentDidCatch(error: Error){console.error("Cashback page render failed:",error);}
+  render(){
+    if(!this.state.failed)return this.props.children;
+    return <div className="min-h-screen bg-white text-slate-900 dark:bg-[#101f36] dark:text-white">
+      <main className="mx-auto max-w-xl px-6 py-20 text-center" role="alert">
+        <h1 className="text-2xl font-black">Cashback could not open</h1>
+        <p className="mt-3 text-base font-semibold text-slate-700 dark:text-slate-200">Your cashback records have not been changed. Refresh the page to try again.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button type="button" onClick={()=>window.location.reload()} className="min-h-11 rounded-xl bg-orange-600 px-5 py-3 font-bold text-white">Retry Cashback</button>
+          <a href={this.props.admin?"/admin/dashboard":"/dashboard"} className="min-h-11 rounded-xl border border-slate-400 bg-white px-5 py-3 font-bold text-slate-900">Return to dashboard</a>
+        </div>
+      </main>
+    </div>;
+  }
+}
+
 class ListingErrorBoundary extends React.Component<{children: React.ReactNode}, {failed:boolean}> {
   state = {failed:false};
   static getDerivedStateFromError() { return {failed:true}; }
@@ -409,7 +429,7 @@ function Router() {
       <Route path="/admin/imports" component={AdminImportsPage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />
       <Route path="/admin/api-centre" component={AdminImporterControlPage} />
-      <Route path="/admin/cashback" component={AdminCashbackPage} />
+      <Route path="/admin/cashback">{() => <CashbackErrorBoundary admin><AdminCashbackPage /></CashbackErrorBoundary>}</Route>
       <Route path="/admin/classifieds" component={AdminClassifiedsPage} />
       <Route path="/admin/payments" component={AdminPaymentsPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
@@ -442,7 +462,7 @@ function Router() {
       <Route path="/rewards">{() => <FeatureGate feature="games" name="Rewards Arcade"><RewardsPage /></FeatureGate>}</Route>
       <Route path="/treasure-hunt">{() => <Redirect to="/rewards" />}</Route>
       <Route path="/buyer-protection">{() => <FeatureGate feature="buyer_protection" name="Buyer Protection"><BuyerProtectionPage /></FeatureGate>}</Route>
-      <Route path="/cashback">{() => <FeatureGate feature="cashback" name="Cashback"><CashbackPage /></FeatureGate>}</Route>
+      <Route path="/cashback">{() => <CashbackErrorBoundary><FeatureGate feature="cashback" name="Cashback"><CashbackPage /></FeatureGate></CashbackErrorBoundary>}</Route>
       <Route path="/welcome-new-buyers" component={WelcomeNewBuyers} />
       <Route component={NotFound} />
     </Switch>
