@@ -60,6 +60,7 @@ let savedAdminExpandedGroups: Record<string,boolean> = {overview:true,accounts:t
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin } = useAdmin();
   const [location, setLocation] = useLocation();
+  useEffect(()=>{window.dispatchEvent(new Event("bazunk-design-route-change"));},[location]);
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => { if (navRef.current) navRef.current.scrollTop = savedAdminNavScrollTop; }, []);
