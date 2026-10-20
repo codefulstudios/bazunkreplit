@@ -12,19 +12,26 @@ export function AdminFeatureFlagsPage(){
  const { token }=useAdmin() as any;
  const [meta,setMeta]=useState<Meta|null>(null),[history,setHistory]=useState<Change[]>([]);
  const [selectedFeature,setSelectedFeature]=useState("all"),[reason,setReason]=useState(""),[success,setSuccess]=useState(""); const [flags,setFlags]=useState<F[]>([]); const [q,setQ]=useState(""); const [busy,setBusy]=useState<string|null>(null); const [categorySettings,setCategorySettings]=useState<Record<string,boolean>>({}); const [counts,setCounts]=useState<any[]>([]); const [display,setDisplay]=useState<Record<string,string>>({}); const [expanded,setExpanded]=useState<string|null>(null); const [error,setError]=useState("");
- const load=async()=>{setError("");try{const r=await fetch(`${API_BASE}/api/admin/feature-flags`,{headers:{Authorization:`Bearer ${token}`}});const d=await r.json().catch(()=>null);if(!r.ok||!Array.isArray(d))throw new Error(d?.error||"Could not load feature flags");setFlags(d);}catch(e:any){setError(e?.message||"Could not load feature flags");}};
+ const load=async()=>{setError("");try{const r=await fetch(`${API_BASE}/api/admin/feature-flags`,{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});const d=await r.json().catch(()=>null);if(!r.ok||!Array.isArray(d))throw new Error(d?.error||"Could not load feature flags");setFlags(d);}catch(e:any){setError(e?.message||"Could not load feature flags");}};
  const loadCategories=async()=>{try{const r=await fetch(`${API_BASE}/api/admin/category-visibility`,{headers:{Authorization:`Bearer ${token}`}});const d=await r.json();if(!r.ok)throw Error(d.error||"Could not load categories");setCategorySettings(d.settings||{});setDisplay(d.display||{});setCounts(d.counts||[]);}catch(e:any){setError(e.message||"Could not load category visibility");}};
  const loadControls=async()=>{
+   const headers={Authorization:`Bearer ${token}`};
+   // A history endpoint outage should NOT prevent loading environment metadata.
+   // Metadata is the required safeguard against editing the wrong environment.
    try{
-    const headers={Authorization:`Bearer ${token}`};
-    const [m,h]=await Promise.all([
-     fetch(`${API_BASE}/api/admin/feature-toggles/meta`,{headers,cache:"no-store"}),
-     fetch(`${API_BASE}/api/admin/feature-toggles/history`,{headers,cache:"no-store"})
-    ]);
-    const [md,hd]=await Promise.all([m.json(),h.json()]);
-    if(!m.ok||!h.ok)throw Error(md.error||hd.error||"Cannot verify change history");
-    setMeta(md);setHistory(hd.changes||[]);
-   }catch(e){setError(e instanceof Error?e.message:"History unavailable");}
+     const m=await fetch(`${API_BASE}/api/admin/feature-toggles/meta`,{headers,cache:"no-store"});
+     const md=await m.json().catch(()=>({}));
+     if(!m.ok || !md.environment)throw Error(md.error||"Could not verify feature toggle environment");
+     setMeta(md as Meta);
+   }catch(e){setMeta(null);setError(e instanceof Error?e.message:"Could not verify feature toggle environment");return;}
+   try{
+     const h=await fetch(`${API_BASE}/api/admin/feature-toggles/history`,{headers,cache:"no-store"});
+     const hd=await h.json().catch(()=>({}));
+     if(!h.ok)throw Error(hd.error||"History unavailable");
+     setHistory(Array.isArray(hd.changes)?hd.changes:[]);
+   }catch(e){
+     setError(e instanceof Error?`Toggle history could not be loaded: ${e.message}`:"Toggle history unavailable");
+   }
  };
  useEffect(()=>{if(token){void load();void loadCategories();void loadControls();}},[token]);
  const visible=(category:string,sub?:string)=>categorySettings[category+(sub?"__"+sub:"")]!==false;
@@ -34,27 +41,53 @@ export function AdminFeatureFlagsPage(){
 
  const groups=useMemo(()=>{const m=new Map<string,F[]>(); flags.filter(f=>(f.label+' '+f.group).toLowerCase().includes(q.toLowerCase())).forEach(f=>m.set(f.group,[...(m.get(f.group)||[]),f]));return [...m.entries()]},[flags,q]);
  async function change(f:F,entry?:Change){
-  if(!meta||meta.readOnly){setError("Environment not verified or is read-only");return;}
-  if(reason.trim().length<8){setError("Provide a reason of at least eight characters");return;}
+  if(!meta||meta.readOnly){
+   setError(meta?.readOnly?`Feature changes are disabled on the ${meta.environment} service.`:"Environment has not been verified. Use Refresh to retry.");
+   return;
+  }
+  if(busy!==null)return;
+  // Do not silently disable every switch for a missing off-screen reason field.
+  // The API still receives a useful human-readable reason for every audited change.
+  const requestedReason=reason.trim();
+  if(requestedReason.length>0 && requestedReason.length<8){
+   setError("Custom reasons need at least 8 characters, or clear the box to use an automatic audit reason.");
+   window.scrollTo({top:0,behavior:"smooth"});
+   return;
+  }
+  const nextEnabled=entry?entry.previous_enabled:!f.enabled;
+  const auditReason=requestedReason || `Admin ${entry?"rollback":"toggle"}: ${f.label} ${nextEnabled?"enabled":"disabled"} through Feature Toggles`;
   if(meta.environment==="production"&&!window.confirm(
-    `Apply ${entry?"rollback":"change"} to PRODUCTION feature "${f.label}"?`
+    `Are you sure you want to turn ${f.label} ${nextEnabled?"ON":"OFF"} on the LIVE Bazunk site?`
   ))return;
   setBusy(f.key);setError("");setSuccess("");
   try{
    const url=entry?`${API_BASE}/api/admin/feature-toggles/${f.key}/rollback`:`${API_BASE}/api/admin/feature-flags/${f.key}`;
    const r=await fetch(url,{method:entry?"POST":"PATCH",
+    cache:"no-store",
     headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
     body:JSON.stringify({environment:meta.environment,expectedEnabled:f.enabled,
-     reason:reason.trim(),...(entry?{changeId:entry.id}:{enabled:!f.enabled})})
+     reason:auditReason,...(entry?{changeId:entry.id}:{enabled:nextEnabled})})
    });
    const d=await r.json().catch(()=>({}));
-   if(!r.ok)throw Error(d.error||"Change not saved");
-   setFlags(x=>x.map(a=>a.key===f.key?{...a,enabled:d.enabled}:a));
-   setSuccess(`${f.label} ${entry?"rolled back":"updated"} for ${meta.environment}. Audit entry #${d.change.id} recorded.`);
-   setReason("");await loadControls();
+   if(!r.ok)throw Error(d.error||`Feature update failed (HTTP ${r.status})`);
+   if(typeof d.enabled!=="boolean" || !d.change?.id)throw Error("Server did not confirm that this change was audited");
+   // Read it back from the authoritative API instead of trusting the switch animation.
+   const check=await fetch(`${API_BASE}/api/admin/feature-flags`,{
+     headers:{Authorization:`Bearer ${token}`},cache:"no-store",
+   });
+   const current=await check.json().catch(()=>null);
+   if(!check.ok || !Array.isArray(current))throw Error("Change saved but could not reload feature states. Press Refresh.");
+   const persisted=current.find((row:F)=>row.key===f.key);
+   setFlags(current);
+   if(!persisted || persisted.enabled!==nextEnabled)throw Error("Feature state did not persist as expected. Press Refresh.");
+   setSuccess(`${f.label} turned ${nextEnabled?"ON":"OFF"} in ${meta.environment}. Saved and verified; audit #${d.change.id}.`);
+   setReason("");
    window.dispatchEvent(new Event("bazunk-settings-updated"));
-  }catch(e){setError(e instanceof Error?e.message:"Feature update failed");await load();}
-  finally{setBusy(null);}
+   void loadControls();
+  }catch(e){
+   setError(e instanceof Error?e.message:"Feature update failed");
+   await load();
+  }finally{setBusy(null);}
  }
  const filteredHistory=history.filter(x=>selectedFeature==="all"||selectedFeature===x.feature_key);
 
@@ -64,20 +97,21 @@ export function AdminFeatureFlagsPage(){
   <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-200">Connected environment: <strong className="uppercase">{meta?.environment||"Verifying…"}</strong>. {meta?.warning||"Checking service identity and audit history."}</p></div>
   <button type="button" onClick={()=>{void load();void loadControls();}} className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-bold dark:border-slate-600"><RefreshCw className="h-4 w-4"/>Refresh</button>
  </div>
- <label className="mt-3 block text-sm font-bold">Reason for next toggle change or rollback
-  <input value={reason} maxLength={500} onChange={e=>setReason(e.target.value)} placeholder="e.g. Disable during checkout incident 123" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 placeholder:text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-300"/>
+ <label className="mt-3 block text-sm font-bold">Reason for next toggle change or rollback (optional)
+  <input value={reason} maxLength={500} onChange={e=>setReason(e.target.value)} placeholder="Optional: leave blank for an automatic audit reason" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 placeholder:text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-300"/>
  </label>
+ <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-200">Switches work without entering a reason. To write a custom audit reason, use at least eight characters.</p>
  {meta?.environment==="production"&&<p className="mt-2 text-xs font-bold text-orange-800 dark:text-orange-200">Production is LIVE. A confirmation is required before each change. Staging must be opened on its own service.</p>}
  </section>
  {success&&<p role="status" className="rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-900 dark:!bg-[#a7f3d0] dark:!text-[#052e24]">{success}</p>}
- <div className="relative max-w-md"><Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search features..." className="w-full pl-9 pr-3 py-2 border rounded-xl bg-white"/></div><section className="bg-white rounded-2xl border shadow-sm overflow-hidden"><div className="px-5 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">Category Visibility</h2><p className="text-sm text-gray-500">Import in stages. Choose Active, Coming Soon, Under Maintenance or Hidden Completely for each category and subcategory. Disabled listings stay private; placeholders appear only on the Categories page.</p></div><div className="divide-y">{ACTIVE_CATEGORIES.filter(c=>(c.name+" "+c.subcategories.map(s=>s.name).join(" ")).toLowerCase().includes(q.toLowerCase())).map(c=><div key={c.slug}><div className="px-5 py-3 flex items-center justify-between gap-3"><button className="font-semibold text-left flex-1" onClick={()=>setExpanded(expanded===c.slug?null:c.slug)}>{expanded===c.slug?"▾":"▸"} {c.name} <span className="text-xs text-gray-500">({counts.filter((x:any)=>x.category===c.slug).reduce((n:number,x:any)=>n+Number(x.count||0),0)} listings)</span></button>{stateSelect(c.slug)}</div>{expanded===c.slug&&<div className="px-8 pb-4 space-y-2">{c.subcategories.map(sub=><div key={sub.slug} className="flex items-center justify-between gap-2 text-sm"><span>{sub.name} <span className="text-gray-400">({counts.filter((x:any)=>x.category===c.slug&&x.subcategory===sub.slug).reduce((n:number,x:any)=>n+Number(x.count||0),0)})</span></span>{stateSelect(c.slug,sub.slug)}</div>)}</div>}</div>)}</div></section><LoaderSettingsPanel />{groups.map(([group,items])=><section key={group} className="bg-white rounded-2xl border shadow-sm overflow-hidden"><div className="px-5 py-3 bg-gray-50 border-b font-semibold">{group}</div><div className="divide-y">{items.map(f=><div key={f.key} className="px-5 py-4 flex items-center justify-between gap-4"><div><div className="font-semibold">{f.label}</div><div className="text-xs text-gray-500 font-mono">{f.key}</div></div><div className="flex items-center gap-3"><span className={`text-xs font-semibold ${f.enabled?'text-emerald-600':'text-red-600'}`}>{f.enabled?'ON':'OFF'}</span><button disabled={busy===f.key||!meta||meta.readOnly||reason.trim().length<8} onClick={()=>void change(f)} aria-label={`Turn ${f.label} ${f.enabled?'off':'on'}`} className={`relative w-12 h-7 rounded-full transition ${f.enabled?'bg-emerald-500':'bg-gray-300'} disabled:opacity-50`}><span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${f.enabled?'left-6':'left-1'}`}/></button></div></div>)}</div></section>)}<section className="rounded-2xl border-2 border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-[#172541]">
+ <div className="relative max-w-md"><Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search features..." className="w-full pl-9 pr-3 py-2 border rounded-xl bg-white"/></div><section className="bg-white rounded-2xl border shadow-sm overflow-hidden"><div className="px-5 py-4 bg-gray-50 border-b"><h2 className="font-bold text-lg">Category Visibility</h2><p className="text-sm text-gray-500">Import in stages. Choose Active, Coming Soon, Under Maintenance or Hidden Completely for each category and subcategory. Disabled listings stay private; placeholders appear only on the Categories page.</p></div><div className="divide-y">{ACTIVE_CATEGORIES.filter(c=>(c.name+" "+c.subcategories.map(s=>s.name).join(" ")).toLowerCase().includes(q.toLowerCase())).map(c=><div key={c.slug}><div className="px-5 py-3 flex items-center justify-between gap-3"><button className="font-semibold text-left flex-1" onClick={()=>setExpanded(expanded===c.slug?null:c.slug)}>{expanded===c.slug?"▾":"▸"} {c.name} <span className="text-xs text-gray-500">({counts.filter((x:any)=>x.category===c.slug).reduce((n:number,x:any)=>n+Number(x.count||0),0)} listings)</span></button>{stateSelect(c.slug)}</div>{expanded===c.slug&&<div className="px-8 pb-4 space-y-2">{c.subcategories.map(sub=><div key={sub.slug} className="flex items-center justify-between gap-2 text-sm"><span>{sub.name} <span className="text-gray-400">({counts.filter((x:any)=>x.category===c.slug&&x.subcategory===sub.slug).reduce((n:number,x:any)=>n+Number(x.count||0),0)})</span></span>{stateSelect(c.slug,sub.slug)}</div>)}</div>}</div>)}</div></section><LoaderSettingsPanel />{groups.map(([group,items])=><section key={group} className="bg-white rounded-2xl border shadow-sm overflow-hidden"><div className="px-5 py-3 bg-gray-50 border-b font-semibold">{group}</div><div className="divide-y">{items.map(f=><div key={f.key} className="px-5 py-4 flex items-center justify-between gap-4"><div><div className="font-semibold">{f.label}</div><div className="text-xs text-gray-500 font-mono">{f.key}</div></div><div className="flex items-center gap-3"><span className={`text-xs font-semibold ${f.enabled?'text-emerald-600':'text-red-600'}`}>{f.enabled?'ON':'OFF'}</span><button role="switch" type="button" aria-checked={f.enabled} disabled={busy!==null||!meta||meta.readOnly} onClick={()=>void change(f)} aria-label={`Turn ${f.label} ${f.enabled?'off':'on'}`} title={meta?.readOnly?"This environment is read-only":`Turn ${f.label} ${f.enabled?"OFF":"ON"} (saves immediately after confirmation)`} className={`relative w-12 h-7 rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${f.enabled?'bg-emerald-500':'bg-gray-300'} disabled:opacity-50`}><span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-all ${f.enabled?'left-6':'left-1'}`}/></button></div></div>)}</div></section>)}<section className="rounded-2xl border-2 border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-[#172541]">
  <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-lg font-black text-slate-950 dark:text-white"><History className="h-5 w-5 text-orange-600"/>Toggle audit history & rollback</h2>
  <select aria-label="Filter toggle history" value={selectedFeature} onChange={e=>setSelectedFeature(e.target.value)} className="min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-sm font-semibold text-slate-950 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
  <option value="all">All features</option>{flags.map(f=><option key={f.key} value={f.key}>{f.label}</option>)}</select></div>
  <p className="mt-1 text-xs font-semibold text-slate-700 dark:text-slate-200">Latest 100 changes in this environment. Rollback restores the historical prior state and creates a new record.</p>
  <div className="mt-3 max-h-96 space-y-2 overflow-y-auto">{filteredHistory.length===0?<p className="py-4 text-sm font-semibold text-slate-600 dark:text-slate-300">No recorded changes yet.</p>:filteredHistory.map(h=>{
  const current=flags.find(f=>f.key===h.feature_key);
- const canUndo=!h.legacy&&!!current&&current.enabled!==h.previous_enabled&&!meta?.readOnly&&reason.trim().length>=8;
+ const canUndo=!h.legacy&&!!current&&current.enabled!==h.previous_enabled&&!meta?.readOnly;
  return <div key={h.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
  <div className="min-w-0"><p className="text-sm font-black text-slate-950 dark:text-white">{current?.label||h.feature_key} · {h.previous_enabled?"ON":"OFF"} → {h.new_enabled?"ON":"OFF"}</p>
  <p className="text-xs text-slate-700 dark:text-slate-200">{new Date(h.created_at).toLocaleString("en-GB")} · {h.actor} · {h.environment}</p>
