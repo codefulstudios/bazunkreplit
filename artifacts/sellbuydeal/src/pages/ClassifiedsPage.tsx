@@ -1046,6 +1046,7 @@ export function ClassifiedsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
+      <div className="border-b border-orange-300 bg-orange-50 px-4 py-3 text-center text-sm font-bold text-slate-900"><a href="/find-it" className="font-black text-orange-800 underline">Try Bazunk Find It →</a> Describe an item, set your budget and let sellers compete with offers.</div>
 
       {/* Hero */}
       <div className="bg-gradient-to-br from-[#F26B21]/10 via-orange-50 to-white border-b border-orange-100">
