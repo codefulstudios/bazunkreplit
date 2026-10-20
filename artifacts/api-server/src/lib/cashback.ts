@@ -16,7 +16,9 @@ const tiers:CashbackTier[]=[
 ];
 /** Runtime policy deliberately starts DISABLED. Existing promotional flags are not a promise of funded earnings. */
 const runtimeDefaults={earningEnabled:false,payoutRequestsEnabled:false,holdDays:30,minPayoutGbp:5,accrualStartedAt:null as string|null};
-export async function ensureCashback(){
+let schemaReady:Promise<void>|null=null;
+export function ensureCashback():Promise<void>{
+ if(!schemaReady){schemaReady=(async()=>{
  await db.execute(sql`CREATE TABLE IF NOT EXISTS marketplace_cashback_earnings(
    order_id TEXT PRIMARY KEY REFERENCES orders(id) ON DELETE RESTRICT,
    buyer_email TEXT NOT NULL, spend_minor INTEGER NOT NULL CHECK(spend_minor>0),
@@ -45,6 +47,8 @@ export async function ensureCashback(){
  await db.execute(sql`INSERT INTO site_settings(key,value,updated_at)
     VALUES('cashback_runtime_policy',${JSON.stringify(runtimeDefaults)},NOW())
     ON CONFLICT(key) DO NOTHING`);
+ })().catch(err=>{schemaReady=null;throw err;});}
+ return schemaReady;
 }
 const raw=(v:unknown)=>{try{return JSON.parse(String(v));}catch{return null;}};
 export async function cashbackConfig():Promise<CashbackConfig>{
