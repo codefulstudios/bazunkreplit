@@ -3,7 +3,7 @@ import { useAdmin } from "@/context/AdminContext";
 import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { AdminLayout } from "./AdminLayout";
 import { AdminSettingsPage } from "./AdminSettingsPage";
-import { ShieldCheck, Copy, RotateCcw } from "lucide-react";
+import { ShieldCheck, Copy, RotateCcw, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
 // Deliberately isolated: these settings render only inside the preview.
 // Publishing requires a validated, authenticated server-side settings endpoint.
@@ -29,6 +29,47 @@ function luminance(hex: string): number {
 function contrast(a:string,b:string): number {
   const x=luminance(a),y=luminance(b);
   return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
+}
+const ICONS = {smartphone:Smartphone,shirt:Shirt,gaming:Gamepad2,home:Armchair,sports:Dumbbell,books:BookOpen,collectibles:Gem,automotive:CarFront,package:Package};
+const DESIGN_CATEGORIES = ["electronics","fashion","gaming","home","sports","books","collectibles","automotive"] as const;
+function DesignAssetsEditor() {
+ const {authFetch}=useAdmin();
+ const [items,setItems]=useState<Record<string,string>>({});
+ const [saving,setSaving]=useState(false);
+ const [status,setStatus]=useState("");
+ const [loading,setLoading]=useState(true);
+ useEffect(()=>{let active=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Could not load");return r.json()}).then((data:Record<string,string>)=>{if(active)setItems(data)}).catch(()=>{if(active)setStatus("Could not load saved graphics settings.")}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[authFetch]);
+ function change(key:string,value:string){setItems(p=>({...p,[key]:value}));setStatus("Unsaved changes");}
+ async function save(){setSaving(true);setStatus("");try{
+  const keys=["design_hero_image_url","design_hero_image_alt",...DESIGN_CATEGORIES.map(c=>"design_category_icon_"+c)];
+  const updates=Object.fromEntries(keys.map(k=>[k,items[k]||""]));
+  const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(updates)});
+  if(!response.ok){const err=await response.json().catch(()=>({}));throw Error(err.error||"Save failed");}
+  window.dispatchEvent(new Event("bazunk-settings-updated"));setStatus("Graphics and icons saved successfully.");
+ }catch(e){setStatus(e instanceof Error?e.message:"Could not save assets.")}finally{setSaving(false)}}
+ return <div className="space-y-4 rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
+  <div className="flex items-center gap-2"><ImageIcon className="h-6 w-6"/><h2 className="text-xl font-extrabold">Icons & Graphics</h2></div>
+  <p className="text-sm font-semibold">Choose approved category icons and an optional HTTPS homepage hero graphic (PNG, JPEG or WebP). Files must be hosted online; direct uploads are not enabled yet.</p>
+  {loading?<p>Loading appearance settings…</p>:<>
+   <div className="grid gap-4 md:grid-cols-2">{DESIGN_CATEGORIES.map(category=>{
+    const value=items["design_category_icon_"+category]||category;
+    const Icon=ICONS[value as keyof typeof ICONS]||Package;
+    return <label key={category} className="flex items-center justify-between gap-4 rounded-xl border border-slate-300 p-3 dark:border-slate-500">
+      <span className="flex items-center gap-2 font-bold capitalize"><Icon className="h-6 w-6"/>{category}</span>
+      <select aria-label={category+" icon"} value={value} onChange={e=>change("design_category_icon_"+category,e.target.value)} className="max-w-[55%] rounded-lg border border-slate-400 bg-white p-2 text-slate-950 dark:bg-slate-800 dark:text-white">
+      {Object.keys(ICONS).map(name=><option key={name} value={name}>{name}</option>)}</select>
+    </label>
+   })}</div>
+   <label className="block text-sm font-bold">Homepage hero graphic URL
+    <input type="url" value={items.design_hero_image_url||""} onChange={e=>change("design_hero_image_url",e.target.value)} placeholder="https://example.com/hero.webp" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
+   </label>
+   <label className="block text-sm font-bold">Hero graphic description (alt text)
+    <input value={items.design_hero_image_alt||""} onChange={e=>change("design_hero_image_alt",e.target.value)} maxLength={150} placeholder="Description of the image" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
+   </label>
+   {items.design_hero_image_url&&/^https:\/\//.test(items.design_hero_image_url)&&<p className="text-sm font-bold">Hero image will be displayed only after saving a valid HTTPS image URL.</p>}
+   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-orange-300 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
+  </>}
+ </div>;
 }
 export function AdminDesignSystemPage() {
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets">("colours");
