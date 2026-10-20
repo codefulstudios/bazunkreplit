@@ -2,6 +2,7 @@ import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDis
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
 import { SellerCard } from "@/components/listing/ListingSellerCard";
+import { TrustProofBuyerPanel } from "@/components/listing/TrustProofBuyerPanel";
 import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
 import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
@@ -404,7 +405,7 @@ export function ListingPage() {
                     </span>
                     {product.verified && (
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500 text-white flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Verified
+                        <CheckCircle2 className="w-3 h-3" /> Identity verified
                       </span>
                     )}
                   </div>
@@ -453,6 +454,9 @@ export function ListingPage() {
                     return null;
                   })()}
                 </div></>} />
+
+            {/* Three separate trust claims; seller uploads never confer product authenticity. */}
+            {apiProduct?.id&&<TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)} />}
 
             {/* {t("descriptionDetails")} */}
             {(() => {

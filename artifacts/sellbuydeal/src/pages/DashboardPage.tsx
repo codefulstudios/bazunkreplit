@@ -577,6 +577,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
               <button onClick={openRevise} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <Pencil className="w-3.5 h-3.5 text-[#4A5CE8]" /> Revise Listing
               </button>
+              {listing.status === "active" && <Link href={`/trust-proof?listing=${listing.id}`} onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50"><ShieldCheck className="h-4 w-4"/> TrustProof evidence</Link>}
               <button onClick={() => { setMenuOpen(false); setPromoteOpen(true); }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <TrendingUp className="w-3.5 h-3.5 text-[#F26B21]" /> Promote Listing
               </button>

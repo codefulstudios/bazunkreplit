@@ -7,6 +7,7 @@ export function useFeature(key:string){ const settings=useRawSettings(); const l
 export function FeatureVisible({feature,children}:{feature:string;children:React.ReactNode}){ return useFeature(feature) ? <>{children}</> : null; }
 export function featureForHref(href:string):string|undefined {
   const path=href.split("?")[0];
+  if(path.startsWith("/trust-proof")) return "trust_proof";
   if(path.startsWith("/deal-pilot")) return "deal_pilot";
   if(path.startsWith("/find-it")) return "find_it";
   if(path.startsWith("/live")) return "live";

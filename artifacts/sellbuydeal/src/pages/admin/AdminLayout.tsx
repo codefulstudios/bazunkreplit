@@ -14,6 +14,7 @@ const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
+  { label: "TrustProof", href: "/admin/trust-proof", icon: ShieldCheck },
   { label: "Listings", href: "/admin/listings", icon: Package },
   { label: "Importer Control", href: "/admin/importer-control", icon: Package },
   { label: "Snap & Sell AI", href: "/admin/snap-sell", icon: Camera },
@@ -45,7 +46,7 @@ const NAV = [
 
 const NAV_GROUPS = [
   { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard"] },
-  { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","Reviews"] },
+  { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","TrustProof","Reviews"] },
   { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Snap & Sell AI","DealPilot","Find It","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
   { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
   { id:"growth", label:"Growth & Rewards", icon:Megaphone, pages:["Cashback","Rewards","Credits Economy","Referrals","Promotions"] },

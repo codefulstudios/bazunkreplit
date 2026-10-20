@@ -3,6 +3,7 @@ import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
+import { ensureTrustProofTables, auditProof } from "../lib/trustProof.js";
 import { db, listingsTable, listingPromotionsTable } from "@workspace/db";
 import { eq, desc, and, gt, sql, inArray } from "drizzle-orm";
 import { toGbp } from "../fxRates.js";
@@ -571,6 +572,19 @@ router.patch("/listings/:id", async (req, res) => {
       .where(and(eq(listingsTable.id, id), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${email})`))
       .returning();
     if (updated.length === 0) { res.status(404).json({ error: "Listing not found or not yours" }); return; }
+    // Proof belongs to the specific photographed item and description. Any
+    // material change revokes prior human review and third-party authentication.
+    if (["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].some(k=>body[k]!==undefined)) {
+      try{
+        await ensureTrustProofTables();
+        const revoked=await db.execute(sql`UPDATE marketplace_trust_proofs SET status='revoked',
+          reviewed_at=NULL,reviewed_by=NULL,external_provider=NULL,external_reference=NULL,
+          external_checked_at=NULL,external_admin=NULL,updated_at=NOW()
+          WHERE listing_id=${id} AND status IN ('collecting','submitted','approved','rejected')
+          RETURNING listing_id`);
+        if(revoked.rows.length)await auditProof(id,authenticatedEmail,"listing_changed",{fields:Object.keys(body).filter(k=>["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].includes(k))});
+      }catch(err){console.error("TrustProof revocation failed; public fingerprint still blocks stale evidence",err);}
+    }
     res.json(updated[0]);
   } catch (err) {
     console.error("Error updating listing:", err);

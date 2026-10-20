@@ -92,6 +92,8 @@ import { ImportersPage } from "@/pages/ImportersPage";
 import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
 import { BrowsePage } from "@/pages/BrowsePage";
 import { ListingPage } from "@/pages/ListingPage";
+import { TrustProofPage } from "@/pages/TrustProofPage";
+import { AdminTrustProofPage } from "@/pages/admin/AdminTrustProofPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
 import { MobileNotificationsPage } from "@/pages/MobileNotificationsPage";
 import { MobileShopNav } from "@/components/MobileShopNav";
@@ -361,6 +363,7 @@ function Router() {
       <Route path="/sell/snap">{() => <FeatureGate feature="snap_sell" name="Snap & Sell"><SnapSellPage /></FeatureGate>}</Route>
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/sell/quick">{() => <FeatureGate feature="quick_sell" name="Quick Sale"><DirectSalePage /></FeatureGate>}</Route>
+      <Route path="/trust-proof">{() => <FeatureGate feature="trust_proof" name="TrustProof"><TrustProofPage /></FeatureGate>}</Route>
       <Route path="/deal-pilot">{() => <FeatureGate feature="deal_pilot" name="DealPilot"><DealPilotPage /></FeatureGate>}</Route>
       <Route path="/find-it">{() => <FeatureGate feature="find_it" name="Find It"><FindItPage /></FeatureGate>}</Route>
       <Route path="/dashboard" component={DashboardPage} />
@@ -429,6 +432,7 @@ function Router() {
       <Route path="/admin/promotions" component={AdminPromotionsPage} />
       <Route path="/admin/reviews" component={AdminReviewsPage} />
       <Route path="/admin/verification" component={AdminVerificationPage} />
+      <Route path="/admin/trust-proof" component={AdminTrustProofPage} />
       <Route path="/setup" component={SetupWizardPage} />
       <Route path="/videos" component={VideoPage} />
       <Route path="/video">{() => <Redirect to="/videos" />}</Route>
