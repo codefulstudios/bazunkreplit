@@ -79,7 +79,8 @@ router.get("/find-it/eligible",async(req,res)=>{
   await ensureFindItTables();
   const ads=(await db.execute(sql`SELECT a.id,a.title,a.description,a.category,a.location,a.price,a.marketplace_region,a.photos
     FROM classified_ads a LEFT JOIN marketplace_find_requests r ON r.classified_id=a.id
-    WHERE a.type='wanted' AND a.status='active' AND LOWER(a.contact_email)=${email} AND r.id IS NULL
+    WHERE a.type='wanted' AND a.status='active' AND (a.expires_at IS NULL OR a.expires_at>NOW())
+    AND LOWER(a.contact_email)=${email} AND r.id IS NULL
     ORDER BY a.posted_at DESC LIMIT 40`)).rows;
   res.json(ads);
  }catch(e){sendError(res,e);}
@@ -135,7 +136,7 @@ router.post("/find-it",async(req,res)=>{
       title:f.title,description:f.description,category:f.category,type:"wanted",price:(f.amount/100).toFixed(2),
       marketplaceRegion:f.region,location:f.location,contactName:f.contactName,contactEmail:email,
       condition:safeText(req.body?.condition,30)||null,photos:photo?JSON.stringify([photo]):null,
-      priceLabel:"Maximum budget",status:"active"
+      priceLabel:"Maximum budget",status:"active",expiresAt:expires(req.body?.days)
     }).returning({id:classifiedAdsTable.id});
     await tx.execute(sql`INSERT INTO marketplace_find_requests(id,classified_id,buyer_email,region,budget_minor,expires_at)
       VALUES(${id},${ad.id},${email},${f.region},${f.amount},${expires(req.body?.days).toISOString()})`);
@@ -160,7 +161,7 @@ router.post("/find-it/upgrade",async(req,res)=>{
     if(already)return null;
     await tx.execute(sql`INSERT INTO marketplace_find_requests(id,classified_id,buyer_email,region,budget_minor,expires_at)
       VALUES(${id},${classifiedId},${email},${a.marketplace_region},${budget},${expires(req.body?.days).toISOString()})`);
-    await tx.execute(sql`UPDATE classified_ads SET price=${(budget/100).toFixed(2)},price_label='Maximum budget' WHERE id=${classifiedId}`);
+    await tx.execute(sql`UPDATE classified_ads SET price=${(budget/100).toFixed(2)},price_label='Maximum budget',expires_at=${expires(req.body?.days).toISOString()} WHERE id=${classifiedId}`);
     return id;
   });
   if(!row){res.status(409).json({error:"This Wanted listing cannot be upgraded or is already using Find It."});return;}
