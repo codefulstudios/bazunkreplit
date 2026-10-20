@@ -21,9 +21,15 @@ const validatedFields=(body:any)=>{
     !["uk","us"].includes(region)||amount<100) return null;
   return {title,description,category,location,contactName,region:region as "uk"|"us",amount};
 };
-const requestPublic=`r.id,r.classified_id,r.region,r.budget_minor,r.status,r.expires_at,r.created_at,
-    a.title,a.description,a.category,a.subcategory,a.location,a.condition,a.photos,
-    (SELECT COUNT(*)::int FROM marketplace_find_offers o WHERE o.request_id=r.id AND o.status IN ('pending','selected')) AS offer_count`;
+/** Disallow mutating an accepted request during a valid Stripe reservation. */
+async function liveCheckout(selectedOfferId:string|null|undefined){
+ if(!selectedOfferId)return false;
+ const exists=(await db.execute(sql`SELECT to_regclass('public.special_checkout_reservations') AS ref`)).rows[0]?.ref;
+ if(!exists)return false;
+ const rows=await db.execute(sql`SELECT 1 FROM special_checkout_reservations
+   WHERE source=${"find_it:"+selectedOfferId} AND (fulfilled_at IS NOT NULL OR expires_at>NOW()) LIMIT 1`);
+ return rows.rows.length>0;
+}
 
 // Public marketplace results: NEVER return buyer email, phone or private seller bid details.
 router.get("/find-it",async(req,res)=>{
@@ -215,6 +221,7 @@ router.patch("/find-it/:id",async(req,res)=>{
   const row=await db.transaction(async tx=>{
     const current=(await tx.execute(sql`SELECT * FROM marketplace_find_requests WHERE id=${req.params.id} FOR UPDATE`)).rows[0] as any;
     if(!current||String(current.buyer_email).toLowerCase()!==email||current.status==="purchased"||current.status==="paused")return null;
+    if(current.status==="accepted"&&await liveCheckout(current.selected_offer_id))return null;
     if(status==="open"&&new Date(current.expires_at).getTime()<=Date.now())return null;
     await tx.execute(sql`UPDATE marketplace_find_requests SET status=${status},
       selected_offer_id=NULL,updated_at=NOW() WHERE id=${req.params.id}`);
@@ -259,11 +266,14 @@ router.patch("/admin/find-it/:id",requireAdmin,async(req,res)=>{
   await ensureFindItTables();
   const status=String(req.body.status);
   const changed=await db.transaction(async tx=>{
-    const r=(await tx.execute(sql`SELECT id,status,classified_id,expires_at FROM marketplace_find_requests
+    const r=(await tx.execute(sql`SELECT id,status,selected_offer_id,classified_id,expires_at FROM marketplace_find_requests
        WHERE id=${req.params.id} FOR UPDATE`)).rows[0] as any;
     if(!r||r.status==="purchased"||(status==="open"&&new Date(r.expires_at).getTime()<=Date.now()))return false;
+    if(r.status==="accepted"&&await liveCheckout(r.selected_offer_id))return false;
     await tx.execute(sql`UPDATE marketplace_find_requests SET status=${status},
       selected_offer_id=CASE WHEN ${status}='open' THEN NULL ELSE selected_offer_id END,updated_at=NOW() WHERE id=${r.id}`);
+    if(status==="open")await tx.execute(sql`UPDATE marketplace_find_offers SET status='pending',updated_at=NOW()
+      WHERE request_id=${r.id} AND status IN ('selected','declined')`);
     await tx.execute(sql`UPDATE classified_ads SET status=${status==="open"?"active":"closed"} WHERE id=${r.classified_id}`);
     await tx.execute(sql`INSERT INTO marketplace_find_audit(request_id,actor,action)
       VALUES(${r.id},${String((req as any).admin?.email||"admin")},${"moderate:"+status})`);
