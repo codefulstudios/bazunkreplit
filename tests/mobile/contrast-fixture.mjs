@@ -20,7 +20,7 @@ const samples=[
  {id:"cookie-customise",className:"bz-cookie-customise text-white",outer:"bazunk-cookie-consent",tag:"button",bg:"#253958",value:"Customise"},
  {id:"cookie-accept",className:"bz-cookie-accept text-slate-950",outer:"bazunk-cookie-consent",tag:"button",bg:"#f97316",value:"Accept all"},
  {id:"dealpilot-checkbox",className:"text-slate-900 dark:!text-white",tag:"label",bg:"#172541",value:"Suggest offers for my approval",skipLight:true},
- {id:"dealpilot-muted",className:"text-slate-200",tag:"p",bg:"#172541",value:"Your matched items are shown here"},
+ {id:"dealpilot-muted",className:"text-slate-200",tag:"p",bg:"#172541",value:"Your matched items are shown here",skipLight:true},
  {id:"offers-heading",className:"text-[#fff0a8]",tag:"span",bg:"#2528e9",value:"Offers"},
  {id:"offers-metrics",className:"text-white",tag:"span",bg:"#9a3412",value:"Pending Offers"},
  {id:"importer-modal",className:"dark:!text-orange-100",outer:"bz-importer-dialog",tag:"p",bg:"#0d0d0d",value:"See how products move to your Bazunk store",skipLight:true},
@@ -48,7 +48,14 @@ try{
   for(const dark of [false,true]){
    await page.evaluate(mode=>{document.documentElement.classList.toggle("dark",mode);document.documentElement.style.colorScheme=mode?"dark":"light";},dark);
    const computed=await page.evaluate(()=>{
-    function triplet(value){const m=value.match(/rgba?\(([^)]+)\)/);return m?(m[1].match(/[\d.]+/g)||[]).slice(0,3).map(Number):null;}
+    function triplet(value){
+      // Canvas normalises rgb(), oklch(), and color(srgb ...) to numeric sRGB.
+      const canvas=document.createElement("canvas");canvas.width=canvas.height=1;
+      const ctx=canvas.getContext("2d",{willReadFrequently:true});
+      if(!ctx)return null;
+      ctx.fillStyle=value;ctx.fillRect(0,0,1,1);
+      return [...ctx.getImageData(0,0,1,1).data].slice(0,3);
+    }
     function lum(rgb){return rgb.map(v=>{const c=v/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}).reduce((acc,x,i)=>acc+x*[.2126,.7152,.0722][i],0);}
     return [...document.querySelectorAll("[data-sample]")].map(el=>{
       const child=el.firstElementChild;

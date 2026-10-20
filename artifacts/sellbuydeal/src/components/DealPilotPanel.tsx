@@ -13,7 +13,7 @@ type Match={pilot_id:string;listing_id:number;title:string;image:string|null;con
 type Payload={pilots:Pilot[];matches:Match[];settings:{alerts:boolean;offers:boolean;monitor:boolean}};
 const pounds=(minor:number,currency:string)=>new Intl.NumberFormat("en-GB",{style:"currency",currency}).format(Number(minor||0)/100);
 const panel="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-[#172541]";
-const btn="rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
+const btn="rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:brightness-90";
 
 export function DealPilotPanel() {
  const {isSignedIn,isLoaded,getToken}=useAuth();

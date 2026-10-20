@@ -1181,6 +1181,7 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
    unchanged. Include dark: and dark:! variants for authored components.
    Every new text utility using a light shade must meet 4.5:1 on its surface.
    Tested by tests/mobile/contrast-fixture.mjs in PR CI. */
+@layer utilities {
 .dark :is(
 [class~="text-slate-50"],
 [class~="dark:text-slate-50"],
@@ -1421,6 +1422,8 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 [class~="dark:!text-lime-200"]
 ) { color: #e2e8f0 !important; }
 
+}
+
 /* Independent dark-surface components: brand CTA, consent controls and
    hero copy always use deliberate foreground colours in both themes. */
 .bz-hero-kicker { color: #fed7aa !important; }
@@ -1437,3 +1440,6 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .bz-importer-dialog .bz-example-light .text-orange-600 { color:#9a3412 !important; }
 .dark .bz-importer-dialog .bz-example-light .bg-blue-600 { background-color:#2563eb !important; color:#fff !important; }
 .dark .bz-importer-dialog .bz-example-light .bg-orange-500 { background-color:#f97316 !important; color:#111827 !important; }
+
+.dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] { color:#fff !important; }
+.dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] :is(span,p) {color:#fff !important;}
