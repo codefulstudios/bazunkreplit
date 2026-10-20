@@ -1,0 +1,38 @@
+name: Cookie consent and storefront checks
+on:
+  pull_request:
+    paths:
+      - 'artifacts/sellbuydeal/src/App.tsx'
+      - 'artifacts/sellbuydeal/src/components/CookieConsent.tsx'
+      - 'artifacts/sellbuydeal/src/components/ChatwootWidget.tsx'
+      - 'artifacts/sellbuydeal/src/components/AdSlot.tsx'
+      - 'artifacts/sellbuydeal/src/components/Footer.tsx'
+      - 'artifacts/sellbuydeal/src/pages/CookiePolicyPage.tsx'
+      - 'artifacts/sellbuydeal/index.html'
+      - 'scripts/cookie-consent-contract.test.mjs'
+      - '.github/workflows/cookie-consent-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/sellbuydeal/src/components/CookieConsent.tsx'
+      - 'scripts/cookie-consent-contract.test.mjs'
+      - '.github/workflows/cookie-consent-checks.yml'
+  workflow_dispatch:
+jobs:
+  consent-and-frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check cookie consent integration
+        run: node --test scripts/cookie-consent-contract.test.mjs
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Bazunk storefront
+        run: pnpm --filter @workspace/sellbuydeal run build

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { ExternalLink, Megaphone } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
+import { useCookieConsent } from "@/components/CookieConsent";
 
 type SlotKey = "home_bottom" | "browse_top" | "browse_bottom" | "auctions_mid" | "flash_sales_mid" | "categories_top" | "classifieds_mid" | "support_mid" | "live_left" | "live_bottom";
 
@@ -29,11 +30,14 @@ function AdSenseBlock({ code }: { code: string }) {
 
 export function AdSlot({ slotKey, className = "" }: AdSlotProps) {
   const raw = useSiteSettings() as unknown as Record<string, string>;
+  const { choices } = useCookieConsent();
 
   const enabled = raw[`ad_${slotKey}_enabled`] === "true";
   if (!enabled) return null;
 
   const type = raw[`ad_${slotKey}_type`] || "text";
+  // Never execute configurable third-party ads before marketing consent.
+  if ((type === "custom" || type === "adsense") && !choices.marketing) return null;
   const code = raw[`ad_${slotKey}_code`] || "";
   const customHtml = raw[`ad_${slotKey}_custom_html`] || "";
   const textTitle = raw[`ad_${slotKey}_text_title`] || "";

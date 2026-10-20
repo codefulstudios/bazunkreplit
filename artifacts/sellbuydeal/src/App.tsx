@@ -101,6 +101,8 @@ import { PromotionsPage } from "@/pages/PromotionsPage";
 import { SupportPage } from "@/pages/SupportPage";
 import { TermsPage } from "@/pages/TermsPage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
+import { CookiePolicyPage } from "@/pages/CookiePolicyPage";
+import { CookieConsentProvider, CookieConsentBanner, CookieMarketingScripts } from "@/components/CookieConsent";
 import { OffersPage } from "@/pages/OffersPage";
 import { LivePage, LiveHubPage } from "@/pages/LivePage";
 import { LiveNowStrip } from "@/components/LiveNowStrip";
@@ -375,6 +377,7 @@ function Router() {
       <Route path="/faq">{() => <Redirect to="/support" />}</Route>
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/cookies" component={CookiePolicyPage} />
       <Route path="/offers">{() => <FeatureGate feature="offers" name="Make an Offer"><OffersPage /></FeatureGate>}</Route>
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
@@ -465,6 +468,8 @@ function InnerApp() {
                     <Router />
                     <CartDrawer />
                     <ChatwootWidget />
+                    <CookieMarketingScripts />
+                    <CookieConsentBanner />
                     <Toaster />
                   </OfferProvider>
                 </LiveStreamProvider>
@@ -485,11 +490,13 @@ function App() {
       <CurrencyProvider>
         <LanguageProvider>
         <SiteSettingsProvider>
+          <CookieConsentProvider>
           <AdminProvider>
             <WouterRouter base={basePath}>
               <InnerApp />
             </WouterRouter>
           </AdminProvider>
+          </CookieConsentProvider>
         </SiteSettingsProvider>
         </LanguageProvider>
       </CurrencyProvider>

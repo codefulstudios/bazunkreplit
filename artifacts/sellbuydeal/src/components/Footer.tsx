@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { openCookieSettings } from "@/components/CookieConsent";
 
 const linkClass = "text-sm font-medium text-white/70 hover:text-white transition-colors";
 
@@ -98,9 +99,11 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Bazunk LLC. All rights reserved.
             <span className="block mt-1">2709 N Hayden Island Dr, STE 872346, Portland, Oregon, 97217, USA</span>
           </p>
-          <div className="flex gap-5 text-xs md:text-sm text-white/50">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs md:text-sm text-white/80">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
+            <button type="button" onClick={openCookieSettings} className="font-medium text-white hover:text-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400">Cookie Settings</button>
           </div>
         </div>
       </div>
