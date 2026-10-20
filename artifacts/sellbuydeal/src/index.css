@@ -1443,3 +1443,28 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 
 .dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] { color:#fff !important; }
 .dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] :is(span,p) {color:#fff !important;}
+
+
+/* Bazunk readable-surface contract: prevent faint content across mobile and desktop.
+   Scope by actual dark surfaces; do not globally recolour text on light cards. */
+:root { --bz-readable-on-dark:#f1f5f9; --bz-secondary-on-dark:#cbd5e1; }
+.dark main :is(p,span,label,small,a,button):not([class*="text-white"]):not([class*="text-orange"]):not([class*="text-blue"]):not([class*="text-emerald"]):not([class*="text-red"])[class*="text-slate-8"],
+.dark main :is(p,span,label,small,a,button)[class*="text-gray-8"] { color:var(--bz-readable-on-dark); }
+.dark main :is([class*="text-slate-4"],[class*="text-gray-4"],[class*="text-zinc-4"],[class*="text-neutral-4"]) { color:var(--bz-secondary-on-dark) !important; }
+.dark main :is([class*="text-slate-5"],[class*="text-gray-5"],[class*="text-zinc-5"],[class*="text-neutral-5"]) { color:var(--bz-secondary-on-dark) !important; }
+.dark main :is([class*="text-slate-6"],[class*="text-gray-6"],[class*="text-zinc-6"],[class*="text-neutral-6"]) { color:var(--bz-secondary-on-dark) !important; }
+.dark main :is([class*="text-slate-7"],[class*="text-gray-7"],[class*="text-zinc-7"],[class*="text-neutral-7"]) { color:var(--bz-readable-on-dark) !important; }
+.dark main :is(input,textarea,select) { color-scheme:dark; }
+.dark main :is(input,textarea)::placeholder {color:#cbd5e1 !important;opacity:1;}
+/* Components with a dark surface even if the OS theme is light. */
+.bazunk-cookie-consent :is(h2,h3,p,span,label,small) { color:#f1f5f9; }
+.bazunk-cookie-consent .bz-cookie-description {color:#e2e8f0 !important;opacity:1 !important;}
+.bazunk-cookie-consent button {opacity:1 !important;}
+.bz-importer-dialog {color:#f8fafc;}
+.bz-importer-dialog :is(p,span,label,small,h2,h3):not(.bz-example-light *) {color:#e2e8f0;}
+.bz-importer-dialog button:not(.bz-example-light button) {opacity:1;}
+/* DealPilot's controls are required to be legible on its navy panels. */
+.dark [data-testid="deal-pilot-panel"] :is(label,input[type="checkbox"] + span) {color:#f8fafc;}
+.dark [data-testid="deal-pilot-panel"] :is(input,textarea,select) {color:#f8fafc;opacity:1;}
+/* High-contrast focus indication for keyboard and mobile assistive navigation. */
+:where(button,a,input,textarea,select):focus-visible {outline:3px solid #60a5fa;outline-offset:2px;}
