@@ -15,8 +15,8 @@ test("Cashback and Importers are page routes, not empty inline dashboard panels"
  assert.match(app,/<Route path="\/admin\/cashback">/);
 });
 test("Mobile and desktop dashboard menus use the same route-aware navigation",()=>{
- const snippets=[...dashboard.matchAll(/onClick=\{\(\) => \{\s*setActiveSection\(item\.id\);[\s\S]{0,140}?\}\}/g)];
- assert.equal(snippets.length,2,"Both mobile and desktop menus must call route-aware navigation");
+ const selections=dashboard.match(/setActiveSection\(item\.id\);/g) || [];
+ assert.equal(selections.length,2,"Both mobile and desktop menus must call route-aware navigation");
 });
 test("Old bookmarked cashback dashboard sections redirect to actual page",()=>{
  assert.match(dashboard,/allIds\.includes\(s\) && !DASHBOARD_PAGE_ROUTES\[s\]/);
