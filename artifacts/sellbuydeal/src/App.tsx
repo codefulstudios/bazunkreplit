@@ -92,6 +92,8 @@ import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
 import { BrowsePage } from "@/pages/BrowsePage";
 import { ListingPage } from "@/pages/ListingPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
+import { MobileNotificationsPage } from "@/pages/MobileNotificationsPage";
+import { MobileShopNav } from "@/components/MobileShopNav";
 import { BundlePage } from "@/pages/BundlePage";
 import { ClassifiedsPage } from "@/pages/ClassifiedsPage";
 import { MessagesPage } from "@/pages/MessagesPage";
@@ -367,6 +369,7 @@ function Router() {
       <Route path="/search" component={BrowsePage} />
       <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/notifications" component={MobileNotificationsPage} />
       <Route path="/bundle">{() => <FeatureGate feature="bundles" name="Bundles"><BundlePage /></FeatureGate>}</Route>
       <Route path="/classifieds">{() => <FeatureGate feature="classifieds" name="Classifieds"><ClassifiedsPage /></FeatureGate>}</Route>
       <Route path="/messages">{() => <FeatureGate feature="messaging" name="Messaging"><MessagesPage /></FeatureGate>}</Route>
@@ -466,6 +469,7 @@ function InnerApp() {
                     <ScrollToTop />
                     <BackToTop />
                     <Router />
+                    <MobileShopNav />
                     <CartDrawer />
                     <ChatwootWidget />
                     <CookieMarketingScripts />
