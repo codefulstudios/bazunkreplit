@@ -14,11 +14,22 @@ const browser=await chromium.launch({headless:true});
 const samples=[
  {id:"hero-kicker",className:"bz-hero-kicker text-orange-300",bg:"#151d37",value:"Discover something great"},
  {id:"hero-description",className:"bz-hero-summary text-slate-200",bg:"#151d37",value:"Explore unique finds from independent sellers"},
- {id:"cookie-description",className:"bz-cookie-description text-slate-100",outer:"bazunk-cookie-consent",bg:"#07172c",value:"Essential cookies and optional preferences"},
- {id:"cookie-link",className:"bz-cookie-description",outer:"bazunk-cookie-consent",tag:"a",bg:"#07172c",value:"Read our Cookie Policy"},
- {id:"cookie-reject",className:"bz-cookie-reject text-slate-950",outer:"bazunk-cookie-consent",tag:"button",bg:"#ffffff",value:"Reject optional"},
- {id:"cookie-customise",className:"bz-cookie-customise text-white",outer:"bazunk-cookie-consent",tag:"button",bg:"#253958",value:"Customise"},
- {id:"cookie-accept",className:"bz-cookie-accept text-slate-950",outer:"bazunk-cookie-consent",tag:"button",bg:"#f97316",value:"Accept all"},
+ // Cookie UI uses fixed light surfaces in BOTH themes, including inside the modal.
+ {id:"cookie-heading",className:"bz-cookie-title text-slate-900",outer:"bazunk-cookie-consent bz-cookie-dialog",tag:"h2",bg:"#ffffff",value:"Your cookie preferences"},
+ {id:"cookie-description",className:"bz-cookie-description text-slate-700",outer:"bazunk-cookie-consent bz-cookie-banner",bg:"#ffffff",value:"Essential cookies and optional preferences"},
+ {id:"cookie-link",className:"bz-cookie-policy-link",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"a",bg:"#ffffff",value:"Read our Cookie Policy"},
+ {id:"cookie-option-title",className:"bz-cookie-option-title text-slate-900",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"h3",bg:"#ffffff",value:"Strictly necessary"},
+ {id:"cookie-option-copy",className:"bz-cookie-option-copy text-slate-700",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"p",bg:"#ffffff",value:"Required for login and security"},
+ {id:"cookie-badge",className:"bz-cookie-essential-badge text-emerald-950",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"span",bg:"#ffffff",value:"Always on"},
+ // Cookie Policy reproduces its real parent > main > bright article structure.
+ {id:"policy-heading",className:"font-bold text-2xl",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"h1",bg:"#f8fafc",value:"Cookie Policy"},
+ {id:"policy-description",className:"text-sm",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"p",bg:"#f8fafc",value:"How Bazunk uses cookies"},
+ {id:"policy-highlight",className:"text-sm",outer:"bz-cookie-policy",main:true,inner:"bz-policy-highlight",tag:"p",bg:"#f8fafc",value:"Your current choices"},
+ {id:"policy-provider",className:"font-bold",outer:"bz-cookie-policy",main:true,inner:"bz-policy-entry",tag:"h3",bg:"#f8fafc",value:"Clerk"},
+ {id:"policy-link",className:"bz-policy-link",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"a",bg:"#f8fafc",value:"Privacy Policy"},
+ {id:"cookie-reject",className:"bz-cookie-reject text-slate-900",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Reject optional"},
+ {id:"cookie-customise",className:"bz-cookie-customise text-slate-900",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Customise"},
+ {id:"cookie-accept",className:"bz-cookie-accept text-slate-950",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Accept all"},
  {id:"dealpilot-checkbox",className:"text-slate-900 dark:!text-white",tag:"label",bg:"#172541",value:"Suggest offers for my approval",skipLight:true},
  {id:"dealpilot-muted",className:"text-slate-200",tag:"p",bg:"#172541",value:"Your matched items are shown here",skipLight:true},
  {id:"offers-heading",className:"text-[#fff0a8]",tag:"span",bg:"#2528e9",value:"Offers"},
@@ -36,7 +47,10 @@ function fixtureHtml(){
  return samples.map(s=>{
   const tag=s.tag||"p", attr=s.outer?' class="'+escapeHtml(s.outer)+'"':"";
   const style='style="background-color:'+s.bg+';padding:18px;display:block"';
-  return '<section data-sample="'+s.id+'" '+attr+' '+style+'><'+tag+' class="'+escapeHtml(s.className)+'" style="font-size:16px;display:inline-block">'+escapeHtml(s.value)+'</'+tag+'></section>';
+  const textElement='<'+tag+' data-text-target class="'+escapeHtml(s.className)+'" style="font-size:16px;display:inline-block">'+escapeHtml(s.value)+'</'+tag+'>';
+  const inner=s.inner?'<div class="'+escapeHtml(s.inner)+'" style="padding:12px">'+textElement+'</div>':textElement;
+  const body=s.main?'<main>'+inner+'</main>':inner;
+  return '<section data-sample="'+s.id+'" '+attr+' '+style+'>'+body+'</section>';
  }).join("\n");
 }
 const violations=[];
@@ -58,11 +72,20 @@ try{
     }
     function lum(rgb){return rgb.map(v=>{const c=v/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4;}).reduce((acc,x,i)=>acc+x*[.2126,.7152,.0722][i],0);}
     return [...document.querySelectorAll("[data-sample]")].map(el=>{
-      const child=el.firstElementChild;
+      const child=el.querySelector("[data-text-target]");
       const fore=triplet(getComputedStyle(child).color);
-      const back=triplet(getComputedStyle(el).backgroundColor);
+      // Measure the actual painted background under the text, not a hardcoded
+      // fixture colour: buttons and badges paint their OWN light backgrounds.
+      let backgroundElement=child;
+      let background="transparent";
+      while (backgroundElement) {
+        background=getComputedStyle(backgroundElement).backgroundColor;
+        if(background!=="transparent" && background!=="rgba(0, 0, 0, 0)") break;
+        backgroundElement=backgroundElement.parentElement;
+      }
+      const back=triplet(background);
       const ratio=fore&&back?(Math.max(lum(fore),lum(back))+.05)/(Math.min(lum(fore),lum(back))+.05):0;
-      return {id:el.dataset.sample,ratio:Number(ratio.toFixed(2)),foreground:getComputedStyle(child).color,background:getComputedStyle(el).backgroundColor};
+      return {id:el.dataset.sample,ratio:Number(ratio.toFixed(2)),foreground:getComputedStyle(child).color,background};
     });
    });
    for(const row of computed){

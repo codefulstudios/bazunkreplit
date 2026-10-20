@@ -4,6 +4,7 @@ on:
     paths:
       - 'artifacts/sellbuydeal/src/App.tsx'
       - 'artifacts/sellbuydeal/src/components/CookieConsent.tsx'
+      - 'artifacts/sellbuydeal/src/index.css'
       - 'artifacts/sellbuydeal/src/components/ChatwootWidget.tsx'
       - 'artifacts/sellbuydeal/src/components/AdSlot.tsx'
       - 'artifacts/sellbuydeal/src/components/Footer.tsx'
@@ -15,6 +16,7 @@ on:
     branches: [main]
     paths:
       - 'artifacts/sellbuydeal/src/components/CookieConsent.tsx'
+      - 'artifacts/sellbuydeal/src/index.css'
       - 'scripts/cookie-consent-contract.test.mjs'
       - '.github/workflows/cookie-consent-checks.yml'
   workflow_dispatch:

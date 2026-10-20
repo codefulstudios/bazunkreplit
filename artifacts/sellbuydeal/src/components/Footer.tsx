@@ -102,7 +102,7 @@ export function Footer() {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs md:text-sm text-white/80">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
+            <a href="https://bazunk.com/cookies" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Cookie Policy<span className="sr-only"> (opens in a new tab)</span></a>
             <button type="button" onClick={openCookieSettings} className="font-medium text-white hover:text-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400">Cookie Settings</button>
           </div>
         </div>
