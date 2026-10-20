@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { Link } from "wouter";
 import { Cookie, Settings2, ShieldCheck, X } from "lucide-react";
 
 export type CookieCategory = "necessary" | "functional" | "analytics" | "marketing";
@@ -151,7 +150,7 @@ const categories: Array<{
   { key: "marketing", title: "Advertising", description: "Allows Google advertising code and any administrator-configured advertising scripts that may use tracking technologies." },
 ];
 
-const choiceButton = "min-h-11 rounded-xl border px-4 py-2.5 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400";
+const choiceButton = "min-h-11 rounded-xl border px-4 py-2.5 text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600";
 
 export function CookieConsentBanner() {
   const { choices, hasSaved, settingsOpen, openSettings, closeSettings, save } = useCookieConsent();
@@ -169,69 +168,70 @@ export function CookieConsentBanner() {
       )}
       <section
         role={settingsOpen ? "dialog" : "region"}
+        aria-describedby="bazunk-cookie-description"
         aria-modal={settingsOpen ? true : undefined}
         aria-labelledby="bazunk-cookie-heading"
         className={settingsOpen
-          ? "bazunk-cookie-consent fixed left-1/2 top-1/2 z-[100] w-[min(96vw,600px)] max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-600 bg-[#10223e] p-5 text-white shadow-2xl sm:p-7"
-          : "bazunk-cookie-consent fixed bottom-0 left-0 right-0 z-[90] border-t-2 border-orange-500 bg-[#07172c] px-4 py-4 text-white shadow-[0_-8px_35px_rgba(0,0,0,.35)] sm:px-6"}
+          ? "bazunk-cookie-consent bz-cookie-dialog fixed left-1/2 top-1/2 z-[100] w-[min(96vw,600px)] max-h-[90dvh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 shadow-2xl sm:p-7"
+          : "bazunk-cookie-consent bz-cookie-banner fixed bottom-0 left-0 right-0 z-[90] border-t-2 border-orange-600 bg-white px-4 py-4 text-slate-900 shadow-[0_-8px_35px_rgba(0,0,0,.25)] sm:px-6"}
       >
         <div className={settingsOpen ? "" : "mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"}>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2.5">
-              <Cookie className="h-6 w-6 shrink-0 text-orange-400" aria-hidden="true" />
-              <h2 id="bazunk-cookie-heading" className="text-lg font-extrabold text-white">
+              <Cookie className="bz-cookie-icon h-6 w-6 shrink-0 text-orange-700" aria-hidden="true" />
+              <h2 id="bazunk-cookie-heading" className="bz-cookie-title text-lg font-extrabold text-slate-900">
                 {settingsOpen ? "Your cookie preferences" : "Your privacy matters"}
               </h2>
               {settingsOpen && hasSaved && (
                 <button type="button" onClick={closeSettings} aria-label="Close cookie preferences"
-                  className="ml-auto rounded-lg p-2 text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
+                  className="bz-cookie-close ml-auto rounded-lg p-2 text-slate-900 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
                   <X className="h-5 w-5" />
                 </button>
               )}
             </div>
-            <p className="bz-cookie-description mt-2 max-w-3xl text-sm leading-6 text-slate-100">
+            <p id="bazunk-cookie-description" className="bz-cookie-description mt-2 max-w-3xl text-sm leading-6 text-slate-700">
               We use essential cookies and browser storage for shopping, security and accounts.
               With your permission, we can enable optional live chat, analytics and advertising.
               You can refuse optional cookies and still browse and buy.
-              {" "}<Link href="/cookies" className="font-bold text-orange-300 underline underline-offset-2 hover:text-white">Read our Cookie Policy</Link>.
+              {" "}<a href="https://www.bazunk.com/cookies" target="_blank" rel="noopener noreferrer" className="bz-cookie-policy-link font-bold underline underline-offset-2">Read our Cookie Policy<span className="sr-only"> (opens in a new tab)</span></a>.
             </p>
             {settingsOpen && (
               <div className="mt-5 space-y-3">
-                <div className="flex items-start gap-3 rounded-xl border border-slate-600 bg-white/5 p-4">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" aria-hidden="true" />
-                  <div className="flex-1"><h3 className="font-bold text-white">Strictly necessary</h3>
-                    <p className="mt-1 text-sm text-slate-200">Required for login, security, checkout, cart and recording these choices.</p></div>
-                  <span className="rounded-lg bg-emerald-900 px-3 py-1 text-xs font-bold text-emerald-100">Always on</span>
+                <div className="bz-cookie-option flex items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4">
+                  <ShieldCheck className="bz-cookie-icon mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+                  <div className="flex-1"><h3 className="bz-cookie-option-title font-bold text-slate-900">Strictly necessary</h3>
+                    <p className="bz-cookie-option-copy mt-1 text-sm text-slate-700">Required for login, security, checkout, cart and recording these choices.</p></div>
+                  <span className="bz-cookie-essential-badge shrink-0 rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-950">Always on</span>
                 </div>
                 {categories.map(category => (
-                  <label key={category.key} className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-600 bg-white/5 p-4">
-                    <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-orange-500"
+                  <label key={category.key} className="bz-cookie-option flex cursor-pointer items-start gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4">
+                    <input type="checkbox" className="bz-cookie-checkbox mt-1 h-5 w-5 shrink-0 accent-orange-600"
                       checked={category.key === "marketing" && gpc ? false : draft[category.key]}
                       disabled={category.key === "marketing" && gpc}
                       onChange={event => setDraft(previous => ({ ...previous, [category.key]: event.target.checked }))} />
                     <span className="flex-1">
-                      <span className="block font-bold text-white">{category.title}</span>
-                      <span className="mt-1 block text-sm leading-5 text-slate-200">{category.description}</span>
-                      {category.key === "marketing" && gpc && <span className="mt-1 block text-xs text-orange-200">Your browser's Global Privacy Control signal disables advertising tracking.</span>}
+                      <span className="bz-cookie-option-title block font-bold text-slate-900">{category.title}</span>
+                      <span className="bz-cookie-option-copy mt-1 block text-sm leading-5 text-slate-700">{category.description}</span>
+                      {category.key === "marketing" && gpc && <span className="bz-cookie-gpc mt-1 block text-xs text-orange-800">Your browser's Global Privacy Control signal disables advertising tracking.</span>}
                     </span>
                   </label>
                 ))}
               </div>
             )}
           </div>
-          <div className={settingsOpen ? "mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3" : "flex shrink-0 flex-col gap-2 sm:flex-row lg:justify-end"}>
+          <div className={settingsOpen ? "bz-cookie-actions sticky bottom-0 z-10 -mx-5 mt-5 grid grid-cols-1 gap-2 border-t border-slate-200 bg-white px-5 pb-2 pt-4 sm:-mx-7 sm:grid-cols-3 sm:px-7" : "flex shrink-0 flex-col gap-2 sm:flex-row lg:justify-end"}>
             <button type="button" onClick={reject}
-              className={choiceButton + " bz-cookie-reject border-white bg-white text-slate-950 hover:bg-slate-100"}>
+              className={choiceButton + " bz-cookie-reject border-slate-400 bg-white text-slate-900 hover:bg-slate-50"}>
               Reject optional
             </button>
             {settingsOpen ? (
               <button type="button" onClick={() => save(draft)}
-                className={choiceButton + " border-white/50 bg-[#253958] text-white hover:bg-[#334969]"}>
+                className={choiceButton + " bz-cookie-save border-slate-400 bg-slate-100 text-slate-900 hover:bg-slate-200"}>
                 Save choices
               </button>
             ) : (
               <button type="button" onClick={openSettings}
-                className={choiceButton + " bz-cookie-customise inline-flex items-center justify-center gap-2 border-white/50 bg-[#253958] text-white hover:bg-[#334969]"}>
+                className={choiceButton + " bz-cookie-customise inline-flex items-center justify-center gap-2 border-slate-400 bg-slate-100 text-slate-900 hover:bg-slate-200"}>
                 <Settings2 className="h-4 w-4" aria-hidden="true" /> Customise
               </button>
             )}
