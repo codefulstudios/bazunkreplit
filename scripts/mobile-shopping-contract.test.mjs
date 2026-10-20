@@ -4,6 +4,7 @@ import {readFileSync} from "node:fs";
 
 const src=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const direct=src("artifacts/sellbuydeal/src/pages/DirectSalePage.tsx");
+const listingRoute=src("artifacts/api-server/src/routes/listings.ts");
 const checkout=src("artifacts/sellbuydeal/src/pages/CheckoutPage.tsx");
 const browse=src("artifacts/sellbuydeal/src/pages/BrowsePage.tsx");
 const app=src("artifacts/sellbuydeal/src/App.tsx");
@@ -66,4 +67,16 @@ test("mobile browse offers one-tap sorts and avoids per-card motion layout",()=>
  const cards=browse.split("function ProductCard(")[1]?.split("export function BrowsePage()")[0]||"";
  assert.ok(!cards.includes("layout\n"),"Product tiles should not force framer layout calculations");
  assert.match(cards,/loading="lazy" decoding="async"/);
+});
+
+test("saved draft updates keep mobile delivery and inventory fields",()=>{
+  const patch=listingRoute.split('router.patch("/listings/:id"')[1]||
+    listingRoute.split('router.patch("/listings/')[1]||"";
+  assert.ok(patch,"PATCH listings endpoint must exist");
+  for(const key of ["shipOrigin","shipOriginOther","shipZone","carrier","shippingPrice","handlingCharge","quantity","sku"]){
+    assert.ok(patch.includes(key),`Draft publishing must preserve ${key}`);
+  }
+  assert.match(direct,/metadata\.photos/);
+  assert.match(direct,/async function shrinkPhoto/);
+  assert.match(direct,/capture="environment"/);
 });
