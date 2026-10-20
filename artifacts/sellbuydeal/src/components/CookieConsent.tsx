@@ -193,7 +193,7 @@ export function CookieConsentBanner() {
               We use essential cookies and browser storage for shopping, security and accounts.
               With your permission, we can enable optional live chat, analytics and advertising.
               You can refuse optional cookies and still browse and buy.
-              {" "}<a href="https://www.bazunk.com/cookies" target="_blank" rel="noopener noreferrer" className="bz-cookie-policy-link font-bold underline underline-offset-2">Read our Cookie Policy<span className="sr-only"> (opens in a new tab)</span></a>.
+              {" "}<a href="https://bazunk.com/cookies" target="_blank" rel="noopener noreferrer" className="bz-cookie-policy-link font-bold underline underline-offset-2">Read our Cookie Policy<span className="sr-only"> (opens in a new tab)</span></a>.
             </p>
             {settingsOpen && (
               <div className="mt-5 space-y-3">
