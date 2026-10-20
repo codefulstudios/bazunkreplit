@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 export type ProofStatus="collecting"|"submitted"|"approved"|"rejected"|"revoked";
 export type ProofKind="item"|"condition"|"serial"|"video";
 export type ProofListing={id:number;title:string;description:string;condition:string;image:string|null;
- seller_email:string;status:string;public_id:string|null};
+ seller_email:string;status:string;public_id:string|null;category:string;specifications:string|null};
 export type ProofRecord={listing_id:number;seller_email:string;challenge:string;issued_at:Date|string;
  expires_at:Date|string;fingerprint:string;has_serial:boolean;status:ProofStatus;
  submitted_at:Date|string|null;reviewed_at:Date|string|null;reviewed_by:string|null;
@@ -48,7 +48,7 @@ export function ensureTrustProofTables():Promise<void>{
  return tables;
 }
 export async function getProofListing(id:number):Promise<ProofListing|null>{
- const r=await db.execute(sql`SELECT id,title,description,condition,image,seller_email,status,public_id
+ const r=await db.execute(sql`SELECT id,title,description,condition,image,seller_email,status,public_id,category,specifications
    FROM listings WHERE id=${id} LIMIT 1`);
  return (r.rows[0] as unknown as ProofListing)||null;
 }
@@ -61,7 +61,9 @@ export function validListingId(value:unknown):number|null{
 export function listingFingerprint(l:ProofListing):string{
  return createHash("sha256").update(JSON.stringify([
   l.id,String(l.title||"").trim(),String(l.description||"").trim(),
-  String(l.condition||"").trim(),l.image?createHash("sha256").update(l.image).digest("hex"):null,
+  String(l.condition||"").trim(),String(l.category||"").trim(),
+  l.image?createHash("sha256").update(l.image).digest("hex"):null,
+  l.specifications?createHash("sha256").update(l.specifications).digest("hex"):null,
   String(l.seller_email||"").toLowerCase()
  ])).digest("hex");
 }
