@@ -1460,3 +1460,125 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
     bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
+
+
+/* ================================================================
+   COOKIE / LEGAL CONTRAST GUARANTEE (all themes)
+   Bazunk's global dark-mode palette changes Tailwind's foreground
+   tokens independently from backgrounds. Never rely on inherited
+   light/dark utility tokens inside a fixed light legal surface.
+   These two components deliberately use white/pale backgrounds and
+   explicitly dark type EVEN IF the rest of Bazunk is in dark mode.
+   Scope legal overrides to <main>, leaving Navbar/Footer untouched.
+   ================================================================ */
+.bz-cookie-policy main,
+.dark .bz-cookie-policy main {
+  background-color: #f8fafc !important;
+  color: #111827 !important;
+  color-scheme: light;
+}
+.bz-cookie-policy main .bz-policy-surface,
+.dark .bz-cookie-policy main .bz-policy-surface {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #111827 !important;
+}
+.bz-cookie-policy main :is(h1,h2,h3,dt) { color: #111827 !important; opacity: 1 !important; }
+.bz-cookie-policy main :is(p,dd) { color: #334155 !important; opacity: 1 !important; }
+.bz-cookie-policy main .bz-policy-highlight,
+.dark .bz-cookie-policy main .bz-policy-highlight {
+  background-color: #fff7ed !important;
+  border-color: #fdba74 !important;
+  color: #111827 !important;
+}
+.bz-cookie-policy main .bz-policy-entry,
+.dark .bz-cookie-policy main .bz-policy-entry {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #111827 !important;
+}
+.bz-cookie-policy main .bz-policy-section { border-color: #cbd5e1 !important; }
+.bz-cookie-policy main .bz-policy-icon-box { background-color: #ffedd5 !important; }
+.bz-cookie-policy main .bz-policy-icon { color: #9a3412 !important; }
+.bz-cookie-policy main .bz-policy-link,
+.bz-cookie-policy main .bz-policy-back {
+  color: #1d4ed8 !important;
+}
+.bz-cookie-policy main :is(.bz-policy-link,.bz-policy-back):hover { color: #1e40af !important; }
+.bz-cookie-policy main .bz-policy-action {
+  background-color: #9a3412 !important;
+  border-color: #9a3412 !important;
+  color: #ffffff !important;
+}
+.bz-cookie-policy main .bz-policy-action:hover { background-color: #7c2d12 !important; }
+
+/* Cookie consent: keep bright, dark-text cards/buttons across themes. */
+.bazunk-cookie-consent.bz-cookie-banner,
+.bazunk-cookie-consent.bz-cookie-dialog,
+.dark .bazunk-cookie-consent.bz-cookie-banner,
+.dark .bazunk-cookie-consent.bz-cookie-dialog {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #111827 !important;
+  color-scheme: light;
+}
+.bazunk-cookie-consent.bz-cookie-banner,
+.dark .bazunk-cookie-consent.bz-cookie-banner { border-top-color: #f97316 !important; }
+.bazunk-cookie-consent :is(.bz-cookie-title,.bz-cookie-option-title,.bz-cookie-close) {
+  color: #111827 !important;
+  opacity: 1 !important;
+}
+.bazunk-cookie-consent .bz-cookie-description,
+.bazunk-cookie-consent .bz-cookie-option-copy {
+  color: #334155 !important;
+  opacity: 1 !important;
+}
+.bazunk-cookie-consent .bz-cookie-policy-link,
+.bazunk-cookie-consent .bz-cookie-description a {
+  color: #9a3412 !important;
+}
+.bazunk-cookie-consent .bz-cookie-policy-link:hover { color: #7c2d12 !important; }
+.bazunk-cookie-consent .bz-cookie-option,
+.dark .bazunk-cookie-consent .bz-cookie-option {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #111827 !important;
+}
+.bazunk-cookie-consent .bz-cookie-checkbox { color-scheme: light; accent-color: #c2410c; }
+.bazunk-cookie-consent .bz-cookie-checkbox:focus-visible { outline: 3px solid #c2410c; outline-offset: 3px; }
+.bazunk-cookie-consent .bz-cookie-icon { color: #9a3412 !important; }
+.bazunk-cookie-consent .bz-cookie-gpc { color: #92400e !important; }
+.bazunk-cookie-consent .bz-cookie-essential-badge,
+.dark .bazunk-cookie-consent .bz-cookie-essential-badge {
+  background-color: #d1fae5 !important;
+  border: 1px solid #34d399 !important;
+  color: #064e3b !important;
+  opacity: 1 !important;
+}
+.bazunk-cookie-consent .bz-cookie-actions,
+.dark .bazunk-cookie-consent .bz-cookie-actions {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+.bazunk-cookie-consent .bz-cookie-reject,
+.dark .bazunk-cookie-consent .bz-cookie-reject {
+  background-color: #ffffff !important;
+  border-color: #64748b !important;
+  color: #111827 !important;
+}
+.bazunk-cookie-consent :is(.bz-cookie-customise,.bz-cookie-save),
+.dark .bazunk-cookie-consent :is(.bz-cookie-customise,.bz-cookie-save) {
+  background-color: #e2e8f0 !important;
+  border-color: #64748b !important;
+  color: #111827 !important;
+}
+.bazunk-cookie-consent :is(.bz-cookie-customise,.bz-cookie-save):hover {
+  background-color: #cbd5e1 !important;
+}
+.bazunk-cookie-consent .bz-cookie-accept,
+.dark .bazunk-cookie-consent .bz-cookie-accept {
+  background-color: #f97316 !important;
+  border-color: #f97316 !important;
+  color: #111827 !important;
+}
+.bazunk-cookie-consent .bz-cookie-accept:hover { background-color: #fb923c !important; }
