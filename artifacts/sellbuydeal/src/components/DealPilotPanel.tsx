@@ -114,7 +114,7 @@ export function DealPilotPanel() {
        <select value={condition} onChange={e=>setCondition(e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white p-3 text-slate-950 dark:border-slate-500 dark:bg-slate-900 dark:text-white">
         <option value="any">Any condition</option><option value="good">Good or better</option><option value="excellent">Excellent or better</option><option value="new">New only</option></select></label>
      </div>
-     <div className="flex flex-wrap gap-5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+     <div className="flex flex-wrap gap-5 text-sm font-semibold text-slate-900 dark:text-white">
       <label className="inline-flex items-center gap-2 text-slate-900 dark:!text-white"><input type="checkbox" checked={alerts} onChange={e=>setAlerts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Notify me about matches</label>
       <label className="inline-flex items-center gap-2 text-slate-900 dark:!text-white"><input type="checkbox" checked={drafts} onChange={e=>setDrafts(e.target.checked)} className="h-4 w-4 accent-orange-600"/> Suggest offers for my approval</label>
      </div>
