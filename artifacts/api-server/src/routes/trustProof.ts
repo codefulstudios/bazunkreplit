@@ -229,7 +229,7 @@ router.get("/admin/trust-proof/:listingId",requireAdmin,async(req,res)=>{
 router.get("/admin/trust-proof/:listingId/media/:kind",requireAdmin,async(req,res)=>{
  try{
   const id=validListingId(req.params.listingId);
-  if(!id||!mediaKind(req.params.kind)){res.status(404).end();return;}
+  if(!id||!mediaKind(String(req.params.kind))){res.status(404).end();return;}
   await ensureTrustProofTables();
   const row=(await db.execute(sql`SELECT media_type,media_bytes FROM marketplace_trust_proof_media
     WHERE listing_id=${id} AND kind=${req.params.kind}`)).rows[0] as any;
