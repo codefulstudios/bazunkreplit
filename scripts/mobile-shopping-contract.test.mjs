@@ -8,6 +8,7 @@ const listingRoute=src("artifacts/api-server/src/routes/listings.ts");
 const checkout=src("artifacts/sellbuydeal/src/pages/CheckoutPage.tsx");
 const browse=src("artifacts/sellbuydeal/src/pages/BrowsePage.tsx");
 const app=src("artifacts/sellbuydeal/src/App.tsx");
+const styles=src("artifacts/sellbuydeal/src/index.css");
 const nav=src("artifacts/sellbuydeal/src/components/MobileShopNav.tsx");
 const inbox=src("artifacts/sellbuydeal/src/pages/MobileNotificationsPage.tsx");
 
@@ -86,4 +87,10 @@ test("browse controls remain labelled and flexible at 320px",()=>{
  assert.match(browse,/aria-label="List view"/);
  assert.match(browse,/aria-label="Remove category filter"/);
  assert.match(browse,/flex min-w-0 max-w-full flex-wrap items-center gap-2/);
+});
+
+test("support chat launcher stays above mobile action bars",()=>{
+ assert.match(styles,/html:has\(\[data-testid="mobile-direct-sale-actions"\]\) \.woot-widget-bubble/);
+ assert.match(styles,/html:has\(\[data-testid="mobile-shop-nav"\]\) \.woot--bubble-holder/);
+ assert.match(styles,/bottom: calc\(102px \+ env\(safe-area-inset-bottom/);
 });
