@@ -1,0 +1,49 @@
+name: Mobile foreground contrast guard
+on:
+  pull_request:
+    paths:
+      - "artifacts/sellbuydeal/src/**"
+      - "scripts/mobile-contrast-contract.test.mjs"
+      - "tests/mobile/contrast-fixture.mjs"
+      - ".github/workflows/mobile-foreground-contrast.yml"
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/sellbuydeal/src/**"
+      - "scripts/mobile-contrast-contract.test.mjs"
+      - "tests/mobile/contrast-fixture.mjs"
+      - ".github/workflows/mobile-foreground-contrast.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "10"
+      - name: Install application dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify contrast source contracts
+        run: node --test scripts/mobile-contrast-contract.test.mjs
+      - name: Build local storefront CSS
+        run: pnpm --filter @workspace/sellbuydeal run build
+      - name: Install browser for computed contrast tests
+        run: |
+          npm install --prefix tests/mobile --no-save --no-package-lock playwright@1.56.1
+          tests/mobile/node_modules/.bin/playwright install --with-deps chromium
+      - name: Check 390px and desktop foreground contrast in both themes
+        run: node tests/mobile/contrast-fixture.mjs
+      - name: Upload fixture screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-text-contrast-screenshots
+          path: mobile-results/
+          if-no-files-found: ignore

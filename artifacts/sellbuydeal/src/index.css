@@ -1170,3 +1170,276 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bz-category-redesign .bz-category-sidebar nav button[aria-current="page"]{color:#fff!important}
 .bz-category-redesign .bz-category-sidebar nav button:focus-visible{outline:3px solid #fb923c;outline-offset:2px}
 .bz-category-redesign .bz-category-modern-card:hover{transform:none!important}
+
+
+/* ACCESSIBILITY CONTRACT — token remapping must NEVER darken foreground text.
+   The dark palette intentionally turns bg-slate-100/bg-orange-100 into dark
+   surfaces. Tailwind shares those tokens with text-slate-100/text-orange-100:
+   without property-specific colour corrections, headings, descriptions and
+   labels become almost black on navy surfaces. Correct only the *color*
+   property; leave background-color, border-color and deliberate light cards
+   unchanged. Include dark: and dark:! variants for authored components.
+   Every new text utility using a light shade must meet 4.5:1 on its surface.
+   Tested by tests/mobile/contrast-fixture.mjs in PR CI. */
+@layer utilities {
+.dark :is(
+[class~="text-slate-50"],
+[class~="dark:text-slate-50"],
+[class~="dark:!text-slate-50"],
+[class~="text-gray-50"],
+[class~="dark:text-gray-50"],
+[class~="dark:!text-gray-50"],
+[class~="text-zinc-50"],
+[class~="dark:text-zinc-50"],
+[class~="dark:!text-zinc-50"],
+[class~="text-neutral-50"],
+[class~="dark:text-neutral-50"],
+[class~="dark:!text-neutral-50"],
+[class~="text-stone-50"],
+[class~="dark:text-stone-50"],
+[class~="dark:!text-stone-50"],
+[class~="text-slate-100"],
+[class~="dark:text-slate-100"],
+[class~="dark:!text-slate-100"],
+[class~="text-gray-100"],
+[class~="dark:text-gray-100"],
+[class~="dark:!text-gray-100"],
+[class~="text-zinc-100"],
+[class~="dark:text-zinc-100"],
+[class~="dark:!text-zinc-100"],
+[class~="text-neutral-100"],
+[class~="dark:text-neutral-100"],
+[class~="dark:!text-neutral-100"],
+[class~="text-stone-100"],
+[class~="dark:text-stone-100"],
+[class~="dark:!text-stone-100"],
+[class~="text-slate-200"],
+[class~="dark:text-slate-200"],
+[class~="dark:!text-slate-200"],
+[class~="text-gray-200"],
+[class~="dark:text-gray-200"],
+[class~="dark:!text-gray-200"],
+[class~="text-zinc-200"],
+[class~="dark:text-zinc-200"],
+[class~="dark:!text-zinc-200"],
+[class~="text-neutral-200"],
+[class~="dark:text-neutral-200"],
+[class~="dark:!text-neutral-200"],
+[class~="text-stone-200"],
+[class~="dark:text-stone-200"],
+[class~="dark:!text-stone-200"]
+) { color: #f1f5f9 !important; }
+
+.dark :is(
+[class~="text-slate-300"],
+[class~="dark:text-slate-300"],
+[class~="dark:!text-slate-300"],
+[class~="text-gray-300"],
+[class~="dark:text-gray-300"],
+[class~="dark:!text-gray-300"],
+[class~="text-zinc-300"],
+[class~="dark:text-zinc-300"],
+[class~="dark:!text-zinc-300"],
+[class~="text-neutral-300"],
+[class~="dark:text-neutral-300"],
+[class~="dark:!text-neutral-300"],
+[class~="text-stone-300"],
+[class~="dark:text-stone-300"],
+[class~="dark:!text-stone-300"]
+) { color: #cbd5e1 !important; }
+
+.dark :is(
+[class~="text-orange-50"],
+[class~="dark:text-orange-50"],
+[class~="dark:!text-orange-50"],
+[class~="text-amber-50"],
+[class~="dark:text-amber-50"],
+[class~="dark:!text-amber-50"],
+[class~="text-yellow-50"],
+[class~="dark:text-yellow-50"],
+[class~="dark:!text-yellow-50"],
+[class~="text-orange-100"],
+[class~="dark:text-orange-100"],
+[class~="dark:!text-orange-100"],
+[class~="text-amber-100"],
+[class~="dark:text-amber-100"],
+[class~="dark:!text-amber-100"],
+[class~="text-yellow-100"],
+[class~="dark:text-yellow-100"],
+[class~="dark:!text-yellow-100"],
+[class~="text-orange-200"],
+[class~="dark:text-orange-200"],
+[class~="dark:!text-orange-200"],
+[class~="text-amber-200"],
+[class~="dark:text-amber-200"],
+[class~="dark:!text-amber-200"],
+[class~="text-yellow-200"],
+[class~="dark:text-yellow-200"],
+[class~="dark:!text-yellow-200"]
+) { color: #ffedd5 !important; }
+
+.dark :is(
+[class~="text-orange-300"],
+[class~="dark:text-orange-300"],
+[class~="dark:!text-orange-300"]
+) { color: #fdba74 !important; }
+
+.dark :is(
+[class~="text-amber-300"],
+[class~="dark:text-amber-300"],
+[class~="dark:!text-amber-300"],
+[class~="text-yellow-300"],
+[class~="dark:text-yellow-300"],
+[class~="dark:!text-yellow-300"]
+) { color: #fde68a !important; }
+
+.dark :is(
+[class~="text-blue-50"],
+[class~="dark:text-blue-50"],
+[class~="dark:!text-blue-50"],
+[class~="text-sky-50"],
+[class~="dark:text-sky-50"],
+[class~="dark:!text-sky-50"],
+[class~="text-cyan-50"],
+[class~="dark:text-cyan-50"],
+[class~="dark:!text-cyan-50"],
+[class~="text-indigo-50"],
+[class~="dark:text-indigo-50"],
+[class~="dark:!text-indigo-50"],
+[class~="text-violet-50"],
+[class~="dark:text-violet-50"],
+[class~="dark:!text-violet-50"],
+[class~="text-purple-50"],
+[class~="dark:text-purple-50"],
+[class~="dark:!text-purple-50"],
+[class~="text-fuchsia-50"],
+[class~="dark:text-fuchsia-50"],
+[class~="dark:!text-fuchsia-50"],
+[class~="text-pink-50"],
+[class~="dark:text-pink-50"],
+[class~="dark:!text-pink-50"],
+[class~="text-rose-50"],
+[class~="dark:text-rose-50"],
+[class~="dark:!text-rose-50"],
+[class~="text-red-50"],
+[class~="dark:text-red-50"],
+[class~="dark:!text-red-50"],
+[class~="text-green-50"],
+[class~="dark:text-green-50"],
+[class~="dark:!text-green-50"],
+[class~="text-emerald-50"],
+[class~="dark:text-emerald-50"],
+[class~="dark:!text-emerald-50"],
+[class~="text-teal-50"],
+[class~="dark:text-teal-50"],
+[class~="dark:!text-teal-50"],
+[class~="text-lime-50"],
+[class~="dark:text-lime-50"],
+[class~="dark:!text-lime-50"],
+[class~="text-blue-100"],
+[class~="dark:text-blue-100"],
+[class~="dark:!text-blue-100"],
+[class~="text-sky-100"],
+[class~="dark:text-sky-100"],
+[class~="dark:!text-sky-100"],
+[class~="text-cyan-100"],
+[class~="dark:text-cyan-100"],
+[class~="dark:!text-cyan-100"],
+[class~="text-indigo-100"],
+[class~="dark:text-indigo-100"],
+[class~="dark:!text-indigo-100"],
+[class~="text-violet-100"],
+[class~="dark:text-violet-100"],
+[class~="dark:!text-violet-100"],
+[class~="text-purple-100"],
+[class~="dark:text-purple-100"],
+[class~="dark:!text-purple-100"],
+[class~="text-fuchsia-100"],
+[class~="dark:text-fuchsia-100"],
+[class~="dark:!text-fuchsia-100"],
+[class~="text-pink-100"],
+[class~="dark:text-pink-100"],
+[class~="dark:!text-pink-100"],
+[class~="text-rose-100"],
+[class~="dark:text-rose-100"],
+[class~="dark:!text-rose-100"],
+[class~="text-red-100"],
+[class~="dark:text-red-100"],
+[class~="dark:!text-red-100"],
+[class~="text-green-100"],
+[class~="dark:text-green-100"],
+[class~="dark:!text-green-100"],
+[class~="text-emerald-100"],
+[class~="dark:text-emerald-100"],
+[class~="dark:!text-emerald-100"],
+[class~="text-teal-100"],
+[class~="dark:text-teal-100"],
+[class~="dark:!text-teal-100"],
+[class~="text-lime-100"],
+[class~="dark:text-lime-100"],
+[class~="dark:!text-lime-100"],
+[class~="text-blue-200"],
+[class~="dark:text-blue-200"],
+[class~="dark:!text-blue-200"],
+[class~="text-sky-200"],
+[class~="dark:text-sky-200"],
+[class~="dark:!text-sky-200"],
+[class~="text-cyan-200"],
+[class~="dark:text-cyan-200"],
+[class~="dark:!text-cyan-200"],
+[class~="text-indigo-200"],
+[class~="dark:text-indigo-200"],
+[class~="dark:!text-indigo-200"],
+[class~="text-violet-200"],
+[class~="dark:text-violet-200"],
+[class~="dark:!text-violet-200"],
+[class~="text-purple-200"],
+[class~="dark:text-purple-200"],
+[class~="dark:!text-purple-200"],
+[class~="text-fuchsia-200"],
+[class~="dark:text-fuchsia-200"],
+[class~="dark:!text-fuchsia-200"],
+[class~="text-pink-200"],
+[class~="dark:text-pink-200"],
+[class~="dark:!text-pink-200"],
+[class~="text-rose-200"],
+[class~="dark:text-rose-200"],
+[class~="dark:!text-rose-200"],
+[class~="text-red-200"],
+[class~="dark:text-red-200"],
+[class~="dark:!text-red-200"],
+[class~="text-green-200"],
+[class~="dark:text-green-200"],
+[class~="dark:!text-green-200"],
+[class~="text-emerald-200"],
+[class~="dark:text-emerald-200"],
+[class~="dark:!text-emerald-200"],
+[class~="text-teal-200"],
+[class~="dark:text-teal-200"],
+[class~="dark:!text-teal-200"],
+[class~="text-lime-200"],
+[class~="dark:text-lime-200"],
+[class~="dark:!text-lime-200"]
+) { color: #e2e8f0 !important; }
+
+}
+
+/* Independent dark-surface components: brand CTA, consent controls and
+   hero copy always use deliberate foreground colours in both themes. */
+.bz-hero-kicker { color: #fed7aa !important; }
+.bz-hero-summary { color: #e2e8f0 !important; }
+.bazunk-cookie-consent .bz-cookie-description { color: #e2e8f0 !important; }
+.bazunk-cookie-consent .bz-cookie-description a { color: #fdba74 !important; }
+.bazunk-cookie-consent .bz-cookie-reject { background-color:#fff !important; color:#111827 !important; border-color:#fff !important; }
+.bazunk-cookie-consent .bz-cookie-customise { background-color:#253958 !important; color:#fff !important; }
+.bazunk-cookie-consent .bz-cookie-accept { background-color:#f97316 !important; color:#111827 !important; }
+.dark .bz-importer-dialog { color: #f8fafc; }
+.dark .bz-importer-dialog .bz-example-light { background-color:#fff !important; color:#111827 !important; }
+.dark .bz-importer-dialog .bz-example-light :is(p,span,div) { color:inherit; }
+.dark .bz-importer-dialog .bz-example-light .text-blue-600 { color:#1d4ed8 !important; }
+.dark .bz-importer-dialog .bz-example-light .text-orange-600 { color:#9a3412 !important; }
+.dark .bz-importer-dialog .bz-example-light .bg-blue-600 { background-color:#2563eb !important; color:#fff !important; }
+.dark .bz-importer-dialog .bz-example-light .bg-orange-500 { background-color:#f97316 !important; color:#111827 !important; }
+
+.dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] { color:#fff !important; }
+.dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] :is(span,p) {color:#fff !important;}
