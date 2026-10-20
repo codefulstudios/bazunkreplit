@@ -28,7 +28,7 @@ test("mobile publication uses existing authenticated API, validates fields and p
  assert.match(direct,/status: "active"/);
  assert.match(direct,/mobile-save-draft/);
  assert.match(direct,/handleSaveDraft/);
- assert.match(direct,/e\.target\.value = "";/);
+ assert.match(direct,/e\.target\.value\s*=\s*"";/);
 });
 test("shopping navigation routes are mobile-only and keep checkout unobstructed",()=>{
  assert.match(nav,/md:hidden/);
