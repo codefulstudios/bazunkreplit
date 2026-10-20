@@ -6,37 +6,39 @@ import { openCookieSettings, useCookieConsent } from "@/components/CookieConsent
 
 const groups = [
   {
-    title: "Strictly necessary",
-    description: "These are needed to supply services you request and keep them secure. Consent is not required for strictly necessary technologies.",
-    entries: [
-      ["Bazunk", "Cookie preferences (bazunk_cookie_preferences_v1 in localStorage)", "Stores your choice and its date so you are not asked every visit.", "Until browser storage is cleared or preferences are updated."],
-      ["Bazunk", "Cart, region, currency, language and other core browser state", "Retains your basket and shopping preferences across page visits.", "Local/session storage; until cleared or superseded, depending on the feature."],
-      ["Clerk", "Sign-in, session and authentication cookies", "Maintains account access, protects login and helps prevent fraud.", "Session and persistent cookies; precise names and expiry depend on Clerk configuration."],
-      ["Stripe", "Checkout and payment security cookies", "Protects payment processing and helps detect fraudulent transactions when you use checkout.", "Provider-controlled, depending on the Stripe payment flow."],
-    ],
+    title: "1. Essential cookies",
+    description: "Always active. These technologies support services you request and protect the marketplace. Where strictly necessary, separate cookie consent is not required.",
+    items: ["Secure registration, sign-in and authentication", "Shopping baskets, checkout and payment security", "Session security, fraud prevention and misuse protection", "Remembering cookie preferences and providing core marketplace services"],
   },
   {
-    title: "Optional functionality",
-    description: "Only enabled when you choose optional functionality.",
-    entries: [
-      ["Chatwoot", "Live-chat cookies and local storage", "Keeps support conversations available and may link messages to a signed-in user when identification is enabled.", "Provider-controlled session or persistent storage; see Chatwoot's current documentation."],
-    ],
+    title: "2. Preferences and personalisation",
+    description: "Bazunk may remember your settings and help tailor your marketplace experience. Some requested preferences can be necessary; other personalisation technologies require appropriate permission.",
+    items: ["Language, currency, regional and display preferences", "Recently viewed products and personalised recommendations", "Saved searches, product discovery and personal buying assistance", "Other optional browsing and marketplace preferences"],
   },
   {
-    title: "Analytics",
-    description: "Optional audience measurement, subject to your choice. No dedicated analytics tag was identified in the reviewed storefront code as of this update; this preference does not imply analytics tracking is active.",
-    entries: [
-      ["Optional providers", "Analytics cookies, if configured later", "Measure use of marketplace pages and feature performance.", "The provider, cookie names and expiry must be disclosed before activation."],
-    ],
+    title: "3. Customer support and communication",
+    description: "When enabled or requested, these tools support assistance and communication. Non-essential support technologies follow your optional functionality choice.",
+    items: ["Live customer support chat and ongoing conversations", "Support history for signed-in customers", "Optional communication and notification features", "Support service quality and reliability"],
   },
   {
-    title: "Advertising and marketing",
-    description: "Only enabled when you allow advertising cookies, subject to your browser's privacy signals.",
-    entries: [
-      ["Google AdSense", "Advertising cookies and similar identifiers", "Delivers, measures or personalises advertising subject to Google's controls and settings.", "Google-controlled; names and duration can differ by device, region and user state."],
-      ["Administrator-configured ad services", "Third-party advertising scripts, where enabled", "Display and measure third-party advertisements in configured slots.", "Varies by actual advertising provider; must be reviewed when scripts change."],
-    ],
+    title: "4. Analytics and marketplace improvements",
+    description: "Where enabled, measurement helps us understand marketplace use and improve its services. Non-essential analytics will require your permission unless an applicable legal exemption applies.",
+    items: ["Website navigation and technical performance", "Search, discovery and feature improvements", "Checkout usability, accessibility and speed", "Evaluation of newly introduced marketplace functionality"],
   },
+  {
+    title: "5. Advertising and marketing",
+    description: "Where advertising technologies require consent, they are enabled only when you allow advertising. Rejecting optional advertising cookies does not necessarily remove contextual advertisements.",
+    items: ["Displaying relevant advertisements and sponsored listings", "Measuring campaign effectiveness", "Limiting repetitive advertisements", "Personalising advertising where permitted"],
+  },
+] as const;
+
+const technicalDetails = [
+  { name: "Bazunk - consent preferences", category: "Essential", purpose: "Stores your cookie choices and date in browser local storage.", duration: "Until you update preferences or clear browser storage." },
+  { name: "Bazunk - shopping state", category: "Essential / requested preferences", purpose: "Stores cart, regional and other core browser state where used.", duration: "Session or persistent browser storage, according to the feature." },
+  { name: "Clerk - authentication", category: "Essential", purpose: "Manages sign-in sessions and account security.", duration: "Provider-controlled session or persistent cookies; values vary by configuration." },
+  { name: "Stripe - payments", category: "Essential when checkout is requested", purpose: "Supports payment security and anti-fraud controls.", duration: "Provider-controlled; varies with the payment flow." },
+  { name: "Chatwoot - live support", category: "Optional functionality", purpose: "Keeps support chats available when enabled.", duration: "Provider-controlled session and persistent storage." },
+  { name: "Google AdSense and configured ad services", category: "Optional advertising", purpose: "Advertising delivery and measurement where the integration is active.", duration: "Provider-controlled; varies by region, device and implementation." },
 ] as const;
 
 export function CookiePolicyPage() {
@@ -94,22 +96,56 @@ export function CookiePolicyPage() {
               <section key={group.title} className="bz-policy-section border-t pt-6" aria-label={group.title}>
                 <h2 className="text-lg font-bold">{group.title}</h2>
                 <p className="mt-2 text-sm leading-7">{group.description}</p>
+                <ul className="mt-3 list-disc space-y-2 pl-6 text-sm leading-7">
+                  {group.items.map(item => <li key={item}>{item}</li>)}
+                </ul>
+              </section>
+            ))}
+            <section className="bz-policy-section border-t pt-6">
+              <h2 className="text-lg font-bold">6. New features and services</h2>
+              <p className="mt-3 text-sm leading-7">
+                Bazunk continues to introduce and improve tools for buyers, sellers and visitors.
+                New features may use additional cookies, browser storage or trusted technology providers.
+                We review new technologies before activation, update relevant disclosures and request
+                new permission when an additional purpose requires consent. This policy does not give
+                blanket permission for future tracking.
+              </p>
+            </section>
+            <section className="bz-policy-section border-t pt-6">
+              <h2 className="text-lg font-bold">7. Third-party services and detailed cookie information</h2>
+              <p className="mt-3 text-sm leading-7">
+                Technology partners may help with secure accounts, payment processing, support,
+                advertising and future marketplace services. The details below describe currently
+                identified integrations, not an exhaustive live scan. Exact third-party cookie names
+                and storage periods may depend on their configuration, region and browser.
+              </p>
+              <details className="bz-policy-entry mt-4 rounded-xl border p-4">
+                <summary className="cursor-pointer text-base font-bold">Detailed Cookie Information - providers, purposes and storage</summary>
                 <div className="mt-4 space-y-3">
-                  {group.entries.map(([provider, technology, purpose, duration]) => (
-                    <div key={provider + technology} className="bz-policy-entry rounded-xl border p-4">
-                      <h3 className="text-base font-bold">{provider}</h3>
+                  {technicalDetails.map(detail => (
+                    <div key={detail.name} className="bz-policy-entry rounded-xl border p-4">
+                      <h3 className="text-base font-bold">{detail.name}</h3>
                       <dl className="mt-2 space-y-2 text-sm leading-6">
-                        <div><dt className="inline font-bold">Technology: </dt><dd className="inline">{technology}</dd></div>
-                        <div><dt className="inline font-bold">Purpose: </dt><dd className="inline">{purpose}</dd></div>
-                        <div><dt className="inline font-bold">Duration: </dt><dd className="inline">{duration}</dd></div>
+                        <div><dt className="inline font-bold">Category: </dt><dd className="inline">{detail.category}</dd></div>
+                        <div><dt className="inline font-bold">Purpose: </dt><dd className="inline">{detail.purpose}</dd></div>
+                        <div><dt className="inline font-bold">Duration: </dt><dd className="inline">{detail.duration}</dd></div>
                       </dl>
                     </div>
                   ))}
                 </div>
-              </section>
-            ))}
+              </details>
+            </section>
             <section className="bz-policy-section border-t pt-6">
-              <h2 className="text-lg font-bold">Change or withdraw your consent</h2>
+              <h2 className="text-lg font-bold">8. How long cookies are stored</h2>
+              <p className="mt-3 text-sm leading-7">
+                Session technologies generally expire at the end of a browsing session. Persistent
+                cookies and browser storage may remain to remember choices or support disclosed functions.
+                Actual expiry depends on the technology and the provider. The details above describe
+                the integrations currently identified on the storefront.
+              </p>
+            </section>
+            <section className="bz-policy-section border-t pt-6">
+              <h2 className="text-lg font-bold">9. Change or withdraw your consent</h2>
               <p className="mt-3 text-sm leading-7">
                 The first-visit banner offers Accept all, Reject optional and Customise.
                 You can reopen Cookie Settings at any time using the footer or the button above.
@@ -127,9 +163,9 @@ export function CookiePolicyPage() {
               </p>
             </section>
             <section className="bz-policy-section border-t pt-6">
-              <h2 className="text-lg font-bold">More information</h2>
+              <h2 className="text-lg font-bold">10. Privacy, changes and contact</h2>
               <p className="mt-3 text-sm leading-7">
-                Learn about personal data and your rights in our{" "}
+                This policy may change as Bazunk adds features or legal requirements evolve. We will seek new consent where required. Learn about your privacy rights in our{" "}
                 <Link href="/privacy" className="bz-policy-link font-semibold underline">Privacy Policy</Link>.
                 For questions or concerns visit our{" "}
                 <Link href="/support" className="bz-policy-link font-semibold underline">Support Centre</Link>.
