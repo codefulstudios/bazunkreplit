@@ -3,6 +3,7 @@ import healthRouter from "./health.js";
 import demoCreatorRouter from "./demoCreator.js";
 import stripeRouter from "./stripe.js";
 import adminRouter from "./admin.js";
+import cashbackRouter from "./cashback.js";
 import setupRouter from "./setup.js";
 import productsRouter from "./products.js";
 import disputesRouter from "./disputes.js";
@@ -54,6 +55,8 @@ router.get("/public/homepage-intro", async (_req, res) => {
 
 router.use(healthRouter);
 router.use(stripeRouter);
+// Before legacy admin routes so real ledger endpoints supersede promotional-only settings.
+router.use(cashbackRouter);
 router.use(adminRouter);
 router.use(setupRouter);
 router.use(productsRouter);
