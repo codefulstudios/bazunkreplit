@@ -86,3 +86,17 @@
 .bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card svg:first-child {
  background:var(--bz-section-accent) !important;
 }
+
+/* Correct the observed spotlight empty state even with no custom design saved. */
+.bz-design-spotlight:not([data-design-spotlight="true"]) {
+ background:#ffffff !important;color:#111827 !important;
+}
+.bz-design-spotlight:not([data-design-spotlight="true"]) :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:#111827 !important;
+}
+.dark .bz-design-spotlight:not([data-design-spotlight="true"]) {
+ background:#17243a !important;color:#ffffff !important;
+}
+.dark .bz-design-spotlight:not([data-design-spotlight="true"]) :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:#ffffff !important;
+}
