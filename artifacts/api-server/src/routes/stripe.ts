@@ -251,7 +251,7 @@ router.post("/stripe/special-checkout", async(req,res)=>{
   try {
     const email=await authenticatedSellerEmail(req,res);if(!email)return;
     const kind=req.body?.kind, id=req.body?.id;
-    if((kind!=="auction"&&kind!=="flash")||typeof id!=="string"||!id.trim()||id.length>100) {
+    if((kind!=="auction"&&kind!=="flash"&&kind!=="find_it")||typeof id!=="string"||!id.trim()||id.length>100) {
       res.status(400).json({error:"Invalid sale reference"});return;
     }
     const origin=new URL(resolveOrigin(req)).origin;
