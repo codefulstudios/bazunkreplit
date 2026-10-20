@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
@@ -15,7 +15,7 @@ export function AdminDealPilotPage(){
  const [data,setData]=useState<Report|null>(null);
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const [loading,setLoading]=useState(false),[saving,setSaving]=useState(false);
- const refresh=useCallback(async()=>{
+ const refresh=async()=>{
   setLoading(true);setError("");
   try{
    const r=await authFetch("/api/admin/deal-pilot",{cache:"no-store"});
@@ -24,8 +24,8 @@ export function AdminDealPilotPage(){
    setData(json);
   }catch(e){setError(e instanceof Error?e.message:"Admin reporting unavailable");}
   finally{setLoading(false);}
- },[authFetch]);
- useEffect(()=>{if(isAdmin)void refresh();},[isAdmin,refresh]);
+ };
+ useEffect(()=>{if(isAdmin)void refresh();},[isAdmin]);
  const save=async(key:keyof Settings,enabled:boolean)=>{
   if(!data)return;setSaving(true);setError("");setNotice("");
   try{
