@@ -143,7 +143,7 @@ export function TrustProofPage(){
   }
  };
  const proof=detail?.proof;
- const expired=proof?new Date(proof.expires_at).getTime()<Date.now():false;
+ const expired=proof?.status==="collecting" && new Date(proof.expires_at).getTime()<Date.now();
  const canCapture=proof?.status==="collecting"&&proof.current&&!expired;
  const uploaded=new Set(detail?.media.map(m=>m.kind)||[]);
  const ready=canCapture&&(uploaded.has("video")||(uploaded.has("item")&&uploaded.has("condition")&&(!proof?.has_serial||uploaded.has("serial"))));
