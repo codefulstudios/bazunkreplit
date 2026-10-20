@@ -221,7 +221,7 @@ export function CookieConsentBanner() {
           </div>
           <div className={settingsOpen ? "mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3" : "flex shrink-0 flex-col gap-2 sm:flex-row lg:justify-end"}>
             <button type="button" onClick={reject}
-              className={choiceButton + " border-white/50 bg-[#253958] text-white hover:bg-[#334969]"}>
+              className={choiceButton + " border-white bg-white text-slate-950 hover:bg-slate-100"}>
               Reject optional
             </button>
             {settingsOpen ? (
