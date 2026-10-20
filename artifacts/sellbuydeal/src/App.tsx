@@ -437,7 +437,7 @@ function Router() {
       <Route path="/admin/returns" component={AdminReturnsPage} />
       <Route path="/admin/auctions" component={AdminAuctionsPage} />
       <Route path="/admin/design-system" component={AdminDesignSystemPage} />
-      <Route path="/admin/settings" component={AdminSettingsPage} />
+      <Route path="/admin/settings"><AdminSettingsPage /></Route>
       <Route path="/admin/emails" component={AdminEmailsPage} />
       <Route path="/auctions/create">{() => <FeatureGate feature="auctions" name="Auctions"><CreateAuctionPage /></FeatureGate>}</Route>
       <Route path="/auctions/:id">{() => <FeatureGate feature="auctions" name="Auctions"><AuctionDetailPage /></FeatureGate>}</Route>
