@@ -1,0 +1,26 @@
+name: Diagnose live Cashback browser rendering
+on:
+  pull_request:
+    paths:
+      - 'scripts/cashback-live-browser-diagnostic.mjs'
+      - '.github/workflows/cashback-live-browser-diagnostic.yml'
+  workflow_dispatch:
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock playwright && npx playwright install --with-deps chromium
+      - name: Inspect live Cashback in Chromium
+        run: node scripts/cashback-live-browser-diagnostic.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cashback-browser-diagnostic
+          path: artifacts/cashback-diag-*.png
+          if-no-files-found: ignore
