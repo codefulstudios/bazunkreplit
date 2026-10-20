@@ -161,7 +161,7 @@ function FeeCalculator() {
   const rawSettings = useRawSettings();
   const businessRate = useMktRate(rawSettings);
   const businessRatePct = businessRate * 100;
-  const buyerPct = (parseFloat(rawSettings["buyer_protection_rate"] ?? rawSettings["buyer_protection_percent"] ?? "6") || 6) / 100;
+  const buyerPct = (parseFloat(rawSettings["buyer_protection_percent"] ?? "6") || 6) / 100;
   const defaultFixed: Record<string, number> = { GBP: 1.00, USD: 1.00, EUR: 1.00, AUD: 1.00, CAD: 1.00, NZD: 1.00, CHF: 1.00 };
   const fixedSetting = rawSettings[`buyer_protection_fixed_${currency.code.toLowerCase()}`] ?? (currency.code === "GBP" ? rawSettings["buyer_protection_fixed"] : undefined);
   const buyerFixed = fixedSetting !== undefined && Number.isFinite(Number(fixedSetting)) ? Math.max(0, Number(fixedSetting)) : defaultFixed[currency.code] ?? 1;
