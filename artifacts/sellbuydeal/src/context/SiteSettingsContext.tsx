@@ -118,6 +118,19 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
       root.style.setProperty("--bz-protected-field",p.field);
       root.style.setProperty("--bz-protected-button",p.action);
       root.style.setProperty("--bz-protected-button-text",p.actionText);
+      const customized=Boolean(rawSettings[designSettingKey(area,mode)]);
+      const remap:Record<string,string>={
+        "--bz-surface-page":p.background,"--bz-surface-card":p.surface,
+        "--bz-surface-raised":p.field,"--bz-surface-field":p.field,
+        "--bz-text-primary":p.text,"--bz-text-secondary":p.secondaryText,
+        "--bz-text-muted":p.secondaryText,"--bz-action-primary":p.action,
+        "--bz-action-primary-text":p.actionText
+      };
+      for(const [key,value] of Object.entries(remap)){
+        if(customized)root.style.setProperty(key,value);
+        else root.style.removeProperty(key);
+      }
+
     };
     apply();
     const observer=new MutationObserver(apply);
