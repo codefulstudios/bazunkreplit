@@ -21,6 +21,7 @@ const btn="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bor
 const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 font-black text-white hover:bg-orange-700 disabled:opacity-60";
 const input="min-h-11 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-lg font-black text-slate-950 dark:border-slate-500 dark:bg-[#0e203e] dark:text-white";
 const gbp=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(n||0)/100);
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 export default function CashbackPage(){
  const {isLoaded,isSignedIn,getToken}=useAuth();
  // Clerk can supply a new getToken callback across renders. Do not make data loading
@@ -34,7 +35,7 @@ export default function CashbackPage(){
  const get=useCallback(async(path:string,init:RequestInit={},authenticated=false)=>{
    const token=authenticated?await tokenRef.current():null;
    if(authenticated&&!token)throw Error("Please sign in to view your cashback.");
-   const r=await fetch("/api"+path,{...init,cache:"no-store",signal:AbortSignal.timeout(20000),headers:{
+   const r=await fetch(`${API_BASE}/api`+path,{...init,cache:"no-store",signal:AbortSignal.timeout(20000),headers:{
     ...(init.body?{"Content-Type":"application/json"}:{}),
     ...(token?{Authorization:`Bearer ${token}`}:{}),...init.headers
    }});
