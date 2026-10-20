@@ -856,7 +856,7 @@ router.put("/admin/settings", async (req, res) => {
     const updates = req.body as Record<string, string>;
     if (!updates || typeof updates !== "object" || Array.isArray(updates)) return res.status(400).json({error:"Invalid settings payload"});
     for (const [key,value] of Object.entries(updates)) {
-      if (!/^design_palette_(storefront|admin)_(light|dark)$/.test(key)) continue;
+      if (!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)) continue;
       try {
         const palette=JSON.parse(value);
         const required=["background","surface","text","secondaryText","field","action","actionText"];

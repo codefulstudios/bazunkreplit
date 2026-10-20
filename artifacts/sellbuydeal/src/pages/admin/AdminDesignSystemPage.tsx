@@ -7,9 +7,10 @@ import { ShieldCheck, Copy, RotateCcw } from "lucide-react";
 // Deliberately isolated: these settings render only inside the preview.
 // Publishing requires a validated, authenticated server-side settings endpoint.
 type Mode = "light" | "dark";
-type Area = "storefront" | "admin";
+type Area = "storefront" | "admin" | "dealpilot";
 type Palette = { background: string; surface: string; text: string; secondaryText: string; field: string; action: string; actionText: string };
 const PRESETS: Record<Area, Record<Mode, Palette>> = {
+  dealpilot: DESIGN_DEFAULTS.dealpilot,
   storefront: {
     light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
     dark: { background:"#0b1427",surface:"#17243a",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827" },
@@ -36,7 +37,7 @@ export function AdminDesignSystemPage() {
   const {authFetch}=useAdmin();
   const [saving,setSaving]=useState(false);
   const [dirty,setDirty]=useState(false);
-  useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setDrafts({storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
+  useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setDrafts({storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")},dealpilot:{light:parseDesignPalette(values[designSettingKey("dealpilot","light")],"dealpilot","light"),dark:parseDesignPalette(values[designSettingKey("dealpilot","dark")],"dealpilot","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
   async function publish(){if(!safe)return;setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Changes saved successfully for "+area+" / "+mode+".");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
   const checks=useMemo(()=>[
@@ -62,7 +63,7 @@ export function AdminDesignSystemPage() {
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <label className="text-sm font-bold">Area <select aria-label="Preview area" value={area} onChange={e=>setArea(e.target.value as Area)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="storefront">Storefront</option><option value="admin">Admin</option></select></label>
+          <label className="text-sm font-bold">Area <select aria-label="Preview area" value={area} onChange={e=>setArea(e.target.value as Area)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="storefront">Storefront</option><option value="admin">Admin</option><option value="dealpilot">DealPilot page</option></select></label>
           <label className="text-sm font-bold">Theme <select aria-label="Preview theme" value={mode} onChange={e=>setMode(e.target.value as Mode)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="light">Light</option><option value="dark">Dark</option></select></label>
         </div>
       </div>
