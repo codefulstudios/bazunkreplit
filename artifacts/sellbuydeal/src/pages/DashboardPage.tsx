@@ -59,6 +59,15 @@ type SidebarCategory = {
   gradient: string; bg: string; items: SidebarSubItem[];
 };
 
+// Dashboard rail entries that are full pages, not inline dashboard sections.
+// Both desktop flyout and mobile accordion MUST use the same navigation.
+const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
+  cashback: "/cashback",
+  "open-importers": "/importers",
+  "my-store": "/my-store",
+  "store-settings": "/my-store#popular-items",
+};
+
 const SIDEBAR_CATEGORIES: SidebarCategory[] = [
   {
     id: "overview", label: "Overview", icon: LayoutDashboard,
@@ -5644,7 +5653,7 @@ export function DashboardPage() {
   const liveEnabled = isFeatureEnabled(rawSettings, "live");
   const dashboardFeatureForItem: Record<string,string> = {
     "my-bids":"auctions", "offers":"offers", "deal-pilot":"deal_pilot", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
-    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits",
+    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits", "cashback":"cashback",
     "promotions":"promotions", "verification":"verification", "buyer-protection":"buyer_protection",
     "disputes":"disputes_returns", "returns":"disputes_returns"
   };
@@ -5659,11 +5668,26 @@ export function DashboardPage() {
     let s = params.get("section");
     if (s === "payment") s = "seller-payouts"; // legacy redirect
     const allIds = SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items.map(i => i.id) : [c.id]);
-    return s && allIds.includes(s) ? s : "overview";
+    // Cashback and Importers are standalone routes. Never initialise an empty dashboard panel.
+    return s && allIds.includes(s) && !DASHBOARD_PAGE_ROUTES[s] ? s : "overview";
   });
+  useEffect(() => {
+    // Fix old bookmarked URLs such as /dashboard?section=cashback.
+    const section=new URLSearchParams(window.location.search).get("section");
+    const destination=section?DASHBOARD_PAGE_ROUTES[section]:undefined;
+    if(destination) setLocation(destination);
+  }, [setLocation]);
   const dashboardContentRef = useRef<HTMLElement>(null);
   const [sectionNavigation, setSectionNavigation] = useState(0);
   const setActiveSection = (id: string) => {
+    const destination=DASHBOARD_PAGE_ROUTES[id];
+    if(destination){
+      setSidebarOpen(false);
+      setActiveCategory(null);
+      setMobileExpandedCat(null);
+      setLocation(destination);
+      return;
+    }
     setActiveSectionRaw(id);
     setSidebarOpen(false);
     setActiveCategory(null);
@@ -5890,9 +5914,6 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
                                 setActiveSection(item.id);
                                 setSidebarOpen(false);
                                 setMobileExpandedCat(null);
@@ -6012,7 +6033,6 @@ export function DashboardPage() {
                             <button
                               key={item.id}
                               onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
                                 setActiveSection(item.id);
                                 setActiveCategory(null);
                                 setSidebarOpen(false);
