@@ -233,6 +233,33 @@ router.patch("/find-it/:id",async(req,res)=>{
   res.json({ok:true});
  }catch(e){sendError(res,e);}
 });
+// A seller can improve a pending bid without posting multiple offers or changing an accepted price.
+router.patch("/find-it/offers/:offerId",async(req,res)=>{
+ try{
+  const email=await authenticatedSellerEmail(req,res);if(!email)return;
+  if(!validId(req.params.offerId)){res.status(400).json({error:"Invalid offer"});return;}
+  const price=amountMinor(req.body?.price);
+  if(!price){res.status(400).json({error:"Enter a valid revised item price"});return;}
+  await ensureFindItTables();
+  const outcome=await db.transaction(async tx=>{
+    const o=(await tx.execute(sql`SELECT o.*,r.region,r.budget_minor,r.status AS request_status,r.expires_at,a.category
+      FROM marketplace_find_offers o JOIN marketplace_find_requests r ON r.id=o.request_id
+      JOIN classified_ads a ON a.id=r.classified_id WHERE o.id=${req.params.offerId} FOR UPDATE OF o`)).rows[0] as any;
+    if(!o||String(o.seller_email).toLowerCase()!==email)return "forbidden";
+    if(o.status!=="pending"||o.request_status!=="open"||new Date(o.expires_at).getTime()<=Date.now())return "closed";
+    const quote=await findQuote({price_minor:price,seller_email:email,region:o.region,category:o.category});
+    if(quote.total_minor>Number(o.budget_minor))return "budget";
+    await tx.execute(sql`UPDATE marketplace_find_offers SET price_minor=${price},updated_at=NOW()
+      WHERE id=${req.params.offerId} AND status='pending'`);
+    return "ok";
+  });
+  if(outcome!=="ok"){res.status(outcome==="forbidden"?403:409).json({error:{
+    forbidden:"This is not your offer",closed:"Only open pending bids may be improved",
+    budget:"The revised bid would exceed the buyer's total budget"
+  }[outcome]});return;}
+  res.json({ok:true});
+ }catch(e){sendError(res,e);}
+});
 router.post("/find-it/offers/:offerId/withdraw",async(req,res)=>{
  try{
   const email=await authenticatedSellerEmail(req,res);if(!email)return;
