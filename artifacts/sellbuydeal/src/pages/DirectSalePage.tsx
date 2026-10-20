@@ -345,7 +345,7 @@ export function DirectSalePage() {
     e.preventDefault();
     const errors: string[] = [];
     if (!title.trim()) errors.push("Title is required");
-    if (!price || parseFloat(price) <= 0) errors.push("Price must be greater than 0");
+    if (!price || !Number.isFinite(Number(price)) || Number(price) <= 0) errors.push("Price must be greater than 0");
     if (!category) errors.push("Category is required");
     if (!description.trim()) errors.push("Description is required");
 
@@ -675,7 +675,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Eco-Friendly */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-5 border border-sky-400/15">
+          <section className={`min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-5 border border-sky-400/15 ${quickMode || step===1 ? "" : "hidden lg:block"}`}>
             <label
               className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
                 ecoFriendly ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-green-300"
