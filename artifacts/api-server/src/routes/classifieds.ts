@@ -15,7 +15,7 @@ router.get("/classifieds", async (req, res) => {
     return;
   }
 
-  const conditions = [eq(classifiedAdsTable.status, "active"), sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${classifiedAdsTable.category} OR cv.key='category_visible_' || ${classifiedAdsTable.category} || '__' || COALESCE(${classifiedAdsTable.subcategory},'')))`];
+  const conditions = [eq(classifiedAdsTable.status, "active"), sql`(${classifiedAdsTable.expiresAt} IS NULL OR ${classifiedAdsTable.expiresAt} > NOW())`, sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${classifiedAdsTable.category} OR cv.key='category_visible_' || ${classifiedAdsTable.category} || '__' || COALESCE(${classifiedAdsTable.subcategory},'')))`];
   if (region === "uk" || region === "us") conditions.push(eq(classifiedAdsTable.marketplaceRegion, region));
   if (category && category !== "all") conditions.push(eq(classifiedAdsTable.category, category));
   if (subcategory) conditions.push(eq(classifiedAdsTable.subcategory, subcategory));
