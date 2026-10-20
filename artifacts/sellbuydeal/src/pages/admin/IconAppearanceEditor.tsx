@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
 import {useAdmin} from "@/context/AdminContext";
+import {DesignTargetGuide} from "./DesignTargetGuide";
 import {ICON_DEFAULTS,iconKey,isValidIconAppearance,readIconAppearance,type IconArea,type IconMode,type IconAppearance} from "@/design-system/iconAppearance";
 import {Smartphone,Shirt,Gamepad2,ShoppingBag} from "lucide-react";
 const colors:{key:keyof IconAppearance;label:string}[]=[
@@ -28,6 +29,7 @@ export function IconAppearanceEditor(){
  }
  const samples=area==="categories"?[{name:"Electronics",Icon:Smartphone},{name:"Fashion",Icon:Shirt},{name:"Gaming",Icon:Gamepad2}]:[{name:"Shop the marketplace",Icon:ShoppingBag}];
  return <section className="space-y-4 rounded-2xl border border-slate-300 bg-white p-5 text-slate-950 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
+  <DesignTargetGuide target="assets" override={{title:area==="categories"?"Homepage category tile icons":"Homepage promotional card icons",description:"Edit icon size, symbol colour, surrounding background, border and spacing for "+mode+" mode.",url:"/",coverage:area==="categories"?"The homepage category tiles only. Choose individual category symbols in the editor above.":"Homepage promotional card icons only. Header, footer and listing icons are not yet editable here."}}/>
   <h3 className="text-lg font-extrabold">Icon appearance</h3>
   <p className="text-sm font-semibold">Change category or promotional icons without affecting the rest of Bazunk. Each theme saves independently.</p>
   <div className="flex flex-wrap gap-3">
@@ -35,11 +37,11 @@ export function IconAppearanceEditor(){
    <label className="font-bold text-sm">Theme <select aria-label="Icon theme" className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-950 dark:bg-slate-800 dark:text-white" value={mode} onChange={e=>setMode(e.target.value as IconMode)}><option value="light">Light</option><option value="dark">Dark</option></select></label>
   </div>
   {loading?<p>Loading icons…</p>:<div className="grid gap-5 lg:grid-cols-2">
-   <div className="grid gap-3 sm:grid-cols-2">
+   <div className="grid gap-3 sm:grid-cols-2"><h4 className="col-span-full font-extrabold">1. Colours and dimensions</h4>
     {colors.map(({key,label})=><label key={key} className="flex items-center justify-between gap-2 rounded-lg border border-slate-300 p-2 text-sm font-bold dark:border-slate-500">{label}<input aria-label={label} type="color" value={draft[key] as string} onChange={e=>change(key,e.target.value)} className="h-10 w-12 cursor-pointer"/></label>)}
     {sizes.map(({key,label,min,max})=><label key={key} className="rounded-lg border border-slate-300 p-3 text-sm font-bold dark:border-slate-500">{label} — {draft[key]}px<input aria-label={label} type="range" min={min} max={max} value={draft[key] as number} onChange={e=>change(key,Number(e.target.value))} className="mt-2 block w-full"/></label>)}
    </div>
-   <div className="space-y-3">
+   <div className="space-y-3"><h4 className="font-extrabold">2. Preview and save</h4>
     <div className="flex flex-wrap gap-3 rounded-xl border border-slate-400 p-4">
      {samples.map(({name,Icon})=><div key={name} style={{background:draft.tileColor,color:draft.tileText,borderColor:draft.tileBorder,gap:draft.gap}} className="flex min-w-28 flex-col items-center justify-center rounded-xl border p-3 text-center">
       <span style={{width:draft.badgeSize,height:draft.badgeSize,background:draft.badgeColor,borderColor:draft.badgeBorder,borderRadius:draft.radius}} className="flex items-center justify-center border">
@@ -47,6 +49,7 @@ export function IconAppearanceEditor(){
       </span><span className="text-sm font-bold">{name}</span>
      </div>)}
     </div>
+    <p className="text-sm font-semibold">Icon appearance can override the same tile colours in Website Sections. Use one editor for each kind of change to keep the result predictable.</p>
     <p role="status" className={"text-sm font-bold "+(valid?"text-emerald-700 dark:text-emerald-300":"text-red-700 dark:text-red-300")}>{valid?"Icon and label contrast checks passed.":"Unsafe colours or sizes. Increase contrast or reduce icon size before saving."}</p>
     <div className="flex flex-wrap gap-2">
      <button onClick={()=>void save()} disabled={saving||!valid} type="button" className="rounded-xl bg-orange-300 px-5 py-3 font-extrabold text-slate-950 disabled:opacity-50">{saving?"Saving…":"Save Icon Appearance"}</button>
