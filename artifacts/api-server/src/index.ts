@@ -588,7 +588,7 @@ async function runAppMigrations() {
 
   // Versioned, once-only policy migration; keep historic orders and cashback earnings unchanged.
   // The advisory lock prevents concurrent Render instances from applying it twice.
-  await run(sql`DO $
+  await run(sql`DO $$
   DECLARE previous_policy JSONB;
           new_tiers JSONB;
   BEGIN
@@ -635,7 +635,7 @@ async function runAppMigrations() {
       INSERT INTO site_settings(key,value,updated_at)
       VALUES('pricing_policy_20261020_v2','applied',NOW());
     END IF;
-  END $`, "site_settings.pricing_policy_20261020_v2");
+  END $$`, "site_settings.pricing_policy_20261020_v2");
 
   // ── Buyer / seller marketplace messaging ──
   await run(sql`CREATE TABLE IF NOT EXISTS marketplace_conversations (
