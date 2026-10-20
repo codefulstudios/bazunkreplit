@@ -44,7 +44,7 @@ const SECTIONS = [
   },
   {
     "title": "10. Advertising and optional technologies",
-    "body": "Bazunk can display internal promotions, external links and administrator-configured advertising scripts. Third-party advertising scripts can transmit device, usage and other personal data directly to their providers. The information they process is not necessarily anonymous. The providers and choices relevant to any optional tracking must be disclosed before it is enabled where required by law. This notice does not claim that a Cookie Settings tool or automatic browser opt-out handling is currently implemented. It does not authorise tracking for which consent or another legal condition is required."
+    "body": "Bazunk can display internal promotions, external links and administrator-configured advertising scripts. Third-party advertising scripts can transmit device, usage and other personal data directly to their providers. The information they process is not necessarily anonymous. The providers and choices relevant to any optional tracking must be disclosed before it is enabled where required by law. Visitors can use Cookie Settings in the site footer to choose optional functionality, analytics and advertising, and read the Cookie Policy for details. This tool gates Bazunk-controlled optional scripts and responds to Global Privacy Control for advertising; it does not automatically delete cookies previously set by third parties. Other lawful consent or opt-out obligations remain applicable."
   },
   {
     "title": "11. Purposes and legal bases",

@@ -26,7 +26,7 @@ test('demo listing has zero stock and cannot be purchased',()=>{
  assert.match(demo,/\},0\) RETURNING id/);
  assert.match(checkout,/Demo listings are for preview only and cannot be purchased/);
  assert.match(detail,/disabled=\{isDemoListing\}/);
- assert.match(detail,/Temporarily out of stock/);
+ assert.match(detail,/Currently unavailable/);
 });
 test('admin publishing and regional fixtures exist',()=>{
  assert.match(demo,/listings\/batch-publish/);

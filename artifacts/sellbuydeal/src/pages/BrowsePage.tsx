@@ -129,7 +129,7 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
   return <span className={`text-xs font-black px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
 }
 
-function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_PRODUCTS[0]; view: "grid" | "list"; promotions?: string[] }) {
+function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_PRODUCTS[0] & { seller?: { name?: string } }; view: "grid" | "list"; promotions?: string[] }) {
   const [wishlisted, setWishlisted] = useState(false);
   const { formatPrice } = useCurrency();
 
