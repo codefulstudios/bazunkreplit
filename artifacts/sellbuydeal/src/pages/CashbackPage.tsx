@@ -152,7 +152,7 @@ export default function CashbackPage(){
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{(settings?.tiers||[]).map((t,i)=><article key={t.id} className={panel}>
      <p className="text-xs font-black uppercase tracking-wide text-orange-700 dark:text-orange-300">{["🏅","🥈","🥇","💎"][i]} {t.name}</p>
      <p className="mt-2 text-3xl font-black">{t.rate}%</p><p className={sub}>Tier threshold: {gbp(t.spendGbp*100)} qualifying lifetime spend</p>
-     {t.perks.length>0&&<div className="mt-3 space-y-1">{t.perks.map((note,k)=><p key={k} className={sub}>• {note}</p>)}</div>}
+     <p className={sub+" mt-3"}>Earn this rate on eligible items when cashback earning is active. Other promotional benefits are not included unless separately enabled.</p>
     </article>)}</div>
    </section>
    <p className={sub+" rounded-xl border border-slate-300 p-4 text-center dark:border-slate-600"}><ShieldCheck className="mr-1 inline h-4 w-4 text-orange-600"/>Cashback is subject to eligibility checks, refunds, disputes, the holding period and the programme settings. Requesting a payout does not send funds automatically.</p>
