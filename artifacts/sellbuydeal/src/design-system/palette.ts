@@ -3,7 +3,7 @@ export type DesignMode = "light" | "dark";
 export type DesignPalette = { background:string; surface:string; text:string; secondaryText:string; field:string; action:string; actionText:string };
 export const DESIGN_DEFAULTS: Record<DesignArea,Record<DesignMode,DesignPalette>>={
  dealpilot:{
-  light:{background:"#1e2545",surface:"#ffffff",text:"#ffffff",secondaryText:"#e5e7eb",field:"#f1f5f9",action:"#fb923c",actionText:"#111827"},
+  light:{background:"#1e2545",surface:"#273653",text:"#ffffff",secondaryText:"#e5e7eb",field:"#31415b",action:"#fb923c",actionText:"#111827"},
   dark:{background:"#1e2545",surface:"#172541",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827"}
  },
  storefront:{
