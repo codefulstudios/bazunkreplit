@@ -1,4 +1,5 @@
 import { getFeeSnapshot } from "./checkoutQuote.js";
+import { recordCashbackForSession } from "./cashback.js";
 import { awardReferralMilestone } from "./referrals.js";
 import { db, creditTransactionsTable } from "@workspace/db";
 import { recordCreditEconomy } from "./creditEconomy.js";
@@ -151,6 +152,10 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
       for (const [email, items] of sellerEmailItems) void sendSellerSaleNotification({ email, items, buyerEmail });
     }
 
+    // Order confirmation must not fail if the optional cashback ledger is unavailable.
+    // Admin reconciliation can repair missing entries from Stripe-verified sessions.
+    try { await recordCashbackForSession(sessionId); }
+    catch (err) { logger.error({err,sessionId},"Cashback accrual deferred for reconciliation"); }
     return { status: "fulfilled", orders: lineNo };
   } catch (err) {
     // Release the claim so a retry (webhook redelivery or page refresh) can finish the job.

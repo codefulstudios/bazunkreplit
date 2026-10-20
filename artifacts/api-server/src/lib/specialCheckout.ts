@@ -6,6 +6,7 @@ import { calculateFees, minor, percentage } from "./marketplaceFees.js";
 import { logger } from "./logger.js";
 import type Stripe from "stripe";
 import { convertAmount } from "../fxRates.js";
+import { recordCashbackForSession } from "./cashback.js";
 import { ensureFindItTables } from "./findIt.js";
 
 export type SaleKind = "auction" | "flash" | "find_it";
@@ -151,5 +152,7 @@ export async function fulfillSpecialCheckout(sessionId:string) {
     }
     await tx.execute(sql`UPDATE special_checkout_reservations SET fulfilled_at=NOW() WHERE source=${m.source}`);
   });
+  try { await recordCashbackForSession(sessionId); }
+  catch(err) { logger.error({err,sessionId},"Cashback special order accrual deferred"); }
   logger.info({sessionId,source:m.source},"Special sale payment fulfilled");
 }

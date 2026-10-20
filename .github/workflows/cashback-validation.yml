@@ -1,0 +1,32 @@
+name: Cashback validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/api-server/src/lib/cashback.ts'
+      - 'artifacts/api-server/src/routes/cashback.ts'
+      - 'artifacts/api-server/src/lib/fulfillment.ts'
+      - 'artifacts/api-server/src/lib/specialCheckout.ts'
+      - 'artifacts/api-server/src/routes/index.ts'
+      - 'artifacts/sellbuydeal/src/pages/CashbackPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminCashbackPage.tsx'
+      - '.github/workflows/cashback-validation.yml'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile --prod=false
+      - run: pnpm run typecheck:libs
+      - run: pnpm --filter @workspace/api-server run typecheck
+      - run: pnpm --filter @workspace/sellbuydeal run typecheck
+      - run: pnpm run build
