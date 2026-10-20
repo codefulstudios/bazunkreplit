@@ -1,5 +1,6 @@
 import { refreshSavedSearchMatches } from "../lib/savedSearches.js";
 import { ensureDealPilotTables, pilotSettings } from "../lib/dealPilot.js";
+import { ensureFindItTables } from "../lib/findIt.js";
 import { watchAlertEvents } from "../lib/listingAlerts.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
@@ -8,7 +9,7 @@ import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { ensureMarketplaceOffers } from "./marketplaceOffers.js";
 
 const router=Router();
-type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock"|"deal_pilot";title:string;desc:string;time:string;href:string};
+type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock"|"deal_pilot"|"find_it";title:string;desc:string;time:string;href:string};
 async function ensureReads(){
   await db.execute(sql`CREATE TABLE IF NOT EXISTS marketplace_notification_reads (
     recipient_email text NOT NULL, event_id text NOT NULL, read_at timestamptz NOT NULL DEFAULT NOW(),
@@ -108,6 +109,30 @@ router.get("/notifications",async(req,res)=>{
        isPrice?"Price drop on a watched item":"Watched item available again",description,change.created_at,
        `/listing/${encodeURIComponent(String(change.public_id||change.listing_id))}`));
     }
+
+    // Buyer offer arrivals and seller selections in the existing read/unread inbox.
+    // Isolate optional Find It queries so a migration issue never blocks other notifications.
+    try {
+      await ensureFindItTables();
+      const found=(await db.execute(sql`SELECT o.id,o.request_id,o.seller_email,o.seller_name,
+        o.item_title,o.status,o.created_at,o.updated_at,r.buyer_email,r.status AS request_status,
+        a.title AS request_title FROM marketplace_find_offers o
+        JOIN marketplace_find_requests r ON r.id=o.request_id
+        JOIN classified_ads a ON a.id=r.classified_id
+        WHERE LOWER(r.buyer_email)=${email} OR LOWER(o.seller_email)=${email}
+        ORDER BY o.updated_at DESC LIMIT 80`)).rows as any[];
+      for(const o of found){
+        if(String(o.buyer_email).toLowerCase()===email){
+          events.push(event(`find_it:new:${o.id}`,"find_it","New Find It offer",
+            `${o.seller_name} offered ${o.item_title} for your request: ${o.request_title}`,
+            o.created_at,"/find-it"));
+        }else if(o.status==="selected"||o.request_status==="purchased"){
+          events.push(event(`find_it:chosen:${o.id}:${o.request_status}`,"find_it",
+            o.request_status==="purchased"?"Find It sale confirmed":"Your Find It offer was selected",
+            `${o.item_title} · ${o.request_title}`,o.updated_at,"/find-it"));
+        }
+      }
+    }catch(e){console.error("Find It notification lookup unavailable",e);}
     const seen=new Set((reads.rows as any[]).map(r=>String(r.event_id)));
     const filtered=events.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,100)
       .map(e=>({...e,unread:!seen.has(e.id)}));
