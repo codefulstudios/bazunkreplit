@@ -9,7 +9,7 @@ import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { ensureMarketplaceOffers } from "./marketplaceOffers.js";
 
 const router=Router();
-type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock"|"deal_pilot"|"find_it";title:string;desc:string;time:string;href:string};
+type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock"|"deal_pilot"|"find_it"|"cashback";title:string;desc:string;time:string;href:string};
 async function ensureReads(){
   await db.execute(sql`CREATE TABLE IF NOT EXISTS marketplace_notification_reads (
     recipient_email text NOT NULL, event_id text NOT NULL, read_at timestamptz NOT NULL DEFAULT NOW(),
@@ -133,6 +133,36 @@ router.get("/notifications",async(req,res)=>{
         }
       }
     }catch(e){console.error("Find It notification lookup unavailable",e);}
+    // Cashback alerts are derived from the persisted ledger, never a mock wallet.
+    // Missing optional tables must not break the general notifications inbox.
+    try {
+      const tables=(await db.execute(sql`SELECT to_regclass('public.marketplace_cashback_earnings') AS earnings,
+        to_regclass('public.marketplace_cashback_payouts') AS payouts`)).rows[0] as any;
+      if(tables?.earnings&&tables?.payouts){
+        const [eligible,payouts]=await Promise.all([
+          db.execute(sql`SELECT e.order_id,e.available_at,e.amount_minor,o.item_title
+            FROM marketplace_cashback_earnings e JOIN orders o ON o.id=e.order_id
+            WHERE LOWER(e.buyer_email)=${email} AND e.available_at<=NOW()
+              AND e.available_at>NOW()-INTERVAL '30 days'
+              AND o.status NOT IN ('cancelled','refunded') AND COALESCE(o.refunded_total,0)=0
+              AND NOT EXISTS (SELECT 1 FROM disputes d WHERE d.order_id=o.id AND d.status NOT IN ('resolved','rejected','closed','cancelled'))
+              AND NOT EXISTS (SELECT 1 FROM returns r WHERE r.order_id=o.id AND r.status NOT IN ('resolved','rejected','closed','cancelled'))
+            ORDER BY e.available_at DESC LIMIT 35`),
+          db.execute(sql`SELECT id,amount_minor,status,requested_at,reviewed_at
+            FROM marketplace_cashback_payouts WHERE LOWER(buyer_email)=${email}
+              AND status IN ('approved','rejected','paid')
+            ORDER BY reviewed_at DESC LIMIT 35`)
+        ]);
+        for(const x of eligible.rows as any[])events.push(event(
+          `cashback:available:${x.order_id}`,"cashback","Cashback available",
+          `£${(Number(x.amount_minor)/100).toFixed(2)} from ${x.item_title} is now eligible for withdrawal`,
+          x.available_at,"/cashback"));
+        for(const x of payouts.rows as any[])events.push(event(
+          `cashback:payout:${x.id}:${x.status}`,"cashback","Cashback payout "+x.status,
+          `£${(Number(x.amount_minor)/100).toFixed(2)} · ${x.status}`,
+          x.reviewed_at||x.requested_at,"/cashback"));
+      }
+    }catch(err){console.error("Cashback notification lookup unavailable",err);}
     const seen=new Set((reads.rows as any[]).map(r=>String(r.event_id)));
     const filtered=events.sort((a,b)=>Date.parse(b.time)-Date.parse(a.time)).slice(0,100)
       .map(e=>({...e,unread:!seen.has(e.id)}));
