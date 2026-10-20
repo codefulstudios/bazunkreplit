@@ -1,0 +1,14 @@
+/* Single source for protected component colours. Feature CSS must use these tokens. */
+:root {
+ --bz-protected-page:#f8fafc;--bz-protected-card:#ffffff;--bz-protected-text:#111827;
+ --bz-protected-secondary:#374151;--bz-protected-field:#f1f5f9;
+ --bz-protected-button:#fb923c;--bz-protected-button-text:#111827;
+}
+.bz-protected-panel {background:var(--bz-protected-card);color:var(--bz-protected-text)}
+.bz-protected-description {color:var(--bz-protected-secondary)}
+.bz-protected-field, .bz-protected-field :is(option, input, select, textarea) {background:var(--bz-protected-field);color:var(--bz-protected-text)}
+.bz-protected-action {background:var(--bz-protected-button);color:var(--bz-protected-button-text)}
+.bz-protected-page {background:var(--bz-protected-page);color:var(--bz-protected-text)}
+/* Admin remains visually isolated from storefront utilities. */
+[data-bz-design-area="admin"] .bz-protected-panel {background:var(--bz-protected-card);color:var(--bz-protected-text)}
+@media (prefers-reduced-motion:reduce) {.bz-protected-action {transition:none}}
