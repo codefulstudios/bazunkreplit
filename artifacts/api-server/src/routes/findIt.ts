@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { amountMinor, ensureFindItTables, findPhoto, findQuote } from "../lib/findIt.js";
+import { dealTerms } from "../lib/dealPilot.js";
 
 const router=Router();
 const sendError=(res:any,e:unknown)=>{console.error("Find It failed",e);res.status(503).json({error:"Find It is temporarily unavailable."});};
@@ -81,6 +82,41 @@ router.get("/find-it/eligible",async(req,res)=>{
     WHERE a.type='wanted' AND a.status='active' AND LOWER(a.contact_email)=${email} AND r.id IS NULL
     ORDER BY a.posted_at DESC LIMIT 40`)).rows;
   res.json(ads);
+ }catch(e){sendError(res,e);}
+});
+// Deterministic existing-inventory suggestions, with strict regional filtering.
+router.get("/find-it/suggested",async(req,res)=>{
+ try{
+  const email=await authenticatedSellerEmail(req,res);if(!email)return;
+  const region=String(req.query.region??"uk");
+  if(!["uk","us"].includes(region)){res.status(400).json({error:"Invalid region"});return;}
+  await ensureFindItTables();
+  const [inventory,requests]=await Promise.all([
+    db.execute(sql`SELECT id,title,category,specifications FROM listings
+      WHERE LOWER(seller_email)=${email} AND status='active' ORDER BY updated_at DESC LIMIT 200`),
+    db.execute(sql`SELECT r.id,a.title,a.category,r.budget_minor FROM marketplace_find_requests r
+      JOIN classified_ads a ON a.id=r.classified_id
+      WHERE r.region=${region} AND r.status='open' AND r.expires_at>NOW()
+      ORDER BY r.created_at DESC LIMIT 120`)
+  ]);
+  const valid=(inventory.rows as any[]).filter(l=>{
+    try{
+      const specs=JSON.parse(String(l.specifications||"{}"));
+      return specs.marketplace_region===region && specs.demo_creator!==true && specs.demo_creator!=="true";
+    }catch{return false;}
+  });
+  const suggestions=(requests.rows as any[]).map(r=>{
+    const target=dealTerms(String(r.title));
+    const match=valid.map(l=>{
+      const words=dealTerms(String(l.title));
+      const overlap=target.filter(w=>words.includes(w)).length;
+      const sameCat=String(l.category).toLowerCase()===String(r.category).toLowerCase();
+      return {listingId:l.id,listingTitle:l.title,score:overlap+(sameCat?1:0),overlap};
+    }).filter(m=>m.overlap>=Math.min(2,target.length)&&m.overlap>0)
+     .sort((a,b)=>b.score-a.score)[0];
+    return match?{requestId:r.id,...match}:null;
+  }).filter(Boolean);
+  res.setHeader("Cache-Control","private,no-store");res.json(suggestions);
  }catch(e){sendError(res,e);}
 });
 router.post("/find-it",async(req,res)=>{
