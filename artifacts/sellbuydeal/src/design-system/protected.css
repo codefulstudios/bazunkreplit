@@ -100,3 +100,18 @@
 .dark .bz-design-spotlight:not([data-design-spotlight="true"]) :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
  color:#ffffff !important;
 }
+
+.bz-design-home-hero[data-design-home-hero="true"] h1 span {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] > svg {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-icon {
+ background:var(--bz-section-accent) !important;
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-icon svg {
+ color:var(--bz-section-accent-text) !important;
+ background:none !important;
+}
