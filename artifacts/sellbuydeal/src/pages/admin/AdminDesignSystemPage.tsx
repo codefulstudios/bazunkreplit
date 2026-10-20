@@ -4,6 +4,7 @@ import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-
 import { AdminLayout } from "./AdminLayout";
 import { AdminSettingsPage } from "./AdminSettingsPage";
 import { IconAppearanceEditor } from "./IconAppearanceEditor";
+import {DesignTargetGuide,type DesignTarget} from "./DesignTargetGuide";
 import { DesignSectionsEditor } from "./DesignSectionsEditor";
 import { ShieldCheck, Copy, RotateCcw, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
@@ -50,9 +51,11 @@ function DesignAssetsEditor() {
   window.dispatchEvent(new Event("bazunk-settings-updated"));setStatus("Graphics and icons saved successfully.");
  }catch(e){setStatus(e instanceof Error?e.message:"Could not save assets.")}finally{setSaving(false)}}
  return <div className="space-y-4 rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
-  <div className="flex items-center gap-2"><ImageIcon className="h-6 w-6"/><h2 className="text-xl font-extrabold">Icons & Graphics</h2></div>
-  <p className="text-sm font-semibold">Choose approved category icons and an optional HTTPS homepage hero graphic (PNG, JPEG or WebP). Files must be hosted online; direct uploads are not enabled yet.</p>
+  <DesignTargetGuide target="assets" />
+  <div className="flex items-center gap-2"><ImageIcon className="h-6 w-6"/><h2 className="text-xl font-extrabold">Choose category icons and hero graphic</h2></div>
+  <p className="text-sm font-semibold">Step 1: choose individual category icons. Step 2: optionally add a homepage graphic. More detailed icon colours and sizes are in Icon appearance below. Choose approved category icons and an optional HTTPS homepage hero graphic (PNG, JPEG or WebP). Files must be hosted online; direct uploads are not enabled yet.</p>
   {loading?<p>Loading appearance settings…</p>:<>
+   <h3 className="text-base font-extrabold">1. Individual category symbols · <a href="/" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline dark:text-blue-300">View on homepage ↗</a></h3>
    <div className="grid gap-4 md:grid-cols-2">{DESIGN_CATEGORIES.map(category=>{
     const value=items["design_category_icon_"+category]||category;
     const Icon=ICONS[value as keyof typeof ICONS]||Package;
@@ -62,6 +65,7 @@ function DesignAssetsEditor() {
       {Object.keys(ICONS).map(name=><option key={name} value={name}>{name}</option>)}</select>
     </label>
    })}</div>
+   <h3 className="text-base font-extrabold">2. Optional homepage graphic</h3>
    <label className="block text-sm font-bold">Homepage hero graphic URL
     <input type="url" value={items.design_hero_image_url||""} onChange={e=>change("design_hero_image_url",e.target.value)} placeholder="https://example.com/hero.webp" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
    </label>
@@ -107,8 +111,9 @@ export function AdminDesignSystemPage() {
       <div className="rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white"><h1 className="text-2xl font-extrabold">Bazunk Design Center</h1><p className="mt-1 text-sm font-semibold">Storefront and admin appearance, branding, homepage, footer and SEO in one place.</p><div className="mt-4 flex flex-wrap gap-2">{([{key:"sections",label:"Website sections"},{key:"colours",label:"Protected colours"},{key:"branding",label:"Branding & SEO"},{key:"homepage",label:"Homepage"},{key:"footer",label:"Footer"},{key:"advertising",label:"Advertising"},{key:"assets",label:"Icons & Graphics"}] as const).map(item=><button key={item.key} type="button" onClick={()=>setDesignTab(item.key)} aria-pressed={designTab===item.key} className={"rounded-lg border px-4 py-2 text-sm font-bold "+(designTab===item.key?"border-orange-700 bg-orange-300 text-slate-950":"border-slate-400 bg-white text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white")}>{item.label}</button>)}</div></div>
       {designTab==="assets" && <><DesignAssetsEditor /><IconAppearanceEditor /></>}
       {designTab==="sections" && <DesignSectionsEditor />}
+      {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<DesignTargetGuide target={designTab as DesignTarget}/>}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<AdminSettingsPage key={designTab} embedded initialTab={designTab}/>}
-      {designTab==="colours"&&<>
+      {designTab==="colours"&&<><DesignTargetGuide target="colours" />
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
