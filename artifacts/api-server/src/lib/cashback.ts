@@ -9,10 +9,10 @@ export type CashbackConfig={
  accrualStartedAt:string|null;
 };
 const tiers:CashbackTier[]=[
- {id:"bronze",name:"Bronze",rate:1,spendGbp:0,perks:[]},
- {id:"silver",name:"Silver",rate:1.5,spendGbp:250,perks:[]},
- {id:"gold",name:"Gold",rate:2,spendGbp:750,perks:[]},
- {id:"platinum",name:"Platinum",rate:3,spendGbp:2000,perks:[]}
+ {id:"bronze",name:"Bronze",rate:0.25,spendGbp:50,perks:[]},
+ {id:"silver",name:"Silver",rate:0.5,spendGbp:150,perks:[]},
+ {id:"gold",name:"Gold",rate:0.75,spendGbp:350,perks:[]},
+ {id:"platinum",name:"Platinum",rate:1,spendGbp:700,perks:[]}
 ];
 /** Runtime policy deliberately starts DISABLED. Existing promotional flags are not a promise of funded earnings. */
 const runtimeDefaults={earningEnabled:false,payoutRequestsEnabled:false,holdDays:30,minPayoutGbp:5,accrualStartedAt:null as string|null};
