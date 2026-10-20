@@ -86,6 +86,7 @@ import { SellPage } from "@/pages/SellPage";
 import { DirectSalePage } from "@/pages/DirectSalePage";
 import { SnapSellPage } from "@/pages/SnapSellPage";
 import { DealPilotPage } from "@/pages/DealPilotPage";
+import { FindItPage } from "@/pages/FindItPage";
 import { DashboardPage, MyStorePage } from "@/pages/DashboardPage";
 import { ImportersPage } from "@/pages/ImportersPage";
 import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
@@ -126,6 +127,7 @@ import { AdminAuditLogPage } from "@/pages/admin/AdminAuditLogPage";
 import { AdminSystemStatusPage } from "@/pages/admin/AdminSystemStatusPage";
 import { AdminSnapSellPage } from "@/pages/admin/AdminSnapSellPage";
 import { AdminDealPilotPage } from "@/pages/admin/AdminDealPilotPage";
+import { AdminFindItPage } from "@/pages/admin/AdminFindItPage";
 import { AdminFeatureFlagsPage } from "@/pages/admin/AdminFeatureFlagsPage";
 import { FeatureGate, FeatureVisible } from "@/components/FeatureGate";
 import { AdminPaymentsPage } from "@/pages/admin/AdminPaymentsPage";
@@ -360,6 +362,7 @@ function Router() {
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/sell/quick">{() => <FeatureGate feature="quick_sell" name="Quick Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/deal-pilot">{() => <FeatureGate feature="deal_pilot" name="DealPilot"><DealPilotPage /></FeatureGate>}</Route>
+      <Route path="/find-it">{() => <FeatureGate feature="find_it" name="Find It"><FindItPage /></FeatureGate>}</Route>
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/my-store/settings">{() => <MyStorePage settingsPage />}</Route>
       <Route path="/my-store">{() => <MyStorePage />}</Route>
@@ -394,6 +397,7 @@ function Router() {
       <Route path="/admin/system-status" component={AdminSystemStatusPage} />
       <Route path="/admin/snap-sell" component={AdminSnapSellPage} />
       <Route path="/admin/deal-pilot" component={AdminDealPilotPage} />
+      <Route path="/admin/find-it" component={AdminFindItPage} />
       <Route path="/admin/feature-toggles" component={AdminFeatureFlagsPage} />
       <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
       <Route path="/admin/products" component={AdminProductsPage} />
