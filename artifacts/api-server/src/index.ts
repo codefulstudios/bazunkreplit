@@ -549,8 +549,8 @@ async function runAppMigrations() {
   await run(sql`DO $$ BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('bazunk-fee-policy-v1'));
     IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='fee_policy_private_business_v1') THEN
-      UPDATE site_settings SET value='5',updated_at=NOW() WHERE key='buyer_protection_percent';
-      UPDATE site_settings SET value='0.70',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
+      UPDATE site_settings SET value='6',updated_at=NOW() WHERE key='buyer_protection_percent';
+      UPDATE site_settings SET value='1.00',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key='fee_rate_default';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key LIKE 'fee_rate_%' AND value='5';
       INSERT INTO site_settings(key,value,updated_at) VALUES('fee_policy_private_business_v1','applied',NOW());
@@ -562,8 +562,8 @@ async function runAppMigrations() {
     INSERT INTO site_settings (key, value, updated_at) VALUES
       ('fee_rate_default',              '8', NOW()),
       ('fee_listing_free',           'true', NOW()),
-      ('buyer_protection_percent',      '5', NOW()),
-      ('buyer_protection_fixed_gbp',   '0.70', NOW()),
+      ('buyer_protection_percent',      '6', NOW()),
+      ('buyer_protection_fixed_gbp',   '1.00', NOW()),
       ('buyer_protection_fixed_usd',   '1.00', NOW()),
       ('buyer_protection_fixed_eur',   '1.00', NOW()),
       ('fee_rate_electronics',           '8', NOW()),
