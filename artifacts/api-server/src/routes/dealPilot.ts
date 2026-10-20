@@ -42,7 +42,7 @@ router.post("/deal-pilot",async(req,res)=>{
   const email=await authenticatedSellerEmail(req,res);if(!email)return;
   const prompt=String(req.body?.prompt??"").trim().slice(0,220);
   const parsed=interpretRequest(prompt);
-  const region=parsed.region || req.body?.region as Region;
+  const region=(parsed.region || req.body?.region) as Region;
   const amount=req.body?.maxTotal===undefined||req.body.maxTotal===""?parsed.budget:req.body.maxTotal;
   const maximum=money(amount);
   const condition=req.body?.condition && req.body.condition!=="any"?req.body.condition:parsed.condition;
