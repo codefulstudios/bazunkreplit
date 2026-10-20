@@ -12,3 +12,32 @@
 /* Admin remains visually isolated from storefront utilities. */
 [data-bz-design-area="admin"] .bz-protected-panel {background:var(--bz-protected-card);color:var(--bz-protected-text)}
 @media (prefers-reduced-motion:reduce) {.bz-protected-action {transition:none}}
+
+/* Per-section overrides are opt-in and cannot leak to other Bazunk pages. */
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero {
+ background:var(--dp-bg) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero :is(h1,p,span) {
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero button {
+ background:var(--dp-action) !important;
+ color:var(--dp-action-text) !important;
+ border-color:transparent !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission {
+ background:var(--dp-surface) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(h2,p,label) {
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(input:not([type="checkbox"]),textarea,select) {
+ background:var(--dp-field) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(input,textarea)::placeholder {
+ color:var(--dp-subtext) !important;
+ opacity:1;
+}
