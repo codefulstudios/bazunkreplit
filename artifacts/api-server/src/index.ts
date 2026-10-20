@@ -10,6 +10,7 @@ import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
 import { ensureAdminAuditLog } from "./lib/adminAudit.js";
 import { ensureListingAlerts } from "./lib/listingAlerts.js";
 import { startDealPilotMonitor } from "./lib/dealPilot.js";
+import { startTrustProofRetention } from "./lib/trustProof.js";
 
 const rawPort = process.env["PORT"];
 
@@ -834,6 +835,7 @@ runAppMigrations()
   .then(() => {
     startListingScheduler();
     startDealPilotMonitor();
+    startTrustProofRetention();
     startSyncJob();
     startAdminEbaySyncJob();
     const complianceScan = () => { void scanSellerCompliance().then(result => logger.info({result},"Seller compliance scan complete")).catch(err => logger.error({err},"Seller compliance scan failed")); };
