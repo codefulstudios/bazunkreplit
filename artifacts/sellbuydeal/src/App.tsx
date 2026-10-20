@@ -135,6 +135,7 @@ import { FeatureGate, FeatureVisible } from "@/components/FeatureGate";
 import { AdminPaymentsPage } from "@/pages/admin/AdminPaymentsPage";
 import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
 import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
+import { AdminDesignSystemPage } from "@/pages/admin/AdminDesignSystemPage";
 import { AdminEmailsPage } from "@/pages/admin/AdminEmailsPage";
 import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
 import { AdminListingsPage } from "@/pages/admin/AdminListingsPage";
@@ -415,6 +416,7 @@ function Router() {
       <Route path="/admin/disputes" component={AdminDisputesPage} />
       <Route path="/admin/returns" component={AdminReturnsPage} />
       <Route path="/admin/auctions" component={AdminAuctionsPage} />
+      <Route path="/admin/design-system" component={AdminDesignSystemPage} />
       <Route path="/admin/settings" component={AdminSettingsPage} />
       <Route path="/admin/emails" component={AdminEmailsPage} />
       <Route path="/auctions/create">{() => <FeatureGate feature="auctions" name="Auctions"><CreateAuctionPage /></FeatureGate>}</Route>

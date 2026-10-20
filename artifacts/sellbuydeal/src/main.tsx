@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import "./design-system/protected.css";
 
 // The production frontend is a static Render site, so Vite's dev /api proxy
 // does not exist after deployment. Keep all legacy and future relative API
