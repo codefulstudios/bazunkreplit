@@ -854,7 +854,7 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/10 text-[#4A5CE8] text-xs font-semibold px-3 py-1 rounded-full">
                     {cat?.name ?? slug}
-                    <button onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove category filter" onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
@@ -867,31 +867,31 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/5 text-[#4A5CE8] text-xs font-medium px-3 py-1 rounded-full border border-[#4A5CE8]/20">
                     ↳ {label}
-                    <button onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove subcategory filter" onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {selectedConditions.map((c) => (
                 <span key={c} className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full capitalize">
-                  {c}<button onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
+                  {c}<button type="button" aria-label="Remove condition filter" onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {(minPrice || maxPrice) && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   £{minPrice || "0"} – £{maxPrice || "∞"}
-                  <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove price filter" onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {verifiedOnly && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full">
                   <CheckCircle2 className="w-3 h-3" /> Verified Only
-                  <button onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove verified-only filter" onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {shipFrom.map((f) => (
                 <span key={f} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
                   From: {f}
-                  <button onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove ships-from filter" onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {shipTo.map((t) => {
@@ -899,26 +899,26 @@ export function BrowsePage() {
                 return (
                   <span key={t} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
                     <Globe className="w-3 h-3" /> {label}
-                    <button onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove ships-to filter" onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {freeShipping && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Truck className="w-3 h-3" /> Free Shipping
-                  <button onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove free-shipping filter" onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {minRating !== null && (
                 <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Star className="w-3 h-3 fill-current" /> {minRating}+ stars
-                  <button onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove rating filter" onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {listedWithin !== "any" && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   {{ today: "Today", week: "Last 7 days", month: "Last 30 days" }[listedWithin]}
-                  <button onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove date filter" onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
                 </span>
               )}
             </div>
@@ -963,7 +963,7 @@ export function BrowsePage() {
               <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
                 className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-3 py-2 font-black text-sm text-white hover:bg-orange-700" data-testid="button-save-search">
                 <Bell className="h-4 w-4"/> Save search
@@ -985,6 +985,7 @@ export function BrowsePage() {
               <div className="flex border border-gray-200 rounded-xl overflow-hidden">
                 <button
                   onClick={() => setView("grid")}
+                  aria-label="Grid view" aria-pressed={view==="grid"}
                   className={`p-2 ${view === "grid" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-grid"
                 >
@@ -992,6 +993,7 @@ export function BrowsePage() {
                 </button>
                 <button
                   onClick={() => setView("list")}
+                  aria-label="List view" aria-pressed={view==="list"}
                   className={`p-2 ${view === "list" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-list"
                 >
