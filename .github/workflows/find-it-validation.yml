@@ -1,0 +1,39 @@
+name: Bazunk Find It validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/api-server/src/lib/findIt.ts'
+      - 'artifacts/api-server/src/lib/specialCheckout.ts'
+      - 'artifacts/api-server/src/routes/findIt.ts'
+      - 'artifacts/api-server/src/routes/stripe.ts'
+      - 'artifacts/api-server/src/routes/classifieds.ts'
+      - 'artifacts/api-server/src/routes/notifications.ts'
+      - 'artifacts/api-server/src/routes/index.ts'
+      - 'artifacts/sellbuydeal/src/pages/FindItPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminFindItPage.tsx'
+      - '.github/workflows/find-it-validation.yml'
+  workflow_dispatch:
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --no-frozen-lockfile --prod=false
+      - name: Check library declarations
+        run: pnpm run typecheck:libs
+      - name: Typecheck API and storefront
+        run: |
+          pnpm --filter @workspace/api-server run typecheck
+          pnpm --filter @workspace/sellbuydeal run typecheck
+      - name: Production builds
+        run: pnpm run build
