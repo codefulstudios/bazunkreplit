@@ -253,7 +253,7 @@ export function CheckoutPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
+      <div className="container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-4xl flex-1">
         <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-gray-700 transition-colors mb-6">
           <ChevronLeft className="w-4 h-4" /> Back to browsing
         </button>
@@ -269,7 +269,7 @@ export function CheckoutPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <div className="lg:col-span-2 space-y-4">
 
             {/* ── STEP 1: Order Review ── */}
@@ -285,7 +285,7 @@ export function CheckoutPage() {
                     {items.map((item) => (
                       <div key={item.product.id} className="flex gap-3 items-center">
                         <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex-shrink-0 overflow-hidden">
-                          <img src={item.product.image} alt={item.product.title} className="w-full h-full object-contain p-1.5" />
+                          <img src={item.product.image} alt={item.product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-1.5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.product.title}</p>
@@ -317,10 +317,29 @@ export function CheckoutPage() {
                   </div>
                 )}
 
+                {/* At phone sizes the entire fee breakdown sits beside the payment decision,
+                    rather than hidden below the Pay button in the desktop sidebar. */}
+                <section aria-label="Mobile order cost breakdown" className="mt-5 rounded-2xl border-2 border-indigo-300 bg-white p-4 text-slate-900 shadow-sm lg:hidden">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="text-base font-black text-slate-950">Payable total · GBP</h2>
+                    <span className="text-xs font-bold text-slate-700">Stripe secure payment</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-3"><span>Items</span><strong>{quote?formatPrice(subtotal):"Calculating…"}</strong></div>
+                    <div className="flex justify-between gap-3"><span>Delivery</span><strong>{quote?(delivery===0?"FREE":formatPrice(delivery)):"Calculating…"}</strong></div>
+                    <div className="flex justify-between gap-3"><span>Buyer protection</span><strong>{quote?(buyerProtectionFee>0?formatPrice(buyerProtectionFee):"Included"):"Calculating…"}</strong></div>
+                    {bundleDiscount>0&&<div className="flex justify-between gap-3 font-bold text-emerald-800"><span>Bundle savings</span><span>−{formatPrice(bundleDiscount)}</span></div>}
+                    <div aria-live="polite" className="flex justify-between gap-3 border-t border-indigo-200 pt-3 text-xl font-black">
+                      <span>Total</span><span data-testid="mobile-checkout-total">{!quote||quotedKey!==cartKey?"Calculating…":formatPrice(total)}</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-slate-700">The price is calculated by Bazunk. It will be confirmed again before Stripe payment.</p>
+                </section>
+
                 <button
                   onClick={handleContinueToPayment}
                   disabled={checkoutLoading || quoteLoading || !quote || quotedKey!==cartKey}
-                  className="w-full mt-4 py-4 rounded-xl bg-[#E66A20] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="sticky bottom-2 z-20 w-full mt-4 min-h-14 py-4 rounded-xl bg-[#E66A20] text-white font-black text-base hover:bg-orange-700 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 lg:static"
                   data-testid="button-continue-payment"
                 >
                   {checkoutLoading
@@ -359,7 +378,7 @@ export function CheckoutPage() {
           </div>
 
           {/* Right: order summary (sticky) */}
-          <div className="space-y-4">
+          <div className="hidden space-y-4 lg:block">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
               <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary · GBP</h3>
               <div className="space-y-2 text-sm">
