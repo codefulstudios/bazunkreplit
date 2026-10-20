@@ -115,3 +115,29 @@
  color:var(--bz-section-accent-text) !important;
  background:none !important;
 }
+
+/* Only opted-in icon groups are affected. No global icon CSS. */
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-tile {
+ background:var(--bz-icon-tile) !important;color:var(--bz-icon-text) !important;
+ border-color:var(--bz-icon-border) !important;gap:var(--bz-icon-gap) !important;
+}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-tile p {color:var(--bz-icon-text) !important}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-icon {
+ width:var(--bz-icon-badge-size) !important;height:var(--bz-icon-badge-size) !important;
+ background:var(--bz-icon-badge) !important;border-color:var(--bz-icon-badge-border) !important;
+ border-radius:var(--bz-icon-radius) !important;
+}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-icon svg {
+ width:var(--bz-icon-size) !important;height:var(--bz-icon-size) !important;color:var(--bz-icon-color) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-card {
+ background:var(--bz-icon-tile) !important;color:var(--bz-icon-text) !important;border-color:var(--bz-icon-border) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-card :is(h2,h3,p,span) {color:var(--bz-icon-text) !important}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-icon {
+ width:var(--bz-icon-badge-size) !important;height:var(--bz-icon-badge-size) !important;
+ background:var(--bz-icon-badge) !important;border:1px solid var(--bz-icon-badge-border) !important;border-radius:var(--bz-icon-radius) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-icon svg {
+ width:var(--bz-icon-size) !important;height:var(--bz-icon-size) !important;color:var(--bz-icon-color) !important;background:none !important;
+}
