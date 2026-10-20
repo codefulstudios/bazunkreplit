@@ -213,11 +213,11 @@ router.post("/find-it/:id/offers",async(req,res)=>{
        VALUES(${id},${req.params.id},${email},${sellerName},${title},${description},${condition},${price},${photo})`);
     return "ok";
   });
-  if(result!=="ok"){res.status(409).json({error:{
+  if(result!=="ok"){res.status(409).json({error:({
     closed:"This request is no longer accepting offers.",own:"You cannot bid on your own request.",
     duplicate:"You've already submitted an offer to this buyer.",full:"This request has reached its offer limit.",
     budget:"The item, delivery and buyer protection exceed the buyer's maximum budget."
-  }[result]});return;}
+  } as Record<string,string>)[result]});return;}
   res.status(201).json({id});
  }catch(e){sendError(res,e);}
 });
@@ -242,10 +242,10 @@ router.post("/find-it/:id/accept/:offerId",async(req,res)=>{
       ELSE 'declined' END,updated_at=NOW() WHERE request_id=${row.id} AND status='pending'`);
     return "ok";
   });
-  if(r!=="ok"){res.status(r==="forbidden"?403:409).json({error:{
+  if(r!=="ok"){res.status(r==="forbidden"?403:409).json({error:({
     forbidden:"This is not your request.",closed:"Request already accepted, closed or expired.",
     missing:"Offer is no longer available.",budget:"Fees or exchange rates changed and this offer exceeds your budget."
-  }[r]});return;}
+  } as Record<string,string>)[r]});return;}
   res.json({ok:true,selectedOfferId:req.params.offerId,checkoutReady:true});
  }catch(e){sendError(res,e);}
 });
@@ -290,10 +290,10 @@ router.patch("/find-it/offers/:offerId",async(req,res)=>{
       WHERE id=${req.params.offerId} AND status='pending'`);
     return "ok";
   });
-  if(outcome!=="ok"){res.status(outcome==="forbidden"?403:409).json({error:{
+  if(outcome!=="ok"){res.status(outcome==="forbidden"?403:409).json({error:({
     forbidden:"This is not your offer",closed:"Only open pending bids may be improved",
     budget:"The revised bid would exceed the buyer's total budget"
-  }[outcome]});return;}
+  } as Record<string,string>)[outcome]});return;}
   res.json({ok:true});
  }catch(e){sendError(res,e);}
 });
