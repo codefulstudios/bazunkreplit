@@ -5829,7 +5829,6 @@ export function DashboardPage() {
                 {initial}
               </div>
               <p className="font-bold text-gray-900">{user.username}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
             </div>
 
             {/* Nav menu — icon rail + flyout (desktop only hint) */}
