@@ -299,23 +299,46 @@ export function DirectSalePage() {
       specifications, draftForm: form, tags, status: "draft" };
   }
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    const remaining = 10 - photos.length;
-    const toRead = files.slice(0, remaining);
-    if (!toRead.length) return;
-    Promise.all(
-      toRead.map(
-        (f) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target?.result as string);
-            reader.readAsDataURL(f);
-          })
-      )
-    ).then((dataUrls) => setPhotos((p) => [...p, ...dataUrls]));
-    // Allow reselecting the same camera photo after deletion.
-    e.target.value = "";
+  const [uploadingPhotos,setUploadingPhotos] = useState(false);
+  const cameraInputRef=useRef<HTMLInputElement>(null);
+
+  // Re-encode large smartphone photos so the whole listing stays under the
+  // API's 10 MB JSON limit. Sequential processing limits mobile memory usage.
+  async function shrinkPhoto(file:File):Promise<string> {
+    if (!file.type.startsWith("image/")) throw Error("Please choose an image file.");
+    const url=URL.createObjectURL(file);
+    try {
+      const image=await new Promise<HTMLImageElement>((resolve,reject)=>{
+        const element=new Image();
+        element.onload=()=>resolve(element);
+        element.onerror=()=>reject(Error("This photo could not be opened."));
+        element.src=url;
+      });
+      const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+      const context=canvas.getContext("2d");
+      if(!context)throw Error("Your browser cannot prepare this photo.");
+      context.fillStyle="#ffffff";
+      context.fillRect(0,0,canvas.width,canvas.height);
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      return canvas.toDataURL("image/jpeg",0.75);
+    } finally {URL.revokeObjectURL(url);}
+  }
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files=Array.from(e.target.files??[]);
+    e.target.value="";
+    const toRead=files.slice(0,Math.max(0,10-photos.length));
+    if(!toRead.length)return;
+    setUploadingPhotos(true);setPublishError(null);
+    try{
+      const prepared:string[]=[];
+      for(const file of toRead) prepared.push(await shrinkPhoto(file));
+      setPhotos(previous=>[...previous,...prepared].slice(0,10));
+    }catch(err){setPublishError(err instanceof Error?err.message:"Could not add photo. Try another image.");}
+    finally{setUploadingPhotos(false);}
   }
 
   async function handlePublish(e: React.FormEvent) {
@@ -904,7 +927,8 @@ export function DirectSalePage() {
                     <button
                       type="button"
                       onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-lg font-bold"
+                      aria-label={`Remove photo ${i+1}`}
+                      className="absolute inset-0 bg-black/45 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xl font-black"
                     >
                       ×
                     </button>
@@ -920,7 +944,7 @@ export function DirectSalePage() {
 
             {photos.length < 10 && (
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-5 sm:p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
                 onClick={() => photoInputRef.current?.click()}
                 data-testid="dropzone-photos"
               >
@@ -936,8 +960,14 @@ export function DirectSalePage() {
                   data-testid="button-choose-photos"
                 >
                   <Upload className="w-4 h-4" />
-                  Choose Files
+                  {uploadingPhotos?"Preparing photos…":"Choose Files"}
                 </button>
+                <button type="button" disabled={uploadingPhotos}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-300 bg-[#23466b] px-5 py-2.5 text-sm font-bold text-white lg:hidden"
+                  onClick={e=>{e.stopPropagation();cameraInputRef.current?.click();}}
+                  data-testid="button-take-photo"><Camera className="h-4 w-4"/> Take a photo</button>
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+                  className="hidden" onChange={handlePhotoChange} />
                 <input
                   ref={photoInputRef}
                   type="file"
