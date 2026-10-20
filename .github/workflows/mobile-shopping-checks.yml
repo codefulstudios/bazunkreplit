@@ -9,6 +9,7 @@ on:
       - 'artifacts/sellbuydeal/src/pages/MobileNotificationsPage.tsx'
       - 'artifacts/sellbuydeal/src/components/MobileShopNav.tsx'
       - 'artifacts/sellbuydeal/src/App.tsx'
+      - 'artifacts/sellbuydeal/src/index.css'
       - 'scripts/mobile-shopping-contract.test.mjs'
       - '.github/workflows/mobile-shopping-checks.yml'
   push:
