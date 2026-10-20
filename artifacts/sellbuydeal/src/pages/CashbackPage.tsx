@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Coins, Gift, LockKeyhole, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
@@ -21,30 +21,37 @@ const btn="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bor
 const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 font-black text-white hover:bg-orange-700 disabled:opacity-60";
 const input="min-h-11 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-lg font-black text-slate-950 dark:border-slate-500 dark:bg-[#0e203e] dark:text-white";
 const gbp=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(n||0)/100);
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 export default function CashbackPage(){
  const {isLoaded,isSignedIn,getToken}=useAuth();
+ // Clerk can supply a new getToken callback across renders. Do not make data loading
+ // depend on its identity: otherwise a setState -> effect -> fetch cycle can lock the page.
+ const tokenRef=useRef(getToken);
+ tokenRef.current=getToken;
  const [settings,setSettings]=useState<Settings|null>(null);
  const [account,setAccount]=useState<Account|null>(null);
  const [spend,setSpend]=useState(100),[amount,setAmount]=useState("");
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[message,setMessage]=useState(""),[error,setError]=useState("");
  const get=useCallback(async(path:string,init:RequestInit={},authenticated=false)=>{
-   const token=authenticated?await getToken():null;
+   const token=authenticated?await tokenRef.current():null;
    if(authenticated&&!token)throw Error("Please sign in to view your cashback.");
-   const r=await fetch("/api"+path,{...init,cache:"no-store",headers:{
+   const r=await fetch(`${API_BASE}/api`+path,{...init,cache:"no-store",signal:AbortSignal.timeout(20000),headers:{
     ...(init.body?{"Content-Type":"application/json"}:{}),
     ...(token?{Authorization:`Bearer ${token}`}:{}),...init.headers
    }});
    const data=await r.json().catch(()=>({}));
    if(!r.ok)throw Error(data.error||"Cashback request failed");
    return data;
- },[getToken]);
+ },[]);
  const load=useCallback(async()=>{
   setLoading(true);setError("");
   try{
    const [config,details]=await Promise.all([get("/cashback/settings"),
     isSignedIn?get("/cashback/account",{},true):Promise.resolve(null)]);
+   if(!config || typeof config!=="object" || !Array.isArray(config.tiers))throw Error("Invalid cashback programme settings. Please retry.");
+   if(details && (!details.balance || !Array.isArray(details.earnings) || !Array.isArray(details.payouts)))throw Error("Incomplete cashback wallet response. Your balance has not been changed.");
    setSettings(config);setAccount(details);
-  }catch(e){setError(e instanceof Error?e.message:"Cashback information unavailable");}
+  }catch(e){setError(e instanceof Error?e.message:"Cashback information unavailable");setAccount(null);}
   finally{setLoading(false);}
  },[get,isSignedIn]);
  useEffect(()=>{if(isLoaded)void load();},[load,isLoaded]);
@@ -89,7 +96,7 @@ export default function CashbackPage(){
      {loading?"Checking programme status…":active?"Cashback earning is active for new eligible purchases.":"Cashback earning is currently paused. No new cashback is being awarded."}
     </p>
    </header>
-   {error&&<div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 font-bold text-red-950 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</div>}
+   {error&&<div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 font-bold text-red-950 dark:border-red-700 dark:bg-red-950 dark:text-red-100"><p>{error}</p><button type="button" className={btn+" mt-3"} onClick={()=>void load()}>Retry cashback</button></div>}
    {message&&<div role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 font-bold text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">{message}</div>}
    {!isSignedIn&&isLoaded&&<div className={panel+" flex flex-wrap items-center justify-between gap-3"}>
     <div><h2 className="text-lg font-black">Sign in to see your actual cashback</h2><p className={sub}>The calculator below is an estimate, not a wallet balance.</p></div>

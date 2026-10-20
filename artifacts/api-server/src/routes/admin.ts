@@ -854,7 +854,7 @@ router.get("/admin/settings", async (_req, res) => {
 router.put("/admin/settings", async (req, res) => {
   try {
     const updates = req.body as Record<string, string>;
-    if (!updates || typeof updates !== "object" || Array.isArray(updates)) return res.status(400).json({error:"Invalid settings payload"});
+    if (!updates || typeof updates !== "object" || Array.isArray(updates)) { res.status(400).json({error:"Invalid settings payload"}); return; }
     for (const [key,value] of Object.entries(updates)) {
       if (!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)) continue;
       try {
@@ -864,7 +864,7 @@ router.put("/admin/settings", async (req, res) => {
         const luminance=(hex:string)=>{const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2]};
         const ratio=(a:string,b:string)=>{const x=luminance(a),y=luminance(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
         if(![[palette.text,palette.background],[palette.text,palette.surface],[palette.secondaryText,palette.surface],[palette.text,palette.field],[palette.actionText,palette.action]].every(([a,b])=>ratio(a,b)>=4.5))throw Error("Insufficient contrast");
-      } catch {return res.status(400).json({error:"Design palette failed accessibility validation"});}
+      } catch { res.status(400).json({error:"Design palette failed accessibility validation"}); return; }
     }
     const keys = Object.keys(updates);
     const oldRows = keys.length ? await db.execute(sql`SELECT key, value FROM site_settings`).then(r => r.rows as any[]) : [];

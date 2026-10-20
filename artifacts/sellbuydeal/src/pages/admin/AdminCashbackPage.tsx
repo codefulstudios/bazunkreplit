@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
 import { AlertTriangle, Banknote, CheckCircle2, Clock, RefreshCw, Save, ShieldCheck, Wallet } from "lucide-react";
@@ -20,6 +20,9 @@ const gbp=(v:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"
 
 export function AdminCashbackPage(){
  const {authFetch,isAdmin}=useAdmin();
+ // Keep the latest auth function without coupling loads to context callback identity.
+ const authFetchRef=useRef(authFetch);
+ authFetchRef.current=authFetch;
  const [config,setConfig]=useState<Config|null>(null),[overview,setOverview]=useState<Overview|null>(null);
  const [loading,setLoading]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState(""),[error,setError]=useState("");
@@ -28,16 +31,17 @@ export function AdminCashbackPage(){
   setLoading(true);setError("");
   try{
    const [settingsR,overviewR]=await Promise.all([
-    authFetch("/api/admin/cashback/settings",{cache:"no-store"}),
-    authFetch("/api/admin/cashback/overview",{cache:"no-store"})
+    authFetchRef.current("/api/admin/cashback/settings",{cache:"no-store",signal:AbortSignal.timeout(20000)}),
+    authFetchRef.current("/api/admin/cashback/overview",{cache:"no-store",signal:AbortSignal.timeout(20000)})
    ]);
    const settings=await settingsR.json().catch(()=>({}));
    const overview=await overviewR.json().catch(()=>({}));
    if(!settingsR.ok||!overviewR.ok)throw Error(settings.error||overview.error||"Could not load cashback controls");
+   if(!settings || !Array.isArray(settings.tiers) || !overview || !overview.earnings || !Array.isArray(overview.payoutSummary) || !Array.isArray(overview.payouts) || !Array.isArray(overview.audit))throw Error("The Cashback API returned incomplete data. No settings were changed.");
    setConfig(settings);setOverview(overview);
   }catch(e){setError(e instanceof Error?e.message:"Cashback management unavailable");}
   finally{setLoading(false);}
- },[authFetch]);
+ },[]);
  useEffect(()=>{if(isAdmin)void load();},[isAdmin,load]);
  const patch=(value:Partial<Config>)=>setConfig(old=>old?{...old,...value}:old);
  const updateTier=(i:number,value:Partial<Tier>)=>setConfig(old=>old?{...old,
@@ -102,7 +106,7 @@ export function AdminCashbackPage(){
    <p className="mt-2 max-w-3xl text-sm font-semibold text-white">Real order-backed accruals, pending balances, manual payout reviews, and activity history. No automatic bank transfers.</p></div>
    <button className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/70 bg-white/10 px-4 py-2 font-bold text-white" disabled={loading} onClick={()=>void load()}><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh</button></div>
   </header>
-  {error&&<div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 font-bold text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</div>}
+  {error&&<div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 font-bold text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100"><p>{error}</p><button type="button" className={button+" mt-3"} onClick={()=>void load()}>Retry Cashback</button></div>}
   {message&&<div role="status" className="rounded-xl bg-emerald-50 p-4 font-bold text-emerald-950 dark:bg-emerald-950 dark:text-emerald-100">{message}</div>}
   {loading&&!config&&<p className={text}>Loading cashback system…</p>}
   {overview&&<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
