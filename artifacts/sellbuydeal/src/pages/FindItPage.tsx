@@ -53,6 +53,7 @@ export function FindItPage(){
  const [browse,setBrowse]=useState<Request[]>([]);
  const [mine,setMine]=useState<Personal>({requests:[],offers:[],sellerOffers:[]});
  const [eligible,setEligible]=useState<Wanted[]>([]);
+ const [suggested,setSuggested]=useState<Array<{requestId:string;listingId:number;listingTitle:string;score:number}>>([]);
  const [tab,setTab]=useState<"browse"|"mine"|"offers">("browse");
  const [creating,setCreating]=useState(false),[bidding,setBidding]=useState<string|null>(null);
  const [loading,setLoading]=useState(false),[working,setWorking]=useState(false);
@@ -75,12 +76,13 @@ export function FindItPage(){
  const refresh=useCallback(async()=>{
   setLoading(true);setError("");
   try{
-   const [all,own,old]=await Promise.all([
+   const [all,own,old,matches]=await Promise.all([
     api("/find-it?region="+region),
     isSignedIn?api("/find-it/mine",{},true):Promise.resolve({requests:[],offers:[],sellerOffers:[]}),
-    isSignedIn?api("/find-it/eligible",{},true):Promise.resolve([])
+    isSignedIn?api("/find-it/eligible",{},true):Promise.resolve([]),
+    isSignedIn?api("/find-it/suggested?region="+region,{},true).catch(()=>[]):Promise.resolve([])
    ]);
-   setBrowse(all);setMine(own);setEligible(old);
+   setBrowse(all);setMine(own);setEligible(old);setSuggested(matches);
   }catch(e){setError(e instanceof Error?e.message:"Could not load Find It");}
   finally{setLoading(false);}
  },[api,isSignedIn,region]);
@@ -116,6 +118,12 @@ export function FindItPage(){
   if(!window.confirm(status==="closed"?"Close this request?":"Reopen this request and let sellers offer again?"))return;
   void act(()=>api("/find-it/"+r.id,{method:"PATCH",body:JSON.stringify({status})},true),"Request updated.");
  };
+ const improve=(o:Bid)=>{
+  const value=window.prompt("Your improved item price (excluding fees and delivery)",String(Number(o.price_minor)/100));
+  if(!value)return;
+  void act(()=>api("/find-it/offers/"+o.id,{method:"PATCH",body:JSON.stringify({price:Number(value)})},true),
+    "Your improved offer has been sent to the buyer.");
+ };
  const upgrade=(w:Wanted)=>{
   const budget=window.prompt(`Maximum total budget for "${w.title}" (including fees and delivery):`,String(w.price??""));
   if(!budget)return;
@@ -130,6 +138,8 @@ export function FindItPage(){
  };
  const bidList=(id:string)=>mine.offers.filter(o=>o.request_id===id).sort((a,b)=>(a.quote?.total_minor??Infinity)-(b.quote?.total_minor??Infinity));
  const signedIn=isLoaded&&isSignedIn;
+ const orderedBrowse=[...browse].sort((a,b)=>
+  Number(suggested.some(m=>m.requestId===b.id))-Number(suggested.some(m=>m.requestId===a.id)));
  return <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-[#0d1427] dark:text-white">
   <Navbar/>
   <main className="mx-auto max-w-6xl space-y-5 px-3 py-5 pb-20 sm:px-6 sm:py-8" data-testid="find-it-page">
@@ -183,8 +193,9 @@ export function FindItPage(){
     {loading&&<p className={hint}>Loading buyer requests…</p>}
     {!loading&&!browse.length&&<div className={panel}><PackageSearch className="h-10 w-10 text-orange-600"/><p className="mt-2 font-black">No open requests in this marketplace yet.</p><p className={hint}>Be the first to post what you're looking for.</p></div>}
     <div className="grid gap-4 md:grid-cols-2">
-    {browse.map(r=><article key={r.id} className={panel+" min-w-0 space-y-3"}>
-     <div className="flex items-start gap-4">{photoFrom(r.photos)&&<img src={photoFrom(r.photos)!} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover"/>}<div className="min-w-0 flex-1"><span className="text-xs font-black uppercase tracking-wide text-orange-700 dark:text-orange-300">Buyer request · {r.region.toUpperCase()}</span><h3 className="mt-1 break-words text-lg font-black">{r.title}</h3><p className={hint+" mt-1"}>{r.location} · {r.category}</p></div></div>
+    {orderedBrowse.map(r=><article key={r.id} className={panel+" min-w-0 space-y-3"}>
+     <div className="flex items-start gap-4">{photoFrom(r.photos)&&<img src={photoFrom(r.photos)!} alt="" className="h-24 w-24 shrink-0 rounded-xl object-cover"/>}<div className="min-w-0 flex-1"><span className="text-xs font-black uppercase tracking-wide text-orange-700 dark:text-orange-300">Buyer request · {r.region.toUpperCase()}</span>
+    {suggested.some(m=>m.requestId===r.id)&&<p className="mt-1 text-xs font-black text-emerald-700 dark:text-emerald-300">Matches an item in your inventory</p>}<h3 className="mt-1 break-words text-lg font-black">{r.title}</h3><p className={hint+" mt-1"}>{r.location} · {r.category}</p></div></div>
      <p className={hint+" break-words"}>{r.description}</p>
      <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xl font-black">Up to {format(Number(r.budget_minor),r.region)}</span><span className={hint}>{r.offer_count||0} offers · Until {new Date(r.expires_at).toLocaleDateString()}</span></div>
      <p className={hint}>Maximum is inclusive of Bazunk fees and delivery.</p>
@@ -239,7 +250,10 @@ export function FindItPage(){
      !mine.sellerOffers.length?<div className={panel}>No seller offers yet. Browse requests and submit an item you can supply.</div>:
      mine.sellerOffers.map(o=><article key={o.id} className={panel+" flex flex-wrap items-center justify-between gap-4"}>
       <div className="min-w-0"><h3 className="font-black">{o.item_title}</h3><p className={hint}>For: {o.request_title} · {format(Number(o.price_minor),o.region)}</p><p className={hint}>Status: <strong className="capitalize">{o.status}</strong> · Buyer request: {o.request_status}</p></div>
-      {o.status==="pending"&&<button className={secondary} disabled={working} onClick={()=>void act(()=>api("/find-it/offers/"+o.id+"/withdraw",{method:"POST"},true),"Offer withdrawn.")}><Trash2 className="h-4 w-4"/>Withdraw</button>}
+      {o.status==="pending"&&<div className="flex flex-wrap gap-2">
+       <button className={secondary} disabled={working} onClick={()=>improve(o)}>Improve bid</button>
+       <button className={secondary} disabled={working} onClick={()=>void act(()=>api("/find-it/offers/"+o.id+"/withdraw",{method:"POST"},true),"Offer withdrawn.")}><Trash2 className="h-4 w-4"/>Withdraw</button>
+      </div>}
       {o.status==="selected"&&<span className="rounded-xl bg-emerald-100 px-3 py-2 font-black text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">Buyer selected your offer</span>}
      </article>)}
    </section>}
