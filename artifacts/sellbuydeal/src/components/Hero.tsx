@@ -94,7 +94,7 @@ export function Hero() {
   const heroAppearance=readSection(featureSettings,"home_hero",designMode);
   const categoryAppearance=readSection(featureSettings,"home_categories",designMode);
   const heroGraphic = featureSettings.design_hero_image_url || "";
-  const safeHeroGraphic = /^https:\/\/[^\\s?#]+\\.(png|jpe?g|webp)(\\?[^\\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
+  const safeHeroGraphic = /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
