@@ -79,6 +79,7 @@ const SELL_OPTIONS: Array<{
 
 const MORE_NAV = [
   { href: "/deal-pilot",       label: "DealPilot", icon: Search, color: "text-orange-600", bg: "bg-orange-50" },
+  { href: "/find-it", label: "Find It – buyer requests", icon: Handshake, color: "text-orange-700", bg: "bg-orange-50" },
   { href: "/rewards",          label: "Rewards", icon: Trophy, color: "text-amber-700", bg: "bg-amber-50" },
   { href: "/live",             label: "Live Shopping", icon: Radio, color: "text-red-600", bg: "bg-red-50" },
   { href: "/auctions",          label: "Auctions",         icon: Gavel,           color: "text-amber-600",   bg: "bg-amber-50" },
@@ -95,6 +96,7 @@ const MOBILE_NAV_LINKS = [
   { href: "/",            label: "Home",        icon: Home },
   { href: "/browse",      label: "Shop",        icon: Grid3X3 },
   { href: "/deal-pilot", label: "DealPilot", icon: Search },
+  { href: "/find-it", label: "Find It", icon: Handshake },
   { href: "/categories",  label: "Categories",  icon: List },
   { href: "/rewards", label: "Daily Rewards", icon: Gift },
   { href: "/dashboard?section=credits", label: "Credits & Milestones", icon: Trophy },
