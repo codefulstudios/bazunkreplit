@@ -1,222 +1,161 @@
-import { useEffect, useState } from 'react';
-import { Coins, TrendingUp, Gift, Star, Zap, Crown, ArrowLeft, House } from 'lucide-react';
-import { Link } from 'wouter';
-import { useCurrency } from '@/context/CurrencyContext';
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@clerk/react";
+import { Link } from "wouter";
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Coins, Gift, LockKeyhole, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
-const DEFAULT_TIERS = [
-  {
-    id: 'bronze',
-    icon: '🏅',
-    name: 'Bronze',
-    rate: '1%',
-    spendGbp: 0,
-    perks: ['1% cashback on all purchases', 'Monthly payout to wallet', 'Access to Flash Sale early alerts'],
-    color: 'from-amber-700 to-amber-900',
-    border: 'border-amber-700/40',
-    badge: 'bg-amber-700/20 text-amber-500',
-  },
-  {
-    id: 'silver',
-    icon: '🥈',
-    name: 'Silver',
-    rate: '1.5%',
-    spendGbp: 250,
-    perks: ['1.5% cashback on all purchases', 'Weekly payout to wallet', 'Free listing boosts ×2/month', 'Priority buyer support'],
-    color: 'from-slate-400 to-slate-600',
-    border: 'border-slate-400/40',
-    badge: 'bg-slate-400/20 text-slate-300',
-  },
-  {
-    id: 'gold',
-    icon: '🥇',
-    name: 'Gold',
-    rate: '2%',
-    spendGbp: 750,
-    perks: ['2% cashback on all purchases', 'Instant payout on request', 'Exclusive Gold-only Flash Deals', 'Free listing boosts ×5/month', 'Dedicated account manager'],
-    color: 'from-yellow-400 to-yellow-600',
-    border: 'border-yellow-400/40',
-    badge: 'bg-yellow-400/20 text-yellow-400',
-    popular: true,
-  },
-  {
-    id: 'platinum',
-    icon: '💎',
-    name: 'Platinum',
-    rate: '3%',
-    spendGbp: 2000,
-    perks: ['3% cashback on all purchases', 'Instant automated payouts', 'First access to new features', 'Unlimited free listing boosts', 'VIP support hotline', 'Exclusive Platinum auctions'],
-    color: 'from-cyan-400 to-blue-600',
-    border: 'border-cyan-400/40',
-    badge: 'bg-cyan-400/20 text-cyan-400',
-  },
-];
-
-const HOW_IT_WORKS = [
-  { icon: Zap, title: 'Buy Anything', desc: 'Purchase any item on Bazunk — all categories qualify for cashback.' },
-  { icon: TrendingUp, title: 'Cashback Accrues', desc: 'Your cashback % is automatically calculated and added to your rewards wallet.' },
-  { icon: Coins, title: 'Collect Your Cash', desc: 'Request a payout at any time. Funds hit your bank within 3 days.' },
-  { icon: Crown, title: 'Climb the Tiers', desc: 'The more you spend, the higher your tier — and the more you earn back.' },
-];
-
-export default function CashbackPage() {
-  const { formatPrice, currency } = useCurrency();
-  const [calc, setCalc] = useState(100);
-  const [settings,setSettings] = useState<any>(null);
-  useEffect(()=>{fetch('https://bazunk-api.onrender.com/api/cashback/settings').then(r=>r.json()).then(setSettings).catch(()=>{});},[]);
-  const TIERS=DEFAULT_TIERS.map(t=>{const v=settings?.tiers?.find((x:any)=>x.id===t.id);return v?{...t,...v,rate:String(v.rate)+'%'}:t;});
-  const current=[...TIERS].reverse().find(t=>calc>=t.spendGbp)||TIERS[0];
-  const rate = parseFloat(current.rate)/100;
-  const earned = (calc * rate).toFixed(2);
-  const tierName = current.name;
-
-  return (
-    <div className="min-h-screen bg-[#1A1D2E] text-white">
-      <nav aria-label="Cashback page navigation" className="relative z-20 mx-auto max-w-6xl px-5 pt-5 flex flex-wrap gap-3">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20"><ArrowLeft className="h-4 w-4" /> Back to Dashboard</Link>
-        <Link href="/" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/20"><House className="h-4 w-4" /> Home</Link>
-        <Link href="/rewards" className="inline-flex items-center gap-2 rounded-xl border border-yellow-400/40 bg-yellow-400/10 px-4 py-2.5 text-sm font-semibold text-yellow-400 hover:bg-yellow-400/20"><Gift className="h-4 w-4" /> Rewards</Link>
-      </nav>
-      {/* Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-yellow-900/30 via-[#1A1D2E] to-[#1A1D2E] pt-20 pb-16 px-6">
-        <div className="absolute top-0 left-0 w-[60vw] h-[60vw] bg-yellow-400/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 font-bold px-5 py-2 rounded-full text-sm mb-6">
-            <Coins className="w-4 h-4" />
-            CashBack Rewards — Exclusive to Bazunk
-          </div>
-          <h1 className="text-5xl md:text-6xl font-black mb-6 leading-tight">
-            Get Paid to<br />
-            <span className="text-yellow-400">Shop Smart</span>
-          </h1>
-          <p className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Every purchase earns you real cash back — automatically. No vouchers, no fuss.
-            Just money returned to your wallet.
-          </p>
-          <div className="mt-8 inline-flex items-center gap-3 bg-yellow-400/10 border border-yellow-400/20 rounded-2xl px-6 py-4">
-            <span className="text-yellow-400 font-black text-4xl">Up to {Math.max(...TIERS.map(t=>parseFloat(t.rate)))}%</span>
-            <span className="text-white/60 text-left text-sm">cashback<br />on every order</span>
-          </div>
-        </div>
-      </div>
-
-      {settings&&!settings.enabled&&<div className="max-w-3xl mx-auto p-4 text-center bg-amber-900/40">Cashback is not currently active. Rates are illustrative only.</div>}
-      {settings?.payoutPolicy&&<p className="max-w-3xl mx-auto p-4 text-center text-white/70">{settings.payoutPolicy}</p>}
-      {/* How it works */}
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-black text-center mb-3">How CashBack Works</h2>
-        <p className="text-white/50 text-center mb-10">Simple. Automatic. No activation needed.</p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {HOW_IT_WORKS.map((s, i) => (
-            <div key={s.title} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center hover:border-[#F26B21]/30 transition-colors">
-              <div className="w-12 h-12 rounded-xl bg-[#F26B21]/10 border border-[#F26B21]/20 flex items-center justify-center mx-auto mb-4">
-                <s.icon className="w-6 h-6 text-[#F26B21]" />
-              </div>
-              <div className="w-6 h-6 rounded-full bg-[#F26B21] text-white text-xs font-black flex items-center justify-center mx-auto mb-3">
-                {i + 1}
-              </div>
-              <h3 className="font-black mb-2">{s.title}</h3>
-              <p className="text-white/50 text-sm">{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Calculator */}
-      <div className="bg-white/3 border-y border-white/10 py-16 px-6">
-        <div className="max-w-lg mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <Gift className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-2xl font-black">CashBack Calculator</h2>
-          </div>
-          <p className="text-white/50 text-sm mb-8">See how much you'd earn</p>
-
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <label className="block text-white/50 text-sm mb-2">Monthly spend on Bazunk ({currency.code})</label>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-white/50 font-bold">{currency.symbol}</span>
-              <input
-                type="range" min={10} max={3000} value={calc}
-                onChange={e => setCalc(+e.target.value)}
-                className="flex-1 accent-[#F26B21]"
-              />
-              <span className="text-white font-black w-24 text-right text-lg">{formatPrice(calc)}</span>
-            </div>
-
-            <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-xl p-5 mt-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-white/60 text-sm">Your tier</span>
-                <span className="text-yellow-400 font-black">{tierName} ({(rate * 100).toFixed(1)}%)</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-white/60 text-sm">Monthly cashback</span>
-                <span className="text-yellow-400 font-black text-2xl">{formatPrice(+earned)}</span>
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-white/10">
-                <span className="text-white/60 text-sm">Annual cashback</span>
-                <span className="text-yellow-400 font-black text-xl">{formatPrice(+earned * 12)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Tier cards */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-black text-center mb-3">Reward Tiers</h2>
-        <p className="text-white/50 text-center mb-10">Progress automatically as you shop more.</p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          {TIERS.map(tier => (
-            <div key={tier.id}
-              className={`relative bg-white/5 border rounded-2xl overflow-hidden flex flex-col hover:border-opacity-80 transition-colors ${tier.border} ${tier.popular ? 'ring-2 ring-yellow-400/50' : ''}`}>
-              {tier.popular && (
-                <div className="absolute top-0 left-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-black text-center py-1 tracking-widest uppercase">
-                  Most Popular
-                </div>
-              )}
-              <div className={`bg-gradient-to-br ${tier.color} p-6 ${tier.popular ? 'pt-8' : ''}`}>
-                <div className="text-4xl mb-2">{tier.icon}</div>
-                <h3 className="text-white font-black text-2xl">{tier.name}</h3>
-                <div className="text-white font-black text-4xl mt-1">{tier.rate}</div>
-                <p className="text-white/70 text-sm">cashback · {formatPrice(tier.spendGbp)}+ spent</p>
-              </div>
-              <div className="p-5 flex-1">
-                <ul className="space-y-2.5">
-                  {tier.perks.map((p: string) => (
-                    <li key={p} className="flex items-start gap-2 text-sm text-white/70">
-                      <Star className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Compare vs OnBuy */}
-      <div className="bg-white/3 border-t border-white/10 py-12 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <h3 className="text-2xl font-black mb-2">Better Than OnBuy's CashBack</h3>
-          <p className="text-white/50 text-sm mb-6">OnBuy offers cashback — but only as vouchers. Ours is real money.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <div className="bg-[#F26B21]/10 border border-[#F26B21]/30 rounded-2xl px-6 py-4 text-center min-w-[160px]">
-              <p className="text-[#F26B21] font-black text-xl mb-1">Bazunk</p>
-              <p className="text-white/70 text-sm">Up to 3% · Real cash · Instant payout</p>
-            </div>
-            <span className="text-white/30 font-bold text-sm">vs</span>
-            <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center min-w-[160px]">
-              <p className="text-white/40 font-black text-xl mb-1">OnBuy</p>
-              <p className="text-white/30 text-sm">Up to 1% · Site vouchers only</p>
-            </div>
-            <span className="text-white/30 font-bold text-sm">vs</span>
-            <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-center min-w-[160px]">
-              <p className="text-white/40 font-black text-xl mb-1">eBay / Amazon</p>
-              <p className="text-white/30 text-sm">No buyer cashback</p>
-            </div>
-          </div>
-        </div>
-      </div>
+type Tier={id:string;name:string;rate:number;spendGbp:number;perks:string[]};
+type Settings={enabled:boolean;earningEnabled:boolean;payoutRequestsEnabled:boolean;featureEnabled:boolean;
+ holdDays:number;minPayoutGbp:number;payoutPolicy:string;tiers:Tier[]};
+type Balance={earnedMinor:number;maturedMinor:number;pendingMinor:number;
+ paidMinor:number;reservedMinor:number;availableMinor:number;adjustmentMinor:number};
+type Earning={order_id:string;item_title:string;spend_minor:number;rate_bps:number;amount_minor:number;
+ tier_id:string;earned_at:string;available_at:string;order_status:string;refunded_total:number};
+type Payout={id:string;amount_minor:number;status:string;requested_at:string;
+ reviewed_at:string|null;transfer_reference:string|null;decision_note:string|null};
+type Account={balance:Balance;earnings:Earning[];payouts:Payout[];settings:Settings};
+const panel="rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-sm dark:border-slate-600 dark:bg-[#192b49] dark:text-white sm:p-6";
+const sub="text-sm font-medium text-slate-700 dark:text-slate-200";
+const btn="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 font-bold text-slate-950 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-500 dark:bg-[#273951] dark:text-white dark:hover:bg-[#344969]";
+const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 font-black text-white hover:bg-orange-700 disabled:opacity-60";
+const input="min-h-11 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-lg font-black text-slate-950 dark:border-slate-500 dark:bg-[#0e203e] dark:text-white";
+const gbp=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(n||0)/100);
+export default function CashbackPage(){
+ const {isLoaded,isSignedIn,getToken}=useAuth();
+ const [settings,setSettings]=useState<Settings|null>(null);
+ const [account,setAccount]=useState<Account|null>(null);
+ const [spend,setSpend]=useState(100),[amount,setAmount]=useState("");
+ const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[message,setMessage]=useState(""),[error,setError]=useState("");
+ const get=useCallback(async(path:string,init:RequestInit={},authenticated=false)=>{
+   const token=authenticated?await getToken():null;
+   if(authenticated&&!token)throw Error("Please sign in to view your cashback.");
+   const r=await fetch("/api"+path,{...init,cache:"no-store",headers:{
+    ...(init.body?{"Content-Type":"application/json"}:{}),
+    ...(token?{Authorization:`Bearer ${token}`}:{}),...init.headers
+   }});
+   const data=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(data.error||"Cashback request failed");
+   return data;
+ },[getToken]);
+ const load=useCallback(async()=>{
+  setLoading(true);setError("");
+  try{
+   const [config,details]=await Promise.all([get("/cashback/settings"),
+    isSignedIn?get("/cashback/account",{},true):Promise.resolve(null)]);
+   setSettings(config);setAccount(details);
+  }catch(e){setError(e instanceof Error?e.message:"Cashback information unavailable");}
+  finally{setLoading(false);}
+ },[get,isSignedIn]);
+ useEffect(()=>{if(isLoaded)void load();},[load,isLoaded]);
+ const submit=async()=>{
+  if(!account||!settings||!settings.payoutRequestsEnabled)return;
+  const n=Number(amount);
+  if(!Number.isFinite(n)||n<settings.minPayoutGbp||Math.round(n*100)>account.balance.availableMinor){
+   setError("Choose an amount within your available cashback balance and the minimum withdrawal.");return;
+  }
+  if(!window.confirm("Submit a manual payout request of "+gbp(Math.round(n*100))+"? This does not transfer money automatically."))return;
+  setBusy(true);setError("");setMessage("");
+  try{
+   const result=await get("/cashback/payouts",{method:"POST",body:JSON.stringify({amount:n})},true);
+   setMessage("Request "+result.id.slice(0,8)+" received for manual verification. Funds have been reserved, not sent.");
+   setAmount("");await load();
+  }catch(e){setError(e instanceof Error?e.message:"Could not request payout");}
+  finally{setBusy(false);}
+ };
+ const cancel=async(p:Payout)=>{
+  if(!window.confirm("Cancel this pending payout and release its reserved cashback?"))return;
+  setBusy(true);setError("");setMessage("");
+  try{
+   await get("/cashback/payouts/"+p.id+"/cancel",{method:"POST"},true);
+   setMessage("Payout request cancelled and reserved amount released.");await load();
+  }catch(e){setError(e instanceof Error?e.message:"Cancellation failed");}
+  finally{setBusy(false);}
+ };
+ const active=!!settings?.enabled&&!!settings?.earningEnabled&&!!settings?.featureEnabled;
+ const tier=[...(settings?.tiers||[])].reverse().find(t=>spend>=t.spendGbp)||settings?.tiers?.[0];
+ const estimated=tier?Math.round(spend*100*tier.rate/100):0;
+ return <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-[#0c1529] dark:text-white">
+  <Navbar/>
+  <main className="mx-auto max-w-6xl space-y-5 px-3 py-5 pb-20 sm:px-6 sm:py-8" data-testid="cashback-page">
+   <header className="rounded-3xl bg-gradient-to-br from-[#172445] via-[#29366e] to-[#a95a11] p-6 text-white sm:p-10">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+     <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-black text-white"><Coins className="h-4 w-4"/>Bazunk Cashback</span>
+     <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/70 px-4 py-2 font-bold text-white"><ArrowLeft className="h-4 w-4"/>Dashboard</Link>
     </div>
-  );
+    <h1 className="mt-5 text-3xl font-black sm:text-5xl">Your cashback, clearly tracked.</h1>
+    <p className="mt-3 max-w-2xl text-base font-semibold text-white">See cashback earned on qualifying Bazunk purchases, when it becomes available and the status of withdrawal requests.</p>
+    <p className="mt-4 rounded-xl border border-white/40 bg-white/10 px-4 py-3 text-sm font-bold text-white">
+     {loading?"Checking programme status…":active?"Cashback earning is active for new eligible purchases.":"Cashback earning is currently paused. No new cashback is being awarded."}
+    </p>
+   </header>
+   {error&&<div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-4 font-bold text-red-950 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</div>}
+   {message&&<div role="status" className="rounded-xl border border-emerald-300 bg-emerald-50 p-4 font-bold text-emerald-950 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-100">{message}</div>}
+   {!isSignedIn&&isLoaded&&<div className={panel+" flex flex-wrap items-center justify-between gap-3"}>
+    <div><h2 className="text-lg font-black">Sign in to see your actual cashback</h2><p className={sub}>The calculator below is an estimate, not a wallet balance.</p></div>
+    <Link href="/sign-in" className={primary}>Sign in <ArrowRight className="h-4 w-4"/></Link>
+   </div>}
+   {account&&<section className="space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black">My cashback wallet</h2><button className={btn} disabled={loading} onClick={()=>void load()}><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh</button></div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+     {[{title:"Available to request",value:account.balance.availableMinor,icon:Wallet},
+       {title:"Pending holding period",value:account.balance.pendingMinor,icon:Clock},
+       {title:"Reserved for payouts",value:account.balance.reservedMinor,icon:LockKeyhole},
+       {title:"Payouts recorded paid",value:account.balance.paidMinor,icon:CheckCircle2}
+      ].map(x=><div key={x.title} className={panel}><x.icon className="h-6 w-6 text-orange-600 dark:text-orange-300"/><p className={sub+" mt-3"}>{x.title}</p><p className="mt-1 text-3xl font-black">{gbp(x.value)}</p></div>)}
+    </div>
+    {account.balance.adjustmentMinor<0&&<p className="rounded-xl bg-amber-50 p-4 font-bold text-amber-950 dark:bg-amber-950 dark:text-amber-100">Your eligible balance has been reduced by order adjustments. Future cashback may offset previous withdrawals. Contact support for a breakdown.</p>}
+    <div className="grid gap-4 lg:grid-cols-2">
+     <article className={panel+" space-y-3"}><h3 className="text-xl font-black">Request a payout</h3>
+      <p className={sub}>Withdrawals are reviewed and settled manually. No automatic Stripe or bank transfer is connected. Do not enter bank information on this page.</p>
+      {settings?.payoutRequestsEnabled&&settings.enabled?
+       <><p className="text-sm font-bold">Minimum request: {gbp(Math.round(settings.minPayoutGbp*100))}</p>
+       <label className="block text-sm font-black">Amount to request (GBP)<input className={input+" mt-1"} type="number" min={settings.minPayoutGbp} max={account.balance.availableMinor/100} step=".01" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.00"/></label>
+       <button className={primary+" w-full"} disabled={busy||account.balance.availableMinor<Math.round(settings.minPayoutGbp*100)} onClick={()=>void submit()}>{busy?"Submitting…":"Request payout"}</button></>:
+       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">Payout requests are not enabled yet. Any earned balance remains recorded; no bank payout is promised.</div>}
+      {settings?.payoutPolicy&&<p className={sub+" border-t border-slate-200 pt-3 dark:border-slate-600"}>{settings.payoutPolicy}</p>}
+     </article>
+     <article className={panel+" space-y-3"}><h3 className="text-xl font-black">Withdrawal history</h3>
+      {!account.payouts.length&&<p className={sub}>No payout requests yet.</p>}
+      <div className="max-h-72 space-y-3 overflow-y-auto">{account.payouts.map(p=><div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-300 p-3 dark:border-slate-600" key={p.id}>
+       <div><p className="font-black">{gbp(p.amount_minor)} <span className="ml-1 text-sm font-semibold capitalize">· {p.status}</span></p>
+       <p className={sub}>{new Date(p.requested_at).toLocaleDateString("en-GB")}{p.decision_note?" · "+p.decision_note:""}</p></div>
+       {p.status==="requested"&&<button type="button" className={btn} disabled={busy} onClick={()=>void cancel(p)}>Cancel</button>}
+      </div>)}</div>
+     </article>
+    </div>
+    <article className={panel}><h3 className="text-xl font-black">Purchase cashback activity</h3>
+     <p className={sub+" mt-1"}>Cashback is based on eligible item prices in GBP, not delivery or buyer protection. Refunds and disputes can remove eligibility.</p>
+     {!account.earnings.length&&<div className="mt-4 rounded-xl border border-slate-300 p-4 font-semibold dark:border-slate-600">No eligible cashback earnings have been recorded yet. Existing historic orders are not automatically backdated.</div>}
+     <div className="mt-3 space-y-2">{account.earnings.map(e=>{
+      const blocked=e.order_status==="refunded"||e.order_status==="cancelled"||Number(e.refunded_total)>0;
+      const pending=new Date(e.available_at).getTime()>Date.now();
+      return <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 p-3 dark:border-slate-600" key={e.order_id}>
+       <div className="min-w-0"><strong className="block break-words">{e.item_title}</strong>
+        <p className={sub}>{e.tier_id} · {(e.rate_bps/100).toFixed(2)}% of {gbp(e.spend_minor)} · {new Date(e.earned_at).toLocaleDateString("en-GB")}</p>
+        <p className={sub}>{blocked?"Ineligible: order adjusted":pending?"Available from "+new Date(e.available_at).toLocaleDateString("en-GB"):"Holding period complete (subject to order checks)"}</p>
+       </div><strong className={"text-lg "+(blocked?"line-through text-slate-500 dark:text-slate-300":"text-emerald-700 dark:text-emerald-300")}>{gbp(e.amount_minor)}</strong>
+      </div>;
+     })}</div>
+    </article>
+   </section>}
+   <section className={panel+" space-y-4"}>
+    <div><h2 className="text-2xl font-black">Cashback calculator</h2><p className={sub}>Illustration only. The actual tier for each order is based on your qualifying prior lifetime purchases.</p></div>
+    <label className="block text-sm font-black" htmlFor="cashback-price">Example item price (GBP)<input id="cashback-price" type="range" min={10} max={3000} step={10} className="mt-3 w-full accent-orange-600" value={spend} onChange={e=>setSpend(Number(e.target.value))}/></label>
+    <div className="grid gap-3 sm:grid-cols-3">{[
+     {label:"Example item price",value:gbp(spend*100)},
+     {label:"Illustrative rate",value:tier?tier.rate+"% · "+tier.name:"—"},
+     {label:"Example cashback",value:gbp(estimated)}
+    ].map(x=><div key={x.label} className="rounded-xl bg-slate-100 p-4 dark:bg-[#0f1d36]"><p className={sub}>{x.label}</p><p className="mt-1 text-xl font-black">{x.value}</p></div>)}</div>
+   </section>
+   <section><h2 className="mb-4 text-2xl font-black">Cashback tiers</h2>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{(settings?.tiers||[]).map((t,i)=><article key={t.id} className={panel}>
+     <p className="text-xs font-black uppercase tracking-wide text-orange-700 dark:text-orange-300">{["🏅","🥈","🥇","💎"][i]} {t.name}</p>
+     <p className="mt-2 text-3xl font-black">{t.rate}%</p><p className={sub}>Tier threshold: {gbp(t.spendGbp*100)} qualifying lifetime spend</p>
+     {t.perks.length>0&&<div className="mt-3 space-y-1">{t.perks.map((note,k)=><p key={k} className={sub}>• {note}</p>)}</div>}
+    </article>)}</div>
+   </section>
+   <p className={sub+" rounded-xl border border-slate-300 p-4 text-center dark:border-slate-600"}><ShieldCheck className="mr-1 inline h-4 w-4 text-orange-600"/>Cashback is subject to eligibility checks, refunds, disputes, the holding period and the programme settings. Requesting a payout does not send funds automatically.</p>
+  </main><Footer/>
+ </div>;
 }
