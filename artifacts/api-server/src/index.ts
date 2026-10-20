@@ -590,7 +590,7 @@ async function runAppMigrations() {
   // The advisory lock prevents concurrent Render instances from applying it twice.
   await run(sql`DO $
   DECLARE previous_policy JSONB;
-  DECLARE new_tiers JSONB;
+          new_tiers JSONB;
   BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('bazunk-pricing-20261020-v2'));
     IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='pricing_policy_20261020_v2') THEN
