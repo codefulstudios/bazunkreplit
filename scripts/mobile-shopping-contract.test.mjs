@@ -80,3 +80,10 @@ test("saved draft updates keep mobile delivery and inventory fields",()=>{
   assert.match(direct,/async function shrinkPhoto/);
   assert.match(direct,/capture="environment"/);
 });
+
+test("browse controls remain labelled and flexible at 320px",()=>{
+ assert.match(browse,/aria-label="Grid view"/);
+ assert.match(browse,/aria-label="List view"/);
+ assert.match(browse,/aria-label="Remove category filter"/);
+ assert.match(browse,/flex min-w-0 max-w-full flex-wrap items-center gap-2/);
+});
