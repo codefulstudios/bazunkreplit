@@ -225,7 +225,7 @@ export function CartDrawer() {
                   </div>
                   <p className="rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
                     Buyer Protection is added at checkout for personal-seller items
-                    (5% + 70p by default, with one fixed fee per checkout).
+                    (6% + £1 by default in the UK, with one fixed fee per checkout).
                     Business-seller purchases include protection with no extra buyer fee.
                     Your final total is shown before payment.
                   </p>
