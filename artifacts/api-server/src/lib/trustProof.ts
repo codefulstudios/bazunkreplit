@@ -114,3 +114,28 @@ export async function auditProof(listingId:number,actor:string,action:string,det
 }
 export const EXTERNAL_PROVIDER_NOTICE=
  "Independent product authentication requires a separately checked third-party report. Seller photos and a Bazunk proof review do not establish authenticity.";
+
+/** Periodic retention job: unsubmitted uploads are short-lived; rejected and
+ * revoked media is purged without erasing the administrative decision trail.
+ * Approved evidence remains while the listing is live, until revoked or deleted.
+ */
+export function startTrustProofRetention(){
+ let busy=false;
+ const sweep=async()=>{
+  if(busy)return;busy=true;
+  try{
+   await ensureTrustProofTables();
+   const r=await db.execute(sql`DELETE FROM marketplace_trust_proof_media m
+    USING marketplace_trust_proofs p
+    WHERE m.listing_id=p.listing_id AND (
+     (p.status='collecting' AND p.expires_at<NOW()-INTERVAL '48 hours')
+     OR (p.status='rejected' AND p.updated_at<NOW()-INTERVAL '90 days')
+     OR (p.status='revoked' AND p.updated_at<NOW()-INTERVAL '30 days')
+    ) RETURNING m.listing_id`);
+   if(r.rows.length)console.info("TrustProof media retention purge",r.rows.length);
+  }catch(e){console.error("TrustProof retention cleanup delayed",e);}
+  finally{busy=false;}
+ };
+ setTimeout(()=>{void sweep();},30*60_000).unref();
+ setInterval(()=>{void sweep();},6*60*60_000).unref();
+}
