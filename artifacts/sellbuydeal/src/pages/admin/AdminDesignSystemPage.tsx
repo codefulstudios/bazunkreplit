@@ -113,7 +113,7 @@ export function AdminDesignSystemPage() {
       {designTab==="sections" && <DesignSectionsEditor />}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<DesignTargetGuide target={designTab as DesignTarget}/>}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<AdminSettingsPage key={designTab} embedded initialTab={designTab}/>}
-      {designTab==="colours"&&<><DesignTargetGuide target="colours" />
+      {designTab==="colours"&&<><DesignTargetGuide target="colours" override={{title:area==="admin"?"Admin shared colours":area==="dealpilot"?"DealPilot shared colours":"Storefront shared colours",description:"Editing "+area+" / "+mode+". Changes apply to shared colour tokens for that area and selected theme.",url:area==="admin"?"/admin/dashboard":area==="dealpilot"?"/deal-pilot":"/",coverage:"Shared "+area+" components only. Specific homepage section and icon settings may take precedence."}}/>
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
