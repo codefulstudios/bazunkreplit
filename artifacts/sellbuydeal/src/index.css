@@ -1443,3 +1443,20 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 
 .dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] { color:#fff !important; }
 .dark .bz-importer-dialog .bz-example-light [class~="bg-[#171717]"] :is(span,p) {color:#fff !important;}
+
+
+/* Keep the Chatwoot launcher clear of thumb navigation and the mobile seller
+   Publish bar. Only move the launcher; never shift the open chat conversation.
+   :has() scopes this to routes actually showing those fixed controls. */
+@media (max-width: 1023px) {
+  html:has([data-testid="mobile-direct-sale-actions"]) .woot-widget-bubble,
+  html:has([data-testid="mobile-direct-sale-actions"]) .woot--bubble-holder {
+    bottom: calc(102px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+@media (max-width: 767px) {
+  html:has([data-testid="mobile-shop-nav"]) .woot-widget-bubble,
+  html:has([data-testid="mobile-shop-nav"]) .woot--bubble-holder {
+    bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
