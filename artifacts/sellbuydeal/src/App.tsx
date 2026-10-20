@@ -52,7 +52,7 @@ function BackToTop() {
       aria-label="Back to top"
       title="Back to top"
       onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })}
-      className="fixed bottom-6 left-4 sm:left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#F26B21] text-white shadow-lg border border-orange-300 hover:bg-[#d95512] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
+      className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#F26B21] text-white shadow-lg border border-orange-300 hover:bg-[#d95512] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
       data-testid="button-back-to-top"
     >
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="m6 12 6-6 6 6"/><path d="M12 6v12"/></svg>
@@ -92,6 +92,8 @@ import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
 import { BrowsePage } from "@/pages/BrowsePage";
 import { ListingPage } from "@/pages/ListingPage";
 import { CheckoutPage } from "@/pages/CheckoutPage";
+import { MobileNotificationsPage } from "@/pages/MobileNotificationsPage";
+import { MobileShopNav } from "@/components/MobileShopNav";
 import { BundlePage } from "@/pages/BundlePage";
 import { ClassifiedsPage } from "@/pages/ClassifiedsPage";
 import { MessagesPage } from "@/pages/MessagesPage";
@@ -367,6 +369,7 @@ function Router() {
       <Route path="/search" component={BrowsePage} />
       <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/notifications" component={MobileNotificationsPage} />
       <Route path="/bundle">{() => <FeatureGate feature="bundles" name="Bundles"><BundlePage /></FeatureGate>}</Route>
       <Route path="/classifieds">{() => <FeatureGate feature="classifieds" name="Classifieds"><ClassifiedsPage /></FeatureGate>}</Route>
       <Route path="/messages">{() => <FeatureGate feature="messaging" name="Messaging"><MessagesPage /></FeatureGate>}</Route>
@@ -466,6 +469,7 @@ function InnerApp() {
                     <ScrollToTop />
                     <BackToTop />
                     <Router />
+                    <MobileShopNav />
                     <CartDrawer />
                     <ChatwootWidget />
                     <CookieMarketingScripts />

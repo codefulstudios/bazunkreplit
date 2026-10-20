@@ -180,6 +180,31 @@ export function DirectSalePage() {
   const quickMode = location === "/sell/quick";
   const [step, setStep] = useState(1);
   const steps = ["Basics", "Photos", "Details", "Shipping", "Video", "Review"];
+  // The phone flow deliberately skips desktop's optional video upsell.
+  const mobileSteps = [1, 2, 3, 4, 6] as const;
+  const mobileLabels = ["Item", "Photos", "Details", "Delivery", "Publish"];
+  const mobilePosition = Math.max(0, mobileSteps.indexOf(step as typeof mobileSteps[number]));
+  function mobileContinue() {
+    const missing: string[] = [];
+    if (step === 1) {
+      if (!title.trim()) missing.push("Enter a listing title");
+      if (!price || !Number.isFinite(Number(price)) || Number(price) <= 0) missing.push("Enter a valid selling price");
+      if (!category) missing.push("Choose a category");
+      if (!description.trim()) missing.push("Describe your item");
+    }
+    if (missing.length) {
+      setValidationErrors(missing);
+      document.getElementById("mobile-direct-sale-steps")?.scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    setValidationErrors([]);
+    const next = mobileSteps[Math.min(mobileSteps.length-1,mobilePosition+1)];
+    goStep(next);
+  }
+  function mobileBack() {
+    setValidationErrors([]);
+    goStep(mobileSteps[Math.max(0,mobilePosition-1)]);
+  }
   const goStep = (next: number) => { setStep(Math.max(1, Math.min(6, next))); window.requestAnimationFrame(() => document.getElementById("direct-sale-step-nav")?.scrollIntoView({ behavior: "smooth", block: "start" })); };
 
   const snapDraftRef=useRef(false);
@@ -249,7 +274,7 @@ export function DirectSalePage() {
         setSubsubcategory(form.subsubcategory ?? "");
         setDescription(form.description ?? draft.description ?? "");
         setCondition(form.condition ?? draft.condition ?? "brand-new");
-        setPhotos(form.photos ?? (draft.image ? [draft.image] : []));
+        setPhotos(form.photos ?? (Array.isArray(metadata.photos) ? metadata.photos : (draft.image ? [draft.image] : [])));
         setQuantity(form.quantity ?? "1");
         setSku(form.sku ?? "");
         setShipOrigin(form.shipOrigin ?? "UK");
@@ -267,38 +292,66 @@ export function DirectSalePage() {
   }, [user?.email, marketplaceRegion, getToken]);
 
   function draftPayload() {
-    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, photos, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
+    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
     return { title: title.trim() || "Untitled draft", price: price || "0", currency: extractCurrencyCode(currency),
       marketplaceRegion, category: category || "General", description, condition, image: photos[0] ?? null, photos,
       sellerEmail: user?.email, sellerName: user?.username ?? user?.name ?? null,
       specifications, draftForm: form, tags, status: "draft" };
   }
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    const remaining = 10 - photos.length;
-    const toRead = files.slice(0, remaining);
-    Promise.all(
-      toRead.map(
-        (f) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target?.result as string);
-            reader.readAsDataURL(f);
-          })
-      )
-    ).then((dataUrls) => setPhotos((p) => [...p, ...dataUrls]));
+  const [uploadingPhotos,setUploadingPhotos] = useState(false);
+  const cameraInputRef=useRef<HTMLInputElement>(null);
+
+  // Re-encode large smartphone photos so the whole listing stays under the
+  // API's 10 MB JSON limit. Sequential processing limits mobile memory usage.
+  async function shrinkPhoto(file:File):Promise<string> {
+    if (!file.type.startsWith("image/")) throw Error("Please choose an image file.");
+    const url=URL.createObjectURL(file);
+    try {
+      const image=await new Promise<HTMLImageElement>((resolve,reject)=>{
+        const element=new Image();
+        element.onload=()=>resolve(element);
+        element.onerror=()=>reject(Error("This photo could not be opened."));
+        element.src=url;
+      });
+      const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+      const context=canvas.getContext("2d");
+      if(!context)throw Error("Your browser cannot prepare this photo.");
+      context.fillStyle="#ffffff";
+      context.fillRect(0,0,canvas.width,canvas.height);
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      return canvas.toDataURL("image/jpeg",0.75);
+    } finally {URL.revokeObjectURL(url);}
+  }
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files=Array.from(e.target.files??[]);
+    e.target.value="";
+    const toRead=files.slice(0,Math.max(0,10-photos.length));
+    if(!toRead.length)return;
+    setUploadingPhotos(true);setPublishError(null);
+    try{
+      const prepared:string[]=[];
+      for(const file of toRead) prepared.push(await shrinkPhoto(file));
+      setPhotos(previous=>[...previous,...prepared].slice(0,10));
+    }catch(err){setPublishError(err instanceof Error?err.message:"Could not add photo. Try another image.");}
+    finally{setUploadingPhotos(false);}
   }
 
   async function handlePublish(e: React.FormEvent) {
     e.preventDefault();
     const errors: string[] = [];
     if (!title.trim()) errors.push("Title is required");
-    if (!price || parseFloat(price) <= 0) errors.push("Price must be greater than 0");
+    if (!price || !Number.isFinite(Number(price)) || Number(price) <= 0) errors.push("Price must be greater than 0");
     if (!category) errors.push("Category is required");
     if (!description.trim()) errors.push("Description is required");
 
     if (errors.length > 0) {
+      // Mobile must display a useful correction screen rather than a hidden review error.
+      if (window.matchMedia("(max-width: 1023px)").matches) setStep(1);
       setValidationErrors(errors);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -402,10 +455,10 @@ export function DirectSalePage() {
           .direct-sale-form > section textarea:focus { border-color: #5aa3ff; outline-color: #5aa3ff; }
           .direct-sale-form > section [class*="text-gray-"] { color: #d5e4f6; }
         `}</style>
-        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0">
+        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0 pb-32 lg:pb-0">
 
           {/* Header card */}
-          <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-7 py-7 mb-0 shadow-lg">
+          <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-5 py-5 sm:px-7 sm:py-7 mb-0 shadow-lg">
             <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sale" : "Direct Sale"}</h1>
             <a href="/sell/snap" className="mt-3 inline-flex items-center rounded-xl border border-white/50 bg-white/20 px-4 py-2 text-sm font-bold text-white hover:bg-white/30">📸 Snap & Sell — photo & barcode assistant</a>
             <p className="text-white text-sm mt-1">{quickMode ? "List in under a minute. Add more details from your dashboard later." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
@@ -413,7 +466,7 @@ export function DirectSalePage() {
 
 
 
-          <aside className="min-w-0 lg:col-start-2 lg:row-start-4 lg:row-span-8 lg:sticky lg:top-24 space-y-4">
+          <aside className="hidden lg:block min-w-0 lg:col-start-2 lg:row-start-4 lg:row-span-8 lg:sticky lg:top-24 space-y-4">
             <section className="rounded-2xl border border-sky-400/25 bg-[#102541] p-4 text-white shadow-xl">
               <h2 className="font-black text-lg flex items-center gap-2"><Eye className="w-5 h-5 text-sky-300"/> Listing Preview</h2>
               <p className="text-xs text-sky-200 mt-1 mb-4">Updates as you enter your details</p>
@@ -427,9 +480,29 @@ export function DirectSalePage() {
             <section className="rounded-2xl border border-purple-400/60 bg-gradient-to-br from-[#35205d] to-[#44227d] p-5 text-white shadow-lg"><h2 className="font-black text-lg flex items-center gap-2"><Video className="w-5 h-5 text-purple-200"/> Boost Your Listing</h2><p className="text-sm font-medium leading-relaxed text-white mt-2">Add a product video to help buyers see your item in action. Optional — you can add it below.</p><a href="#product-video" className="inline-flex mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-bold text-white hover:bg-purple-400">Go to video options ↓</a></section>
             <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-100"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
           </aside>
-          {!quickMode && <nav id="direct-sale-step-nav" aria-label="Direct Sale steps" className="lg:col-span-2 lg:row-start-2 scroll-mt-24 grid grid-cols-3 sm:grid-cols-6 gap-2 rounded-2xl bg-white dark:bg-[#102541] p-3 shadow-sm border border-slate-200 dark:border-blue-700/40">{steps.map((name,i)=><button type="button" key={name} onClick={()=>goStep(i+1)} aria-current={step===i+1?"step":undefined} className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-xs sm:text-sm font-bold transition-colors ${step===i+1?"bg-blue-600 text-white shadow-md":"bg-slate-100 text-slate-900 hover:bg-blue-100 dark:bg-[#243b61] dark:!text-white dark:hover:bg-[#34558a]"}`}><span className="rounded-full bg-white/20 px-2 py-1 text-current">{i+1}</span>{name}</button>)}</nav>}
-          {!quickMode && <div className="lg:col-span-2 lg:row-start-3 flex justify-between items-center gap-3 rounded-xl bg-blue-50 dark:bg-[#172e56] px-5 py-3 text-slate-900 dark:!text-white"><span className="font-bold">Step {step} of 6: {steps[step-1]} · {Math.round(step / 6 * 100)}%</span><div className="flex gap-2"><button type="button" disabled={step===1} onClick={()=>goStep(step-1)} className="rounded-lg bg-white text-slate-900 dark:bg-[#30496e] dark:!text-white px-4 py-2 font-bold disabled:opacity-50">Back</button><button type="button" disabled={step===6} onClick={()=>goStep(step+1)} className="rounded-lg bg-gradient-to-r from-blue-600 to-fuchsia-600 px-4 py-2 font-black text-white disabled:opacity-40">Next →</button></div></div>}
-          {/* Basic Information */}
+          {!quickMode && <nav id="direct-sale-step-nav" aria-label="Direct Sale steps" className="hidden lg:grid lg:col-span-2 lg:row-start-2 scroll-mt-24 grid-cols-6 gap-2 rounded-2xl bg-white dark:bg-[#102541] p-3 shadow-sm border border-slate-200 dark:border-blue-700/40">{steps.map((name,i)=><button type="button" key={name} onClick={()=>goStep(i+1)} aria-current={step===i+1?"step":undefined} className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-xs sm:text-sm font-bold transition-colors ${step===i+1?"bg-blue-600 text-white shadow-md":"bg-slate-100 text-slate-900 hover:bg-blue-100 dark:bg-[#243b61] dark:!text-white dark:hover:bg-[#34558a]"}`}><span className="rounded-full bg-white/20 px-2 py-1 text-current">{i+1}</span>{name}</button>)}</nav>}
+          {!quickMode && <div className="hidden lg:col-span-2 lg:row-start-3 lg:flex justify-between items-center gap-3 rounded-xl bg-blue-50 dark:bg-[#172e56] px-5 py-3 text-slate-900 dark:!text-white"><span className="font-bold">Step {step} of 6: {steps[step-1]} · {Math.round(step / 6 * 100)}%</span><div className="flex gap-2"><button type="button" disabled={step===1} onClick={()=>goStep(step-1)} className="rounded-lg bg-white text-slate-900 dark:bg-[#30496e] dark:!text-white px-4 py-2 font-bold disabled:opacity-50">Back</button><button type="button" disabled={step===6} onClick={()=>goStep(step+1)} className="rounded-lg bg-gradient-to-r from-blue-600 to-fuchsia-600 px-4 py-2 font-black text-white disabled:opacity-40">Next →</button></div></div>}
+          {/* Phone-only editor: short steps, clear progress and always-visible publish footer. */}
+          {!quickMode && <section id="mobile-direct-sale-steps" aria-label="Mobile listing progress"
+            className="scroll-mt-28 rounded-2xl border border-sky-500/40 bg-[#142d4f] px-4 py-4 text-white lg:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <div><p className="text-xs font-bold uppercase tracking-wider text-sky-200">Mobile Direct Sale</p>
+                <h2 className="mt-1 text-xl font-black text-white">{mobileLabels[mobilePosition]}</h2></div>
+              <span className="rounded-lg bg-[#294a73] px-3 py-2 text-sm font-black text-white">Step {mobilePosition+1} of 5</span>
+            </div>
+            <div className="mt-4 grid grid-cols-5 gap-2" aria-label="Listing progress">
+              {mobileLabels.map((name,index)=><button type="button" key={name}
+                aria-label={`Go to ${name}`} aria-current={mobilePosition===index?"step":undefined}
+                onClick={()=>{setValidationErrors([]);goStep(mobileSteps[index]);}}
+                className={`min-h-11 rounded-lg px-1 py-2 text-[11px] font-bold ${mobilePosition===index?"bg-orange-600 text-white":index<mobilePosition?"bg-emerald-800 text-white":"bg-[#284568] text-slate-100"}`}>
+                <span className="block text-sm">{index+1}</span>{name}
+              </button>)}
+            </div>
+            {validationErrors.length>0&&<div role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-950 p-3 text-sm font-bold text-white">
+              {validationErrors.map(err=><p key={err}>• {err}</p>)}
+            </div>}
+          </section>}
+                    {/* Basic Information */}
           <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <h2 className="text-base font-bold text-white mb-5">Basic Information</h2>
 
@@ -602,7 +675,7 @@ export function DirectSalePage() {
           </section>
 
           {/* Eco-Friendly */}
-          <section className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-5 border border-sky-400/15">
+          <section className={`min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-5 border border-sky-400/15 ${quickMode || step===1 ? "" : "hidden lg:block"}`}>
             <label
               className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
                 ecoFriendly ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-green-300"
@@ -854,7 +927,8 @@ export function DirectSalePage() {
                     <button
                       type="button"
                       onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-lg font-bold"
+                      aria-label={`Remove photo ${i+1}`}
+                      className="absolute inset-0 bg-black/45 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xl font-black"
                     >
                       ×
                     </button>
@@ -870,7 +944,7 @@ export function DirectSalePage() {
 
             {photos.length < 10 && (
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-5 sm:p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
                 onClick={() => photoInputRef.current?.click()}
                 data-testid="dropzone-photos"
               >
@@ -886,8 +960,14 @@ export function DirectSalePage() {
                   data-testid="button-choose-photos"
                 >
                   <Upload className="w-4 h-4" />
-                  Choose Files
+                  {uploadingPhotos?"Preparing photos…":"Choose Files"}
                 </button>
+                <button type="button" disabled={uploadingPhotos}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-300 bg-[#23466b] px-5 py-2.5 text-sm font-bold text-white lg:hidden"
+                  onClick={e=>{e.stopPropagation();cameraInputRef.current?.click();}}
+                  data-testid="button-take-photo"><Camera className="h-4 w-4"/> Take a photo</button>
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+                  className="hidden" onChange={handlePhotoChange} />
                 <input
                   ref={photoInputRef}
                   type="file"
@@ -1383,6 +1463,27 @@ export function DirectSalePage() {
               )}
             </AnimatePresence>
           </section>
+          {/* Fixed on phones: never make people scroll through the full editor to find Submit. */}
+          <div data-testid="mobile-direct-sale-actions" className="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-500 bg-[#102541]/95 px-4 pt-3 text-white shadow-[0_-8px_25px_rgba(0,0,0,.4)] backdrop-blur-lg lg:hidden"
+            style={{paddingBottom:"max(12px, env(safe-area-inset-bottom))"}}>
+            <div className="mx-auto flex max-w-lg items-center gap-2">
+              {!quickMode&&mobilePosition>0&&<button type="button" onClick={mobileBack} className="min-h-12 rounded-xl border border-slate-400 px-4 text-sm font-bold text-white">Back</button>}
+              <button type="button" onClick={()=>void handleSaveDraft()} disabled={savingDraft||publishing}
+                className="min-h-12 rounded-xl border border-sky-400/50 px-3 text-xs font-bold text-slate-100 disabled:opacity-70"
+                data-testid="mobile-save-draft">{savingDraft?"Saving…":draftSaved?"Saved ✓":"Save draft"}</button>
+              {quickMode||mobilePosition===mobileSteps.length-1?
+                <button type="submit" disabled={publishing||published}
+                  data-testid="mobile-publish-listing"
+                  className="min-h-12 flex-1 rounded-xl bg-orange-600 px-3 text-base font-black text-white disabled:opacity-60">
+                  {publishing?"Publishing…":published?"Published ✓":"Publish listing"}
+                </button>:
+                <button type="button" onClick={mobileContinue} data-testid="mobile-next-listing"
+                  className="min-h-12 flex-1 rounded-xl bg-orange-600 px-3 text-base font-black text-white">
+                  {mobilePosition===mobileSteps.length-2?"Review listing →":"Continue →"}
+                </button>}
+            </div>
+            {publishError&&<p role="alert" className="mx-auto mt-2 max-w-lg text-sm font-bold text-red-200">{publishError}</p>}
+          </div>
         </form>
       </div>
 

@@ -139,10 +139,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 
   if (view === "list") {
     return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
@@ -180,15 +177,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
@@ -213,7 +207,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
         <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
@@ -228,7 +222,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -934,7 +928,7 @@ export function BrowsePage() {
 
       <AdSlot slotKey="browse_top" />
 
-      <div className="container mx-auto px-4 py-6 flex gap-6 flex-1">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-6 flex-1 pb-24 md:pb-6">
 
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-56 flex-shrink-0">
@@ -953,11 +947,21 @@ export function BrowsePage() {
 
         {/* Main content */}
         <main className="flex-1 min-w-0">
+          {/* Thumb-friendly sorting without an extra modal. Desktop keeps the detailed selector. */}
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-2 sm:hidden" aria-label="Quick sorting" data-testid="mobile-browse-sort">
+            {([
+              ["newest","Newest"],["price-asc","Lowest £"],["price-desc","Highest £"],["views","Popular"]
+            ] as const).map(([value,label])=><button key={value} type="button"
+              onClick={()=>setSort(value)} aria-pressed={sort===value}
+              className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold ${sort===value?"border-indigo-600 bg-indigo-600 text-white":"border-slate-300 bg-white text-slate-900 dark:border-slate-500 dark:bg-[#1b3151] dark:text-white"}`}>
+              {label}
+            </button>)}
+          </div>
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
               <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
-              <p className="text-sm text-gray-400">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
             </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
@@ -965,7 +969,7 @@ export function BrowsePage() {
                 <Bell className="h-4 w-4"/> Save search
               </button>
               {/* Sort */}
-              <div className="relative">
+              <div className="relative hidden sm:block">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
@@ -1022,7 +1026,7 @@ export function BrowsePage() {
             </div>
           ) : (
             <div className={view === "grid"
-              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4"
               : "flex flex-col gap-3"
             }>
               {filtered.map((product) => (

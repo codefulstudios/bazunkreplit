@@ -513,9 +513,31 @@ router.patch("/listings/:id", async (req, res) => {
     if (!email || email.trim().toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Seller account mismatch" }); return; }
     const body = req.body as Record<string, unknown>;
     const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency", "specifications", "tags"] as const;
-    const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
+    const updates: Partial<typeof listingsTable.$inferInsert> = {};
     for (const key of allowed) {
-      if (typeof body[key] === "string") updates[key] = body[key] as string;
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = body[key];
+    }
+    // Mobile and desktop draft publication share this API. Persist the fields
+    // buyers use to choose delivery, including when publishing a saved draft.
+    if (body.image === null) updates.image = null;
+    for (const key of ["shipOrigin", "shipOriginOther", "shipZone", "carrier", "sku", "sellerName", "sellerUsername"] as const) {
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = (body[key] as string).slice(0, key==="shipOriginOther"||key==="sku"?120:80);
+    }
+    for (const key of ["shippingPrice", "handlingCharge"] as const) {
+      if (body[key] !== undefined) {
+        const amount=Number(body[key]);
+        if (!Number.isFinite(amount) || amount<0 || amount>100000) {
+          res.status(400).json({error:"Shipping and handling must be valid non-negative amounts"});return;
+        }
+        updates[key]=amount.toFixed(2);
+      }
+    }
+    if (body.quantity !== undefined) {
+      const quantity=Number(body.quantity);
+      if (!Number.isSafeInteger(quantity) || quantity<1 || quantity>10000) {
+        res.status(400).json({error:"Quantity must be between 1 and 10000"});return;
+      }
+      updates.quantity=quantity;
     }
 
     if (typeof body.subsubcategory === "string" && body.subsubcategory !== "" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory)) { res.status(400).json({ error: "Invalid third-level category slug" }); return; }

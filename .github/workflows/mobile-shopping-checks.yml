@@ -1,0 +1,49 @@
+name: Mobile shopping and selling checks
+on:
+  pull_request:
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/DirectSalePage.tsx'
+      - 'artifacts/api-server/src/routes/listings.ts'
+      - 'artifacts/sellbuydeal/src/pages/CheckoutPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/BrowsePage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/MobileNotificationsPage.tsx'
+      - 'artifacts/sellbuydeal/src/components/MobileShopNav.tsx'
+      - 'artifacts/sellbuydeal/src/App.tsx'
+      - 'scripts/mobile-shopping-contract.test.mjs'
+      - '.github/workflows/mobile-shopping-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/DirectSalePage.tsx'
+      - 'artifacts/api-server/src/routes/listings.ts'
+      - 'artifacts/sellbuydeal/src/pages/CheckoutPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/BrowsePage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/MobileNotificationsPage.tsx'
+      - 'artifacts/sellbuydeal/src/components/MobileShopNav.tsx'
+      - 'scripts/mobile-shopping-contract.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile-shopping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Check mobile feature contracts
+        run: node --test scripts/mobile-shopping-contract.test.mjs
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile --prod=false
+      - name: Typecheck libraries
+        run: pnpm run typecheck:libs
+      - name: Typecheck frontend
+        run: pnpm --filter @workspace/sellbuydeal typecheck
+      - name: Build storefront
+        run: pnpm --filter @workspace/sellbuydeal build
