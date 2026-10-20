@@ -866,6 +866,30 @@ router.put("/admin/settings", async (req, res) => {
         if(![[palette.text,palette.background],[palette.text,palette.surface],[palette.secondaryText,palette.surface],[palette.text,palette.field],[palette.actionText,palette.action]].every(([a,b])=>ratio(a,b)>=4.5))throw Error("Insufficient contrast");
       } catch { res.status(400).json({error:"Design palette failed accessibility validation"}); return; }
     }
+    for(const [key,value] of Object.entries(updates)){
+      if(!key.startsWith("design_"))continue;
+      if(typeof value!=="string"){res.status(400).json({error:"Invalid design setting"});return;}
+      if(key==="design_hero_image_url"){
+        if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500)){res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});return;}
+      }else if(key==="design_hero_image_alt"){
+        if(value.length>150){res.status(400).json({error:"Graphic description too long"});return;}
+      }else if(/^design_category_icon_/.test(key)){
+        if(!/^design_category_icon_(electronics|fashion|gaming|home|sports|books|collectibles|automotive)$/.test(key)||!["","smartphone","shirt","gaming","home","sports","books","collectibles","automotive","package"].includes(value)){res.status(400).json({error:"Unrecognised category icon"});return;}
+      }else if(/^design_section_/.test(key)){
+        if(!/^design_section_(home_hero|home_categories|home_spotlight|home_promos)_(light|dark)$/.test(key)){res.status(400).json({error:"Unrecognised design section"});return;}
+        if(value==="")continue;
+        try{
+          const p=JSON.parse(value);
+          const keys=["background","text","accent","accentText"];
+          if(!p||Object.keys(p).sort().join(",")!==keys.slice().sort().join(",")||!keys.every(k=>typeof p[k]==="string"&&/^#[0-9a-fA-F]{6}$/.test(p[k])))throw Error("Invalid colours");
+          const lum=(hex:string)=>{const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+          const contrast=(a:string,b:string)=>{const a1=lum(a),b1=lum(b);return (Math.max(a1,b1)+.05)/(Math.min(a1,b1)+.05)};
+          if(contrast(p.text,p.background)<4.5||contrast(p.accentText,p.accent)<4.5)throw Error("Low contrast");
+        }catch{res.status(400).json({error:"Section style must pass WCAG AA contrast"});return;}
+      }else if(!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)){
+        {res.status(400).json({error:"Unrecognised design setting"});return;}
+      }
+    }
     const keys = Object.keys(updates);
     const oldRows = keys.length ? await db.execute(sql`SELECT key, value FROM site_settings`).then(r => r.rows as any[]) : [];
     const beforeSettings = Object.fromEntries(oldRows.filter((r:any) => keys.includes(String(r.key))).map((r:any) => [r.key, r.value]));

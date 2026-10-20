@@ -12,6 +12,8 @@ import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import { useRawSettings } from "@/context/SiteSettingsContext";
+import { useTheme } from "next-themes";
+import { readSection,sectionStyle } from "@/design-system/sectionAppearance";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 
 const PILLS = [
@@ -66,6 +68,7 @@ const SELL_OPTIONS = [
   },
 ];
 
+const APPROVED_CATEGORY_ICONS = { smartphone:Smartphone,shirt:Shirt,gaming:Gamepad2,home:Armchair,sports:Dumbbell,books:BookOpen,collectibles:Gem,automotive:CarFront,package:Package2 } as const;
 const HERO_CATS = [
   { name: "Electronics",   icon: Smartphone, color: "#3B82F6", emoji:"💻", href: "/browse?category=electronics" },
   { name: "Fashion",       icon: Shirt,      color: "#EC4899", emoji:"🧥", href: "/browse?category=fashion"     },
@@ -86,6 +89,12 @@ export function Hero() {
   const [, setLocation] = useLocation();
   const [sellOpen, setSellOpen] = useState(false);
   const featureSettings = useRawSettings();
+  const {resolvedTheme}=useTheme();
+  const designMode=resolvedTheme==="dark"?"dark":"light";
+  const heroAppearance=readSection(featureSettings,"home_hero",designMode);
+  const categoryAppearance=readSection(featureSettings,"home_categories",designMode);
+  const heroGraphic = featureSettings.design_hero_image_url || "";
+  const safeHeroGraphic = /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
@@ -98,7 +107,7 @@ export function Hero() {
   }
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#1A1D2E]">
+    <section data-design-home-hero={heroAppearance?"true":"false"} style={sectionStyle(heroAppearance)} className="bz-design-home-hero relative w-full overflow-hidden bg-[#1A1D2E]">
       {/* Diagonal accent */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
         <div className="absolute -right-48 top-0 h-full w-[700px] bg-[#4A5CE8]/10"
@@ -145,8 +154,9 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex flex-col gap-4 self-start"
           >
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: Icon, href }, i) => (
+            {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
+            <div data-design-home-categories={categoryAppearance?"true":"false"} style={sectionStyle(categoryAppearance)} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            {HERO_CATS.map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -154,9 +164,9 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
+                  <div className="bz-design-category-tile bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
+                      className="bz-design-category-icon w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
                     >
                       <Icon className="w-6 h-6 text-orange-200" aria-hidden="true" />
                     </div>
@@ -166,7 +176,7 @@ export function Hero() {
                   </div>
                 </Link>
               </motion.div>
-            ))}
+            ); })}
             </div>
 
             {/* Marketplace type pills — aligned under categories */}

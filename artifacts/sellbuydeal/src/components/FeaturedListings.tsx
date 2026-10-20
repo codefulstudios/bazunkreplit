@@ -7,6 +7,9 @@ import { Store, Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, P
 import { Link } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
+import {useTheme} from "next-themes";
+import {useRawSettings} from "@/context/SiteSettingsContext";
+import {readSection,sectionStyle} from "@/design-system/sectionAppearance";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -63,6 +66,9 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
 
 export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promoted" }) {
   const [marketRegion] = useMarketplaceRegion();
+  const rawDesign=useRawSettings();
+  const {resolvedTheme}=useTheme();
+  const spotlightStyle=readSection(rawDesign,"home_spotlight",resolvedTheme==="dark"?"dark":"light");
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
@@ -141,7 +147,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     );
   }
 
-  if (displayListings.length === 0) return <section className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 py-10"><div className="max-w-6xl mx-auto px-4"><div className="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center"><Package className="mx-auto h-9 w-9 text-orange-600 dark:text-orange-300" /><h2 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">{mode === "promoted" ? "Spotlight listings" : "Recently listed"}</h2><p className="mt-2 text-base text-slate-700 dark:text-slate-200">{loadError ? "Listings could not be loaded right now. Please try again shortly." : mode === "promoted" ? "No spotlight listings are available at the moment." : "No listings are available in this region yet."}</p><Link href="/browse" className="mt-4 inline-flex text-sm font-semibold text-orange-700 dark:text-orange-300">Browse the marketplace <ArrowRight className="ml-1 h-4 w-4" /></Link></div></div></section>;
+  if (displayListings.length === 0) return <section className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 py-10"><div className="max-w-6xl mx-auto px-4"><div data-design-spotlight={spotlightStyle?"true":"false"} style={sectionStyle(spotlightStyle)} className="bz-design-spotlight rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center"><Package className="mx-auto h-9 w-9 text-orange-600 dark:text-orange-300" /><h2 className="bz-design-spotlight-heading mt-3 text-xl font-semibold text-slate-900 dark:text-white">{mode === "promoted" ? "Spotlight listings" : "Recently listed"}</h2><p className="bz-design-spotlight-copy mt-2 text-base text-slate-700 dark:text-slate-200">{loadError ? "Listings could not be loaded right now. Please try again shortly." : mode === "promoted" ? "No spotlight listings are available at the moment." : "No listings are available in this region yet."}</p><Link href="/browse" className="bz-design-spotlight-link mt-4 inline-flex text-sm font-semibold text-orange-700 dark:text-orange-300">Browse the marketplace <ArrowRight className="ml-1 h-4 w-4" /></Link></div></div></section>;
 
   return (
     <section className="py-12 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">

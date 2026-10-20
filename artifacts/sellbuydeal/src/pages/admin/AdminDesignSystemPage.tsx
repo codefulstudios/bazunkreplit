@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useAdmin } from "@/context/AdminContext";
 import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { AdminLayout } from "./AdminLayout";
-import { ShieldCheck, Copy, RotateCcw } from "lucide-react";
+import { AdminSettingsPage } from "./AdminSettingsPage";
+import { DesignSectionsEditor } from "./DesignSectionsEditor";
+import { ShieldCheck, Copy, RotateCcw, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
 // Deliberately isolated: these settings render only inside the preview.
 // Publishing requires a validated, authenticated server-side settings endpoint.
@@ -29,7 +31,49 @@ function contrast(a:string,b:string): number {
   const x=luminance(a),y=luminance(b);
   return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);
 }
+const ICONS = {smartphone:Smartphone,shirt:Shirt,gaming:Gamepad2,home:Armchair,sports:Dumbbell,books:BookOpen,collectibles:Gem,automotive:CarFront,package:Package};
+const DESIGN_CATEGORIES = ["electronics","fashion","gaming","home","sports","books","collectibles","automotive"] as const;
+function DesignAssetsEditor() {
+ const {authFetch}=useAdmin();
+ const [items,setItems]=useState<Record<string,string>>({});
+ const [saving,setSaving]=useState(false);
+ const [status,setStatus]=useState("");
+ const [loading,setLoading]=useState(true);
+ useEffect(()=>{let active=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Could not load");return r.json()}).then((data:Record<string,string>)=>{if(active)setItems(data)}).catch(()=>{if(active)setStatus("Could not load saved graphics settings.")}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[authFetch]);
+ function change(key:string,value:string){setItems(p=>({...p,[key]:value}));setStatus("Unsaved changes");}
+ async function save(){setSaving(true);setStatus("");try{
+  const keys=["design_hero_image_url","design_hero_image_alt",...DESIGN_CATEGORIES.map(c=>"design_category_icon_"+c)];
+  const updates=Object.fromEntries(keys.map(k=>[k,items[k]||""]));
+  const response=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify(updates)});
+  if(!response.ok){const err=await response.json().catch(()=>({}));throw Error(err.error||"Save failed");}
+  window.dispatchEvent(new Event("bazunk-settings-updated"));setStatus("Graphics and icons saved successfully.");
+ }catch(e){setStatus(e instanceof Error?e.message:"Could not save assets.")}finally{setSaving(false)}}
+ return <div className="space-y-4 rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
+  <div className="flex items-center gap-2"><ImageIcon className="h-6 w-6"/><h2 className="text-xl font-extrabold">Icons & Graphics</h2></div>
+  <p className="text-sm font-semibold">Choose approved category icons and an optional HTTPS homepage hero graphic (PNG, JPEG or WebP). Files must be hosted online; direct uploads are not enabled yet.</p>
+  {loading?<p>Loading appearance settings…</p>:<>
+   <div className="grid gap-4 md:grid-cols-2">{DESIGN_CATEGORIES.map(category=>{
+    const value=items["design_category_icon_"+category]||category;
+    const Icon=ICONS[value as keyof typeof ICONS]||Package;
+    return <label key={category} className="flex items-center justify-between gap-4 rounded-xl border border-slate-300 p-3 dark:border-slate-500">
+      <span className="flex items-center gap-2 font-bold capitalize"><Icon className="h-6 w-6"/>{category}</span>
+      <select aria-label={category+" icon"} value={value} onChange={e=>change("design_category_icon_"+category,e.target.value)} className="max-w-[55%] rounded-lg border border-slate-400 bg-white p-2 text-slate-950 dark:bg-slate-800 dark:text-white">
+      {Object.keys(ICONS).map(name=><option key={name} value={name}>{name}</option>)}</select>
+    </label>
+   })}</div>
+   <label className="block text-sm font-bold">Homepage hero graphic URL
+    <input type="url" value={items.design_hero_image_url||""} onChange={e=>change("design_hero_image_url",e.target.value)} placeholder="https://example.com/hero.webp" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
+   </label>
+   <label className="block text-sm font-bold">Hero graphic description (alt text)
+    <input value={items.design_hero_image_alt||""} onChange={e=>change("design_hero_image_alt",e.target.value)} maxLength={150} placeholder="Description of the image" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
+   </label>
+   {items.design_hero_image_url&&/^https:\/\//.test(items.design_hero_image_url)&&<p className="text-sm font-bold">Hero image will be displayed only after saving a valid HTTPS image URL.</p>}
+   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-orange-300 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
+  </>}
+ </div>;
+}
 export function AdminDesignSystemPage() {
+  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("sections");
   const [area,setArea]=useState<Area>("storefront");
   const [mode,setMode]=useState<Mode>("light");
   const [drafts,setDrafts]=useState(PRESETS);
@@ -59,6 +103,11 @@ export function AdminDesignSystemPage() {
   }
   return <AdminLayout>
     <section className="mx-auto max-w-6xl space-y-5" data-testid="protected-design-console">
+      <div className="rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white"><h1 className="text-2xl font-extrabold">Bazunk Design Center</h1><p className="mt-1 text-sm font-semibold">Storefront and admin appearance, branding, homepage, footer and SEO in one place.</p><div className="mt-4 flex flex-wrap gap-2">{([{key:"sections",label:"Website sections"},{key:"colours",label:"Protected colours"},{key:"branding",label:"Branding & SEO"},{key:"homepage",label:"Homepage"},{key:"footer",label:"Footer"},{key:"advertising",label:"Advertising"},{key:"assets",label:"Icons & Graphics"}] as const).map(item=><button key={item.key} type="button" onClick={()=>setDesignTab(item.key)} aria-pressed={designTab===item.key} className={"rounded-lg border px-4 py-2 text-sm font-bold "+(designTab===item.key?"border-orange-700 bg-orange-300 text-slate-950":"border-slate-400 bg-white text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white")}>{item.label}</button>)}</div></div>
+      {designTab==="assets" && <DesignAssetsEditor />}
+      {designTab==="sections" && <DesignSectionsEditor />}
+      {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<AdminSettingsPage key={designTab} embedded initialTab={designTab}/>}
+      {designTab==="colours"&&<>
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
@@ -102,6 +151,7 @@ export function AdminDesignSystemPage() {
           </div>
         </div>
       </div>
+      </>}
     </section>
   </AdminLayout>;
 }

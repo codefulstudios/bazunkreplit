@@ -1,0 +1,41 @@
+name: Bazunk Design Center protections
+on:
+  pull_request:
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/admin/**'
+      - 'artifacts/sellbuydeal/src/components/Hero.tsx'
+      - 'artifacts/sellbuydeal/src/components/FeaturedListings.tsx'
+      - 'artifacts/sellbuydeal/src/components/HomepagePromoCards.tsx'
+      - 'artifacts/sellbuydeal/src/design-system/**'
+      - 'artifacts/api-server/src/routes/admin.ts'
+      - 'scripts/design-center-contract.test.mjs'
+      - '.github/workflows/design-center.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/admin/**'
+      - 'artifacts/sellbuydeal/src/components/Hero.tsx'
+      - 'artifacts/sellbuydeal/src/components/FeaturedListings.tsx'
+      - 'artifacts/sellbuydeal/src/components/HomepagePromoCards.tsx'
+      - 'artifacts/sellbuydeal/src/design-system/**'
+      - 'artifacts/api-server/src/routes/admin.ts'
+      - 'scripts/design-center-contract.test.mjs'
+      - '.github/workflows/design-center.yml'
+jobs:
+  design-center:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Design Center regression checks
+        run: node --test scripts/design-center-contract.test.mjs
+      - name: Install pnpm
+        run: corepack enable
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile --prod=false
+      - name: Build storefront and admin
+        run: pnpm --filter @workspace/sellbuydeal run build
+      - name: Build API
+        run: pnpm --filter @workspace/api-server run build
