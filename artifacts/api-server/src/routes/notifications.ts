@@ -1,4 +1,5 @@
 import { refreshSavedSearchMatches } from "../lib/savedSearches.js";
+import { ensureDealPilotTables, pilotSettings } from "../lib/dealPilot.js";
 import { watchAlertEvents } from "../lib/listingAlerts.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
@@ -7,7 +8,7 @@ import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { ensureMarketplaceOffers } from "./marketplaceOffers.js";
 
 const router=Router();
-type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock";title:string;desc:string;time:string;href:string};
+type Event={id:string;type:"order"|"sale"|"offer"|"bid"|"message"|"search"|"price_drop"|"restock"|"deal_pilot";title:string;desc:string;time:string;href:string};
 async function ensureReads(){
   await db.execute(sql`CREATE TABLE IF NOT EXISTS marketplace_notification_reads (
     recipient_email text NOT NULL, event_id text NOT NULL, read_at timestamptz NOT NULL DEFAULT NOW(),
@@ -20,8 +21,9 @@ function event(id:string,type:Event["type"],title:string,desc:string,time:unknow
 router.get("/notifications",async(req,res)=>{
   try{
     const email=await authenticatedSellerEmail(req,res);if(!email)return;
-    await Promise.all([ensureReads(),ensureMarketplaceOffers(),refreshSavedSearchMatches(email)]);
-    const [orders,bids,outbid,wins,offers,messages,reads,searchMatches,listingChanges]=await Promise.all([
+    await Promise.all([ensureReads(),ensureMarketplaceOffers(),refreshSavedSearchMatches(email),ensureDealPilotTables()]);
+    const dealPilotConfig=await pilotSettings();
+    const [orders,bids,outbid,wins,offers,messages,reads,searchMatches,listingChanges,dealPilotMatches]=await Promise.all([
       db.execute(sql`SELECT id,buyer_email,seller_email,item_title,status,updated_at FROM orders
         WHERE LOWER(buyer_email)=${email} OR LOWER(seller_email)=${email}
         ORDER BY updated_at DESC LIMIT 80`),
@@ -55,7 +57,14 @@ router.get("/notifications",async(req,res)=>{
         JOIN listings l ON l.id=m.listing_id
         WHERE LOWER(s.user_email)=${email} AND s.alert_enabled=TRUE AND l.status='active'
         ORDER BY m.matched_at DESC LIMIT 80`),
-      watchAlertEvents(email)
+      watchAlertEvents(email),
+      dealPilotConfig.alerts ? db.execute(sql`SELECT m.pilot_id,m.listing_id,m.discovered_at,
+        l.title,l.public_id,p.query,p.region,m.total_minor
+        FROM marketplace_deal_pilot_matches m JOIN marketplace_deal_pilots p ON p.id=m.pilot_id
+        JOIN listings l ON l.id=m.listing_id
+        WHERE LOWER(p.user_email)=${email} AND p.active=TRUE AND p.alerts_enabled=TRUE
+          AND l.status='active' AND m.discovered_at>NOW()-INTERVAL '30 days'
+        ORDER BY m.discovered_at DESC LIMIT 50`) : Promise.resolve({rows:[]})
     ]);
     const events:Event[]=[];
     for(const o of orders.rows as any[]){
@@ -84,6 +93,10 @@ router.get("/notifications",async(req,res)=>{
     for(const m of searchMatches.rows as any[])events.push(event(
       `search:${m.search_id}:${m.listing_id}`,"search","Saved search match",
       `${m.name}: ${m.title}`,m.matched_at,`/listing/${encodeURIComponent(String(m.public_id||m.listing_id))}`
+    ));
+    for(const m of dealPilotMatches.rows as any[])events.push(event(
+      `deal_pilot:${m.pilot_id}:${m.listing_id}`,"deal_pilot","DealPilot found a match",
+      `${m.query}: ${m.title}`,m.discovered_at,"/deal-pilot"
     ));
     for(const change of listingChanges as any[]){
       const isPrice=change.event_type==="price_drop";

@@ -1,6 +1,7 @@
 import type { Request,Response,NextFunction } from "express";
 import { featureEnabled } from "../lib/featureFlags.js";
 const rules:[RegExp,string][]=[
+ [/^\/deal-pilot(?:\/|$)/,"deal_pilot"],
  [/^\/auctions(?:\/|$)/,"auctions"],[/^\/flash-sales(?:\/|$)/,"flash_sales"],[/^\/classifieds(?:\/|$)/,"classifieds"],[/^\/live(?:\/|$)|^\/livekit(?:\/|$)/,"live"],
  [/^\/rewards(?:\/|$)|^\/treasure-hunt(?:\/|$)/,"games"],[/^\/referrals(?:\/|$)/,"referrals"],[/^\/promotions(?:\/|$)/,"promotions"],
  [/^\/watch(?:ers)?(?:\/|$)/,"watchers"],[/^\/messages(?:\/|$)/,"messaging"],[/^\/reviews(?:\/|$)/,"reviews"],[/^\/verification(?:\/|$)/,"verification"],
