@@ -21,6 +21,12 @@ const samples=[
  {id:"cookie-option-title",className:"bz-cookie-option-title text-slate-900",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"h3",bg:"#ffffff",value:"Strictly necessary"},
  {id:"cookie-option-copy",className:"bz-cookie-option-copy text-slate-700",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"p",bg:"#ffffff",value:"Required for login and security"},
  {id:"cookie-badge",className:"bz-cookie-essential-badge text-emerald-950",outer:"bazunk-cookie-consent bz-cookie-dialog",inner:"bz-cookie-option",tag:"span",bg:"#ffffff",value:"Always on"},
+ // Cookie Policy reproduces its real parent > main > bright article structure.
+ {id:"policy-heading",className:"font-bold text-2xl",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"h1",bg:"#f8fafc",value:"Cookie Policy"},
+ {id:"policy-description",className:"text-sm",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"p",bg:"#f8fafc",value:"How Bazunk uses cookies"},
+ {id:"policy-highlight",className:"text-sm",outer:"bz-cookie-policy",main:true,inner:"bz-policy-highlight",tag:"p",bg:"#f8fafc",value:"Your current choices"},
+ {id:"policy-provider",className:"font-bold",outer:"bz-cookie-policy",main:true,inner:"bz-policy-entry",tag:"h3",bg:"#f8fafc",value:"Clerk"},
+ {id:"policy-link",className:"bz-policy-link",outer:"bz-cookie-policy",main:true,inner:"bz-policy-surface",tag:"a",bg:"#f8fafc",value:"Privacy Policy"},
  {id:"cookie-reject",className:"bz-cookie-reject text-slate-900",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Reject optional"},
  {id:"cookie-customise",className:"bz-cookie-customise text-slate-900",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Customise"},
  {id:"cookie-accept",className:"bz-cookie-accept text-slate-950",outer:"bazunk-cookie-consent bz-cookie-banner",tag:"button",bg:"#ffffff",value:"Accept all"},
@@ -43,7 +49,8 @@ function fixtureHtml(){
   const style='style="background-color:'+s.bg+';padding:18px;display:block"';
   const textElement='<'+tag+' data-text-target class="'+escapeHtml(s.className)+'" style="font-size:16px;display:inline-block">'+escapeHtml(s.value)+'</'+tag+'>';
   const inner=s.inner?'<div class="'+escapeHtml(s.inner)+'" style="padding:12px">'+textElement+'</div>':textElement;
-  return '<section data-sample="'+s.id+'" '+attr+' '+style+'>'+inner+'</section>';
+  const body=s.main?'<main>'+inner+'</main>':inner;
+  return '<section data-sample="'+s.id+'" '+attr+' '+style+'>'+body+'</section>';
  }).join("\n");
 }
 const violations=[];
