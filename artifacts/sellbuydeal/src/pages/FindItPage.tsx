@@ -56,7 +56,7 @@ export function FindItPage(){
  const [suggested,setSuggested]=useState<Array<{requestId:string;listingId:number;listingTitle:string;score:number}>>([]);
  const [tab,setTab]=useState<"browse"|"mine"|"offers">("browse");
  const [creating,setCreating]=useState(false),[bidding,setBidding]=useState<string|null>(null);
- const [loading,setLoading]=useState(false),[working,setWorking]=useState(false);
+ const [loading,setLoading]=useState(false),[working,setWorking]=useState(false),[recognizing,setRecognizing]=useState(false);
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const [draft,setDraft]=useState({title:"",description:"",budget:"",category:"electronics",location:"",contactName:"",
    condition:"any",days:"14",photo:""});
@@ -137,6 +137,28 @@ export function FindItPage(){
   e.target.value="";
  };
  const bidList=(id:string)=>mine.offers.filter(o=>o.request_id===id).sort((a,b)=>(a.quote?.total_minor??Infinity)-(b.quote?.total_minor??Infinity));
+ const recognize=async()=>{
+  if(!draft.photo)return;
+  setRecognizing(true);setError("");setNotice("");
+  try{
+   // Photo analysis is optional: the buyer explicitly chooses whether to send their image
+   // to Bazunk's configured AI provider. Generated fields always remain editable.
+   const data=await api("/snap-sell/analyse",{method:"POST",
+    body:JSON.stringify({photo:draft.photo,context:"Identify the object shown. The user wants to BUY an item like this; do not describe it as their item for sale."})},true);
+   const suggestion=data?.suggestion||{};
+   const title=typeof suggestion.title==="string"?suggestion.title.trim().slice(0,120):"";
+   const desc=typeof suggestion.description==="string"?suggestion.description.trim().slice(0,1500):"";
+   const category=typeof suggestion.category==="string"?suggestion.category.trim():"";
+   setDraft(old=>({
+    ...old,
+    title:old.title.trim()?old.title:title,
+    description:old.description.trim()?old.description:(desc?"Looking for an item matching this reference photo. "+desc:""),
+    category:CLASSIFIED_CATEGORIES.some(c=>c.slug===category)?category:old.category
+   }));
+   setNotice("Photo identified. Review the suggested title, description and category before posting.");
+  }catch(e){setError(e instanceof Error?e.message:"Photo identification is unavailable. Enter the details manually.");}
+  finally{setRecognizing(false);}
+ };
  const signedIn=isLoaded&&isSignedIn;
  const orderedBrowse=[...browse].sort((a,b)=>
   Number(suggested.some(m=>m.requestId===b.id))-Number(suggested.some(m=>m.requestId===a.id)));
@@ -183,7 +205,16 @@ export function FindItPage(){
      <label className="block text-sm font-black">Display name<input required maxLength={100} className={field+" mt-1"} value={draft.contactName} onChange={e=>setDraft(d=>({...d,contactName:e.target.value}))}/></label>
      <label className="block text-sm font-black">Request duration<select className={field+" mt-1"} value={draft.days} onChange={e=>setDraft(d=>({...d,days:e.target.value}))}><option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option></select></label>
      <label className="sm:col-span-2 block text-sm font-black"><span className="flex items-center gap-2"><ImagePlus className="h-5 w-5"/>Reference photo (optional)</span><input type="file" accept="image/jpeg,image/png,image/webp" className={field+" mt-1 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-600 file:px-3 file:py-2 file:font-bold file:text-white"} onChange={e=>void attachPhoto(e,"request")}/></label>
-     {draft.photo&&<div className="sm:col-span-2"><img src={draft.photo} alt="Reference item" className="h-32 w-32 rounded-xl object-cover"/><button type="button" className={secondary+" mt-2"} onClick={()=>setDraft(d=>({...d,photo:""}))}>Remove photo</button></div>}
+     {draft.photo&&<div className="sm:col-span-2 flex flex-wrap items-center gap-3">
+      <img src={draft.photo} alt="Reference item" className="h-32 w-32 rounded-xl object-cover"/>
+      <div className="space-y-2">
+       <button type="button" disabled={recognizing||working} className={primary} onClick={()=>void recognize()}>
+        <Sparkles className="h-4 w-4"/>{recognizing?"Identifying photo…":"Identify item from photo"}
+       </button>
+       <button type="button" className={secondary} onClick={()=>setDraft(d=>({...d,photo:""}))}>Remove photo</button>
+       <p className={hint+" max-w-xs"}>Optional AI sends this photo to the configured recognition provider only when you tap Identify. Check all suggested details.</p>
+      </div>
+     </div>}
      <p className={hint+" sm:col-span-2"}>Budget includes item, delivery and applicable buyer protection. Payment is charged in GBP at Stripe checkout, including for US requests; the actual GBP total is shown before payment.</p>
      <button type="submit" disabled={working} className={primary+" sm:col-span-2"}>{working?"Posting…":"Post Find It request"}</button>
     </form>}
