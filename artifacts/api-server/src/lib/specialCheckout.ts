@@ -5,9 +5,11 @@ import { getUncachableStripeClient } from "../stripeClient.js";
 import { calculateFees, minor, percentage } from "./marketplaceFees.js";
 import { logger } from "./logger.js";
 import type Stripe from "stripe";
+import { convertAmount } from "../fxRates.js";
+import { ensureFindItTables } from "./findIt.js";
 
-export type SaleKind = "auction" | "flash";
-type Sale = { id:string; seller_email:string; title:string; image:string|null; category:string|null; price:number; source:string };
+export type SaleKind = "auction" | "flash" | "find_it";
+type Sale = { id:string; seller_email:string; title:string; image:string|null; category:string|null; price:number; source:string; region?:string; budgetMinor?:number };
 async function schema() {
   await db.execute(sql`CREATE TABLE IF NOT EXISTS special_checkout_reservations (
     source TEXT PRIMARY KEY, buyer_email TEXT NOT NULL, stripe_session_id TEXT UNIQUE,
@@ -16,6 +18,20 @@ async function schema() {
   )`);
 }
 async function getSale(kind: SaleKind, id:string, buyer:string):Promise<Sale> {
+  if(kind==="find_it"){
+    await ensureFindItTables();
+    const r=(await db.execute(sql`SELECT o.id,o.seller_email,o.item_title,o.photo,o.price_minor,
+      r.buyer_email,r.region,r.budget_minor,r.status,r.selected_offer_id,a.category
+      FROM marketplace_find_offers o JOIN marketplace_find_requests r ON r.id=o.request_id
+      JOIN classified_ads a ON a.id=r.classified_id WHERE o.id=${id} AND o.status='selected'`)).rows[0] as any;
+    if(!r||r.status!=="accepted"||r.selected_offer_id!==id||String(r.buyer_email).toLowerCase()!==buyer)
+      throw Error("Only the buyer of the selected Find It offer may pay");
+    if(String(r.seller_email).toLowerCase()===buyer)throw Error("Cannot purchase your own offer");
+    const price=r.region==="us" ? await convertAmount(Number(r.price_minor)/100,"USD","GBP") : Number(r.price_minor)/100;
+    if(!Number.isFinite(price)||price<1)throw Error("Invalid offered price");
+    return {id,seller_email:r.seller_email,title:r.item_title,image:r.photo??null,
+      category:r.category,price,source:`find_it:${id}`,region:r.region,budgetMinor:Number(r.budget_minor)};
+  }
   const row = kind === "auction"
     ? (await db.execute(sql`SELECT id,title,images,category,seller_email,winner_email,winner_bid,status,end_time
         FROM auctions WHERE id=${id}`)).rows[0] as any
@@ -72,6 +88,12 @@ export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,
     const category=String(sale.category??"").toLowerCase();
     const item={id:1,quantity:1,priceMinor:minor(sale.price),sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),title:sale.title,image:sale.image,sellerEmail:sale.seller_email,category};
     const quote=calculateFees([item],percentage(fees.buyer_protection_percent,5),fees.buyer_protection_fixed_gbp==null?70:minor(fees.buyer_protection_fixed_gbp),sale.price>=50?0:399);
+    if(kind==="find_it"){
+      // Recheck the maximum *including* delivery and protection at payment time.
+      const localTotal=sale.region==="us" ? await convertAmount(quote.totalMinor/100,"GBP","USD") : quote.totalMinor/100;
+      if(Math.round(localTotal*100)>Number(sale.budgetMinor))
+        throw Error("Current payment total exceeds the buyer's budget; reopen the request");
+    }
     const stripe=await getUncachableStripeClient();
     const session=await stripe.checkout.sessions.create({
       mode:"payment", customer_email:buyer, client_reference_id:buyer,
@@ -87,7 +109,7 @@ export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,
         deliveryMinor:String(quote.deliveryMinor),totalMinor:String(quote.totalMinor)},
       expires_at:Math.floor(expiry.getTime()/1000),
       success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:`${origin}/${kind==="auction"?"auctions":"flash-sales"}/${encodeURIComponent(id)}`
+      cancel_url:kind==="find_it"?`${origin}/find-it`:`${origin}/${kind==="auction"?"auctions":"flash-sales"}/${encodeURIComponent(id)}`
     });
     await db.execute(sql`UPDATE special_checkout_reservations SET stripe_session_id=${session.id} WHERE source=${sale.source} AND buyer_email=${buyer}`);
     return {url:session.url};
@@ -109,7 +131,9 @@ export async function fulfillSpecialCheckout(sessionId:string) {
   const id=`ORD-${randomUUID().slice(0,8).toUpperCase()}`;
   const titleRow=m.kind==="auction"
     ? (await db.execute(sql`SELECT title, images->>0 AS image FROM auctions WHERE id=${m.saleId}`)).rows[0] as any
-    : (await db.execute(sql`SELECT title,image FROM flash_sales WHERE id=${m.saleId}`)).rows[0] as any;
+    : m.kind==="find_it"
+      ? (await db.execute(sql`SELECT item_title AS title,photo AS image FROM marketplace_find_offers WHERE id=${m.saleId}`)).rows[0] as any
+      : (await db.execute(sql`SELECT title,image FROM flash_sales WHERE id=${m.saleId}`)).rows[0] as any;
   await db.transaction(async tx=>{
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${m.source}))`);
     const present=(await tx.execute(sql`SELECT fulfilled_at FROM special_checkout_reservations WHERE source=${m.source} FOR UPDATE`)).rows[0] as any;
@@ -120,6 +144,11 @@ export async function fulfillSpecialCheckout(sessionId:string) {
       ${Number(m.sellerFeeMinor??0)/100},${Number(m.sellerNetMinor??0)/100},${Number(m.deliveryMinor??0)/100},
       ${Number(m.totalMinor)/100},${m.feePolicy??"special-v1"},NOW(),NOW())
       ON CONFLICT(stripe_session_id,line_no) DO NOTHING`);
+    if(m.kind==="find_it"){
+      const found=(await tx.execute(sql`UPDATE marketplace_find_requests SET status='purchased',updated_at=NOW()
+        WHERE selected_offer_id=${m.saleId} AND status='accepted' RETURNING classified_id`)).rows[0] as any;
+      if(found)await tx.execute(sql`UPDATE classified_ads SET status='closed' WHERE id=${found.classified_id}`);
+    }
     await tx.execute(sql`UPDATE special_checkout_reservations SET fulfilled_at=NOW() WHERE source=${m.source}`);
   });
   logger.info({sessionId,source:m.source},"Special sale payment fulfilled");
