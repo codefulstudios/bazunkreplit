@@ -117,7 +117,8 @@ router.put("/admin/cashback/settings",requireAdmin,async(req,res)=>{
   if(clean.some((t,i)=>!t.name||!Number.isFinite(t.rate)||t.rate<0||t.rate>20||
       !Number.isFinite(t.spendGbp)||t.spendGbp<0||
       (i>0&&t.spendGbp<=clean[i-1].spendGbp))||
-     (value.earningEnabled&&!value.enabled)||(value.payoutRequestsEnabled&&!value.enabled)){
+     (value.earningEnabled&&!value.enabled)||(value.payoutRequestsEnabled&&!value.enabled)||
+     (value.payoutRequestsEnabled&&/not (yet |currently )?enabled/i.test(value.payoutPolicy))){
     res.status(400).json({error:"Cashback thresholds, rates or earning/payout controls are inconsistent."});return;
   }
   const settings=await saveCashbackConfig({...value,tiers:clean}, "authenticated-admin");
