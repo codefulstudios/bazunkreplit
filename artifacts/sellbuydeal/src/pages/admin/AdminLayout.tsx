@@ -12,6 +12,7 @@ import { useAdmin } from "@/context/AdminContext";
 
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
+  { label: "Design Center", href: "/admin/design-system", icon: ShieldCheck },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "TrustProof", href: "/admin/trust-proof", icon: ShieldCheck },
@@ -41,18 +42,17 @@ const NAV = [
   { label: "System Status", href: "/admin/system-status", icon: ServerCog },
   { label: "Feature Toggles", href: "/admin/feature-toggles", icon: Flag },
   { label: "Email Templates", href: "/admin/emails", icon: Mail },
-  { label: "Design System", href: "/admin/design-system", icon: ShieldCheck },
   { label: "Settings",   href: "/admin/settings",   icon: Settings        },
 ];
 
 const NAV_GROUPS = [
-  { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard"] },
+  { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard","Design Center"] },
   { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","TrustProof","Reviews"] },
   { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Snap & Sell AI","DealPilot","Find It","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
   { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
   { id:"growth", label:"Growth & Rewards", icon:Megaphone, pages:["Cashback","Rewards","Credits Economy","Referrals","Promotions"] },
   { id:"support", label:"Support & Messaging", icon:LifeBuoy, pages:["Support","Chatwoot Settings","Email Templates"] },
-  { id:"system", label:"Platform & Settings", icon:Settings, pages:["Audit Log","System Status","Feature Toggles","Design System","Settings"] }
+  { id:"system", label:"Platform & Settings", icon:Settings, pages:["Audit Log","System Status","Feature Toggles","Settings"] }
 ] as const;
 
 let savedAdminExpandedGroups: Record<string,boolean> = {overview:true,accounts:true,marketplace:true,commerce:true,growth:false,support:false,system:false};
