@@ -136,8 +136,9 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     const observer=new MutationObserver(apply);
     observer.observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
     window.addEventListener("popstate",apply);
+    window.addEventListener("bazunk-design-route-change",apply);
     window.addEventListener("bazunk-settings-updated",apply);
-    return ()=>{observer.disconnect();window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-settings-updated",apply)};
+    return ()=>{observer.disconnect();window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-design-route-change",apply);window.removeEventListener("bazunk-settings-updated",apply)};
   },[rawSettings]);
 
   return (
