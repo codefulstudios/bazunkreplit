@@ -866,6 +866,19 @@ router.put("/admin/settings", async (req, res) => {
         if(![[palette.text,palette.background],[palette.text,palette.surface],[palette.secondaryText,palette.surface],[palette.text,palette.field],[palette.actionText,palette.action]].every(([a,b])=>ratio(a,b)>=4.5))throw Error("Insufficient contrast");
       } catch { res.status(400).json({error:"Design palette failed accessibility validation"}); return; }
     }
+    for(const [key,value] of Object.entries(updates)){
+      if(!key.startsWith("design_"))continue;
+      if(typeof value!=="string")return res.status(400).json({error:"Invalid design setting"});
+      if(key==="design_hero_image_url"){
+        if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500))return res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});
+      }else if(key==="design_hero_image_alt"){
+        if(value.length>150)return res.status(400).json({error:"Graphic description too long"});
+      }else if(/^design_category_icon_/.test(key)){
+        if(!/^design_category_icon_(electronics|fashion|gaming|home|sports|books|collectibles|automotive)$/.test(key)||!["","smartphone","shirt","gaming","home","sports","books","collectibles","automotive","package"].includes(value))return res.status(400).json({error:"Unrecognised category icon"});
+      }else if(!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)){
+        return res.status(400).json({error:"Unrecognised design setting"});
+      }
+    }
     const keys = Object.keys(updates);
     const oldRows = keys.length ? await db.execute(sql`SELECT key, value FROM site_settings`).then(r => r.rows as any[]) : [];
     const beforeSettings = Object.fromEntries(oldRows.filter((r:any) => keys.includes(String(r.key))).map((r:any) => [r.key, r.value]));
