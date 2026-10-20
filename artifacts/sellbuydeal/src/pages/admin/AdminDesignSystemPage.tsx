@@ -35,8 +35,9 @@ export function AdminDesignSystemPage() {
   const [notice,setNotice]=useState("");
   const {authFetch}=useAdmin();
   const [saving,setSaving]=useState(false);
+  const [dirty,setDirty]=useState(false);
   useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setDrafts({storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
-  async function publish(){if(!safe)return;setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Published validated "+area+" "+mode+" palette.");}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
+  async function publish(){if(!safe)return;setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Changes saved successfully for "+area+" / "+mode+".");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
   const checks=useMemo(()=>[
     ["Main text / page",palette.text,palette.background],
@@ -48,7 +49,7 @@ export function AdminDesignSystemPage() {
   const safe=checks.every(x=>x.pass);
   function change(key:keyof Palette,value:string) {
     setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...p[area][mode],[key]:value}}}));
-    setNotice("");
+    setNotice("");setDirty(true);
   }
   async function copy() {
     if(!safe){setNotice("Cannot export: fix all contrast warnings first.");return;}
@@ -65,6 +66,10 @@ export function AdminDesignSystemPage() {
           <label className="text-sm font-bold">Theme <select aria-label="Preview theme" value={mode} onChange={e=>setMode(e.target.value as Mode)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="light">Light</option><option value="dark">Dark</option></select></label>
         </div>
       </div>
+      <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-orange-500 bg-white p-3 shadow-lg dark:bg-[#17243a]" data-testid="design-save-bar">
+        <div className="min-w-0"><p className="font-extrabold text-slate-950 dark:text-white">{dirty?"Unsaved design changes":"Design settings"}</p><p className="text-sm font-semibold text-slate-700 dark:text-slate-100">{safe?"Contrast checks passed — safe to save.":"Contrast check failed — adjust colours before saving."}</p></div>
+        <button type="button" onClick={publish} disabled={!safe || saving} aria-label="Save design changes" className="min-h-12 rounded-xl border-2 border-orange-700 bg-orange-400 px-6 py-3 text-base font-extrabold text-slate-950 shadow-sm hover:bg-orange-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-300 disabled:text-slate-800">{saving?"Saving…":"Save Changes"}</button>
+      </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
           <h2 className="text-lg font-bold">Colour editor</h2>
@@ -72,7 +77,7 @@ export function AdminDesignSystemPage() {
           <div className="grid gap-3 sm:grid-cols-2">{(Object.keys(LABELS) as (keyof Palette)[]).map(key=><label key={key} className="flex items-center justify-between gap-3 rounded-lg border border-slate-300 p-3 text-sm font-semibold dark:border-slate-600"><span>{LABELS[key]}</span><input aria-label={LABELS[key]+" colour"} type="color" value={palette[key]} onChange={e=>change(key,e.target.value)} className="h-10 w-12 cursor-pointer rounded border border-slate-500" /></label>)}</div>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...PRESETS[area][mode]}}}));setNotice("Preview reset to protected defaults.");}} className="inline-flex items-center gap-2 rounded-lg border border-slate-400 bg-white px-4 py-2 font-bold text-slate-900 dark:bg-slate-800 dark:text-white"><RotateCcw className="h-4 w-4"/>Reset preview</button>
-            <button type="button" disabled={!safe || saving} onClick={publish} className="rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700">{saving?"Publishing…":"Publish validated palette"}</button>
+            <button type="button" disabled={!safe || saving} onClick={publish} className="rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700">{saving?"Saving…":"Save Changes"}</button>
             <button type="button" disabled={!safe} onClick={copy} className="inline-flex items-center gap-2 rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700"><Copy className="h-4 w-4"/>Copy validated draft</button>
           </div>
           {notice&&<p role="status" className="mt-3 text-sm font-bold">{notice}</p>}
