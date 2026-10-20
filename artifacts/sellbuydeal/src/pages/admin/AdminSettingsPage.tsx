@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   Save, RefreshCw, Check, KeyRound, Eye, EyeOff, Megaphone,
@@ -144,7 +144,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-export function AdminSettingsPage() {
+export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?: boolean; initialTab?: "branding" | "homepage" | "footer" | "advertising" } = {}) {
   const { isAdmin, authFetch, logout } = useAdmin();
   const [, setLocation] = useLocation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
@@ -155,7 +155,7 @@ export function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [tab, setTabState] = useState<Tab>(() => {
     const savedTab = sessionStorage.getItem("bazunk-admin-settings-tab") as Tab | null;
-    return savedTab && TABS.some(t => t.id === savedTab) ? savedTab : "branding";
+    return initialTab || (savedTab && TABS.some(t => t.id === savedTab) ? savedTab : "branding");
   });
   const setTab = (next: Tab) => {
     sessionStorage.setItem("bazunk-admin-settings-tab", next);
@@ -281,8 +281,9 @@ export function AdminSettingsPage() {
   }
 
 
+  const Shell = embedded ? Fragment : AdminLayout;
   return (
-    <AdminLayout>
+    <Shell>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Settings</h1>
@@ -795,6 +796,6 @@ export function AdminSettingsPage() {
           )}
         </div>
       )}
-    </AdminLayout>
+    </Shell>
   );
 }
