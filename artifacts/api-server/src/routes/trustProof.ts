@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { createHash } from "node:crypto";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
@@ -10,6 +11,9 @@ import {
 } from "../lib/trustProof.js";
 
 const router=Router();
+// Admin sessions are not tied to named users in the existing admin token.
+// Attribute each moderation action to a stable, non-reversible session reference.
+const reviewActor=(req:any)=>"admin-session:"+createHash("sha256").update(String(req.headers.authorization||"")).digest("hex").slice(0,16);
 const cache=(res:any)=>res.setHeader("Cache-Control","private,no-store");
 const error=(res:any,err:unknown)=>{console.error("TrustProof error",err);res.status(503).json({error:"TrustProof is temporarily unavailable."});};
 const kinds=["item","condition","serial","video"] as const;
@@ -260,12 +264,12 @@ router.post("/admin/trust-proof/:listingId/review",requireAdmin,async(req,res)=>
    res.status(400).json({error:"The required evidence and serial-number review are incomplete."});return;
   }
   const row=await db.execute(sql`UPDATE marketplace_trust_proofs SET status=${decision==="approve"?"approved":"rejected"},
-    reviewed_at=NOW(),reviewed_by='Bazunk administrator',review_note=${note},
+    reviewed_at=NOW(),reviewed_by=${reviewActor(req)},review_note=${note},
     external_provider=NULL,external_reference=NULL,external_checked_at=NULL,external_admin=NULL,
     updated_at=NOW() WHERE listing_id=${id} AND status='submitted' AND fingerprint=${listingFingerprint(listing)}
     RETURNING listing_id`);
   if(!row.rows.length){res.status(409).json({error:"Review status changed."});return;}
-  await auditProof(id,"Bazunk administrator",decision==="approve"?"evidence_approved":"evidence_rejected",
+  await auditProof(id,reviewActor(req),decision==="approve"?"evidence_approved":"evidence_rejected",
    {note,challengeVisible:req.body?.challengeVisible===true,
     itemMatches:req.body?.itemMatches===true,conditionVisible:req.body?.conditionVisible===true,
     serialChecked:req.body?.serialChecked===true});
@@ -293,11 +297,11 @@ router.post("/admin/trust-proof/:listingId/authentication",requireAdmin,async(re
     external_provider=${action==="record"?provider:null},
     external_reference=${action==="record"?reference:null},
     external_checked_at=${action==="record"?new Date():null},
-    external_admin=${action==="record"?"Bazunk administrator":null},updated_at=NOW()
+    external_admin=${action==="record"?reviewActor(req):null},updated_at=NOW()
     WHERE listing_id=${id} AND status='approved' AND fingerprint=${listingFingerprint(listing)}
     RETURNING listing_id`);
   if(!row.rows.length){res.status(409).json({error:"Proof changed before authentication."});return;}
-  await auditProof(id,"Bazunk administrator",action==="record"?"third_party_auth_recorded":"third_party_auth_revoked",
+  await auditProof(id,reviewActor(req),action==="record"?"third_party_auth_recorded":"third_party_auth_revoked",
     {provider:action==="record"?provider:undefined,reference:action==="record"?reference:undefined,
      howChecked:action==="record"?howChecked:undefined});
   res.json({independentlyAuthenticated:action==="record"});

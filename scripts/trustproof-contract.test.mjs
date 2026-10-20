@@ -92,3 +92,18 @@ test("privacy disclosures and media purge lifecycle",()=>{
  assert.match(flags,/\["trust_proof","TrustProof listing evidence","Trust"\]/);
  assert.match(gate,/\^\\\/trust-proof/);
 });
+
+test("live camera preview is visible during TrustProof recording and tracks are cleaned up",()=>{
+ assert.match(seller,/videoPreview=useRef<HTMLVideoElement\|null>/);
+ assert.match(seller,/videoPreview\.current\.srcObject=stream/);
+ assert.match(seller,/videoPreview\.current\.srcObject=null/);
+ assert.match(seller,/aria-label="Live camera preview during verification video recording"/);
+ assert.match(seller,/playsInline autoPlay muted/);
+});
+test("admin moderation audit records session attribution without storing bearer token",()=>{
+ assert.match(api,/reviewActor=\(req:any\)/);
+ assert.match(api,/admin-session:/);
+ assert.match(api,/createHash\("sha256"\)/);
+ assert.match(api,/reviewed_by=\$\{reviewActor\(req\)\}/);
+ assert.match(api,/await auditProof\(id,reviewActor\(req\)/);
+});

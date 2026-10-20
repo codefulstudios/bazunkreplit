@@ -51,9 +51,11 @@ export function TrustProofPage(){
  const [loading,setLoading]=useState(false),[busy,setBusy]=useState(false),[recording,setRecording]=useState(false);
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const videoStream=useRef<MediaStream|null>(null),recorder=useRef<MediaRecorder|null>(null);
+ const videoPreview=useRef<HTMLVideoElement|null>(null);
  const timer=useRef<number|null>(null);
  useEffect(()=>()=>{if(timer.current!==null)clearTimeout(timer.current);recorder.current?.state==="recording"&&recorder.current.stop();
-   videoStream.current?.getTracks().forEach(t=>t.stop());},[]);
+   videoStream.current?.getTracks().forEach(t=>t.stop());
+   if(videoPreview.current)videoPreview.current.srcObject=null;},[]);
  async function request(path:string,options:RequestInit={}){
   const token=await getToken();if(!token)throw Error("Sign in to use TrustProof.");
   const r=await fetch("/api/trust-proof"+path,{
@@ -121,6 +123,8 @@ export function TrustProofPage(){
    if(!mime)throw Error("This browser doesn't support small video recordings. Use guided photos instead.");
    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:720}},audio:false});
    videoStream.current=stream;
+   if(videoPreview.current){videoPreview.current.srcObject=stream;
+     await videoPreview.current.play().catch(()=>{});}
    const chunks:BlobPart[]=[];
    const r=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:1_000_000});
    recorder.current=r;
@@ -139,6 +143,7 @@ export function TrustProofPage(){
   finally{
    if(timer.current!==null)clearTimeout(timer.current);timer.current=null;
    videoStream.current?.getTracks().forEach(t=>t.stop());videoStream.current=null;
+   if(videoPreview.current)videoPreview.current.srcObject=null;
    recorder.current=null;setRecording(false);
   }
  };
@@ -221,6 +226,10 @@ export function TrustProofPage(){
       <section className={box+" space-y-3"}>
        <h2 className="text-xl font-black">Option B · Short verification video</h2>
        <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">A single continuous six-second clip can replace the guided photos. Show the handwritten challenge, item condition and serial tag (if one exists). Videos and serial numbers remain private to reviewers.</p>
+       <video ref={videoPreview} playsInline autoPlay muted
+        aria-label="Live camera preview during verification video recording"
+        className={recording?"mb-3 aspect-video w-full max-w-md rounded-xl border border-indigo-400 bg-black object-cover":"hidden"} />
+       {recording&&<p role="status" className="text-sm font-black text-indigo-700 dark:text-indigo-200">Recording now — keep the dated code, item condition and identifying label in view.</p>}
        <div className="flex flex-wrap gap-3">
         <button type="button" disabled={busy||recording} onClick={()=>void capture()} className={btn+" bg-indigo-700 text-white"}>
          <Video className="h-4 w-4"/>{recording?"Recording 6 seconds…":"Record a six-second clip"}</button>
