@@ -1,3 +1,4 @@
+import type {CSSProperties} from "react";
 /** Only explicitly supported components consume these section-level settings. */
 export const DESIGN_SECTIONS = ["home_hero","home_categories","home_spotlight","home_promos"] as const;
 export type DesignSection = typeof DESIGN_SECTIONS[number];
@@ -16,4 +17,8 @@ export function readSection(raw:Record<string,string>,section:DesignSection,mode
  const value=raw[sectionKey(section,mode)];
  if(!value)return null;
  try{const p=JSON.parse(value);return isValidSection(p)?p:null}catch{return null}
+}
+
+export function sectionStyle(p:SectionAppearance|null):CSSProperties|undefined{
+ return p?{"--bz-section-bg":p.background,"--bz-section-text":p.text,"--bz-section-accent":p.accent,"--bz-section-accent-text":p.accentText} as CSSProperties:undefined;
 }
