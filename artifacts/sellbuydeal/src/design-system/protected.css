@@ -41,3 +41,48 @@
  color:var(--dp-subtext) !important;
  opacity:1;
 }
+
+/* Opt-in homepage sections: no global wildcard selectors or cross-page leakage. */
+.bz-design-home-hero[data-design-home-hero="true"] {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-hero[data-design-home-hero="true"] :is(h1,p,.bz-hero-summary,.bz-hero-kicker) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-hero[data-design-home-hero="true"] a[href="/browse"].min-h-12 {
+ background:var(--bz-section-accent) !important;color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-tile {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-tile p {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-icon {
+ background:var(--bz-section-accent) !important;color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-icon svg {
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] .bz-design-spotlight-link {
+ color:var(--bz-section-accent-text) !important;background:var(--bz-section-accent) !important;
+ padding:0.65rem 1rem;border-radius:0.65rem;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card :is(h2,h3,p,span) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card svg {
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card svg:first-child {
+ background:var(--bz-section-accent) !important;
+}
