@@ -10,6 +10,7 @@ import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
 import { ensureAdminAuditLog } from "./lib/adminAudit.js";
 import { ensureListingAlerts } from "./lib/listingAlerts.js";
 import { startDealPilotMonitor } from "./lib/dealPilot.js";
+import { ensureCashback } from "./lib/cashback.js";
 
 const rawPort = process.env["PORT"];
 
@@ -827,7 +828,9 @@ app.listen(port, (err?: Error) => {
 runAppMigrations()
   // Install price-drop/restock change tracking before routine listing edits.
   // Failure is logged without interrupting unrelated storefront services.
-  .then(async () => { try { await ensureListingAlerts(); logger.info("Persistent listing alert tracking ready"); }
+  .then(async () => { try { await ensureCashback(); logger.info("Cashback ledger and payout policy ready"); }
+    catch (err) { logger.error({err},"Cashback schema setup failed: earning remains disabled until initialized"); }
+    try { await ensureListingAlerts(); logger.info("Persistent listing alert tracking ready"); }
     catch (err) { logger.error({err},"Persistent listing alert initialization failed"); } })
   .then(() => ensureEbayUsageLedger())
   .then(() => loadRapidApiKeyFromDb())
