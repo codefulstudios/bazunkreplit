@@ -24,7 +24,7 @@ const CATEGORIES = [
       { q: "Can I track my order?", a: "Once an item ships you'll receive a tracking number by email and inside Dashboard → Orders. Click the order to see live tracking steps from dispatch to delivery." },
       { q: "What payment methods are accepted?", a: "We accept all major credit and debit cards (Visa, Mastercard, Amex), PayPal, and Apple Pay. All transactions are processed over encrypted, PCI-compliant connections." },
       { q: "Can I buy from multiple sellers at once?", a: "Yes — add items from different sellers to your cart and check out together. Each seller's items are grouped and shipped separately, and fees are calculated per seller." },
-      { q: "What is Buyer Protection?", a: "Buyer Protection is added automatically to purchases made through Bazunk. It helps protect eligible purchases if an item doesn't arrive, arrives damaged, or is significantly not as described. For personal-seller items the default UK fee is 5% of the item price + 70p, charged once per checkout. Business-seller items include Buyer Protection with no additional buyer fee. Checkout shows the current admin-configured amount. See the Buyer Protection page for claim and dispute details." },
+      { q: "What is Buyer Protection?", a: "Buyer Protection is added automatically to purchases made through Bazunk. It helps protect eligible purchases if an item doesn't arrive, arrives damaged, or is significantly not as described. For personal-seller items the default UK fee is 6% of the item price + £1, charged once per checkout. Business-seller items include Buyer Protection with no additional buyer fee. Checkout shows the current admin-configured amount. See the Buyer Protection page for claim and dispute details." },
     ],
   },
   {

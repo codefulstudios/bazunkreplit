@@ -173,7 +173,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
   const defaultFeeRates = Object.fromEntries(
     FEE_CATEGORIES.map(c => [`fee_rate_${c.slug}`, c.defaultRate])
   );
-  const [feeRates, setFeeRates] = useState<Record<string, string>>({ ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "5", buyer_protection_fixed_gbp: "0.70", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" });
+  const [feeRates, setFeeRates] = useState<Record<string, string>>({ ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "6", buyer_protection_fixed_gbp: "1.00", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" });
   const [feesSaving, setFeesSaving] = useState(false);
   const [feesSaved, setFeesSaved] = useState(false);
   const [feesError, setFeesError] = useState<string | null>(null);
@@ -189,7 +189,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
       const [d, persisted] = await Promise.all([res.json(), feeRes.json()]);
       const valid = (value: unknown): value is Record<string, string> => !!value && typeof value === "object" && !Array.isArray(value) && Object.values(value).every(v => typeof v === "string");
       if (!valid(d) || !valid(persisted)) throw new Error("The settings response was invalid. Please retry.");
-      const loaded: Record<string, string> = { ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "5", buyer_protection_fixed_gbp: "0.70", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" };
+      const loaded: Record<string, string> = { ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "6", buyer_protection_fixed_gbp: "1.00", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" };
       Object.entries(d).forEach(([k, v]) => { if (k.startsWith("fee_") || k.startsWith("buyer_protection_")) loaded[k] = v; });
       setSettings({ ...DEFAULTS, ...d });
       setFeeRates({ ...loaded, ...persisted });
@@ -617,7 +617,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
                 </div>
                 <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[["buyer_protection_percent","Percentage","%"],["buyer_protection_fixed_gbp","UK fixed","£"],["buyer_protection_fixed_usd","US fixed","$"],["buyer_protection_fixed_eur","EU fixed","€"]].map(([key,label,unit]) => (
-                    <label key={key} className="text-xs font-bold text-gray-500">{label}<div className="flex items-center gap-2 mt-1"><span>{unit}</span><input type="number" min="0" step="0.01" value={feeRates[key] ?? (key === "buyer_protection_percent" ? "5" : key === "buyer_protection_fixed_gbp" ? "0.70" : "1.00")} onChange={e => setFeeRate(key,e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" /></div></label>
+                    <label key={key} className="text-xs font-bold text-gray-500">{label}<div className="flex items-center gap-2 mt-1"><span>{unit}</span><input type="number" min="0" step="0.01" value={feeRates[key] ?? (key === "buyer_protection_percent" ? "6" : key === "buyer_protection_fixed_gbp" ? "1.00" : "1.00")} onChange={e => setFeeRate(key,e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" /></div></label>
                   ))}
                 </div>
               </div>

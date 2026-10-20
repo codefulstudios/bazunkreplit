@@ -56,8 +56,8 @@ export async function findQuote(offer:{price_minor:number|string;seller_email:st
   const calc=calculateFees([{id:1,quantity:1,priceMinor,sellerType,
     businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),
     title:"Find It offer",image:null,sellerEmail:offer.seller_email,category}],
-    percentage(fees.buyer_protection_percent,5),
-    fees.buyer_protection_fixed_gbp==null ? 70 : minor(fees.buyer_protection_fixed_gbp),
+    percentage(fees.buyer_protection_percent,6),
+    fees.buyer_protection_fixed_gbp==null ? 100 : minor(fees.buyer_protection_fixed_gbp),
     gbpPrice>=50?0:399);
   const totalLocal=offer.region==="us" ? await convertAmount(calc.totalMinor/100,"GBP","USD") : calc.totalMinor/100;
   return {currency:offer.region==="us"?"USD":"GBP",offer_minor:Number(offer.price_minor),

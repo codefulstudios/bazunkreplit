@@ -549,8 +549,8 @@ async function runAppMigrations() {
   await run(sql`DO $$ BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('bazunk-fee-policy-v1'));
     IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='fee_policy_private_business_v1') THEN
-      UPDATE site_settings SET value='5',updated_at=NOW() WHERE key='buyer_protection_percent';
-      UPDATE site_settings SET value='0.70',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
+      UPDATE site_settings SET value='6',updated_at=NOW() WHERE key='buyer_protection_percent';
+      UPDATE site_settings SET value='1.00',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key='fee_rate_default';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key LIKE 'fee_rate_%' AND value='5';
       INSERT INTO site_settings(key,value,updated_at) VALUES('fee_policy_private_business_v1','applied',NOW());
@@ -562,8 +562,8 @@ async function runAppMigrations() {
     INSERT INTO site_settings (key, value, updated_at) VALUES
       ('fee_rate_default',              '8', NOW()),
       ('fee_listing_free',           'true', NOW()),
-      ('buyer_protection_percent',      '5', NOW()),
-      ('buyer_protection_fixed_gbp',   '0.70', NOW()),
+      ('buyer_protection_percent',      '6', NOW()),
+      ('buyer_protection_fixed_gbp',   '1.00', NOW()),
       ('buyer_protection_fixed_usd',   '1.00', NOW()),
       ('buyer_protection_fixed_eur',   '1.00', NOW()),
       ('fee_rate_electronics',           '8', NOW()),
@@ -585,6 +585,57 @@ async function runAppMigrations() {
       ('fee_rate_adult',                 '8', NOW())
     ON CONFLICT (key) DO NOTHING
   `, "site_settings.seed");
+
+  // Versioned, once-only policy migration; keep historic orders and cashback earnings unchanged.
+  // The advisory lock prevents concurrent Render instances from applying it twice.
+  await run(sql`DO $$
+  DECLARE previous_policy JSONB;
+          new_tiers JSONB;
+  BEGIN
+    PERFORM pg_advisory_xact_lock(hashtext('bazunk-pricing-20261020-v2'));
+    IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='pricing_policy_20261020_v2') THEN
+      INSERT INTO site_settings(key,value,updated_at) VALUES
+        ('buyer_protection_percent','6',NOW()),
+        ('buyer_protection_fixed_gbp','1.00',NOW()),
+        ('buyer_protection_fixed_eur','1.00',NOW()),
+        ('buyer_protection_fixed_usd','1.00',NOW())
+      ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW();
+
+      SELECT value::jsonb INTO previous_policy
+      FROM site_settings WHERE key='cashback_program_settings' FOR UPDATE;
+      IF previous_policy IS NULL OR jsonb_typeof(previous_policy)<>'object' THEN
+        previous_policy=jsonb_build_object('enabled',false,
+          'payoutPolicy','Cashback payouts are not yet enabled.');
+      END IF;
+      IF jsonb_typeof(previous_policy->'tiers') IS DISTINCT FROM 'array'
+        OR jsonb_array_length(CASE WHEN jsonb_typeof(previous_policy->'tiers')='array'
+          THEN previous_policy->'tiers' ELSE '[]'::jsonb END) <> 4 THEN
+        previous_policy=jsonb_set(previous_policy,'{tiers}',jsonb_build_array(
+          jsonb_build_object('id','bronze','name','Bronze','rate',0.25,'spendGbp',50,'perks',jsonb_build_array()),
+          jsonb_build_object('id','silver','name','Silver','rate',0.5,'spendGbp',150,'perks',jsonb_build_array()),
+          jsonb_build_object('id','gold','name','Gold','rate',0.75,'spendGbp',350,'perks',jsonb_build_array()),
+          jsonb_build_object('id','platinum','name','Platinum','rate',1,'spendGbp',700,'perks',jsonb_build_array())
+        ),true);
+      ELSE
+        SELECT jsonb_agg(jsonb_set(tier,'{rate}',to_jsonb(
+          CASE tier->>'id'
+            WHEN 'bronze' THEN 0.25::numeric
+            WHEN 'silver' THEN 0.5::numeric
+            WHEN 'gold' THEN 0.75::numeric
+            WHEN 'platinum' THEN 1::numeric
+            ELSE 0.25::numeric
+          END),true) ORDER BY ord)
+        INTO new_tiers
+        FROM jsonb_array_elements(previous_policy->'tiers') WITH ORDINALITY AS v(tier,ord);
+        previous_policy=jsonb_set(previous_policy,'{tiers}',new_tiers,true);
+      END IF;
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('cashback_program_settings',previous_policy::text,NOW())
+      ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW();
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('pricing_policy_20261020_v2','applied',NOW());
+    END IF;
+  END $$`, "site_settings.pricing_policy_20261020_v2");
 
   // ── Buyer / seller marketplace messaging ──
   await run(sql`CREATE TABLE IF NOT EXISTS marketplace_conversations (

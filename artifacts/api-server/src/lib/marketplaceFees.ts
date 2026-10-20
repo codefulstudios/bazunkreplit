@@ -22,7 +22,7 @@ export function allocate(total: number, weights: number[]): number[] {
   for (let i=0; i<left; i++) values[order[i].index]++;
   return values;
 }
-export function calculateFees(items: FeeItem[], protectionPercent = 5, fixedMinor = 70, deliveryMinor = 0) {
+export function calculateFees(items: FeeItem[], protectionPercent = 6, fixedMinor = 100, deliveryMinor = 0) {
   const units: FeeUnit[] = items.flatMap(item => Array.from({length:item.quantity}, () => {
     const {quantity: _, ...unit} = item;
     const sellerFeeMinor = item.sellerType === "private" ? 0 : Math.round(item.priceMinor * item.businessRate / 100);

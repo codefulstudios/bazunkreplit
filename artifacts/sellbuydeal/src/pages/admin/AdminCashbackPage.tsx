@@ -138,7 +138,7 @@ export function AdminCashbackPage(){
     <h3 className="font-black capitalize">{t.id} tier</h3>
     <label className="block text-sm font-bold">Display name<input className={input} maxLength={40} value={t.name} onChange={e=>updateTier(i,{name:e.target.value})}/></label>
     <div className="grid grid-cols-2 gap-3">
-     <label className="block text-sm font-bold">Cashback rate (%)<input className={input} type="number" min="0" max="20" step=".1" value={t.rate} onChange={e=>updateTier(i,{rate:Number(e.target.value)})}/></label>
+     <label className="block text-sm font-bold">Cashback rate (%)<input className={input} type="number" min="0" max="20" step=".05" value={t.rate} onChange={e=>updateTier(i,{rate:Number(e.target.value)})}/></label>
      <label className="block text-sm font-bold">Lifetime spend from (£)<input className={input} type="number" min="0" step="1" value={t.spendGbp} onChange={e=>updateTier(i,{spendGbp:Number(e.target.value)})}/></label>
     </div>
     <label className="block text-sm font-bold">Tier notes (one per line)<textarea className={input} rows={3} value={t.perks.join("\n")} onChange={e=>updateTier(i,{perks:e.target.value.split("\n")})}/></label>

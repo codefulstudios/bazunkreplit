@@ -47,13 +47,13 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     items.push({id,quantity:counts.get(id)!,priceMinor,sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),title:String(row.title),image:row.image ? String(row.image):null,sellerEmail:String(row.seller_email),category});
   }
   const subtotal=items.reduce((sum,item)=>sum+item.priceMinor*item.quantity,0);
-  const fixed=fees.buyer_protection_fixed_gbp==null ? 70 : minor(fees.buyer_protection_fixed_gbp);
+  const fixed=fees.buyer_protection_fixed_gbp==null ? 100 : minor(fees.buyer_protection_fixed_gbp);
   // Never trust browser discount/shipping totals. Policy is read from the seller's
   // verified settings and frozen in the quote snapshot before charging Stripe.
   const enabled = await featureEnabled("combined_shipping");
   const discountsEnabled = await featureEnabled("multi_item_discount");
   const policyExists = (await db.execute(sql`SELECT to_regclass('public.seller_bundle_policies') AS table_name`)).rows[0]?.table_name;
-  if (!enabled || !policyExists) return calculateFees(items,percentage(fees.buyer_protection_percent,5),fixed,subtotal>=5000?0:399);
+  if (!enabled || !policyExists) return calculateFees(items,percentage(fees.buyer_protection_percent,6),fixed,subtotal>=5000?0:399);
   const policyRows = (await db.execute(sql`SELECT seller_email,enabled,combined_shipping_minor,multi_item_discount_percent,min_items FROM seller_bundle_policies WHERE enabled=TRUE`)).rows as any[];
   const policies = new Map(policyRows.map(p=>[String(p.seller_email).toLowerCase(),p]));
   const perSeller = new Map<string,FeeItem[]>();
@@ -90,7 +90,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     breakdown.find(b=>b.sellerEmail===key)!.shippingMinor+=fallback;
     deliveryMinor+=fallback;
   }
-  const quote=calculateFees(adjusted,percentage(fees.buyer_protection_percent,5),fixed,0) as CheckoutQuote;
+  const quote=calculateFees(adjusted,percentage(fees.buyer_protection_percent,6),fixed,0) as CheckoutQuote;
   // Allocate each seller's shipping only across that seller's orders.
   for(const [email,charge] of sellerDelivery) {
     const indices=quote.units.map((u,i)=>u.sellerEmail.toLowerCase()===email?i:-1).filter(i=>i>=0);

@@ -173,7 +173,7 @@ export function AdminPaymentsPage() {
             <div>
               <p className="font-bold">Buyer Protection & Business Seller Fees</p>
               <p className="text-xs text-blue-500 mt-0.5">
-                Private sellers pay no seller commission. Buyers pay Buyer Protection only on personal-seller items (5% + £0.70 by default in GBP, with one fixed fee per checkout). Business and sole-trader sellers pay an 8% selling fee by default, subject to configured category rates, including protection and support. Buyers pay no additional Buyer Protection fee on business-seller items.
+                Private sellers pay no seller commission. Buyers pay Buyer Protection only on personal-seller items (6% + £1.00 by default in GBP, with one fixed fee per checkout). Business and sole-trader sellers pay an 8% selling fee by default, subject to configured category rates, including protection and support. Buyers pay no additional Buyer Protection fee on business-seller items.
                 Change rates in <button onClick={() => setLocation("/admin/settings")} className="underline font-semibold">Site Settings → Fees</button>.
               </p>
             </div>

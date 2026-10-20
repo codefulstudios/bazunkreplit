@@ -1,0 +1,42 @@
+name: Pricing and cashback policy validation
+on:
+  pull_request:
+    paths:
+      - 'artifacts/api-server/src/index.ts'
+      - 'artifacts/api-server/src/lib/checkoutQuote.ts'
+      - 'artifacts/api-server/src/lib/marketplaceFees.ts'
+      - 'artifacts/api-server/src/lib/cashback.ts'
+      - 'artifacts/api-server/src/lib/specialCheckout.ts'
+      - 'artifacts/api-server/src/lib/findIt.ts'
+      - 'artifacts/sellbuydeal/src/pages/**'
+      - 'scripts/pricing-cashback-policy.test.mjs'
+      - '.github/workflows/pricing-cashback-policy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/api-server/src/index.ts'
+      - 'artifacts/api-server/src/lib/checkoutQuote.ts'
+      - 'artifacts/api-server/src/lib/marketplaceFees.ts'
+      - 'artifacts/api-server/src/lib/cashback.ts'
+      - 'scripts/pricing-cashback-policy.test.mjs'
+      - '.github/workflows/pricing-cashback-policy.yml'
+  workflow_dispatch:
+jobs:
+  pricing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: node --test scripts/pricing-cashback-policy.test.mjs
+      - run: pnpm install --no-frozen-lockfile --prod=false
+      - run: pnpm run typecheck:libs
+      - run: pnpm --filter @workspace/api-server run typecheck
+      - run: pnpm --filter @workspace/sellbuydeal run typecheck
+      - run: pnpm run build
