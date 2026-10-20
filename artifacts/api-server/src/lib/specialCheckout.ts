@@ -88,7 +88,7 @@ export async function startSpecialCheckout(kind:SaleKind,id:string,buyer:string,
     if(!["private","business","sole_trader"].includes(sellerType)) throw new Error("Seller verification is required");
     const category=String(sale.category??"").toLowerCase();
     const item={id:1,quantity:1,priceMinor:minor(sale.price),sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),title:sale.title,image:sale.image,sellerEmail:sale.seller_email,category};
-    const quote=calculateFees([item],percentage(fees.buyer_protection_percent,5),fees.buyer_protection_fixed_gbp==null?70:minor(fees.buyer_protection_fixed_gbp),sale.price>=50?0:399);
+    const quote=calculateFees([item],percentage(fees.buyer_protection_percent,6),fees.buyer_protection_fixed_gbp==null?100:minor(fees.buyer_protection_fixed_gbp),sale.price>=50?0:399);
     if(kind==="find_it"){
       // Recheck the maximum *including* delivery and protection at payment time.
       const localTotal=sale.region==="us" ? await convertAmount(quote.totalMinor/100,"GBP","USD") : quote.totalMinor/100;
