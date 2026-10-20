@@ -31,7 +31,7 @@ export function HomepagePromoCards() {
       </Link>
       <div className="grid gap-3 sm:grid-cols-3">
         {secondary.map(({title,description,icon:Icon,href})=><Link key={title} href={href} className="bz-design-promo-card group flex min-h-[160px] flex-col rounded-2xl border p-5 hover:shadow-md hover:border-orange-400 transition-all" style={{backgroundColor:"#1D2C44",borderColor:"#64748B",color:"#FFFFFF"}}>
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:"#35445B",color:"#FDBA74"}}><Icon className="h-5 w-5"/></div>
+          <div className="bz-design-promo-icon mb-4 flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:"#35445B",color:"#FDBA74"}}><Icon className="h-5 w-5"/></div>
           <h3 className="text-lg font-semibold" style={{color:"#FFFFFF"}}>{title}</h3>
           <p className="mt-2 text-sm leading-relaxed" style={{color:"#E2E8F0"}}>{description}</p>
           <span className="mt-auto pt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{color:"#FDBA74"}}>Explore <ArrowRight className="h-4 w-4"/></span>
