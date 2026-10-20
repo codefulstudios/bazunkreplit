@@ -873,6 +873,18 @@ router.put("/admin/settings", async (req, res) => {
         if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500)){res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});return;}
       }else if(key==="design_hero_image_alt"){
         if(value.length>150){res.status(400).json({error:"Graphic description too long"});return;}
+      }else if(/^design_icon_style_/.test(key)){
+        if(!/^design_icon_style_(categories|promos)_(light|dark)$/.test(key)){res.status(400).json({error:"Unknown icon area"});return;}
+        if(value==="")continue;
+        try{
+          const p=JSON.parse(value), colors=["iconColor","tileColor","tileText","tileBorder","badgeColor","badgeBorder"];
+          const required=[...colors,"size","badgeSize","radius","gap"];
+          if(!p||Object.keys(p).sort().join(",")!==required.sort().join(",")||!colors.every(k=>typeof p[k]==="string"&&/^#[0-9a-fA-F]{6}$/.test(p[k])))throw Error("Invalid colours");
+          if(!([["size",16,44],["badgeSize",36,84],["radius",0,28],["gap",4,20]] as const).every(([k,min,max])=>Number.isInteger(p[k])&&p[k]>=min&&p[k]<=max))throw Error("Invalid icon dimensions");
+          const lum=(hex:string)=>{const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+          const ratio=(a:string,b:string)=>{const a1=lum(a),b1=lum(b);return (Math.max(a1,b1)+.05)/(Math.min(a1,b1)+.05)};
+          if(p.size>p.badgeSize-8||ratio(p.iconColor,p.badgeColor)<4.5||ratio(p.tileText,p.tileColor)<4.5)throw Error("Unsafe contrast");
+        }catch{res.status(400).json({error:"Icon design failed accessibility validation"});return;}
       }else if(/^design_category_icon_/.test(key)){
         if(!/^design_category_icon_(electronics|fashion|gaming|home|sports|books|collectibles|automotive)$/.test(key)||!["","smartphone","shirt","gaming","home","sports","books","collectibles","automotive","package"].includes(value)){res.status(400).json({error:"Unrecognised category icon"});return;}
       }else if(/^design_section_/.test(key)){

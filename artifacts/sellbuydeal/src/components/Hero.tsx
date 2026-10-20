@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useRawSettings } from "@/context/SiteSettingsContext";
 import { useTheme } from "next-themes";
 import { readSection,sectionStyle } from "@/design-system/sectionAppearance";
+import {readIconAppearance,iconStyle} from "@/design-system/iconAppearance";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 
 const PILLS = [
@@ -93,6 +94,7 @@ export function Hero() {
   const designMode=resolvedTheme==="dark"?"dark":"light";
   const heroAppearance=readSection(featureSettings,"home_hero",designMode);
   const categoryAppearance=readSection(featureSettings,"home_categories",designMode);
+  const categoryIconAppearance=readIconAppearance(featureSettings,"categories",designMode);
   const heroGraphic = featureSettings.design_hero_image_url || "";
   const safeHeroGraphic = /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
@@ -155,7 +157,7 @@ export function Hero() {
             className="flex flex-col gap-4 self-start"
           >
             {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
-            <div data-design-home-categories={categoryAppearance?"true":"false"} style={sectionStyle(categoryAppearance)} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            <div data-design-home-categories={categoryAppearance?"true":"false"} data-design-icons={categoryIconAppearance?"true":"false"} style={{...sectionStyle(categoryAppearance),...iconStyle(categoryIconAppearance)}} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
             {HERO_CATS.map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
                 key={name}
