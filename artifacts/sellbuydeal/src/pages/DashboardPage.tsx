@@ -3,6 +3,7 @@ import { SellerTrustInsights } from "@/components/SellerTrustInsights";
 import { SellerPricingInsightsPanel } from "@/components/SellerPricingInsightsPanel";
 import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
 import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
+import { DealPilotPanel } from "@/components/DealPilotPanel";
 import { WatchAlertsManager } from "@/components/dashboard/WatchAlertsManager";
 import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
 import "./../styles/dashboard-submenus-theme.css";
@@ -80,6 +81,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
       { id: "offers",         label: "My Offers",     icon: Handshake,   iconBg: "bg-emerald-600"    },
       { id: "watchlist",      label: "Watchlist",     icon: Heart,       iconBg: "bg-amber-500"      },
       { id: "saved-searches", label: "Saved Searches",icon: Search,      iconBg: "bg-sky-500"        },
+      { id: "deal-pilot", label: "DealPilot", icon: Search, iconBg: "bg-violet-600" },
     ],
   },
   {
@@ -5640,7 +5642,7 @@ export function DashboardPage() {
   const rawSettings = useRawSettings();
   const liveEnabled = isFeatureEnabled(rawSettings, "live");
   const dashboardFeatureForItem: Record<string,string> = {
-    "my-bids":"auctions", "offers":"offers", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
+    "my-bids":"auctions", "offers":"offers", "deal-pilot":"deal_pilot", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
     "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits",
     "promotions":"promotions", "verification":"verification", "buyer-protection":"buyer_protection",
     "disputes":"disputes_returns", "returns":"disputes_returns"
@@ -6232,6 +6234,7 @@ export function DashboardPage() {
               </>
             )}
             {activeSection === "saved-searches" && <SavedSearchesSection />}
+            {activeSection === "deal-pilot" && <DealPilotPanel />}
             {activeSection === "messages" && (
   <section className="rounded-2xl border border-blue-300 bg-white p-6 text-center dark:border-blue-700 dark:bg-[#111f36]">
     <MessageSquare className="mx-auto h-10 w-10 text-indigo-500" />
