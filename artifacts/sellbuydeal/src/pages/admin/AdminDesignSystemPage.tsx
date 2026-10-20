@@ -3,6 +3,7 @@ import { useAdmin } from "@/context/AdminContext";
 import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { AdminLayout } from "./AdminLayout";
 import { AdminSettingsPage } from "./AdminSettingsPage";
+import { DesignSectionsEditor } from "./DesignSectionsEditor";
 import { ShieldCheck, Copy, RotateCcw, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
 // Deliberately isolated: these settings render only inside the preview.
@@ -72,7 +73,7 @@ function DesignAssetsEditor() {
  </div>;
 }
 export function AdminDesignSystemPage() {
-  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets">("colours");
+  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("sections");
   const [area,setArea]=useState<Area>("storefront");
   const [mode,setMode]=useState<Mode>("light");
   const [drafts,setDrafts]=useState(PRESETS);
@@ -102,8 +103,9 @@ export function AdminDesignSystemPage() {
   }
   return <AdminLayout>
     <section className="mx-auto max-w-6xl space-y-5" data-testid="protected-design-console">
-      <div className="rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white"><h1 className="text-2xl font-extrabold">Bazunk Design Center</h1><p className="mt-1 text-sm font-semibold">Storefront and admin appearance, branding, homepage, footer and SEO in one place.</p><div className="mt-4 flex flex-wrap gap-2">{([{key:"colours",label:"Protected colours"},{key:"branding",label:"Branding & SEO"},{key:"homepage",label:"Homepage"},{key:"footer",label:"Footer"},{key:"advertising",label:"Advertising"},{key:"assets",label:"Icons & Graphics"}] as const).map(item=><button key={item.key} type="button" onClick={()=>setDesignTab(item.key)} aria-pressed={designTab===item.key} className={"rounded-lg border px-4 py-2 text-sm font-bold "+(designTab===item.key?"border-orange-700 bg-orange-300 text-slate-950":"border-slate-400 bg-white text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white")}>{item.label}</button>)}</div></div>
+      <div className="rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white"><h1 className="text-2xl font-extrabold">Bazunk Design Center</h1><p className="mt-1 text-sm font-semibold">Storefront and admin appearance, branding, homepage, footer and SEO in one place.</p><div className="mt-4 flex flex-wrap gap-2">{([{key:"sections",label:"Website sections"},{key:"colours",label:"Protected colours"},{key:"branding",label:"Branding & SEO"},{key:"homepage",label:"Homepage"},{key:"footer",label:"Footer"},{key:"advertising",label:"Advertising"},{key:"assets",label:"Icons & Graphics"}] as const).map(item=><button key={item.key} type="button" onClick={()=>setDesignTab(item.key)} aria-pressed={designTab===item.key} className={"rounded-lg border px-4 py-2 text-sm font-bold "+(designTab===item.key?"border-orange-700 bg-orange-300 text-slate-950":"border-slate-400 bg-white text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white")}>{item.label}</button>)}</div></div>
       {designTab==="assets" && <DesignAssetsEditor />}
+      {designTab==="sections" && <DesignSectionsEditor />}
       {designTab!=="colours"&&designTab!=="assets"&&<AdminSettingsPage key={designTab} embedded initialTab={designTab}/>}
       {designTab==="colours"&&<>
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
