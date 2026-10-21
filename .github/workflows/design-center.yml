@@ -9,6 +9,7 @@ on:
       - 'artifacts/sellbuydeal/src/design-system/**'
       - 'artifacts/api-server/src/routes/admin.ts'
       - 'scripts/design-center-contract.test.mjs'
+      - 'scripts/admin-control-light-dark.test.mjs'
       - 'scripts/icon-appearance-contract.test.mjs'
       - 'scripts/design-center-clarity.test.mjs'
       - 'scripts/design-center-mockup-contract.test.mjs'
@@ -33,7 +34,7 @@ jobs:
         with:
           node-version: '22'
       - name: Design Center regression checks
-        run: node --test scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs
+        run: node --test scripts/admin-control-light-dark.test.mjs scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs
       - name: Install pnpm
         run: corepack enable
       - name: Install workspace dependencies
