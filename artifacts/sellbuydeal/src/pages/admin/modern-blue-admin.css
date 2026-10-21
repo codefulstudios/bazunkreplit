@@ -361,3 +361,37 @@
 .bazunk-admin main :is(input,textarea)::placeholder{color:#596a80;opacity:1}
 .dark .bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){color:#f5f9ff!important}
 .dark .bazunk-admin main :is(input,textarea)::placeholder{color:#c3d3e9!important;opacity:1}
+
+
+/* Phase 2: semantic admin component contract across every submenu.
+   Scoped to the admin shell; intentional filled buttons keep their own text. */
+.bazunk-admin{
+ --bz-control-border:#94a3b8;
+ --bz-control-bg:#ffffff;
+ --bz-control-text:#172b49;
+ --bz-control-placeholder:#52647a;
+ --bz-control-focus:#1769ff;
+}
+.dark .bazunk-admin{
+ --bz-control-border:#64748b;
+ --bz-control-bg:#1d3048;
+ --bz-control-text:#f8fafc;
+ --bz-control-placeholder:#cbd5e1;
+ --bz-control-focus:#93c5fd;
+}
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){
+ background-color:var(--bz-control-bg);
+ color:var(--bz-control-text);
+ border-color:var(--bz-control-border);
+ color-scheme:light;
+}
+.dark .bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){color-scheme:dark}
+.bazunk-admin main :is(input,textarea)::placeholder{color:var(--bz-control-placeholder);opacity:1}
+.bazunk-admin main :is(button,a,input,textarea,select):focus-visible{
+ outline:3px solid var(--bz-control-focus);
+ outline-offset:2px;
+}
+.bazunk-admin main select option{background:var(--bz-control-bg);color:var(--bz-control-text)}
+.bazunk-admin main button:not(:disabled){cursor:pointer}
+.bazunk-admin main button:disabled{cursor:not-allowed;opacity:.65}
+.bazunk-admin main :is(button[role="switch"],input[type="checkbox"],input[type="radio"]){accent-color:#1769ff}
