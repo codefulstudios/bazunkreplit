@@ -12,6 +12,7 @@ export function installDesignPreviewBridge(){
   if(event.origin!==location.origin||event.source!==window.parent)return;
   if((event.data as any)?.type==="bazunk:icon-preview"){
    const detail=event.data as any;
+   if(detail.mode!==(root.classList.contains("dark")?"dark":"light"))return;
    if(detail.area!=="categories"&&detail.area!=="promos")return;
    const p=detail.draft;
    const colors=["iconColor","tileColor","tileText","tileBorder","badgeColor","badgeBorder"];
@@ -27,6 +28,7 @@ export function installDesignPreviewBridge(){
   }
   if((event.data as any)?.type==="bazunk:section-preview"){
    const detail=event.data as any;
+   if(detail.mode!==(root.classList.contains("dark")?"dark":"light"))return;
    const targets:Record<string,string>={home_hero:".bz-design-home-hero",home_categories:".bz-design-home-categories",home_spotlight:".bz-design-spotlight",home_promos:".bz-design-home-promos"};
    const selector=targets[detail.section];const d=detail.draft;
    if(!selector||!d||!["background","text","accent","accentText"].every(k=>typeof d[k]==="string"&&/^#[0-9a-f]{6}$/i.test(d[k])))return;
