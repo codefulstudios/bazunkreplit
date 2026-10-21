@@ -23,12 +23,22 @@ export function AdminDashboardPage(){
   ["Live streams",num(s.activeLiveStreams),`${num(s.liveViewers)} current viewers`,Radio], ["Open disputes",num(s.openDisputes),`${num(s.totalDisputes)} total`,AlertTriangle],
   ["Open returns",num(s.openReturns),"Awaiting completion",RotateCcw], ["Refunds",money(s.refunds),"Recorded dispute/return refunds",RotateCcw],
  ] as const:[];
- const palettes=Array.from({length:12},()=> "bg-white text-slate-900 dark:bg-[#111f35] dark:text-white");
  return <AdminLayout><div className="admin-dashboard space-y-6">{loading&&!s&&<MarketplaceLoader area="admin" label="Loading admin dashboard…" />}
   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><h1 className="text-[26px] font-extrabold tracking-tight text-[#0f172a] dark:text-white sm:text-[30px]">Dashboard</h1><p className="mt-1 text-sm text-[#52638a] dark:text-slate-300">Here's what's happening with your marketplace today.</p></div><div className="flex flex-wrap items-center gap-3 sm:justify-end"><div className="flex flex-col gap-2"><span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-[#27385d] shadow-sm dark:border-white/10 dark:bg-[#182846] dark:text-white"><CalendarDays className="h-4 w-4"/>{new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date())}</span><span className="inline-flex items-center justify-end gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-500"/>Admin dashboard connected</span></div><button onClick={load} disabled={loading} className="flex items-center gap-2 rounded-xl bg-[#1769ff] px-4 py-2.5 text-sm font-bold text-white dark:bg-blue-600"><RefreshCw className={`h-4 w-4 ${loading?"animate-spin":""}`}/>Refresh</button></div></div>
   <AdminActionRequired />
-  {loading&&!s?<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({length:12}).map((_,i)=><div key={i} className="h-28 bg-white dark:bg-[#172541] rounded-2xl animate-pulse"/>)}</div>:s&&<>
-   <div className="grid grid-cols-1 min-[390px]:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">{cards.map(([label,value,sub,Icon],i)=><div key={label} className={`admin-kpi admin-kpi-${i%12} relative min-w-0 overflow-hidden min-h-[132px] rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-[#263854] ${palettes[i%palettes.length]}`}><div className="mb-2 flex items-center justify-between gap-2"><span className="text-[12px] font-semibold tracking-wide text-slate-600 dark:text-slate-300">{label}</span><div className="admin-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 shadow-sm dark:bg-blue-500/15 dark:text-blue-300"><Icon className="h-6 w-6"/></div></div><div className="text-2xl font-extrabold tabular-nums sm:text-3xl">{value}</div><div className="mt-1 flex items-center justify-between gap-1 text-xs font-medium text-slate-600 dark:text-slate-300"><span>{sub}</span><ArrowUpRight className="h-4 w-4 shrink-0"/></div></div>)}</div>
+  {loading&&!s?<div className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">{Array.from({length:12}).map((_,i)=><div key={i} className="h-[156px] bg-white dark:bg-[#111f35] rounded-xl animate-pulse"/>)}</div>:s&&<>
+   <section aria-label="Marketplace key performance indicators" className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
+    {cards.map(([label,value,sub,Icon],i)=><div key={label} className={`admin-kpi admin-kpi-${i} relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]`}>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <span className="admin-kpi-label min-w-0 text-[13px] font-semibold leading-5 text-slate-600 dark:text-slate-300">{label}</span>
+        <span aria-hidden="true" className="admin-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300"><Icon className="h-5 w-5"/></span>
+      </div>
+      <div className="min-w-0">
+        <div className="admin-kpi-value font-extrabold tracking-tight tabular-nums text-slate-950 dark:text-white" title={value}>{value}</div>
+        <p className="admin-kpi-sub mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-600 dark:text-slate-300">{sub}</p>
+      </div>
+    </div>)}
+   </section>
    <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2>
