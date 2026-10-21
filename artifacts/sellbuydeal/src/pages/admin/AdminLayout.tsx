@@ -49,7 +49,7 @@ const NAV = [
 ];
 
 const NAV_GROUPS = [
-  { id:"overview", label:"Overview", icon:LayoutDashboard, pages:["Dashboard","Design Center"] },
+
   { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","TrustProof","Reviews"] },
   { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Snap & Sell AI","DealPilot","Find It","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
   { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
@@ -58,6 +58,10 @@ const NAV_GROUPS = [
   { id:"system", label:"Platform & Settings", icon:Settings, pages:["Audit Log","System Status","Feature Toggles","Settings"] }
 ] as const;
 
+const DESIGN_SECTIONS = [
+  ["assistant","AI Design Assistant"],["themes","Theme Gallery"],["preview","Live Preview"],
+  ["colours","Colours"],["components","Admin Appearance"],["content","Pages & Branding"],["history","History & Restore"]
+] as const;
 let savedAdminExpandedGroups: Record<string,boolean> = {overview:false,accounts:false,marketplace:false,commerce:false,growth:false,support:false,system:false};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -116,6 +120,11 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="admin-sidebar-search px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
         {/* Nav */}
         <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto py-4 px-3 space-y-2">
+          <button type="button" onClick={()=>{setMenuOpen(false);setLocation("/admin/dashboard")}} aria-current={location==="/admin/dashboard"?"page":undefined} className={"admin-nav-link mb-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-3 text-left text-sm font-bold "+(location==="/admin/dashboard"?"bg-[#1769ff] text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-white/10")}><LayoutDashboard className="h-4 w-4"/>Dashboard</button>
+          <div className="mb-3 rounded-xl border border-slate-200 p-2 dark:border-slate-700">
+            <button type="button" onClick={()=>{setMenuOpen(false);setLocation("/admin/design-system")}} className={"admin-nav-link flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-bold "+(location.startsWith("/admin/design-system")?"bg-blue-600 text-white":"text-slate-800 dark:text-white")}><ShieldCheck className="h-4 w-4"/>Design Center</button>
+            {location.startsWith("/admin/design-system")&&<div className="mt-1 ml-2 space-y-1 border-l-2 border-blue-300 pl-2 dark:border-blue-700">{DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}))} className="admin-design-submenu-link block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-800 dark:text-slate-100 dark:hover:bg-[#2a4263]">{label}</button>)}</div>}
+          </div>
           {NAV_GROUPS.map(group=>{
             const pages=NAV.filter(n=>group.pages.some(label=>label===n.label) &&
               (!search.trim()||n.label.toLowerCase().includes(search.trim().toLowerCase())||group.label.toLowerCase().includes(search.trim().toLowerCase())));

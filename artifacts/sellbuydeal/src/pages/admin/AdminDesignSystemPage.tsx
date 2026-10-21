@@ -82,6 +82,7 @@ function DesignAssetsEditor() {
 }
 export function AdminDesignSystemPage() {
   const [workspaceSection,setWorkspaceSection]=useState<"assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history">("assistant");
+  useEffect(()=>{const change=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(["assistant","themes","preview","colours","components","content","history"].includes(id)){setWorkspaceSection(id as "assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history");}};window.addEventListener("bazunk-design-section",change);return()=>window.removeEventListener("bazunk-design-section",change)},[]);
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
   const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
@@ -223,14 +224,8 @@ export function AdminDesignSystemPage() {
   }
   return <AdminLayout>
     <section className="mx-auto max-w-[1700px] rounded-xl bg-[#f5f8fd] p-3 text-slate-900 dark:bg-[#081220] dark:text-white sm:p-5" data-testid="protected-design-console">
-     <div className="grid gap-5 lg:grid-cols-[225px_minmax(0,1fr)]">
-      <aside aria-label="Design Center sections" className="min-w-0 self-start rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-[#172541] lg:sticky lg:top-4">
-       <div className="border-b border-slate-200 px-3 pb-3 dark:border-slate-600"><strong className="text-base text-slate-950 dark:text-white">Design Center</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Choose a task to edit</p></div>
-       <nav className="mt-3 grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
-        {([{id:"assistant",label:"AI Design Assistant",desc:"Describe changes in plain English",icon:Palette},{id:"themes",label:"Theme gallery",desc:"Choose a ready-made theme",icon:Palette},{id:"preview",label:"Live preview",desc:"View desktop and mobile",icon:Monitor},{id:"colours",label:"Colours",desc:"Adjust text and surfaces",icon:Sun},{id:"components",label:"Admin appearance",desc:"Fonts, cards and sidebar",icon:Type},{id:"content",label:"Pages & branding",desc:"Icons, homepage, footer",icon:LayoutGrid}] as const).map(item=><button key={item.id} type="button" aria-current={workspaceSection===item.id?"page":undefined} onClick={()=>{setWorkspaceSection(item.id);if(item.id==="colours")setDesignTab("colours");if(item.id==="content"&&designTab==="colours")setDesignTab("branding");if(item.id==="components")setSelectedPlatform("admin")}} className={"flex min-h-12 items-center gap-2 rounded-lg p-3 text-left text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 "+(workspaceSection===item.id?"bg-blue-600 text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-[#304866]")}><item.icon className="h-4 w-4 shrink-0"/><span><span className="block">{item.label}</span><span className={"hidden text-xs font-medium lg:block "+(workspaceSection===item.id?"text-blue-50":"text-slate-600 dark:text-slate-300")}>{item.desc}</span></span></button>)}
-       </nav>
-      </aside>
-      <div className="min-w-0 space-y-5">
+     <div className="min-w-0 space-y-5">
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
         <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={saveDraft} className="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-white px-5 py-3 font-bold text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:border-slate-500 dark:bg-[#213a58] dark:text-white"><Save className="h-4 w-4"/>Save draft</button><span role="status" className="self-center text-xs font-semibold text-slate-700 dark:text-slate-200">{autoStatus}</span><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
@@ -330,7 +325,6 @@ export function AdminDesignSystemPage() {
         </div>
       </div>
       </>}
-      </div>
       </div>
      </div>
     </section>
