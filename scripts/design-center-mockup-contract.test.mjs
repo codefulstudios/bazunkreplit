@@ -12,5 +12,5 @@ test("Mobile design inheritance is real and server validated",()=>{
  assert.match(ctx,/design_mobile_inherit_web/);
  assert.match(ctx,/max-width: 767px/);
  assert.match(api,/design_mobile_inherit_web/);
- assert.match(api,/design_palette_\(storefront\|admin\|dealpilot\|mobile\)/);
+ assert.match(api,/design_\(draft_\)\?palette_\(storefront\|admin\|dealpilot\|mobile\)/);
 });

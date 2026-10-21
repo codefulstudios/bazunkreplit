@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { designSettingKey, parseDesignPalette, type DesignArea, type DesignMode } from "@/design-system/palette";
+import {installDesignPreviewBridge} from "@/design-system/previewBridge";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -74,6 +75,7 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue>({
 });
 
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
+  useEffect(()=>installDesignPreviewBridge(),[]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULTS);
   const [rawSettings, setRawSettings] = useState<Record<string, string>>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
