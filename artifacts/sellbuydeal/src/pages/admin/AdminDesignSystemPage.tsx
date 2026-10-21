@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdmin } from "@/context/AdminContext";
 import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { AdminLayout } from "./AdminLayout";
@@ -83,6 +83,10 @@ export function AdminDesignSystemPage() {
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("storefront");
   const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"dark",storefront:"dark",mobile:"dark"});
   const [previewPage,setPreviewPage]=useState<"home"|"listing"|"dealpilot"|"dashboard">("home");
+  const desktopRef=useRef<HTMLIFrameElement>(null);
+  const mobileRef=useRef<HTMLIFrameElement>(null);
+  const [inspectMode,setInspectMode]=useState(false);
+  const [picked,setPicked]=useState("");
   const [syncMobile,setSyncMobile]=useState(false);
   const [mobileSyncBusy,setMobileSyncBusy]=useState(false);
   const [area,setArea]=useState<Area>("storefront");
@@ -95,7 +99,19 @@ export function AdminDesignSystemPage() {
   useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setSyncMobile(values.design_mobile_inherit_web==="true");setDrafts({mobile:{light:parseDesignPalette(values[designSettingKey("mobile","light")],"mobile","light"),dark:parseDesignPalette(values[designSettingKey("mobile","dark")],"mobile","dark")},storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")},dealpilot:{light:parseDesignPalette(values[designSettingKey("dealpilot","light")],"dealpilot","light"),dark:parseDesignPalette(values[designSettingKey("dealpilot","dark")],"dealpilot","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
   async function publish(){if(!safe||saving||(area==="mobile"&&syncMobile)){setNotice("Disable mobile sync to edit mobile independently.");return;}setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Changes saved successfully for "+area+" / "+mode+".");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
+  const sendPreview=()=>{
+    for(const [frame,platform] of [[desktopRef.current,"storefront"],[mobileRef.current,"mobile"]] as const){
+      if(!frame?.contentWindow)continue;
+      const source=platform==="mobile"&&syncMobile?"storefront":platform;
+      const previewMode=platform==="mobile"?platformModes.mobile:platformModes.storefront;
+      const values=drafts[source][previewMode];
+      frame.contentWindow.postMessage({type:"bazunk:design-preview",palette:values,mode:previewMode,select:inspectMode},window.location.origin);
+    }
+  };
+  useEffect(()=>{sendPreview()},[drafts,platformModes,inspectMode,syncMobile,previewPage]);
+  useEffect(()=>{const handler=(e:MessageEvent)=>{if(e.origin!==window.location.origin)return;if(e.data?.type==="bazunk:design-ready")sendPreview();if(e.data?.type==="bazunk:design-selected"){setPicked(String(e.data.label||"Component"));setDesignTab("sections")}};window.addEventListener("message",handler);return()=>window.removeEventListener("message",handler)},[drafts,platformModes,inspectMode,syncMobile,previewPage]);
   const pageUrl=previewPage==="home"?"/":previewPage==="listing"?"/browse":previewPage==="dealpilot"?"/deal-pilot":"/admin/dashboard";
+  const previewUrl=pageUrl+(pageUrl.includes("?")?"&":"?")+"bzDesignPreview=1";
   function selectPlatform(next:"admin"|"storefront"|"mobile"){setSelectedPlatform(next);setArea(next);setMode(platformModes[next]);}
   function selectMode(next:Mode,platform:"admin"|"storefront"|"mobile"){setPlatformModes(p=>({...p,[platform]:next}));setSelectedPlatform(platform);setArea(platform);setMode(next);}
   async function setInheritance(next:boolean){setMobileSyncBusy(true);try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({design_mobile_inherit_web:next?"true":"false"})});if(!r.ok)throw Error();setSyncMobile(next);setNotice(next?"Mobile now follows web theme colours.":"Mobile theme colours can now be edited separately.");window.dispatchEvent(new Event("bazunk-settings-updated"));}catch{setNotice("Unable to save mobile synchronization preference.");}finally{setMobileSyncBusy(false)}}
@@ -136,11 +152,12 @@ export function AdminDesignSystemPage() {
        </div>
        <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-900 bg-[#13294b] p-4 text-white"><div><span className="text-xs text-slate-300">You are editing</span><div className="font-extrabold">{selectedPlatform==="storefront"?"Frontend Web":selectedPlatform==="mobile"?"Frontend Mobile":"Admin"} · {mode==="dark"?"Dark":"Light"} Mode · {previewPage==="home"?"Homepage":previewPage==="listing"?"Listings":previewPage==="dealpilot"?"DealPilot":"Admin Dashboard"}</div></div><label className="text-xs font-semibold">Preview page <select aria-label="Preview page" value={previewPage} onChange={e=>setPreviewPage(e.target.value as typeof previewPage)} className="ml-2 rounded-lg border border-slate-500 bg-[#182b49] p-2 text-white"><option value="home">Homepage</option><option value="listing">Listing Page</option><option value="dealpilot">DealPilot</option><option value="dashboard">Admin Dashboard</option></select></label></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm font-bold text-white"><input type="checkbox" checked={inspectMode} onChange={e=>setInspectMode(e.target.checked)} className="h-5 w-5 accent-blue-500"/> Select elements directly in preview</label><span className="text-xs text-slate-200">{picked?"Selected: "+picked:"Changes to shared colours update previews before saving"}</span></div>
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_225px]">
-         <div className="min-w-0 rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Desktop Preview</div><iframe title="Desktop website preview" loading="lazy" src={pageUrl} className="h-[390px] w-full rounded-lg border border-slate-600 bg-white" style={{colorScheme:mode}}/></div>
-         <div className="rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Mobile Preview</div><div className="mx-auto max-w-[205px] rounded-[24px] border-[5px] border-slate-900 bg-slate-900 p-1 shadow-xl"><iframe title="Mobile website preview" loading="lazy" src={pageUrl} className="h-[365px] w-full rounded-[18px] bg-white" style={{colorScheme:platformModes.mobile}}/></div></div>
+         <div className="min-w-0 rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Desktop Preview</div><iframe title="Desktop website preview" ref={desktopRef} onLoad={sendPreview} loading="lazy" src={previewUrl} className="h-[390px] w-full rounded-lg border border-slate-600 bg-white" style={{colorScheme:mode}}/></div>
+         <div className="rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Mobile Preview</div><div className="mx-auto max-w-[205px] rounded-[24px] border-[5px] border-slate-900 bg-slate-900 p-1 shadow-xl"><iframe title="Mobile website preview" ref={mobileRef} onLoad={sendPreview} loading="lazy" src={previewUrl} className="h-[365px] w-full rounded-[18px] bg-white" style={{colorScheme:platformModes.mobile}}/></div></div>
         </div>
-        <p className="text-xs font-medium text-slate-300">Previews load the current published page. Unsaved colour changes are shown in the editor below; previews do not publish them automatically. <a href={pageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
+        <p className="text-xs font-medium text-slate-300">Live colour drafts are applied only inside these preview frames. Selecting an element identifies it; the matching editor below controls publishing. <a href={pageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
        </div>
       </div>
       <div className="rounded-xl border border-slate-700 bg-[#101c33] p-4"><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
