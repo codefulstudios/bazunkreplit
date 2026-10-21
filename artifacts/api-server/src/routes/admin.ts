@@ -872,6 +872,14 @@ router.put("/admin/settings", async (req, res) => {
       if(typeof value!=="string"){res.status(400).json({error:"Invalid design setting"});return;}
       if(key==="design_mobile_inherit_web"){
         if(value!=="true"&&value!=="false"){res.status(400).json({error:"Invalid mobile sync option"});return;}
+      }else if(key==="design_admin_components_v1"){
+        try{
+          const obj=JSON.parse(value);
+          const keys=["font","heading","body","sidebar","density","radius","button","shadow","header","sidebarStyle","stickyHeader"];
+          if(!obj||typeof obj!=="object"||Object.keys(obj).sort().join(",")!==keys.sort().join(","))throw Error("Unknown fields");
+          const range=(n:unknown,lo:number,hi:number)=>typeof n==="number"&&Number.isInteger(n)&&n>=lo&&n<=hi;
+          if(!["Inter","Arial","system-ui","Georgia"].includes(obj.font)||!range(obj.heading,24,40)||!range(obj.body,13,18)||!range(obj.sidebar,210,320)||!range(obj.radius,0,24)||!["compact","comfortable","spacious"].includes(obj.density)||!["rounded","pill","square"].includes(obj.button)||!["none","soft","medium"].includes(obj.shadow)||!["solid","transparent"].includes(obj.header)||!["solid","bordered"].includes(obj.sidebarStyle)||typeof obj.stickyHeader!=="boolean")throw Error("Invalid component settings");
+        }catch{res.status(400).json({error:"Invalid admin component design settings"});return;}
       }else if(key==="design_hero_image_url"){
         if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500)){res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});return;}
       }else if(key==="design_hero_image_alt"){
