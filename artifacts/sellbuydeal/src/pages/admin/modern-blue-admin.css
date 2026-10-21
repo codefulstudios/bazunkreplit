@@ -149,3 +149,11 @@
  .bazunk-admin .admin-kpi-grid .admin-kpi{height:146px;min-height:146px;padding:16px}
  .bazunk-admin .admin-kpi-grid .admin-kpi-value{font-size:26px}
 }
+
+/* Equal-height dashboard analytics cards, anchored to the approved Modern Blue grid. */
+.bazunk-admin .admin-charts{align-items:stretch}
+.bazunk-admin .admin-charts .admin-chart-card{min-height:375px;border-radius:14px;box-shadow:0 3px 14px rgb(18 48 89 / 5%)}
+.bazunk-admin .admin-charts{--bz-chart-grid:#dce5f1;--bz-chart-tick:#52647c;--bz-chart-tooltip:#ffffff;--bz-chart-tooltip-text:#0f172a;--bz-chart-hover:#edf4ff}
+.dark .bazunk-admin .admin-charts{--bz-chart-grid:#314863;--bz-chart-tick:#cbd5e1;--bz-chart-tooltip:#172942;--bz-chart-tooltip-text:#f8fafc;--bz-chart-hover:#1d385a}
+.dark .bazunk-admin .admin-charts .admin-chart-card{box-shadow:none}
+@media(max-width:639px){.bazunk-admin .admin-charts .admin-chart-card{padding:16px;min-height:355px}.bazunk-admin .admin-charts .admin-chart-plot{height:250px}}
