@@ -856,7 +856,8 @@ router.put("/admin/settings", async (req, res) => {
     const updates = req.body as Record<string, string>;
     if (!updates || typeof updates !== "object" || Array.isArray(updates)) { res.status(400).json({error:"Invalid settings payload"}); return; }
     for (const [key,value] of Object.entries(updates)) {
-      if (!/^design_palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)) continue;
+      if (!/^design_(draft_)?palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)) continue;
+      if(key.startsWith("design_draft_")&&value==="")continue;
       try {
         const palette=JSON.parse(value);
         const required=["background","surface","text","secondaryText","field","action","actionText"];
@@ -900,7 +901,7 @@ router.put("/admin/settings", async (req, res) => {
           const contrast=(a:string,b:string)=>{const a1=lum(a),b1=lum(b);return (Math.max(a1,b1)+.05)/(Math.min(a1,b1)+.05)};
           if(contrast(p.text,p.background)<4.5||contrast(p.accentText,p.accent)<4.5)throw Error("Low contrast");
         }catch{res.status(400).json({error:"Section style must pass WCAG AA contrast"});return;}
-      }else if(!/^design_palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)){
+      }else if(!/^design_(draft_)?palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)){
         {res.status(400).json({error:"Unrecognised design setting"});return;}
       }
     }
