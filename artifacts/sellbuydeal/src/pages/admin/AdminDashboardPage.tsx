@@ -40,7 +40,7 @@ export function AdminDashboardPage(){
     </div>)}
    </section>
    <details className="admin-secondary-metrics rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#111f35]"><summary className="cursor-pointer text-sm font-bold text-slate-800 dark:text-white">More performance metrics · Credits, streams, disputes, returns and refunds</summary><div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">{cards.slice(6).map(([label,value,sub,Icon])=><div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-[#192c46]"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">{label}</span><Icon className="h-4 w-4 text-blue-600 dark:text-blue-300"/></div><strong className="mt-2 block text-2xl font-extrabold text-slate-950 dark:text-white">{value}</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{sub}</p></div>)}</div></details>
-   <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+   <div className="admin-dashboard-panels grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2>
        <div className="grid grid-cols-2 gap-3 text-sm">
