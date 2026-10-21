@@ -19,6 +19,7 @@ export function IconAppearanceEditor(){
  useEffect(()=>{let active=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(active)setStored(values)}).catch(()=>{if(active)setStatus("Unable to load icon settings.")}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[authFetch]);
  useEffect(()=>{setDraft(readIconAppearance(stored,area,mode)||ICON_DEFAULTS[area]);},[stored,area,mode]);
  const valid=isValidIconAppearance(draft);
+ useEffect(()=>{if(valid)window.dispatchEvent(new CustomEvent("bazunk:icon-preview-draft",{detail:{area,mode,draft}}));},[area,mode,draft,valid]);
  const change=(key:keyof IconAppearance,value:string|number)=>{setDraft(p=>({...p,[key]:value}));setStatus("Unsaved changes");};
  async function save(reset=false){
   setSaving(true);setStatus("");
