@@ -152,10 +152,7 @@ export function AdminDesignSystemPage() {
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <label className="text-sm font-bold">Area <select aria-label="Preview area" value={area} onChange={e=>setArea(e.target.value as Area)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="storefront">Storefront</option><option value="admin">Admin</option><option value="dealpilot">DealPilot page</option></select></label>
-          <label className="text-sm font-bold">Theme <select aria-label="Preview theme" value={mode} onChange={e=>setMode(e.target.value as Mode)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="light">Light</option><option value="dark">Dark</option></select></label>
-        </div>
+        <p className="mt-3 rounded-lg bg-slate-100 px-4 py-3 text-sm font-bold text-slate-900 dark:bg-slate-800 dark:text-white">Selected platform: {area==="storefront"?"Frontend Web":area==="mobile"?"Frontend Mobile":area==="admin"?"Admin":"DealPilot"} · {mode==="dark"?"Dark":"Light"} mode. Use the platform cards above to switch.</p>
       </div>
       <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-orange-500 bg-white p-3 shadow-lg dark:bg-[#17243a]" data-testid="design-save-bar">
         <div className="min-w-0"><p className="font-extrabold text-slate-950 dark:text-white">{dirty?"Unsaved design changes":"Design settings"}</p><p className="text-sm font-semibold text-slate-700 dark:text-slate-100">{safe?"Contrast checks passed — safe to save.":"Contrast check failed — adjust colours before saving."}</p></div>
