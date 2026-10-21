@@ -217,3 +217,16 @@
 }
 .dark .bazunk-admin .admin-dashboard .admin-charts .admin-chart-card{background:#14253e!important;border-color:#304563!important;color:#f8fafc!important}
 .bazunk-admin .admin-dashboard .admin-secondary-metrics summary:focus-visible{outline:3px solid #1769ff;outline-offset:4px}
+
+/* Support panels match the restrained mockup instead of solid promotional blue. */
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div{
+ background:#fff!important;background-image:none!important;
+ border:1px solid #e0e7f1!important;box-shadow:0 3px 12px rgb(26 47 86 / 6%)!important;
+ color:#0f172a!important;
+}
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div{
+ background:#14253e!important;border-color:#304563!important;color:#f8fafc!important;box-shadow:none!important;
+}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div h2{color:inherit!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#f1f6ff!important}
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#1b3454!important}
