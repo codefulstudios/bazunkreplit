@@ -307,3 +307,24 @@
 .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button{background:transparent!important;box-shadow:none!important;padding:0}
 .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#1459df!important}
 .dark .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#bfdbfe!important}
+
+/* Consistent KPI hierarchy: matte, readable, and visually balanced. */
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{
+  min-height:166px!important;height:166px!important;padding:22px!important;
+  border-radius:14px!important;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{
+  width:48px!important;height:48px!important;border-radius:12px!important;
+  box-shadow:none!important;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{
+  font-size:clamp(29px,2.5vw,36px)!important;line-height:1.13!important;
+  letter-spacing:-.035em;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-sub{
+  font-size:13px!important;line-height:1.45!important;margin-top:7px!important;
+}
+@media(max-width:639px){
+  .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{min-height:152px!important;height:152px!important;padding:17px!important}
+  .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{font-size:29px!important}
+}
