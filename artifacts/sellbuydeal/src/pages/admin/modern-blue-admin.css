@@ -83,3 +83,49 @@
 .bazunk-admin main :is(h1){font-size:clamp(24px,var(--bz-admin-heading-size,30px),40px);font-weight:800}
 .bazunk-admin main :is(h2){font-weight:750}
 @media(prefers-reduced-motion:reduce){.bazunk-admin main button{transition:none!important;transform:none!important}}
+
+
+/* Modern Blue mockup sidebar: consistent proportions and visual hierarchy. */
+.bazunk-admin aside{border-right:1px solid #dbe4f1;background:#fff;color:#172b4d;min-width:0}
+.dark .bazunk-admin aside{border-right-color:#263955;background:#0a1830;color:#f8fafc}
+.bazunk-admin .admin-sidebar-brand{min-height:108px}
+.bazunk-admin .admin-sidebar-nav{scrollbar-width:thin;scrollbar-color:#c4d3e7 transparent;overscroll-behavior:contain}
+.dark .bazunk-admin .admin-sidebar-nav{scrollbar-color:#38506f transparent}
+.bazunk-admin .admin-nav-group-trigger{min-height:36px;color:#48617f}
+.dark .bazunk-admin .admin-nav-group-trigger{color:#d8e4f6}
+.bazunk-admin .admin-nav-group-trigger:hover{background:#edf4ff}
+.dark .bazunk-admin .admin-nav-group-trigger:hover{background:#1a3152}
+.bazunk-admin .admin-nav-link{position:relative;color:#243954;line-height:1.25}
+.dark .bazunk-admin .admin-nav-link{color:#d9e4f7}
+.bazunk-admin .admin-nav-link:hover:not([aria-current="page"]){background:#edf4ff;color:#1459df}
+.dark .bazunk-admin .admin-nav-link:hover:not([aria-current="page"]){background:#1a3152;color:#fff}
+.bazunk-admin .admin-nav-link[aria-current="page"]{background:#1769ff!important;color:#fff!important;box-shadow:0 3px 9px rgb(23 105 255 / 17%)}
+.bazunk-admin .admin-nav-link[aria-current="page"] svg{color:#fff!important}
+.bazunk-admin .admin-sidebar-search input{min-width:0}
+.bazunk-admin .admin-sidebar-signout-label{font-weight:700}
+.bazunk-admin .admin-sidebar-collapse:focus-visible{outline:3px solid #1769ff;outline-offset:2px}
+@media(min-width:1024px){
+ .bazunk-admin[data-sidebar-collapsed="true"] aside{width:76px!important}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand{min-height:88px;padding-left:10px;padding-right:10px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand>img{width:46px;height:36px;object-fit:contain}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand>div,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-search,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-label,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-count,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-chevron,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-pages,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-identity-label,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-signout-label{display:none}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-collapse{right:-12px;top:52px;z-index:3;background:#fff}
+ .dark .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-collapse{background:#152b47}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-nav{padding-left:8px;padding-right:8px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-trigger{justify-content:center;padding:12px 6px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-trigger svg{height:19px;width:19px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-identity{justify-content:center;margin-left:8px;margin-right:8px;padding:8px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sign-out{justify-content:center}
+}
+@media(max-width:1023px){
+ .bazunk-admin aside{width:min(304px,85vw);box-shadow:0 16px 46px rgb(15 23 42 / 25%)}
+ .bazunk-admin .admin-sidebar-brand{min-height:100px}
+ .bazunk-admin .admin-sidebar-nav{padding-bottom:20px}
+}
