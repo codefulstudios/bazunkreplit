@@ -130,7 +130,6 @@ export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [marketRegion, changeMarketRegion] = useMarketplaceRegion();
   const [regionPromptOpen, setRegionPromptOpen] = useState(() => {
     try { return !window.localStorage.getItem(MARKETPLACE_REGION_STORAGE_KEY); } catch { return false; }
@@ -154,7 +153,6 @@ export function Navbar() {
   const [location, setLocation] = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const currencyRef = useRef<HTMLDivElement>(null);
   const sellRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const rewardsRef = useRef<HTMLDivElement>(null);
@@ -175,7 +173,6 @@ export function Navbar() {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
-      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) setCurrencyOpen(false);
       if (sellRef.current && !sellRef.current.contains(e.target as Node)) setSellOpen(false);
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
       if (rewardsRef.current && !rewardsRef.current.contains(e.target as Node)) setRewardsPopover(false);
@@ -680,30 +677,6 @@ export function Navbar() {
         {/* Brand colour accent */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
       </nav>
-
-      {/* Floating country + currency selector */}
-      {isFeatureEnabled(featureSettings, "currency_selector") && <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
-        <button onClick={() => setCurrencyOpen(!currencyOpen)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 bg-white shadow-lg hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors">
-          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-600">·</span><span>{currency.code} {currency.symbol}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${currencyOpen ? "rotate-180" : ""}`} />
-        </button>
-        {currencyOpen && (
-          <div className="absolute right-0 bottom-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 p-3">
-            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("country")}</label>
-            <select value={country.code} onChange={e => changeCountry(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 mb-3">
-              {MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
-            </select>
-            <label className="block text-xs font-bold uppercase tracking-widest text-gray-600 mb-1">{t("currency")}</label>
-            <select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800">
-              {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map(c => <option key={c.code} value={c.code}>{c.flag} {c.name} ({c.symbol})</option>)}
-            </select>
-            <p className="mt-2 text-xs leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
-          </div>
-        )}
-      </div>}
 
       {/* Mobile menu drawer */}
       <AnimatePresence>
