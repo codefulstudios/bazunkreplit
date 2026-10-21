@@ -11,6 +11,7 @@ on:
       - 'scripts/design-center-contract.test.mjs'
       - 'scripts/icon-appearance-contract.test.mjs'
       - 'scripts/design-center-clarity.test.mjs'
+      - 'scripts/design-center-mockup-contract.test.mjs'
       - '.github/workflows/design-center.yml'
   push:
     branches: [main]
@@ -32,7 +33,7 @@ jobs:
         with:
           node-version: '22'
       - name: Design Center regression checks
-        run: node --test scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs
+        run: node --test scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs
       - name: Install pnpm
         run: corepack enable
       - name: Install workspace dependencies
