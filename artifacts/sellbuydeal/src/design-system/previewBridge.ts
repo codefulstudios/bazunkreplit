@@ -3,7 +3,8 @@ type PreviewMessage={type:"bazunk:design-preview";palette:DesignPalette;mode:"li
 const KEYS:Record<keyof DesignPalette,string>={background:"--bz-protected-page",surface:"--bz-protected-card",text:"--bz-protected-text",secondaryText:"--bz-protected-secondary",field:"--bz-protected-field",action:"--bz-protected-button",actionText:"--bz-protected-button-text"};
 export function installDesignPreviewBridge(){
  const params=new URLSearchParams(window.location.search);
- if(params.get("bzDesignPreview")!=="1"||window.parent===window||window.parent.location.origin!==window.location.origin)return()=>{};
+ if(params.get("bzDesignPreview")!=="1"||window.parent===window)return()=>{};
+ try{if(window.parent.location.origin!==window.location.origin)return()=>{}}catch{return()=>{}}
  const root=document.documentElement;
  const previous:Record<string,string>={};
  let selected=false;
