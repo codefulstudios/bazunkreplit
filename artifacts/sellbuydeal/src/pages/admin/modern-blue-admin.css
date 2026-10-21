@@ -273,3 +273,29 @@
 .bazunk-admin .admin-dashboard .admin-payments{background:var(--matte-card)!important}
 .bazunk-admin .admin-dashboard .admin-payments th{background:var(--matte-soft)!important}
 .bazunk-admin .admin-dashboard .admin-secondary-metrics{background:var(--matte-card)!important}
+
+
+/* Dashboard and sidebar layout proportions: restrained Modern Blue. */
+@media(min-width:1024px){
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) aside{width:var(--bz-admin-sidebar-width,260px);min-width:240px;max-width:320px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-sidebar-nav{padding:18px 12px 22px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-group{margin-bottom:8px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-group-trigger{min-height:42px;padding:11px 12px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-link{min-height:42px;padding:10px 12px}
+}
+.bazunk-admin .admin-dashboard-proportions{width:100%;max-width:1580px;margin-inline:auto}
+.bazunk-admin .admin-dashboard-proportions .admin-kpi-grid{gap:18px;grid-auto-rows:1fr}
+.bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi{min-height:152px;height:152px!important;padding:22px!important}
+.bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels{align-items:stretch;gap:20px}
+.bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{min-width:0;min-height:230px;padding:24px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts{gap:20px}
+.bazunk-admin .admin-dashboard-proportions .admin-chart-card{min-width:0;padding:24px}
+@media(max-width:1199px){
+ .bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{min-height:0}
+}
+@media(max-width:639px){
+ .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid{gap:12px}
+ .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi{height:144px!important;min-height:144px;padding:16px!important}
+ .bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{padding:18px}
+ .bazunk-admin .admin-dashboard-proportions .admin-chart-card{padding:16px}
+}
