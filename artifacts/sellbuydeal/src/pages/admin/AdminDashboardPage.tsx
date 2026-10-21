@@ -52,13 +52,21 @@ export function AdminDashboardPage(){
    <details className="admin-secondary-metrics rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#111f35]"><summary className="cursor-pointer text-sm font-bold text-slate-800 dark:text-white">More performance metrics · Credits, streams, disputes, returns and refunds</summary><div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">{cards.slice(6).map(([label,value,sub,Icon])=><div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-[#192c46]"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">{label}</span><Icon className="h-4 w-4 text-blue-600 dark:text-blue-300"/></div><strong className="mt-2 block text-2xl font-extrabold text-slate-950 dark:text-white">{value}</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{sub}</p></div>)}</div></details>
    <div className="admin-dashboard-panels grid gap-5 lg:grid-cols-2 2xl:grid-cols-[1.1fr_1fr_.9fr]">
      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
-       <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2>
-       <div className="grid grid-cols-2 gap-3 text-sm">
-         <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-500/10"><p className="text-slate-600 dark:text-slate-300">Total orders</p><strong className="text-xl">{num(s.orderCount)}</strong></div>
-         <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-500/10"><p className="text-slate-600 dark:text-slate-300">Active listings</p><strong className="text-xl">{num(s.activeListings)}</strong></div>
-         <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-500/10"><p className="text-slate-600 dark:text-slate-300">Open disputes</p><strong className="text-xl">{num(s.openDisputes)}</strong></div>
-         <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-500/10"><p className="text-slate-600 dark:text-slate-300">Open returns</p><strong className="text-xl">{num(s.openReturns)}</strong></div>
+       <div className="mb-4 flex items-start justify-between gap-3">
+         <div><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Current marketplace activity</p></div>
+         <Activity aria-hidden="true" className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/>
        </div>
+       <dl className="admin-overview-stats grid grid-cols-2" aria-label="Marketplace statistics">
+         {[
+           ["Total orders",num(s.orderCount)],
+           ["Active listings",num(s.activeListings)],
+           ["Open disputes",num(s.openDisputes)],
+           ["Open returns",num(s.openReturns)]
+         ].map(([label,value],i)=><div key={label} className={`min-w-0 py-3 ${i%2===0?"pr-4":"border-l border-slate-200 pl-4 dark:border-[#34435b]"} ${i>=2?"border-t border-slate-200 dark:border-[#34435b]":""}`}>
+           <dt className="text-xs font-semibold leading-5 text-slate-600 dark:text-slate-300">{label}</dt>
+           <dd className="mt-1 text-2xl font-extrabold tracking-tight tabular-nums text-slate-950 dark:text-white">{value}</dd>
+         </div>)}
+       </dl>
      </div>
      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Quick actions</h2>
