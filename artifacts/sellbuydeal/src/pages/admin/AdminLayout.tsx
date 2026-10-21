@@ -5,8 +5,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // AdminLayout remounts on route changes; retain the sidebar position across pages.
 let savedAdminNavScrollTop = 0;
+let savedSidebarCollapsed = false;
 import { useLocation } from "wouter";
-import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, Bell, CalendarDays } from "lucide-react";
+import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { AdminAlertsPopover } from "@/components/admin/AdminAlertsPopover";
@@ -66,6 +67,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   useEffect(()=>{window.dispatchEvent(new Event("bazunk-design-route-change"));},[location]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarCollapsed,setSidebarCollapsed] = useState(()=>savedSidebarCollapsed);
+  const toggleSidebar=()=>setSidebarCollapsed(previous=>{savedSidebarCollapsed=!previous;return !previous});
   const navRef = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => { if (navRef.current) navRef.current.scrollTop = savedAdminNavScrollTop; }, []);
   const [search, setSearch] = useState("");
@@ -91,7 +94,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
 
   return (
-    <div style={{"--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
+    <div style={{fontFamily:componentStyle.font+", ui-sans-serif, system-ui, sans-serif","--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} data-sidebar-collapsed={sidebarCollapsed} className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
         <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
@@ -101,18 +104,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar — always visible */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white dark:bg-[#0a1830] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--bz-admin-sidebar-width)] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo */}
-        <div className="px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
-          <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-white lg:hidden"><X className="h-5 w-5" /></button>
+        <div className="admin-sidebar-brand px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
+          <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-slate-800 dark:text-white lg:hidden"><X className="h-5 w-5" /></button>
           <img src="/bazunk-logo.png" alt="Bazunk" className="h-9 w-auto object-contain self-start rounded bg-white px-2 py-0.5" />
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#F26B21]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span className="font-bold text-blue-700 dark:text-white text-xs tracking-wide uppercase">Admin Panel</span>
           </div>
+          <button type="button" onClick={toggleSidebar} aria-label={sidebarCollapsed?"Expand admin sidebar":"Collapse admin sidebar"} aria-expanded={!sidebarCollapsed} title={sidebarCollapsed?"Expand menu":"Collapse menu"} className="admin-sidebar-collapse hidden lg:flex absolute right-3 top-5 h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-700 hover:bg-blue-50 dark:border-slate-600 dark:bg-[#1e3452] dark:text-white">{sidebarCollapsed?<ChevronRight className="h-4 w-4"/>:<ChevronLeft className="h-4 w-4"/>}</button>
         </div>
 
-        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
+        <div className="admin-sidebar-search px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
         {/* Nav */}
-        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto py-3 px-3 space-y-1">
           {NAV_GROUPS.map(group=>{
             const pages=NAV.filter(n=>group.pages.some(label=>label===n.label) &&
               (!search.trim()||n.label.toLowerCase().includes(search.trim().toLowerCase())||group.label.toLowerCase().includes(search.trim().toLowerCase())));
@@ -120,22 +124,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             const Icon=group.icon;
             const expanded=!!search.trim()||!!expandedGroups[group.id];
             const activeCount=pages.some(n=>location===n.href||location.startsWith(n.href+"/"));
-            return <div key={group.id} className="mb-1">
-              <button type="button" onClick={()=>toggleGroup(group.id)} aria-expanded={expanded}
+            return <div key={group.id} className="admin-nav-group mb-2">
+              <button type="button" onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false);savedAdminExpandedGroups={...savedAdminExpandedGroups,[group.id]:true};setExpandedGroups({...savedAdminExpandedGroups});}else toggleGroup(group.id)}} title={sidebarCollapsed?group.label:undefined} aria-label={group.label} aria-expanded={expanded}
                 aria-controls={`admin-nav-${group.id}`}
-                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-black uppercase tracking-wide transition-colors hover:bg-blue-50 dark:hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${activeCount?"text-blue-700 dark:text-blue-300":"text-slate-700 dark:text-white"}`}>
+                className={`admin-nav-group-trigger flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[11px] font-extrabold uppercase tracking-[.07em] transition-colors hover:bg-blue-50 dark:hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${activeCount?"text-blue-700 dark:text-blue-300":"text-slate-700 dark:text-white"}`}>
                 <Icon className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400"/>
-                <span className="flex-1">{group.label}</span>
-                <span className="rounded-lg bg-blue-100 dark:bg-white/10 px-1.5 text-xs font-bold text-blue-700 dark:text-white">{pages.length}</span>
-                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${expanded?"rotate-180":""}`}/>
+                <span className="admin-nav-group-label flex-1">{group.label}</span>
+                <span className="admin-nav-count rounded-lg bg-blue-100 dark:bg-white/10 px-1.5 text-xs font-bold text-blue-700 dark:text-white">{pages.length}</span>
+                <ChevronDown className={`admin-nav-chevron h-4 w-4 shrink-0 transition-transform ${expanded?"rotate-180":""}`}/>
               </button>
-              {expanded&&<div id={`admin-nav-${group.id}`} className="mt-0.5 space-y-0.5 border-l-2 border-blue-200 dark:border-blue-500/30 pl-2 ml-4">
+              {expanded&&<div id={`admin-nav-${group.id}`} className="admin-nav-pages mt-1 space-y-1 border-l-2 border-blue-100 dark:border-blue-500/30 pl-2 ml-4">
                 {pages.map(({label,href,icon:PageIcon})=>{
                   const active=location===href||location.startsWith(href+"/");
                   return <button type="button" key={href} aria-current={active?"page":undefined}
                     onClick={()=>{setMenuOpen(false);setLocation(href);}}
-                    className={`admin-nav-link flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${active?"bg-[#1769ff] text-white":"text-slate-700 hover:bg-blue-50 hover:text-blue-900 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"}`}>
-                    <PageIcon className={`h-4 w-4 shrink-0 ${active?"text-white":"text-blue-500"}`}/>{label}
+                    className={`admin-nav-link flex w-full min-h-[39px] items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${active?"bg-[#1769ff] text-white":"text-slate-700 hover:bg-blue-50 hover:text-blue-900 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"}`}>
+                    <PageIcon className={`h-4 w-4 shrink-0 ${active?"text-white":"text-blue-500"}`}/><span className="admin-nav-page-label">{label}</span>
                   </button>;
                 })}
               </div>}
@@ -146,14 +150,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <p className="p-3 text-sm font-semibold text-slate-200">No matching admin pages.</p>}
         </nav>
 
+        {/* Admin identity and sign-out remain accessible in both sidebar widths. */}
+        <div className="admin-sidebar-identity mx-3 mt-2 mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-[#182c49]"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-extrabold text-white">A</div><div className="admin-sidebar-identity-label min-w-0"><strong className="block truncate text-sm text-slate-900 dark:text-white">Administrator</strong><span className="block text-xs font-medium text-slate-600 dark:text-slate-300">Bazunk workspace</span></div></div>
         {/* Logout */}
-        <div className="px-2 pb-4 border-t border-slate-200 dark:border-white/10 pt-3">
+        <div className="admin-sidebar-footer px-3 pb-4 border-t border-slate-200 dark:border-white/10 pt-3">
           <button
             onClick={() => { logout(); setLocation("/admin"); }}
             className="admin-sign-out w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:text-red-500 hover:bg-red-500/10 transition-colors font-medium"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            Sign Out
+            <span className="admin-sidebar-signout-label">Sign Out</span>
           </button>
         </div>
       </aside>
