@@ -6,6 +6,7 @@ import { AdminSettingsPage } from "./AdminSettingsPage";
 import { IconAppearanceEditor } from "./IconAppearanceEditor";
 import {DesignTargetGuide,type DesignTarget} from "./DesignTargetGuide";
 import { DesignSectionsEditor } from "./DesignSectionsEditor";
+import type {DesignSection} from "@/design-system/sectionAppearance";
 import { ShieldCheck, Copy, RotateCcw, Globe, Monitor, Moon, Sun, PanelsTopLeft, ExternalLink, Save, Rocket, Palette, Type, LayoutGrid, Menu, Link2, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
 // Deliberately isolated: these settings render only inside the preview.
@@ -87,6 +88,7 @@ export function AdminDesignSystemPage() {
   const mobileRef=useRef<HTMLIFrameElement>(null);
   const [inspectMode,setInspectMode]=useState(false);
   const [picked,setPicked]=useState("");
+  const [pickedSection,setPickedSection]=useState<DesignSection|undefined>(undefined);
   const [syncMobile,setSyncMobile]=useState(false);
   const [mobileSyncBusy,setMobileSyncBusy]=useState(false);
   const [area,setArea]=useState<Area>("storefront");
@@ -109,7 +111,7 @@ export function AdminDesignSystemPage() {
     }
   };
   useEffect(()=>{sendPreview()},[drafts,platformModes,inspectMode,syncMobile,previewPage]);
-  useEffect(()=>{const handler=(e:MessageEvent)=>{if(e.origin!==window.location.origin)return;if(e.data?.type==="bazunk:design-ready")sendPreview();if(e.data?.type==="bazunk:design-selected"){setPicked(String(e.data.label||"Component"));setDesignTab("sections")}};window.addEventListener("message",handler);return()=>window.removeEventListener("message",handler)},[drafts,platformModes,inspectMode,syncMobile,previewPage]);
+  useEffect(()=>{const handler=(e:MessageEvent)=>{if(e.origin!==window.location.origin)return;if(e.data?.type==="bazunk:design-ready")sendPreview();if(e.data?.type==="bazunk:design-selected"){setPicked(String(e.data.label||"Component"));const match:Record<string,DesignSection>={"Category tiles":"home_categories","Spotlight":"home_spotlight","Promotions":"home_promos","Homepage hero":"home_hero"};setPickedSection(match[String(e.data.label)]);setDesignTab(match[String(e.data.label)]?"sections":"colours")}};window.addEventListener("message",handler);return()=>window.removeEventListener("message",handler)},[drafts,platformModes,inspectMode,syncMobile,previewPage]);
   const pageUrl=previewPage==="home"?"/":previewPage==="listing"?"/browse":previewPage==="dealpilot"?"/deal-pilot":"/admin/dashboard";
   const previewUrl=pageUrl+(pageUrl.includes("?")?"&":"?")+"bzDesignPreview=1";
   function selectPlatform(next:"admin"|"storefront"|"mobile"){setSelectedPlatform(next);setArea(next);setMode(platformModes[next]);}
@@ -162,7 +164,7 @@ export function AdminDesignSystemPage() {
       </div>
       <div className="rounded-xl border border-slate-700 bg-[#101c33] p-4"><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
       {designTab==="assets" && <><DesignAssetsEditor /><IconAppearanceEditor /></>}
-      {designTab==="sections" && <DesignSectionsEditor />}
+      {designTab==="sections" && <DesignSectionsEditor selectedSection={pickedSection} />}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<DesignTargetGuide target={designTab as DesignTarget}/>}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<AdminSettingsPage key={designTab} embedded initialTab={designTab}/>}
       {designTab==="colours"&&<><DesignTargetGuide target="colours" override={{title:area==="admin"?"Admin shared colours":area==="dealpilot"?"DealPilot shared colours":"Storefront shared colours",description:"Editing "+area+" / "+mode+". Changes apply to shared colour tokens for that area and selected theme.",url:area==="admin"?"/admin/dashboard":area==="dealpilot"?"/deal-pilot":"/",coverage:"Shared "+area+" components only. Specific homepage section and icon settings may take precedence."}}/>
