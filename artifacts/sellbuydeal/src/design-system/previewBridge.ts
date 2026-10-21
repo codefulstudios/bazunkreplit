@@ -10,6 +10,21 @@ export function installDesignPreviewBridge(){
  let selected=false;
  const onMessage=(event:MessageEvent<PreviewMessage>)=>{
   if(event.origin!==location.origin||event.source!==window.parent)return;
+  if((event.data as any)?.type==="bazunk:icon-preview"){
+   const detail=event.data as any;
+   if(detail.area!=="categories"&&detail.area!=="promos")return;
+   const p=detail.draft;
+   const colors=["iconColor","tileColor","tileText","tileBorder","badgeColor","badgeBorder"];
+   if(!p||!colors.every(k=>typeof p[k]==="string"&&/^#[0-9a-f]{6}$/i.test(p[k])))return;
+   if(![p.size,p.badgeSize,p.radius,p.gap].every(v=>Number.isInteger(v)&&v>=0&&v<=90))return;
+   const selector=detail.area==="categories"?".bz-design-home-categories":".bz-design-home-promos";
+   for(const element of document.querySelectorAll<HTMLElement>(selector)){
+    const values:Record<string,string>={"--bz-icon-color":p.iconColor,"--bz-icon-tile":p.tileColor,"--bz-icon-text":p.tileText,"--bz-icon-border":p.tileBorder,"--bz-icon-badge":p.badgeColor,"--bz-icon-badge-border":p.badgeBorder,"--bz-icon-size":p.size+"px","--bz-icon-badge-size":p.badgeSize+"px","--bz-icon-radius":p.radius+"px","--bz-icon-gap":p.gap+"px"};
+    for(const [k,v] of Object.entries(values))element.style.setProperty(k,v);
+    element.dataset.designIcons="true";
+   }
+   return;
+  }
   if((event.data as any)?.type==="bazunk:section-preview"){
    const detail=event.data as any;
    const targets:Record<string,string>={home_hero:".bz-design-home-hero",home_categories:".bz-design-home-categories",home_spotlight:".bz-design-spotlight",home_promos:".bz-design-home-promos"};
