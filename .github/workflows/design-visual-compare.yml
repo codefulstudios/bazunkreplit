@@ -21,7 +21,7 @@ jobs:
           node-version: '22'
       - name: Install real-browser screenshot tooling
         run: |
-          npm install --no-save --no-package-lock playwright pngjs pixelmatch
+          npm install --ignore-scripts --no-save --no-package-lock playwright pngjs pixelmatch
           npx playwright install --with-deps chromium
       - name: Capture and compare desktop/mobile light/dark screenshots
         env:
