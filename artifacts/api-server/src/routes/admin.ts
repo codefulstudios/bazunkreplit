@@ -311,21 +311,45 @@ router.get("/admin/system-status", async (_req, res) => {
       rapidChecks = [
         { key:"rapidapi_amazon", name:"Amazon importer", group:"RapidAPI", configured:false, ok:false, message:"RapidAPI key not configured", latencyMs:null },
         { key:"rapidapi_ebay", name:"eBay importer", group:"RapidAPI", configured:false, ok:false, message:"RapidAPI key not configured", latencyMs:null },
-        { key:"rapidapi_aliexpress", name:"AliExpress importer", group:"RapidAPI", configured:false, ok:false, message:"RapidAPI key not configured", latencyMs:null },
       ];
     } else {
       const start = Date.now();
       try {
         const rr = await testRapidApi();
         const keyFor = (name:string) => name.toLowerCase().includes("amazon") ? "rapidapi_amazon" : name.toLowerCase().includes("ebay") ? "rapidapi_ebay" : "rapidapi_aliexpress";
-        rapidChecks = rr.map((r:any) => ({ key:keyFor(r.api || r.name || ""), name:(r.api || r.name || "RapidAPI importer").replace(/ \(.+\)$/," importer"), group:"RapidAPI", configured:true, ok:Boolean(r.ok), message:String(r.message || (r.ok ? "Connected" : "Connection failed")), latencyMs:Date.now()-start }));
+        rapidChecks = rr.filter((r:any)=>!/aliexpress/i.test(String(r.api||r.name||""))).map((r:any) => ({ key:keyFor(r.api || r.name || ""), name:(r.api || r.name || "RapidAPI importer").replace(/ \(.+\)$/," importer"), group:"RapidAPI", configured:true, ok:Boolean(r.ok), message:String(r.message || (r.ok ? "Connected" : "Connection failed")), latencyMs:Date.now()-start }));
       } catch (e:any) {
         const message = e?.message ? String(e.message).slice(0,220) : "RapidAPI check failed";
-        rapidChecks = ["Amazon","eBay","AliExpress"].map(n => ({ key:`rapidapi_${n.toLowerCase()}`, name:`${n} importer`, group:"RapidAPI", configured:true, ok:false, message, latencyMs:Date.now()-start }));
+        rapidChecks = ["Amazon","eBay"].map(n => ({ key:`rapidapi_${n.toLowerCase()}`, name:`${n} importer`, group:"RapidAPI", configured:true, ok:false, message, latencyMs:Date.now()-start }));
       }
     }
 
-    const checks: Check[] = [...await Promise.all([postgresPromise, clerkPromise, stripePromise, livekitPromise]), ...rapidChecks];
+    // AliExpress imports use Bazunk Platform Core's official integration, not
+    // the retired RapidAPI DataHub endpoint (which often returns 403).
+    const officialAliExpress = await timed(
+      "aliexpress_official", "AliExpress importer", "Official AliExpress",
+      Boolean(process.env.BAZUNK_DATA_API_URL && process.env.BAZUNK_DATA_INTERNAL_TOKEN),
+      async () => {
+        const url = new URL("/internal/aliexpress/search", process.env.BAZUNK_DATA_API_URL!);
+        url.searchParams.set("q", "usb cable");
+        url.searchParams.set("page", "1");
+        url.searchParams.set("currency", "USD");
+        url.searchParams.set("country", "GB");
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${process.env.BAZUNK_DATA_INTERNAL_TOKEN}` },
+          signal: AbortSignal.timeout(12000),
+        });
+        if (!response.ok) throw Error(`Official AliExpress service returned HTTP ${response.status}; check Platform Core connection and OAuth.`);
+        const payload = await response.json() as any;
+        if (!Array.isArray(payload.items)) throw Error("Official AliExpress service returned an invalid product response.");
+        return `Official AliExpress search responding (${payload.items.length} items returned; individual imports not verified)`;
+      }
+    );
+    if (!officialAliExpress.configured) {
+      officialAliExpress.message = "Platform Core AliExpress connection is not configured on this API service.";
+    }
+
+    const checks: Check[] = [...await Promise.all([postgresPromise, clerkPromise, stripePromise, livekitPromise]), ...rapidChecks, officialAliExpress];
     for (const c of checks) {
       await db.execute(sql`
         INSERT INTO system_integration_status (integration,last_success_at,last_check_at,last_status,last_message)
