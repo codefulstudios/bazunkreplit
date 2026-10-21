@@ -81,7 +81,7 @@ function DesignAssetsEditor() {
  </div>;
 }
 export function AdminDesignSystemPage() {
-  const [workspaceSection,setWorkspaceSection]=useState<"themes"|"preview"|"colours"|"components"|"content"|"history">("themes");
+  const [workspaceSection,setWorkspaceSection]=useState<"assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history">("assistant");
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
   const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
@@ -102,6 +102,11 @@ export function AdminDesignSystemPage() {
   const {authFetch}=useAdmin();
   const [saving,setSaving]=useState(false);
   const [dirty,setDirty]=useState(false);
+  const [designPrompt,setDesignPrompt]=useState("Make the design cleaner, professional and readable in both themes");
+  const [aiBusy,setAiBusy]=useState(false);
+  const [aiExplanation,setAiExplanation]=useState("");
+  const [aiSuggestions,setAiSuggestions]=useState<string[]>([]);
+  const [customHue,setCustomHue]=useState("#1769ff");
   const [history,setHistory]=useState<Array<{at:string;area:Area;mode:Mode;palette:Palette}>>([]);
   const [autoStatus,setAutoStatus]=useState("Drafts save automatically");
   useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>{e.preventDefault()};window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn)},[dirty]);
@@ -178,6 +183,35 @@ export function AdminDesignSystemPage() {
   });
 
   useEffect(()=>{if(!dirty||!safe||saving||(area==="mobile"&&syncMobile))return;const timer=window.setTimeout(async()=>{try{const key="design_draft_"+designSettingKey(area,mode);const res=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[key]:JSON.stringify(palette)})});if(!res.ok)throw Error("Draft was not saved");setAutoStatus("Draft saved automatically");setDirty(false)}catch{setAutoStatus("Autosave failed — use Save draft to retry")}},1100);return()=>window.clearTimeout(timer)},[dirty,area,mode,palette,safe,saving,syncMobile,authFetch]);
+  async function suggestDesign(){
+    setAiBusy(true);setNotice("");setAiExplanation("");
+    try{
+      const response=await authFetch("/api/admin/design-ai/suggest",{method:"POST",body:JSON.stringify({prompt:designPrompt,theme:mode,palette})});
+      const result=await response.json();
+      if(!response.ok)throw Error(result.error||"Design Assistant unavailable");
+      const next=result.palette as Palette;
+      setDrafts(p=>({...p,[area]:{...p[area],[mode]:next}}));
+      setDirty(true);setAiExplanation(String(result.explanation||"Design draft created."));
+      setAiSuggestions(Array.isArray(result.suggestions)?result.suggestions:[]);
+      setNotice("AI suggestion loaded as a draft. Review the contrast checks and preview before publishing.");
+    }catch(err){setNotice(err instanceof Error?err.message:"Could not create a design suggestion")}finally{setAiBusy(false)}
+  }
+  function suggestReadabilityFix(){
+    const base=mode==="dark"?{text:"#f8fafc",secondaryText:"#d6e2f2",actionText:"#ffffff"}:{text:"#152345",secondaryText:"#334155",actionText:"#ffffff"};
+    const action=palette.action;
+    const repaired={...palette,...base,action:contrast("#ffffff",action)>=4.5?action:mode==="dark"?"#2563eb":"#1459df"};
+    setDrafts(p=>({...p,[area]:{...p[area],[mode]:repaired}}));
+    setDirty(true);setNotice("Readability suggestion loaded into draft. Review before publishing.");
+  }
+  function generatePreset(){
+    const c=customHue;
+    if(!/^#[0-9a-fA-F]{6}$/.test(c)){setNotice("Choose a valid hex colour");return;}
+    const accent=contrast("#ffffff",c)>=4.5?c:"#1459df";
+    const base=mode==="dark"?{background:"#0b1729",surface:"#1d2c42",field:"#283a53",text:"#f8fafc",secondaryText:"#d3e0ef"}:{background:"#f5f7fb",surface:"#ffffff",field:"#eaf0f7",text:"#17233c",secondaryText:"#334155"};
+    const next:Palette={...base,action:accent,actionText:"#ffffff"};
+    setDrafts(p=>({...p,[area]:{...p[area],[mode]:next}}));setDirty(true);
+    setNotice("Generated a coordinated "+mode+" preset from "+c+". Review contrast before publishing.");
+  }
   function change(key:keyof Palette,value:string) {
     setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...p[area][mode],[key]:value}}}));
     setNotice("");setDirty(true);
@@ -193,7 +227,7 @@ export function AdminDesignSystemPage() {
       <aside aria-label="Design Center sections" className="min-w-0 self-start rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-[#172541] lg:sticky lg:top-4">
        <div className="border-b border-slate-200 px-3 pb-3 dark:border-slate-600"><strong className="text-base text-slate-950 dark:text-white">Design Center</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Choose a task to edit</p></div>
        <nav className="mt-3 grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
-        {([{id:"themes",label:"Theme gallery",desc:"Choose a ready-made theme",icon:Palette},{id:"preview",label:"Live preview",desc:"View desktop and mobile",icon:Monitor},{id:"colours",label:"Colours",desc:"Adjust text and surfaces",icon:Sun},{id:"components",label:"Admin appearance",desc:"Fonts, cards and sidebar",icon:Type},{id:"content",label:"Pages & branding",desc:"Icons, homepage, footer",icon:LayoutGrid}] as const).map(item=><button key={item.id} type="button" aria-current={workspaceSection===item.id?"page":undefined} onClick={()=>{setWorkspaceSection(item.id);if(item.id==="colours")setDesignTab("colours");if(item.id==="content"&&designTab==="colours")setDesignTab("branding");if(item.id==="components")setSelectedPlatform("admin")}} className={"flex min-h-12 items-center gap-2 rounded-lg p-3 text-left text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 "+(workspaceSection===item.id?"bg-blue-600 text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-[#304866]")}><item.icon className="h-4 w-4 shrink-0"/><span><span className="block">{item.label}</span><span className={"hidden text-xs font-medium lg:block "+(workspaceSection===item.id?"text-blue-50":"text-slate-600 dark:text-slate-300")}>{item.desc}</span></span></button>)}
+        {([{id:"assistant",label:"AI Design Assistant",desc:"Describe changes in plain English",icon:Palette},{id:"themes",label:"Theme gallery",desc:"Choose a ready-made theme",icon:Palette},{id:"preview",label:"Live preview",desc:"View desktop and mobile",icon:Monitor},{id:"colours",label:"Colours",desc:"Adjust text and surfaces",icon:Sun},{id:"components",label:"Admin appearance",desc:"Fonts, cards and sidebar",icon:Type},{id:"content",label:"Pages & branding",desc:"Icons, homepage, footer",icon:LayoutGrid}] as const).map(item=><button key={item.id} type="button" aria-current={workspaceSection===item.id?"page":undefined} onClick={()=>{setWorkspaceSection(item.id);if(item.id==="colours")setDesignTab("colours");if(item.id==="content"&&designTab==="colours")setDesignTab("branding");if(item.id==="components")setSelectedPlatform("admin")}} className={"flex min-h-12 items-center gap-2 rounded-lg p-3 text-left text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 "+(workspaceSection===item.id?"bg-blue-600 text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-[#304866]")}><item.icon className="h-4 w-4 shrink-0"/><span><span className="block">{item.label}</span><span className={"hidden text-xs font-medium lg:block "+(workspaceSection===item.id?"text-blue-50":"text-slate-600 dark:text-slate-300")}>{item.desc}</span></span></button>)}
        </nav>
       </aside>
       <div className="min-w-0 space-y-5">
@@ -201,6 +235,16 @@ export function AdminDesignSystemPage() {
         <div><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
         <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={saveDraft} className="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-white px-5 py-3 font-bold text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:border-slate-500 dark:bg-[#213a58] dark:text-white"><Save className="h-4 w-4"/>Save draft</button><span role="status" className="self-center text-xs font-semibold text-slate-700 dark:text-slate-200">{autoStatus}</span><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
       </div>
+      {workspaceSection==="assistant"&&<section aria-label="AI Design Assistant" className="space-y-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-600 dark:bg-[#172541]">
+        <div><h2 className="text-xl font-extrabold text-slate-900 dark:text-white">AI Design Assistant</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-200">Describe a theme change in ordinary language. Suggestions are previews only until you publish.</p></div>
+        <label className="block space-y-2 text-sm font-bold text-slate-900 dark:text-white">What would you like to change?
+          <textarea value={designPrompt} onChange={e=>setDesignPrompt(e.target.value)} rows={3} maxLength={1000} placeholder="e.g. A calmer navy and teal design with highly visible text" className="block w-full rounded-lg border border-slate-400 bg-white p-3 text-sm text-slate-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white"/>
+        </label>
+        <div className="flex flex-wrap gap-2"><button type="button" disabled={aiBusy||designPrompt.trim().length<8} onClick={()=>void suggestDesign()} className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">{aiBusy?"Generating…":"Generate AI suggestion"}</button><button type="button" onClick={suggestReadabilityFix} className="rounded-lg border border-blue-300 bg-white px-4 py-3 text-sm font-bold text-blue-800 dark:bg-[#213a58] dark:text-white">Suggest readability fixes</button></div>
+        {aiExplanation&&<div role="status" className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950 dark:border-blue-600 dark:bg-[#193454] dark:text-white"><strong>Suggested draft</strong><p className="mt-2">{aiExplanation}</p>{aiSuggestions.map((tip,i)=><p key={i} className="mt-1">• {tip}</p>)}</div>}
+        <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-600"><h3 className="font-bold text-slate-900 dark:text-white">Generate a coordinated preset</h3><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Choose an accent colour. The editor generates matching backgrounds, readable text and button colours.</p><div className="mt-3 flex flex-wrap items-center gap-3"><input type="color" aria-label="Preset accent colour" value={customHue} onChange={e=>setCustomHue(e.target.value)} className="h-11 w-14 rounded-lg border border-slate-400"/><span className="text-sm font-semibold">{customHue}</span><button type="button" onClick={generatePreset} className="rounded-lg border border-blue-300 px-4 py-2 text-sm font-bold text-blue-700 dark:text-blue-200">Generate preset</button></div></div>
+        <div className="rounded-lg bg-slate-50 p-3 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">Next: open Colours to inspect your new draft, then use Publish when satisfied.</div>
+      </section>}
       {(workspaceSection==="colours"||workspaceSection==="themes")&&<section aria-label="Automatic light and dark contrast checks" className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-600 dark:bg-[#172541]">
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Automatic contrast check</h2><span className="text-xs font-semibold text-slate-600 dark:text-slate-300">WCAG AA · 4.5:1 minimum</span></div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">{themeHealth.map(h=><div key={h.theme} className={"rounded-lg border p-3 "+(h.pass?"border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-600 dark:bg-emerald-950 dark:text-emerald-100":"border-red-300 bg-red-50 text-red-950 dark:border-red-600 dark:bg-red-950 dark:text-red-100")}><strong className="capitalize">{h.theme} mode</strong><p className="mt-1 text-xs font-bold">{h.pass?"All five colour combinations pass":h.failures+" contrast issue(s) — choose this mode to correct them"}</p></div>)}</div>
