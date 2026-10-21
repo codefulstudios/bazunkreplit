@@ -8,7 +8,22 @@ export function installDesignPreviewBridge(){
  const previous:Record<string,string>={};
  let selected=false;
  const onMessage=(event:MessageEvent<PreviewMessage>)=>{
-  if(event.origin!==location.origin||event.source!==window.parent||event.data?.type!=="bazunk:design-preview")return;
+  if(event.origin!==location.origin||event.source!==window.parent)return;
+  if((event.data as any)?.type==="bazunk:section-preview"){
+   const detail=event.data as any;
+   const targets:Record<string,string>={home_hero:".bz-design-home-hero",home_categories:".bz-design-home-categories",home_spotlight:".bz-design-spotlight",home_promos:".bz-design-home-promos"};
+   const selector=targets[detail.section];const d=detail.draft;
+   if(!selector||!d||!["background","text","accent","accentText"].every(k=>typeof d[k]==="string"&&/^#[0-9a-f]{6}$/i.test(d[k])))return;
+   for(const element of document.querySelectorAll<HTMLElement>(selector)){
+    element.style.setProperty("--bz-section-bg",d.background);
+    element.style.setProperty("--bz-section-text",d.text);
+    element.style.setProperty("--bz-section-accent",d.accent);
+    element.style.setProperty("--bz-section-accent-text",d.accentText);
+    element.setAttribute("data-design-"+(detail.section==="home_hero"?"home-hero":detail.section==="home_categories"?"home-categories":detail.section==="home_spotlight"?"spotlight":"home-promos"),"true");
+   }
+   return;
+  }
+  if(event.data?.type!=="bazunk:design-preview")return;
   const {palette,mode,select}=event.data;
   if(!palette||!Object.values(palette).every(x=>typeof x==="string"&&/^#[0-9a-f]{6}$/i.test(x)))return;
   selected=select;
