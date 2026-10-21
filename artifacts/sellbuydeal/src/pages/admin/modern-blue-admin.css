@@ -12,3 +12,16 @@
 .dark .bazunk-admin .admin-dashboard .admin-kpi{background:#111f35;color:#f8fafc;border-color:#263854;box-shadow:none}
 .dark .bazunk-admin .admin-dashboard .admin-kpi-icon{background:#1e3b61;color:#93c5fd}
 @media(max-width:639px){.bazunk-admin .admin-dashboard{padding-bottom:20px}.bazunk-admin .admin-dashboard .admin-kpi{min-height:116px}}
+
+/* Design Center admin component settings (scoped, both colour modes). */
+.bazunk-admin{font-size:var(--bz-admin-font-size,14px)}
+.bazunk-admin .admin-dashboard h1{font-size:var(--bz-admin-heading-size,30px)}
+.bazunk-admin .admin-dashboard .admin-kpi,.bazunk-admin .admin-charts>div,.bazunk-admin .admin-payments{border-radius:var(--bz-admin-radius,12px);box-shadow:var(--bz-admin-card-shadow,0 2px 10px rgb(15 23 42 / 4%))}
+.bazunk-admin[data-admin-button="pill"] button:not(.admin-nav-link){border-radius:999px}
+.bazunk-admin[data-admin-button="square"] button:not(.admin-nav-link){border-radius:0}
+.bazunk-admin[data-admin-header="transparent"] .admin-topbar{background:transparent;backdrop-filter:blur(16px)}
+.bazunk-admin[data-admin-sticky="false"] .admin-topbar{position:relative}
+.bazunk-admin[data-admin-sidebar="bordered"] aside{border-right:2px solid #1769ff}
+.bazunk-admin[data-admin-density="compact"] .admin-dashboard{row-gap:12px}
+.bazunk-admin[data-admin-density="spacious"] .admin-dashboard{row-gap:32px}
+.dark .bazunk-admin .admin-dashboard .admin-kpi{box-shadow:var(--bz-admin-card-shadow,none)}
