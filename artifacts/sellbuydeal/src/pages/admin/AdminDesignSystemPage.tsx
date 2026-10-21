@@ -105,14 +105,31 @@ export function AdminDesignSystemPage() {
   async function saveDraft(){if(!safe||saving||(area==="mobile"&&syncMobile))return;setSaving(true);try{const key="design_draft_"+designSettingKey(area,mode);const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[key]:JSON.stringify(palette)})});if(!r.ok)throw Error();setNotice("Draft saved privately. Use Publish to update the live site.");setDirty(false)}catch{setNotice("Could not save the draft.")}finally{setSaving(false)}}
   async function publish(){if(!safe||saving||(area==="mobile"&&syncMobile)){setNotice("Disable mobile sync to edit mobile independently.");return;}setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette),["design_draft_"+designSettingKey(area,mode)]:""})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Published "+area+" / "+mode+" to the live site.");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
+  // Complete palettes, not just a button colour. Text/surface contrast is
+  // checked by the existing WCAG guard before saving or publishing.
   const themePresets=[
-    {name:"Modern Blue",color:"#1769ff"},{name:"Ocean Teal",color:"#0d9488"},
-    {name:"Purple Pro",color:"#7c3aed"},{name:"Emerald Green",color:"#059669"},
-    {name:"Sunset Orange",color:"#ea580c"},{name:"Minimal Slate",color:"#475569"}
+    {name:"Modern Blue",color:"#1769ff",action:"#1459df",darkAction:"#347cfa",tint:"#eaf2ff"},
+    {name:"Ocean Teal",color:"#0d9488",action:"#0f766e",darkAction:"#0f766e",tint:"#e7f7f3"},
+    {name:"Purple Pro",color:"#7c3aed",action:"#6d28d9",darkAction:"#6d28d9",tint:"#f2ebff"},
+    {name:"Emerald Green",color:"#059669",action:"#047857",darkAction:"#047857",tint:"#e9f8f0"},
+    {name:"Sunset Orange",color:"#ea580c",action:"#c2410c",darkAction:"#c2410c",tint:"#fff0e7"},
+    {name:"Minimal Slate",color:"#475569",action:"#334155",darkAction:"#475569",tint:"#edf2f7"}
   ];
-  function applyPreset(name:string,color:string){
-    setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...p[area][mode],action:color,actionText:"#ffffff"}}}));
-    setActivePreset(name);setDirty(true);setNotice("Preset applied to draft. Save or publish when ready.");
+  function applyPreset(item:(typeof themePresets)[number]){
+    const base=PRESETS[area][mode];
+    const next:Palette=mode==="dark"
+      ? {...base,background:"#081220",surface:"#111f35",field:"#21334b",text:"#f8fafc",secondaryText:"#cbd5e1",action:item.darkAction,actionText:"#ffffff"}
+      : {...base,background:"#f5f8fd",surface:"#ffffff",field:item.tint,text:"#0f172a",secondaryText:"#475569",action:item.action,actionText:"#ffffff"};
+    const nextChecks:[[string,string],...[string,string][]]=[
+      [next.text,next.background],[next.text,next.surface],[next.secondaryText,next.surface],
+      [next.text,next.field],[next.actionText,next.action]
+    ];
+    if(nextChecks.some(([foreground,background])=>contrast(foreground,background)<4.5)){
+      setNotice("This preset does not meet minimum text contrast and was not applied.");return;
+    }
+    setDrafts(p=>({...p,[area]:{...p[area],[mode]:next}}));
+    setActivePreset(item.name);setDirty(true);
+    setNotice(item.name+" "+mode+" palette applied to your draft. Nothing is published until you save.");
   }
   const sendPreview=()=>{
     for(const [frame,platform] of [[desktopRef.current,"storefront"],[mobileRef.current,"mobile"]] as const){
@@ -156,7 +173,7 @@ export function AdminDesignSystemPage() {
       </div>
       <div className="rounded-xl border border-slate-200 bg-white p-4 text-slate-900 dark:border-slate-700 dark:bg-[#111f35] dark:text-white">
         <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-extrabold">Theme Presets</h2><span className="text-xs font-semibold text-slate-500 dark:text-slate-300">Select a starting look for this target</span></div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{themePresets.map(item=><button key={item.name} type="button" onClick={()=>applyPreset(item.name,item.color)} aria-pressed={activePreset===item.name} className={"overflow-hidden rounded-xl border-2 bg-white text-left text-slate-900 dark:bg-[#14243d] dark:text-white "+(activePreset===item.name?"border-blue-600":"border-slate-200 dark:border-slate-600")}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{themePresets.map(item=><button key={item.name} type="button" onClick={()=>applyPreset(item)} aria-pressed={activePreset===item.name} className={"overflow-hidden rounded-xl border-2 bg-white text-left text-slate-900 dark:bg-[#14243d] dark:text-white "+(activePreset===item.name?"border-blue-600":"border-slate-200 dark:border-slate-600")}>
           <div className="flex h-14 items-end gap-1 bg-slate-100 p-2 dark:bg-[#0c192c]"><span className="h-full w-4 rounded" style={{background:item.color}}/><span className="h-7 flex-1 rounded bg-white dark:bg-[#243651]"/><span className="h-10 flex-1 rounded bg-white dark:bg-[#243651]"/></div>
           <div className="p-2 text-xs font-bold">{item.name}</div>
         </button>)}</div>
