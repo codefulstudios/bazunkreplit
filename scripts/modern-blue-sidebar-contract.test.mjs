@@ -4,11 +4,13 @@ import {test} from "node:test";
 const dir="artifacts/sellbuydeal/src/pages/admin/";
 const layout=readFileSync(dir+"AdminLayout.tsx","utf8");
 const styles=readFileSync(dir+"modern-blue-admin.css","utf8");
-test("Modern Blue sidebar keeps every admin route and all seven logical groups",()=>{
+test("Modern Blue sidebar keeps every admin route and six grouped categories plus Dashboard",()=>{
  const routes=[...layout.matchAll(/href: "(\/admin\/[^"]+)"/g)].map(m=>m[1]);
  assert.equal(new Set(routes).size,routes.length);
  assert.ok(routes.length>=30);
- for(const name of ["overview","accounts","marketplace","commerce","growth","support","system"])assert.match(layout,new RegExp('id:"'+name+'"'));
+ assert.match(layout,/Dashboard<\/button>/);
+ assert.match(layout,/DESIGN_SECTIONS/);
+ for(const name of ["accounts","marketplace","commerce","growth","support","system"])assert.match(layout,new RegExp('id:"'+name+'"'));
 });
 test("sidebar has keyboard-accessible groups, collapse, and mobile drawer",()=>{
  for(const content of ["aria-expanded={expanded}","aria-controls={`admin-nav-","aria-current={active?","toggleSidebar","aria-label={sidebarCollapsed?","lg:hidden","savedAdminNavScrollTop"])assert.ok(layout.includes(content),content);
