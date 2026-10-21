@@ -18,8 +18,8 @@ const PRESETS: Record<Area, Record<Mode, Palette>> = {
   mobile: DESIGN_DEFAULTS.storefront,
   dealpilot: DESIGN_DEFAULTS.dealpilot,
   storefront: {
-    light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
-    dark: { background:"#0b1427",surface:"#17243a",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827" },
+    light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#1769ff",actionText:"#ffffff" },
+    dark: { background:"#081220",surface:"#111f35",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827" },
   },
   admin: {
     light: { background:"#f3f6fc",surface:"#ffffff",text:"#152345",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
@@ -75,14 +75,14 @@ function DesignAssetsEditor() {
     <input value={items.design_hero_image_alt||""} onChange={e=>change("design_hero_image_alt",e.target.value)} maxLength={150} placeholder="Description of the image" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
    </label>
    {items.design_hero_image_url&&/^https:\/\//.test(items.design_hero_image_url)&&<p className="text-sm font-bold">Hero image will be displayed only after saving a valid HTTPS image URL.</p>}
-   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-orange-300 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
+   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-blue-600 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
   </>}
  </div>;
 }
 export function AdminDesignSystemPage() {
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
-  const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("storefront");
-  const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"dark",storefront:"dark",mobile:"dark"});
+  const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
+  const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
   const [previewPage,setPreviewPage]=useState<"home"|"listing"|"dealpilot"|"dashboard">("home");
   const desktopRef=useRef<HTMLIFrameElement>(null);
   const mobileRef=useRef<HTMLIFrameElement>(null);
@@ -91,7 +91,7 @@ export function AdminDesignSystemPage() {
   const [pickedSection,setPickedSection]=useState<DesignSection|undefined>(undefined);
   const [syncMobile,setSyncMobile]=useState(false);
   const [mobileSyncBusy,setMobileSyncBusy]=useState(false);
-  const [area,setArea]=useState<Area>("storefront");
+  const [area,setArea]=useState<Area>("admin");
   const [mode,setMode]=useState<Mode>("light");
   const [drafts,setDrafts]=useState(PRESETS);
   const [notice,setNotice]=useState("");
