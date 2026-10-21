@@ -50,8 +50,12 @@ export function AdminDashboardPage(){
     </div>)}
    </section>
    <details className="admin-secondary-metrics rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#111f35]"><summary className="cursor-pointer text-sm font-bold text-slate-800 dark:text-white">More performance metrics · Credits, streams, disputes, returns and refunds</summary><div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">{cards.slice(6).map(([label,value,sub,Icon])=><div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-[#192c46]"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">{label}</span><Icon className="h-4 w-4 text-blue-600 dark:text-blue-300"/></div><strong className="mt-2 block text-2xl font-extrabold text-slate-950 dark:text-white">{value}</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{sub}</p></div>)}</div></details>
-   <div className="admin-dashboard-panels grid gap-5 lg:grid-cols-2 2xl:grid-cols-[1.1fr_1fr_.9fr]">
-     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
+   <section aria-label="Marketplace management" className="admin-dashboard-management space-y-4">
+     <div className="flex flex-wrap items-end justify-between gap-3">
+       <div><h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Marketplace management</h2><p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Key operations, shortcuts and appearance settings in one place.</p></div>
+     </div>
+     <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,.95fr)_minmax(0,1.65fr)]">
+       <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <div className="mb-4 flex items-start justify-between gap-3">
          <div><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Current marketplace activity</p></div>
          <Activity aria-hidden="true" className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/>
@@ -68,17 +72,22 @@ export function AdminDashboardPage(){
          </div>)}
        </dl>
      </div>
-     <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
-       <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Quick actions</h2>
-       <div className="grid grid-cols-2 gap-3">{[["Manage orders","/admin/orders",ShoppingBag],["Listings","/admin/listings",Package],["Users","/admin/users",Users],["Feature toggles","/admin/feature-toggles",Settings],["Email templates","/admin/emails",Mail],["System status","/admin/system-status",Activity]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>go(href)} className="flex min-h-16 flex-col items-start justify-center gap-1 rounded-lg border border-slate-200 p-3 text-left text-xs font-bold text-slate-800 hover:border-blue-500 hover:bg-blue-50 dark:border-[#263854] dark:text-white dark:hover:bg-blue-500/10"><Icon className="h-5 w-5 text-blue-600 dark:text-blue-400"/>{label}</button>)}</div>
+
+       <div className="admin-management-hub min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#34435b] dark:bg-[#15243b]">
+         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 px-5 py-4 dark:border-[#34435b]">
+           <div><h3 className="font-extrabold text-slate-900 dark:text-white">Quick actions</h3><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Common administration tasks</p></div>
+           <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">6 shortcuts</span>
+         </div>
+         <div className="grid gap-0 sm:grid-cols-2">
+           {[[ "Manage orders","/admin/orders",ShoppingBag],["Listings","/admin/listings",Package],["Users","/admin/users",Users],["Feature toggles","/admin/feature-toggles",Settings],["Email templates","/admin/emails",Mail],["System status","/admin/system-status",Activity]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>go(href)} className="flex min-h-12 items-center gap-3 border-b border-slate-200 px-5 py-3 text-left text-sm font-bold text-slate-800 hover:bg-blue-50 dark:border-[#34435b] dark:text-white dark:hover:bg-[#223b59]"><Icon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/><span className="flex-1">{label}</span><ArrowUpRight className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300"/></button>)}
+         </div>
+         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-5 py-4 dark:border-[#34435b] dark:bg-[#1a2d47]">
+           <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-[#284669] dark:text-blue-200"><Sparkles className="h-5 w-5"/></span><div><h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Design Center</h3><p className="text-xs font-medium text-slate-600 dark:text-slate-200">Themes, typography and layouts</p></div></div>
+           <button type="button" onClick={()=>go("/admin/design-system")} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Open Design Center <ArrowUpRight className="h-4 w-4"/></button>
+         </div>
+       </div>
      </div>
-     <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-5 dark:border-blue-800 dark:from-[#102b56] dark:to-[#111f35]">
-       <div className="mb-3 inline-flex rounded-lg bg-blue-100 p-3 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300"><Sparkles className="h-6 w-6"/></div>
-       <h2 className="text-xl font-black text-slate-900 dark:text-white">Design Center</h2>
-       <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">Customize your admin, storefront and mobile experience. Preview light and dark themes before publishing.</p>
-       <button type="button" onClick={()=>go("/admin/design-system")} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-700">Open Design Center <ArrowUpRight className="h-4 w-4"/></button>
-     </div>
-   </div>
+   </section>
    <AdminActionRequired />
    <section aria-label="Marketplace trends" className="admin-charts grid min-w-0 gap-5 xl:grid-cols-2">
     <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
