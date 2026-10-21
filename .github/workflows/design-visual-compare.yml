@@ -1,0 +1,47 @@
+name: Design Center desktop mobile visual comparison
+on:
+  workflow_dispatch:
+    inputs:
+      baseline_url:
+        description: 'Known good deployment URL'
+        required: false
+        default: 'https://www.bazunk.com'
+      candidate_url:
+        description: 'Candidate deployment URL (optional)'
+        required: false
+        default: ''
+jobs:
+  screenshot-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real-browser screenshot tooling
+        run: |
+          npm install --no-save --no-package-lock playwright pngjs pixelmatch
+          npx playwright install --with-deps chromium
+      - name: Capture and compare desktop/mobile light/dark screenshots
+        env:
+          BAZUNK_VISUAL_BASELINE_URL: ${{ inputs.baseline_url }}
+          BAZUNK_VISUAL_CANDIDATE_URL: ${{ inputs.candidate_url }}
+          BAZUNK_AUTH_STATE_B64: ${{ secrets.BAZUNK_AUTH_STATE_B64 }}
+        run: |
+          if [ -n "$BAZUNK_AUTH_STATE_B64" ]; then
+            printf '%s' "$BAZUNK_AUTH_STATE_B64" | base64 -d > auth-state.json
+            export BAZUNK_AUTH_STATE_PATH=auth-state.json
+            export BAZUNK_VISUAL_ROUTES=/admin/dashboard,/admin/design-system,/admin/feature-toggles
+          else
+            echo "No authenticated session configured. Only public pages will be checked."
+            export BAZUNK_VISUAL_ROUTES=/,/sell
+          fi
+          trap 'rm -f auth-state.json' EXIT
+          node scripts/design-visual-compare.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase2-visual-comparison
+          path: artifacts/design-visual-comparison/
+          if-no-files-found: warn
