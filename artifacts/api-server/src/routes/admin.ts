@@ -856,7 +856,7 @@ router.put("/admin/settings", async (req, res) => {
     const updates = req.body as Record<string, string>;
     if (!updates || typeof updates !== "object" || Array.isArray(updates)) { res.status(400).json({error:"Invalid settings payload"}); return; }
     for (const [key,value] of Object.entries(updates)) {
-      if (!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)) continue;
+      if (!/^design_palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)) continue;
       try {
         const palette=JSON.parse(value);
         const required=["background","surface","text","secondaryText","field","action","actionText"];
@@ -869,7 +869,9 @@ router.put("/admin/settings", async (req, res) => {
     for(const [key,value] of Object.entries(updates)){
       if(!key.startsWith("design_"))continue;
       if(typeof value!=="string"){res.status(400).json({error:"Invalid design setting"});return;}
-      if(key==="design_hero_image_url"){
+      if(key==="design_mobile_inherit_web"){
+        if(value!=="true"&&value!=="false"){res.status(400).json({error:"Invalid mobile sync option"});return;}
+      }else if(key==="design_hero_image_url"){
         if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500)){res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});return;}
       }else if(key==="design_hero_image_alt"){
         if(value.length>150){res.status(400).json({error:"Graphic description too long"});return;}
@@ -898,7 +900,7 @@ router.put("/admin/settings", async (req, res) => {
           const contrast=(a:string,b:string)=>{const a1=lum(a),b1=lum(b);return (Math.max(a1,b1)+.05)/(Math.min(a1,b1)+.05)};
           if(contrast(p.text,p.background)<4.5||contrast(p.accentText,p.accent)<4.5)throw Error("Low contrast");
         }catch{res.status(400).json({error:"Section style must pass WCAG AA contrast"});return;}
-      }else if(!/^design_palette_(storefront|admin|dealpilot)_(light|dark)$/.test(key)){
+      }else if(!/^design_palette_(storefront|admin|dealpilot|mobile)_(light|dark)$/.test(key)){
         {res.status(400).json({error:"Unrecognised design setting"});return;}
       }
     }

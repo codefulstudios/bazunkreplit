@@ -6,14 +6,15 @@ import { AdminSettingsPage } from "./AdminSettingsPage";
 import { IconAppearanceEditor } from "./IconAppearanceEditor";
 import {DesignTargetGuide,type DesignTarget} from "./DesignTargetGuide";
 import { DesignSectionsEditor } from "./DesignSectionsEditor";
-import { ShieldCheck, Copy, RotateCcw, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
+import { ShieldCheck, Copy, RotateCcw, Globe, Monitor, Moon, Sun, PanelsTopLeft, ExternalLink, Save, Rocket, Palette, Type, LayoutGrid, Menu, Link2, Image as ImageIcon, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, Package } from "lucide-react";
 
 // Deliberately isolated: these settings render only inside the preview.
 // Publishing requires a validated, authenticated server-side settings endpoint.
 type Mode = "light" | "dark";
-type Area = "storefront" | "admin" | "dealpilot";
+type Area = "storefront" | "admin" | "dealpilot" | "mobile";
 type Palette = { background: string; surface: string; text: string; secondaryText: string; field: string; action: string; actionText: string };
 const PRESETS: Record<Area, Record<Mode, Palette>> = {
+  mobile: DESIGN_DEFAULTS.storefront,
   dealpilot: DESIGN_DEFAULTS.dealpilot,
   storefront: {
     light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
@@ -78,7 +79,12 @@ function DesignAssetsEditor() {
  </div>;
 }
 export function AdminDesignSystemPage() {
-  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("sections");
+  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
+  const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("storefront");
+  const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"dark",storefront:"dark",mobile:"dark"});
+  const [previewPage,setPreviewPage]=useState<"home"|"listing"|"dealpilot"|"dashboard">("home");
+  const [syncMobile,setSyncMobile]=useState(false);
+  const [mobileSyncBusy,setMobileSyncBusy]=useState(false);
   const [area,setArea]=useState<Area>("storefront");
   const [mode,setMode]=useState<Mode>("light");
   const [drafts,setDrafts]=useState(PRESETS);
@@ -86,9 +92,13 @@ export function AdminDesignSystemPage() {
   const {authFetch}=useAdmin();
   const [saving,setSaving]=useState(false);
   const [dirty,setDirty]=useState(false);
-  useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setDrafts({storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")},dealpilot:{light:parseDesignPalette(values[designSettingKey("dealpilot","light")],"dealpilot","light"),dark:parseDesignPalette(values[designSettingKey("dealpilot","dark")],"dealpilot","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
-  async function publish(){if(!safe)return;setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Changes saved successfully for "+area+" / "+mode+".");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
+  useEffect(()=>{let live=true;authFetch("/api/admin/settings").then(r=>{if(!r.ok)throw Error("Settings unavailable");return r.json()}).then((values:Record<string,string>)=>{if(!live)return;setSyncMobile(values.design_mobile_inherit_web==="true");setDrafts({mobile:{light:parseDesignPalette(values[designSettingKey("mobile","light")],"mobile","light"),dark:parseDesignPalette(values[designSettingKey("mobile","dark")],"mobile","dark")},storefront:{light:parseDesignPalette(values[designSettingKey("storefront","light")],"storefront","light"),dark:parseDesignPalette(values[designSettingKey("storefront","dark")],"storefront","dark")},admin:{light:parseDesignPalette(values[designSettingKey("admin","light")],"admin","light"),dark:parseDesignPalette(values[designSettingKey("admin","dark")],"admin","dark")},dealpilot:{light:parseDesignPalette(values[designSettingKey("dealpilot","light")],"dealpilot","light"),dark:parseDesignPalette(values[designSettingKey("dealpilot","dark")],"dealpilot","dark")}});}).catch(()=>{if(live)setNotice("Unable to load saved settings. Showing defaults.");});return()=>{live=false}},[authFetch]);
+  async function publish(){if(!safe||saving||(area==="mobile"&&syncMobile)){setNotice("Disable mobile sync to edit mobile independently.");return;}setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette)})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Changes saved successfully for "+area+" / "+mode+".");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
+  const pageUrl=previewPage==="home"?"/":previewPage==="listing"?"/browse":previewPage==="dealpilot"?"/deal-pilot":"/admin/dashboard";
+  function selectPlatform(next:"admin"|"storefront"|"mobile"){setSelectedPlatform(next);setArea(next);setMode(platformModes[next]);}
+  function selectMode(next:Mode,platform:"admin"|"storefront"|"mobile"){setPlatformModes(p=>({...p,[platform]:next}));setSelectedPlatform(platform);setArea(platform);setMode(next);}
+  async function setInheritance(next:boolean){setMobileSyncBusy(true);try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({design_mobile_inherit_web:next?"true":"false"})});if(!r.ok)throw Error();setSyncMobile(next);setNotice(next?"Mobile now follows web theme colours.":"Mobile theme colours can now be edited separately.");window.dispatchEvent(new Event("bazunk-settings-updated"));}catch{setNotice("Unable to save mobile synchronization preference.");}finally{setMobileSyncBusy(false)}}
   const checks=useMemo(()=>[
     ["Main text / page",palette.text,palette.background],
     ["Main text / card",palette.text,palette.surface],
@@ -107,8 +117,33 @@ export function AdminDesignSystemPage() {
     catch {setNotice("Clipboard unavailable. No changes were published.");}
   }
   return <AdminLayout>
-    <section className="mx-auto max-w-6xl space-y-5" data-testid="protected-design-console">
-      <div className="rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white"><h1 className="text-2xl font-extrabold">Bazunk Design Center</h1><p className="mt-1 text-sm font-semibold">Storefront and admin appearance, branding, homepage, footer and SEO in one place.</p><div className="mt-4 flex flex-wrap gap-2">{([{key:"sections",label:"Website sections"},{key:"colours",label:"Protected colours"},{key:"branding",label:"Branding & SEO"},{key:"homepage",label:"Homepage"},{key:"footer",label:"Footer"},{key:"advertising",label:"Advertising"},{key:"assets",label:"Icons & Graphics"}] as const).map(item=><button key={item.key} type="button" onClick={()=>setDesignTab(item.key)} aria-pressed={designTab===item.key} className={"rounded-lg border px-4 py-2 text-sm font-bold "+(designTab===item.key?"border-orange-700 bg-orange-300 text-slate-950":"border-slate-400 bg-white text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white")}>{item.label}</button>)}</div></div>
+    <section className="mx-auto max-w-[1600px] space-y-5 rounded-xl bg-[#0b1427] p-5 text-white" data-testid="protected-design-console">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div><h1 className="text-3xl font-black tracking-tight text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
+        <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={publish} className="inline-flex items-center gap-2 rounded-xl border border-slate-500 px-5 py-3 font-bold text-white disabled:opacity-50"><Save className="h-4 w-4"/>Save changes</button><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
+      </div>
+      <div className="grid gap-3 xl:grid-cols-4">
+       {([{key:"admin",label:"Admin",subtitle:"Customize the admin dashboard.",icon:Monitor},{key:"storefront",label:"Frontend Web",subtitle:"Customize your public website.",icon:Globe},{key:"mobile",label:"Frontend Mobile",subtitle:"Customize the mobile experience.",icon:Smartphone}] as const).map(p=><div key={p.key} className={"rounded-xl border bg-[#17243a] p-4 "+(selectedPlatform===p.key?"border-blue-500":"border-slate-700")}>
+        <button type="button" onClick={()=>selectPlatform(p.key)} className="flex items-center gap-3 text-left text-white"><span className="rounded-lg bg-blue-600 p-2"><p.icon className="h-6 w-6"/></span><span><strong className="block text-sm">{p.label}</strong><span className="text-xs text-slate-200">{p.subtitle}</span></span></button>
+        <div className="mt-4 flex gap-2">{(["light","dark"] as const).map(m=><button key={m} type="button" onClick={()=>selectMode(m,p.key)} className={"flex flex-1 items-center justify-center gap-2 rounded-lg border px-2 py-2 text-sm font-bold "+(platformModes[p.key]===m?"border-blue-500 bg-blue-900 text-white":"border-slate-600 text-slate-200")}>{m==="light"?<Sun className="h-4 w-4"/>:<Moon className="h-4 w-4"/>}{m==="light"?"Light":"Dark"}</button>)}</div>
+       </div>)}
+       <label className="flex flex-col justify-between rounded-xl border border-slate-700 bg-[#17243a] p-4 text-white"><span className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 font-bold"><Link2 className="h-5 w-5"/>Apply frontend web changes to mobile too</span><input type="checkbox" aria-label="Apply web changes to mobile" checked={syncMobile} disabled={mobileSyncBusy} onChange={e=>void setInheritance(e.target.checked)} className="h-5 w-5 accent-blue-500"/></span><span className="mt-3 text-xs text-slate-200">When enabled, mobile inherits web colours. Mobile-only layout adjustments remain independent.</span></label>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[255px_minmax(0,1fr)]">
+       <div className="space-y-3">
+        <nav aria-label="Design editing categories" className="overflow-hidden rounded-xl border border-slate-700 bg-[#17243a]">{([{key:"colours",label:"Colors",description:"Brand colors, backgrounds, text",icon:Palette},{key:"assets",label:"Icons & Graphics",description:"Category icons, logos, illustrations",icon:ImageIcon},{key:"branding",label:"Typography & Branding",description:"Fonts, names, SEO",icon:Type},{key:"sections",label:"Layout & Homepage Sections",description:"Hero, categories, deals, banners",icon:LayoutGrid},{key:"homepage",label:"Homepage Content",description:"Headings and announcements",icon:PanelsTopLeft},{key:"footer",label:"Footer",description:"Links and footer copy",icon:Menu},{key:"advertising",label:"Advertising",description:"Ad visibility and locations",icon:Globe}] as const).map(item=><button type="button" key={item.key} onClick={()=>setDesignTab(item.key)} className={"flex w-full items-center gap-3 border-b border-slate-700 p-3 text-left text-sm "+(designTab===item.key?"bg-blue-700 text-white":"text-slate-100 hover:bg-slate-700")}><item.icon className="h-5 w-5 shrink-0"/><span><strong className="block">{item.label}</strong><span className="text-xs opacity-90">{item.description}</span></span><span className="ml-auto">›</span></button>)}</nav>
+        <div className="rounded-xl border border-slate-700 bg-[#17243a] p-4 text-sm text-slate-200"><strong className="mb-2 block text-white">Design Sync & Inheritance</strong>Mobile follows web appearance only when sync is enabled. Turn it off for independent mobile colours.</div>
+       </div>
+       <div className="min-w-0 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-900 bg-[#13294b] p-4 text-white"><div><span className="text-xs text-slate-300">You are editing</span><div className="font-extrabold">{selectedPlatform==="storefront"?"Frontend Web":selectedPlatform==="mobile"?"Frontend Mobile":"Admin"} · {mode==="dark"?"Dark":"Light"} Mode · {previewPage==="home"?"Homepage":previewPage==="listing"?"Listings":previewPage==="dealpilot"?"DealPilot":"Admin Dashboard"}</div></div><label className="text-xs font-semibold">Preview page <select aria-label="Preview page" value={previewPage} onChange={e=>setPreviewPage(e.target.value as typeof previewPage)} className="ml-2 rounded-lg border border-slate-500 bg-[#182b49] p-2 text-white"><option value="home">Homepage</option><option value="listing">Listing Page</option><option value="dealpilot">DealPilot</option><option value="dashboard">Admin Dashboard</option></select></label></div>
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_225px]">
+         <div className="min-w-0 rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Desktop Preview</div><iframe title="Desktop website preview" loading="lazy" src={pageUrl} className="h-[390px] w-full rounded-lg border border-slate-600 bg-white" style={{colorScheme:mode}}/></div>
+         <div className="rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Mobile Preview</div><div className="mx-auto max-w-[205px] rounded-[24px] border-[5px] border-slate-900 bg-slate-900 p-1 shadow-xl"><iframe title="Mobile website preview" loading="lazy" src={pageUrl} className="h-[365px] w-full rounded-[18px] bg-white" style={{colorScheme:platformModes.mobile}}/></div></div>
+        </div>
+        <p className="text-xs font-medium text-slate-300">Previews load the current published page. Unsaved colour changes are shown in the editor below; previews do not publish them automatically. <a href={pageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
+       </div>
+      </div>
+      <div className="rounded-xl border border-slate-700 bg-[#101c33] p-4"><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
       {designTab==="assets" && <><DesignAssetsEditor /><IconAppearanceEditor /></>}
       {designTab==="sections" && <DesignSectionsEditor />}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<DesignTargetGuide target={designTab as DesignTarget}/>}
@@ -117,14 +152,11 @@ export function AdminDesignSystemPage() {
       <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
         <div className="flex flex-wrap items-center gap-3"><ShieldCheck className="h-7 w-7 text-emerald-600 dark:text-emerald-400"/><h1 className="text-2xl font-bold">Protected Design System</h1></div>
         <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-100">Preview changes first, then publish them to the chosen area and theme. Contrast protection cannot be switched off.</p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <label className="text-sm font-bold">Area <select aria-label="Preview area" value={area} onChange={e=>setArea(e.target.value as Area)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="storefront">Storefront</option><option value="admin">Admin</option><option value="dealpilot">DealPilot page</option></select></label>
-          <label className="text-sm font-bold">Theme <select aria-label="Preview theme" value={mode} onChange={e=>setMode(e.target.value as Mode)} className="ml-2 rounded-lg border border-slate-400 bg-white p-2 text-slate-900 dark:border-slate-500 dark:bg-slate-800 dark:text-white"><option value="light">Light</option><option value="dark">Dark</option></select></label>
-        </div>
+        <p className="mt-3 rounded-lg bg-slate-100 px-4 py-3 text-sm font-bold text-slate-900 dark:bg-slate-800 dark:text-white">Selected platform: {area==="storefront"?"Frontend Web":area==="mobile"?"Frontend Mobile":area==="admin"?"Admin":"DealPilot"} · {mode==="dark"?"Dark":"Light"} mode. Use the platform cards above to switch.</p>
       </div>
       <div className="sticky top-2 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-orange-500 bg-white p-3 shadow-lg dark:bg-[#17243a]" data-testid="design-save-bar">
         <div className="min-w-0"><p className="font-extrabold text-slate-950 dark:text-white">{dirty?"Unsaved design changes":"Design settings"}</p><p className="text-sm font-semibold text-slate-700 dark:text-slate-100">{safe?"Contrast checks passed — safe to save.":"Contrast check failed — adjust colours before saving."}</p></div>
-        <button type="button" onClick={publish} disabled={!safe || saving} aria-label="Save design changes" className="min-h-12 rounded-xl border-2 border-orange-700 bg-orange-400 px-6 py-3 text-base font-extrabold text-slate-950 shadow-sm hover:bg-orange-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-300 disabled:text-slate-800">{saving?"Saving…":"Save Changes"}</button>
+        <button type="button" onClick={publish} disabled={!safe || saving || area==="mobile"&&syncMobile} aria-label="Save design changes" className="min-h-12 rounded-xl border-2 border-orange-700 bg-orange-400 px-6 py-3 text-base font-extrabold text-slate-950 shadow-sm hover:bg-orange-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:border-slate-400 disabled:bg-slate-300 disabled:text-slate-800">{saving?"Saving…":"Save Changes"}</button>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
@@ -133,7 +165,7 @@ export function AdminDesignSystemPage() {
           <div className="grid gap-3 sm:grid-cols-2">{(Object.keys(LABELS) as (keyof Palette)[]).map(key=><label key={key} className="flex items-center justify-between gap-3 rounded-lg border border-slate-300 p-3 text-sm font-semibold dark:border-slate-600"><span>{LABELS[key]}</span><input aria-label={LABELS[key]+" colour"} type="color" value={palette[key]} onChange={e=>change(key,e.target.value)} className="h-10 w-12 cursor-pointer rounded border border-slate-500" /></label>)}</div>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...PRESETS[area][mode]}}}));setNotice("Preview reset to protected defaults.");}} className="inline-flex items-center gap-2 rounded-lg border border-slate-400 bg-white px-4 py-2 font-bold text-slate-900 dark:bg-slate-800 dark:text-white"><RotateCcw className="h-4 w-4"/>Reset preview</button>
-            <button type="button" disabled={!safe || saving} onClick={publish} className="rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700">{saving?"Saving…":"Save Changes"}</button>
+            <button type="button" disabled={!safe || saving || area==="mobile"&&syncMobile} onClick={publish} className="rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700">{saving?"Saving…":"Save Changes"}</button>
             <button type="button" disabled={!safe} onClick={copy} className="inline-flex items-center gap-2 rounded-lg bg-orange-300 px-4 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700"><Copy className="h-4 w-4"/>Copy validated draft</button>
           </div>
           {notice&&<p role="status" className="mt-3 text-sm font-bold">{notice}</p>}
@@ -158,6 +190,7 @@ export function AdminDesignSystemPage() {
         </div>
       </div>
       </>}
+      </div>
     </section>
   </AdminLayout>;
 }

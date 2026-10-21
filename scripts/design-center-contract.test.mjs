@@ -11,7 +11,7 @@ test("Design Center is the second admin navigation item",()=>{
 });
 test("Design Center consolidates site settings",()=>{
  const x=read(base+"pages/admin/AdminDesignSystemPage.tsx");
- for(const title of ["Branding & SEO","Homepage","Footer","Advertising","Icons & Graphics","Website sections"])assert.ok(x.includes(title),title);
+ for(const title of ["Typography & Branding","Homepage Content","Footer","Advertising","Icons & Graphics","Layout & Homepage Sections"])assert.ok(x.includes(title),title);
  assert.match(x,/<AdminSettingsPage key=\{designTab\} embedded initialTab=\{designTab\}/);
 });
 test("Settings embeds without a second AdminLayout",()=>{

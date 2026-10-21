@@ -106,9 +106,11 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const apply=()=>{
-      const area:DesignArea=window.location.pathname.startsWith("/admin")?"admin":"storefront";
+      const isAdmin=window.location.pathname.startsWith("/admin");
+      const area:DesignArea=isAdmin?"admin":window.matchMedia("(max-width: 767px)").matches?"mobile":"storefront";
       const mode:DesignMode=document.documentElement.classList.contains("dark")?"dark":"light";
-      const p=parseDesignPalette(rawSettings[designSettingKey(area,mode)],area,mode);
+      const source:DesignArea=area==="mobile"&&rawSettings.design_mobile_inherit_web==="true"?"storefront":area;
+      const p=parseDesignPalette(rawSettings[designSettingKey(source,mode)],source,mode);
       const root=document.documentElement;
       root.dataset.bzDesignArea=area;
       root.style.setProperty("--bz-protected-page",p.background);
@@ -118,7 +120,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
       root.style.setProperty("--bz-protected-field",p.field);
       root.style.setProperty("--bz-protected-button",p.action);
       root.style.setProperty("--bz-protected-button-text",p.actionText);
-      const customized=Boolean(rawSettings[designSettingKey(area,mode)]);
+      const customized=Boolean(rawSettings[designSettingKey(source,mode)]);
       const remap:Record<string,string>={
         "--bz-surface-page":p.background,"--bz-surface-card":p.surface,
         "--bz-surface-raised":p.field,"--bz-surface-field":p.field,
@@ -135,10 +137,11 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     apply();
     const observer=new MutationObserver(apply);
     observer.observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
+    window.addEventListener("resize",apply);
     window.addEventListener("popstate",apply);
     window.addEventListener("bazunk-design-route-change",apply);
     window.addEventListener("bazunk-settings-updated",apply);
-    return ()=>{observer.disconnect();window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-design-route-change",apply);window.removeEventListener("bazunk-settings-updated",apply)};
+    return ()=>{observer.disconnect();window.removeEventListener("resize",apply);window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-design-route-change",apply);window.removeEventListener("bazunk-settings-updated",apply)};
   },[rawSettings]);
 
   return (
