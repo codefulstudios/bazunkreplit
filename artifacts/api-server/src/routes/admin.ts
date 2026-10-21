@@ -904,6 +904,20 @@ router.put("/admin/settings", async (req, res) => {
           const range=(n:unknown,lo:number,hi:number)=>typeof n==="number"&&Number.isInteger(n)&&n>=lo&&n<=hi;
           if(!["Inter","Arial","system-ui","Georgia"].includes(obj.font)||!range(obj.heading,24,40)||!range(obj.body,13,18)||!range(obj.sidebar,210,320)||!range(obj.radius,0,24)||!["compact","comfortable","spacious"].includes(obj.density)||!["rounded","pill","square"].includes(obj.button)||!["none","soft","medium"].includes(obj.shadow)||!["solid","transparent"].includes(obj.header)||!["solid","bordered"].includes(obj.sidebarStyle)||typeof obj.stickyHeader!=="boolean")throw Error("Invalid component settings");
         }catch{res.status(400).json({error:"Invalid admin component design settings"});return;}
+      }else if(key==="design_palette_history_v1"){
+        try{
+          const h=JSON.parse(value);
+          const areas=["admin","storefront","mobile","dealpilot"];
+          const modes=["light","dark"];
+          const cols=["background","surface","text","secondaryText","field","action","actionText"];
+          if(!Array.isArray(h)||h.length>20||value.length>18000||!h.every((entry:any)=>
+            entry&&typeof entry==="object"&&Object.keys(entry).sort().join(",")==="area,at,mode,palette"&&
+            areas.includes(entry.area)&&modes.includes(entry.mode)&&typeof entry.at==="string"&&
+            Number.isFinite(Date.parse(entry.at))&&entry.palette&&
+            Object.keys(entry.palette).sort().join(",")===cols.slice().sort().join(",")&&
+            cols.every(k=>typeof entry.palette[k]==="string"&&/^#[0-9a-fA-F]{6}$/.test(entry.palette[k]))
+          ))throw Error("Invalid history format");
+        }catch{res.status(400).json({error:"Invalid palette version history"});return;}
       }else if(key==="design_hero_image_url"){
         if(value && (!/^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(value)||value.length>500)){res.status(400).json({error:"Graphic must be an HTTPS PNG, JPG or WebP URL"});return;}
       }else if(key==="design_hero_image_alt"){
