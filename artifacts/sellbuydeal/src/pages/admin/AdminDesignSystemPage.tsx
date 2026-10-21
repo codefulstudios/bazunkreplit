@@ -18,8 +18,8 @@ const PRESETS: Record<Area, Record<Mode, Palette>> = {
   mobile: DESIGN_DEFAULTS.storefront,
   dealpilot: DESIGN_DEFAULTS.dealpilot,
   storefront: {
-    light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
-    dark: { background:"#0b1427",surface:"#17243a",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827" },
+    light: { background:"#f8fafc",surface:"#ffffff",text:"#111827",secondaryText:"#374151",field:"#f1f5f9",action:"#1769ff",actionText:"#ffffff" },
+    dark: { background:"#081220",surface:"#111f35",text:"#ffffff",secondaryText:"#e5e7eb",field:"#263449",action:"#fb923c",actionText:"#111827" },
   },
   admin: {
     light: { background:"#f3f6fc",surface:"#ffffff",text:"#152345",secondaryText:"#374151",field:"#f1f5f9",action:"#fb923c",actionText:"#111827" },
@@ -75,14 +75,14 @@ function DesignAssetsEditor() {
     <input value={items.design_hero_image_alt||""} onChange={e=>change("design_hero_image_alt",e.target.value)} maxLength={150} placeholder="Description of the image" className="mt-1 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 dark:bg-slate-800 dark:text-white"/>
    </label>
    {items.design_hero_image_url&&/^https:\/\//.test(items.design_hero_image_url)&&<p className="text-sm font-bold">Hero image will be displayed only after saving a valid HTTPS image URL.</p>}
-   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-orange-300 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
+   <div className="flex flex-wrap items-center gap-3"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-blue-600 px-6 py-3 font-extrabold text-slate-950 disabled:opacity-60">{saving?"Saving…":"Save Icons & Graphics"}</button><p role="status" className="font-semibold">{status}</p></div>
   </>}
  </div>;
 }
 export function AdminDesignSystemPage() {
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
-  const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("storefront");
-  const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"dark",storefront:"dark",mobile:"dark"});
+  const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
+  const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
   const [previewPage,setPreviewPage]=useState<"home"|"listing"|"dealpilot"|"dashboard">("home");
   const desktopRef=useRef<HTMLIFrameElement>(null);
   const mobileRef=useRef<HTMLIFrameElement>(null);
@@ -91,10 +91,12 @@ export function AdminDesignSystemPage() {
   const [pickedSection,setPickedSection]=useState<DesignSection|undefined>(undefined);
   const [syncMobile,setSyncMobile]=useState(false);
   const [mobileSyncBusy,setMobileSyncBusy]=useState(false);
-  const [area,setArea]=useState<Area>("storefront");
+  const [area,setArea]=useState<Area>("admin");
   const [mode,setMode]=useState<Mode>("light");
   const [drafts,setDrafts]=useState(PRESETS);
   const [notice,setNotice]=useState("");
+  const [activePreset,setActivePreset]=useState("Modern Blue");
+  const [previewDevice,setPreviewDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
   const {authFetch}=useAdmin();
   const [saving,setSaving]=useState(false);
   const [dirty,setDirty]=useState(false);
@@ -103,6 +105,15 @@ export function AdminDesignSystemPage() {
   async function saveDraft(){if(!safe||saving||(area==="mobile"&&syncMobile))return;setSaving(true);try{const key="design_draft_"+designSettingKey(area,mode);const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[key]:JSON.stringify(palette)})});if(!r.ok)throw Error();setNotice("Draft saved privately. Use Publish to update the live site.");setDirty(false)}catch{setNotice("Could not save the draft.")}finally{setSaving(false)}}
   async function publish(){if(!safe||saving||(area==="mobile"&&syncMobile)){setNotice("Disable mobile sync to edit mobile independently.");return;}setSaving(true);setNotice("");try{const r=await authFetch("/api/admin/settings",{method:"PUT",body:JSON.stringify({[designSettingKey(area,mode)]:JSON.stringify(palette),["design_draft_"+designSettingKey(area,mode)]:""})});if(!r.ok)throw Error("Save rejected");window.dispatchEvent(new Event("bazunk-settings-updated"));setNotice("Published "+area+" / "+mode+" to the live site.");setDirty(false);}catch{setNotice("Unable to publish palette. No confirmation from server.");}finally{setSaving(false)}}
   const palette=drafts[area][mode];
+  const themePresets=[
+    {name:"Modern Blue",color:"#1769ff"},{name:"Ocean Teal",color:"#0d9488"},
+    {name:"Purple Pro",color:"#7c3aed"},{name:"Emerald Green",color:"#059669"},
+    {name:"Sunset Orange",color:"#ea580c"},{name:"Minimal Slate",color:"#475569"}
+  ];
+  function applyPreset(name:string,color:string){
+    setDrafts(p=>({...p,[area]:{...p[area],[mode]:{...p[area][mode],action:color,actionText:"#ffffff"}}}));
+    setActivePreset(name);setDirty(true);setNotice("Preset applied to draft. Save or publish when ready.");
+  }
   const sendPreview=()=>{
     for(const [frame,platform] of [[desktopRef.current,"storefront"],[mobileRef.current,"mobile"]] as const){
       if(!frame?.contentWindow)continue;
@@ -138,10 +149,17 @@ export function AdminDesignSystemPage() {
     catch {setNotice("Clipboard unavailable. No changes were published.");}
   }
   return <AdminLayout>
-    <section className="mx-auto max-w-[1600px] space-y-5 rounded-xl bg-[#0b1427] p-5 text-white" data-testid="protected-design-console">
+    <section className="mx-auto max-w-[1600px] space-y-5 rounded-xl bg-[#f5f8fd] p-5 text-slate-900 dark:bg-[#081220] dark:text-white" data-testid="protected-design-console">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div><h1 className="text-3xl font-black tracking-tight text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
-        <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={saveDraft} className="inline-flex items-center gap-2 rounded-xl border border-slate-500 px-5 py-3 font-bold text-white disabled:opacity-50"><Save className="h-4 w-4"/>Save draft</button><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
+        <div><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
+        <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={saveDraft} className="inline-flex items-center gap-2 rounded-xl border border-slate-500 px-5 py-3 font-bold text-white disabled:opacity-50"><Save className="h-4 w-4"/>Save draft</button><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-slate-900 dark:border-slate-700 dark:bg-[#111f35] dark:text-white">
+        <div className="mb-3 flex items-center justify-between"><h2 className="text-base font-extrabold">Theme Presets</h2><span className="text-xs font-semibold text-slate-500 dark:text-slate-300">Select a starting look for this target</span></div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">{themePresets.map(item=><button key={item.name} type="button" onClick={()=>applyPreset(item.name,item.color)} aria-pressed={activePreset===item.name} className={"overflow-hidden rounded-xl border-2 bg-white text-left text-slate-900 dark:bg-[#14243d] dark:text-white "+(activePreset===item.name?"border-blue-600":"border-slate-200 dark:border-slate-600")}>
+          <div className="flex h-14 items-end gap-1 bg-slate-100 p-2 dark:bg-[#0c192c]"><span className="h-full w-4 rounded" style={{background:item.color}}/><span className="h-7 flex-1 rounded bg-white dark:bg-[#243651]"/><span className="h-10 flex-1 rounded bg-white dark:bg-[#243651]"/></div>
+          <div className="p-2 text-xs font-bold">{item.name}</div>
+        </button>)}</div>
       </div>
       <div className="grid gap-3 xl:grid-cols-4">
        {([{key:"admin",label:"Admin",subtitle:"Customize the admin dashboard.",icon:Monitor},{key:"storefront",label:"Frontend Web",subtitle:"Customize your public website.",icon:Globe},{key:"mobile",label:"Frontend Mobile",subtitle:"Customize the mobile experience.",icon:Smartphone}] as const).map(p=><div key={p.key} className={"rounded-xl border bg-[#17243a] p-4 "+(selectedPlatform===p.key?"border-blue-500":"border-slate-700")}>
@@ -158,8 +176,9 @@ export function AdminDesignSystemPage() {
        <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-900 bg-[#13294b] p-4 text-white"><div><span className="text-xs text-slate-300">You are editing</span><div className="font-extrabold">{selectedPlatform==="storefront"?"Frontend Web":selectedPlatform==="mobile"?"Frontend Mobile":"Admin"} · {mode==="dark"?"Dark":"Light"} Mode · {previewPage==="home"?"Homepage":previewPage==="listing"?"Listings":previewPage==="dealpilot"?"DealPilot":"Admin Dashboard"}</div></div><label className="text-xs font-semibold">Preview page <select aria-label="Preview page" value={previewPage} onChange={e=>setPreviewPage(e.target.value as typeof previewPage)} className="ml-2 rounded-lg border border-slate-500 bg-[#182b49] p-2 text-white"><option value="home">Homepage</option><option value="listing">Listing Page</option><option value="dealpilot">DealPilot</option><option value="dashboard">Admin Dashboard</option></select></label></div>
         <div className="flex flex-wrap items-center justify-between gap-2"><label className="flex items-center gap-2 text-sm font-bold text-white"><input type="checkbox" checked={inspectMode} onChange={e=>setInspectMode(e.target.checked)} className="h-5 w-5 accent-blue-500"/> Select elements directly in preview</label><span className="text-xs text-slate-200">{picked?"Selected: "+picked+" · adjust controls below":"Changes to shared colours update previews before saving"}</span></div>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">Live device preview</strong><div className="flex gap-1">{(["desktop","tablet","mobile"] as const).map(device=><button type="button" key={device} onClick={()=>setPreviewDevice(device)} aria-pressed={previewDevice===device} className={"rounded-lg px-3 py-2 text-xs font-bold capitalize "+(previewDevice===device?"bg-blue-600 text-white":"border border-slate-500 text-slate-700 dark:text-white")}>{device}</button>)}</div></div>
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_225px]">
-         <div className="min-w-0 rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Desktop Preview</div><iframe title="Desktop website preview" ref={desktopRef} onLoad={sendPreview} loading="lazy" src={previewUrl} className="h-[390px] w-full rounded-lg border border-slate-600 bg-white" style={{colorScheme:mode}}/></div>
+         <div className="min-w-0 rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Desktop Preview</div><iframe title="Desktop website preview" ref={desktopRef} onLoad={sendPreview} loading="lazy" src={previewUrl} className={"h-[390px] rounded-lg border border-slate-600 bg-white transition-all "+(previewDevice==="mobile"?"mx-auto block w-[375px] max-w-full":previewDevice==="tablet"?"mx-auto block w-[768px] max-w-full":"w-full")} style={{colorScheme:mode}}/></div>
          <div className="rounded-xl border border-slate-700 bg-[#17243a] p-3"><div className="mb-2 text-xs font-bold text-slate-100">Mobile Preview</div><div className="mx-auto max-w-[205px] rounded-[24px] border-[5px] border-slate-900 bg-slate-900 p-1 shadow-xl"><iframe title="Mobile website preview" ref={mobileRef} onLoad={sendPreview} loading="lazy" src={previewUrl} className="h-[365px] w-full rounded-[18px] bg-white" style={{colorScheme:platformModes.mobile}}/></div></div>
         </div>
         <p className="text-xs font-medium text-slate-300">Live colour drafts are applied only inside these preview frames. Selecting an element identifies it; the matching editor below controls publishing. <a href={effectivePageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
