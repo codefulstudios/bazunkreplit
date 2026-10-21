@@ -15,7 +15,7 @@ test("admin switches can be used without an offscreen audit reason", () => {
   assert.match(admin, /disabled=\{busy!==null\|\|!meta\|\|meta\.readOnly\}/);
   assert.doesNotMatch(admin, /disabled=\{[^}]*reason\.trim\(\)\.length<8/);
   assert.match(admin, /role="switch" type="button" aria-checked=\{f.enabled\}/);
-  assert.match(admin, /window\.confirm\(/);
+  assert.doesNotMatch(admin, /window\.confirm\(/);
 });
 
 test("feature changes confirm database persistence and refresh public site settings", () => {
