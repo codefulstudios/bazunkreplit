@@ -58,7 +58,7 @@ const NAV_GROUPS = [
   { id:"system", label:"Platform & Settings", icon:Settings, pages:["Audit Log","System Status","Feature Toggles","Settings"] }
 ] as const;
 
-let savedAdminExpandedGroups: Record<string,boolean> = {overview:true,accounts:true,marketplace:true,commerce:true,growth:false,support:false,system:false};
+let savedAdminExpandedGroups: Record<string,boolean> = {overview:false,accounts:false,marketplace:false,commerce:false,growth:false,support:false,system:false};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin, authFetch } = useAdmin();
@@ -80,10 +80,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     setMenuOpen(false); setProfileOpen(false);
     const current=NAV.find(n=>n.href===location||location.startsWith(n.href+"/"));
     const group=NAV_GROUPS.find(g=>current&&g.pages.some(label=>label===current.label));
-    if(group&&!savedAdminExpandedGroups[group.id]){
-      savedAdminExpandedGroups={...savedAdminExpandedGroups,[group.id]:true};
-      setExpandedGroups({...savedAdminExpandedGroups});
-    }
+    // Keep the navigation tidy: only the group for the current page opens.
+    savedAdminExpandedGroups=Object.fromEntries(NAV_GROUPS.map(g=>[g.id,g.id===group?.id]));
+    setExpandedGroups({...savedAdminExpandedGroups});
   }, [location]);
   function toggleGroup(id:string){
     savedAdminExpandedGroups={...expandedGroups,[id]:!expandedGroups[id]};
