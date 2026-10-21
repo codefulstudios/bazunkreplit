@@ -203,12 +203,7 @@ export function AdminDesignSystemPage() {
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-slate-300 bg-white p-5 text-slate-900 dark:border-slate-600 dark:bg-[#17243a] dark:text-white">
-            <h2 className="text-lg font-bold">Protected accessibility checks</h2>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-100">Required contrast ratio: 4.5:1 or higher.</p>
-            <ul className="mt-3 space-y-2">{checks.map(c=><li key={c.label} className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold"><span>{c.label}</span><span className={c.pass?"text-emerald-700 dark:text-emerald-300":"text-red-700 dark:text-red-300"}>{c.pass?"PASS":"FAIL"} — {c.ratio.toFixed(2)}:1</span></li>)}</ul>
-            <p role="status" className="mt-4 font-bold">{safe?"All preview checks pass.":"Unsafe draft: export disabled until contrast is fixed."}</p>
-          </div>
+
         </div>
       </div>
       </>}
