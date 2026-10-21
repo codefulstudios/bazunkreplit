@@ -81,6 +81,7 @@ function DesignAssetsEditor() {
  </div>;
 }
 export function AdminDesignSystemPage() {
+  const [workspaceSection,setWorkspaceSection]=useState<"themes"|"preview"|"colours"|"components"|"content">("themes");
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
   const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
@@ -167,12 +168,20 @@ export function AdminDesignSystemPage() {
     catch {setNotice("Clipboard unavailable. No changes were published.");}
   }
   return <AdminLayout>
-    <section className="mx-auto max-w-[1600px] space-y-5 rounded-xl bg-[#f5f8fd] p-5 text-slate-900 dark:bg-[#081220] dark:text-white" data-testid="protected-design-console">
+    <section className="mx-auto max-w-[1700px] rounded-xl bg-[#f5f8fd] p-3 text-slate-900 dark:bg-[#081220] dark:text-white sm:p-5" data-testid="protected-design-console">
+     <div className="grid gap-5 lg:grid-cols-[225px_minmax(0,1fr)]">
+      <aside aria-label="Design Center sections" className="min-w-0 self-start rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-600 dark:bg-[#172541] lg:sticky lg:top-4">
+       <div className="border-b border-slate-200 px-3 pb-3 dark:border-slate-600"><strong className="text-base text-slate-950 dark:text-white">Design Center</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Choose a task to edit</p></div>
+       <nav className="mt-3 grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1">
+        {([{id:"themes",label:"Theme gallery",desc:"Choose a ready-made theme",icon:Palette},{id:"preview",label:"Live preview",desc:"View desktop and mobile",icon:Monitor},{id:"colours",label:"Colours",desc:"Adjust text and surfaces",icon:Sun},{id:"components",label:"Admin appearance",desc:"Fonts, cards and sidebar",icon:Type},{id:"content",label:"Pages & branding",desc:"Icons, homepage, footer",icon:LayoutGrid}] as const).map(item=><button key={item.id} type="button" aria-current={workspaceSection===item.id?"page":undefined} onClick={()=>{setWorkspaceSection(item.id);if(item.id==="colours")setDesignTab("colours");if(item.id==="content"&&designTab==="colours")setDesignTab("branding");if(item.id==="components")setSelectedPlatform("admin")}} className={"flex min-h-12 items-center gap-2 rounded-lg p-3 text-left text-sm font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 "+(workspaceSection===item.id?"bg-blue-600 text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-[#304866]")}><item.icon className="h-4 w-4 shrink-0"/><span><span className="block">{item.label}</span><span className={"hidden text-xs font-medium lg:block "+(workspaceSection===item.id?"text-blue-50":"text-slate-600 dark:text-slate-300")}>{item.desc}</span></span></button>)}
+       </nav>
+      </aside>
+      <div className="min-w-0 space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div><h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Design Center</h1><p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">Control Bazunk appearance across admin, web, and mobile.</p></div>
         <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setDrafts(p=>({...p,[area]:{...p[area],[mode]:PRESETS[area][mode]}}));setDirty(true)}} className="rounded-xl border border-slate-600 px-5 py-3 font-bold text-white">Reset</button><button type="button" disabled={!safe||saving||syncMobile&&selectedPlatform==="mobile"} onClick={saveDraft} className="inline-flex items-center gap-2 rounded-xl border border-blue-300 bg-white px-5 py-3 font-bold text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:border-slate-500 dark:bg-[#213a58] dark:text-white"><Save className="h-4 w-4"/>Save draft</button><button type="button" disabled={!safe||saving} onClick={publish} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-extrabold text-white disabled:opacity-50"><Rocket className="h-4 w-4"/>Publish</button></div>
       </div>
-      <section aria-label="Theme gallery" className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-[#111f35] dark:text-white">
+      <section aria-label="Theme gallery" className={(workspaceSection==="themes"?"":"hidden ")+"rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-[#111f35] dark:text-white">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-xl font-extrabold">Theme Gallery</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Choose a coordinated theme for the selected platform and light or dark mode. Your selection remains a draft.</p></div><span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-500/20 dark:text-blue-200">6 professionally matched presets</span></div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">{themePresets.map(item=><button key={item.name} type="button" onClick={()=>applyPreset(item)} aria-pressed={activePreset===item.name} aria-label={`Preview ${item.name} theme`} className={"group overflow-hidden rounded-2xl border-2 bg-white text-left transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-400 dark:bg-[#14243d] "+(activePreset===item.name?"border-blue-600 shadow-md":"border-slate-200 dark:border-slate-600")}>
           <div className="relative h-36 overflow-hidden bg-[#f4f7fc] p-3 dark:bg-[#0b1729]">
@@ -185,14 +194,14 @@ export function AdminDesignSystemPage() {
           <div className="flex items-center justify-between gap-2 p-4"><div><strong className="block text-sm text-slate-900 dark:text-white">{item.name}</strong><span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-300">Light and dark compatible</span></div><span className="h-7 w-7 rounded-full border-2 border-white shadow" style={{background:item.color}}/></div>
         </button>)}</div>
       </section>
-      <div className="grid gap-3 xl:grid-cols-4">
+      <div className={(workspaceSection==="themes"||workspaceSection==="preview"?"":"hidden ")+"grid gap-3 xl:grid-cols-4"}>
        {([{key:"admin",label:"Admin",subtitle:"Customize the admin dashboard.",icon:Monitor},{key:"storefront",label:"Frontend Web",subtitle:"Customize your public website.",icon:Globe},{key:"mobile",label:"Frontend Mobile",subtitle:"Customize the mobile experience.",icon:Smartphone}] as const).map(p=><div key={p.key} className={"rounded-xl border bg-[#17243a] p-4 "+(selectedPlatform===p.key?"border-blue-500":"border-slate-700")}>
         <button type="button" onClick={()=>selectPlatform(p.key)} className="flex items-center gap-3 text-left text-white"><span className="rounded-lg bg-blue-600 p-2"><p.icon className="h-6 w-6"/></span><span><strong className="block text-sm">{p.label}</strong><span className="text-xs text-slate-200">{p.subtitle}</span></span></button>
         <div className="mt-4 flex gap-2">{(["light","dark"] as const).map(m=><button key={m} type="button" onClick={()=>selectMode(m,p.key)} className={"flex flex-1 items-center justify-center gap-2 rounded-lg border px-2 py-2 text-sm font-bold "+(platformModes[p.key]===m?"border-blue-500 bg-blue-900 text-white":"border-slate-600 text-slate-200")}>{m==="light"?<Sun className="h-4 w-4"/>:<Moon className="h-4 w-4"/>}{m==="light"?"Light":"Dark"}</button>)}</div>
        </div>)}
        <label className="flex flex-col justify-between rounded-xl border border-slate-700 bg-[#17243a] p-4 text-white"><span className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 font-bold"><Link2 className="h-5 w-5"/>Apply frontend web changes to mobile too</span><input type="checkbox" aria-label="Apply web changes to mobile" checked={syncMobile} disabled={mobileSyncBusy} onChange={e=>void setInheritance(e.target.checked)} className="h-5 w-5 accent-blue-500"/></span><span className="mt-3 text-xs text-slate-200">When enabled, mobile inherits web colours. Mobile-only layout adjustments remain independent.</span></label>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[255px_minmax(0,1fr)]">
+      <div className={(workspaceSection==="preview"||workspaceSection==="colours"||workspaceSection==="content"?"":"hidden ")+"grid gap-4 lg:grid-cols-[255px_minmax(0,1fr)]"}>
        <div className="space-y-3">
         <nav aria-label="Design editing categories" className="overflow-hidden rounded-xl border border-slate-700 bg-[#17243a]">{([{key:"colours",label:"Colors",description:"Brand colors, backgrounds, text",icon:Palette},{key:"assets",label:"Icons & Graphics",description:"Category icons, logos, illustrations",icon:ImageIcon},{key:"branding",label:"Typography & Branding",description:"Fonts, names, SEO",icon:Type},{key:"sections",label:"Layout & Homepage Sections",description:"Hero, categories, deals, banners",icon:LayoutGrid},{key:"homepage",label:"Homepage Content",description:"Headings and announcements",icon:PanelsTopLeft},{key:"footer",label:"Footer",description:"Links and footer copy",icon:Menu},{key:"advertising",label:"Advertising",description:"Ad visibility and locations",icon:Globe}] as const).map(item=><button type="button" key={item.key} onClick={()=>setDesignTab(item.key)} className={"flex w-full items-center gap-3 border-b border-slate-700 p-3 text-left text-sm "+(designTab===item.key?"bg-blue-700 text-white":"text-slate-100 hover:bg-slate-700")}><item.icon className="h-5 w-5 shrink-0"/><span><strong className="block">{item.label}</strong><span className="text-xs opacity-90">{item.description}</span></span><span className="ml-auto">›</span></button>)}</nav>
         <div className="rounded-xl border border-slate-700 bg-[#17243a] p-4 text-sm text-slate-200"><strong className="mb-2 block text-white">Design Sync & Inheritance</strong>Mobile follows web appearance only when sync is enabled. Turn it off for independent mobile colours.</div>
@@ -208,8 +217,8 @@ export function AdminDesignSystemPage() {
         <p className="text-xs font-medium text-slate-300">Live colour drafts are applied only inside these preview frames. Selecting an element identifies it; the matching editor below controls publishing. <a href={effectivePageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
        </div>
       </div>
-      {selectedPlatform==="admin" && <AdminComponentEditor />}
-      <div className="rounded-xl border border-slate-700 bg-[#101c33] p-4"><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
+      {workspaceSection==="components" && <AdminComponentEditor />}
+      <div className={(workspaceSection==="colours"||workspaceSection==="content"?"":"hidden ")+"rounded-xl border border-slate-700 bg-[#101c33] p-4"}><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
       {designTab==="assets" && <><DesignAssetsEditor /><IconAppearanceEditor /></>}
       {designTab==="sections" && <DesignSectionsEditor selectedSection={pickedSection} />}
       {designTab!=="colours"&&designTab!=="assets"&&designTab!=="sections"&&<DesignTargetGuide target={designTab as DesignTarget}/>}
@@ -252,6 +261,8 @@ export function AdminDesignSystemPage() {
       </div>
       </>}
       </div>
+      </div>
+     </div>
     </section>
   </AdminLayout>;
 }
