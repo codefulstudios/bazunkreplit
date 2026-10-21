@@ -56,9 +56,6 @@ export function AdminFeatureFlagsPage(){
   }
   const nextEnabled=entry?entry.previous_enabled:!f.enabled;
   const auditReason=requestedReason || `Admin ${entry?"rollback":"toggle"}: ${f.label} ${nextEnabled?"enabled":"disabled"} through Feature Toggles`;
-  if(meta.environment==="production"&&!window.confirm(
-    `Are you sure you want to turn ${f.label} ${nextEnabled?"ON":"OFF"} on the LIVE Bazunk site?`
-  ))return;
   setBusy(f.key);setError("");setSuccess("");
   try{
    const url=entry?`${API_BASE}/api/admin/feature-toggles/${f.key}/rollback`:`${API_BASE}/api/admin/feature-flags/${f.key}`;
