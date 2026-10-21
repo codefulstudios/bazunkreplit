@@ -108,7 +108,7 @@ export function AdminDesignSystemPage() {
   // Complete palettes, not just a button colour. Text/surface contrast is
   // checked by the existing WCAG guard before saving or publishing.
   const themePresets=[
-    {name:"Modern Blue",color:"#1769ff",action:"#1459df",darkAction:"#347cfa",tint:"#eaf2ff"},
+    {name:"Modern Blue",color:"#1769ff",action:"#1459df",darkAction:"#1459df",tint:"#eaf2ff"},
     {name:"Ocean Teal",color:"#0d9488",action:"#0f766e",darkAction:"#0f766e",tint:"#e7f7f3"},
     {name:"Purple Pro",color:"#7c3aed",action:"#6d28d9",darkAction:"#6d28d9",tint:"#f2ebff"},
     {name:"Emerald Green",color:"#059669",action:"#047857",darkAction:"#047857",tint:"#e9f8f0"},
@@ -120,7 +120,7 @@ export function AdminDesignSystemPage() {
     const next:Palette=mode==="dark"
       ? {...base,background:"#081220",surface:"#111f35",field:"#21334b",text:"#f8fafc",secondaryText:"#cbd5e1",action:item.darkAction,actionText:"#ffffff"}
       : {...base,background:"#f5f8fd",surface:"#ffffff",field:item.tint,text:"#0f172a",secondaryText:"#475569",action:item.action,actionText:"#ffffff"};
-    const nextChecks:[[string,string],...[string,string][]]=[
+    const nextChecks:Array<[string,string]> = [
       [next.text,next.background],[next.text,next.surface],[next.secondaryText,next.surface],
       [next.text,next.field],[next.actionText,next.action]
     ];
