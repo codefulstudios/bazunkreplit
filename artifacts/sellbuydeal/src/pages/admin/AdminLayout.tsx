@@ -1,4 +1,5 @@
 import "./admin-theme.css";
+import "./modern-blue-admin.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // AdminLayout remounts on route changes; retain the sidebar position across pages.
@@ -87,7 +88,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
 
   return (
-    <div className="bazunk-admin min-h-screen bg-[#f3f6fc] text-[#152345] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
+    <div className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
         <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
@@ -95,18 +96,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {menuOpen && <button type="button" aria-label="Close admin menu" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
 
       {/* Sidebar — always visible */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-[#101c35] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[238px] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white dark:bg-[#0a1830] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[238px] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo */}
-        <div className="px-4 pt-5 pb-4 border-b border-white/10 flex flex-col gap-2 relative">
+        <div className="px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
           <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-white lg:hidden"><X className="h-5 w-5" /></button>
           <img src="/bazunk-logo.png" alt="Bazunk" className="h-9 w-auto object-contain self-start rounded bg-white px-2 py-0.5" />
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#F26B21]" />
-            <span className="font-bold text-white text-xs tracking-wide uppercase">Admin Panel</span>
+            <span className="font-bold text-blue-700 dark:text-white text-xs tracking-wide uppercase">Admin Panel</span>
           </div>
         </div>
 
-        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-white outline-none placeholder:text-slate-200"/></label></div>
+        <div className="px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
         {/* Nav */}
         <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="min-h-0 flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {NAV_GROUPS.map(group=>{
@@ -119,19 +120,19 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             return <div key={group.id} className="mb-1">
               <button type="button" onClick={()=>toggleGroup(group.id)} aria-expanded={expanded}
                 aria-controls={`admin-nav-${group.id}`}
-                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-black uppercase tracking-wide transition-colors hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${activeCount?"text-orange-200":"text-white"}`}>
-                <Icon className="h-4 w-4 shrink-0 text-orange-400"/>
+                className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-black uppercase tracking-wide transition-colors hover:bg-blue-50 dark:hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${activeCount?"text-blue-700 dark:text-blue-300":"text-slate-700 dark:text-white"}`}>
+                <Icon className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400"/>
                 <span className="flex-1">{group.label}</span>
-                <span className="rounded-lg bg-white/10 px-1.5 text-xs font-bold text-white">{pages.length}</span>
+                <span className="rounded-lg bg-blue-100 dark:bg-white/10 px-1.5 text-xs font-bold text-blue-700 dark:text-white">{pages.length}</span>
                 <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${expanded?"rotate-180":""}`}/>
               </button>
-              {expanded&&<div id={`admin-nav-${group.id}`} className="mt-0.5 space-y-0.5 border-l-2 border-orange-500/30 pl-2 ml-4">
+              {expanded&&<div id={`admin-nav-${group.id}`} className="mt-0.5 space-y-0.5 border-l-2 border-blue-200 dark:border-blue-500/30 pl-2 ml-4">
                 {pages.map(({label,href,icon:PageIcon})=>{
                   const active=location===href||location.startsWith(href+"/");
                   return <button type="button" key={href} aria-current={active?"page":undefined}
                     onClick={()=>{setMenuOpen(false);setLocation(href);}}
-                    className={`admin-nav-link flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${active?"bg-[#F26B21] text-white":"text-slate-200 hover:bg-white/10 hover:text-white"}`}>
-                    <PageIcon className={`h-4 w-4 shrink-0 ${active?"text-white":"text-orange-400"}`}/>{label}
+                    className={`admin-nav-link flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-bold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${active?"bg-[#1769ff] text-white":"text-slate-700 hover:bg-blue-50 hover:text-blue-900 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"}`}>
+                    <PageIcon className={`h-4 w-4 shrink-0 ${active?"text-white":"text-blue-500"}`}/>{label}
                   </button>;
                 })}
               </div>}
@@ -143,10 +144,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Logout */}
-        <div className="px-2 pb-4 border-t border-white/10 pt-3">
+        <div className="px-2 pb-4 border-t border-slate-200 dark:border-white/10 pt-3">
           <button
             onClick={() => { logout(); setLocation("/admin"); }}
-            className="admin-sign-out w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-200 hover:text-red-400 hover:bg-red-500/10 transition-colors font-medium"
+            className="admin-sign-out w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-700 dark:text-slate-200 hover:text-red-500 hover:bg-red-500/10 transition-colors font-medium"
           >
             <LogOut className="w-4 h-4 shrink-0" />
             Sign Out
