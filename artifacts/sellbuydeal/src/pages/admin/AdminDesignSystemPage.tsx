@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdmin } from "@/context/AdminContext";
 import { DESIGN_DEFAULTS, designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { AdminLayout } from "./AdminLayout";
+import { AdminComponentEditor } from "./AdminComponentEditor";
 import { AdminSettingsPage } from "./AdminSettingsPage";
 import { IconAppearanceEditor } from "./IconAppearanceEditor";
 import {DesignTargetGuide,type DesignTarget} from "./DesignTargetGuide";
@@ -201,6 +202,7 @@ export function AdminDesignSystemPage() {
         <p className="text-xs font-medium text-slate-300">Live colour drafts are applied only inside these preview frames. Selecting an element identifies it; the matching editor below controls publishing. <a href={effectivePageUrl} target="_blank" rel="noopener noreferrer" className="underline">Open page ↗</a></p>
        </div>
       </div>
+      {selectedPlatform==="admin" && <AdminComponentEditor />}
       <div className="rounded-xl border border-slate-700 bg-[#101c33] p-4"><h2 className="mb-3 text-lg font-extrabold text-white">Edit selected design settings</h2>
       {designTab==="assets" && <><DesignAssetsEditor /><IconAppearanceEditor /></>}
       {designTab==="sections" && <DesignSectionsEditor selectedSection={pickedSection} />}

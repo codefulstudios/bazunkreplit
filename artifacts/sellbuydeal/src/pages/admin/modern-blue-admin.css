@@ -12,3 +12,74 @@
 .dark .bazunk-admin .admin-dashboard .admin-kpi{background:#111f35;color:#f8fafc;border-color:#263854;box-shadow:none}
 .dark .bazunk-admin .admin-dashboard .admin-kpi-icon{background:#1e3b61;color:#93c5fd}
 @media(max-width:639px){.bazunk-admin .admin-dashboard{padding-bottom:20px}.bazunk-admin .admin-dashboard .admin-kpi{min-height:116px}}
+
+/* Design Center admin component settings (scoped, both colour modes). */
+.bazunk-admin{font-size:var(--bz-admin-font-size,14px)}
+.bazunk-admin .admin-dashboard h1{font-size:var(--bz-admin-heading-size,30px)}
+.bazunk-admin .admin-dashboard .admin-kpi,.bazunk-admin .admin-charts>div,.bazunk-admin .admin-payments{border-radius:var(--bz-admin-radius,12px);box-shadow:var(--bz-admin-card-shadow,0 2px 10px rgb(15 23 42 / 4%))}
+.bazunk-admin[data-admin-button="pill"] button:not(.admin-nav-link){border-radius:999px}
+.bazunk-admin[data-admin-button="square"] button:not(.admin-nav-link){border-radius:0}
+.bazunk-admin[data-admin-header="transparent"] .admin-topbar{background:transparent;backdrop-filter:blur(16px)}
+.bazunk-admin[data-admin-sticky="false"] .admin-topbar{position:relative}
+.bazunk-admin[data-admin-sidebar="bordered"] aside{border-right:2px solid #1769ff}
+.bazunk-admin[data-admin-density="compact"] .admin-dashboard{row-gap:12px}
+.bazunk-admin[data-admin-density="spacious"] .admin-dashboard{row-gap:32px}
+.dark .bazunk-admin .admin-dashboard .admin-kpi{box-shadow:var(--bz-admin-card-shadow,none)}
+
+
+/* Unified admin submenu presentation. Scope every rule to the admin main region;
+   destructive/semantic actions keep their distinct warning and success colours. */
+.bazunk-admin main{
+  --bz-admin-control-radius:var(--bz-admin-radius,12px);
+  --bz-admin-card-bg:#ffffff;
+  --bz-admin-card-border:#d9e2ee;
+  --bz-admin-field-bg:#ffffff;
+  --bz-admin-field-text:#0f172a;
+  --bz-admin-muted:#475569;
+  --bz-admin-ring:#1769ff;
+}
+.dark .bazunk-admin main{
+  --bz-admin-card-bg:#111f35;
+  --bz-admin-card-border:#30445f;
+  --bz-admin-field-bg:#182b49;
+  --bz-admin-field-text:#f8fafc;
+  --bz-admin-muted:#cbd5e1;
+  --bz-admin-ring:#8bb8ff;
+}
+.bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white,
+ .bazunk-admin main .admin-kpi{
+  border-radius:var(--bz-admin-radius,12px);
+}
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),select,textarea){
+  color:var(--bz-admin-field-text);
+  background-color:var(--bz-admin-field-bg);
+  border:1px solid var(--bz-admin-card-border);
+  border-radius:min(var(--bz-admin-radius,12px),12px);
+  min-height:38px;
+}
+.bazunk-admin main :is(input,textarea)::placeholder{color:var(--bz-admin-muted);opacity:1}
+.bazunk-admin main :is(input,select,textarea,button,a):focus-visible{
+  outline:3px solid var(--bz-admin-ring);outline-offset:2px;
+}
+.bazunk-admin main :is(input[type="checkbox"],input[type="radio"]){accent-color:#1769ff;min-width:16px;min-height:16px}
+.bazunk-admin main :is(button,[role="button"]){font-weight:650}
+.bazunk-admin main :is(button.bg-blue-600,button.bg-blue-700,a.bg-blue-600,a.bg-blue-700){
+  background:#1769ff;color:white;
+}
+.bazunk-admin main :is(button.bg-blue-600,button.bg-blue-700,a.bg-blue-600,a.bg-blue-700):not(:disabled):hover{background:#0b55df}
+.bazunk-admin main :is(button,select,input,textarea):disabled{cursor:not-allowed;opacity:.65}
+.bazunk-admin main :is(table){width:100%}
+.bazunk-admin main :is(th){color:#334155;background:#edf3fb}
+.dark .bazunk-admin main th{background:#20334f;color:#f1f5f9}
+.bazunk-admin main :is(td){color:#1e293b}
+.dark .bazunk-admin main td{color:#e2e8f0}
+.bazunk-admin main :is(tbody tr){border-bottom:1px solid var(--bz-admin-card-border)}
+.bazunk-admin main :is(tbody tr:hover){background:rgb(23 105 255 / 5%)}
+.dark .bazunk-admin main :is(tbody tr:hover){background:rgb(59 130 246 / 10%)}
+.bazunk-admin main :is(.bg-white.rounded-xl,.bg-white.rounded-2xl){box-shadow:var(--bz-admin-card-shadow,0 2px 10px rgb(15 23 42 / 4%))}
+.bazunk-admin main :is(.bg-white.rounded-xl,.bg-white.rounded-2xl):not(.border-0){border-color:var(--bz-admin-card-border)}
+.bazunk-admin[data-admin-density="compact"] main :is(th,td){padding-top:.5rem;padding-bottom:.5rem}
+.bazunk-admin[data-admin-density="spacious"] main :is(th,td){padding-top:1rem;padding-bottom:1rem}
+.bazunk-admin main :is(h1){font-size:clamp(24px,var(--bz-admin-heading-size,30px),40px);font-weight:800}
+.bazunk-admin main :is(h2){font-weight:750}
+@media(prefers-reduced-motion:reduce){.bazunk-admin main button{transition:none!important;transform:none!important}}
