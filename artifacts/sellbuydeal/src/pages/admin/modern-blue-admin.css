@@ -230,3 +230,46 @@
 .bazunk-admin .admin-dashboard .admin-dashboard-panels>div h2{color:inherit!important}
 .bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#f1f6ff!important}
 .dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#1b3454!important}
+
+
+/* Matte admin design pass — no sheen, glowing widgets or saturated panels.
+   Dashboard-only overrides, preserving semantic alerts and primary actions. */
+.bazunk-admin .admin-dashboard{
+ --matte-card:#fff;--matte-border:#e1e7ef;--matte-muted:#526178;
+ --matte-soft:#f4f7fb;
+}
+.dark .bazunk-admin .admin-dashboard{
+ --matte-card:#15243b;--matte-border:#34435b;--matte-muted:#c5d1e2;
+ --matte-soft:#1b2d47;
+}
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics),
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div,
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div{
+ background:var(--matte-card)!important;background-image:none!important;
+ border:1px solid var(--matte-border)!important;
+ color:inherit!important;box-shadow:none!important;
+ border-radius:12px!important;filter:none!important;backdrop-filter:none!important;
+}
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics)::before,
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics)::after{box-shadow:none!important}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{background:var(--matte-card)!important;border-color:var(--matte-border)!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{background:var(--matte-card)!important;border-color:var(--matte-border)!important}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#eaf1fc!important;color:#2059bf!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#253d5c!important;color:#a9c8ff!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div,
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div{background:var(--matte-card)!important;box-shadow:none!important;border-color:var(--matte-border)!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels :is(.bg-blue-50,.dark\\:bg-blue-500\\/10){
+ background:var(--matte-soft)!important;
+}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels button:not(:hover){box-shadow:none!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div,
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div{
+ background:var(--matte-card)!important;box-shadow:none!important;border-color:var(--matte-border)!important;
+}
+.bazunk-admin .admin-dashboard .admin-chart-card{background:var(--matte-card)!important;border-color:var(--matte-border)!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-chart-card{background:var(--matte-card)!important}
+.bazunk-admin .admin-dashboard .admin-operations button{background:var(--matte-card)!important;box-shadow:none!important;border:1px solid var(--matte-border)!important;border-radius:10px!important}
+.bazunk-admin .admin-dashboard .admin-operations button:hover{background:var(--matte-soft)!important}
+.bazunk-admin .admin-dashboard .admin-payments{background:var(--matte-card)!important}
+.bazunk-admin .admin-dashboard .admin-payments th{background:var(--matte-soft)!important}
+.bazunk-admin .admin-dashboard .admin-secondary-metrics{background:var(--matte-card)!important}
