@@ -62,8 +62,8 @@ let savedAdminExpandedGroups: Record<string,boolean> = {overview:false,accounts:
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin, authFetch } = useAdmin();
-  const [componentStyle,setComponentStyle]=useState(DEFAULT_COMPONENT_STYLE);
-  useEffect(()=>{let active=true;const refresh=()=>authFetch("/api/admin/settings").then(r=>r.ok?r.json():Promise.reject()).then(data=>{if(active){try{setComponentStyle(validateAdminComponentStyle(JSON.parse(data[ADMIN_COMPONENT_KEY]||"{}")))}catch{setComponentStyle(DEFAULT_COMPONENT_STYLE)}}}).catch(()=>{});void refresh();window.addEventListener("bazunk-settings-updated",refresh);return()=>{active=false;window.removeEventListener("bazunk-settings-updated",refresh)}},[authFetch]);
+  const [componentStyle,setComponentStyle]=useState({...DEFAULT_COMPONENT_STYLE,sidebar:260});
+  useEffect(()=>{let active=true;const refresh=()=>authFetch("/api/admin/settings").then(r=>r.ok?r.json():Promise.reject()).then(data=>{if(active){try{setComponentStyle(validateAdminComponentStyle(JSON.parse(data[ADMIN_COMPONENT_KEY]||'{"sidebar":260}')))}catch{setComponentStyle(DEFAULT_COMPONENT_STYLE)}}}).catch(()=>{});void refresh();window.addEventListener("bazunk-settings-updated",refresh);return()=>{active=false;window.removeEventListener("bazunk-settings-updated",refresh)}},[authFetch]);
   const [location, setLocation] = useLocation();
   useEffect(()=>{window.dispatchEvent(new Event("bazunk-design-route-change"));},[location]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -115,7 +115,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         <div className="admin-sidebar-search px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
         {/* Nav */}
-        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto py-3 px-3 space-y-1">
+        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto py-4 px-3 space-y-2">
           {NAV_GROUPS.map(group=>{
             const pages=NAV.filter(n=>group.pages.some(label=>label===n.label) &&
               (!search.trim()||n.label.toLowerCase().includes(search.trim().toLowerCase())||group.label.toLowerCase().includes(search.trim().toLowerCase())));
