@@ -12,7 +12,7 @@ const money=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency
 const num=(n:number)=>new Intl.NumberFormat("en-GB").format(n||0);
 
 export function AdminDashboardPage(){
- const {isAdmin,authFetch}=useAdmin(); const [,go]=useLocation(); const [s,setS]=useState<Stats|null>(null); const [loading,setLoading]=useState(true);
+ const {isAdmin,authFetch}=useAdmin(); const [,go]=useLocation(); const [s,setS]=useState<Stats|null>(null); const [loading,setLoading]=useState(true); const [paymentStatus,setPaymentStatus]=useState("all"); const [paymentQuery,setPaymentQuery]=useState(""); const [showAllPayments,setShowAllPayments]=useState(false);
  useEffect(()=>{if(!isAdmin){go("/admin");return;} load();},[isAdmin]);
  async function load(){setLoading(true);try{const r=await authFetch("/api/admin/stats");if(r.ok)setS(await r.json());}finally{setLoading(false)}}
  const cards=s?[
@@ -92,18 +92,18 @@ export function AdminDashboardPage(){
    <section aria-label="Marketplace trends" className="admin-charts grid min-w-0 gap-5 xl:grid-cols-2">
     <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><BarChart3 className="h-5 w-5 text-blue-600"/>Sales overview</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 7 days · completed marketplace activity</p></div>
+        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><BarChart3 className="h-5 w-5 text-blue-600"/>Sales & GMV</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 7 days · completed marketplace activity</p></div>
         <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-700 dark:text-slate-200" aria-label="Sales chart legend"><span className="flex items-center gap-1.5"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#1769ff]"/>Orders</span><span className="flex items-center gap-1.5"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#16a6b6]"/>GMV (£)</span></div>
       </div>
-      <div className="admin-chart-plot h-[275px] min-w-0" role="img" aria-label="Seven day orders and gross merchandise value trends">
+      <div className="admin-chart-plot h-[240px] min-w-0" role="img" aria-label="Seven day orders and gross merchandise value trends">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={s.salesTrend} margin={{top:8,right:12,left:0,bottom:5}}>
-            <CartesianGrid vertical={false} stroke="var(--bz-chart-grid, #dce5f1)" strokeDasharray="4 4"/>
+            <CartesianGrid vertical={false} stroke="var(--bz-chart-grid, #dce5f1)" strokeDasharray="3 5"/>
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}} tickMargin={12}/>
             <YAxis yAxisId="orders" allowDecimals={false} axisLine={false} tickLine={false} width={34} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
             <YAxis yAxisId="gmv" orientation="right" axisLine={false} tickLine={false} width={48} tickFormatter={(v:number)=>"£"+v.toLocaleString("en-GB")} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
             <Tooltip contentStyle={{background:"var(--bz-chart-tooltip, #ffffff)",color:"var(--bz-chart-tooltip-text, #0f172a)",border:"1px solid var(--bz-chart-grid, #dce5f1)",borderRadius:12}} formatter={(v:any,name:any)=>name==="GMV"?[money(Number(v)),"GMV"]:[num(Number(v)),"Orders"]}/>
-            <Line yAxisId="orders" name="Orders" type="monotone" dataKey="orders" stroke="#1769ff" strokeWidth={3} dot={{r:3,fill:"#1769ff"}} activeDot={{r:6}}/>
+            <Line yAxisId="orders" name="Orders" type="monotone" dataKey="orders" stroke="#1769ff" strokeWidth={2.5} dot={{r:2,fill:"#1769ff"}} activeDot={{r:6}}/>
             <Line yAxisId="gmv" name="GMV" type="monotone" dataKey="gmv" stroke="#16a6b6" strokeWidth={3} dot={{r:3,fill:"#16a6b6"}} activeDot={{r:6}}/>
           </LineChart>
         </ResponsiveContainer>
@@ -111,7 +111,7 @@ export function AdminDashboardPage(){
     </article>
     <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><Users className="h-5 w-5 text-blue-600"/>User growth</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 30 days · daily registrations</p></div>
+        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><Users className="h-5 w-5 text-blue-600"/>Registration trends</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 30 days · daily registrations</p></div>
         <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#1769ff]"/>New users</span>
       </div>
       <div className="admin-chart-plot h-[275px] min-w-0" role="img" aria-label="Daily user registrations over the last thirty days">
@@ -127,8 +127,20 @@ export function AdminDashboardPage(){
       </div>
     </article>
    </section>
-   <div><h2 className="text-sm font-black text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-3">Operations</h2><div className="admin-operations grid grid-cols-1 min-[390px]:grid-cols-2 md:grid-cols-4 gap-3">{[["Orders","/admin/orders",ShoppingBag],["Importer Control","/admin/importer-control",Activity],["Credits Economy","/admin/credits-economy",Coins],["Settings","/admin/settings",Settings]].map(([label,href,Icon]:any)=><button key={href} onClick={()=>go(href)} className="bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:border-[#1769ff]"><Icon className="w-5 h-5 text-[#1769ff]"/><span className="font-bold text-sm">{label}</span></button>)}</div></div>
-   <div className="admin-payments bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden"><div className="px-5 py-4 border-b"><h2 className="font-black">Recent Stripe payments</h2></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="bg-slate-100 dark:bg-[#233452] text-left text-xs uppercase text-slate-500 dark:text-slate-300"><th className="p-3">Customer</th><th className="p-3">Amount</th><th className="p-3">Status</th><th className="p-3">Date</th></tr></thead><tbody>{s.recentPayments.length?s.recentPayments.map(p=><tr key={p.id} className="border-t border-slate-200 dark:border-white/10"><td className="p-3">{p.email}</td><td className="p-3 font-bold">{p.currency} {p.amount.toFixed(2)}</td><td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${p.status==="paid"?"bg-emerald-100 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-200":"bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-200"}`}>{p.status}</span></td><td className="p-3">{new Date(p.date).toLocaleString("en-GB")}</td></tr>):<tr><td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-300">No recent Stripe payments</td></tr>}</tbody></table></div></div>
+   <section className="admin-system-links" aria-label="Specialist tools">
+     <div className="mb-3"><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Specialist tools</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Functions not duplicated in Quick Actions</p></div>
+     <div className="grid gap-3 sm:grid-cols-2">
+       {[[ "Importer control","/admin/importer-control",Activity,"Review incoming listings and source health"],["Credits economy","/admin/credits-economy",Coins,"Manage credits and marketplace rewards"]].map(([label,href,Icon,detail]:any)=><button key={href} type="button" onClick={()=>go(href)} className="flex min-h-16 items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-left hover:border-blue-400 hover:bg-blue-50 dark:border-[#3c4d64] dark:bg-[#202c3d] dark:hover:bg-[#293d55]"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-[#334965] dark:text-blue-200"><Icon className="h-5 w-5"/></span><span className="flex-1"><strong className="block text-sm text-slate-900 dark:text-white">{label}</strong><span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-300">{detail}</span></span><ArrowUpRight className="h-4 w-4 text-blue-700 dark:text-blue-300"/></button>)}
+     </div>
+   </section>
+   <section className="admin-payments overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-[#3c4d64] dark:bg-[#202c3d]" aria-label="Recent Stripe payments">
+     <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 px-5 py-4 dark:border-[#3c4d64]">
+       <div><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Recent Stripe payments</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Latest transactions · {s.recentPayments.length} records loaded</p></div>
+       <div className="flex flex-wrap items-center gap-2"><label className="sr-only" htmlFor="admin-payment-search">Search payments by customer</label><input id="admin-payment-search" value={paymentQuery} onChange={e=>setPaymentQuery(e.target.value)} placeholder="Search customer" className="min-h-9 w-40 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 placeholder:text-slate-500 dark:border-[#52677f] dark:bg-[#192638] dark:text-white dark:placeholder:text-slate-300"/><label className="sr-only" htmlFor="admin-payment-status">Filter payments by status</label><select id="admin-payment-status" value={paymentStatus} onChange={e=>setPaymentStatus(e.target.value)} className="min-h-9 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-[#52677f] dark:bg-[#192638] dark:text-white"><option value="all">All statuses</option><option value="paid">Paid</option><option value="other">Other statuses</option></select></div>
+     </div>
+     <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm"><thead><tr className="bg-slate-50 text-left text-[11px] font-bold uppercase tracking-wide text-slate-600 dark:bg-[#27364a] dark:text-slate-200"><th className="px-4 py-2">Customer</th><th className="px-4 py-2">Amount</th><th className="px-4 py-2">Status</th><th className="px-4 py-2">Date</th></tr></thead><tbody>{(()=>{const matching=s.recentPayments.filter(p=>(paymentStatus==="all"||(paymentStatus==="paid"?p.status==="paid":p.status!=="paid"))&&p.email.toLowerCase().includes(paymentQuery.trim().toLowerCase()));const visible=showAllPayments?matching:matching.slice(0,5);return visible.length?visible.map(p=><tr key={p.id} className="border-t border-slate-100 text-slate-800 dark:border-[#34465a] dark:text-slate-100"><td className="max-w-[300px] truncate px-4 py-2.5" title={p.email}>{p.email}</td><td className="whitespace-nowrap px-4 py-2.5 font-bold tabular-nums">{p.currency} {p.amount.toFixed(2)}</td><td className="px-4 py-2.5"><span className={`inline-flex rounded-md px-2 py-1 text-xs font-bold capitalize ${p.status==="paid"?"bg-emerald-100 text-emerald-900 dark:bg-emerald-800/60 dark:text-emerald-100":"bg-amber-100 text-amber-900 dark:bg-amber-700/50 dark:text-amber-100"}`}>{p.status}</span></td><td className="whitespace-nowrap px-4 py-2.5 text-xs">{new Date(p.date).toLocaleDateString("en-GB")}</td></tr>):<tr><td colSpan={4} className="px-4 py-6 text-center font-medium text-slate-600 dark:text-slate-200">No matching payments</td></tr>})()}</tbody></table></div>
+     {s.recentPayments.filter(p=>(paymentStatus==="all"||(paymentStatus==="paid"?p.status==="paid":p.status!=="paid"))&&p.email.toLowerCase().includes(paymentQuery.trim().toLowerCase())).length>5&&<div className="flex justify-end border-t border-slate-200 px-4 py-3 dark:border-[#34465a]"><button type="button" onClick={()=>setShowAllPayments(x=>!x)} className="text-xs font-bold text-blue-700 hover:underline dark:text-blue-200">{showAllPayments?"Show fewer payments":"Show all matching payments"}</button></div>}
+   </section>
   </>}
  </div></AdminLayout>
 }
