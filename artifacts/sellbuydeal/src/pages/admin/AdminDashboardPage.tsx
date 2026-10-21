@@ -58,7 +58,7 @@ export function AdminDashboardPage(){
        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <div className="mb-4 flex items-start justify-between gap-3">
          <div><h2 className="text-base font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Current marketplace activity</p></div>
-         <Activity aria-hidden="true" className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/>
+         <Activity aria-hidden="true" className="h-6 w-6 shrink-0 text-blue-600 dark:text-blue-300"/>
        </div>
        <dl className="admin-overview-stats grid grid-cols-2" aria-label="Marketplace statistics">
          {[
@@ -78,12 +78,12 @@ export function AdminDashboardPage(){
            <div><h3 className="font-extrabold text-slate-900 dark:text-white">Quick actions</h3><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Common administration tasks</p></div>
            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">6 shortcuts</span>
          </div>
-         <div className="grid gap-0 sm:grid-cols-2">
-           {[[ "Manage orders","/admin/orders",ShoppingBag],["Listings","/admin/listings",Package],["Users","/admin/users",Users],["Feature toggles","/admin/feature-toggles",Settings],["Email templates","/admin/emails",Mail],["System status","/admin/system-status",Activity]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>go(href)} className="flex min-h-12 items-center gap-3 border-b border-slate-200 px-5 py-3 text-left text-sm font-bold text-slate-800 hover:bg-blue-50 dark:border-[#34435b] dark:text-white dark:hover:bg-[#223b59]"><Icon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/><span className="flex-1">{label}</span><ArrowUpRight className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300"/></button>)}
+         <div className="grid gap-2 p-3 sm:grid-cols-2">
+           {[[ "Manage orders","/admin/orders",ShoppingBag],["Listings","/admin/listings",Package],["Users","/admin/users",Users],["Feature toggles","/admin/feature-toggles",Settings],["Email templates","/admin/emails",Mail],["System status","/admin/system-status",Activity]].map(([label,href,Icon]:any)=><button key={href} type="button" onClick={()=>go(href)} className="flex min-h-[66px] items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-800 transition-colors hover:border-blue-300 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 dark:border-[#34435b] dark:bg-[#1b2d47] dark:text-white dark:hover:bg-[#243d5d]"><Icon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-300"/><span className="flex-1">{label}</span><ArrowUpRight className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-300"/></button>)}
          </div>
-         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 bg-slate-50 px-5 py-4 dark:border-[#34435b] dark:bg-[#1a2d47]">
-           <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-[#284669] dark:text-blue-200"><Sparkles className="h-5 w-5"/></span><div><h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Design Center</h3><p className="text-xs font-medium text-slate-600 dark:text-slate-200">Themes, typography and layouts</p></div></div>
-           <button type="button" onClick={()=>go("/admin/design-system")} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Open Design Center <ArrowUpRight className="h-4 w-4"/></button>
+         <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 px-5 py-5 dark:border-[#34435b]">
+           <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-blue-700 dark:border-[#34435b] dark:bg-[#1b2d47] dark:text-blue-200"><Sparkles className="h-5 w-5"/></span><div><h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Design Center</h3><p className="text-xs font-medium text-slate-600 dark:text-slate-200">Themes, typography and layouts</p></div></div>
+           <button type="button" onClick={()=>go("/admin/design-system")} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 dark:border-[#47617d] dark:bg-[#213750] dark:text-blue-100">Manage design <ArrowUpRight className="h-4 w-4"/></button>
          </div>
        </div>
      </div>
