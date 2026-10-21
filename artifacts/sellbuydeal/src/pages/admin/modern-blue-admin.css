@@ -83,3 +83,33 @@
 .bazunk-admin main :is(h1){font-size:clamp(24px,var(--bz-admin-heading-size,30px),40px);font-weight:800}
 .bazunk-admin main :is(h2){font-weight:750}
 @media(prefers-reduced-motion:reduce){.bazunk-admin main button{transition:none!important;transform:none!important}}
+
+
+/* Universal management controls. This layer intentionally follows legacy admin-theme.css
+   to prevent legacy high-specificity colour rules from hiding the actual controls. */
+.bazunk-admin main :is(input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],input[type="date"],input[type="datetime-local"],input[type="url"],input[type="tel"],select,textarea,[role="combobox"]){
+  background:#fff;color:#17243e;border:1px solid #aabbd1;
+  border-radius:min(var(--bz-admin-radius,12px),12px);
+  opacity:1;min-height:40px;color-scheme:light;
+}
+.dark .bazunk-admin main :is(input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],input[type="date"],input[type="datetime-local"],input[type="url"],input[type="tel"],select,textarea,[role="combobox"]){
+  background:#182b49;color:#f8fafc;border-color:#7188a8;
+  color-scheme:dark;
+}
+.bazunk-admin main :is(select option,select optgroup){background:#fff;color:#17243e}
+.dark .bazunk-admin main :is(select option,select optgroup){background:#182b49;color:#fff}
+.bazunk-admin main :is(input,textarea)::placeholder{color:#52647c;opacity:1}
+.dark .bazunk-admin main :is(input,textarea)::placeholder{color:#d5dfec;opacity:1}
+.bazunk-admin main :is(input[type="checkbox"],input[type="radio"]){accent-color:#1769ff;opacity:1}
+.bazunk-admin main :is(button,a,[role="button"]).bg-blue-600,
+.bazunk-admin main :is(button,a,[role="button"]).bg-blue-700{background:#1769ff;color:#fff}
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-blue-600,
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-blue-700{background:#1769ff;color:#fff}
+.bazunk-admin main :is(button,a,[role="button"]):focus-visible,
+.bazunk-admin main :is(input,select,textarea,[role="combobox"]):focus-visible{outline:3px solid #1769ff;outline-offset:2px}
+.dark .bazunk-admin main :is(button,a,[role="button"]):focus-visible,
+.dark .bazunk-admin main :is(input,select,textarea,[role="combobox"]):focus-visible{outline-color:#93c5fd}
+.bazunk-admin main :is(button,a,[role="button"]).text-white:not(:disabled){opacity:1}
+.bazunk-admin main :is(button,a,[role="button"]):disabled{opacity:.6;cursor:not-allowed}
+.bazunk-admin main :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500):not(button):not(a):not([role="button"]){color:#52647c}
+.dark .bazunk-admin main :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500):not(button):not(a):not([role="button"]){color:#cbd5e1}
