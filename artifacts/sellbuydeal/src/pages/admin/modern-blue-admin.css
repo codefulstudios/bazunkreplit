@@ -129,3 +129,23 @@
  .bazunk-admin .admin-sidebar-brand{min-height:100px}
  .bazunk-admin .admin-sidebar-nav{padding-bottom:20px}
 }
+
+
+/* Dashboard KPI cards: Modern Blue approved mockup proportions */
+.bazunk-admin .admin-kpi-grid{align-items:stretch}
+.bazunk-admin .admin-kpi-grid .admin-kpi{
+  height:156px;min-height:156px;padding:20px;border-radius:14px;
+  background:#fff;border:1px solid #dce5f1;
+  box-shadow:0 3px 14px rgb(18 48 89 / 5%);
+}
+.bazunk-admin .admin-kpi-grid .admin-kpi-icon{border-radius:12px;box-shadow:none;background:#eaf2ff;color:#1769ff}
+.bazunk-admin .admin-kpi-grid .admin-kpi-label{font-weight:650;letter-spacing:0}
+.bazunk-admin .admin-kpi-grid .admin-kpi-value{font-size:clamp(24px,2.1vw,31px);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bazunk-admin .admin-kpi-grid .admin-kpi-sub{color:#52647c}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi{background:#111f35;border-color:#2e425e;box-shadow:none}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi-icon{background:#1d3a5f;color:#9ac4ff}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi-sub{color:#cbd5e1}
+@media(max-width:639px){
+ .bazunk-admin .admin-kpi-grid .admin-kpi{height:146px;min-height:146px;padding:16px}
+ .bazunk-admin .admin-kpi-grid .admin-kpi-value{font-size:26px}
+}
