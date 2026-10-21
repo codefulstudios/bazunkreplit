@@ -326,7 +326,8 @@
 
 
 /* Production screenshot corrections: sidebar group labels and neutral action buttons. */
-.bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#f3f7ff!important;opacity:1!important;}
+.bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#334155!important;opacity:1!important;}
+.dark .bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#f3f7ff!important;}
 .bazunk-admin aside button[aria-controls^="admin-nav-"] :is(span,svg) {color:inherit!important;opacity:1!important;}
 .dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
 .dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\]:hover {background:#47668f!important;}
