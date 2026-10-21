@@ -4,9 +4,10 @@ import {DesignTargetGuide} from "./DesignTargetGuide";
 import {DESIGN_SECTIONS,SECTION_DEFAULTS,isValidSection,readSection,sectionContrast,sectionKey,type DesignSection,type SectionAppearance} from "@/design-system/sectionAppearance";
 const titles:Record<DesignSection,string>={home_hero:"Homepage hero",home_categories:"Category tiles and icons",home_spotlight:"Spotlight listings / empty state",home_promos:"Homepage promotional cards"};
 const fields:Record<keyof SectionAppearance,string>={background:"Section / card background",text:"Text colour",accent:"Icon / action background",accentText:"Icon / action text"};
-export function DesignSectionsEditor(){
+export function DesignSectionsEditor({selectedSection}:{selectedSection?:DesignSection}={}){
  const {authFetch}=useAdmin();
- const [section,setSection]=useState<DesignSection>("home_spotlight");
+ const [section,setSection]=useState<DesignSection>(selectedSection||"home_spotlight");
+ useEffect(()=>{if(selectedSection)setSection(selectedSection)},[selectedSection]);
  const [mode,setMode]=useState<"light"|"dark">("dark");
  const [saved,setSaved]=useState<Record<string,string>>({});
  const [draft,setDraft]=useState<SectionAppearance>(SECTION_DEFAULTS.home_spotlight);
