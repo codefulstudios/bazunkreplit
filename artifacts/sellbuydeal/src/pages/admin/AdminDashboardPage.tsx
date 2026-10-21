@@ -25,10 +25,10 @@ export function AdminDashboardPage(){
  ] as const:[];
  return <AdminLayout><div className="admin-dashboard space-y-6">{loading&&!s&&<MarketplaceLoader area="admin" label="Loading admin dashboard…" />}
   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0"><h1 className="text-[26px] font-extrabold tracking-tight text-[#0f172a] dark:text-white sm:text-[30px]">Dashboard</h1><p className="mt-1 text-sm text-[#52638a] dark:text-slate-300">Here's what's happening with your marketplace today.</p></div><div className="flex flex-wrap items-center gap-3 sm:justify-end"><div className="flex flex-col gap-2"><span className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-[#27385d] shadow-sm dark:border-white/10 dark:bg-[#182846] dark:text-white"><CalendarDays className="h-4 w-4"/>{new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date())}</span><span className="inline-flex items-center justify-end gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-500"/>Admin dashboard connected</span></div><button onClick={load} disabled={loading} className="flex items-center gap-2 rounded-xl bg-[#1769ff] px-4 py-2.5 text-sm font-bold text-white dark:bg-blue-600"><RefreshCw className={`h-4 w-4 ${loading?"animate-spin":""}`}/>Refresh</button></div></div>
-  <AdminActionRequired />
   {loading&&!s?<div className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">{Array.from({length:12}).map((_,i)=><div key={i} className="h-[156px] bg-white dark:bg-[#111f35] rounded-xl animate-pulse"/>)}</div>:s&&<>
-   <section aria-label="Marketplace key performance indicators" className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-5">
-    {cards.map(([label,value,sub,Icon],i)=><div key={label} className={`admin-kpi admin-kpi-${i} relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]`}>
+   <div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Marketplace performance</h2><p className="text-sm text-slate-600 dark:text-slate-300">Your most important marketplace metrics at a glance</p></div><span className="hidden rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200 sm:inline-flex">Live overview</span></div>
+   <section aria-label="Marketplace key performance indicators" className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+    {cards.slice(0,6).map(([label,value,sub,Icon],i)=><div key={label} className={`admin-kpi admin-kpi-${i} relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]`}>
       <div className="flex min-w-0 items-start justify-between gap-3">
         <span className="admin-kpi-label min-w-0 text-[13px] font-semibold leading-5 text-slate-600 dark:text-slate-300">{label}</span>
         <span aria-hidden="true" className="admin-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300"><Icon className="h-5 w-5"/></span>
@@ -39,6 +39,7 @@ export function AdminDashboardPage(){
       </div>
     </div>)}
    </section>
+   <details className="admin-secondary-metrics rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#111f35]"><summary className="cursor-pointer text-sm font-bold text-slate-800 dark:text-white">More performance metrics · Credits, streams, disputes, returns and refunds</summary><div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-3">{cards.slice(6).map(([label,value,sub,Icon])=><div key={label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-[#192c46]"><div className="flex items-center justify-between"><span className="text-sm font-bold text-slate-700 dark:text-slate-200">{label}</span><Icon className="h-4 w-4 text-blue-600 dark:text-blue-300"/></div><strong className="mt-2 block text-2xl font-extrabold text-slate-950 dark:text-white">{value}</strong><p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{sub}</p></div>)}</div></details>
    <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
      <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]">
        <h2 className="mb-3 font-extrabold text-slate-900 dark:text-white">Marketplace overview</h2>
@@ -60,6 +61,7 @@ export function AdminDashboardPage(){
        <button type="button" onClick={()=>go("/admin/design-system")} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-700">Open Design Center <ArrowUpRight className="h-4 w-4"/></button>
      </div>
    </div>
+   <AdminActionRequired />
    <section aria-label="Marketplace trends" className="admin-charts grid min-w-0 gap-5 xl:grid-cols-2">
     <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
