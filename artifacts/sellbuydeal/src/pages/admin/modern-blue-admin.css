@@ -299,3 +299,11 @@
  .bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{padding:18px}
  .bazunk-admin .admin-dashboard-proportions .admin-chart-card{padding:16px}
 }
+
+/* Compact actionable queue replaces legacy tall cards without four separate surfaces. */
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"]{background:#fff!important;border:1px solid #e1e7ef!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"]{background:#15243b!important;border-color:#34435b!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] .grid>div{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button{background:transparent!important;box-shadow:none!important;padding:0}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#1459df!important}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#bfdbfe!important}
