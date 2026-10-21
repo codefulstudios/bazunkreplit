@@ -1,5 +1,6 @@
 import "./admin-theme.css";
 import "./modern-blue-admin.css";
+import {ADMIN_COMPONENT_KEY,DEFAULT_COMPONENT_STYLE,validateAdminComponentStyle} from "./AdminComponentEditor";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 // AdminLayout remounts on route changes; retain the sidebar position across pages.
@@ -59,7 +60,9 @@ const NAV_GROUPS = [
 let savedAdminExpandedGroups: Record<string,boolean> = {overview:true,accounts:true,marketplace:true,commerce:true,growth:false,support:false,system:false};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { logout, isAdmin } = useAdmin();
+  const { logout, isAdmin, authFetch } = useAdmin();
+  const [componentStyle,setComponentStyle]=useState(DEFAULT_COMPONENT_STYLE);
+  useEffect(()=>{let active=true;const refresh=()=>authFetch("/api/admin/settings").then(r=>r.ok?r.json():Promise.reject()).then(data=>{if(active){try{setComponentStyle(validateAdminComponentStyle(JSON.parse(data[ADMIN_COMPONENT_KEY]||"{}")))}catch{setComponentStyle(DEFAULT_COMPONENT_STYLE)}}}).catch(()=>{});void refresh();window.addEventListener("bazunk-settings-updated",refresh);return()=>{active=false;window.removeEventListener("bazunk-settings-updated",refresh)}},[authFetch]);
   const [location, setLocation] = useLocation();
   useEffect(()=>{window.dispatchEvent(new Event("bazunk-design-route-change"));},[location]);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -88,7 +91,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
 
   return (
-    <div className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
+    <div style={{"--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
         <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
@@ -96,7 +99,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {menuOpen && <button type="button" aria-label="Close admin menu" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
 
       {/* Sidebar — always visible */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white dark:bg-[#0a1830] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[238px] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white dark:bg-[#0a1830] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--bz-admin-sidebar-width)] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo */}
         <div className="px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
           <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-white lg:hidden"><X className="h-5 w-5" /></button>
@@ -157,7 +160,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-20 hidden h-[68px] items-center justify-between gap-6 border-b border-slate-200 bg-white px-6 shadow-sm dark:border-white/10 dark:bg-[#101b34] lg:flex">
+        <header className="admin-topbar sticky top-0 z-20 hidden h-[68px] items-center justify-between gap-6 border-b border-slate-200 bg-white px-6 shadow-sm dark:border-white/10 dark:bg-[#101b34] lg:flex">
           <AdminGlobalSearch />
           <div className="flex shrink-0 items-center gap-4">
             <button type="button" onClick={()=>setTheme(isDark?"light":"dark")} aria-label={isDark?"Switch to light mode":"Switch to dark mode"} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-2 text-sm dark:bg-white/10"><Sun className={`h-4 w-4 ${isDark?"text-slate-500":"text-amber-500"}`}/><Moon className={`h-4 w-4 ${isDark?"text-indigo-300":"text-slate-400"}`}/></button>
