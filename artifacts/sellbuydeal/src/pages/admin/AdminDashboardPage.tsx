@@ -39,13 +39,13 @@ export function AdminDashboardPage(){
    <div className="flex items-center justify-between gap-3"><div><h2 className="text-lg font-extrabold text-slate-900 dark:text-white">Marketplace performance</h2><p className="text-sm text-slate-600 dark:text-slate-300">Your most important marketplace metrics at a glance</p></div><span className="hidden rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-200 sm:inline-flex">Live overview</span></div>
    <section aria-label="Marketplace key performance indicators" className="admin-kpi-grid grid grid-cols-1 min-[480px]:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
     {cards.slice(0,6).map(([label,value,sub,Icon],i)=><div key={label} className={`admin-kpi admin-kpi-${i} relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-[#263854] dark:bg-[#111f35]`}>
-      <div className="flex min-w-0 items-start justify-between gap-3">
-        <span className="admin-kpi-label min-w-0 text-[13px] font-semibold leading-5 text-slate-600 dark:text-slate-300">{label}</span>
-        <span aria-hidden="true" className="admin-kpi-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300"><Icon className="h-5 w-5"/></span>
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <span className="admin-kpi-label min-w-0 pt-1 text-sm font-bold leading-5 text-slate-700 dark:text-slate-200">{label}</span>
+        <span aria-hidden="true" className="admin-kpi-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-200"><Icon className="h-6 w-6" strokeWidth={1.85}/></span>
       </div>
       <div className="min-w-0">
-        <div className="admin-kpi-value font-extrabold tracking-tight tabular-nums text-slate-950 dark:text-white" title={value}>{value}</div>
-        <p className="admin-kpi-sub mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-600 dark:text-slate-300">{sub}</p>
+        <div className="admin-kpi-value font-black tracking-tight tabular-nums text-slate-950 dark:text-white" title={value}>{value}</div>
+        <p className="admin-kpi-sub mt-2 line-clamp-2 text-[13px] font-medium leading-5 text-slate-600 dark:text-slate-300">{sub}</p>
       </div>
     </div>)}
    </section>
