@@ -328,3 +328,24 @@
   .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{min-height:152px!important;height:152px!important;padding:17px!important}
   .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{font-size:29px!important}
 }
+
+/* Cohesive dashboard final pass: calm contrast, measured rhythm and reduced chrome. */
+.bazunk-admin .admin-dashboard-proportions{--bz-chart-grid:#dbe4ed;--bz-chart-tick:#526279;--bz-chart-tooltip:#fff;--bz-chart-tooltip-text:#172238;--bz-chart-hover:#eef3f9}
+.bazunk-admin .admin-dashboard-proportions>header{margin-bottom:2px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts{gap:18px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card{min-height:340px;padding:22px!important;box-shadow:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-chart-plot{height:240px!important}
+.bazunk-admin .admin-dashboard-proportions .admin-system-links button{box-shadow:none!important;background-image:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-payments{box-shadow:none!important;background-image:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-payments tbody tr:hover{background:#f6f8fb}
+.dark .bazunk-admin .admin-dashboard-proportions{
+ --matte-card:#202c3d;--matte-border:#3c4d64;--matte-soft:#26354a;
+ --bz-chart-grid:#3e526a;--bz-chart-tick:#d0dbea;--bz-chart-tooltip:#202c3d;--bz-chart-tooltip-text:#f5f7fa;--bz-chart-hover:#34475c;
+}
+.dark .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi,
+.dark .bazunk-admin .admin-dashboard-proportions .admin-dashboard-management .grid>div,
+.dark .bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card,
+.dark .bazunk-admin .admin-dashboard-proportions [data-testid="admin-action-compact-panel"],
+.dark .bazunk-admin .admin-dashboard-proportions .admin-payments{background:#202c3d!important;border-color:#3c4d64!important}
+.dark .bazunk-admin .admin-dashboard-proportions .admin-payments tbody tr:hover{background:#29394e}
+@media(max-width:639px){.bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card{min-height:325px;padding:16px!important}.bazunk-admin .admin-dashboard-proportions .admin-chart-plot{height:232px!important}}
