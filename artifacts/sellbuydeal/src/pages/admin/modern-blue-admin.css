@@ -1,0 +1,14 @@
+/* Modern Blue admin foundation, scoped to the admin shell.
+   Keep light/dark surfaces consistent without overriding storefront styles. */
+.bazunk-admin{--admin-blue:#1769ff;--admin-blue-hover:#0b55df;--admin-ink:#0f172a;--admin-line:#e2e8f0;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.bazunk-admin .admin-dashboard{max-width:1680px;margin-inline:auto}
+.bazunk-admin .admin-dashboard .admin-kpi{background:#fff;color:var(--admin-ink);border:1px solid var(--admin-line);box-shadow:0 2px 10px rgb(15 23 42 / 4%)}
+.bazunk-admin .admin-dashboard .admin-kpi-icon{background:#eaf2ff;color:#1769ff}
+.bazunk-admin .admin-dashboard .admin-kpi:focus-within{outline:2px solid #1769ff;outline-offset:2px}
+.bazunk-admin button:focus-visible,.bazunk-admin a:focus-visible,.bazunk-admin select:focus-visible,.bazunk-admin input:focus-visible{outline:2px solid #1769ff;outline-offset:2px}
+.bazunk-admin .admin-nav-link[aria-current="page"]{background:#1769ff;color:#fff}
+.bazunk-admin .admin-charts>div,.bazunk-admin .admin-payments{box-shadow:0 2px 12px rgb(15 23 42 / 4%)}
+.dark .bazunk-admin{--admin-ink:#f8fafc;--admin-line:#263854}
+.dark .bazunk-admin .admin-dashboard .admin-kpi{background:#111f35;color:#f8fafc;border-color:#263854;box-shadow:none}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-icon{background:#1e3b61;color:#93c5fd}
+@media(max-width:639px){.bazunk-admin .admin-dashboard{padding-bottom:20px}.bazunk-admin .admin-dashboard .admin-kpi{min-height:116px}}
