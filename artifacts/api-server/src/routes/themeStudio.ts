@@ -89,9 +89,9 @@ function validTheme(raw:unknown):raw is ThemeFields{
    (key!=="icon_overrides"||validIconOverrides(str));
  });
 }
-function normalizeTheme(raw:unknown):ThemeFields|null{
+function normalizeTheme(raw:unknown,base:ThemeFields=defaults):ThemeFields|null{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))return null;
- const candidate={...defaults,...raw};
+ const candidate={...base,...raw};
  return validTheme(candidate)?candidate:null;
 }
 async function mediaTable(){
@@ -168,7 +168,7 @@ adminThemeStudioRouter.get("/admin/theme-studio",async(_req,res)=>{
   const draft=parse(rows.theme_studio_draft_v1);
   const history=parse(rows.theme_studio_history_v1);
   res.setHeader("Cache-Control","no-store");
-  res.json({published:current,draft:normalizeTheme(draft)||current,
+  res.json({published:current,draft:normalizeTheme(draft,current)||current,
    history:Array.isArray(history)?history.slice(0,12).map((x:any)=>x&&({...x,fields:normalizeTheme(x.fields)})).filter((x:any)=>x&&x.fields):[]});
  }catch(err){logger.error({err},"Theme Studio read failed");res.status(503).json({error:"Theme Studio is unavailable"})}
 });
