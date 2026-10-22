@@ -70,3 +70,14 @@ test("Theme Studio keeps drafts, media and version history in one validated publ
  assert.match(hero,/featureSettings.hero_image_url/);
  assert.match(context,/settings.site_favicon_url/);
 });
+
+test("Published Design Center activation reaches shoppers without exposing drafts",()=>{
+ const handler=routes.slice(routes.indexOf('router.get("/settings/public"'),routes.indexOf('// ── All routes below require admin token'));
+ assert.match(handler,/row\.key !== "theme_studio_enabled"/);
+ assert.match(handler,/isPrivateSetting\(row\.key\)/);
+ assert.match(handler,/startsWith\("theme_studio_"\)/);
+ assert.match(api,/\["theme_studio_enabled","true"\]/);
+ assert.match(context,/fetch\(`\$\{API_BASE\}\/api\/settings\/public`/);
+ assert.match(hero,/theme_studio_enabled==="true"/);
+ assert.match(footer,/theme_studio_enabled==="true"/);
+});
