@@ -80,7 +80,7 @@ function validTheme(raw:unknown):raw is ThemeFields{
  return Object.keys(v).sort().join(",")===keys.slice().sort().join(",")&&keys.every(key=>{
   const str=v[key];
   return typeof str==="string"&&str.length<=lengths[key]&&
-   !/[<>\u0000-\u001f]/.test(str)&&
+   !/[<>\u0000-\u0009\u000b-\u001f]/.test(str)&&
    (!mediaKeys.includes(key as any)||str===""||assetPath.test(str))&&
    (!socialKeys.includes(key as any)||str==="#"||str===""||/^https:\/\/[^\s]+$/i.test(str))&&
    (key!=="announcement_enabled"||str==="true"||str==="false")&&
