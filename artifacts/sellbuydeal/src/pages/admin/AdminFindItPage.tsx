@@ -41,7 +41,7 @@ export function AdminFindItPage(){
  }
  const rows=(report?.requests||[]).filter(r=>filter==="all"||r.status===filter);
  return <AdminLayout><div className="mx-auto max-w-7xl space-y-5 pb-12">
-  <header className="rounded-3xl bg-gradient-to-r from-indigo-800 to-orange-700 p-6 text-white">
+  <header className="bz-contrast-hero rounded-3xl bg-gradient-to-r from-indigo-800 to-orange-700 p-6 text-white">
    <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-widest text-white">Reverse marketplace operations</p>
     <h1 className="mt-2 flex items-center gap-2 text-3xl font-black"><Handshake className="h-8 w-8"/>Bazunk Find It</h1>
     <p className="mt-2 text-sm font-bold text-white">Live buyer requests, seller participation and moderation. Payments remain within verified Stripe checkout.</p></div>
