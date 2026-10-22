@@ -102,7 +102,38 @@ async function mediaTable(){
  )`);
 }
 async function settings(){
- const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN (\n  'site_name',\n  'site_tagline',\n  'site_logo_url',\n  'site_favicon_url',\n  'hero_image_url',\n  'seo_og_image_url',\n  'home_sections_layout',\n  'hero_title',\n  'hero_subtitle',\n  'hero_cta_primary',\n  'hero_cta_secondary',\n  'footer_about',\n  'footer_copyright',\n  'footer_facebook',\n  'footer_twitter',\n  'footer_instagram',\n  'footer_youtube',\n  'announcement_enabled',\n  'announcement_text',\n  'announcement_color',\n  'categories_title',\n  'categories_subtitle',\n  'features_title',\n  'features_subtitle',\n  'header_search_placeholder',\n  'seo_title',\n  'seo_description',\n  'icon_overrides',\n  'theme_studio_draft_v1',\n  'theme_studio_history_v1'\n  )`);
+ const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN (
+  'site_name',
+  'site_tagline',
+  'site_logo_url',
+  'site_favicon_url',
+  'hero_image_url',
+  'seo_og_image_url',
+  'home_sections_layout',
+  'hero_title',
+  'hero_subtitle',
+  'hero_cta_primary',
+  'hero_cta_secondary',
+  'footer_about',
+  'footer_copyright',
+  'footer_facebook',
+  'footer_twitter',
+  'footer_instagram',
+  'footer_youtube',
+  'announcement_enabled',
+  'announcement_text',
+  'announcement_color',
+  'categories_title',
+  'categories_subtitle',
+  'features_title',
+  'features_subtitle',
+  'header_search_placeholder',
+  'seo_title',
+  'seo_description',
+  'icon_overrides',
+  'theme_studio_draft_v1',
+  'theme_studio_history_v1'
+  )`);
  return Object.fromEntries((rows.rows as any[]).map(x=>[String(x.key),String(x.value??"")]));
 }
 async function put(key:string,value:string){
