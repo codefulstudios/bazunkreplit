@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { CreditCard, RefreshCw, Percent, Info } from "lucide-react";
+import { CreditCard, RefreshCw, Percent, Info, AlertTriangle, Coins } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
 import { AdminFinanceReconciliation } from "@/components/admin/AdminFinanceReconciliation";
+import { AdminManagementHeader, AdminStatusTabs, AdminMetric } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Payment {
@@ -82,42 +83,19 @@ export function AdminPaymentsPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-black text-gray-900">Payments & Buyer Protection</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {payments.length} recent credit purchases · {loading ? "Checking Stripe…" : error ? "Revenue unavailable" : revenue}
-          </p>
-        </div>
-        <button onClick={load} disabled={loading}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-40">
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
-
+      <AdminManagementHeader title="Payments" description="Review Stripe credit purchases, Buyer Protection, seller fees and reconciliation." meta={<span>Verified live Stripe gross across displayed purchases: {loading?"Checking Stripe…":error?"Unavailable":revenue}</span>} actions={<button type="button" onClick={load} disabled={loading} className="wp-action wp-action-primary"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh payments</button>}/>
+      <section className="wp-management-metrics grid gap-3 sm:grid-cols-3" aria-label="Payment summary">
+        <AdminMetric label="Credit purchases loaded" value={payments.length} icon={CreditCard}/>
+        <AdminMetric label="Verified live amounts" value={payments.filter(p=>p.livemode===true&&p.amount_minor!==null).length} icon={Coins} tone="green"/>
+        <AdminMetric label="Unverified amounts" value={unavailable} icon={AlertTriangle} tone="orange"/>
+      </section>
       <p className="text-xs text-gray-500 mb-4">Gross live Stripe payments for the purchases shown (up to 50), before refunds and processing fees. Bonus credits and test payments are excluded from totals.</p>
       {error && <div role="alert" className="text-sm text-red-600 mb-4">{error} <button onClick={load} className="underline font-bold">Retry</button></div>}
       {unavailable > 0 && <p role="status" className="text-sm text-amber-700 mb-4">Totals are incomplete: Stripe amounts could not be verified for {unavailable} purchase(s). Refresh to retry.</p>}
       <div className="mb-6"><AdminFinanceReconciliation /></div>
-      {/* Sub-tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5 max-w-xs">
-        {([
-          { id: "credits" as PayTab, label: "Credit Purchases", icon: CreditCard },
-          { id: "fees" as PayTab, label: "Buyer Protection & Fees", icon: Percent },
-        ]).map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setPayTab(id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
-              payTab === id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}>
-            <Icon className="w-3.5 h-3.5" />
-            {label}
-          </button>
-        ))}
-      </div>
-
+      <AdminStatusTabs label="Payment settings and transactions" value={payTab} onChange={x=>setPayTab(x as PayTab)} options={[{value:"credits",label:"Credit purchases"},{value:"fees",label:"Buyer protection & fees"}]}/>
       {payTab === "credits" && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
