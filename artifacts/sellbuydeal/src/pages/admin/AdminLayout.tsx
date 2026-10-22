@@ -18,6 +18,7 @@ import { useAdmin } from "@/context/AdminContext";
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Design Center", href: "/admin/design-system", icon: Palette },
+  { label: "Theme Studio", href: "/admin/theme-studio", icon: Palette },
   { label: "Content", href: "/admin/content", icon: FileText },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Users",        href: "/admin/users",        icon: Users           },
