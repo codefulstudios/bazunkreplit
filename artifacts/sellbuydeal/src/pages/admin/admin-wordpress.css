@@ -107,3 +107,15 @@
 @media(max-width:1350px){.bazunk-admin-wordpress .wp-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1100px){.bazunk-admin-wordpress .wp-dashboard-layout{grid-template-columns:1fr}}
 @media(max-width:640px){.bazunk-admin-wordpress .wp-dashboard-kpis,.bazunk-admin-wordpress .wp-shortcut-grid{grid-template-columns:1fr}.bazunk-admin-wordpress .wp-panel-heading{flex-wrap:wrap}.bazunk-admin-wordpress .wp-metric{min-height:94px;padding:16px}}
+
+/* Explicitly outrank the legacy selected-link light-on-blue rule. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active[aria-current="page"]{
+ color:#1255c6!important;background:#eaf2ff!important;box-shadow:inset 3px 0 0 #1769ff!important
+}
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active svg{color:#1263e6!important}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active[aria-current="page"]{
+ color:#f8fafc!important;background:#213e6b!important
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active svg{color:#9ec5ff!important}
