@@ -9,7 +9,7 @@ test("WordPress sidebar keeps all routes and twelve top-level sections",()=>{
  assert.equal(new Set(routes).size,routes.length);
  assert.ok(routes.length>=30);
  assert.match(layout,/Dashboard<\/span>/);
- assert.match(layout,/DESIGN_SECTIONS/);
+ assert.doesNotMatch(layout,/const DESIGN_SECTIONS/);
  for(const name of ["listings","orders","customers","sellers","payments","marketing","content","design","importers","analytics","settings"])assert.match(layout,new RegExp('id:"'+name+'"'));
 });
 test("sidebar has keyboard-accessible groups, collapse, and mobile drawer",()=>{
