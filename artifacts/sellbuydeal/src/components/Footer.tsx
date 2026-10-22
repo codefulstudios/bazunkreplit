@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
@@ -27,7 +26,7 @@ export function Footer() {
             <Link href="/" className="inline-block mb-3">
               <img
                 src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url:"/bazunk-logo-header.png"}
-                alt={s.site_name||"Bazunk"}
+                alt={s.site_name||"Bazunk"} data-theme-edit="site_logo_url"
                 className="h-9 md:h-10 w-auto object-contain"
               />
             </Link>
@@ -92,10 +91,10 @@ export function Footer() {
             <h4 className="text-white font-black mb-3 text-sm uppercase tracking-wide">Follow Us</h4>
             <div className="flex flex-wrap gap-2">
               {[
-                {url:s.footer_facebook, Icon:Facebook, label:"Facebook"},
-                {url:s.footer_instagram, Icon:Instagram, label:"Instagram"},
-                {url:s.footer_youtube, Icon:Youtube, label:"YouTube"},
-                {url:s.footer_twitter, Icon:Twitter, label:"Twitter"}
+                {url:s.footer_facebook, Icon:FacebookIcon, label:"Facebook"},
+                {url:s.footer_instagram, Icon:InstagramIcon, label:"Instagram"},
+                {url:s.footer_youtube, Icon:YoutubeIcon, label:"YouTube"},
+                {url:s.footer_twitter, Icon:TwitterIcon, label:"Twitter"}
               ].filter(item => item.url && item.url !== "#").map(({url,Icon,label}) => (
                 <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-9 h-9 flex items-center justify-center rounded-full bg-[#203b63] text-white hover:bg-blue-600 transition-colors"><Icon className="w-4 h-4" /></a>
               ))}
