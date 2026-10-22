@@ -2,6 +2,7 @@ import "./admin-theme.css";
 import "./modern-blue-admin.css";
 import "./admin-wordpress.css";
 import "./admin-wordpress-phase2.css";
+import "./admin-wordpress-finish.css";
 import {ADMIN_COMPONENT_KEY,DEFAULT_COMPONENT_STYLE,validateAdminComponentStyle} from "./AdminComponentEditor";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
