@@ -125,6 +125,7 @@ import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
 import { AdminThemeStudioPage } from "@/pages/admin/AdminThemeStudioPage";
 import { AdminWordPressDashboard } from "@/pages/admin/AdminWordPressDashboard";
 import { AdminContentPage, AdminAnalyticsPage } from "@/pages/admin/AdminManagementHubs";
+import { AdminMarketingOverviewPage, AdminImporterOverviewPage, AdminSettingsOverviewPage } from "@/pages/admin/AdminOperationsHubs";
 import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminSellerCompliancePage } from "@/pages/admin/AdminSellerCompliancePage";
@@ -425,6 +426,9 @@ function Router() {
       <Route path="/admin" component={AdminLoginPage} />
       <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/dashboard" component={AdminWordPressDashboard} />
+      <Route path="/admin/marketing" component={AdminMarketingOverviewPage} />
+      <Route path="/admin/importer-overview" component={AdminImporterOverviewPage} />
+      <Route path="/admin/settings-overview" component={AdminSettingsOverviewPage} />
       <Route path="/admin/content" component={AdminContentPage} />
       <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
