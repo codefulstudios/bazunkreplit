@@ -119,3 +119,11 @@
  color:#f8fafc!important;background:#213e6b!important
 }
 .dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active svg{color:#9ec5ff!important}
+
+/* Nested selected pages should match the lighter WordPress navigation treatment. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#eaf2ff!important;color:#1255c6!important;box-shadow:none!important
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#213e6b!important;color:#f8fafc!important
+}
