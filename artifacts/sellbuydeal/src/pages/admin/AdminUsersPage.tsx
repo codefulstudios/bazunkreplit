@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   Search, Ban, CheckCircle, RefreshCw, Trophy,
@@ -91,6 +91,7 @@ export function AdminUsersPage() {
 
   // Milestones
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
+  const [expandedManageEmail,setExpandedManageEmail]=useState<string|null>(null);
   const [milestoneData, setMilestoneData] = useState<Record<string, { progress: number; completed: boolean }>>({});
   const [milestoneInputs, setMilestoneInputs] = useState<Record<string, string>>({});
   const [milestoneLoading, setMilestoneLoading] = useState(false);
@@ -314,181 +315,99 @@ export function AdminUsersPage() {
       </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
-      <div className="admin-users-table wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto bz-table-scroll">
-          <table className="w-full text-sm bz-data-table">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-3 py-2"><input type="checkbox" aria-label="Select all visible users" className="h-4 w-4"
-                  checked={visibleUserIds.length>0&&visibleUserIds.every(id=>selectedUserIds.includes(id))}
-                  onChange={e=>setSelectedUserIds(e.target.checked?visibleUserIds:[])}/></th>
-                {["User", "Selling", "Buying", "Messages", "Reputation / Risk", "Credits", "Last activity", "Adjust Credits", "Actions"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr><td colSpan={10} className="text-center text-gray-400 py-10">Loading…</td></tr>
-              )}
-              {!loading && users.length === 0 && (
-                <tr><td colSpan={10} className="text-center text-gray-400 py-10">
-                  No users found{!search && " — press “Sync users” above to import your existing accounts."}
-                </td></tr>
-              )}
-              {visibleUsers.map((u) => (
-                <>
-                  <tr key={u.email} className={`border-t border-gray-50 ${u.banned ? "bg-red-50/40" : "hover:bg-gray-50/40"}`}>
-                    <td className="px-3 py-2"><input type="checkbox" className="h-4 w-4" aria-label={`Select user ${u.email}`}
+      <div className="admin-users-compact wp-management-table-card rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-600 dark:bg-[#152239]">
+        <table className="admin-users-compact-table w-full table-fixed text-sm" aria-label="Customers management">
+          <colgroup><col style={{width:"4%"}}/><col style={{width:"24%"}}/><col style={{width:"29%"}}/><col style={{width:"21%"}}/><col style={{width:"22%"}}/></colgroup>
+          <thead><tr>
+            <th scope="col" className="px-2 py-3"><input type="checkbox" aria-label="Select all visible users"
+              checked={visibleUserIds.length>0&&visibleUserIds.every(id=>selectedUserIds.includes(id))}
+              onChange={e=>setSelectedUserIds(e.target.checked?visibleUserIds:[])}/></th>
+            {["Customer","Marketplace activity","Account & credits","Actions"].map(label=><th scope="col" key={label} className="px-3 py-3 text-left text-xs font-bold">{label}</th>)}
+          </tr></thead>
+          <tbody>
+            {loading&&<tr><td colSpan={5} className="px-4 py-10 text-center">Loading customers…</td></tr>}
+            {!loading&&visibleUsers.length===0&&<tr><td colSpan={5} className="px-4 py-10 text-center">No matching customers. Adjust your search or filters.</td></tr>}
+            {!loading&&visibleUsers.map(u=>(
+              <Fragment key={u.email}>
+                <tr className={"admin-users-compact-row "+(u.banned?"admin-users-suspended":"")}>
+                  <td className="admin-users-select px-2 py-3 text-center align-middle">
+                    <input type="checkbox" aria-label={`Select user ${u.email}`}
                       checked={selectedUserIds.includes(u.email)}
-                      onChange={e=>setSelectedUserIds(p=>e.target.checked?[...new Set([...p,u.email])]:p.filter(id=>id!==u.email))}/></td>
-                    {/* User */}
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-800 text-xs">{u.email}</p>
-                      <p className="text-gray-400 text-[11px] mt-0.5">{u.name ?? <span className="italic">No name</span>}</p>
-                      {u.banned && <span className="inline-block mt-1 text-[9px] font-bold text-red-500 bg-red-100 px-1.5 py-0.5 rounded-full">SUSPENDED</span>}
-                    </td>
-
-                    {/* Marketplace activity */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{Number(u.listings_total ?? 0)} listed · {Number(u.sold ?? 0)} sold</p>
-                      <p className="text-[10px] text-gray-400">{u.listings_active} active · £{Number(u.sales_value || 0).toFixed(2)} sales</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{Number(u.bought ?? 0)} bought</p>
-                      <p className="text-[10px] text-gray-400">£{Number(u.spent || 0).toFixed(2)} spent</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">↑ {Number(u.messages_sent ?? 0)} · ↓ {Number(u.messages_received ?? 0)}</p>
-                      <p className="text-[10px] text-gray-400">{Number(u.conversations ?? 0)} conversations</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{u.reviews_received ? `${Number(u.rating || 0).toFixed(1)}★ · ${u.reviews_received} reviews` : "No reviews"}</p>
-                      <p className={`text-[10px] ${u.disputes_open ? "text-red-600 font-bold" : "text-gray-400"}`}>{u.disputes_open} open · {u.disputes_total} disputes</p>
-                      {u.live_streams > 0 && <p className="text-[10px] text-violet-500">{u.live_streams} live streams · {u.live_viewers} viewers recorded</p>}
-                    </td>
-
-                    {/* Credits */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-[#4A5CE8] text-xs">{Math.round(parseFloat(u.credits) * 100).toLocaleString()} cr</p>
-                      <p className="text-[10px] text-gray-400">£{parseFloat(u.credits).toFixed(2)}</p>
-                    </td>
-
-                    {/* Last activity */}
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                      <p>{u.last_activity ? new Date(u.last_activity).toLocaleDateString() : "—"}</p>
-                      <p className="text-[10px]">Joined {new Date(u.created_at).toLocaleDateString()}</p>
-                      <p className="text-[10px] capitalize">{(u.seller_type ?? "private").replace("_", " ")}</p>
-                    </td>
-
-                    {/* Adjust Credits */}
-                    <td className="px-4 py-3">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number" min="0" step="1"
-                            value={creditInput[u.email] ?? ""}
-                            onChange={(e) => setCreditInput(prev => ({ ...prev, [u.email]: e.target.value }))}
-                            placeholder="Credits"
-                            className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]"
-                          />
-                          <button
-                            onClick={() => saveCredits(u.email, 1)}
-                            disabled={creditSaving === u.email}
-                            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-40 whitespace-nowrap"
-                          >
-                            {creditSaving === u.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                            Add
+                      onChange={e=>setSelectedUserIds(previous=>e.target.checked?[...new Set([...previous,u.email])]:previous.filter(id=>id!==u.email))}/>
+                  </td>
+                  <td className="admin-users-customer px-3 py-3 align-middle">
+                    <strong className="admin-users-main block text-xs font-bold">{u.name||"Unnamed customer"}</strong>
+                    <span className="admin-users-muted block break-all text-xs" title={u.email}>{u.email}</span>
+                    <span className="admin-users-muted block text-[11px] capitalize">{(u.seller_type??"private").replace("_"," ")} seller</span>
+                  </td>
+                  <td className="admin-users-activity px-3 py-3 align-middle">
+                    <span className="admin-users-main block text-xs font-semibold">{Number(u.listings_total||0)} listed · {Number(u.sold||0)} sold · {Number(u.bought||0)} bought</span>
+                    <span className="admin-users-muted block text-[11px]">{u.listings_active} active · £{Number(u.sales_value||0).toFixed(2)} sales · £{Number(u.spent||0).toFixed(2)} spent</span>
+                    <span className="admin-users-muted block text-[11px]">{Number(u.conversations||0)} conversations · {u.reviews_received?Number(u.rating||0).toFixed(1)+"★ / "+u.reviews_received+" reviews":"No reviews"} · {u.disputes_open} open disputes</span>
+                  </td>
+                  <td className="admin-users-account px-3 py-3 align-middle">
+                    <span className="admin-users-main block text-xs font-bold">{Math.round(Number(u.credits||0)*100).toLocaleString()} credits</span>
+                    <span className="admin-users-muted block text-[11px]">£{Number(u.credits||0).toFixed(2)} · Last active {u.last_activity?new Date(u.last_activity).toLocaleDateString("en-GB"):"—"}</span>
+                    <span className={"admin-users-status mt-1 inline-flex text-[11px] font-bold "+(u.banned?"admin-users-status-suspended":"admin-users-status-active")}>{u.banned?"Suspended":"Active"}</span>
+                  </td>
+                  <td className="admin-users-actions px-3 py-3 align-middle">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button type="button" onClick={()=>{setEditUser(u);setEditName(u.name??"");setEditSellerType(u.seller_type??"private");setEditReviewReason("");setEditError("")}}
+                        className="admin-users-action" title="Edit customer"><Pencil size={14}/> Edit</button>
+                      <button type="button" onClick={()=>{setMsgUser(u);setMsgSubject("");setMsgBody("");setMsgResult(null)}}
+                        className="admin-users-action" title="Message customer"><Mail size={14}/> Message</button>
+                      <button type="button" className="admin-users-action admin-users-action-primary" aria-expanded={expandedManageEmail===u.email}
+                        aria-controls={`customer-manage-${u.id}`}
+                        onClick={()=>setExpandedManageEmail(current=>current===u.email?null:u.email)}>
+                        Manage {expandedManageEmail===u.email?<ChevronUp size={14}/>:<ChevronDown size={14}/>}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {expandedManageEmail===u.email&&<tr className="admin-users-details-row">
+                  <td colSpan={5} id={`customer-manage-${u.id}`} className="px-4 py-4">
+                    <div className="admin-users-details-grid">
+                      <section className="min-w-0">
+                        <h3 className="mb-2 text-sm font-bold">Adjust credits · {u.email}</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="sr-only" htmlFor={`customer-credit-${u.id}`}>Credit amount</label>
+                          <input id={`customer-credit-${u.id}`} type="number" min="0" step="1" placeholder="Credits"
+                            value={creditInput[u.email]??""}
+                            onChange={e=>setCreditInput(previous=>({...previous,[u.email]:e.target.value}))}
+                            className="admin-users-detail-input w-28"/>
+                          <button type="button" disabled={creditSaving===u.email} className="admin-users-action admin-users-positive"
+                            onClick={()=>saveCredits(u.email,1)}>{creditSaving===u.email?<Loader2 size={14} className="animate-spin"/>:<Save size={14}/>} Add</button>
+                          <button type="button" disabled={creditSaving===u.email} className="admin-users-action"
+                            onClick={()=>saveCredits(u.email,-1)}>Deduct</button>
+                        </div>
+                        <label className="sr-only" htmlFor={`customer-reason-${u.id}`}>Credit adjustment reason</label>
+                        <input id={`customer-reason-${u.id}`} type="text" placeholder="Reason (optional)" value={creditReason[u.email]??""}
+                          onChange={e=>setCreditReason(previous=>({...previous,[u.email]:e.target.value}))}
+                          className="admin-users-detail-input mt-2 w-full max-w-md"/>
+                        {creditResult[u.email]&&<p role="status" className={"mt-1 text-xs font-bold "+(creditResult[u.email].ok?"text-emerald-700 dark:text-emerald-300":"text-red-700 dark:text-red-300")}>{creditResult[u.email].msg}</p>}
+                      </section>
+                      <section>
+                        <h3 className="mb-2 text-sm font-bold">Customer management</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button type="button" onClick={()=>toggleBan(u.email,u.banned)} disabled={banSaving===u.email} className="admin-users-action">
+                            {banSaving===u.email?<Loader2 size={14} className="animate-spin"/>:u.banned?<CheckCircle size={14}/>:<Ban size={14}/>}
+                            {u.banned?"Unsuspend":"Suspend"}
                           </button>
-                          <button
-                            onClick={() => saveCredits(u.email, -1)}
-                            disabled={creditSaving === u.email}
-                            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-40 whitespace-nowrap"
-                          >
-                            {creditSaving === u.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                            Deduct
+                          <button type="button" className="admin-users-action" aria-expanded={expandedEmail===u.email} onClick={()=>toggleMilestones(u.email)}>
+                            <Trophy size={14}/> Milestones
+                          </button>
+                          <button type="button" onClick={()=>setDeleteUser(u)} className="admin-users-action admin-users-danger">
+                            <Trash2 size={14}/> Delete
                           </button>
                         </div>
-                        <input
-                          type="text"
-                          value={creditReason[u.email] ?? ""}
-                          onChange={(e) => setCreditReason(prev => ({ ...prev, [u.email]: e.target.value }))}
-                          placeholder="Reason (optional)"
-                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#4A5CE8] text-gray-600"
-                        />
-                        {creditResult[u.email] && (
-                          <p className={`text-[10px] font-semibold ${creditResult[u.email].ok ? "text-emerald-600" : "text-red-500"}`}>
-                            {creditResult[u.email].msg}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {/* Edit */}
-                        <button
-                          onClick={() => { setEditUser(u); setEditName(u.name ?? ""); setEditSellerType(u.seller_type ?? "private"); setEditReviewReason(""); setEditError(""); }}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                          title="Edit user"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </button>
-
-                        {/* Message */}
-                        <button
-                          onClick={() => { setMsgUser(u); setMsgSubject(""); setMsgBody(""); setMsgResult(null); }}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
-                          title="Send a message to their inbox"
-                        >
-                          <Mail className="w-3.5 h-3.5" /> Message
-                        </button>
-
-                        {/* Suspend / unsuspend */}
-                        <button
-                          onClick={() => toggleBan(u.email, u.banned)}
-                          disabled={banSaving === u.email}
-                          className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${
-                            u.banned
-                              ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                              : "bg-red-50 text-red-600 hover:bg-red-100"
-                          }`}
-                        >
-                          {banSaving === u.email
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : u.banned ? <CheckCircle className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-                          {u.banned ? "Unsuspend" : "Suspend"}
-                        </button>
-
-                        {/* Milestones */}
-                        <button
-                          onClick={() => toggleMilestones(u.email)}
-                          className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
-                            expandedEmail === u.email
-                              ? "bg-[#4A5CE8] text-white"
-                              : "bg-[#4A5CE8]/10 text-[#4A5CE8] hover:bg-[#4A5CE8]/20"
-                          }`}
-                        >
-                          <Trophy className="w-3.5 h-3.5" />
-                          {expandedEmail === u.email ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => setDeleteUser(u)}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                          title="Delete user"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-
+                        <p className="admin-users-muted mt-2 text-xs">Joined {new Date(u.created_at).toLocaleDateString("en-GB")} · {u.messages_sent} sent / {u.messages_received} received messages · {u.disputes_total} disputes · {u.live_streams} live streams</p>
+                      </section>
+                    </div>
+                  </td>
+                </tr>}
                   {expandedEmail === u.email && (
                     <tr key={`${u.email}-milestones`} className="bg-[#4A5CE8]/3 border-t border-[#4A5CE8]/10">
-                      <td colSpan={10} className="px-4 py-5">
+                      <td colSpan={5} className="px-4 py-5">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-[#4A5CE8]" />
@@ -566,12 +485,10 @@ export function AdminUsersPage() {
                         )}
                       </td>
                     </tr>
-                  )}
-                </>
+                  )}                </Fragment>
               ))}
             </tbody>
           </table>
-        </div>
       </div>
 
       {/* ── Add User Modal ── */}

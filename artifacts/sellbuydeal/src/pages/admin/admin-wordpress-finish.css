@@ -100,3 +100,127 @@
 @media(prefers-reduced-motion:reduce){
  .bazunk-admin-wordpress .wp-operations-tool{transition:none}
 }
+
+
+/* Fix legacy active-label overrides: selected admin links must use dark text
+   on pale light-mode backgrounds, including nested spans and SVG icons. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"],
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#eaf2ff!important;color:#1255c6!important;opacity:1!important;
+ text-shadow:none!important;
+}
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"] :is(span,svg),
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active :is(span,svg),
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"] :is(span,svg){
+ color:#1255c6!important;opacity:1!important;fill:none;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"],
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#213e6b!important;color:#f8fafc!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"] :is(span,svg),
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active :is(span,svg),
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"] :is(span,svg){
+ color:#f8fafc!important;opacity:1!important;
+}
+/* Two-line Customers overview: keep all data and controls in the page width. */
+.bazunk-admin-wordpress .admin-users-compact{width:100%;min-width:0;overflow:hidden}
+.bazunk-admin-wordpress .admin-users-compact-table{
+ width:100%;min-width:0;max-width:100%;table-layout:fixed;
+ border-collapse:collapse;color:var(--wp-ink);
+}
+.bazunk-admin-wordpress .admin-users-compact-table th{
+ padding:12px 9px;background:var(--wp-soft);
+ color:var(--wp-ink)!important;font-size:11px;letter-spacing:.02em;
+ border-bottom:1px solid var(--wp-border);
+}
+.bazunk-admin-wordpress .admin-users-compact-table td{
+ padding:10px 9px!important;overflow-wrap:anywhere;
+ border-bottom:1px solid var(--wp-border);
+ color:var(--wp-ink);vertical-align:middle;
+}
+.bazunk-admin-wordpress .admin-users-compact-row:hover{background:var(--wp-soft)}
+.bazunk-admin-wordpress .admin-users-suspended{background:#fff5f5}
+.dark .bazunk-admin-wordpress .admin-users-suspended{background:#3b2330}
+.bazunk-admin-wordpress .admin-users-main{
+ color:var(--wp-ink)!important;line-height:1.5;
+}
+.bazunk-admin-wordpress .admin-users-muted{
+ color:#52647a!important;line-height:1.45;
+}
+.dark .bazunk-admin-wordpress .admin-users-muted{
+ color:#cbd8eb!important;
+}
+.bazunk-admin-wordpress .admin-users-status-active{color:#047857}
+.bazunk-admin-wordpress .admin-users-status-suspended{color:#b91c1c}
+.dark .bazunk-admin-wordpress .admin-users-status-active{color:#86efac}
+.dark .bazunk-admin-wordpress .admin-users-status-suspended{color:#fda4af}
+.bazunk-admin-wordpress .admin-users-actions{overflow-wrap:normal!important}
+.bazunk-admin-wordpress .admin-users-action{
+ display:inline-flex;align-items:center;justify-content:center;gap:4px;
+ border:1px solid var(--wp-border);border-radius:7px;background:var(--wp-surface);
+ color:var(--wp-ink)!important;padding:7px 9px;min-height:33px;
+ font-size:11px;font-weight:700;white-space:nowrap;
+}
+.bazunk-admin-wordpress .admin-users-action:hover{
+ background:var(--wp-soft);border-color:#93b4e9
+}
+.bazunk-admin-wordpress .admin-users-action-primary{
+ border-color:#1769ff;background:#1769ff;color:#fff!important;
+}
+.bazunk-admin-wordpress .admin-users-action-primary:hover{
+ background:#155ccc;color:#fff!important;
+}
+.bazunk-admin-wordpress .admin-users-positive{color:#047857!important}
+.bazunk-admin-wordpress .admin-users-danger{color:#b91c1c!important}
+.bazunk-admin-wordpress .admin-users-details-row{background:var(--wp-soft)}
+.bazunk-admin-wordpress .admin-users-details-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;
+}
+.bazunk-admin-wordpress .admin-users-detail-input{
+ min-height:36px!important;border:1px solid #94a3b8!important;
+ border-radius:7px!important;padding:7px 10px;
+ background:var(--wp-surface)!important;color:var(--wp-ink)!important;
+ font-size:12px;
+}
+@media(max-width:1130px){
+ .bazunk-admin-wordpress .admin-users-compact-table :is(td,th){
+  padding:8px 6px!important;
+ }
+ .bazunk-admin-wordpress .admin-users-action{padding:6px 7px}
+}
+@media(max-width:800px){
+ .bazunk-admin-wordpress .admin-users-compact-table colgroup,
+ .bazunk-admin-wordpress .admin-users-compact-table thead{display:none}
+ .bazunk-admin-wordpress .admin-users-compact-table,
+ .bazunk-admin-wordpress .admin-users-compact-table tbody{display:block}
+ .bazunk-admin-wordpress .admin-users-compact-row{
+  display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;
+  border-bottom:2px solid var(--wp-border);padding:10px 6px;
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row td{
+  display:block;border:0!important;padding:5px 8px!important;
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-select{
+  grid-row:1/5;grid-column:1
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-customer,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-activity,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-account,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-actions{
+  grid-column:2
+ }
+ .bazunk-admin-wordpress .admin-users-details-row{
+  display:block;border-bottom:2px solid var(--wp-border)
+ }
+ .bazunk-admin-wordpress .admin-users-details-row td{display:block;width:100%}
+ .bazunk-admin-wordpress .admin-users-details-grid{grid-template-columns:1fr;gap:16px}
+ .bazunk-admin-wordpress .admin-users-compact-table tr:not(.admin-users-compact-row):not(.admin-users-details-row){
+  display:block
+ }
+ .bazunk-admin-wordpress .admin-users-compact-table tr:not(.admin-users-compact-row):not(.admin-users-details-row) td{
+  display:block;width:100%!important
+ }
+}
