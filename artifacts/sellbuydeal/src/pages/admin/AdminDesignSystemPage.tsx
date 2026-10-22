@@ -81,7 +81,7 @@ function DesignAssetsEditor() {
  </div>;
 }
 export function AdminDesignSystemPage() {
-  const [workspaceSection,setWorkspaceSection]=useState<"assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history">("assistant");
+  const [workspaceSection,setWorkspaceSection]=useState<"assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history">(()=>{const saved=window.sessionStorage.getItem("bazunk-design-section");return (["assistant","themes","preview","colours","components","content","history"].includes(saved||"")?saved:"assistant") as "assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history"});
   useEffect(()=>{const change=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(["assistant","themes","preview","colours","components","content","history"].includes(id)){setWorkspaceSection(id as "assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history");}};window.addEventListener("bazunk-design-section",change);return()=>window.removeEventListener("bazunk-design-section",change)},[]);
   const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
