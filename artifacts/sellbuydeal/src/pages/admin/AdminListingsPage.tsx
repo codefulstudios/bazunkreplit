@@ -5,6 +5,7 @@ import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package } from 
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
+import { AdminManagementHeader, AdminStatusTabs } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Listing {
@@ -106,19 +107,15 @@ export function AdminListingsPage() {
   return (
     <AdminLayout>
       {loading && <MarketplaceLoader area="admin" label="Loading admin listings…" />}
-      <div className="admin-listings-page">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-black text-gray-900">Listings</h1>
-          <p className="text-sm text-gray-400 mt-0.5">All marketplace listings · {total.toLocaleString()} total</p>
-        </div>
-        <button onClick={load} disabled={loading}
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-40">
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
-      </div>
-
+      <div className="admin-listings-page wp-management-page wp-listings-page">
+      <AdminManagementHeader title="Listings" description="Manage marketplace listings, product visibility and source imports." meta={<span>{total.toLocaleString("en-GB")} listings match the current filters</span>} actions={<>
+        <button type="button" onClick={()=>setLocation("/admin/imports")} className="wp-action wp-action-secondary"><ShoppingCart className="h-4 w-4"/>Import products</button>
+        <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-primary"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh listings</button>
+      </>}/>
+      <AdminStatusTabs label="Listing status" value={statusFilter} onChange={x=>setStatusFilter(x)} options={[
+        {value:"all",label:"All listings"},{value:"active",label:"Live"},{value:"pending",label:"Pending"},
+        {value:"draft",label:"Drafts"},{value:"suspended",label:"Suspended"},{value:"inactive",label:"Inactive"},{value:"sold",label:"Sold"}
+      ]}/>
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-48">
@@ -142,19 +139,13 @@ export function AdminListingsPage() {
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
-        <label className="text-sm font-bold text-slate-800 dark:text-white">Listing status
-          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}
-            className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-950 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-            {["all","active","pending","draft","suspended","inactive","sold"].map(x=><option key={x} value={x}>{x==="all"?"All statuses":x}</option>)}
-          </select>
-        </label>
         <span className="text-xs font-semibold text-slate-600 dark:text-slate-200">Select or export current page (up to {LIMIT} listings)</span>
       </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedIds}
         rows={listings.map(l=>({id:String(l.id),cells:[l.public_id??"",l.title,l.status,l.category,l.price,l.currency,l.seller_email]}))}
         columns={["Public ID","Title","Status","Category","Price","Currency","Seller"]} filename="bazunk-admin-selected-listings" onClear={()=>setSelectedIds([])}/></div>
       {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
