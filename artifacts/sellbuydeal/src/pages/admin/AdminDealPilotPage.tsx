@@ -41,7 +41,7 @@ export function AdminDealPilotPage(){
   finally{setSaving(false);}
  };
  return <AdminLayout><div className="mx-auto max-w-7xl space-y-5 pb-12">
-  <div className="rounded-3xl bg-gradient-to-r from-violet-800 to-orange-600 p-6 text-white dark:from-amber-50 dark:via-orange-100 dark:to-orange-300 dark:text-slate-950">
+  <div className="bz-contrast-hero rounded-3xl bg-gradient-to-r from-violet-800 to-orange-600 p-6 text-white dark:from-amber-50 dark:via-orange-100 dark:to-orange-300 dark:text-slate-950">
    <div className="flex flex-wrap items-start justify-between gap-4">
     <div><span className="text-xs font-black uppercase tracking-widest text-white dark:text-orange-950">Buyer discovery & automation</span>
      <h1 className="mt-2 flex items-center gap-3 text-3xl font-black"><Bot className="h-9 w-9"/>DealPilot Control Centre</h1>
