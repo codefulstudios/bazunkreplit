@@ -232,7 +232,7 @@ export function CategoriesPage() {
         </aside>
         <div className="min-w-0 space-y-6">
 
-          <section className="relative overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-r from-indigo-800 via-violet-700 to-fuchsia-600 px-5 py-7 text-white shadow-sm dark:border-violet-700 sm:px-8 sm:py-9">
+          <section className="bz-contrast-hero relative overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-r from-indigo-800 via-violet-700 to-fuchsia-600 px-5 py-7 text-white shadow-sm dark:border-violet-700 sm:px-8 sm:py-9">
             <div className="relative z-10 max-w-2xl">
               <p className="text-xs font-bold uppercase tracking-widest text-white/90">Home / Categories{selected ? " / "+selected.name : ""}</p>
               <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{featuredCategory ? featuredCategory.name : "Discover the marketplace"}</h1>
