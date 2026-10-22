@@ -7,6 +7,7 @@ test("Dashboard is first and Design Center has inline sidebar subnavigation",()=
  const x=read(base+"pages/admin/AdminLayout.tsx");
  assert.ok(x.indexOf('label: "Dashboard"') < x.indexOf('label: "Design Center"'));
  assert.ok(x.indexOf('label: "Design Center"') < x.indexOf('label: "Users"'));
+ assert.match(x,/id:"design"/);
  assert.doesNotMatch(x,/pages:\["Dashboard","Design Center"\]/);
  assert.match(x,/DESIGN_SECTIONS/);
  assert.match(x,/bazunk-design-section/);

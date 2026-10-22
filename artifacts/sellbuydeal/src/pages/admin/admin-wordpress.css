@@ -1,0 +1,129 @@
+/* Bazunk WordPress-inspired admin v1. Scoped to admin only; no storefront changes. */
+.bazunk-admin-wordpress{
+ --wp-blue:#1769ff;--wp-border:#dfe6ee;--wp-ink:#17233d;--wp-muted:#64748b;
+ --wp-surface:#fff;--wp-canvas:#f5f7fb;--wp-soft:#f1f5f9;
+ background:var(--wp-canvas)!important;color:var(--wp-ink);
+}
+.dark .bazunk-admin-wordpress{
+ --wp-blue:#70a4ff;--wp-border:#34445d;--wp-ink:#f1f5fc;--wp-muted:#c4d2e5;
+ --wp-surface:#152239;--wp-canvas:#0b1427;--wp-soft:#1c2e47;
+}
+.bazunk-admin-wordpress aside{background:var(--wp-surface)!important;border-right:1px solid var(--wp-border)!important}
+.bazunk-admin-wordpress .wp-admin-brand{min-height:74px!important;padding-top:14px!important;padding-bottom:12px!important}
+.bazunk-admin-wordpress .wp-admin-brand>img{height:30px;width:auto}
+.bazunk-admin-wordpress .wp-admin-brand>div{display:none}
+.bazunk-admin-wordpress .wp-admin-topbar{background:var(--wp-surface)!important;box-shadow:none!important;border-color:var(--wp-border)!important;height:64px}
+.bazunk-admin-wordpress main{max-width:1800px;margin-inline:auto}
+.bazunk-admin-wordpress .admin-sidebar-search{padding-bottom:4px}
+.bazunk-admin-wordpress .wp-nav{display:flex;flex-direction:column;gap:3px;scrollbar-width:thin}
+.bazunk-admin-wordpress .wp-nav-item{position:relative;display:flex;align-items:center}
+.bazunk-admin-wordpress .wp-nav-link{
+ display:flex;align-items:center;gap:13px;min-height:43px;width:100%;min-width:0;
+ padding:10px 13px;border-radius:8px!important;text-align:left;font-size:14px!important;font-weight:600!important;
+ background:transparent!important;color:#243954!important;box-shadow:none!important;line-height:1.25;
+}
+.dark .bazunk-admin-wordpress .wp-nav-link{color:#e8f0fc!important}
+.bazunk-admin-wordpress .wp-nav-link .wp-nav-icon{flex-shrink:0;color:#50617d}
+.dark .bazunk-admin-wordpress .wp-nav-link .wp-nav-icon{color:#c4d2e5}
+.bazunk-admin-wordpress .wp-nav-link:hover:not([aria-current="page"]){background:#edf4ff!important;color:#1159d9!important}
+.dark .bazunk-admin-wordpress .wp-nav-link:hover:not([aria-current="page"]){background:#2a4263!important;color:#fff!important}
+.bazunk-admin-wordpress .wp-nav-link.wp-nav-active,
+.bazunk-admin-wordpress .wp-nav-link[aria-current="page"]{
+ background:#eaf2ff!important;color:#1263e6!important;box-shadow:inset 3px 0 0 #1769ff!important
+}
+.bazunk-admin-wordpress .wp-nav-link.wp-nav-active .wp-nav-icon,
+.bazunk-admin-wordpress .wp-nav-link[aria-current="page"] .wp-nav-icon{color:#1263e6!important}
+.dark .bazunk-admin-wordpress .wp-nav-link.wp-nav-active,
+.dark .bazunk-admin-wordpress .wp-nav-link[aria-current="page"]{background:#213e6b!important;color:#f8fafc!important}
+.dark .bazunk-admin-wordpress .wp-nav-link.wp-nav-active .wp-nav-icon{color:#9ec5ff!important}
+.bazunk-admin-wordpress .wp-nav-expand{position:absolute;right:5px;top:5px;bottom:5px;display:flex;align-items:center;justify-content:center;width:33px;min-height:0!important;border-radius:6px!important;background:transparent;color:#5a6880!important}
+.bazunk-admin-wordpress .wp-nav-expand:hover{background:#dbeafe!important}
+.dark .bazunk-admin-wordpress .wp-nav-expand{color:#dbe8f7!important}
+.bazunk-admin-wordpress .wp-nav-item:has(.wp-nav-expand)>.wp-nav-link{padding-right:38px}
+.bazunk-admin-wordpress .wp-nav-children{border-left:1px solid var(--wp-border);margin:3px 0 9px 23px;padding:3px 0 3px 10px;display:flex;flex-direction:column;gap:2px}
+.bazunk-admin-wordpress .wp-nav-child{display:block;width:100%;padding:9px 10px;border-radius:7px!important;background:transparent!important;color:#475569!important;text-align:left;font-size:12.5px!important;font-weight:600!important;line-height:1.3}
+.dark .bazunk-admin-wordpress .wp-nav-child{color:#dbe4f2!important}
+.bazunk-admin-wordpress .wp-nav-child:hover{background:#edf4ff!important;color:#1159d9!important}
+.bazunk-admin-wordpress .wp-nav-child[aria-current="page"]{background:#eaf2ff!important;color:#1255c1!important}
+.dark .bazunk-admin-wordpress .wp-nav-child:hover,
+.dark .bazunk-admin-wordpress .wp-nav-child[aria-current="page"]{background:#293f62!important;color:#fff!important}
+.bazunk-admin-wordpress .wp-nav-empty{color:var(--wp-muted);padding:12px;font-size:13px}
+.bazunk-admin-wordpress[data-sidebar-collapsed="true"] .wp-nav-link{justify-content:center;padding:12px 8px}
+.bazunk-admin-wordpress[data-sidebar-collapsed="true"] .wp-nav-link .admin-nav-page-label,
+.bazunk-admin-wordpress[data-sidebar-collapsed="true"] .wp-nav-expand{display:none}
+.bazunk-admin-wordpress .wp-page-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px}
+.bazunk-admin-wordpress .wp-page-header h1{font-size:clamp(26px,2.4vw,32px);font-weight:800;line-height:1.16;letter-spacing:-.035em;color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-page-header p:not(.wp-page-eyebrow){margin-top:7px;font-size:14px;color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-page-eyebrow{text-transform:uppercase;font-size:11px;letter-spacing:.09em;font-weight:700;color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-page-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.bazunk-admin-wordpress .wp-panel,.bazunk-admin-wordpress .wp-metric,.bazunk-admin-wordpress .wp-table-frame{
+ background:var(--wp-surface);border:1px solid var(--wp-border);border-radius:10px;box-shadow:0 1px 3px rgba(15,23,42,.035)
+}
+.bazunk-admin-wordpress .wp-panel{min-width:0;overflow:hidden}
+.bazunk-admin-wordpress .wp-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--wp-border)}
+.bazunk-admin-wordpress .wp-panel-heading h2{font-size:16px;font-weight:750;color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-panel-heading p{margin-top:3px;font-size:12px;color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-panel-action{flex-shrink:0}
+.bazunk-admin-wordpress .wp-panel-body{padding:16px 18px}
+.bazunk-admin-wordpress .wp-metric{display:flex;align-items:center;gap:15px;min-height:124px;padding:20px;text-align:left}
+.bazunk-admin-wordpress .wp-metric-action:hover{border-color:#93b9f9;background:#f9fbff}
+.bazunk-admin-wordpress .wp-metric-icon{flex-shrink:0;width:54px;height:54px;border-radius:50%;display:grid;place-items:center}
+.bazunk-admin-wordpress .wp-tone-blue{background:#e7f1ff;color:#1769ff}
+.bazunk-admin-wordpress .wp-tone-green{background:#e4f8ef;color:#139267}
+.bazunk-admin-wordpress .wp-tone-violet{background:#eeeaff;color:#7353dc}
+.bazunk-admin-wordpress .wp-tone-orange{background:#fff0e4;color:#e56d25}
+.bazunk-admin-wordpress .wp-metric-label{display:block;color:var(--wp-muted);font-size:12px;font-weight:600}
+.bazunk-admin-wordpress .wp-metric-value{display:block;color:var(--wp-ink);font-size:25px;letter-spacing:-.03em;line-height:1.3;font-weight:800;font-variant-numeric:tabular-nums}
+.bazunk-admin-wordpress .wp-metric-detail{display:block;color:var(--wp-muted);font-size:11px;margin-top:3px}
+.bazunk-admin-wordpress .wp-action{display:inline-flex;justify-content:center;align-items:center;gap:7px;min-height:38px;border:1px solid var(--wp-border);border-radius:7px;padding:8px 13px;font-size:13px;font-weight:700}
+.bazunk-admin-wordpress .wp-action-primary{background:#1769ff;color:#fff;border-color:#1769ff}
+.bazunk-admin-wordpress .wp-action-primary:hover{background:#1155ca}
+.bazunk-admin-wordpress .wp-action-secondary{background:var(--wp-surface);color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-action-secondary:hover{background:var(--wp-soft)}
+.bazunk-admin-wordpress .wp-action-quiet{border-color:transparent;background:transparent;color:#1666de}
+.bazunk-admin-wordpress .wp-action:focus-visible,.bazunk-admin-wordpress .wp-nav button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
+.bazunk-admin-wordpress .wp-table-frame{overflow:hidden}
+.bazunk-admin-wordpress .wp-table-scroll{overflow-x:auto}
+.bazunk-admin-wordpress .wp-table-frame table{width:100%;border-collapse:collapse;font-size:13px}
+.bazunk-admin-wordpress .wp-table-frame thead{background:var(--wp-soft);color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-table-frame th{text-align:left;font-size:12px;font-weight:700;padding:12px 14px;white-space:nowrap}
+.bazunk-admin-wordpress .wp-table-frame td{padding:13px 14px;border-top:1px solid var(--wp-border);color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-table-frame tbody tr:hover{background:var(--wp-soft)}
+.bazunk-admin-wordpress .wp-empty-state{text-align:center;padding:32px 18px;color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-empty-state p{color:var(--wp-muted);font-size:13px;margin-top:6px}
+.bazunk-admin-wordpress .wp-shortcut-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bazunk-admin-wordpress .wp-shortcut{border:1px solid var(--wp-border);background:var(--wp-surface);border-radius:8px;display:flex;align-items:center;gap:10px;text-align:left;padding:12px;min-width:0;color:var(--wp-ink)}
+.bazunk-admin-wordpress .wp-shortcut:hover{background:var(--wp-soft);border-color:#9dbdf3}
+.bazunk-admin-wordpress .wp-shortcut svg{flex-shrink:0;color:#1769ff}
+.bazunk-admin-wordpress .wp-shortcut strong{display:block;font-size:12px}
+.bazunk-admin-wordpress .wp-shortcut small{display:block;margin-top:3px;color:var(--wp-muted);font-size:11px}
+.bazunk-admin-wordpress .wp-dashboard-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr);gap:16px}
+.bazunk-admin-wordpress .wp-dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dark .bazunk-admin-wordpress .wp-metric,.dark .bazunk-admin-wordpress .wp-panel{box-shadow:none}
+.dark .bazunk-admin-wordpress .wp-tone-blue{background:#1b3c63;color:#c1dcff}
+.dark .bazunk-admin-wordpress .wp-tone-green{background:#164736;color:#a5f3cc}
+.dark .bazunk-admin-wordpress .wp-tone-violet{background:#3d315d;color:#ddd1ff}
+.dark .bazunk-admin-wordpress .wp-tone-orange{background:#57371f;color:#ffcca1}
+@media(max-width:1350px){.bazunk-admin-wordpress .wp-dashboard-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1100px){.bazunk-admin-wordpress .wp-dashboard-layout{grid-template-columns:1fr}}
+@media(max-width:640px){.bazunk-admin-wordpress .wp-dashboard-kpis,.bazunk-admin-wordpress .wp-shortcut-grid{grid-template-columns:1fr}.bazunk-admin-wordpress .wp-panel-heading{flex-wrap:wrap}.bazunk-admin-wordpress .wp-metric{min-height:94px;padding:16px}}
+
+/* Explicitly outrank the legacy selected-link light-on-blue rule. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active[aria-current="page"]{
+ color:#1255c6!important;background:#eaf2ff!important;box-shadow:inset 3px 0 0 #1769ff!important
+}
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active svg{color:#1263e6!important}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active[aria-current="page"]{
+ color:#f8fafc!important;background:#213e6b!important
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active svg{color:#9ec5ff!important}
+
+/* Nested selected pages should match the lighter WordPress navigation treatment. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#eaf2ff!important;color:#1255c6!important;box-shadow:none!important
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#213e6b!important;color:#f8fafc!important
+}

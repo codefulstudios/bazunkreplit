@@ -1,5 +1,6 @@
 import "./admin-theme.css";
 import "./modern-blue-admin.css";
+import "./admin-wordpress.css";
 import {ADMIN_COMPONENT_KEY,DEFAULT_COMPONENT_STYLE,validateAdminComponentStyle} from "./AdminComponentEditor";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -7,7 +8,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 let savedAdminNavScrollTop = 0;
 let savedSidebarCollapsed = false;
 import { useLocation } from "wouter";
-import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays } from "lucide-react";
+import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays, Store, BarChart3, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { AdminAlertsPopover } from "@/components/admin/AdminAlertsPopover";
@@ -15,7 +16,9 @@ import { useAdmin } from "@/context/AdminContext";
 
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
-  { label: "Design Center", href: "/admin/design-system", icon: ShieldCheck },
+  { label: "Design Center", href: "/admin/design-system", icon: Palette },
+  { label: "Content", href: "/admin/content", icon: FileText },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Users",        href: "/admin/users",        icon: Users           },
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "TrustProof", href: "/admin/trust-proof", icon: ShieldCheck },
@@ -49,20 +52,24 @@ const NAV = [
 ];
 
 const NAV_GROUPS = [
-
-  { id:"accounts", label:"Accounts & Trust", icon:Users, pages:["Users","Seller Compliance","TrustProof","Reviews"] },
-  { id:"marketplace", label:"Marketplace", icon:Package, pages:["Listings","Importer Control","Snap & Sell AI","DealPilot","Find It","Importers","Demo Creator","Classifieds","Auctions","Flash Sales"] },
-  { id:"commerce", label:"Orders & Payments", icon:ShoppingCart, pages:["Orders","Payments","Disputes","Returns"] },
-  { id:"growth", label:"Growth & Rewards", icon:Megaphone, pages:["Cashback","Rewards","Credits Economy","Referrals","Promotions"] },
-  { id:"support", label:"Support & Messaging", icon:LifeBuoy, pages:["Support","Chatwoot Settings","Email Templates"] },
-  { id:"system", label:"Platform & Settings", icon:Settings, pages:["Audit Log","System Status","Feature Toggles","Settings"] }
+ {id:"listings",label:"Listings",href:"/admin/listings",icon:Package,pages:["Listings","Classifieds","Auctions","Flash Sales","Snap & Sell AI","DealPilot","Find It","Demo Creator"]},
+ {id:"orders",label:"Orders",href:"/admin/orders",icon:ShoppingCart,pages:["Orders","Disputes","Returns"]},
+ {id:"customers",label:"Customers",href:"/admin/users",icon:Users,pages:["Users"]},
+ {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
+ {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
+ {id:"marketing",label:"Marketing",href:"/admin/promotions",icon:Megaphone,pages:["Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
+ {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
+ {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
+ {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Importer Control"]},
+ {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
+ {id:"settings",label:"Settings",href:"/admin/settings",icon:Settings,pages:["Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
 
 const DESIGN_SECTIONS = [
   ["assistant","AI Design Assistant"],["themes","Theme Gallery"],["preview","Live Preview"],
   ["colours","Colours"],["components","Admin Appearance"],["content","Pages & Branding"],["history","History & Restore"]
 ] as const;
-let savedAdminExpandedGroups: Record<string,boolean> = {overview:false,accounts:false,marketplace:false,commerce:false,growth:false,support:false,system:false};
+let savedAdminExpandedGroups: Record<string,boolean> = {};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { logout, isAdmin, authFetch } = useAdmin();
@@ -97,7 +104,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   if (!isAdmin) return <div className="p-6">Your admin session has ended. Returning to sign-in…</div>;
 
   return (
-    <div style={{fontFamily:componentStyle.font+", ui-sans-serif, system-ui, sans-serif","--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} data-sidebar-collapsed={sidebarCollapsed} className="bazunk-admin min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
+    <div style={{fontFamily:componentStyle.font+", ui-sans-serif, system-ui, sans-serif","--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} data-sidebar-collapsed={sidebarCollapsed} className="bazunk-admin bazunk-admin-wordpress min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
         <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
@@ -107,7 +114,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* Sidebar — always visible */}
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-white dark:bg-[#0a1830] shadow-2xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-[var(--bz-admin-sidebar-width)] lg:translate-x-0 lg:shadow-none ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
         {/* Logo */}
-        <div className="admin-sidebar-brand px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
+        <div className="admin-sidebar-brand wp-admin-brand px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
           <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-slate-800 dark:text-white lg:hidden"><X className="h-5 w-5" /></button>
           <img src="/bazunk-logo.png" alt="Bazunk" className="h-9 w-auto object-contain self-start rounded bg-white px-2 py-0.5" />
           <div className="flex items-center gap-1.5">
@@ -119,44 +126,34 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
         <div className="admin-sidebar-search px-3 pt-3"><label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/10 px-3 text-slate-700 dark:text-slate-200"><Search className="h-4 w-4"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find admin page..." aria-label="Find admin page" className="w-full bg-transparent py-2 text-sm font-semibold text-slate-900 dark:text-white outline-none placeholder:text-slate-500 dark:placeholder:text-slate-200"/></label></div>
         {/* Nav */}
-        <nav ref={navRef} onScroll={e => { savedAdminNavScrollTop = e.currentTarget.scrollTop; }} className="admin-sidebar-nav min-h-0 flex-1 overflow-y-auto py-4 px-3 space-y-2">
-          <button type="button" onClick={()=>{setMenuOpen(false);setLocation("/admin/dashboard")}} aria-current={location==="/admin/dashboard"?"page":undefined} className={"admin-nav-link mb-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-3 text-left text-sm font-bold "+(location==="/admin/dashboard"?"bg-[#1769ff] text-white":"text-slate-800 hover:bg-blue-50 dark:text-white dark:hover:bg-white/10")}><LayoutDashboard className="h-4 w-4"/>Dashboard</button>
-          <div className="mb-3 rounded-xl border border-slate-200 p-2 dark:border-slate-700">
-            <button type="button" onClick={()=>{setMenuOpen(false);setLocation("/admin/design-system")}} className={"admin-nav-link flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-bold "+(location.startsWith("/admin/design-system")?"bg-blue-600 text-white":"text-slate-800 dark:text-white")}><ShieldCheck className="h-4 w-4"/>Design Center</button>
-            {location.startsWith("/admin/design-system")&&<div className="mt-1 ml-2 space-y-1 border-l-2 border-blue-300 pl-2 dark:border-blue-700">{DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}))} className="admin-design-submenu-link block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-800 dark:text-slate-100 dark:hover:bg-[#2a4263]">{label}</button>)}</div>}
-          </div>
-          {NAV_GROUPS.map(group=>{
-            const pages=NAV.filter(n=>group.pages.some(label=>label===n.label) &&
-              (!search.trim()||n.label.toLowerCase().includes(search.trim().toLowerCase())||group.label.toLowerCase().includes(search.trim().toLowerCase())));
-            if(!pages.length)return null;
-            const Icon=group.icon;
-            const expanded=!!search.trim()||!!expandedGroups[group.id];
-            const activeCount=pages.some(n=>location===n.href||location.startsWith(n.href+"/"));
-            return <div key={group.id} className="admin-nav-group mb-2">
-              <button type="button" onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false);savedAdminExpandedGroups={...savedAdminExpandedGroups,[group.id]:true};setExpandedGroups({...savedAdminExpandedGroups});}else toggleGroup(group.id)}} title={sidebarCollapsed?group.label:undefined} aria-label={group.label} aria-expanded={expanded}
-                aria-controls={`admin-nav-${group.id}`}
-                className={`admin-nav-group-trigger flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-[11px] font-extrabold uppercase tracking-[.07em] transition-colors hover:bg-blue-50 dark:hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${activeCount?"text-blue-700 dark:text-blue-300":"text-slate-700 dark:text-white"}`}>
-                <Icon className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400"/>
-                <span className="admin-nav-group-label flex-1">{group.label}</span>
-                <span className="admin-nav-count rounded-lg bg-blue-100 dark:bg-white/10 px-1.5 text-xs font-bold text-blue-700 dark:text-white">{pages.length}</span>
-                <ChevronDown className={`admin-nav-chevron h-4 w-4 shrink-0 transition-transform ${expanded?"rotate-180":""}`}/>
-              </button>
-              {expanded&&<div id={`admin-nav-${group.id}`} className="admin-nav-pages mt-1 space-y-1 border-l-2 border-blue-100 dark:border-blue-500/30 pl-2 ml-4">
-                {pages.map(({label,href,icon:PageIcon})=>{
-                  const active=location===href||location.startsWith(href+"/");
-                  return <button type="button" key={href} aria-current={active?"page":undefined}
-                    onClick={()=>{setMenuOpen(false);setLocation(href);}}
-                    className={`admin-nav-link flex w-full min-h-[39px] items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400 ${active?"bg-[#1769ff] text-white":"text-slate-700 hover:bg-blue-50 hover:text-blue-900 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"}`}>
-                    <PageIcon className={`h-4 w-4 shrink-0 ${active?"text-white":"text-blue-500"}`}/><span className="admin-nav-page-label">{label}</span>
-                  </button>;
-                })}
-              </div>}
-            </div>;
-          })}
-          {search.trim()&&!NAV.some(n=>n.label.toLowerCase().includes(search.trim().toLowerCase())) &&
-            !NAV_GROUPS.some(g=>g.label.toLowerCase().includes(search.trim().toLowerCase())) &&
-            <p className="p-3 text-sm font-semibold text-slate-200">No matching admin pages.</p>}
-        </nav>
+        <nav ref={navRef} aria-label="Bazunk admin navigation" onScroll={e=>{savedAdminNavScrollTop=e.currentTarget.scrollTop}} className="admin-sidebar-nav wp-nav min-h-0 flex-1 overflow-y-auto px-3 py-3">
+ <button type="button" onClick={()=>{setMenuOpen(false);setLocation("/admin/dashboard")}} aria-current={location==="/admin/dashboard"?"page":undefined} className={"admin-nav-link wp-nav-link wp-nav-dashboard "+(location==="/admin/dashboard"?"wp-nav-active":"")}>
+  <LayoutDashboard className="wp-nav-icon h-5 w-5" aria-hidden="true"/><span className="admin-nav-page-label">Dashboard</span>
+ </button>
+ {NAV_GROUPS.map(group=>{
+   const pages=NAV.filter(n=>group.pages.some(label=>label===n.label));
+   const q=search.trim().toLowerCase();
+   if(q&&!group.label.toLowerCase().includes(q)&&!pages.some(n=>n.label.toLowerCase().includes(q)))return null;
+   const active=location===group.href||pages.some(n=>location===n.href||location.startsWith(n.href+"/"));
+   const expanded=!!q||!!expandedGroups[group.id];
+   const Icon=group.icon;const children=pages.filter(n=>n.href!==group.href);
+   return <div key={group.id} className="admin-nav-group wp-nav-group">
+    <div className="wp-nav-item">
+     <button type="button" onClick={()=>{setMenuOpen(false);setLocation(group.href)}} aria-current={active?"page":undefined} className={"admin-nav-link wp-nav-link "+(active?"wp-nav-active":"")}>
+      <Icon className="wp-nav-icon h-5 w-5" aria-hidden="true"/><span className="admin-nav-page-label">{group.label}</span>
+     </button>
+     {(children.length>0||group.id==="design")&&<button type="button" aria-label={"Toggle "+group.label+" submenu"} title={group.label+" submenu"} onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false)}toggleGroup(group.id)}} aria-expanded={expanded} aria-controls={`admin-nav-${group.id}`} className="admin-nav-group-trigger wp-nav-expand">
+      <ChevronDown className={"admin-nav-chevron h-4 w-4 transition-transform "+(expanded?"rotate-180":"")}/>
+     </button>}
+    </div>
+    {expanded&&!sidebarCollapsed&&<div id={`admin-nav-${group.id}`} className="admin-nav-pages wp-nav-children">
+     {children.map(n=><button type="button" key={n.href} onClick={()=>{setLocation(n.href);setMenuOpen(false)}} aria-current={location===n.href?"page":undefined} className={"admin-nav-link wp-nav-child "+(location===n.href?"wp-nav-child-active":"")}>{n.label}</button>)}
+     {group.id==="design"&&DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>{setLocation("/admin/design-system");window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}));setMenuOpen(false)}} className="admin-design-submenu-link wp-nav-child">{label}</button>)}
+    </div>}
+   </div>;
+ })}
+ {search.trim()&&!NAV.some(n=>n.label.toLowerCase().includes(search.trim().toLowerCase()))&&!NAV_GROUPS.some(g=>g.label.toLowerCase().includes(search.trim().toLowerCase()))&&<p className="wp-nav-empty">No matching admin pages.</p>}
+</nav>
 
         {/* Admin identity and sign-out remain accessible in both sidebar widths. */}
         <div className="admin-sidebar-identity mx-3 mt-2 mb-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-[#182c49]"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-extrabold text-white">A</div><div className="admin-sidebar-identity-label min-w-0"><strong className="block truncate text-sm text-slate-900 dark:text-white">Administrator</strong><span className="block text-xs font-medium text-slate-600 dark:text-slate-300">Bazunk workspace</span></div></div>
@@ -174,7 +171,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div className="min-w-0 flex-1">
-        <header className="admin-topbar sticky top-0 z-20 hidden h-[68px] items-center justify-between gap-6 border-b border-slate-200 bg-white px-6 shadow-sm dark:border-white/10 dark:bg-[#101b34] lg:flex">
+        <header className="admin-topbar wp-admin-topbar sticky top-0 z-20 hidden h-[68px] items-center justify-between gap-6 border-b border-slate-200 bg-white px-6 shadow-sm dark:border-white/10 dark:bg-[#101b34] lg:flex">
           <AdminGlobalSearch />
           <div className="flex shrink-0 items-center gap-4">
             <button type="button" onClick={()=>setTheme(isDark?"light":"dark")} aria-label={isDark?"Switch to light mode":"Switch to dark mode"} className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-2 text-sm dark:bg-white/10"><Sun className={`h-4 w-4 ${isDark?"text-slate-500":"text-amber-500"}`}/><Moon className={`h-4 w-4 ${isDark?"text-indigo-300":"text-slate-400"}`}/></button>

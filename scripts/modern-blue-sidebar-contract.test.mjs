@@ -4,13 +4,13 @@ import {test} from "node:test";
 const dir="artifacts/sellbuydeal/src/pages/admin/";
 const layout=readFileSync(dir+"AdminLayout.tsx","utf8");
 const styles=readFileSync(dir+"modern-blue-admin.css","utf8");
-test("Modern Blue sidebar keeps every admin route and six grouped categories plus Dashboard",()=>{
+test("WordPress sidebar keeps all routes and twelve top-level sections",()=>{
  const routes=[...layout.matchAll(/href: "(\/admin\/[^"]+)"/g)].map(m=>m[1]);
  assert.equal(new Set(routes).size,routes.length);
  assert.ok(routes.length>=30);
- assert.match(layout,/Dashboard<\/button>/);
+ assert.match(layout,/Dashboard<\/span>/);
  assert.match(layout,/DESIGN_SECTIONS/);
- for(const name of ["accounts","marketplace","commerce","growth","support","system"])assert.match(layout,new RegExp('id:"'+name+'"'));
+ for(const name of ["listings","orders","customers","sellers","payments","marketing","content","design","importers","analytics","settings"])assert.match(layout,new RegExp('id:"'+name+'"'));
 });
 test("sidebar has keyboard-accessible groups, collapse, and mobile drawer",()=>{
  for(const content of ["aria-expanded={expanded}","aria-controls={`admin-nav-","aria-current={active?","toggleSidebar","aria-label={sidebarCollapsed?","lg:hidden","savedAdminNavScrollTop"])assert.ok(layout.includes(content),content);
