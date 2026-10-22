@@ -14,7 +14,8 @@ const context=get(base+"context/SiteSettingsContext.tsx");
 const nav=get(base+"pages/admin/AdminLayout.tsx");
 test("Theme Studio is reachable and has real drafts, preview and publication actions",()=>{
  assert.match(app,/\/admin\/theme-studio/);
- assert.match(nav,/Theme Studio/);
+ assert.match(nav,/Design Center/);
+ assert.match(app,/AdminDesignCenterPage/);
  for(const str of ["Theme Studio","Media Library","History & restore","Desktop preview","Mobile preview",
  "authFetch(\"/api/admin/theme-studio\"","/api/admin/theme-studio/draft","/api/admin/theme-studio/publish"])
   assert.ok(ui.includes(str),str);
