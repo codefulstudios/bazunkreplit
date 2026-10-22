@@ -1582,3 +1582,30 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
   color: #111827 !important;
 }
 .bazunk-cookie-consent .bz-cookie-accept:hover { background-color: #fb923c !important; }
+
+
+/* Bright section headings on dark-mode storefront, seller and admin pages.
+   Header treatments are scoped to content areas, not nav, dialogs or inputs. */
+.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > :is(header,.section-header,.page-header):has(:is(h1,h2,h3)),
+.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > div:first-child:has(> :is(h1,h2)):not(:has(input,textarea,select)) {
+  background:linear-gradient(115deg,#fff7df 0%,#ffdeb0 100%) !important;
+  border:1px solid #fbbf75 !important;
+  color:#102044 !important;
+  border-radius:1rem;
+  padding:1rem 1.25rem;
+}
+.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > :is(header,.section-header,.page-header):has(:is(h1,h2,h3)) :is(h1,h2,h3,p,small),
+.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > div:first-child:has(> :is(h1,h2)):not(:has(input,textarea,select)) :is(h1,h2,h3,p,small) {
+  color:#102044 !important;
+  opacity:1 !important;
+}
+/* Explicit DealPilot treatment, including its currently hardcoded gradient
+   and solid blue data panels. The dark outer dashboard remains unchanged. */
+.dark [data-testid="deal-pilot-panel"]:not([data-design-custom="true"]) .bz-dp-hero,
+.dark [data-bz-design-area="admin"] .bz-dp-hero:not([data-design-custom="true"]) {
+  background:linear-gradient(110deg,#fff7db,#ffc16a) !important;
+  color:#102044 !important;
+}
+.dark [data-bz-design-area="admin"] .bz-dp-hero:not([data-design-custom="true"]) :is(h1,h2,h3,p,span) {
+  color:#102044 !important;
+}
