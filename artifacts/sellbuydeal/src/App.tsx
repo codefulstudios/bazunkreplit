@@ -326,7 +326,7 @@ function Home() {
         <CategorySection />
         <FeaturedListings mode="recent" />
         {optionalSections.filter(section=>section.enabled).map(section=>
-          <React.Fragment key={section.id}>{renderOptional(section.id)}</React.Fragment>
+          <div key={section.id} className="contents" data-theme-section={section.id}>{renderOptional(section.id)}</div>
         )}
       </main>
       <Footer />
