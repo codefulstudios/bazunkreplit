@@ -4,7 +4,7 @@ import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { openCookieSettings } from "@/components/CookieConsent";
 
-const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\\/$/,"");
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 const linkClass = "text-sm font-medium text-white/70 hover:text-white transition-colors";
 
 export function Footer() {
