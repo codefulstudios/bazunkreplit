@@ -343,7 +343,7 @@ export function AdminUsersPage() {
                   <td className="admin-users-activity px-3 py-3 align-middle">
                     <span className="admin-users-main block text-xs font-semibold">{Number(u.listings_total||0)} listed · {Number(u.sold||0)} sold · {Number(u.bought||0)} bought</span>
                     <span className="admin-users-muted block text-[11px]">{u.listings_active} active · £{Number(u.sales_value||0).toFixed(2)} sales · £{Number(u.spent||0).toFixed(2)} spent</span>
-                    <span className="admin-users-muted block text-[11px]">{Number(u.conversations||0)} conversations · {u.reviews_received?u.rating.toFixed(1)+"★ / "+u.reviews_received+" reviews":"No reviews"} · {u.disputes_open} open disputes</span>
+                    <span className="admin-users-muted block text-[11px]">{Number(u.conversations||0)} conversations · {u.reviews_received?Number(u.rating||0).toFixed(1)+"★ / "+u.reviews_received+" reviews":"No reviews"} · {u.disputes_open} open disputes</span>
                   </td>
                   <td className="admin-users-account px-3 py-3 align-middle">
                     <span className="admin-users-main block text-xs font-bold">{Math.round(Number(u.credits||0)*100).toLocaleString()} credits</span>
