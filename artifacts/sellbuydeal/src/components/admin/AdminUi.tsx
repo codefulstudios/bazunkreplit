@@ -30,3 +30,14 @@ export function AdminTableFrame({children,className=""}:{children:ReactNode;clas
 export function AdminEmptyState({title,description,children}:{title:string;description?:string;children?:ReactNode}){
  return <div className="wp-empty-state"><strong>{title}</strong>{description&&<p>{description}</p>}{children}</div>;
 }
+
+/** Consistent WordPress-inspired heading for operational pages; actions remain the page's own controls. */
+export function AdminManagementHeader({title,description,actions,meta}:{title:string;description:string;actions?:ReactNode;meta?:ReactNode}){
+ return <header className="wp-management-header">
+  <div className="min-w-0"><h1>{title}</h1><p>{description}</p>{meta&&<div className="wp-management-meta">{meta}</div>}</div>
+  {actions&&<div className="wp-management-actions">{actions}</div>}
+ </header>;
+}
+export function AdminStatusTabs({label,value,options,onChange}:{label:string;value:string;options:ReadonlyArray<{value:string;label:string;count?:number}>;onChange:(value:string)=>void}){
+ return <div className="wp-status-tabs" role="group" aria-label={label}>{options.map(option=><button key={option.value} type="button" aria-pressed={value===option.value} onClick={()=>onChange(option.value)} className={"wp-status-tab "+(value===option.value?"wp-status-active":"")}>{option.label}{typeof option.count==="number"&&<span className="wp-status-count">{option.count.toLocaleString("en-GB")}</span>}</button>)}</div>;
+}
