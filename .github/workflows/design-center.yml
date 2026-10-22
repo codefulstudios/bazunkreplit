@@ -9,6 +9,9 @@ on:
       - 'artifacts/sellbuydeal/src/design-system/**'
       - 'artifacts/api-server/src/routes/admin.ts'
       - 'scripts/design-center-contract.test.mjs'
+      - 'scripts/admin-wordpress-phase1.test.mjs'
+      - 'artifacts/sellbuydeal/src/components/admin/**'
+      - 'artifacts/sellbuydeal/src/App.tsx'
       - 'scripts/admin-control-light-dark.test.mjs'
       - 'scripts/admin-sidebar-theme-contrast.test.mjs'
       - 'scripts/modern-blue-charts-contract.test.mjs'
@@ -38,7 +41,7 @@ jobs:
         with:
           node-version: '22'
       - name: Design Center regression checks
-        run: node --test scripts/admin-sidebar-theme-contrast.test.mjs scripts/admin-control-light-dark.test.mjs scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs scripts/modern-blue-sidebar-contract.test.mjs scripts/modern-blue-kpi-contract.test.mjs scripts/modern-blue-charts-contract.test.mjs
+        run: node --test scripts/admin-sidebar-theme-contrast.test.mjs scripts/admin-control-light-dark.test.mjs scripts/design-center-contract.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs scripts/modern-blue-sidebar-contract.test.mjs scripts/modern-blue-kpi-contract.test.mjs scripts/modern-blue-charts-contract.test.mjs scripts/admin-wordpress-phase1.test.mjs
       - name: Install pnpm
         run: corepack enable
       - name: Install workspace dependencies
