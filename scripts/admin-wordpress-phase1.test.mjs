@@ -11,8 +11,8 @@ test("Approved top-level WordPress admin menu exists in exact order",()=>{
  const actual=[...layout.matchAll(/\{id:"(listings|orders|customers|sellers|payments|marketing|content|design|importers|analytics|settings)"/g)].map(m=>m[1]);
  assert.deepEqual(actual,["listings","orders","customers","sellers","payments","marketing","content","design","importers","analytics","settings"]);
  assert.match(layout,/Dashboard<\/span>/);
- assert.match(layout,/DESIGN_SECTIONS/);
- assert.match(layout,/bazunk-design-section/);
+ assert.doesNotMatch(layout,/const DESIGN_SECTIONS/);
+ assert.match(read("pages/admin/AdminDesignCenterPage.tsx"),/bzdc-menu-link/);
 });
 test("All legacy administration routes remain available",()=>{
  const required=["/admin/users","/admin/seller-compliance","/admin/trust-proof","/admin/listings","/admin/importer-control","/admin/snap-sell","/admin/deal-pilot","/admin/find-it","/admin/imports","/admin/demo-creator","/admin/cashback","/admin/classifieds","/admin/orders","/admin/payments","/admin/auctions","/admin/flash-sales","/admin/disputes","/admin/returns","/admin/support","/admin/chatwoot","/admin/rewards","/admin/credits-economy","/admin/referrals","/admin/promotions","/admin/reviews","/admin/audit-log","/admin/system-status","/admin/feature-toggles","/admin/emails","/admin/settings"];
