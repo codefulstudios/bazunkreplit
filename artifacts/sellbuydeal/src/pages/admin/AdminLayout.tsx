@@ -82,6 +82,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<Record<string,boolean>>(()=>({...savedAdminExpandedGroups}));
   const [profileOpen, setProfileOpen] = useState(false);
+  const [selectedDesignSection,setSelectedDesignSection]=useState(()=>window.sessionStorage.getItem("bazunk-design-section")||"assistant");
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
   useEffect(() => {
@@ -140,7 +141,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 <button type="button" onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false)}toggleGroup(group.id)}} aria-label={"Expand "+group.label+" submenu"} aria-expanded={expanded} aria-controls={`admin-nav-${group.id}`} className="admin-nav-group-trigger flex h-9 w-8 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-white/10"><ChevronDown className={"h-4 w-4 transition-transform "+(expanded?"rotate-180":"")}/></button>
               </div>
               {expanded&&!sidebarCollapsed&&<div id={`admin-nav-${group.id}`} className="admin-nav-pages ml-5 mt-1 space-y-0.5 border-l border-slate-200 pl-3 dark:border-slate-600">
-                {group.id==="design"&&DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>{setMenuOpen(false);setLocation("/admin/design-system");window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}))}} className="admin-design-submenu-link block w-full rounded-md px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-[#253e5a]">{label}</button>)}
+                {group.id==="design"&&DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>{setMenuOpen(false);setSelectedDesignSection(id);window.sessionStorage.setItem("bazunk-design-section",id);setLocation("/admin/design-system");window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}))}} aria-current={selectedDesignSection===id?"page":undefined} className={"admin-design-submenu-link block w-full rounded-md px-3 py-2 text-left text-xs font-medium "+(selectedDesignSection===id?"bg-blue-50 text-blue-700 dark:bg-[#23466e] dark:text-white":"text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-200 dark:hover:bg-[#253e5a]")}>{label}</button>)}
                 {pages.filter(p=>group.id!=="design"&&p.href!==group.href).map(({label,href,icon:PageIcon})=>{
                   const selected=location===href||location.startsWith(href+"/");
                   return <button key={href} type="button" aria-current={selected?"page":undefined} onClick={()=>{setMenuOpen(false);setLocation(href)}} className={"admin-nav-link flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs font-medium "+(selected?"bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-white":"text-slate-700 hover:bg-blue-50 dark:text-slate-200 dark:hover:bg-white/10")}>
