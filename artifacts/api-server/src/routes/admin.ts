@@ -1,5 +1,6 @@
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
+import {publicThemeStudioRouter,adminThemeStudioRouter} from "./themeStudio.js";
 import adminFeatureControlsRouter from "./adminFeatureControls.js";
 import adminOperationsRouter from "./adminOperations.js";
 import adminActionRequiredRouter from "./adminActionRequired.js";
@@ -94,7 +95,7 @@ router.get("/settings/public", async (_req, res) => {
     const rows = await db.execute(sql`SELECT key, value FROM site_settings`);
     const settings: Record<string, string> = {};
     for (const row of rows.rows as any[]) {
-      if (isPrivateSetting(row.key)) continue;
+      if (isPrivateSetting(row.key) || String(row.key).startsWith("theme_studio_")) continue;
       settings[row.key] = row.value;
     }
     res.setHeader("Cache-Control", "no-store");
@@ -117,7 +118,9 @@ router.get("/settings/category-visibility",async(_req,res)=>{
 const cashbackDefaults={enabled:false,payoutPolicy:"Cashback payouts are not yet enabled.",tiers:[{id:"bronze",name:"Bronze",rate:0.25,spendGbp:50,perks:[]},{id:"silver",name:"Silver",rate:0.5,spendGbp:150,perks:[]},{id:"gold",name:"Gold",rate:0.75,spendGbp:350,perks:[]},{id:"platinum",name:"Platinum",rate:1,spendGbp:700,perks:[]}]}
 async function readCashback(){const r=await db.execute(sql`SELECT value FROM site_settings WHERE key='cashback_program_settings'`);try{return JSON.parse(String(r.rows[0]?.value))||cashbackDefaults}catch{return cashbackDefaults}}
 router.get("/cashback/settings",async(_req,res)=>{try{res.json(await readCashback())}catch{res.status(500).json({error:"Unavailable"})}});
+router.use(publicThemeStudioRouter);
 router.use("/admin", requireAdmin);
+router.use(adminThemeStudioRouter);
 router.use(adminFeatureControlsRouter);
 router.use(adminOperationsRouter);
 router.use(adminNavigationRouter); // real alerts and global search, after admin auth
