@@ -8,7 +8,7 @@ test("WordPress sidebar keeps every old route under the approved menu",()=>{
  const routes=[...layout.matchAll(/href: "(\/admin\/[^"]+)"/g)].map(m=>m[1]);
  assert.equal(new Set(routes).size,routes.length);
  assert.ok(routes.length>=30);
- assert.match(layout,/Dashboard<\/button>/);
+ assert.match(layout,/Dashboard<\/span>/);
  assert.match(layout,/DESIGN_SECTIONS/);
  assert.match(layout,/admin-primary-link/);
  assert.match(layout,/href:"\/admin\/content"/);
