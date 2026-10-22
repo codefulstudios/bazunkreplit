@@ -97,10 +97,10 @@ export function Hero() {
   const categoryIconAppearance=readIconAppearance(featureSettings,"categories",designMode);
   const studioImage=featureSettings.theme_studio_enabled==="true"?featureSettings.hero_image_url||"":"";
   const heroGraphic=studioImage||featureSettings.design_hero_image_url||"";
-  const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\\/$/,"");
-  const safeHeroGraphic=/^\\/api\\/site-media\\/[a-f0-9-]{36}$/i.test(heroGraphic)
+  const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
+  const safeHeroGraphic=/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(heroGraphic)
     ? API_BASE+heroGraphic
-    : /^https:\\/\\/[^\\s?#]+\\.(png|jpe?g|webp)(\\?[^\\s]*)?$/i.test(heroGraphic)?heroGraphic:"";
+    : /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic)?heroGraphic:"";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
