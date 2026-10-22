@@ -105,6 +105,7 @@ adminThemeStudioRouter.post("/admin/theme-studio/publish",async(req,res)=>{
    ...(Array.isArray(historic)?historic.filter((x:any)=>x&&validTheme(x.fields)):[])].slice(0,12);
   // All storefront keys stay compatible with the original public settings reader.
   for(const key of keys)await put(key,fields[key]);
+  await put("theme_studio_enabled","true");
   await put("theme_studio_history_v1",JSON.stringify(history));
   await put("theme_studio_draft_v1",JSON.stringify(fields));
   await recordAdminAudit({req,category:"settings",action:"theme_studio.publish",targetType:"site_settings",
