@@ -9,6 +9,7 @@ on:
       - 'artifacts/sellbuydeal/src/design-system/**'
       - 'artifacts/api-server/src/routes/admin.ts'
       - 'scripts/design-center-contract.test.mjs'
+      - 'scripts/design-center-full-mockup.test.mjs'
       - 'scripts/admin-wordpress-phase1.test.mjs'
       - 'scripts/admin-wordpress-phase2.test.mjs'
       - 'scripts/admin-wordpress-completion.test.mjs'
@@ -39,6 +40,7 @@ on:
       - 'artifacts/sellbuydeal/src/design-system/**'
       - 'artifacts/api-server/src/routes/admin.ts'
       - 'scripts/design-center-contract.test.mjs'
+      - 'scripts/design-center-full-mockup.test.mjs'
       - 'scripts/admin-theme-studio-phase3.test.mjs'
       - 'artifacts/api-server/src/routes/themeStudio.ts'
       - 'artifacts/sellbuydeal/src/context/SiteSettingsContext.tsx'
@@ -53,7 +55,7 @@ jobs:
         with:
           node-version: '22'
       - name: Design Center regression checks
-        run: node --test scripts/admin-sidebar-theme-contrast.test.mjs scripts/admin-control-light-dark.test.mjs scripts/design-center-contract.test.mjs scripts/admin-wordpress-phase1.test.mjs scripts/admin-wordpress-completion.test.mjs scripts/admin-customers-compact-contrast.test.mjs scripts/admin-theme-studio-phase3.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs scripts/modern-blue-sidebar-contract.test.mjs scripts/modern-blue-kpi-contract.test.mjs scripts/modern-blue-charts-contract.test.mjs
+        run: node --test scripts/admin-sidebar-theme-contrast.test.mjs scripts/admin-control-light-dark.test.mjs scripts/design-center-contract.test.mjs scripts/design-center-full-mockup.test.mjs scripts/admin-wordpress-phase1.test.mjs scripts/admin-wordpress-completion.test.mjs scripts/admin-customers-compact-contrast.test.mjs scripts/admin-theme-studio-phase3.test.mjs scripts/icon-appearance-contract.test.mjs scripts/design-center-clarity.test.mjs scripts/design-center-mockup-contract.test.mjs scripts/modern-blue-sidebar-contract.test.mjs scripts/modern-blue-kpi-contract.test.mjs scripts/modern-blue-charts-contract.test.mjs
       - name: Install pnpm
         run: corepack enable
       - name: Install workspace dependencies
