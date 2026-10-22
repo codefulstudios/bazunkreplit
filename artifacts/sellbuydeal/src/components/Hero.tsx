@@ -95,8 +95,12 @@ export function Hero() {
   const heroAppearance=readSection(featureSettings,"home_hero",designMode);
   const categoryAppearance=readSection(featureSettings,"home_categories",designMode);
   const categoryIconAppearance=readIconAppearance(featureSettings,"categories",designMode);
-  const heroGraphic = featureSettings.design_hero_image_url || "";
-  const safeHeroGraphic = /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic) ? heroGraphic : "";
+  const studioImage=featureSettings.theme_studio_enabled==="true"?featureSettings.hero_image_url||"":"";
+  const heroGraphic=studioImage||featureSettings.design_hero_image_url||"";
+  const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
+  const safeHeroGraphic=/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(heroGraphic)
+    ? API_BASE+heroGraphic
+    : /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic)?heroGraphic:"";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
@@ -128,8 +132,8 @@ export function Hero() {
           >
             <div className="mb-4">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300 bz-hero-kicker">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
-              <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Great finds. Better deals. All in one place.":<>Great finds. Better deals. <span className="text-orange-400">All in one place.</span></>}</h1>
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_subtitle||"Explore unique finds from independent sellers.":"Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer."}</p>
+              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Great finds. Better deals. All in one place.":<>Great finds. Better deals. <span className="text-orange-400">All in one place.</span></>}</h1>
+              <p data-theme-edit="hero_subtitle" className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_subtitle||"Explore unique finds from independent sellers.":"Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer."}</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">

@@ -38,5 +38,34 @@ test("Published settings are used by actual public homepage, logos and footer",(
  for(const name of ["hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary"])assert.ok(hero.includes("featureSettings."+name),name);
  assert.match(context,/bazunk:theme-preview-settings/);
  assert.match(context,/event.origin!==window.location.origin/);
- assert.match(api,/put\("theme_studio_enabled","true"\)/);
+ assert.match(api,/theme_studio_enabled/);
+ assert.match(api,/sql\.join\(updates\.map/);
+});
+
+test("Homepage builder changes real storefront ordering without hiding core shopping sections",()=>{
+ const layout=get(base+"design-system/homepageSections.ts");
+ for(const id of ["promoted","live","promos","perks","features","rewards","announcement","ads"])assert.ok(layout.includes('id:"'+id+'"'),id);
+ assert.match(layout,/new Set\(value.map/);
+ assert.match(app,/parseHomeSections\(settings.home_sections_layout\)/);
+ assert.match(app,/optionalSections.filter\(section=>section.enabled\)/);
+ assert.ok(app.indexOf("<Hero />")<app.indexOf("optionalSections.filter"));
+ assert.ok(app.indexOf("<CategorySection />")<app.indexOf("optionalSections.filter"));
+ assert.ok(app.indexOf('<FeaturedListings mode="recent" />')<app.indexOf("optionalSections.filter"));
+ assert.match(ui,/draggable onDragStart/);
+ assert.match(ui,/onDragOver=\{e=>e.preventDefault\(\)\}/);
+ assert.match(ui,/onDrop=\{e=>/);
+ assert.match(ui,/setVisible\(entry.id,e.target.checked\)/);
+});
+test("Theme Studio keeps drafts, media and version history in one validated publish",()=>{
+ for(const phrase of ["home_sections_layout","site_favicon_url","hero_image_url","validHomeLayout","normalizeTheme","sql.join(updates.map","theme_studio_history_v1","theme_studio_draft_v1"])
+  assert.ok(api.includes(phrase),phrase);
+ assert.match(api,/new Set\(sections.map/);
+ assert.match(api,/Object.keys\(x\).sort\(\).join/);
+ assert.match(context,/bazunk:theme-preview-select/);
+ assert.match(context,/event.origin!==window.location.origin/);
+ assert.match(ui,/event.source!==iframe.current\?\.contentWindow/);
+ assert.match(ui,/Use favicon/);
+ assert.match(ui,/Use hero/);
+ assert.match(hero,/featureSettings.hero_image_url/);
+ assert.match(context,/settings.site_favicon_url/);
 });

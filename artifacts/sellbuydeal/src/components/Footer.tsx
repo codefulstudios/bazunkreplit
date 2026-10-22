@@ -24,7 +24,7 @@ export function Footer() {
                 className="h-9 md:h-10 w-auto object-contain"
               />
             </Link>
-            <p className="max-w-xs text-sm leading-6 text-white/65">
+            <p data-theme-edit="footer_about" className="max-w-xs text-sm leading-6 text-white/65">
               {raw.theme_studio_enabled==="true"?s.footer_about:"Buy. Sell. Deal. Get Rewarded."}<br />
               Private sellers list and sell for {formatPrice(0)}.
             </p>

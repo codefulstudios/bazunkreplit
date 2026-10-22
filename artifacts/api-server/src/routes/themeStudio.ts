@@ -9,18 +9,30 @@ export const publicThemeStudioRouter = Router();
 export const adminThemeStudioRouter = Router();
 
 const keys = [
-  "site_name","site_tagline","site_logo_url","hero_title","hero_subtitle",
+  "site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","home_sections_layout","hero_title","hero_subtitle",
   "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"
 ] as const;
 type ThemeFields = Record<(typeof keys)[number],string>;
+const HOME_LAYOUT_DEFAULT=["promoted","live","promos","perks","features","rewards","announcement","ads"].map(id=>({id,enabled:true}));
+const HOME_LAYOUT_IDS=new Set(HOME_LAYOUT_DEFAULT.map(x=>x.id));
+function validHomeLayout(value:string){
+ try{
+  const sections=JSON.parse(value);
+  return Array.isArray(sections)&&sections.length===HOME_LAYOUT_DEFAULT.length&&
+   new Set(sections.map((x:any)=>x?.id)).size===HOME_LAYOUT_IDS.size&&
+   sections.every((x:any)=>x&&typeof x==="object"&&!Array.isArray(x)&&
+    Object.keys(x).sort().join(",")==="enabled,id"&&HOME_LAYOUT_IDS.has(x.id)&&typeof x.enabled==="boolean");
+ }catch{return false}
+}
 const defaults:ThemeFields = {
   site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",site_logo_url:"",
+  site_favicon_url:"",hero_image_url:"",home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
   hero_title:"Buy, Make an Offer & List for Free!",
   hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
   hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
   footer_about:"Buy, Sell, and Save More.",footer_copyright:"Bazunk Marketplace"
 };
-const lengths:Record<string,number>={site_name:90,site_tagline:180,site_logo_url:100,hero_title:160,
+const lengths:Record<string,number>={site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,home_sections_layout:600,hero_title:160,
   hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,footer_about:800,footer_copyright:160};
 const assetPath=/^\/api\/site-media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const assetId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -29,8 +41,15 @@ function validTheme(raw:unknown):raw is ThemeFields {
  const v=raw as Record<string,unknown>;
  return Object.keys(v).sort().join(",")===keys.slice().sort().join(",")&&keys.every(key=>{
   const str=v[key];return typeof str==="string"&&str.length<=lengths[key]&&
-   !/[<>\u0000-\u001f]/.test(str)&&(key!=="site_logo_url"||str===""||assetPath.test(str));
+   !/[<>\u0000-\u001f]/.test(str)&&
+   (!["site_logo_url","site_favicon_url","hero_image_url"].includes(key)||str===""||assetPath.test(str))&&
+   (key!=="home_sections_layout"||validHomeLayout(str));
  });
+}
+function normalizeTheme(raw:unknown):ThemeFields|null{
+ if(!raw||typeof raw!=="object"||Array.isArray(raw))return null;
+ const candidate={...defaults,...raw};
+ return validTheme(candidate)?candidate:null;
 }
 async function mediaTable(){
  await db.execute(sql`CREATE TABLE IF NOT EXISTS site_media_assets(
@@ -41,7 +60,7 @@ async function mediaTable(){
 }
 async function settings(){
  const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN (
- 'site_name','site_tagline','site_logo_url','hero_title','hero_subtitle','hero_cta_primary',
+ 'site_name','site_tagline','site_logo_url','site_favicon_url','hero_image_url','home_sections_layout','hero_title','hero_subtitle','hero_cta_primary',
  'hero_cta_secondary','footer_about','footer_copyright',
  'theme_studio_draft_v1','theme_studio_history_v1'
  )`);
@@ -79,8 +98,8 @@ adminThemeStudioRouter.get("/admin/theme-studio",async(_req,res)=>{
   const draft=parse(rows.theme_studio_draft_v1);
   const history=parse(rows.theme_studio_history_v1);
   res.setHeader("Cache-Control","no-store");
-  res.json({published:current,draft:validTheme(draft)?draft:current,
-   history:Array.isArray(history)?history.slice(0,12).filter(x=>x&&validTheme(x.fields)):[]});
+  res.json({published:current,draft:normalizeTheme(draft)||current,
+   history:Array.isArray(history)?history.slice(0,12).map((x:any)=>x&&({...x,fields:normalizeTheme(x.fields)})).filter((x:any)=>x&&x.fields):[]});
  }catch(err){logger.error({err},"Theme Studio read failed");res.status(503).json({error:"Theme Studio is unavailable"})}
 });
 adminThemeStudioRouter.put("/admin/theme-studio/draft",async(req,res)=>{
@@ -93,24 +112,29 @@ adminThemeStudioRouter.post("/admin/theme-studio/publish",async(req,res)=>{
  const fields=req.body?.fields;
  if(!validTheme(fields)){res.status(400).json({error:"Invalid theme values; check text and selected logo"});return}
  try{
-  if(fields.site_logo_url){
+  const selectedImages=[fields.site_logo_url,fields.site_favicon_url,fields.hero_image_url].filter(Boolean);
+  if(selectedImages.length){
    await mediaTable();
-   const selected=fields.site_logo_url.split("/").pop()!;
-   const match=await db.execute(sql`SELECT id FROM site_media_assets WHERE id=${selected}`);
-   if(!match.rows.length){res.status(400).json({error:"Selected logo is no longer in the media library"});return}
+   for(const image of selectedImages){
+    const selected=image.split("/").pop()!;
+    const match=await db.execute(sql`SELECT id FROM site_media_assets WHERE id=${selected}`);
+    if(!match.rows.length){res.status(400).json({error:"A selected image is no longer in the media library"});return}
+   }
   }
   const rows=await settings(),before=currentFrom(rows);
   const historic=parse(rows.theme_studio_history_v1);
   const history=[{id:randomUUID(),at:new Date().toISOString(),fields:before},
-   ...(Array.isArray(historic)?historic.filter((x:any)=>x&&validTheme(x.fields)):[])].slice(0,12);
-  // All storefront keys stay compatible with the original public settings reader.
-  for(const key of keys)await put(key,fields[key]);
-  await put("theme_studio_enabled","true");
-  await put("theme_studio_history_v1",JSON.stringify(history));
-  await put("theme_studio_draft_v1",JSON.stringify(fields));
-  await recordAdminAudit({req,category:"settings",action:"theme_studio.publish",targetType:"site_settings",
-   targetId:"theme_studio",summary:"Published site identity and content from Theme Studio",
-   before,after:fields});
+   ...(Array.isArray(historic)?historic.map((x:any)=>x&&({...x,fields:normalizeTheme(x.fields)})).filter((x:any)=>x&&x.fields):[])].slice(0,12);
+  // One SQL statement commits all public settings, draft and version history together.
+  // A partial theme is never exposed if a database write fails.
+  const updates=[...keys.map(key=>[key,fields[key]] as const),
+   ["theme_studio_enabled","true"],["theme_studio_history_v1",JSON.stringify(history)],
+   ["theme_studio_draft_v1",JSON.stringify(fields)]] as const;
+  await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES ${sql.join(updates.map(([key,value])=>sql`(${key},${value},NOW())`),sql`, `)}
+   ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+  try{await recordAdminAudit({req,category:"settings",action:"theme_studio.publish",targetType:"site_settings",
+   targetId:"theme_studio",summary:"Published site identity, content and homepage layout from Theme Studio",
+   before,after:fields})}catch(auditError){logger.error({err:auditError},"Theme published but audit recording failed")}
   res.setHeader("Cache-Control","no-store");res.json({success:true,history});
  }catch(err){logger.error({err},"Theme publish failed");res.status(503).json({error:"Theme publishing failed; check settings before retrying"})}
 });
@@ -149,7 +173,13 @@ adminThemeStudioRouter.delete("/admin/theme-studio/media/:id",async(req,res)=>{
  if(!assetId.test(req.params.id)){res.status(400).json({error:"Invalid image ID"});return}
  try{
   const rows=await settings();
-  if(rows.site_logo_url==="/api/site-media/"+req.params.id){res.status(409).json({error:"This image is the published logo. Replace it before deleting."});return}
+  const selected="/api/site-media/"+req.params.id;
+  const current=currentFrom(rows),draft=normalizeTheme(parse(rows.theme_studio_draft_v1));
+  const history=parse(rows.theme_studio_history_v1);
+  const inUse=(v:ThemeFields)=>[v.site_logo_url,v.site_favicon_url,v.hero_image_url].includes(selected);
+  if(inUse(current)||draft&&inUse(draft)||Array.isArray(history)&&history.some((h:any)=>{const v=normalizeTheme(h?.fields);return v&&inUse(v)})){
+   res.status(409).json({error:"This image is used by the published site, a draft or version history. Replace it before deleting."});return
+  }
   await mediaTable();
   await db.execute(sql`DELETE FROM site_media_assets WHERE id=${req.params.id}`);
   res.json({success:true});
