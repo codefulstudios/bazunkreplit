@@ -1,0 +1,157 @@
+/*
+ * Bazunk Admin Phase 1 — familiar WordPress-style management shell.
+ * Scoped to .bazunk-admin-wp so the public marketplace is unchanged.
+ * Existing dark-mode support and advanced design controls are preserved.
+ */
+.bazunk-admin-wp{
+  --wp-blue:#1769ff;
+  --wp-ink:#172339;
+  --wp-muted:#53657d;
+  --wp-line:#dbe3ee;
+  --wp-page:#f6f8fc;
+  --wp-card:#ffffff;
+  --wp-card-soft:#f8faff;
+  --wp-focus:#1769ff;
+  background:var(--wp-page);
+  color:var(--wp-ink);
+  font-size:14px;
+}
+.dark .bazunk-admin-wp{
+  --wp-ink:#eef4ff;
+  --wp-muted:#c6d4ea;
+  --wp-line:#3a4d68;
+  --wp-page:#0f192b;
+  --wp-card:#17263c;
+  --wp-card-soft:#1d3049;
+  --wp-focus:#93c5fd;
+}
+.bazunk-admin-wp aside{
+  background:var(--wp-card)!important;
+  color:var(--wp-ink)!important;
+  border-right:1px solid var(--wp-line);
+  box-shadow:none!important;
+}
+.bazunk-admin-wp .admin-sidebar-brand{
+  border-color:var(--wp-line);
+  min-height:82px;
+}
+.bazunk-admin-wp .admin-sidebar-brand img{max-height:34px;max-width:132px}
+.bazunk-admin-wp .admin-sidebar-nav{padding-top:12px;padding-bottom:15px}
+.bazunk-admin-wp .admin-primary-link{
+  min-height:42px;
+  font-size:14px;
+  letter-spacing:0;
+  line-height:1.25;
+  border-radius:8px;
+  box-shadow:none!important;
+  transition:background .15s,color .15s;
+}
+.bazunk-admin-wp .admin-nav-group{margin:0}
+.bazunk-admin-wp .admin-nav-group-row{margin-bottom:2px}
+.bazunk-admin-wp .admin-nav-group-trigger{
+  width:30px;min-width:30px;height:34px;
+  border:0;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--wp-muted)!important;
+}
+.bazunk-admin-wp .admin-nav-group-trigger:hover,
+.bazunk-admin-wp .admin-nav-group-trigger[aria-expanded="true"]{
+  color:#1769ff!important;
+  background:#eaf2ff!important;
+}
+.dark .bazunk-admin-wp .admin-nav-group-trigger:hover,
+.dark .bazunk-admin-wp .admin-nav-group-trigger[aria-expanded="true"]{
+ background:#263e5e!important;color:#cde2ff!important;
+}
+.bazunk-admin-wp .admin-nav-group-row .admin-primary-link[aria-current="page"]{
+  background:#e8f0ff!important;
+  color:#1152d0!important;
+}
+.dark .bazunk-admin-wp .admin-nav-group-row .admin-primary-link[aria-current="page"]{
+  background:#23466e!important;color:#fff!important;
+}
+.bazunk-admin-wp .admin-sidebar-nav>button.admin-primary-link[aria-current="page"]{
+  background:#1769ff!important;color:#fff!important;
+}
+.bazunk-admin-wp .admin-sidebar-nav .admin-primary-link:not([aria-current="page"]){
+  color:var(--wp-ink)!important;
+}
+.bazunk-admin-wp .admin-sidebar-nav .admin-primary-link:not([aria-current="page"]) svg,
+.bazunk-admin-wp .admin-sidebar-nav .admin-primary-link:not([aria-current="page"]) span{
+  color:inherit!important;
+}
+.bazunk-admin-wp .admin-sidebar-nav .admin-primary-link[aria-current="page"] svg,
+.bazunk-admin-wp .admin-sidebar-nav .admin-primary-link[aria-current="page"] span{
+  color:inherit!important;
+}
+.bazunk-admin-wp .admin-sidebar-nav .admin-nav-pages{
+  margin-bottom:8px;
+  border-left:2px solid var(--wp-line);
+}
+.bazunk-admin-wp .admin-nav-pages button{
+  min-height:34px;
+  font-size:12px;
+  border:0;
+  text-align:left;
+  box-shadow:none;
+}
+.bazunk-admin-wp .admin-nav-pages button:focus-visible,
+.bazunk-admin-wp .admin-primary-link:focus-visible{
+  outline:3px solid var(--wp-focus);outline-offset:2px;
+}
+.bazunk-admin-wp .admin-sidebar-identity{
+  border-color:var(--wp-line);
+  background:var(--wp-card-soft);
+}
+.bazunk-admin-wp .admin-sidebar-footer{border-color:var(--wp-line)}
+.bazunk-admin-wp .admin-sidebar-search input{
+  color:var(--wp-ink)!important;
+  -webkit-text-fill-color:var(--wp-ink)!important;
+}
+.bazunk-admin-wp .admin-sidebar-search input::placeholder{
+  color:var(--wp-muted)!important;
+  -webkit-text-fill-color:var(--wp-muted)!important;
+  opacity:1!important;
+}
+.bazunk-admin-wp .admin-topbar{
+  background:var(--wp-card)!important;
+  border-color:var(--wp-line)!important;
+  box-shadow:none!important;
+  height:62px;
+}
+.bazunk-admin-wp main{max-width:1800px;margin-inline:auto;padding:clamp(16px,2vw,32px)}
+.bazunk-admin-wp .wp-page-heading h1{font-size:clamp(26px,2.4vw,34px);letter-spacing:-.04em}
+.bazunk-admin-wp .wp-admin-panel,
+.bazunk-admin-wp .wp-stat-card{
+  background:var(--wp-card)!important;
+  border-color:var(--wp-line)!important;
+  box-shadow:0 2px 11px rgb(15 23 42 / 4%)!important;
+}
+.dark .bazunk-admin-wp .wp-admin-panel,.dark .bazunk-admin-wp .wp-stat-card{
+  box-shadow:0 1px 9px rgb(0 0 0 / 12%)!important;
+}
+.bazunk-admin-wp .wp-admin-panel h2,.bazunk-admin-wp .wp-stat-card strong{letter-spacing:-.02em}
+.bazunk-admin-wp .wp-stat-card{min-height:135px;align-items:center}
+.bazunk-admin-wp .wp-chart-plot .recharts-responsive-container{min-width:0}
+.bazunk-admin-wp .wp-admin-table th{white-space:nowrap;font-weight:700}
+.bazunk-admin-wp .wp-admin-table th,.bazunk-admin-wp .wp-admin-table td{padding:11px 12px}
+.bazunk-admin-wp .wp-admin-table tbody tr:hover{background:#f5f8ff}
+.dark .bazunk-admin-wp .wp-admin-table tbody tr:hover{background:#213854}
+.bazunk-admin-wp .wp-quick-link{transition:background .15s,border-color .15s,box-shadow .15s}
+.bazunk-admin-wp .wp-quick-link:hover{box-shadow:0 2px 8px rgb(23 105 255 / 9%)}
+.bazunk-admin-wp .wp-admin-workspace,.bazunk-admin-wp .wp-dashboard{width:100%;max-width:1640px;margin-inline:auto}
+.bazunk-admin-wp .wp-admin-workspace :is(button,a,input,textarea,select):focus-visible,
+.bazunk-admin-wp .wp-dashboard :is(button,a,input,textarea,select):focus-visible{
+ outline:3px solid var(--wp-focus)!important;outline-offset:2px;
+}
+@media(max-width:1023px){
+ .bazunk-admin-wp main{padding:16px}
+ .bazunk-admin-wp aside{box-shadow:8px 0 35px rgb(15 23 42 / 15%)!important}
+}
+@media(max-width:640px){
+ .bazunk-admin-wp .wp-stat-card{min-height:110px;padding:14px}
+ .bazunk-admin-wp .wp-admin-panel>div:first-child{padding:14px}
+ .bazunk-admin-wp .wp-admin-panel>div:last-child{padding:14px}
+ .bazunk-admin-wp .wp-page-heading{gap:12px}
+}
