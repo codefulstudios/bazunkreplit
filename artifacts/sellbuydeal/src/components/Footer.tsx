@@ -105,7 +105,7 @@ export function Footer() {
 
         <div className="mt-8 pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs md:text-sm text-white/45">
-            &copy; {new Date().getFullYear()} Bazunk LLC. All rights reserved.
+            &copy; {new Date().getFullYear()} {s.footer_copyright||"Bazunk Marketplace"} · Bazunk LLC. All rights reserved.
             <span className="block mt-1">2709 N Hayden Island Dr, STE 872346, Portland, Oregon, 97217, USA</span>
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs md:text-sm text-white/80">
