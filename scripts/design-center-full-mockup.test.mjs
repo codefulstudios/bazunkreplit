@@ -19,7 +19,7 @@ test("Design Center is a full separate workspace with all approved focused edito
  assert.match(page,/bzdc-overview-grid/);
  assert.match(page,/bzdc-builder-grid/);
  assert.match(page,/bzdc-edit-grid/);
- assert.match(page,/bzdc-media/);
+ assert.match(page,/bzdc-library/);
  assert.doesNotMatch(shell,/const DESIGN_SECTIONS/);
  assert.match(app,/<Route path="\/admin\/design-system" component=\{AdminDesignCenterPage\}/);
  assert.match(app,/<Route path="\/admin\/theme-studio" component=\{AdminDesignCenterPage\}/);
