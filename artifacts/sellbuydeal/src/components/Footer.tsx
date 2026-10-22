@@ -1,14 +1,16 @@
 import { Link } from "wouter";
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
-import { useSiteSettings } from "@/context/SiteSettingsContext";
+import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { openCookieSettings } from "@/components/CookieConsent";
 
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 const linkClass = "text-sm font-medium text-white/70 hover:text-white transition-colors";
 
 export function Footer() {
   const { formatPrice, currency } = useCurrency();
   const s = useSiteSettings();
+  const raw=useRawSettings();
 
   return (
     <footer className="bg-[#07172c] text-white/80 border-t border-sky-400/20">
@@ -17,13 +19,13 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1 md:pr-5">
             <Link href="/" className="inline-block mb-3">
               <img
-                src="/bazunk-logo-header.png"
-                alt="Bazunk"
+                src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url:"/bazunk-logo-header.png"}
+                alt={s.site_name||"Bazunk"}
                 className="h-9 md:h-10 w-auto object-contain"
               />
             </Link>
             <p className="max-w-xs text-sm leading-6 text-white/65">
-              Buy. Sell. Deal. Get Rewarded.<br />
+              {raw.theme_studio_enabled==="true"?s.footer_about:"Buy. Sell. Deal. Get Rewarded."}<br />
               Private sellers list and sell for {formatPrice(0)}.
             </p>
 

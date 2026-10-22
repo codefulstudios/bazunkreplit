@@ -306,7 +306,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src="/bazunk-logo-header.png" alt="Bazunk" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
+              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url:"/bazunk-logo-header.png"} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
             </Link>
             <Link
               href="/"
@@ -703,7 +703,7 @@ export function Navbar() {
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center">
-                   <img src="/bazunk-logo-header.png" alt="Bazunk" className="h-7 w-auto max-w-[200px] object-contain" />
+                   <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url:"/bazunk-logo-header.png"} alt={featureSettings.site_name||"Bazunk"} className="h-7 w-auto max-w-[200px] object-contain" />
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
