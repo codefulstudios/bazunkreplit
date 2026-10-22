@@ -1629,3 +1629,25 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark .bz-contrast-section-header :is(button,a) {
   color:#fff !important;
 }
+
+/* Cover storefront promotional and category banners missed by old rounded-3xl
+   selector. Only gradient surfaces with real heading content are affected. */
+.dark main :is(section,article,header,div).rounded-2xl.bg-gradient-to-r.text-white:has(:is(h1,h2,h3)),
+.dark main :is(section,article,header,div).rounded-3xl.bg-gradient-to-r.text-white:has(:is(h1,h2,h3)),
+.dark main :is(section,article,header,div).rounded-2xl.bg-gradient-to-br.text-white:has(:is(h1,h2,h3)),
+.dark main :is(section,article,header,div).rounded-3xl.bg-gradient-to-br.text-white:has(:is(h1,h2,h3)) {
+ background:#ffdfaa !important;
+ background-image:linear-gradient(115deg,#fff7dc,#ffd9a2 58%,#ffba7b) !important;
+ border-color:#efa35c !important;
+ color:#152344 !important;
+}
+.dark main :is(section,article,header,div).rounded-2xl.bg-gradient-to-r.text-white:has(:is(h1,h2,h3)) :is(h1,h2,h3,p,span,small),
+.dark main :is(section,article,header,div).rounded-3xl.bg-gradient-to-r.text-white:has(:is(h1,h2,h3)) :is(h1,h2,h3,p,span,small),
+.dark main :is(section,article,header,div).rounded-2xl.bg-gradient-to-br.text-white:has(:is(h1,h2,h3)) :is(h1,h2,h3,p,span,small),
+.dark main :is(section,article,header,div).rounded-3xl.bg-gradient-to-br.text-white:has(:is(h1,h2,h3)) :is(h1,h2,h3,p,span,small) {
+ color:#152344 !important;opacity:1 !important;
+}
+/* Avoid overriding accent CTA buttons on bright hero banners. */
+.dark main .bz-contrast-hero :is(a,button):not(.bz-contrast-action) {
+ color:#152344;
+}
