@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import {useSiteSettings} from "@/context/SiteSettingsContext";
 import { motion } from "framer-motion";
 import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
 
@@ -22,9 +23,10 @@ const bento = [
   {title:"Refresh your space",subtitle:"Furniture, homewares and garden",image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=900&q=80",href:"/browse?category=home-kitchen"},
 ];
 export function CategorySection() {
+ const s=useSiteSettings();
  return <section className="bg-white dark:bg-slate-950 py-12 border-y border-slate-200 dark:border-slate-800">
   <div className="max-w-6xl mx-auto px-4">
-   <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">Shop by Category</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-300 hover:underline">All categories <ArrowRight className="w-4 h-4"/></Link></div>
+   <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">{s.categories_title||"Shop by Category"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-300 hover:underline">All categories <ArrowRight className="w-4 h-4"/></Link></div>
    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
     {categories.map(({name,slug,icon:Icon,image},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
       <Link href={`/browse?category=${slug}`} className="bz-category-card group block h-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-400 hover:shadow-md focus-visible:ring-2 focus-visible:ring-orange-500 transition-all">
