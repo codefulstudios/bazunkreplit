@@ -9,6 +9,9 @@ export interface SiteSettings {
   site_logo_url: string;
   site_favicon_url: string;
   hero_image_url: string;
+  seo_og_image_url: string;
+  icon_overrides: string;
+  header_search_placeholder: string;
   home_sections_layout: string;
   site_tagline: string;
   primary_color: string;
@@ -48,6 +51,9 @@ const DEFAULTS: SiteSettings = {
   site_logo_url: "",
   site_favicon_url: "",
   hero_image_url: "",
+  seo_og_image_url: "",
+  icon_overrides: "",
+  header_search_placeholder: "Search listings...",
   home_sections_layout: "",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
@@ -116,8 +122,12 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         event.data?.type!=="bazunk:theme-preview-settings")return;
       const proposed=event.data?.settings;
       if(!proposed||typeof proposed!=="object"||Array.isArray(proposed))return;
-      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","home_sections_layout","hero_title","hero_subtitle",
-        "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"];
+      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url","home_sections_layout","hero_title","hero_subtitle",
+        "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright",
+        "footer_facebook","footer_twitter","footer_instagram","footer_youtube",
+        "announcement_enabled","announcement_text","announcement_color",
+        "categories_title","categories_subtitle","features_title","features_subtitle",
+        "header_search_placeholder","seo_title","seo_description","icon_overrides"];
       if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=800))return;
       const safe=Object.fromEntries(keys.map(k=>[k,proposed[k]]));
       setSettings(prev=>({...prev,...safe}));
@@ -152,6 +162,29 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     root.style.setProperty("--brand-secondary", settings.secondary_color);
     if (settings.seo_title) document.title = settings.seo_title;
   }, [settings.primary_color, settings.secondary_color, settings.seo_title]);
+
+  // SEO metadata is edited through Design Center, but only replaces the
+  // homepage's metadata. Product/listing pages retain their own SEO.
+  useEffect(()=>{
+    if(window.location.pathname!=="/")return;
+    const ensure=(key:string,value:string,property=false)=>{
+      const attr=property?"property":"name";
+      let meta=document.head.querySelector<HTMLMetaElement>('meta['+attr+'="'+key+'"]');
+      if(!meta){meta=document.createElement("meta");meta.setAttribute(attr,key);document.head.appendChild(meta);}
+      meta.content=value;
+    };
+    document.title=settings.seo_title||DEFAULTS.seo_title;
+    ensure("description",settings.seo_description||DEFAULTS.seo_description);
+    ensure("og:title",settings.seo_title||DEFAULTS.seo_title,true);
+    ensure("og:description",settings.seo_description||DEFAULTS.seo_description,true);
+    const image=settings.seo_og_image_url;
+    if(/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(image)){
+      ensure("og:image",API_BASE+image,true);
+    }else{
+      const tag=document.head.querySelector<HTMLMetaElement>('meta[property="og:image"]');
+      if(tag?.content.startsWith(API_BASE+"/api/site-media/"))tag.remove();
+    }
+  },[settings.seo_title,settings.seo_description,settings.seo_og_image_url]);
 
   // Theme Studio favicons are sourced from the authenticated media library
   // after publication, or inside the private preview iframe.
