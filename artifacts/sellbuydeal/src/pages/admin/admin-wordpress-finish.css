@@ -1,0 +1,102 @@
+/* Bazunk WordPress-style admin: final operational workspace polish.
+ * Scoped to the authenticated admin shell. Legacy marketplace controls remain
+ * operational; this layer standardises appearance rather than replacing APIs. */
+.bazunk-admin-wordpress {
+  --wp-form-height:40px;
+  --wp-focus:#2563eb;
+  --wp-tool-bg:var(--wp-surface);
+  --wp-tool-ink:var(--wp-ink);
+  --wp-tool-hover:#edf4ff;
+}
+.dark .bazunk-admin-wordpress {
+  --wp-focus:#93c5fd;
+  --wp-tool-hover:#243a59;
+}
+.bazunk-admin-wordpress main :is(button,a,input,textarea,select,[role="button"]):focus-visible {
+  outline:3px solid var(--wp-focus)!important;
+  outline-offset:2px!important;
+}
+.bazunk-admin-wordpress main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),select,textarea){
+  min-height:var(--wp-form-height);
+  border-radius:8px;
+}
+.bazunk-admin-wordpress main :is(input,textarea)::placeholder {
+  color:var(--wp-muted)!important;
+  opacity:1!important;
+}
+.bazunk-admin-wordpress main button:disabled {
+  cursor:not-allowed;
+  opacity:.65;
+}
+.bazunk-admin-wordpress main :is(table,[role="table"]){
+  max-width:100%;
+  border-collapse:collapse;
+}
+.bazunk-admin-wordpress main table th{
+  text-align:left;
+  font-size:12px;
+  font-weight:700;
+}
+.bazunk-admin-wordpress .wp-operations-home {
+  width:100%;max-width:1460px;margin-inline:auto;
+}
+.bazunk-admin-wordpress .wp-operations-intro{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:16px;padding:19px 21px;border:1px solid var(--wp-border);
+  border-radius:10px;background:var(--wp-surface);color:var(--wp-ink);
+}
+.bazunk-admin-wordpress .wp-operations-intro strong{font-size:15px;font-weight:800}
+.bazunk-admin-wordpress .wp-operations-intro p{color:var(--wp-muted);line-height:1.55}
+.bazunk-admin-wordpress .wp-operations-search{
+  display:flex;align-items:center;gap:9px;flex:0 1 380px;min-width:min(100%,230px);
+  border:1px solid var(--wp-border);border-radius:8px;
+  background:var(--wp-surface);padding:0 12px;color:var(--wp-muted);
+}
+.bazunk-admin-wordpress .wp-operations-search:focus-within {
+  border-color:var(--wp-focus);box-shadow:0 0 0 2px color-mix(in srgb,var(--wp-focus) 18%,transparent);
+}
+.bazunk-admin-wordpress .wp-operations-search input{
+  width:100%;min-width:0;min-height:42px;border:0!important;box-shadow:none!important;
+  outline:0!important;background:transparent!important;color:var(--wp-ink)!important;
+  font-size:13px;font-weight:600;
+}
+.bazunk-admin-wordpress .wp-operations-search input::placeholder{color:var(--wp-muted)!important}
+.bazunk-admin-wordpress .wp-operations-count{font-size:12px;color:var(--wp-muted);font-weight:600}
+.bazunk-admin-wordpress .wp-operations-tools{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,295px),1fr));gap:12px;
+}
+.bazunk-admin-wordpress .wp-operations-tool{
+  display:flex;align-items:center;gap:12px;min-width:0;
+  padding:16px 14px;text-align:left;min-height:94px;
+  border:1px solid var(--wp-border);border-radius:9px;background:var(--wp-tool-bg);
+  color:var(--wp-tool-ink);transition:background-color .15s,border-color .15s;
+}
+.bazunk-admin-wordpress .wp-operations-tool:hover{
+  border-color:#7fa9e9;background:var(--wp-tool-hover);
+}
+.bazunk-admin-wordpress .wp-operations-tool strong{
+  display:block;color:var(--wp-ink);font-size:14px;font-weight:750;
+}
+.bazunk-admin-wordpress .wp-operations-tool small{
+  display:block;margin-top:4px;color:var(--wp-muted);
+  font-size:12px;font-weight:550;line-height:1.45;
+}
+.bazunk-admin-wordpress .wp-operations-icon{
+  display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;
+  border-radius:10px;background:#e9f2ff;color:#1459d8;
+}
+.dark .bazunk-admin-wordpress .wp-operations-icon{
+  background:#243e67;color:#c4dcff;
+}
+.bazunk-admin-wordpress .wp-operations-arrow{flex-shrink:0;color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-operations-collapse{font-size:12px;white-space:nowrap}
+.bazunk-admin-wordpress .wp-report-meta{font-size:12px;color:var(--wp-muted);font-weight:600}
+@media(max-width:767px){
+  .bazunk-admin-wordpress .wp-operations-intro{padding:15px;align-items:stretch}
+  .bazunk-admin-wordpress .wp-operations-search{flex:1 1 100%}
+  .bazunk-admin-wordpress .wp-operations-tools{grid-template-columns:1fr}
+  .bazunk-admin-wordpress main table :is(th,td){padding:9px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .bazunk-admin-wordpress .wp-operations-tool{transition:none}
+}
