@@ -30,7 +30,7 @@ export function AdminAnalyticsPage(){
   if(!data)return;
   const safe=(value:unknown)=>{
    const string=String(value??"");
-   const normalized=/^[=+@\\-\\t\\r]/.test(string)?"'"+string:string;
+   const normalized=/^[=+@\-\t\r]/.test(string)?"'"+string:string;
    return '"'+normalized.replaceAll('"','""')+'"';
   };
   const rows:Array<Array<string|number>>=[
@@ -40,8 +40,8 @@ export function AdminAnalyticsPage(){
    ...data.salesTrend.map(item=>[item.label,item.gmv,item.orders]),[],
    ["Registration period","New users"],...data.userTrend.map(item=>[item.label,item.users])
   ];
-  const csv=rows.map(row=>row.map(safe).join(",")).join("\\r\\n");
-  const blob=new Blob(["\\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const csv=rows.map(row=>row.map(safe).join(",")).join("\r\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const href=URL.createObjectURL(blob);
   const a=document.createElement("a");a.href=href;a.download="bazunk-admin-analytics-"+new Date().toISOString().slice(0,10)+".csv";
   document.body.appendChild(a);a.click();a.remove();window.setTimeout(()=>URL.revokeObjectURL(href),1000);
