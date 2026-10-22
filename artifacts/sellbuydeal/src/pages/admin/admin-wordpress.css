@@ -127,3 +127,36 @@
 .dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
  background:#213e6b!important;color:#f8fafc!important
 }
+
+
+/* Unified Phase 1 management controls, shared by all existing admin routes. */
+.bazunk-admin-wordpress{
+ --wp-control-height:38px;
+ --wp-control-radius:8px;
+ --wp-control-outline:#1769ff;
+}
+.bazunk-admin-wordpress main :is(button,a,input,select,textarea):focus-visible{
+ outline:3px solid var(--wp-control-outline)!important;
+ outline-offset:2px;
+}
+.bazunk-admin-wordpress main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),select,textarea){
+ min-height:var(--wp-control-height);
+ border-radius:var(--wp-control-radius);
+}
+.bazunk-admin-wordpress main :is(input,textarea)::placeholder{
+ color:var(--wp-muted)!important;opacity:1!important;
+}
+.bazunk-admin-wordpress main :is(table,[role="table"]){width:100%;border-collapse:collapse}
+.bazunk-admin-wordpress main table th{
+ text-align:left;font-size:12px;font-weight:700;letter-spacing:.02em;
+ color:var(--wp-muted);background:var(--wp-soft);
+ border-bottom:1px solid var(--wp-border);
+}
+.bazunk-admin-wordpress main table :is(th,td){padding:11px 13px}
+.bazunk-admin-wordpress main table tbody tr{border-bottom:1px solid var(--wp-border)}
+.bazunk-admin-wordpress main table tbody tr:hover{background:var(--wp-soft)}
+.bazunk-admin-wordpress main :is(button,a)[aria-disabled="true"]{opacity:.55;pointer-events:none}
+@media(max-width:767px){
+ .bazunk-admin-wordpress main table :is(th,td){padding:9px 8px}
+ .bazunk-admin-wordpress main :is(input,select,textarea){max-width:100%}
+}
