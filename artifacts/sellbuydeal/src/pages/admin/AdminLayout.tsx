@@ -60,7 +60,7 @@ const NAV_GROUPS = [
  {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
  {id:"marketing",label:"Marketing",href:"/admin/promotions",icon:Megaphone,pages:["Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
- {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
+ {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center","Theme Studio"]},
  {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
  {id:"settings",label:"Settings",href:"/admin/settings",icon:Settings,pages:["Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
