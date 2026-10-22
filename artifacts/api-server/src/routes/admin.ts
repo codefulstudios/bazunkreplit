@@ -95,7 +95,7 @@ router.get("/settings/public", async (_req, res) => {
     const rows = await db.execute(sql`SELECT key, value FROM site_settings`);
     const settings: Record<string, string> = {};
     for (const row of rows.rows as any[]) {
-      if (isPrivateSetting(row.key) || String(row.key).startsWith("theme_studio_")) continue;
+      if (isPrivateSetting(row.key) || (String(row.key).startsWith("theme_studio_") && row.key !== "theme_studio_enabled")) continue;
       settings[row.key] = row.value;
     }
     res.setHeader("Cache-Control", "no-store");
