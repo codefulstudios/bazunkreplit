@@ -6,6 +6,7 @@ const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL|
 
 export interface SiteSettings {
   site_name: string;
+  site_logo_url: string;
   site_tagline: string;
   primary_color: string;
   secondary_color: string;
@@ -41,6 +42,7 @@ export interface SiteSettingsContextValue {
 
 const DEFAULTS: SiteSettings = {
   site_name: "Bazunk",
+  site_logo_url: "",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
   secondary_color: "#4A5CE8",
@@ -98,6 +100,26 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     document.addEventListener("visibilitychange", refreshOnFocus);
     return () => {window.removeEventListener("bazunk-settings-updated", loadSettings);window.removeEventListener("focus", loadSettings);document.removeEventListener("visibilitychange", refreshOnFocus);};
   }, []);
+
+  // A draft preview can update this iframe only. Never apply cross-origin
+  // messages or draft values to a visitor's normal browsing session.
+  useEffect(()=>{
+    if(!new URLSearchParams(window.location.search).has("bazunk-theme-preview")||window.parent===window)return;
+    const listener=(event:MessageEvent)=>{
+      if(event.origin!==window.location.origin||event.source!==window.parent||
+        event.data?.type!=="bazunk:theme-preview-settings")return;
+      const proposed=event.data?.settings;
+      if(!proposed||typeof proposed!=="object"||Array.isArray(proposed))return;
+      const keys=["site_name","site_tagline","site_logo_url","hero_title","hero_subtitle",
+        "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"];
+      if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=800))return;
+      const safe=Object.fromEntries(keys.map(k=>[k,proposed[k]]));
+      setSettings(prev=>({...prev,...safe}));
+      setRawSettings(prev=>({...prev,...safe,theme_studio_enabled:"true"}));
+    };
+    window.addEventListener("message",listener);
+    return()=>window.removeEventListener("message",listener);
+  },[]);
 
   useEffect(() => {
     const root = document.documentElement;
