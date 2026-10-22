@@ -1584,28 +1584,48 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .bazunk-cookie-consent .bz-cookie-accept:hover { background-color: #fb923c !important; }
 
 
-/* Bright section headings on dark-mode storefront, seller and admin pages.
-   Header treatments are scoped to content areas, not nav, dialogs or inputs. */
-.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > :is(header,.section-header,.page-header):has(:is(h1,h2,h3)),
-.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > div:first-child:has(> :is(h1,h2)):not(:has(input,textarea,select)) {
-  background:linear-gradient(115deg,#fff7df 0%,#ffdeb0 100%) !important;
-  border:1px solid #fbbf75 !important;
-  color:#102044 !important;
-  border-radius:1rem;
-  padding:1rem 1.25rem;
+
+/* Bazunk dark-mode contrast contract: explicit bright hero + dark type.
+   Shared by storefront, seller dashboard and admin. Do not recolour nested
+   buttons, form controls, page navigation, or entire data tables. */
+.dark .bz-contrast-hero,
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-r:has(> :is(h1,h2,div)),
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-br:has(> :is(h1,h2,div)) {
+  background:#ffdfaa !important;
+  background-image:linear-gradient(115deg,#fff7dc 0%,#ffd9a2 58%,#ffba7b 100%) !important;
+  border:1px solid #f3ac60 !important;
+  color:#152344 !important;
 }
-.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > :is(header,.section-header,.page-header):has(:is(h1,h2,h3)) :is(h1,h2,h3,p,small),
-.dark :is(main,[data-bz-design-area="admin"]) :is(section,article) > div:first-child:has(> :is(h1,h2)):not(:has(input,textarea,select)) :is(h1,h2,h3,p,small) {
-  color:#102044 !important;
+.dark .bz-contrast-hero :is(h1,h2,h3,h4,p,span,small,svg),
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-r:has(> :is(h1,h2,div)) :is(h1,h2,h3,h4,p,span,small,svg),
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-br:has(> :is(h1,h2,div)) :is(h1,h2,h3,h4,p,span,small,svg) {
+  color:#152344 !important;
   opacity:1 !important;
 }
-/* Explicit DealPilot treatment, including its currently hardcoded gradient
-   and solid blue data panels. The dark outer dashboard remains unchanged. */
-.dark [data-testid="deal-pilot-panel"]:not([data-design-custom="true"]) .bz-dp-hero,
-.dark [data-bz-design-area="admin"] .bz-dp-hero:not([data-design-custom="true"]) {
-  background:linear-gradient(110deg,#fff7db,#ffc16a) !important;
-  color:#102044 !important;
+.dark .bz-contrast-hero :is(button,a).bz-contrast-action,
+.dark .bz-contrast-hero > div :is(button,a),
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-r:has(> :is(h1,h2,div)) > div :is(button,a) {
+  background:#c2410c !important;
+  border-color:#9a3412 !important;
+  color:#fff !important;
 }
-.dark [data-bz-design-area="admin"] .bz-dp-hero:not([data-design-custom="true"]) :is(h1,h2,h3,p,span) {
-  color:#102044 !important;
+.dark .bz-contrast-hero :is(button,a).bz-contrast-action :is(span,svg),
+.dark .bz-contrast-hero > div :is(button,a) :is(span,svg),
+.dark :is(main, [data-bz-design-area="admin"]) :is(header, div).rounded-3xl.bg-gradient-to-r:has(> :is(h1,h2,div)) > div :is(button,a) :is(span,svg) {
+  color:#fff !important;
+}
+/* Header rows opt in independently of body surfaces; leave cards and tables intact. */
+.dark .bz-contrast-section-header {
+  background:#17243a !important;
+  border:1px solid #526782 !important;
+  border-radius:1rem;
+  padding:1rem 1.25rem;
+  color:#fff !important;
+}
+.dark .bz-contrast-section-header :is(h1,h2,h3,h4,p,span,small,svg) {
+  color:#fff !important;
+  opacity:1 !important;
+}
+.dark .bz-contrast-section-header :is(button,a) {
+  color:#fff !important;
 }
