@@ -1,6 +1,7 @@
 import { Link } from "wouter";
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
+import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
 import { useCurrency } from "@/context/CurrencyContext";
 import { openCookieSettings } from "@/components/CookieConsent";
 
@@ -11,6 +12,11 @@ export function Footer() {
   const { formatPrice, currency } = useCurrency();
   const s = useSiteSettings();
   const raw=useRawSettings();
+  const studioIcons=parseIconOverrides(raw.icon_overrides);
+  const FacebookIcon=iconForPlacement(studioIcons,"footer_facebook");
+  const TwitterIcon=iconForPlacement(studioIcons,"footer_twitter");
+  const InstagramIcon=iconForPlacement(studioIcons,"footer_instagram");
+  const YoutubeIcon=iconForPlacement(studioIcons,"footer_youtube");
 
   return (
     <footer className="bg-[#07172c] text-white/80 border-t border-sky-400/20">
@@ -20,7 +26,7 @@ export function Footer() {
             <Link href="/" className="inline-block mb-3">
               <img
                 src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url:"/bazunk-logo-header.png"}
-                alt={s.site_name||"Bazunk"}
+                alt={s.site_name||"Bazunk"} data-theme-edit="site_logo_url"
                 className="h-9 md:h-10 w-auto object-contain"
               />
             </Link>
@@ -32,22 +38,22 @@ export function Footer() {
             <div className="flex items-center gap-2.5 mt-4">
               {s.footer_facebook && s.footer_facebook !== "#" && (
                 <a href={s.footer_facebook} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Facebook" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Facebook className="w-3.5 h-3.5" />
+                  <FacebookIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_twitter && s.footer_twitter !== "#" && (
                 <a href={s.footer_twitter} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Twitter" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Twitter className="w-3.5 h-3.5" />
+                  <TwitterIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_instagram && s.footer_instagram !== "#" && (
                 <a href={s.footer_instagram} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Instagram" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Instagram className="w-3.5 h-3.5" />
+                  <InstagramIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_youtube && s.footer_youtube !== "#" && (
                 <a href={s.footer_youtube} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on YouTube" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Youtube className="w-3.5 h-3.5" />
+                  <YoutubeIcon className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
@@ -85,10 +91,10 @@ export function Footer() {
             <h4 className="text-white font-black mb-3 text-sm uppercase tracking-wide">Follow Us</h4>
             <div className="flex flex-wrap gap-2">
               {[
-                {url:s.footer_facebook, Icon:Facebook, label:"Facebook"},
-                {url:s.footer_instagram, Icon:Instagram, label:"Instagram"},
-                {url:s.footer_youtube, Icon:Youtube, label:"YouTube"},
-                {url:s.footer_twitter, Icon:Twitter, label:"Twitter"}
+                {url:s.footer_facebook, Icon:FacebookIcon, label:"Facebook"},
+                {url:s.footer_instagram, Icon:InstagramIcon, label:"Instagram"},
+                {url:s.footer_youtube, Icon:YoutubeIcon, label:"YouTube"},
+                {url:s.footer_twitter, Icon:TwitterIcon, label:"Twitter"}
               ].filter(item => item.url && item.url !== "#").map(({url,Icon,label}) => (
                 <a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label} className="w-9 h-9 flex items-center justify-center rounded-full bg-[#203b63] text-white hover:bg-blue-600 transition-colors"><Icon className="w-4 h-4" /></a>
               ))}
@@ -98,7 +104,7 @@ export function Footer() {
 
         <div className="mt-8 pt-5 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs md:text-sm text-white/45">
-            &copy; {new Date().getFullYear()} Bazunk LLC. All rights reserved.
+            &copy; {new Date().getFullYear()} {s.footer_copyright||"Bazunk Marketplace"} · Bazunk LLC. All rights reserved.
             <span className="block mt-1">2709 N Hayden Island Dr, STE 872346, Portland, Oregon, 97217, USA</span>
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs md:text-sm text-white/80">

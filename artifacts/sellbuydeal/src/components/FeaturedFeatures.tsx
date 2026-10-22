@@ -60,6 +60,8 @@ const TRUST_ITEMS = [
 
 export function FeaturedFeatures() {
   const flags = useRawSettings();
+  const sectionTitle=flags.features_title||"Why Bazunk?";
+  const sectionSubtitle=flags.features_subtitle||"Everything in one place";
   const blocks = FEATURE_BLOCKS.filter(x => isFeatureEnabled(flags, x.feature));
   const trustItems = TRUST_ITEMS.filter(x => isFeatureEnabled(flags, x.feature));
   return (
@@ -74,7 +76,7 @@ export function FeaturedFeatures() {
             viewport={{ once: true }}
             className="text-[#F26B21] text-sm font-semibold uppercase tracking-widest mb-2"
           >
-            Why Bazunk?
+            {sectionTitle}
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 16 }}
@@ -82,7 +84,7 @@ export function FeaturedFeatures() {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
           >
-            Everything in one place
+            {sectionSubtitle}
           </motion.h2>
         </div>
 

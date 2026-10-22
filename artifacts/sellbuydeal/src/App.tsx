@@ -122,7 +122,7 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import IntroSplash from "@/components/IntroSplash";
 import { UserCurrencySync } from "@/components/UserCurrencySync";
 import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
-import { AdminThemeStudioPage } from "@/pages/admin/AdminThemeStudioPage";
+import { AdminDesignCenterPage } from "@/pages/admin/AdminDesignCenterPage";
 import { AdminWordPressDashboard } from "@/pages/admin/AdminWordPressDashboard";
 import { AdminContentPage, AdminAnalyticsPage } from "@/pages/admin/AdminManagementHubs";
 import { AdminMarketingOverviewPage, AdminImporterOverviewPage, AdminSettingsOverviewPage } from "@/pages/admin/AdminOperationsHubs";
@@ -453,8 +453,9 @@ function Router() {
       <Route path="/admin/disputes" component={AdminDisputesPage} />
       <Route path="/admin/returns" component={AdminReturnsPage} />
       <Route path="/admin/auctions" component={AdminAuctionsPage} />
-      <Route path="/admin/design-system" component={AdminDesignSystemPage} />
-      <Route path="/admin/theme-studio" component={AdminThemeStudioPage} />
+      <Route path="/admin/design-system" component={AdminDesignCenterPage} />
+      <Route path="/admin/design-advanced" component={AdminDesignSystemPage} />
+      <Route path="/admin/theme-studio" component={AdminDesignCenterPage} />
       <Route path="/admin/settings"><AdminSettingsPage /></Route>
       <Route path="/admin/emails" component={AdminEmailsPage} />
       <Route path="/auctions/create">{() => <FeatureGate feature="auctions" name="Auctions"><CreateAuctionPage /></FeatureGate>}</Route>

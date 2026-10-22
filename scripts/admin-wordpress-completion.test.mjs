@@ -41,8 +41,10 @@ test("Original marketplace, importer, compliance, refund, and feature routes rem
   assert.ok(app.includes('<Route path="'+route+'"'),"Missing route handler "+route);
  }
 });
-test("Theme Studio remains unchanged while other operations are made consistent",()=>{
- assert.ok(shell.includes('href: "/admin/theme-studio"'));
+test("Old Theme Studio route remains compatible with the new Design Center",()=>{
+ assert.ok(shell.includes('href: "/admin/design-system"'));
+ assert.ok(app.includes('AdminDesignCenterPage'));
+ assert.ok(app.includes('<Route path="/admin/design-advanced"'));
  assert.ok(app.includes('<Route path="/admin/theme-studio"'));
  assert.match(shell,/import "\.\/admin-wordpress-finish\.css"/);
  assert.match(styles,/\.dark \.bazunk-admin-wordpress/);

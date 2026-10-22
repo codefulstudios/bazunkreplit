@@ -19,6 +19,7 @@ import { useMarketplaceRegion, MARKETPLACE_REGION_STORAGE_KEY } from "@/hooks/us
 import { MessageCenterOverlay } from "./MessageCenterOverlay";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRawSettings } from "@/context/SiteSettingsContext";
+import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
@@ -123,6 +124,11 @@ export function Navbar() {
   const { t } = useLanguage();
   const changeCountry = (code: string) => { setCountry(code); };
   const featureSettings = useRawSettings();
+  const studioIcons=parseIconOverrides(featureSettings.icon_overrides);
+  const HomeHeaderIcon=iconForPlacement(studioIcons,"header_home");
+  const SearchHeaderIcon=iconForPlacement(studioIcons,"header_search");
+  const CartHeaderIcon=iconForPlacement(studioIcons,"header_cart");
+  const AccountHeaderIcon=iconForPlacement(studioIcons,"header_account");
   const visibleHref = (href:string) => { const f=featureForHref(href); return !f || isFeatureEnabled(featureSettings,f); };
   const [hiddenCategories,setHiddenCategories]=useState<string[]>([]);
   useEffect(()=>{fetch(`${API_BASE}/api/settings/category-visibility`,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
@@ -306,16 +312,16 @@ export function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url:"/bazunk-logo-header.png"} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
+              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url:"/bazunk-logo-header.png"} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
             </Link>
             <Link
               href="/"
               aria-label="Home"
               title="Home"
-              data-testid="link-home-icon"
+              data-testid="link-home-icon" data-theme-edit="icon_overrides"
               className="hidden 2xl:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
             >
-              <Home className="w-4 h-4" />
+              <HomeHeaderIcon className="w-4 h-4" />
             </Link>
           </div>
 
@@ -405,15 +411,15 @@ export function Navbar() {
             {/* Desktop search */}
             <div ref={searchRef} className="relative hidden lg:block flex-1 min-w-0 max-w-[680px] mr-1">
               <form onSubmit={handleSubmit}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
+                <SearchHeaderIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                 <Input
                   type="search"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSearchOpen(true); }}
                   onFocus={() => query.trim() && setSearchOpen(true)}
-                  placeholder="Search listings..."
+                  placeholder={featureSettings.header_search_placeholder||"Search listings..."}
                   className="w-full min-w-0 pl-10 pr-9 rounded-full bg-gray-100 border border-gray-200 focus-visible:border-[#F26B21]/50 focus-visible:ring-2 focus-visible:ring-[#F26B21]/20 h-11 text-sm"
-                  data-testid="input-search"
+                  data-testid="input-search" data-theme-edit="header_search_placeholder"
                 />
                 {query && (
                   <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600">
@@ -599,9 +605,9 @@ export function Navbar() {
                 <button
                   onClick={openCart}
                   className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center text-gray-600 transition-colors relative"
-                  data-testid="button-cart"
+                  data-testid="button-cart" data-theme-edit="icon_overrides"
                 >
-                  <ShoppingCart className="w-4 h-4" />
+                  <CartHeaderIcon className="w-4 h-4" />
                   {itemCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-xs font-bold flex items-center justify-center leading-none">
                       {itemCount > 9 ? "9+" : itemCount}
@@ -614,12 +620,12 @@ export function Navbar() {
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                    data-testid="button-user-menu"
+                    data-testid="button-user-menu" data-theme-edit="icon_overrides"
                   >
                     <div className="w-7 h-7 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white text-xs font-bold">
                       {initial}
                     </div>
-                    <span className="hidden md:block text-sm font-semibold text-gray-800 max-w-[80px] truncate">{user.username}</span>
+                    <AccountHeaderIcon className="hidden md:block h-4 w-4 text-slate-600" aria-hidden="true"/><span className="hidden md:block text-sm font-semibold text-gray-800 max-w-[80px] truncate">{user.username}</span>
                     <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -717,12 +723,12 @@ export function Navbar() {
               {/* Search */}
               <div className="px-5 py-3 border-b border-gray-100">
                 <form onSubmit={handleSubmit} className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
+                  <SearchHeaderIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                   <input
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search listings..."
+                    placeholder={featureSettings.header_search_placeholder||"Search listings..."}
                     className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-100 border border-slate-300 text-base text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
                     data-testid="input-search-mobile"
                   />

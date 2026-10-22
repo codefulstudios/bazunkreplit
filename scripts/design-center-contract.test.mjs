@@ -3,14 +3,14 @@ import {readFileSync} from "node:fs";
 import {test} from "node:test";
 const read = path => readFileSync(path,"utf8");
 const base="artifacts/sellbuydeal/src/";
-test("Dashboard is first and Design Center has inline sidebar subnavigation",()=>{
+test("Dashboard remains first and Design Center has its own editor navigation",()=>{
  const x=read(base+"pages/admin/AdminLayout.tsx");
  assert.ok(x.indexOf('label: "Dashboard"') < x.indexOf('label: "Design Center"'));
  assert.ok(x.indexOf('label: "Design Center"') < x.indexOf('label: "Users"'));
  assert.match(x,/id:"design"/);
  assert.doesNotMatch(x,/pages:\["Dashboard","Design Center"\]/);
- assert.match(x,/DESIGN_SECTIONS/);
- assert.match(x,/bazunk-design-section/);
+ assert.doesNotMatch(x,/const DESIGN_SECTIONS/);
+ assert.match(read(base+"pages/admin/AdminDesignCenterPage.tsx"),/aria-label="Design Center sections"/);
 });
 test("Design Center consolidates site settings",()=>{
  const x=read(base+"pages/admin/AdminDesignSystemPage.tsx");

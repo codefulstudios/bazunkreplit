@@ -9,12 +9,30 @@ export const publicThemeStudioRouter = Router();
 export const adminThemeStudioRouter = Router();
 
 const keys = [
-  "site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","home_sections_layout","hero_title","hero_subtitle",
-  "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"
+ "site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url",
+ "home_sections_layout","hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary",
+ "footer_about","footer_copyright","footer_facebook","footer_twitter","footer_instagram","footer_youtube",
+ "announcement_enabled","announcement_text","announcement_color",
+ "categories_title","categories_subtitle","features_title","features_subtitle",
+ "header_search_placeholder","seo_title","seo_description","icon_overrides"
 ] as const;
-type ThemeFields = Record<(typeof keys)[number],string>;
+type ThemeFields=Record<(typeof keys)[number],string>;
 const HOME_LAYOUT_DEFAULT=["promoted","live","promos","perks","features","rewards","announcement","ads"].map(id=>({id,enabled:true}));
 const HOME_LAYOUT_IDS=new Set(HOME_LAYOUT_DEFAULT.map(x=>x.id));
+const ICON_PLACEMENTS=["header_home","header_search","header_cart","header_account","footer_facebook","footer_twitter","footer_instagram","footer_youtube"] as const;
+const ICON_TYPES=new Set(["home","search","cart","account","heart","package","store","menu","star","bell","message","mail","globe","categories","facebook","instagram","youtube","twitter","shield"]);
+const DEFAULT_ICONS={
+ header_home:"home",header_search:"search",header_cart:"cart",header_account:"account",
+ footer_facebook:"facebook",footer_twitter:"twitter",footer_instagram:"instagram",footer_youtube:"youtube"
+};
+function validIconOverrides(source:string){
+ try{
+  const value=JSON.parse(source);
+  return value&&typeof value==="object"&&!Array.isArray(value)&&
+   Object.keys(value).sort().join(",")===ICON_PLACEMENTS.slice().sort().join(",")&&
+   ICON_PLACEMENTS.every(k=>typeof value[k]==="string"&&ICON_TYPES.has(value[k]));
+ }catch{return false}
+}
 function validHomeLayout(value:string){
  try{
   const sections=JSON.parse(value);
@@ -24,31 +42,56 @@ function validHomeLayout(value:string){
     Object.keys(x).sort().join(",")==="enabled,id"&&HOME_LAYOUT_IDS.has(x.id)&&typeof x.enabled==="boolean");
  }catch{return false}
 }
-const defaults:ThemeFields = {
-  site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",site_logo_url:"",
-  site_favicon_url:"",hero_image_url:"",home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
-  hero_title:"Buy, Make an Offer & List for Free!",
-  hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
-  hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
-  footer_about:"Buy, Sell, and Save More.",footer_copyright:"Bazunk Marketplace"
+const defaults:ThemeFields={
+ site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",
+ site_logo_url:"",site_favicon_url:"",hero_image_url:"",seo_og_image_url:"",
+ home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
+ hero_title:"Buy, Make an Offer & List for Free!",
+ hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
+ hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
+ footer_about:"Buy, Sell, and Save More.",footer_copyright:"Bazunk Marketplace",
+ footer_facebook:"#",footer_twitter:"#",footer_instagram:"#",footer_youtube:"#",
+ announcement_enabled:"false",announcement_text:"Welcome to Bazunk — buy and sell anything locally!",
+ announcement_color:"#1769ff",
+ categories_title:"Shop by Category",categories_subtitle:"Browse categories across Bazunk",
+ features_title:"Why Bazunk?",features_subtitle:"A marketplace built around trust",
+ header_search_placeholder:"Search listings...",
+ seo_title:"Bazunk - Buy & Sell Anything Locally",
+ seo_description:"The smarter way to buy and sell locally. Free listings, secure checkout, real reviews.",
+ icon_overrides:JSON.stringify(DEFAULT_ICONS)
 };
-const lengths:Record<string,number>={site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,home_sections_layout:600,hero_title:160,
-  hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,footer_about:800,footer_copyright:160};
+const lengths:Record<string,number>={
+ site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,
+ seo_og_image_url:100,home_sections_layout:600,
+ hero_title:160,hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,
+ footer_about:800,footer_copyright:160,
+ footer_facebook:220,footer_twitter:220,footer_instagram:220,footer_youtube:220,
+ announcement_enabled:5,announcement_text:220,announcement_color:7,
+ categories_title:120,categories_subtitle:240,features_title:120,features_subtitle:240,
+ header_search_placeholder:100,seo_title:150,seo_description:320,icon_overrides:300
+};
 const assetPath=/^\/api\/site-media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const assetId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-function validTheme(raw:unknown):raw is ThemeFields {
+const mediaKeys=["site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url"] as const;
+const socialKeys=["footer_facebook","footer_twitter","footer_instagram","footer_youtube"] as const;
+function validTheme(raw:unknown):raw is ThemeFields{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))return false;
  const v=raw as Record<string,unknown>;
  return Object.keys(v).sort().join(",")===keys.slice().sort().join(",")&&keys.every(key=>{
-  const str=v[key];return typeof str==="string"&&str.length<=lengths[key]&&
-   !/[<>\u0000-\u001f]/.test(str)&&
-   (!["site_logo_url","site_favicon_url","hero_image_url"].includes(key)||str===""||assetPath.test(str))&&
-   (key!=="home_sections_layout"||validHomeLayout(str));
+  const str=v[key];
+  return typeof str==="string"&&str.length<=lengths[key]&&
+   !/[<>\u0000-\u0009\u000b-\u001f]/.test(str)&&
+   (!mediaKeys.includes(key as any)||str===""||assetPath.test(str))&&
+   (!socialKeys.includes(key as any)||str==="#"||str===""||/^https:\/\/[^\s]+$/i.test(str))&&
+   (key!=="announcement_enabled"||str==="true"||str==="false")&&
+   (key!=="announcement_color"||/^#[0-9a-fA-F]{6}$/.test(str))&&
+   (key!=="home_sections_layout"||validHomeLayout(str))&&
+   (key!=="icon_overrides"||validIconOverrides(str));
  });
 }
-function normalizeTheme(raw:unknown):ThemeFields|null{
+function normalizeTheme(raw:unknown,base:ThemeFields=defaults):ThemeFields|null{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))return null;
- const candidate={...defaults,...raw};
+ const candidate={...base,...raw};
  return validTheme(candidate)?candidate:null;
 }
 async function mediaTable(){
@@ -60,10 +103,37 @@ async function mediaTable(){
 }
 async function settings(){
  const rows=await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN (
- 'site_name','site_tagline','site_logo_url','site_favicon_url','hero_image_url','home_sections_layout','hero_title','hero_subtitle','hero_cta_primary',
- 'hero_cta_secondary','footer_about','footer_copyright',
- 'theme_studio_draft_v1','theme_studio_history_v1'
- )`);
+  'site_name',
+  'site_tagline',
+  'site_logo_url',
+  'site_favicon_url',
+  'hero_image_url',
+  'seo_og_image_url',
+  'home_sections_layout',
+  'hero_title',
+  'hero_subtitle',
+  'hero_cta_primary',
+  'hero_cta_secondary',
+  'footer_about',
+  'footer_copyright',
+  'footer_facebook',
+  'footer_twitter',
+  'footer_instagram',
+  'footer_youtube',
+  'announcement_enabled',
+  'announcement_text',
+  'announcement_color',
+  'categories_title',
+  'categories_subtitle',
+  'features_title',
+  'features_subtitle',
+  'header_search_placeholder',
+  'seo_title',
+  'seo_description',
+  'icon_overrides',
+  'theme_studio_draft_v1',
+  'theme_studio_history_v1'
+  )`);
  return Object.fromEntries((rows.rows as any[]).map(x=>[String(x.key),String(x.value??"")]));
 }
 async function put(key:string,value:string){
@@ -98,7 +168,7 @@ adminThemeStudioRouter.get("/admin/theme-studio",async(_req,res)=>{
   const draft=parse(rows.theme_studio_draft_v1);
   const history=parse(rows.theme_studio_history_v1);
   res.setHeader("Cache-Control","no-store");
-  res.json({published:current,draft:normalizeTheme(draft)||current,
+  res.json({published:current,draft:normalizeTheme(draft,current)||current,
    history:Array.isArray(history)?history.slice(0,12).map((x:any)=>x&&({...x,fields:normalizeTheme(x.fields)})).filter((x:any)=>x&&x.fields):[]});
  }catch(err){logger.error({err},"Theme Studio read failed");res.status(503).json({error:"Theme Studio is unavailable"})}
 });
@@ -112,7 +182,7 @@ adminThemeStudioRouter.post("/admin/theme-studio/publish",async(req,res)=>{
  const fields=req.body?.fields;
  if(!validTheme(fields)){res.status(400).json({error:"Invalid theme values; check text and selected logo"});return}
  try{
-  const selectedImages=[fields.site_logo_url,fields.site_favicon_url,fields.hero_image_url].filter(Boolean);
+  const selectedImages=mediaKeys.map(key=>fields[key]).filter(Boolean);
   if(selectedImages.length){
    await mediaTable();
    for(const image of selectedImages){
@@ -176,7 +246,7 @@ adminThemeStudioRouter.delete("/admin/theme-studio/media/:id",async(req,res)=>{
   const selected="/api/site-media/"+req.params.id;
   const current=currentFrom(rows),draft=normalizeTheme(parse(rows.theme_studio_draft_v1));
   const history=parse(rows.theme_studio_history_v1);
-  const inUse=(v:ThemeFields)=>[v.site_logo_url,v.site_favicon_url,v.hero_image_url].includes(selected);
+  const inUse=(v:ThemeFields)=>mediaKeys.some(key=>v[key]===selected);
   if(inUse(current)||draft&&inUse(draft)||Array.isArray(history)&&history.some((h:any)=>{const v=normalizeTheme(h?.fields);return v&&inUse(v)})){
    res.status(409).json({error:"This image is used by the published site, a draft or version history. Replace it before deleting."});return
   }
