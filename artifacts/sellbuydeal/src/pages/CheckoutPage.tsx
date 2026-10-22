@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, CheckCircle2,
   Lock, ShoppingBag, Truck, Shield,
-  Package, AlertCircle, Loader2,
+  Package, AlertCircle, Loader2, Trash2, Minus, Plus, Tag,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -46,7 +46,7 @@ const CONDITION_COLORS: Record<string, string> = {
 };
 
 export function CheckoutPage() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, removeFromCart, updateQuantity } = useCart();
   const { getToken } = useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
@@ -60,6 +60,8 @@ export function CheckoutPage() {
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [discountCode,setDiscountCode] = useState("");
+  const [discountMessage,setDiscountMessage] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [recoveryConsent, setRecoveryConsent] = useState(false);
   const [quote,setQuote]=useState<Quote|null>(null);
@@ -119,6 +121,7 @@ export function CheckoutPage() {
     if (placed && user?.email) refreshBalance();
   }, [placed, user?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const editCart=()=>{setCheckoutError(null);setQuote(null);setQuotedKey("");};
   async function handleContinueToPayment() {
     const email = user?.email ?? guestEmail.trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
@@ -278,9 +281,10 @@ export function CheckoutPage() {
 
                 {/* Items */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
-                  <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-[#4A5CE8]" /> Your Items ({items.length})
-                  </h2>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="font-bold text-gray-900 flex items-center gap-2"><ShoppingBag className="w-4 h-4 text-[#4A5CE8]" /> Your Items ({items.length})</h2>
+                    <button type="button" onClick={()=>{if(window.confirm("Remove all items from your basket?")){editCart();clearCart();}}} className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-800 hover:bg-red-100" aria-label="Remove all items from basket" data-testid="checkout-clear-cart"><Trash2 className="h-3.5 w-3.5"/> Clear cart</button>
+                  </div>
                   <div className="space-y-3">
                     {items.map((item) => (
                       <div key={item.product.id} className="flex gap-3 items-center">
@@ -291,10 +295,17 @@ export function CheckoutPage() {
                           <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.product.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
-                            <span className="text-xs text-slate-600">Qty: {item.quantity}</span>
+                            <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white text-slate-950">
+                              <button type="button" onClick={()=>{editCart();if(item.quantity===1)removeFromCart(item.product.id);else updateQuantity(item.product.id,item.quantity-1);}} aria-label={`Decrease quantity of ${item.product.title}`} className="p-1.5 hover:bg-slate-100 rounded-l-lg"><Minus className="h-3 w-3"/></button>
+                              <span className="min-w-5 text-center text-xs font-bold" aria-label={`Quantity: ${item.quantity}`}>{item.quantity}</span>
+                              <button type="button" onClick={()=>{editCart();updateQuantity(item.product.id,item.quantity+1);}} aria-label={`Increase quantity of ${item.product.title}`} className="p-1.5 hover:bg-slate-100 rounded-r-lg"><Plus className="h-3 w-3"/></button>
+                            </div>
                           </div>
                         </div>
-                        <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                          <button type="button" onClick={()=>{editCart();removeFromCart(item.product.id);}} aria-label={`Remove ${item.product.title} from basket`} title="Remove item" className="inline-flex items-center gap-1 text-xs font-bold text-red-700 hover:text-red-900" data-testid={`checkout-remove-${item.product.id}`}><Trash2 className="h-3.5 w-3.5"/> Remove</button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -406,6 +417,15 @@ export function CheckoutPage() {
               </div>
 
 
+              <div className="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3 text-slate-900">
+                <label htmlFor="checkout-discount-code" className="flex items-center gap-2 text-sm font-bold"><Tag className="h-4 w-4"/> Discount or promo code</label>
+                <div className="mt-2 flex gap-2">
+                  <input id="checkout-discount-code" type="text" autoComplete="off" maxLength={64} value={discountCode} onChange={e=>{setDiscountCode(e.target.value);setDiscountMessage("");}} placeholder="Enter a code" className="min-w-0 flex-1 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-600" />
+                  <button type="button" onClick={()=>setDiscountMessage(discountCode.trim()?"Promotion codes are not enabled for Bazunk checkout yet. No discount has been applied.":"Enter a code first.")} className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-bold text-white">Apply</button>
+                </div>
+                {discountMessage&&<p role="status" className="mt-2 text-xs font-semibold text-amber-900">{discountMessage}</p>}
+                <p className="mt-2 text-xs text-slate-700">Codes are not yet supported by the payment system; totals will not change.</p>
+              </div>
               {user?.email && <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 <summary className="cursor-pointer font-semibold">Optional checkout reminder</summary>
                 {user?.email&&<label className="mt-3 flex items-start gap-2 text-xs text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one reminder if I leave checkout unfinished. This does not affect payment.</span></label>}
