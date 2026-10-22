@@ -293,7 +293,21 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     let user=await storage.getUser(email);let stripeCustomerId=user?.stripeCustomerId;
     if(!stripeCustomerId) {const customer=await stripe.customers.create({email,name});await storage.setStripeCustomerId(email,customer.id);stripeCustomerId=customer.id;}
     const origin=resolveOrigin(req);
-    const session=await stripe.checkout.sessions.create({customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment",metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`});
+    const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (error) {
+      // A customer saved under a previous Stripe sandbox or payment mode
+      // does not exist under the current API key. Recover only this specific
+      // Stripe error; never mask other checkout failures.
+      const err = error as { code?: string; param?: string; message?: string };
+      if (err.code !== "resource_missing" || err.param !== "customer") throw error;
+      logger.warn({ email, oldCustomerId: stripeCustomerId }, "Saved Stripe customer not available in current Stripe environment; creating replacement");
+      const replacement = await stripe.customers.create({ email, name });
+      await storage.setStripeCustomerId(email, replacement.id);
+      session = await stripe.checkout.sessions.create({ ...sessionParams, customer: replacement.id });
+    }
     res.json({url:session.url});
   } catch(err) {
     logger.error({err},"Failed to create cart checkout session");
