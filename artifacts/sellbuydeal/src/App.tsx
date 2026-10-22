@@ -120,7 +120,8 @@ import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import IntroSplash from "@/components/IntroSplash";
 import { UserCurrencySync } from "@/components/UserCurrencySync";
 import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
+import { AdminDashboardWordpressPage as AdminDashboardPage } from "@/pages/admin/AdminDashboardWordpressPage";
+import { AdminContentPage, AdminAnalyticsPage } from "@/pages/admin/AdminWorkspacePages";
 import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
 import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
 import { AdminSellerCompliancePage } from "@/pages/admin/AdminSellerCompliancePage";
@@ -414,6 +415,8 @@ function Router() {
       <Route path="/admin" component={AdminLoginPage} />
       <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/dashboard" component={AdminDashboardPage} />
+      <Route path="/admin/content" component={AdminContentPage} />
+      <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
       <Route path="/admin/seller-compliance" component={AdminSellerCompliancePage} />
       <Route path="/seller-compliance" component={SellerCompliancePage} />
