@@ -22,7 +22,6 @@ const NAV = [
   { label: "Importer Overview", href: "/admin/importer-overview", icon: ArrowDownToLine },
   { label: "Settings Overview", href: "/admin/settings-overview", icon: Settings },
   { label: "Design Center", href: "/admin/design-system", icon: Palette },
-  { label: "Theme Studio", href: "/admin/theme-studio", icon: Palette },
   { label: "Content", href: "/admin/content", icon: FileText },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Users",        href: "/admin/users",        icon: Users           },
@@ -65,16 +64,12 @@ const NAV_GROUPS = [
  {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
  {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
- {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center","Theme Studio"]},
+ {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
  {id:"importers",label:"Importers",href:"/admin/importer-overview",icon:ArrowDownToLine,pages:["Importer Overview","Importers","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
  {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
 
-const DESIGN_SECTIONS = [
-  ["assistant","AI Design Assistant"],["themes","Theme Gallery"],["preview","Live Preview"],
-  ["colours","Colours"],["components","Admin Appearance"],["content","Pages & Branding"],["history","History & Restore"]
-] as const;
 let savedAdminExpandedGroups: Record<string,boolean> = {};
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -154,7 +149,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     </div>
     {expanded&&!sidebarCollapsed&&<div id={`admin-nav-${group.id}`} className="admin-nav-pages wp-nav-children">
      {children.map(n=><button type="button" key={n.href} onClick={()=>{setLocation(n.href);setMenuOpen(false)}} aria-current={location===n.href?"page":undefined} className={"admin-nav-link wp-nav-child "+(location===n.href?"wp-nav-child-active":"")}>{n.label}</button>)}
-     {group.id==="design"&&DESIGN_SECTIONS.map(([id,label])=><button key={id} type="button" data-design-section={id} onClick={()=>{setLocation("/admin/design-system");window.dispatchEvent(new CustomEvent("bazunk-design-section",{detail:id}));setMenuOpen(false)}} className="admin-design-submenu-link wp-nav-child">{label}</button>)}
+     
     </div>}
    </div>;
  })}
