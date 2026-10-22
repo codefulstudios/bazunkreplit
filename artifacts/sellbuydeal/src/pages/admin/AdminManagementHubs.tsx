@@ -12,14 +12,14 @@ export function AdminContentPage(){
  const [,go]=useLocation();
  const links=[
   {title:"Email templates",desc:"Edit buyer and seller notifications",href:"/admin/emails",icon:Mail},
-  {title:"Pages & branding",desc:"Edit existing page presentation and shared design",href:"/admin/design-system",icon:Palette},
+  {title:"Theme Studio",desc:"Edit logo, homepage copy and footer with live preview",href:"/admin/theme-studio",icon:Palette},
   {title:"Homepage and section appearance",desc:"Open Design Center to edit visual sections",href:"/admin/design-system",icon:FileText},
   {title:"Marketplace settings",desc:"Manage site policies and configuration",href:"/admin/settings",icon:Settings}
  ];
  return <AdminLayout><AdminPageHeader title="Content" description="A simpler starting point for the website content tools already available in Bazunk."/>
   <AdminPanel title="Content management" subtitle="Select the editor you need. Existing settings and saved content remain unchanged.">
    <div className="grid gap-3 sm:grid-cols-2">{links.map(link=><button key={link.title} type="button" onClick={()=>go(link.href)} className="wp-shortcut min-h-[85px]"><link.icon size={22}/><span><strong>{link.title}</strong><small>{link.desc}</small></span><ArrowUpRight size={17} className="ml-auto"/></button>)}</div>
-   <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">A full media library and drag-and-drop page editor are future additions; this page does not claim they exist yet.</p>
+   <p className="mt-4 text-xs font-semibold text-slate-600 dark:text-slate-300">Theme Studio includes a branding Media Library, draft publishing and history. Drag-and-drop page layouts remain planned.</p>
   </AdminPanel></AdminLayout>;
 }
 export function AdminAnalyticsPage(){
