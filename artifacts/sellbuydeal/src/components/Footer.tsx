@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
