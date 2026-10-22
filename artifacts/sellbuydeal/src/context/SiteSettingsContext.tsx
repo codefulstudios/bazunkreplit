@@ -7,6 +7,9 @@ const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL|
 export interface SiteSettings {
   site_name: string;
   site_logo_url: string;
+  site_favicon_url: string;
+  hero_image_url: string;
+  home_sections_layout: string;
   site_tagline: string;
   primary_color: string;
   secondary_color: string;
@@ -43,6 +46,9 @@ export interface SiteSettingsContextValue {
 const DEFAULTS: SiteSettings = {
   site_name: "Bazunk",
   site_logo_url: "",
+  site_favicon_url: "",
+  hero_image_url: "",
+  home_sections_layout: "",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
   secondary_color: "#4A5CE8",
@@ -110,7 +116,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         event.data?.type!=="bazunk:theme-preview-settings")return;
       const proposed=event.data?.settings;
       if(!proposed||typeof proposed!=="object"||Array.isArray(proposed))return;
-      const keys=["site_name","site_tagline","site_logo_url","hero_title","hero_subtitle",
+      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","home_sections_layout","hero_title","hero_subtitle",
         "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"];
       if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=800))return;
       const safe=Object.fromEntries(keys.map(k=>[k,proposed[k]]));
@@ -127,6 +133,20 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     root.style.setProperty("--brand-secondary", settings.secondary_color);
     if (settings.seo_title) document.title = settings.seo_title;
   }, [settings.primary_color, settings.secondary_color, settings.seo_title]);
+
+  // Theme Studio favicons are sourced from the authenticated media library
+  // after publication, or inside the private preview iframe.
+  useEffect(()=>{
+    const asset=settings.site_favicon_url;
+    const selector='link[data-bazunk-theme-favicon="true"]';
+    let icon=document.head.querySelector<HTMLLinkElement>(selector);
+    if(!asset||!/^\\/api\\/site-media\\/[a-f0-9-]{36}$/i.test(asset)){
+      icon?.remove();return;
+    }
+    if(!icon){icon=document.createElement("link");icon.rel="icon";icon.dataset.bazunkThemeFavicon="true";document.head.appendChild(icon);}
+    icon.href=API_BASE+asset;
+    return()=>{icon?.remove()};
+  },[settings.site_favicon_url]);
 
   useEffect(() => {
     const apply=()=>{
