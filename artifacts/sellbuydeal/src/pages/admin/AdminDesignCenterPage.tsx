@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useLocation} from "wouter";
-import {Home,PanelTop,PanelBottom,Palette,Type,Shapes,Search,Image as ImageIcon,Layers3,History,LayoutTemplate,Monitor,Smartphone,Save,Upload,ExternalLink,ArrowUp,ArrowDown,GripVertical,Eye,EyeOff,ChevronRight,CheckCircle2,AlertCircle,Trash2,RefreshCw,ShoppingBag,WandSparkles,Globe,Package,Link as LinkIcon} from "lucide-react";
+import {Home,PanelTop,PanelBottom,Palette,Type,Shapes,Search,Image as ImageIcon,Layers3,History,LayoutTemplate,Monitor,Smartphone,Save,Upload,ExternalLink,ArrowUp,ArrowDown,GripVertical,Eye,ChevronRight,CheckCircle2,AlertCircle,Trash2,RefreshCw,ShoppingBag} from "lucide-react";
 import {AdminLayout} from "./AdminLayout";
 import {useAdmin} from "@/context/AdminContext";
 import {parseHomeSections,OPTIONAL_HOME_SECTIONS,HOME_SECTIONS_DEFAULT_JSON,type HomeSectionEntry} from "@/design-system/homepageSections";
@@ -152,6 +152,7 @@ export function AdminDesignCenterPage(){
    const field=String(event.data.field||""),section=String(event.data.section||"");
    if(field==="site_logo_url"){changeTab("branding");setMediaTarget("site_logo_url")}
    else if(field==="footer_about")changeTab("footer");
+   else if(field==="header_search_placeholder")changeTab("header");
    else if(field==="icon_overrides")changeTab("icons");
    else if(field){changeTab("homepage");setActiveBlock("hero")}
    else if(section){changeTab("homepage");setActiveBlock(section)}
