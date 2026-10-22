@@ -68,7 +68,6 @@ export function AdminThemeStudioPage(){
   setBusy(true);setError("");try{await saveDraft()}catch(e){setError(e instanceof Error?e.message:"Saving failed")}finally{setBusy(false)}
  }
  async function publish(){
-  if(!window.confirm("Publish these branding and page text changes to Bazunk?"))return;
   setBusy(true);setError("");setNotice("");
   try{
    const response=await authFetch("/api/admin/theme-studio/publish",{method:"POST",body:JSON.stringify({fields:draft})});
@@ -115,8 +114,8 @@ export function AdminThemeStudioPage(){
   <AdminPageHeader title="Theme Studio" description="Change branding, homepage wording and footer content without writing code. Preview drafts before publishing."/>
   <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#17243a]">
    <AdminAction variant="secondary" onClick={()=>void performSave()} disabled={loading||busy} icon={Save}>Save draft</AdminAction>
-   <AdminAction variant="primary" onClick={()=>void publish()} disabled={loading||busy} icon={Check}>{busy?"Working…":"Publish changes"}</AdminAction>
-   <span className="ml-auto text-xs font-semibold text-slate-600 dark:text-slate-300" role="status">{auto}</span>
+   <AdminAction variant="primary" onClick={()=>void publish()} disabled={loading||busy||JSON.stringify(draft)===JSON.stringify(published)} icon={Check}>{busy?"Working…":"Publish changes"}</AdminAction>
+   <span className="ml-auto text-xs font-semibold text-slate-600 dark:text-slate-300" role="status">{JSON.stringify(draft)!==JSON.stringify(published)?"Unpublished changes · ":""}{auto}</span>
   </div>
   {error&&<div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-100">{error}</div>}
   {notice&&<p role="status" className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-900 dark:border-blue-700 dark:bg-[#213d60] dark:text-white">{notice}</p>}
