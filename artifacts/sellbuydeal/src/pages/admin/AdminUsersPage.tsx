@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
+import { AdminManagementHeader, AdminStatusTabs, AdminMetric } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
 
 interface User {
@@ -270,28 +271,19 @@ export function AdminUsersPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Users Management</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{total} registered users</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={syncUsers} disabled={syncing}
-            title="Import everyone from Clerk and from past listings, purchases and tickets"
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Sync users
-          </button>
-          <button onClick={() => { setAddOpen(true); setAddError(""); }}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-[#4A5CE8] text-white hover:opacity-90">
-            <UserPlus className="w-3.5 h-3.5" /> Add user
-          </button>
-          <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-40 p-2">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
-
+      <AdminManagementHeader title="Customers" description="Manage marketplace accounts, seller access, credits and customer activity." meta={<span>{total.toLocaleString("en-GB")} matching accounts</span>} actions={<>
+        <button type="button" onClick={syncUsers} disabled={syncing} title="Synchronise users from Clerk and marketplace activity" className="wp-action wp-action-secondary">{syncing?<Loader2 className="h-4 w-4 animate-spin"/>:<Download className="h-4 w-4"/>}Sync users</button>
+        <button type="button" onClick={()=>{setAddOpen(true);setAddError("")}} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/>Add customer</button>
+        <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-secondary" aria-label="Refresh customers"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/></button>
+      </>}/>
+      <section aria-label="Account summary" className="wp-management-metrics grid gap-3 sm:grid-cols-3">
+        <AdminMetric label="Accounts loaded" value={users.length} icon={UserPlus} tone="blue"/>
+        <AdminMetric label="Active in current results" value={users.filter(u=>!u.banned).length} icon={CheckCircle} tone="green"/>
+        <AdminMetric label="Suspended in current results" value={users.filter(u=>u.banned).length} icon={Ban} tone="orange"/>
+      </section>
+      <AdminStatusTabs label="Customer account status" value={accountFilter} onChange={x=>{setAccountFilter(x as typeof accountFilter);setSelectedUserIds([])}} options={[
+        {value:"all",label:"All customers"},{value:"active",label:"Active"},{value:"suspended",label:"Suspended"}
+      ]}/>
       {loadError && (
         <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {loadError}
@@ -313,11 +305,6 @@ export function AdminUsersPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <label className="text-sm font-bold text-slate-800 dark:text-white">Account
-          <select value={accountFilter} onChange={e=>{setAccountFilter(e.target.value as typeof accountFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-            <option value="all">All accounts</option><option value="active">Active</option><option value="suspended">Suspended</option>
-          </select>
-        </label>
         <label className="text-sm font-bold text-slate-800 dark:text-white">Seller
           <select value={sellerFilter} onChange={e=>{setSellerFilter(e.target.value as typeof sellerFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
             <option value="all">All types</option><option value="private">Private</option><option value="business">Business / trader</option>
@@ -327,7 +314,7 @@ export function AdminUsersPage() {
       </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
-      <div className="admin-users-table bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="admin-users-table wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto bz-table-scroll">
           <table className="w-full text-sm bz-data-table">
             <thead>

@@ -1,0 +1,137 @@
+/* Phase 2 — consistent operational pages built on the approved WordPress-style shell.
+ * Scoped to admin, with distinct light/dark tokens and visible action/focus states.
+ */
+.bazunk-admin-wordpress{
+ --wp-operations-card:#ffffff;
+ --wp-operations-soft:#f5f8fc;
+ --wp-operations-ink:#14233e;
+ --wp-operations-muted:#52647a;
+ --wp-operations-border:#d9e3ef;
+ --wp-operations-accent:#1769ff;
+}
+.dark .bazunk-admin-wordpress{
+ --wp-operations-card:#16253c;
+ --wp-operations-soft:#20344e;
+ --wp-operations-ink:#f6f9ff;
+ --wp-operations-muted:#cbd8eb;
+ --wp-operations-border:#3a506b;
+ --wp-operations-accent:#a2c8ff;
+}
+.bazunk-admin-wordpress .wp-management-header{
+ display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+ margin:0 0 20px;min-width:0
+}
+.bazunk-admin-wordpress .wp-management-header h1{
+ margin:0;font-size:clamp(25px,2.5vw,32px);line-height:1.16;font-weight:800;
+ color:var(--wp-operations-ink);letter-spacing:-.035em
+}
+.bazunk-admin-wordpress .wp-management-header p{
+ margin-top:7px;font-size:14px;line-height:1.55;
+ color:var(--wp-operations-muted);font-weight:500
+}
+.bazunk-admin-wordpress .wp-management-meta{
+ margin-top:8px;font-size:12px;font-weight:650;color:var(--wp-operations-muted)
+}
+.bazunk-admin-wordpress .wp-management-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.bazunk-admin-wordpress .wp-management-actions .wp-action{min-height:40px}
+.bazunk-admin-wordpress .wp-status-tabs{
+ display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+ width:100%;min-width:0;padding:10px;border:1px solid var(--wp-operations-border);
+ border-radius:12px;background:var(--wp-operations-card);margin:0 0 16px;
+ box-shadow:0 1px 3px rgb(15 23 42 / 3%)
+}
+.bazunk-admin-wordpress .wp-status-tabs .wp-status-tab{
+ display:inline-flex;min-height:36px;align-items:center;gap:7px;justify-content:center;
+ border:1px solid transparent;border-radius:7px;padding:7px 12px;
+ background:transparent;color:var(--wp-operations-ink);font-size:12px;font-weight:700;
+ text-transform:capitalize;cursor:pointer;transition:background .15s,border-color .15s
+}
+.bazunk-admin-wordpress .wp-status-tabs .wp-status-tab:hover{
+ border-color:var(--wp-operations-border);background:var(--wp-operations-soft)
+}
+.bazunk-admin-wordpress .wp-status-tabs .wp-status-tab.wp-status-active,
+.bazunk-admin-wordpress .wp-status-tabs .wp-status-tab[aria-pressed="true"]{
+ background:#eaf2ff!important;border-color:#1769ff!important;color:#1152c5!important;
+ box-shadow:inset 0 -2px #1769ff
+}
+.dark .bazunk-admin-wordpress .wp-status-tabs .wp-status-tab.wp-status-active,
+.dark .bazunk-admin-wordpress .wp-status-tabs .wp-status-tab[aria-pressed="true"]{
+ background:#284872!important;border-color:#80b5ff!important;color:#fff!important;
+ box-shadow:inset 0 -2px #80b5ff
+}
+.bazunk-admin-wordpress .wp-status-count{
+ display:inline-flex;min-width:22px;align-items:center;justify-content:center;
+ border-radius:5px;background:var(--wp-operations-soft);padding:1px 5px;
+ font-size:11px;color:var(--wp-operations-ink)
+}
+.bazunk-admin-wordpress .wp-management-metrics{margin:0 0 18px}
+.bazunk-admin-wordpress .wp-management-metrics .wp-metric{
+ min-width:0;min-height:111px;background:var(--wp-operations-card)!important;
+ border:1px solid var(--wp-operations-border)!important;border-radius:12px!important;
+ box-shadow:0 2px 8px rgb(15 23 42 / 4%)!important
+}
+.bazunk-admin-wordpress .wp-management-table-card,
+.bazunk-admin-wordpress .admin-users-table.wp-management-table-card{
+ border:1px solid var(--wp-operations-border)!important;
+ border-radius:12px!important;background:var(--wp-operations-card)!important;
+ box-shadow:0 1px 7px rgb(15 23 42 / 4%)!important;overflow:hidden
+}
+.bazunk-admin-wordpress .wp-management-table-card table,
+.bazunk-admin-wordpress .admin-users-table table{border-collapse:collapse;min-width:700px;width:100%}
+.bazunk-admin-wordpress .wp-management-table-card thead,
+.bazunk-admin-wordpress .admin-users-table thead{background:var(--wp-operations-soft)!important}
+.bazunk-admin-wordpress .wp-management-table-card th,
+.bazunk-admin-wordpress .admin-users-table th{
+ color:var(--wp-operations-muted)!important;
+ font-size:11px!important;font-weight:800!important;
+ letter-spacing:.025em;text-transform:uppercase;white-space:nowrap;
+ border-bottom:1px solid var(--wp-operations-border)
+}
+.bazunk-admin-wordpress .wp-management-table-card td,
+.bazunk-admin-wordpress .admin-users-table td{
+ color:var(--wp-operations-ink);font-size:13px;
+ border-bottom:1px solid var(--wp-operations-border)
+}
+.bazunk-admin-wordpress .wp-management-table-card tbody tr:hover,
+.bazunk-admin-wordpress .admin-users-table tbody tr:hover{
+ background:var(--wp-operations-soft)!important
+}
+.bazunk-admin-wordpress :is(.admin-listings-page,.admin-orders-page,.admin-compliance-page,.admin-users-table) :is(input,select,textarea){
+ border-color:#8ea0b8;
+}
+.bazunk-admin-wordpress :is(.admin-listings-page,.admin-orders-page,.admin-compliance-page) :is(input:not([type=checkbox]),select,textarea){
+ background-color:var(--wp-operations-card);
+ color:var(--wp-operations-ink);
+}
+.bazunk-admin-wordpress :is(.admin-listings-page,.admin-orders-page,.admin-compliance-page,.admin-users-table) :is(input,textarea)::placeholder{
+ color:var(--wp-operations-muted);opacity:1
+}
+.bazunk-admin-wordpress .wp-management-page :is(button,input,textarea,select):focus-visible,
+.bazunk-admin-wordpress .wp-management-header :is(button,input,select):focus-visible,
+.bazunk-admin-wordpress .wp-status-tabs button:focus-visible{
+ outline:3px solid #1769ff!important;outline-offset:2px
+}
+.dark .bazunk-admin-wordpress .wp-management-page :is(button,input,textarea,select):focus-visible,
+.dark .bazunk-admin-wordpress .wp-management-header :is(button,input,select):focus-visible,
+.dark .bazunk-admin-wordpress .wp-status-tabs button:focus-visible{
+ outline-color:#93c5fd!important
+}
+/* Standardise empty and modal surfaces without removing native transaction controls. */
+.dark .bazunk-admin-wordpress .admin-orders-page .bg-white,
+.dark .bazunk-admin-wordpress .admin-compliance-page .bg-white,
+.dark .bazunk-admin-wordpress .admin-listings-page .bg-white{
+ background-color:var(--wp-operations-card)!important;
+ color:var(--wp-operations-ink)
+}
+.dark .bazunk-admin-wordpress :is(.admin-listings-page,.admin-orders-page,.admin-compliance-page,.admin-users-table) .text-gray-400,
+.dark .bazunk-admin-wordpress :is(.admin-listings-page,.admin-orders-page,.admin-compliance-page,.admin-users-table) .text-gray-500{
+ color:var(--wp-operations-muted)!important
+}
+@media(max-width:767px){
+ .bazunk-admin-wordpress .wp-management-header{align-items:flex-start;gap:12px}
+ .bazunk-admin-wordpress .wp-management-actions{width:100%}
+ .bazunk-admin-wordpress .wp-management-actions .wp-action{flex:1;justify-content:center}
+ .bazunk-admin-wordpress .wp-status-tabs{padding:7px;gap:3px;overflow-x:auto;flex-wrap:nowrap}
+ .bazunk-admin-wordpress .wp-status-tabs .wp-status-tab{white-space:nowrap;padding:7px 10px}
+ .bazunk-admin-wordpress .wp-management-metrics .wp-metric{min-height:95px}
+}

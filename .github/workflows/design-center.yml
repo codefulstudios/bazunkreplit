@@ -10,6 +10,7 @@ on:
       - 'artifacts/api-server/src/routes/admin.ts'
       - 'scripts/design-center-contract.test.mjs'
       - 'scripts/admin-wordpress-phase1.test.mjs'
+      - 'scripts/admin-wordpress-phase2.test.mjs'
       - 'artifacts/sellbuydeal/src/components/admin/AdminUi.tsx'
       - 'artifacts/sellbuydeal/src/App.tsx'
       - 'scripts/admin-control-light-dark.test.mjs'

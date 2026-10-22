@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminLayout } from "./AdminLayout";
 import { AdminComplianceCaseHistory } from "@/components/admin/AdminComplianceCaseHistory";
+import { AdminManagementHeader, AdminStatusTabs, AdminMetric } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
-import { RefreshCw, ShieldCheck } from "lucide-react";
+import { RefreshCw, ShieldCheck, Users, AlertTriangle } from "lucide-react";
 
 type Appeal = {id:number;case_id:number;seller_email:string;explanation:string;status:string;created_at:string};
 type Case = { id:number; seller_email:string; status:string; risk_score:number|null; risk_band:string|null; risk_reasons:{code:string;points:number;detail:string}[]; updated_at:string; opened_at:string };
@@ -61,11 +62,19 @@ export function AdminSellerCompliancePage() {
       setReason(x=>({...x,[c.id]:""}));await load();
     }catch(e:any){setError(e.message||"Unable to save");}finally{setBusy(null);}
   }
-  return <AdminLayout><div className="admin-compliance-page mx-auto max-w-6xl space-y-6 p-4 text-slate-950 dark:text-white sm:p-8">
-    <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="h-7 w-7"/>Seller Compliance</h1><p className="text-sm text-slate-700 dark:text-slate-200 mt-1">Review commercial activity signals. Scores are advisory; never automatically reclassify sellers.</p></div><div className="flex gap-2"><button onClick={()=>void scan()} disabled={scanning} className="rounded-lg bg-indigo-700 px-4 py-2 text-white disabled:opacity-50">{scanning?"Scanning…":"Scan sellers"}</button><button onClick={()=>void load()} disabled={loading} className="rounded-lg border border-slate-500 bg-slate-800 px-4 py-2 text-white hover:bg-slate-700 dark:border-slate-400 dark:!bg-[#334d73] dark:!text-white dark:hover:!bg-[#47668f] disabled:opacity-65 flex gap-2 items-center"><RefreshCw className="h-4 w-4"/>Refresh</button></div></div>
-    <div className="flex flex-wrap gap-2">{statuses.map(x=><button key={x} onClick={()=>setStatus(x)} className={`rounded-lg border px-3 py-2 text-sm capitalize ${status===x?"bg-indigo-700 text-white border-indigo-700 dark:!bg-[#5265cc] dark:!text-white":"bg-white text-slate-900 border-slate-400 dark:!bg-[#243956] dark:!text-white dark:!border-[#7188aa] hover:bg-slate-100 dark:hover:!bg-[#354d70]"}`}>{x.replaceAll("_"," ")}</button>)}</div>
+  return <AdminLayout><div className="admin-compliance-page wp-management-page wp-sellers-page mx-auto max-w-7xl space-y-5 text-slate-950 dark:text-white">
+    <AdminManagementHeader title="Sellers" description="Review seller compliance, verification, appeals and commercial-activity signals. Risk scores are advisory." actions={<>
+      <button type="button" onClick={()=>void scan()} disabled={scanning} className="wp-action wp-action-primary"><ShieldCheck className="h-4 w-4"/>{scanning?"Scanning…":"Scan sellers"}</button>
+      <button type="button" onClick={()=>void load()} disabled={loading} className="wp-action wp-action-secondary"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh</button>
+    </>}/>
+    <section className="wp-management-metrics grid gap-3 sm:grid-cols-3" aria-label="Seller compliance summary">
+      <AdminMetric label="Cases in current view" value={cases.length} icon={Users}/>
+      <AdminMetric label="Pending appeals" value={appeals.filter(a=>a.status==="pending").length} icon={AlertTriangle} tone="orange"/>
+      <AdminMetric label="Under review in current view" value={cases.filter(c=>c.status==="under_review").length} icon={ShieldCheck} tone="violet"/>
+    </section>
+    <AdminStatusTabs label="Seller compliance case status" value={status} onChange={setStatus} options={statuses.map(x=>({value:x,label:x==="all"?"All cases":x.replaceAll("_"," ")}))}/>
     {error&&<p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-800">{error}</p>}
-    <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-600 dark:bg-[#172541] space-y-3"><h2 className="text-lg font-bold">Seller appeals</h2>
+    <section className="wp-management-table-card rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-600 dark:bg-[#172541] space-y-3"><h2 className="text-lg font-bold">Seller appeals</h2>
       {appeals.filter(a=>a.status==="pending").length===0?<p className="text-sm text-slate-700 dark:text-slate-200">No pending appeals.</p>:appeals.filter(a=>a.status==="pending").map(a=><div key={a.id} className="rounded-lg border p-3 space-y-2">
         <p className="font-semibold">{a.seller_email} · Case #{a.case_id}</p><p className="whitespace-pre-wrap text-sm">{a.explanation}</p>
         <textarea rows={2} className="w-full rounded-lg border border-gray-300 bg-white p-2 text-gray-900" placeholder="Document decision rationale (20+ characters)" value={reason[-a.id]||""} onChange={e=>setReason(x=>({...x,[-a.id]:e.target.value}))}/>
