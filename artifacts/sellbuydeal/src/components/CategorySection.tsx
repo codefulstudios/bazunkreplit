@@ -27,6 +27,7 @@ export function CategorySection() {
  return <section className="bg-white dark:bg-slate-950 py-12 border-y border-slate-200 dark:border-slate-800">
   <div className="max-w-6xl mx-auto px-4">
    <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">{s.categories_title||"Shop by Category"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-300 hover:underline">All categories <ArrowRight className="w-4 h-4"/></Link></div>
+   <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">{s.categories_subtitle}</p>
    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
     {categories.map(({name,slug,icon:Icon,image},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
       <Link href={`/browse?category=${slug}`} className="bz-category-card group block h-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-400 hover:shadow-md focus-visible:ring-2 focus-visible:ring-orange-500 transition-all">
