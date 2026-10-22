@@ -13,16 +13,6 @@ const keys = [
   "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright"
 ] as const;
 type ThemeFields = Record<(typeof keys)[number],string>;
-const defaults:ThemeFields = {
-  site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",site_logo_url:"",
-  site_favicon_url:"",hero_image_url:"",home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
-  hero_title:"Buy, Make an Offer & List for Free!",
-  hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
-  hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
-  footer_about:"Buy, Sell, and Save More.",footer_copyright:"Bazunk Marketplace"
-};
-const lengths:Record<string,number>={site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,home_sections_layout:600,hero_title:160,
-  hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,footer_about:800,footer_copyright:160};
 const HOME_LAYOUT_DEFAULT=["promoted","live","promos","perks","features","rewards","announcement","ads"].map(id=>({id,enabled:true}));
 const HOME_LAYOUT_IDS=new Set(HOME_LAYOUT_DEFAULT.map(x=>x.id));
 function validHomeLayout(value:string){
@@ -34,6 +24,16 @@ function validHomeLayout(value:string){
     Object.keys(x).sort().join(",")==="enabled,id"&&HOME_LAYOUT_IDS.has(x.id)&&typeof x.enabled==="boolean");
  }catch{return false}
 }
+const defaults:ThemeFields = {
+  site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",site_logo_url:"",
+  site_favicon_url:"",hero_image_url:"",home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
+  hero_title:"Buy, Make an Offer & List for Free!",
+  hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
+  hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
+  footer_about:"Buy, Sell, and Save More.",footer_copyright:"Bazunk Marketplace"
+};
+const lengths:Record<string,number>={site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,home_sections_layout:600,hero_title:160,
+  hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,footer_about:800,footer_copyright:160};
 const assetPath=/^\/api\/site-media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const assetId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function validTheme(raw:unknown):raw is ThemeFields {
