@@ -2,6 +2,7 @@ import "./admin-theme.css";
 import "./modern-blue-admin.css";
 import "./admin-wordpress.css";
 import "./admin-wordpress-phase2.css";
+import "./admin-wordpress-finish.css";
 import {ADMIN_COMPONENT_KEY,DEFAULT_COMPONENT_STYLE,validateAdminComponentStyle} from "./AdminComponentEditor";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -17,6 +18,9 @@ import { useAdmin } from "@/context/AdminContext";
 
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
+  { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
+  { label: "Importer Overview", href: "/admin/importer-overview", icon: ArrowDownToLine },
+  { label: "Settings Overview", href: "/admin/settings-overview", icon: Settings },
   { label: "Design Center", href: "/admin/design-system", icon: Palette },
   { label: "Theme Studio", href: "/admin/theme-studio", icon: Palette },
   { label: "Content", href: "/admin/content", icon: FileText },
@@ -59,12 +63,12 @@ const NAV_GROUPS = [
  {id:"customers",label:"Customers",href:"/admin/users",icon:Users,pages:["Users"]},
  {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
  {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
- {id:"marketing",label:"Marketing",href:"/admin/promotions",icon:Megaphone,pages:["Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
+ {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center","Theme Studio"]},
- {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Importer Control"]},
+ {id:"importers",label:"Importers",href:"/admin/importer-overview",icon:ArrowDownToLine,pages:["Importer Overview","Importers","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
- {id:"settings",label:"Settings",href:"/admin/settings",icon:Settings,pages:["Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
+ {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
 
 const DESIGN_SECTIONS = [
@@ -138,7 +142,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
    if(q&&!group.label.toLowerCase().includes(q)&&!pages.some(n=>n.label.toLowerCase().includes(q)))return null;
    const active=location===group.href||pages.some(n=>location===n.href||location.startsWith(n.href+"/"));
    const expanded=!!q||!!expandedGroups[group.id];
-   const Icon=group.icon;const children=pages.filter(n=>n.href!==group.href);
+   const Icon=group.icon;const children=pages.filter(n=>n.href!==group.href&&(!q||group.label.toLowerCase().includes(q)||n.label.toLowerCase().includes(q)));
    return <div key={group.id} className="admin-nav-group wp-nav-group">
     <div className="wp-nav-item">
      <button type="button" onClick={()=>{setMenuOpen(false);setLocation(group.href)}} aria-current={active?"page":undefined} className={"admin-nav-link wp-nav-link "+(active?"wp-nav-active":"")}>
