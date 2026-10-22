@@ -130,8 +130,22 @@ export function AdminThemeStudioPage(){
   iframe.current.contentWindow.postMessage({type:"bazunk:theme-preview-settings",settings:draft},window.location.origin);
  };
  useEffect(()=>{if(!ready)return;sendPreview()},[draft,ready,screen]);
+ useEffect(()=>{
+  const select=(event:MessageEvent)=>{
+   if(event.origin!==window.location.origin||event.source!==iframe.current?.contentWindow||event.data?.type!=="bazunk:theme-preview-select")return;
+   const field=String(event.data?.field||"");
+   const block=String(event.data?.section||"");
+   if(["hero_title","hero_subtitle"].includes(field)){setSection("homepage");setNotice("Hero text selected. Edit it in Homepage content.")}
+   else if(field==="footer_about"){setSection("footer");setNotice("Footer text selected. Edit it in Footer.")}
+   else if(block){setSection("builder");setNotice("Selected "+block+". Change its order or visibility in Homepage builder.")}
+   if(field){window.setTimeout(()=>document.querySelector<HTMLInputElement>('[data-studio-field="'+field+'"]')?.focus(),60);}
+  };
+  window.addEventListener("message",select);
+  return()=>window.removeEventListener("message",select);
+ },[]);
+
  const textInput=(key:keyof Fields,label:string,description?:string,max=180,rows=1)=><label className={labelClass}>{label}
-  {rows===1?<input className={textClass} value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>:<textarea rows={rows} className={textClass} value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>}
+  {rows===1?<input data-studio-field={key} className={textClass} value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>:<textarea data-studio-field={key} rows={rows} className={textClass} value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>}
   {description&&<span className="mt-1 block text-xs font-normal text-slate-600 dark:text-slate-300">{description}</span>}
  </label>;
  return <AdminLayout><div className="wp-theme-studio space-y-5">
@@ -224,7 +238,7 @@ export function AdminThemeStudioPage(){
    </section>
    <section aria-label="Live website preview" className="min-w-0 self-start lg:col-span-2 xl:col-span-1 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#17243a]">
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-     <div><h2 className="font-bold text-slate-900 dark:text-white">Live preview</h2><p className="text-xs text-slate-600 dark:text-slate-300">Private preview — not published</p></div>
+     <div><h2 className="font-bold text-slate-900 dark:text-white">Live preview</h2><p className="text-xs text-slate-600 dark:text-slate-300">Private preview — click hero text, footer text or a homepage section to edit</p></div>
      <div className="flex items-center gap-1"><button type="button" aria-pressed={screen==="desktop"} onClick={()=>setScreen("desktop")} className={"rounded p-2 "+(screen==="desktop"?"bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-white":"text-slate-600 dark:text-white")} aria-label="Desktop preview"><Monitor className="h-4 w-4"/></button><button type="button" aria-pressed={screen==="mobile"} onClick={()=>setScreen("mobile")} className={"rounded p-2 "+(screen==="mobile"?"bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-white":"text-slate-600 dark:text-white")} aria-label="Mobile preview"><Smartphone className="h-4 w-4"/></button></div>
     </div>
     <div className="flex justify-center overflow-auto rounded-lg bg-slate-100 p-2 dark:bg-[#20324c]">
