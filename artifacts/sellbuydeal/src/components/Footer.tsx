@@ -1,6 +1,7 @@
 import { Link } from "wouter";
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
+import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
 import { useCurrency } from "@/context/CurrencyContext";
 import { openCookieSettings } from "@/components/CookieConsent";
 
@@ -11,6 +12,11 @@ export function Footer() {
   const { formatPrice, currency } = useCurrency();
   const s = useSiteSettings();
   const raw=useRawSettings();
+  const studioIcons=parseIconOverrides(raw.icon_overrides);
+  const FacebookIcon=iconForPlacement(studioIcons,"footer_facebook");
+  const TwitterIcon=iconForPlacement(studioIcons,"footer_twitter");
+  const InstagramIcon=iconForPlacement(studioIcons,"footer_instagram");
+  const YoutubeIcon=iconForPlacement(studioIcons,"footer_youtube");
 
   return (
     <footer className="bg-[#07172c] text-white/80 border-t border-sky-400/20">
@@ -32,22 +38,22 @@ export function Footer() {
             <div className="flex items-center gap-2.5 mt-4">
               {s.footer_facebook && s.footer_facebook !== "#" && (
                 <a href={s.footer_facebook} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Facebook" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Facebook className="w-3.5 h-3.5" />
+                  <FacebookIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_twitter && s.footer_twitter !== "#" && (
                 <a href={s.footer_twitter} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Twitter" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Twitter className="w-3.5 h-3.5" />
+                  <TwitterIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_instagram && s.footer_instagram !== "#" && (
                 <a href={s.footer_instagram} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on Instagram" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Instagram className="w-3.5 h-3.5" />
+                  <InstagramIcon className="w-3.5 h-3.5" />
                 </a>
               )}
               {s.footer_youtube && s.footer_youtube !== "#" && (
                 <a href={s.footer_youtube} target="_blank" rel="noopener noreferrer" aria-label="Bazunk on YouTube" className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-colors">
-                  <Youtube className="w-3.5 h-3.5" />
+                  <YoutubeIcon className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
