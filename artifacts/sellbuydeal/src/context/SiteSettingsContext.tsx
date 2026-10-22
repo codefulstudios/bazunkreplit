@@ -140,7 +140,7 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     const asset=settings.site_favicon_url;
     const selector='link[data-bazunk-theme-favicon="true"]';
     let icon=document.head.querySelector<HTMLLinkElement>(selector);
-    if(!asset||!/^\\/api\\/site-media\\/[a-f0-9-]{36}$/i.test(asset)){
+    if(!asset||!/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(asset)){
       icon?.remove();return;
     }
     if(!icon){icon=document.createElement("link");icon.rel="icon";icon.dataset.bazunkThemeFavicon="true";document.head.appendChild(icon);}
