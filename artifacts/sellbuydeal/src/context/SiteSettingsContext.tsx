@@ -127,6 +127,25 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     return()=>window.removeEventListener("message",listener);
   },[]);
 
+  // Click-to-edit events are emitted ONLY inside the same-origin private
+  // Theme Studio preview iframe. Public storefront clicks stay unchanged.
+  useEffect(()=>{
+    if(!new URLSearchParams(window.location.search).has("bazunk-theme-preview")||window.parent===window)return;
+    const choose=(event:MouseEvent)=>{
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      const element=target.closest<HTMLElement>("[data-theme-edit],[data-theme-section]");
+      if(!element)return;
+      const field=element.dataset.themeEdit,section=element.dataset.themeSection;
+      if(!field&&!section)return;
+      event.preventDefault();event.stopPropagation();
+      element.style.outline="3px solid #2563eb";element.style.outlineOffset="3px";
+      window.parent.postMessage({type:"bazunk:theme-preview-select",field,section},window.location.origin);
+    };
+    document.addEventListener("click",choose,true);
+    return()=>document.removeEventListener("click",choose,true);
+  },[]);
+
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--brand-primary", settings.primary_color);
