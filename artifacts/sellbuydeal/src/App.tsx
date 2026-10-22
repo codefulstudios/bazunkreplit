@@ -76,6 +76,8 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
 import { HomepagePromoCards } from "@/components/HomepagePromoCards";
+import { useRawSettings } from "@/context/SiteSettingsContext";
+import { parseHomeSections, type HomeSectionId } from "@/design-system/homepageSections";
 import { FeaturedListings } from "@/components/FeaturedListings";
 import { FeaturedFeatures } from "@/components/FeaturedFeatures";
 import { Footer } from "@/components/Footer";
@@ -300,25 +302,32 @@ function SignUpPage() {
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 
 function Home() {
+  const settings=useRawSettings();
+  const optionalSections=parseHomeSections(settings.home_sections_layout);
+  const renderOptional=(id:HomeSectionId)=>{
+    switch(id){
+      case "promoted":return <FeaturedListings mode="promoted"/>;
+      case "live":return <FeatureVisible feature="live"><LiveNowStrip/></FeatureVisible>;
+      case "promos":return <HomepagePromoCards/>;
+      case "perks":return <PerksStrip/>;
+      case "features":return <FeaturedFeatures/>;
+      case "rewards":return <RewardsTeaser/>;
+      case "announcement":return <AnnouncementBanner/>;
+      case "ads":return <AdSlot slotKey="home_bottom"/>;
+    }
+  };
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <IntroSplash />
       <Navbar />
       <main className="flex-1">
-        {/* Shopping first: find an item, explore categories, then see current stock. */}
+        {/* Preserve the essential shopping journey above optional marketing blocks. */}
         <Hero />
         <CategorySection />
         <FeaturedListings mode="recent" />
-
-        {/* Secondary discovery and marketing content stays below real listings. */}
-        <FeaturedListings mode="promoted" />
-        <FeatureVisible feature="live"><LiveNowStrip /></FeatureVisible>
-        <HomepagePromoCards />
-        <PerksStrip />
-        <FeaturedFeatures />
-        <RewardsTeaser />
-        <AnnouncementBanner />
-        <AdSlot slotKey="home_bottom" />
+        {optionalSections.filter(section=>section.enabled).map(section=>
+          <React.Fragment key={section.id}>{renderOptional(section.id)}</React.Fragment>
+        )}
       </main>
       <Footer />
     </div>
