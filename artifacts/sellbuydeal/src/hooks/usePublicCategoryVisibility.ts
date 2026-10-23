@@ -6,10 +6,15 @@ const ACTIVE: Visibility = { hidden: [], display: {} };
 
 // Legacy promotional card slugs that represent the same departments.
 const aliases: Record<string,string> = {
-  "clothing-shoes-jewelry":"fashion", "video-games":"gaming", "home-kitchen":"home",
-  "sports-outdoors":"sports", "arts-crafts-sewing":"arts-crafts",
-  "toys-games":"toys", "health-household":"health",
-  "beauty-personal-care":"beauty", "office-products":"office",
+  "fashion":"clothing-shoes-jewelry",
+  "gaming":"video-games",
+  "home":"home-kitchen",
+  "sports":"sports-outdoors",
+  "health":"health-household",
+  "beauty":"beauty-personal-care",
+  "office":"office-products",
+  "toys":"toys-games",
+  "arts-crafts":"arts-crafts-sewing",
 };
 export function usePublicCategoryVisibility() {
   const [visibility, setVisibility] = useState<Visibility>(ACTIVE);
