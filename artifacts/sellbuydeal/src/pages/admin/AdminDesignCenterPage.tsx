@@ -154,7 +154,7 @@ export function AdminDesignCenterPage(){
  const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
  const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
  const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
- const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(!element)return;if(device==="desktop")patchElement(id,{style:{...element.style,[field]:value}});else patchElement(id,{responsive:{...element.responsive,[device]:{...element.responsive?.[device],[field]:value}}})};
+ const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(!element)return;if(device==="desktop"||!["fontSize","padding","width","sectionSpacing","align"].includes(field))patchElement(id,{style:{...element.style,[field]:value}});else patchElement(id,{responsive:{...element.responsive,[device]:{...element.responsive?.[device],[field]:value}}})};
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
