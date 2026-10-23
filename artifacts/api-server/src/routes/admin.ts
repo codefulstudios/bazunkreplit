@@ -2186,7 +2186,8 @@ router.get("/admin/search-ebay", async (req, res) => {
           rating:          String(seller.feedbackScore ?? ""),
           seller_username: String(seller.username ?? ""),
           seller_feedback: String(seller.feedbackPercentage ?? ""),
-          condition:       String(p.condition ?? ""),
+          condition:       typeof p.condition === "string" ? p.condition : String(p.conditionDisplayName ?? ""),
+          condition_id:    String(p.conditionId ?? ""),
           available_quantity: ebayStockFromSummary(p),
           ebay_url:        `${ebayBase}/itm/${p.legacyItemId}`,
           country,
@@ -2204,11 +2205,26 @@ router.get("/admin/search-ebay", async (req, res) => {
           availability_status: String(((p.estimatedAvailabilities as Record<string,unknown>[]|undefined)?.[0]?.estimatedAvailabilityStatus)??""),
         };
       })
-      .filter(p => p.price > 0 && (condition === "all" || (condition === "new" ? /^new\b/i.test(p.condition) : condition === "used" ? /used|pre-owned/i.test(p.condition) : condition === "refurbished" ? /refurbished/i.test(p.condition) : condition === "open-box" ? /open.box/i.test(p.condition) : condition === "parts" ? /parts|not working/i.test(p.condition) : false)));
+      .filter(p => p.price > 0);
+    const matchesCondition = (p:(typeof products)[number]):boolean => {
+      if(condition === "all")return true;
+      const label = p.condition.trim().toLowerCase();
+      const id = p.condition_id;
+      if(condition === "new")return /^(?:brand new|new|factory sealed|sealed|unused)\\b/.test(label) || id === "1000";
+      if(condition === "used")return /used|pre.?owned|second.?hand/.test(label) || /^3\\d{3}$/.test(id);
+      if(condition === "refurbished")return /refurbished|renewed/.test(label) || ["2000","2500"].includes(id);
+      if(condition === "open-box")return /open[ -]?box|new other|new without box/.test(label) || id === "1500";
+      if(condition === "parts")return /parts|not working|spares|repair/.test(label) || id === "7000";
+      return false;
+    };
+    const filtered = products.filter(matchesCondition);
+    const unknownConditions = products.filter(p=>!p.condition.trim()&&!p.condition_id).length;
+    const unverifiedFallback = condition!=="all" && filtered.length===0 && unknownConditions===products.length && products.length>0;
+    const shown = unverifiedFallback ? products.map(p=>({...p,condition:"Condition not supplied — verify on eBay"})) : filtered;
 
-    const diagnostics = {providerCount:raw.length,locationAndCurrencyCount:eligible.length,returnedCount:products.length,condition,shipsFrom:from,shipsTo:to};
-    if(raw.length && !products.length)logger.info({diagnostics},"eBay items filtered from search");
-    res.json({ products, total: (data.total as number) ?? products.length, diagnostics, notice:raw.length&&!products.length?"The provider returned listings but all were excluded by selected condition, location or currency filters. Try All conditions and All locations.":undefined });
+    const diagnostics = {providerCount:raw.length,locationAndCurrencyCount:eligible.length,returnedCount:shown.length,conditionMatchedCount:filtered.length,unknownConditions,conditionExamples:[...new Set(products.map(p=>p.condition).filter(Boolean))].slice(0,5),condition,shipsFrom:from,shipsTo:to};
+    if(raw.length && !shown.length)logger.info({diagnostics},"eBay items filtered from search");
+    res.json({ products:shown, total: (data.total as number) ?? shown.length, diagnostics, notice:unverifiedFallback?"The provider supplied no condition information. Results are for review only: verify the condition on eBay before importing.":raw.length&&!shown.length?(eligible.length===0?"No listings passed required item, location and currency checks.":"The provider returned "+eligible.length+" eligible listings, but none matched the requested condition. Sample conditions: "+(diagnostics.conditionExamples.join(", ")||"none supplied")+". Try All conditions."):undefined });
   } catch (err) {
     logger.error({ err }, "eBay search failed");
     res.status(500).json({ error: "eBay search failed" });
