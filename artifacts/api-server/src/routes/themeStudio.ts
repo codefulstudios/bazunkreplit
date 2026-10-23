@@ -121,12 +121,14 @@ function validElements(raw:string){
    if(item.style!==undefined){
     const st=item.style;
     if(!st||typeof st!=="object"||Array.isArray(st))return false;
-    const ranges:Record<string,[number,number]>={fontSize:[10,96],fontWeight:[100,900],borderWidth:[0,12],borderRadius:[0,80],padding:[0,120],gap:[0,100],width:[10,100],columns:[1,4],sectionSpacing:[0,120]};
-    const allowed=new Set([...Object.keys(ranges),"fontFamily","borderColor","shadow","align"]);
+    const ranges:Record<string,[number,number]>={fontSize:[10,96],fontWeight:[100,900],borderWidth:[0,12],borderRadius:[0,80],padding:[0,120],gap:[0,100],width:[10,100],columns:[1,4],sectionSpacing:[0,120],imageHeight:[40,1000],imagePositionX:[0,100],imagePositionY:[0,100]};
+    const allowed=new Set([...Object.keys(ranges),"fontFamily","borderColor","shadow","align","imageFit","buttonHoverBackground","buttonHoverColor","buttonVariant"]);
     for(const [key,value] of Object.entries(st)){
      if(!allowed.has(key))return false;
      if(key in ranges){const [min,max]=ranges[key];if(typeof value!=="number"||!Number.isInteger(value)||value<min||value>max)return false}
-     else if(key==="borderColor"){if(typeof value!=="string"||(value!==""&&!/^#[0-9a-fA-F]{6}$/.test(value)))return false}
+     else if(["buttonHoverBackground","buttonHoverColor","borderColor"].includes(key)){if(typeof value!=="string"||(value!==""&&!/^#[0-9a-fA-F]{6}$/.test(value)))return false}
+     else if(key==="imageFit"){if(!["cover","contain","fill"].includes(value as string))return false}
+     else if(key==="buttonVariant"){if(!["solid","outline","ghost"].includes(value as string))return false}
      else if(key==="fontFamily"){if(!["","inherit","Arial","Georgia","Verdana","system-ui","Tahoma"].includes(value as string))return false}
      else if(key==="shadow"){if(!["","none","small","medium","large"].includes(value as string))return false}
      else if(key==="align"){if(!["","left","center","right"].includes(value as string))return false}
