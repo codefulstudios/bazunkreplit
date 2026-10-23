@@ -4,6 +4,7 @@ import { useRawSettings } from "@/context/SiteSettingsContext";
 import {useTheme} from "next-themes";
 import {readSection,sectionStyle} from "@/design-system/sectionAppearance";
 import {readIconAppearance,iconStyle} from "@/design-system/iconAppearance";
+import {parseSectionContent} from "@/design-system/homepageSections";
 import { isFeatureEnabled } from "@/components/FeatureGate";
 
 const promotions = [
@@ -17,9 +18,11 @@ export function HomepagePromoCards() {
   const {resolvedTheme}=useTheme();
   const design=readSection(settings,"home_promos",resolvedTheme==="dark"?"dark":"light");
   const icons=readIconAppearance(settings,"promos",resolvedTheme==="dark"?"dark":"light");
+  const customCards=parseSectionContent(settings.home_sections_content).promos.cards;
+  const configured=promotions.map((item,index)=>({...item,title:customCards?.[index]?.title||item.title,description:customCards?.[index]?.description||item.description,href:customCards?.[index]?.url?.startsWith("/")&&!customCards[index].url.startsWith("//")?customCards[index].url:item.href}));
   const order = (settings.homepage_promotion_order || "shop,flash,offer,rewards").split(",");
   const keys = ["shop","flash","offer","rewards"];
-  const visible = promotions.filter((item,i) => (!item.flag || isFeatureEnabled(settings,item.flag)) && settings[`homepage_promotion_${keys[i]}_visible`] !== "false").sort((x,y) => order.indexOf(keys[promotions.indexOf(x)]) - order.indexOf(keys[promotions.indexOf(y)]));
+  const visible = configured.filter((item,i) => (!item.flag || isFeatureEnabled(settings,item.flag)) && settings[`homepage_promotion_${keys[i]}_visible`] !== "false").sort((x,y) => order.indexOf(keys[configured.indexOf(x)]) - order.indexOf(keys[configured.indexOf(y)]));
   const primary=visible[0];
   const secondary=visible.slice(1);
   if (!primary) return null;
