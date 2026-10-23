@@ -88,6 +88,11 @@ function validSectionContent(raw:string){
     cardsValid=expected>0&&Array.isArray(value.cards)&&value.cards.length===expected;
     if(cardsValid)for(const card of value.cards){
      if(!card||typeof card!=="object"){cardsValid=false;break}
+     for(const extra of ["image","background","textColor"]){
+      const v=card[extra];
+      if(v===undefined)continue;
+      if(typeof v!=="string"||(extra==="image"?(v!==""&&!assetPath.test(v)):(v!==""&&!/^#[0-9a-fA-F]{6}$/.test(v))))cardsValid=false;
+     }
      for(const key of ["title","description","url"]){
       const field=card[key];
       if(typeof field!=="string"||field.length>500||field.includes("<")||field.includes(">"))cardsValid=false;
