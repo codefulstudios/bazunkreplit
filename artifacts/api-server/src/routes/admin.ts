@@ -2210,8 +2210,8 @@ router.get("/admin/search-ebay", async (req, res) => {
       if(condition === "all")return true;
       const label = p.condition.trim().toLowerCase();
       const id = p.condition_id;
-      if(condition === "new")return /^(?:brand new|new|factory sealed|sealed|unused)\\b/.test(label) || id === "1000";
-      if(condition === "used")return /used|pre.?owned|second.?hand/.test(label) || /^3\\d{3}$/.test(id);
+      if(condition === "new")return /^(?:brand new|new|factory sealed|sealed|unused)\b/.test(label) || id === "1000";
+      if(condition === "used")return /used|pre.?owned|second.?hand/.test(label) || /^3\d{3}$/.test(id);
       if(condition === "refurbished")return /refurbished|renewed/.test(label) || ["2000","2500"].includes(id);
       if(condition === "open-box")return /open[ -]?box|new other|new without box/.test(label) || id === "1500";
       if(condition === "parts")return /parts|not working|spares|repair/.test(label) || id === "7000";
