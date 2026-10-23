@@ -7,6 +7,37 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
+// Persistent listing image uploads. Stored in PostgreSQL rather than ephemeral Render files.
+router.get("/listing-media/:id", async (req,res)=>{
+ const id=String(req.params.id||"");
+ if(!/^[0-9a-f-]{36}$/i.test(id)){res.status(400).end();return;}
+ try {
+   const rows=await db.execute(sql`SELECT mime,data_base64 FROM listing_media_assets WHERE id=${id}`).then(r=>r.rows as any[]);
+   if(!rows.length){res.status(404).end();return;}
+   res.setHeader("Content-Type",String(rows[0].mime));
+   res.setHeader("Cache-Control","public,max-age=31536000,immutable");
+   res.send(Buffer.from(String(rows[0].data_base64),"base64"));
+ } catch(err){logger.warn({err},"Listing media unavailable");res.status(404).end();}
+});
+router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
+ const {filename,dataUrl}=req.body||{};
+ if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
+ const matched=/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
+ if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
+ const bytes=Buffer.from(matched[2],"base64");
+ if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
+ const mime=matched[1];
+ const correct=mime==="image/png"&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||
+ mime==="image/jpeg"&&bytes[0]===255&&bytes[1]===216||
+ mime==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!correct){res.status(400).json({error:"Invalid image file"});return;}
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  const id=randomUUID();
+  await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
+  res.status(201).json({url:"/api/listing-media/"+id});
+ }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
+});
 router.use("/admin/products", requireAdmin);
 router.use("/admin/categories", requireAdmin);
 
@@ -359,6 +390,8 @@ router.put("/admin/products/:id", async (req, res) => {
       ships_to: ships_to ?? "", shipping_price: shipping_price === "" ? null : Number(shipping_price),
       free_shipping: Boolean(free_shipping), dispatch_time: dispatch_time ?? "",
       delivery_estimate: delivery_estimate ?? "",
+      admin_gallery_images: Array.isArray(images)?images.slice(0,12):specs.admin_gallery_images,
+      admin_variants: Array.isArray(req.body.variants)?req.body.variants.slice(0,50):specs.admin_variants,
       admin_manual_override: true,
       admin_manual_override_at: new Date().toISOString(),
     });
