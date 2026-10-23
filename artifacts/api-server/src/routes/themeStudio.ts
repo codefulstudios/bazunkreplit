@@ -75,7 +75,22 @@ const assetPath=/^\/api\/site-media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[8
 const assetId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const mediaKeys=["site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url"] as const;
 const socialKeys=["footer_facebook","footer_twitter","footer_instagram","footer_youtube"] as const;
-function validSectionContent(raw:string){try{const obj=JSON.parse(raw);return obj&&typeof obj==="object"&&!Array.isArray(obj)&&Object.keys(obj).sort().join(",")===HOME_LAYOUT_DEFAULT.map(x=>x.id).sort().join(",")&&Object.values(obj).every((v:any)=>v&&typeof v==="object"&&["title","description","button","url"].every(k=>typeof v[k]==="string"&&v[k].length<= (k==="description"?500:k==="url"?200:140)&&!/[<>\\u0000-\\u001f]/.test(v[k]))&&(!v.url||/^\\/(?!\\/)[a-z0-9/?=&_#%-]*$/i.test(v.url)));}catch{return false}}
+function validSectionContent(raw:string){
+ try {
+  const obj=JSON.parse(raw);
+  if(!obj||typeof obj!=="object"||Array.isArray(obj))return false;
+  if(Object.keys(obj).sort().join(",")!==HOME_LAYOUT_DEFAULT.map(x=>x.id).sort().join(","))return false;
+  return Object.values(obj).every((value:any)=>{
+   if(!value||typeof value!=="object"||Array.isArray(value))return false;
+   return ["title","description","button","url"].every(key=>{
+    const str=value[key];
+    return typeof str==="string"&&str.length<=(key==="description"?500:key==="url"?200:140)
+      && !/[<>]/.test(str) && !Array.from(str).some(char=>char.charCodeAt(0)<32)
+      &&(key!=="url"||str===""||(str.startsWith("/")&&!str.startsWith("//")&&!str.includes(":")));
+   });
+  });
+ }catch{return false}
+}
 function validTheme(raw:unknown):raw is ThemeFields{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))return false;
  const v=raw as Record<string,unknown>;
