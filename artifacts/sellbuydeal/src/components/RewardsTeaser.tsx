@@ -1,3 +1,5 @@
+import {useRawSettings} from "@/context/SiteSettingsContext";
+import {parseSectionContent} from "@/design-system/homepageSections";
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Gift, ChevronRight, CalendarCheck, RotateCcw, Brain, Ticket, PackageOpen, Dices } from "lucide-react";
@@ -23,6 +25,7 @@ interface TeaserGame {
 
 /** Homepage strip showing the daily reward games that are switched on in Admin → Rewards. */
 export function RewardsTeaser() {
+  const config=parseSectionContent(useRawSettings().home_sections_content).rewards;
   const [games, setGames] = useState<TeaserGame[]>([]);
 
   useEffect(() => {
@@ -45,11 +48,11 @@ export function RewardsTeaser() {
                 <Gift className="w-4 h-4 text-[#F26B21]" />
                 <span className="text-[#F26B21] font-black text-xs uppercase tracking-widest">Daily Rewards</span>
               </div>
-              <h2 className="text-2xl font-black text-white">Bazunk Rewards Arcade</h2>
-              <p className="text-white/50 text-sm mt-1">Play daily games, win free Bazunk credits and use them on promotions and perks.</p>
+              <h2 className="text-2xl font-black text-white">{config.title}</h2>
+              <p className="text-white/50 text-sm mt-1">{config.description}</p>
             </div>
-            <Link href="/rewards" className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90 transition-opacity self-start md:self-auto">
-              Play now <ChevronRight className="w-4 h-4" />
+            <Link href={config.url.startsWith("/")&&!config.url.startsWith("//")?config.url:"/rewards"} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90 transition-opacity self-start md:self-auto">
+              {config.button||"Play now"} <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="relative grid grid-cols-2 md:grid-cols-5 gap-3">
