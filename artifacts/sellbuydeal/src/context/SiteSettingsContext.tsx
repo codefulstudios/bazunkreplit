@@ -148,13 +148,14 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     const choose=(event:MouseEvent)=>{
       const target=event.target;
       if(!(target instanceof Element))return;
-      const element=target.closest<HTMLElement>("[data-theme-edit],[data-theme-section]");
+      const element=target.closest<HTMLElement>("[data-theme-edit],[data-theme-card-field],[data-theme-section]");
       if(!element)return;
       const field=element.dataset.themeEdit,section=element.dataset.themeSection;
+      const cardIndex=element.dataset.themeCard,cardField=element.dataset.themeCardField;
       if(!field&&!section)return;
       event.preventDefault();event.stopPropagation();
       element.style.outline="3px solid #2563eb";element.style.outlineOffset="3px";
-      window.parent.postMessage({type:"bazunk:theme-preview-select",field,section},window.location.origin);
+      window.parent.postMessage({type:"bazunk:theme-preview-select",field,section,cardIndex,cardField},window.location.origin);
     };
     document.addEventListener("click",choose,true);
     return()=>document.removeEventListener("click",choose,true);
