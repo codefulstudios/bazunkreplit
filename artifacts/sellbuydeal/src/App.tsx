@@ -448,7 +448,7 @@ function Router() {
       <Route path="/admin/find-it" component={AdminFindItPage} />
       <Route path="/admin/feature-toggles" component={AdminFeatureFlagsPage} />
       <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
-      <Route path="/admin/products" component={AdminProductsPage} />
+      <Route path="/admin/products"><Redirect to="/admin/listings" /></Route>
       <Route path="/admin/listings" component={AdminListingsPage} />
       <Route path="/admin/imports" component={AdminImporterOverviewPage} />
       <Route path="/admin/importers/amazon">{() => <AdminImportsPage source="amazon" />}</Route>
