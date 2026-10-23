@@ -14,6 +14,7 @@ type Version={id:string;at:string;fields:Partial<DesignFields>};
 const TABS=[
  {id:"overview",name:"Overview",icon:Home,description:"Manage your design"},
  {id:"homepage",name:"Homepage",icon:Home,description:"Edit and reorder sections"},
+ {id:"visual",name:"Visual Editor",icon:Layers3,description:"Edit the real storefront with a live preview"},
  {id:"header",name:"Header & Navigation",icon:PanelTop,description:"Search, notices and icons"},
  {id:"footer",name:"Footer",icon:PanelBottom,description:"Text, links and social media"},
  {id:"branding",name:"Branding & Logos",icon:Palette,description:"Logos, favicon and brand name"},
@@ -49,7 +50,10 @@ export function AdminDesignCenterPage(){
  const [error,setError]=useState(""),[notice,setNotice]=useState("");
  const [auto,setAuto]=useState("Ready");
  const [dirty,setDirty]=useState(false);
- const [device,setDevice]=useState<"desktop"|"mobile">("desktop");
+ const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
+ const [visualMode,setVisualMode]=useState<"content"|"sections"|"media">("content");
+ const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
+ const undoStack=useRef<DesignFields[]>([]),redoStack=useRef<DesignFields[]>([]);
  const [activeBlock,setActiveBlock]=useState("hero");
  const [mediaTarget,setMediaTarget]=useState<MediaTarget>("site_logo_url");
  const [query,setQuery]=useState("");
@@ -67,15 +71,17 @@ export function AdminDesignCenterPage(){
  },[]);
  const update=(key:keyof DesignFields,value:string)=>{
   editVersion.current++;
-  setDraft(prev=>({...prev,[key]:value}));setDirty(true);setAuto("Unsaved changes");setError("");
+  setDraft(prev=>{undoStack.current.push(prev);if(undoStack.current.length>60)undoStack.current.shift();redoStack.current=[];return {...prev,[key]:value}});setDirty(true);setAuto("Unsaved changes");setError("");
  };
+ const undo=()=>{const prior=undoStack.current.pop();if(!prior)return;redoStack.current.push(draft);editVersion.current++;setDraft(prior);setDirty(true);setAuto("Unsaved changes")};
+ const redo=()=>{const next=redoStack.current.pop();if(!next)return;undoStack.current.push(draft);editVersion.current++;setDraft(next);setDirty(true);setAuto("Unsaved changes")};
  const load=useCallback(async()=>{
   setLoading(true);setError("");
   try{
    const [result,media]=await Promise.all([authFetch("/api/admin/theme-studio"),authFetch("/api/admin/theme-studio/media")]);
    const theme=await result.json(),images=await media.json();
    if(!result.ok||!media.ok)throw Error(theme.error||images.error||"Could not load Design Center");
-   setDraft({...THEME_CENTER_DEFAULTS,...theme.draft});
+   setDraft({...THEME_CENTER_DEFAULTS,...theme.draft});undoStack.current=[];redoStack.current=[];
    setPublished({...THEME_CENTER_DEFAULTS,...theme.published});
    setHistory(Array.isArray(theme.history)?theme.history:[]);
    setAssets(Array.isArray(images.assets)?images.assets:[]);
@@ -138,6 +144,8 @@ export function AdminDesignCenterPage(){
  };
  const setIcon=(placement:IconPlacement,choice:IconChoice)=>update("icon_overrides",JSON.stringify({...icons,[placement]:choice}));
  const applyLayout=(entries:HomeSectionEntry[])=>update("home_sections_layout",JSON.stringify(entries));
+ const updateSection=(id:keyof typeof sectionContent,field:"title"|"description"|"button"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],[field]:value}}));
+ const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
@@ -151,6 +159,12 @@ export function AdminDesignCenterPage(){
   const listener=(event:MessageEvent)=>{
    if(event.origin!==window.location.origin||event.source!==frame.current?.contentWindow||event.data?.type!=="bazunk:theme-preview-select")return;
    const field=String(event.data.field||""),section=String(event.data.section||"");
+   if(tab==="visual"){
+    if(field==="site_logo_url"){setVisualMode("media");setMediaTarget("site_logo_url")}
+    else if(section){setActiveBlock(section);setVisualMode("content")}
+    else if(field){setActiveBlock("hero");setVisualMode("content")}
+    return;
+   }
    if(field==="site_logo_url"){changeTab("branding");setMediaTarget("site_logo_url")}
    else if(field==="footer_about")changeTab("footer");
    else if(field==="header_search_placeholder")changeTab("header");
@@ -159,7 +173,7 @@ export function AdminDesignCenterPage(){
    else if(section){changeTab("homepage");setActiveBlock(section)}
   };
   window.addEventListener("message",listener);return()=>window.removeEventListener("message",listener);
- },[changeTab]);
+ },[changeTab,tab]);
  const input=(key:keyof DesignFields,label:string,description?:string,max=180,multiline=false)=><label key={key} className="bzdc-field">
   <span>{label}</span>{description&&<small>{description}</small>}
   {multiline?<textarea value={draft[key]} maxLength={max} rows={3} onChange={e=>update(key,e.target.value)}/>:<input type="text" value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>}
@@ -176,9 +190,10 @@ export function AdminDesignCenterPage(){
   <div className="bzdc-panel-title"><div><h3>Storefront preview</h3><small>Live private draft — not published</small></div><a href="/" target="_blank" rel="noopener noreferrer">Open store <ExternalLink size={13}/></a></div>
   <div className="bzdc-device-tabs">
    <button type="button" aria-pressed={device==="desktop"} onClick={()=>setDevice("desktop")}><Monitor size={15}/> Desktop</button>
+   <button type="button" aria-pressed={device==="tablet"} onClick={()=>setDevice("tablet")}><Monitor size={15}/> Tablet</button>
    <button type="button" aria-pressed={device==="mobile"} onClick={()=>setDevice("mobile")}><Smartphone size={15}/> Mobile</button>
   </div>
-  <div className={"bzdc-frame-shell "+(device==="mobile"?"is-mobile":"is-desktop")}>
+  <div className={"bzdc-frame-shell "+(device==="mobile"?"is-mobile":device==="tablet"?"is-tablet":"is-desktop")}>
    <iframe ref={frame} key={tab+"-"+device} title={"Bazunk "+device+" private design preview"} src="/?bazunk-theme-preview=1" onLoad={sendPreview}/>
   </div>
  </section>;
@@ -210,6 +225,21 @@ export function AdminDesignCenterPage(){
  </section>;
  return <AdminLayout>
   <div className="bzdc-root">
+<style>{`
+.bzve{display:grid;grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:16px;min-height:76vh;color:var(--foreground,#111827)}
+.bzve-controls,.bzve-stage{background:var(--card,#fff);border:1px solid var(--border,#cbd5e1);border-radius:12px;padding:16px;min-width:0}
+.bzve-controls{max-height:85vh;overflow:auto}.bzve-tabs,.bzve-toolbar,.bzve-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bzve-tabs button,.bzve-actions button,.bzve-item button{border:1px solid #64748b;border-radius:6px;padding:7px;background:var(--background,#fff);color:var(--foreground,#111827);font-weight:600}
+.bzve-tabs button[aria-pressed=true],.bzve-actions button[aria-pressed=true]{background:#2563eb;color:#fff}
+.bzve-fields{display:grid;gap:12px;margin-top:16px}.bzve-item{display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:1px solid #94a3b8}
+.bzve-item button:first-of-type{flex:1;text-align:left}.bzve-item input{width:18px;height:18px}.bzve-toolbar{justify-content:space-between;margin-bottom:12px}
+.bzve-viewport{margin:auto;height:70vh;max-width:100%;border:2px solid #64748b;border-radius:10px;overflow:hidden;background:white}
+.bzve-desktop{width:100%}.bzve-tablet{width:768px}.bzve-mobile{width:390px}.bzve-viewport iframe{width:100%;height:100%;border:0}
+.bzve-images{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.bzve-images img{width:100%;height:78px;object-fit:cover}.bzve-cardfields{border:1px solid #94a3b8;padding:10px;border-radius:8px}
+.bzve-fields input,.bzve-fields select{background:var(--background,#fff);color:var(--foreground,#111827);border:1px solid #64748b;padding:8px}
+@media(max-width:950px){.bzve{grid-template-columns:1fr}.bzve-controls{max-height:none}}
+`}</style>
+
    <div className="bzdc-heading">
     <div><span className="bzdc-breadcrumb">Bazunk Administration / Design Center {tab!=="overview"&&" / "+TABS.find(x=>x.id===tab)?.name}</span><h1>{tab==="overview"?"Design Center":TABS.find(x=>x.id===tab)?.name}</h1>
      <p>{tab==="overview"?"Manage the appearance and wording of your Bazunk storefront from one place.":TABS.find(x=>x.id===tab)?.description}</p>
@@ -248,6 +278,49 @@ export function AdminDesignCenterPage(){
          <button type="button" className="bzdc-btn bzdc-full" onClick={()=>changeTab("history")}>View version history <ChevronRight size={15}/></button>
         </section>
        </div>
+      </div>}
+      {tab==="visual"&&<div className="bzve">
+       <aside className="bzve-controls">
+        <div className="bzdc-panel-title"><div><h3>Visual Editor</h3><small>Homepage · Private draft</small></div></div>
+        <div className="bzve-tabs">
+         {(["content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
+        </div>
+        {visualMode==="sections"&&<div className="bzve-items">
+         <p className="bzdc-help">Drag promotional sections to change their order. Marketplace sections remain fixed.</p>
+         {homeSections.map((item,index)=><div key={item.id} className="bzve-item" draggable
+           onDragStart={e=>e.dataTransfer.setData("text/plain",item.id)}
+           onDragOver={e=>e.preventDefault()}
+           onDrop={e=>{e.preventDefault();reorder(e.dataTransfer.getData("text/plain"),item.id)}}>
+           <GripVertical size={16}/><button type="button" onClick={()=>{setActiveBlock(item.id);setVisualMode("content")}}>{OPTIONAL_HOME_SECTIONS.find(x=>x.id===item.id)?.label}</button>
+           <input aria-label={"Visible "+item.id} type="checkbox" checked={item.enabled} onChange={e=>applyLayout(homeSections.map(x=>x.id===item.id?{...x,enabled:e.target.checked}:x))}/>
+           <button type="button" disabled={index===0} onClick={()=>move(item.id,-1)} aria-label={"Move "+item.id+" up"}><ArrowUp size={14}/></button>
+           <button type="button" disabled={index===homeSections.length-1} onClick={()=>move(item.id,1)} aria-label={"Move "+item.id+" down"}><ArrowDown size={14}/></button>
+          </div>)}
+         </div>}
+        {visualMode==="content"&&<div className="bzve-fields">
+         <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>setActiveBlock(e.target.value)}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
+         {activeBlock==="hero"?<>{input("hero_title","Heading",undefined,160)}{input("hero_subtitle","Description",undefined,600,true)}{input("hero_cta_primary","Primary button",undefined,50)}{input("hero_cta_secondary","Secondary button",undefined,50)}{imageControl("hero_image_url","Hero image")}</>:
+         activeBlock==="categories"?<>{input("categories_title","Heading",undefined,120)}{input("categories_subtitle","Description",undefined,240,true)}</>:
+         activeBlock==="recent"?<p className="bzdc-help">Newest listings are populated from real marketplace data. They cannot be modified here.</p>:
+         (OPTIONAL_HOME_SECTIONS.some(x=>x.id===activeBlock))?<>{(["title","description","button","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={sectionContent[activeBlock as keyof typeof sectionContent][field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateSection(activeBlock as keyof typeof sectionContent,field,e.target.value)}/></label>)}
+         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index}><strong>Card {index+1}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}</div>)}</>:null}
+        </div>}
+        {visualMode==="media"&&<div className="bzve-fields"><label className="bzdc-field"><span>Image placement</span><select value={mediaTarget} onChange={e=>setMediaTarget(e.target.value as MediaTarget)}>{imageTargets.map(x=><option value={x.key} key={x.key}>{x.title}</option>)}</select></label>
+         <button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
+         <div className="bzve-images">{assets.map(asset=><button type="button" key={asset.id} title={asset.filename} onClick={()=>update(mediaTarget,asset.url)}><img src={assetUrl(asset.url)} alt={asset.filename}/></button>)}</div>
+        </div>}
+       </aside>
+       <section className="bzve-stage">
+        <div className="bzve-toolbar"><strong>Actual Bazunk storefront</strong><div className="bzve-actions">
+         <button type="button" disabled={!undoStack.current.length} onClick={undo} title="Undo">↶ Undo</button><button type="button" disabled={!redoStack.current.length} onClick={redo} title="Redo">↷ Redo</button>
+         <button type="button" aria-pressed={visualTheme==="light"} onClick={()=>setVisualTheme("light")}>Light</button><button type="button" aria-pressed={visualTheme==="dark"} onClick={()=>setVisualTheme("dark")}>Dark</button>
+         {(["desktop","tablet","mobile"] as const).map(d=><button type="button" key={d} aria-pressed={device===d} onClick={()=>setDevice(d)}>{d}</button>)}
+        </div></div>
+        <div className={"bzve-viewport "+(device==="mobile"?"bzve-mobile":device==="tablet"?"bzve-tablet":"bzve-desktop")}>
+         <iframe ref={frame} title="Bazunk visual editing live storefront" key={"visual-"+device} src="/?bazunk-theme-preview=1" onLoad={sendPreview}/>
+        </div>
+        <p className="bzdc-help">Click an editable element in the preview to select its section. Changes update the private preview and are published only with Publish changes. Styling controls for light and dark themes remain in Theme Gallery & Colours.</p>
+       </section>
       </div>}
       {tab==="homepage"&&<div className="bzdc-builder-grid">
        <section className="bzdc-panel">
