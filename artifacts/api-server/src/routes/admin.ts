@@ -1350,11 +1350,17 @@ router.delete("/admin/listings/:id/safe-delete",async(req,res)=>{
  const id=Number(req.params.id);
  if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid listing ID"});return;}
  try{
-  const rows=await db.execute(sql`SELECT id,public_id,status,title FROM listings WHERE id=${id}`).then(r=>r.rows);
+  const rows=await db.execute(sql`SELECT id,public_id,status,title,specifications FROM listings WHERE id=${id}`).then(r=>r.rows);
   if(!rows.length){res.status(404).json({error:"Listing not found"});return;}
   const item=rows[0] as any;
   if(item.status==="sold"){res.status(409).json({error:"Sold listings cannot be deleted because their transaction history must be preserved. Hide instead."});return;}
-  if(/^(BZK-(EBY|AMZ|ALI)-)/.test(String(item.public_id??""))){res.status(409).json({error:"Imported listing deletion requires a permanent reimport exclusion. Use Hide until exclusion rules are enabled."});return;}
+  const imported=/^BZK-(EBY|AMZ|ALI)-/.test(String(item.public_id??""));
+  let blockedSourceId:string|null=null;
+  if(imported){
+    const specs=typeof item.specifications==="string"?JSON.parse(item.specifications||"{}"):item.specifications||{};
+    blockedSourceId=String(specs.item_id??specs.own_ebay_item_id??specs.asin??specs.aliexpress_id??"").trim()||null;
+    if(!blockedSourceId){res.status(409).json({error:"Cannot identify imported source item. Hide this listing instead."});return;}
+  }
   // Decline hard deletion when any database relationship references this listing.
   const refs=await db.execute(sql`SELECT tc.table_schema,tc.table_name,kcu.column_name FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name=kcu.constraint_name AND tc.table_schema=kcu.table_schema JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name=tc.constraint_name AND ccu.table_schema=tc.table_schema WHERE tc.constraint_type='FOREIGN KEY' AND ccu.table_name='listings' AND ccu.column_name='id' AND tc.table_schema=current_schema()`).then(r=>r.rows);
   for(const ref of refs){
@@ -1362,6 +1368,11 @@ router.delete("/admin/listings/:id/safe-delete",async(req,res)=>{
     if(!/^[a-z_][a-z0-9_]*$/.test(schema)||!/^[a-z_][a-z0-9_]*$/.test(table)||!/^[a-z_][a-z0-9_]*$/.test(column))continue;
     const check=await db.execute(sql.raw(`SELECT 1 FROM "${schema}"."${table}" WHERE "${column}" = ${id} LIMIT 1`)).then(r=>r.rows);
     if(check.length){res.status(409).json({error:"This listing has related records and cannot be permanently deleted. Hide it instead."});return;}
+  }
+  if(imported && blockedSourceId){
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS admin_import_exclusions (source TEXT NOT NULL, source_item_id TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(source,source_item_id))`);
+    const source=String(item.public_id).startsWith("BZK-EBY-")?"ebay":String(item.public_id).startsWith("BZK-AMZ-")?"amazon":"aliexpress";
+    await db.execute(sql`INSERT INTO admin_import_exclusions(source,source_item_id) VALUES (${source},${blockedSourceId}) ON CONFLICT DO NOTHING`);
   }
   await db.execute(sql`DELETE FROM listings WHERE id=${id}`);
   await recordAdminAudit({req,category:"listings",action:"listings.delete",targetType:"listing",targetId:String(id),summary:`Deleted listing ${item.title}`,before:item});
@@ -2337,6 +2348,9 @@ router.post("/admin/import-selected-ebay", async (req, res) => {
       sql`SELECT id FROM listings WHERE specifications LIKE ${'%"item_id":"' + p.item_id + '"%'}`
     ).then(r => r.rows.length > 0);
     if (exists) continue;
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS admin_import_exclusions (source TEXT NOT NULL, source_item_id TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(source,source_item_id))`);
+    const blocked=await db.execute(sql`SELECT 1 FROM admin_import_exclusions WHERE source='ebay' AND source_item_id=${String(p.item_id)} LIMIT 1`);
+    if(blocked.rows.length)continue;
 
     if(p.available_quantity==null){try{p.available_quantity=await ebayDetailStock(String(p.item_id),site,process.env.RAPIDAPI_KEY||'');}catch(err){logger.warn({err,itemId:p.item_id},'eBay detail stock check skipped');}}
     const landedCost = p.price + shippingAmt;
