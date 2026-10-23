@@ -146,6 +146,7 @@ import { AdminEmailsPage } from "@/pages/admin/AdminEmailsPage";
 import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
 import { AdminListingsPage } from "@/pages/admin/AdminListingsPage";
 import { AdminImportsPage } from "@/pages/admin/AdminImportsPage";
+import { AdminImporterOverviewPage, AdminImporterSettingsPage, AdminImporterBulkUpdatePage, AdminCraigslistPage, AdminOlxPage } from "@/pages/admin/AdminImporterPages";
 import { AdminImporterControlPage } from "@/pages/admin/AdminImporterControlPage";
 import { AdminCashbackPage } from "@/pages/admin/AdminCashbackPage";
 import { AdminClassifiedsPage } from "@/pages/admin/AdminClassifiedsPage";
@@ -449,7 +450,15 @@ function Router() {
       <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
       <Route path="/admin/products" component={AdminProductsPage} />
       <Route path="/admin/listings" component={AdminListingsPage} />
-      <Route path="/admin/imports" component={AdminImportsPage} />
+      <Route path="/admin/imports" component={AdminImporterOverviewPage} />
+      <Route path="/admin/importers/amazon">{() => <AdminImportsPage source="amazon" />}</Route>
+      <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
+      <Route path="/admin/importers/aliexpress">{() => <AdminImportsPage source="aliexpress" />}</Route>
+      <Route path="/admin/importers/gumtree">{() => <AdminImportsPage source="gumtree" />}</Route>
+      <Route path="/admin/importers/craigslist" component={AdminCraigslistPage} />
+      <Route path="/admin/importers/olx" component={AdminOlxPage} />
+      <Route path="/admin/importers/settings" component={AdminImporterSettingsPage} />
+      <Route path="/admin/importers/bulk-update" component={AdminImporterBulkUpdatePage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />
       <Route path="/admin/api-centre" component={AdminImporterControlPage} />
       <Route path="/admin/cashback">{() => <CashbackErrorBoundary admin><AdminCashbackPage /></CashbackErrorBoundary>}</Route>
