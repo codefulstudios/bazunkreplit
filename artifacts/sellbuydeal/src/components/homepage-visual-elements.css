@@ -1,1 +1,5 @@
 .bzve-button:hover{background-color:var(--bzve-hover-bg)!important;color:var(--bzve-hover-color)!important}.bzve-button:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+
+.bzve-layer-hidden{display:none!important}
+@media(max-width:1023px){.bzve-responsive-layer{font-size:var(--bzve-tablet-fontSize,inherit);padding:var(--bzve-tablet-padding,initial);width:var(--bzve-tablet-width,auto);margin-block:var(--bzve-tablet-sectionSpacing,initial);text-align:var(--bzve-tablet-align,inherit)}}
+@media(max-width:639px){.bzve-responsive-layer{font-size:var(--bzve-mobile-fontSize,var(--bzve-tablet-fontSize,inherit));padding:var(--bzve-mobile-padding,var(--bzve-tablet-padding,initial));width:var(--bzve-mobile-width,var(--bzve-tablet-width,auto));margin-block:var(--bzve-mobile-sectionSpacing,var(--bzve-tablet-sectionSpacing,initial));text-align:var(--bzve-mobile-align,var(--bzve-tablet-align,inherit))}}
