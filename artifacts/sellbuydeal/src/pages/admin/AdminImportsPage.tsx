@@ -139,6 +139,9 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
   const [ebayShipFrom,setEbayShipFrom] = useState("GB");
   const [ebayShipTo,setEbayShipTo] = useState("GB");
   const [ebayPage, setEbayPage]             = useState(1);
+  const [ebayProviderCount,setEbayProviderCount] = useState(0);
+  const [ebayTotalResults,setEbayTotalResults] = useState<number|null>(null);
+  const ebayRequestId = useRef(0);
   const [ebaySearching, setEbaySearching]   = useState(false);
   const [ebayResults, setEbayResults]       = useState<EbaySearchResult[]>([]);
   const [ebaySearchErr, setEbaySearchErr]   = useState<string | null>(null);
@@ -419,27 +422,34 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
   useEffect(() => { if (tab === "ebay") loadEbayListings(); }, [tab, loadEbayListings]);
 
   // ── eBay search ───────────────────────────────────────────────
-  async function handleEbaySearch(e?: React.FormEvent) {
+  async function handleEbaySearch(e?: React.FormEvent, requestedPage = 1) {
     e?.preventDefault();
     const q = ebayQuery.trim();
     if (!q) return;
+    const id = ++ebayRequestId.current;
     setEbaySearching(true);
     setEbaySearchErr(null);
     setEbayImportMsg(null);
+    if(requestedPage===1){setEbayPage(1);setEbayTotalResults(null);setEbayProviderCount(0);setEbaySelected(new Set());setEbaySelectionCache({});}
     try {
-      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
-      const d = await r.json() as { products?: EbaySearchResult[]; error?: string; notice?:string; diagnostics?:{providerCount:number;locationAndCurrencyCount:number;returnedCount:number} };
-      if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); setEbayResults([]); }
-      else { setEbayResults(d.products ?? []); setEbayHasSearched(true); if(d.notice)setEbaySearchErr(`${d.notice} Provider returned ${d.diagnostics?.providerCount??0}; eligible after location/currency: ${d.diagnostics?.locationAndCurrencyCount??0}.`); }
+      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${requestedPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
+      const d = await r.json() as { products?: EbaySearchResult[]; error?: string; notice?:string; total?:number; diagnostics?:{providerCount:number;locationAndCurrencyCount:number;returnedCount:number} };
+      if(id!==ebayRequestId.current)return;
+      if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); if(requestedPage===1)setEbayResults([]); }
+      else {
+        setEbayResults(d.products ?? []); setEbayHasSearched(true);setEbayPage(requestedPage);
+        setEbayProviderCount(d.diagnostics?.providerCount??(d.products?.length??0));
+        setEbayTotalResults(typeof d.total==="number"&&d.total>=0?d.total:null);
+        if(d.notice)setEbaySearchErr(d.notice);
+      }
     } catch {
+      if(id!==ebayRequestId.current)return;
       setEbaySearchErr("Network error — check your connection");
-      setEbayResults([]);
+      if(requestedPage===1)setEbayResults([]);
     } finally {
-      setEbaySearching(false);
+      if(id===ebayRequestId.current)setEbaySearching(false);
     }
   }
-
-  useEffect(() => { if (ebayHasSearched) void handleEbaySearch(); }, [ebayPage]);
 
   function toggleEbaySelect(id: string) {
     const product=ebayResults.find(p=>p.item_id===id);
@@ -1029,7 +1039,7 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
               <Globe className="w-4 h-4 text-gray-400" />
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
                 {(["uk", "us"] as EbaySite[]).map(s => (
-                  <button key={s} onClick={() => { setEbaySite(s); setEbayResults([]); setEbayHasSearched(false); setEbaySelected(new Set()); }}
+                  <button key={s} onClick={() => { ebayRequestId.current++;setEbaySite(s);setEbayPage(1);setEbayResults([]);setEbayHasSearched(false);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null); }}
                     className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                       ebaySite === s ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                     }`}>
@@ -1072,17 +1082,17 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
                 </form>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                   <label className="text-xs font-semibold text-gray-600">Condition
-                    <select value={ebayCondition} onChange={e=>setEbayCondition(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                    <select value={ebayCondition} onChange={e=>{setEbayCondition(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
                       <option value="all">All conditions</option><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="open-box">Open box</option><option value="parts">For parts / not working</option>
                     </select>
                   </label>
                   <label className="text-xs font-semibold text-gray-600">Ships from
-                    <select value={ebayShipFrom} onChange={e=>setEbayShipFrom(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                    <select value={ebayShipFrom} onChange={e=>{setEbayShipFrom(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
                       <option value="ALL">All locations</option>{[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
                     </select>
                   </label>
                   <label className="text-xs font-semibold text-gray-600">Ships to
-                    <select value={ebayShipTo} onChange={e=>setEbayShipTo(e.target.value)} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                    <select value={ebayShipTo} onChange={e=>{setEbayShipTo(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
                       {[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
                     </select>
                   </label>
@@ -1205,14 +1215,14 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
                   </div>
 
                   <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{ebayResults.length} results on this page</span>
+                    <span className="text-xs text-gray-400">{ebayResults.length} matching results on page {ebayPage}{ebayTotalResults!==null?` · Provider total: ${ebayTotalResults}`:""}</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setEbayPage(p => Math.max(1, p - 1))} disabled={ebayPage === 1 || ebaySearching}
+                      <button onClick={() => void handleEbaySearch(undefined, Math.max(1, ebayPage - 1))} disabled={ebayPage === 1 || ebaySearching}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         <ChevronLeft className="w-3 h-3" /> Prev
                       </button>
                       <span className="text-xs text-gray-500">Page {ebayPage}</span>
-                      <button onClick={() => setEbayPage(p => p + 1)} disabled={ebaySearching || ebayResults.length === 0}
+                      <button onClick={() => void handleEbaySearch(undefined, ebayPage + 1)} disabled={ebaySearching || ebayProviderCount < 50 || (ebayTotalResults !== null && ebayPage * 50 >= ebayTotalResults)}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
