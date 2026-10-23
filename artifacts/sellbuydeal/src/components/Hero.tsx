@@ -1,3 +1,4 @@
+import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -90,6 +91,7 @@ export function Hero() {
   const [, setLocation] = useLocation();
   const [sellOpen, setSellOpen] = useState(false);
   const featureSettings = useRawSettings();
+  const {isActive:categoryIsActive} = usePublicCategoryVisibility();
   const {resolvedTheme}=useTheme();
   const designMode=resolvedTheme==="dark"?"dark":"light";
   const heroAppearance=readSection(featureSettings,"home_hero",designMode);
@@ -162,7 +164,7 @@ export function Hero() {
           >
             {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
             <div data-design-home-categories={categoryAppearance?"true":"false"} data-design-icons={categoryIconAppearance?"true":"false"} style={{...sectionStyle(categoryAppearance),...iconStyle(categoryIconAppearance)}} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
+            {HERO_CATS.filter(cat=>!cat.href.includes("category=")||categoryIsActive(cat.href.split("category=")[1])).map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
