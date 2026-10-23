@@ -1,3 +1,4 @@
+import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Link, useLocation } from "wouter";
@@ -137,8 +138,7 @@ export function Navbar() {
   const CartHeaderIcon=iconForPlacement(studioIcons,"header_cart");
   const AccountHeaderIcon=iconForPlacement(studioIcons,"header_account");
   const visibleHref = (href:string) => { const f=featureForHref(href); return !f || isFeatureEnabled(featureSettings,f); };
-  const [hiddenCategories,setHiddenCategories]=useState<string[]>([]);
-  useEffect(()=>{fetch(`${API_BASE}/api/settings/category-visibility`,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
+  const {isActive:categoryIsActive}=usePublicCategoryVisibility();
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
@@ -176,8 +176,8 @@ export function Navbar() {
     : [];
   const matchedCategories = trimmed
     ? ACTIVE_CATEGORIES.filter(
-        (c) => !hiddenCategories.includes(c.slug) && c.name.toLowerCase().includes(trimmed) ||
-          c.subcategories.some((s) => !hiddenCategories.includes(c.slug+"__"+s.slug) && s.name.toLowerCase().includes(trimmed))
+        (c) => categoryIsActive(c.slug) && (c.name.toLowerCase().includes(trimmed) ||
+          c.subcategories.some((s) => categoryIsActive(c.slug,s.slug) && s.name.toLowerCase().includes(trimmed)))
       ).slice(0, 3)
     : [];
   const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0;
