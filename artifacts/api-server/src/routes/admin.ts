@@ -1312,6 +1312,26 @@ router.get("/admin/listings", async (req, res) => {
   }
 });
 
+// Admin category corrections use the public listing taxonomy, not free-form category text.
+const ADMIN_LISTING_CATEGORIES: Record<string, string[]> = {"appliances":["refrigerators","washing-machines","dishwashers","microwaves","air-conditioners","vacuums"],"arts-crafts-sewing":["painting","knitting","sewing","scrapbooking","printmaking","beading"],"automotive":["car-parts","tires","car-electronics","motorcycles","auto-tools","car-care"],"baby-products":["baby-clothing","feeding","nursery","strollers","car-seats","baby-toys"],"beauty-personal-care":["skincare","haircare","makeup","fragrances","mens-grooming","oral-care"],"books":["fiction","non-fiction","childrens-books","textbooks","comics","rare-books"],"cds-vinyl":["cds","cassettes","music-box-sets","other-music-formats","vinyl"],"cell-phones":["smartphones","phone-cases","chargers","screen-protectors","earphones","smartwatches"],"clothing-shoes-jewelry":["mens-clothing","womens-clothing","kids-clothing","shoes","jewelry","bags"],"electronics":["computers","tvs","audio","cameras","gaming-consoles","smart-home"],"eco-friendly":["solar","organic-food","reusable","natural-cleaning","sustainable-fashion","green-tech"],"health-household":["vitamins","medical","cleaning","air-fresheners","pest-control"],"home-kitchen":["cookware","bedding","furniture","home-decor","storage","lighting"],"industrial-scientific":["lab-equipment","safety","electrical","hydraulics","janitorial"],"movies-tv":["blu-ray","dvd","4k-uhd","tv-series","foreign-films"],"musical-instruments":["guitars","pianos","drums","wind","dj-equipment","instrument-accessories"],"office-products":["printers","desk-accessories","filing","pens","paper","calendars"],"patio-lawn-garden":["outdoor-furniture","grills","gardening-tools","plants","outdoor-decor"],"pet-supplies":["dogs","cats","birds","fish","small-animals","reptiles"],"sports-outdoors":["fitness","cycling","camping","water-sports","team-sports","winter-sports"],"tools-home-improvement":["power-tools","hand-tools","electrical-installation","electrical-tools","plumbing","paint","safety-tools"],"toys-games":["action-figures","board-games","dolls","outdoor-toys","stem","building-sets"],"video-games":["consoles","playstation","xbox","nintendo","pc-gaming","vr-gaming"],"digital-products":["software","ebooks","music-downloads","stock-media","templates","online-courses"],"digital":["software-apps","documents-ebooks","graphics-design","photography","video","audio-music","games-gaming","education-courses","business-marketing","ai-automation","3d-cad","websites-online-assets","virtual-goods","other-digital"],"jewellery-watches":["fine-jewellery","fashion-jewellery","rings","necklaces","bracelets-earrings","watches","watch-parts","gemstones"],"adult":["adult-clothing","adult-media","adult-collectibles","adult-accessories","adult-wellness","adult-toys","adult-digital","adult-services","adult-vintage-collectors","other-adult"]};
+router.patch("/admin/listings/categories", async (req, res) => {
+  const ids = req.body?.ids;
+  const category = req.body?.category;
+  const subcategory = req.body?.subcategory;
+  if (!Array.isArray(ids) || ids.length < 1 || ids.length > 50 || !ids.every((id: unknown) => Number.isSafeInteger(id) && (id as number) > 0) || new Set(ids).size !== ids.length) {
+    res.status(400).json({error:"Choose between 1 and 50 unique listing IDs."}); return;
+  }
+  if (typeof category !== "string" || typeof subcategory !== "string" || !ADMIN_LISTING_CATEGORIES[category]?.includes(subcategory)) {
+    res.status(400).json({error:"Choose a valid category and subcategory."}); return;
+  }
+  try {
+    const updated = await db.execute(sql`UPDATE listings SET category=${category}, subcategory=${subcategory}, updated_at=NOW() WHERE id IN (${sql.join(ids.map((id: number) => sql`${id}`), sql`, `)}) RETURNING id,category,subcategory`);
+    if (updated.rows.length !== ids.length) { res.status(404).json({error:"One or more listings were not found; refresh and retry."}); return; }
+    await recordAdminAudit({req, category:"listings", action:"listings.recategorize", targetType:"listing", targetId:ids.length===1?String(ids[0]):"bulk", summary:`Changed category for ${ids.length} listing(s) to ${category}/${subcategory}`, after:{ids,category,subcategory}});
+    res.json({updated:updated.rows, count:updated.rows.length});
+  } catch (err) { logger.error({err}, "Failed to recategorize listings"); res.status(500).json({error:"Could not update listing categories."}); }
+});
+
 // PATCH /api/admin/listings/:id/image — set or replace a listing image from Admin
 router.patch("/admin/listings/:id/image", async (req, res) => {
   try {
