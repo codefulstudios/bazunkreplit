@@ -39,7 +39,7 @@ export function AdminImporterBulkUpdatePage(){
   if(!window.confirm("Apply this markup and shipping to ALL existing imports for selected sources? This updates live listing prices and cannot be automatically undone."))return;
   setBusy(true);setResults([]);
   const next:string[]=[];
-  for(const [enabled,label,url] of [[amazon,"Amazon","/api/admin/bulk-markup-amazon"],[ebay,"eBay","/api/admin/bulk-markup-ebay"]] as const){
+  for(const [enabled,label,url] of [[amazon,"Amazon","/api/admin/bulk-markup"],[ebay,"eBay","/api/admin/bulk-markup-ebay"]] as const){
    if(!enabled)continue;
    try{const r=await authFetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({markup:m,shipping:s})});const d=await r.json();next.push(label+": "+(r.ok?String(d.message||("Updated "+(d.updated??0)+" listings")):String(d.error||"Update failed")))}catch{next.push(label+": network error")}
    setResults([...next]);
