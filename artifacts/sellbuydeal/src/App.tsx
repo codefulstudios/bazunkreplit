@@ -300,7 +300,7 @@ function SignUpPage() {
   );
 }
 
-// ─── Homepage: published Design Center sections ─────────────────────────────
+// ─── Homepage: validated published Design Center sections ────────────────────
 
 function Home() {
   const settings=useRawSettings();
