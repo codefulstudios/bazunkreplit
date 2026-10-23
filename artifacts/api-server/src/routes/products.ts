@@ -305,7 +305,8 @@ router.get("/admin/products/:id", async (req, res) => {
     try { specs = row.specifications ? JSON.parse(row.specifications) : {}; } catch { specs = {}; }
     res.json({
       ...row,
-      images: row.image ? [row.image] : [],
+      images: Array.isArray(specs.admin_gallery_images) && specs.admin_gallery_images.length ? specs.admin_gallery_images : (row.image ? [row.image] : []),
+      variants: Array.isArray(specs.admin_variants) ? specs.admin_variants : [],
       status: row.status === "active" ? "approved" : row.status,
       inventory: Number(specs.inventory ?? 1),
       brand: String(specs.brand ?? ""),
@@ -379,6 +380,27 @@ router.put("/admin/products/:id", async (req, res) => {
     logger.error({ err }, "Failed to update product");
     res.status(500).json({ error: "Failed to update product" });
   }
+});
+
+// Manage listing galleries and variants without rewriting source/import metadata.
+router.patch("/admin/products/:id/media-variants",async(req,res)=>{
+ const id=Number(req.params.id);
+ if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid listing ID"});return;}
+ const {images,variants}=req.body??{};
+ if(images===undefined&&variants===undefined){res.status(400).json({error:"No changes provided"});return;}
+ if(images!==undefined&&(!Array.isArray(images)||images.length>12||!images.every((x:unknown)=>typeof x==="string"&&x.length<=4000&&/^https:\/\//i.test(x)))){res.status(400).json({error:"Provide up to 12 HTTPS image URLs"});return;}
+ if(variants!==undefined&&(!Array.isArray(variants)||variants.length>50||!variants.every((v:any)=>v&&["size","color","condition","material","style","other"].includes(v.type)&&typeof v.value==="string"&&v.value.trim().length>0&&v.value.length<=100&&Number.isFinite(Number(v.priceModifier))&&Number.isFinite(Number(v.inventory))&&Number(v.inventory)>=0))){res.status(400).json({error:"Invalid variants (maximum 50)"});return;}
+ try{
+  const [row]=await db.execute(sql`SELECT id,specifications,image FROM listings WHERE id=${id}`).then(r=>r.rows as any[]);
+  if(!row){res.status(404).json({error:"Listing not found"});return;}
+  let specs:any={};try{specs=JSON.parse(row.specifications||"{}");}catch{}
+  if(images!==undefined)specs.admin_gallery_images=images;
+  if(variants!==undefined)specs.admin_variants=variants.map((v:any)=>({type:v.type,value:v.value.trim(),priceModifier:String(v.priceModifier),inventory:String(v.inventory)}));
+  specs.admin_manual_override=true;
+  const primary=images!==undefined?(images[0]??null):row.image;
+  await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify(specs)},image=${primary},updated_at=NOW() WHERE id=${id}`);
+  res.json({ok:true,images:specs.admin_gallery_images??(primary?[primary]:[]),variants:specs.admin_variants??[]});
+ }catch(err){logger.error({err},"Listing media/variant update failed");res.status(500).json({error:"Could not save listing changes"});}
 });
 
 router.delete("/admin/products/:id", async (req, res) => {
