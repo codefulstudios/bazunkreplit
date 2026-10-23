@@ -48,7 +48,7 @@ export function AdminLoginPage() {
       <div className="relative grid w-full max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl dark:border-white/10 dark:bg-[#101e3e] lg:min-h-[600px] lg:grid-cols-2">
         <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#071b43] via-[#0a326e] to-[#10204d] p-8 !text-white sm:p-12">
           <div>
-            <img src="/bazunk-logo.png" alt="Bazunk" className="mb-7 h-12 w-auto rounded-lg bg-white p-2" />
+            <img src="/bazunk-brand-dark.png" alt="Bazunk" className="mb-7 h-12 w-auto rounded-lg bg-white p-2" />
             <div className="text-2xl font-black !text-white sm:text-3xl">Marketplace Admin</div>
             <p className="mt-2 text-lg !text-white">Manage. Monitor. Grow.</p>
             <div className="mt-10 space-y-5 text-sm font-semibold !text-white">
