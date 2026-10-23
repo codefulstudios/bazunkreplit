@@ -308,7 +308,7 @@ router.get("/listings/:id", async (req, res) => {
       tags: listingsTable.tags, extraCategories: listingsTable.extraCategories, specifications: listingsTable.specifications,
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
-    }).from(listingsTable).where(eq(listingsTable.publicId, rawId)).limit(1);
+    }).from(listingsTable).where(sql`public_url_token = ${rawId} OR public_id = ${rawId}`).limit(1);
     if (!row && /^\\d+$/.test(rawId)) {
       [row] = await db.select({
       id: listingsTable.id, publicId: listingsTable.publicId, title: listingsTable.title,
@@ -342,7 +342,8 @@ router.get("/listings/:id", async (req, res) => {
       console.error("Error checking seller verification, defaulting to unverified:", err);
     }
 
-    res.json({ ...withPromo, sellerVerified });
+    const tokenResult=await db.execute(sql`SELECT public_url_token FROM listings WHERE id=${row.id}`);
+    res.json({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified });
   } catch (err) {
     console.error("Error fetching listing:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
