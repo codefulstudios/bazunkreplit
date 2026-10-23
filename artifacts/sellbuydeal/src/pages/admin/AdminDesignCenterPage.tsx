@@ -153,7 +153,7 @@ export function AdminDesignCenterPage(){
   const [item]=list.splice(first,1);list.splice(second,0,item);applyLayout(list);
  };
  const move=(id:string,offset:number)=>{const from=homeSections.findIndex(x=>x.id===id),to=from+offset;if(to>=0&&to<homeSections.length)reorder(id,homeSections[to].id)};
- const sendPreview=useCallback(()=>{frame.current?.contentWindow?.postMessage({type:"bazunk:theme-preview-settings",settings:draft},window.location.origin)},[draft]);
+ const sendPreview=useCallback(()=>{frame.current?.contentWindow?.postMessage({type:"bazunk:theme-preview-settings",settings:draft,previewTheme:tab==="visual"?visualTheme:undefined},window.location.origin)},[draft,tab,visualTheme]);
  useEffect(()=>{sendPreview()},[sendPreview,tab,device]);
  useEffect(()=>{
   const listener=(event:MessageEvent)=>{
@@ -306,7 +306,7 @@ export function AdminDesignCenterPage(){
          {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index}><strong>Card {index+1}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}</div>)}</>:null}
         </div>}
         {visualMode==="media"&&<div className="bzve-fields"><label className="bzdc-field"><span>Image placement</span><select value={mediaTarget} onChange={e=>setMediaTarget(e.target.value as MediaTarget)}>{imageTargets.map(x=><option value={x.key} key={x.key}>{x.title}</option>)}</select></label>
-         <button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
+         <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>void upload(e.target.files?.[0]||null)} ref={tab==="visual"?file:undefined}/><button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
          <div className="bzve-images">{assets.map(asset=><button type="button" key={asset.id} title={asset.filename} onClick={()=>update(mediaTarget,asset.url)}><img src={assetUrl(asset.url)} alt={asset.filename}/></button>)}</div>
         </div>}
        </aside>
