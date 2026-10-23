@@ -2135,21 +2135,28 @@ router.get("/admin/search-ebay", async (req, res) => {
     if (!resp.ok) { res.status(502).json({ error: rapidApiErrorMessage("eBay", resp.status) }); return; }
 
     const data = await resp.json() as Record<string, unknown>;
-    const raw  = (data?.itemSummaries as Record<string, unknown>[]) ?? (data?.data as Record<string,unknown>|undefined)?.itemSummaries as Record<string,unknown>[] ?? [];
+    const nested = (data?.data && typeof data.data === "object") ? data.data as Record<string,unknown> : {};
+    const rawCandidate = data.itemSummaries ?? nested.itemSummaries ?? data.products ?? nested.products ?? data.results ?? nested.results;
+    const raw = Array.isArray(rawCandidate) ? rawCandidate as Record<string,unknown>[] : [];
+    if (!Array.isArray(rawCandidate)) {
+      logger.warn({keys:Object.keys(data).slice(0,15),nestedKeys:Object.keys(nested).slice(0,15)}, "eBay search returned an unrecognised payload");
+      res.status(502).json({error:"eBay provider returned an unsupported response format. The search was not empty; check the API subscription and response mapping."}); return;
+    }
     const currency: "GBP" | "USD" = site === "uk" ? "GBP" : "USD";
     const ebayBase = site === "uk" ? "https://www.ebay.co.uk" : "https://www.ebay.com";
 
     const expectedCountries = site === "uk"
       ? new Set(["GB", "GBR", "UK", "UNITED KINGDOM"])
       : new Set(["US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"]);
-    const products = raw
+    const eligible = raw
       .filter(p => {
         if (!p.legacyItemId || !(p.price as Record<string, unknown>)?.value) return false;
         const loc = (p.itemLocation as Record<string, unknown>) ?? {};
         const country = String(loc.country ?? "").trim().toUpperCase();
         const cur = String(((p.price as Record<string, unknown>)?.currency ?? "")).toUpperCase();
-        return (from === "ALL" ? !!country : country === from || (from === "GB" && expectedCountries.has(country) && site === "uk") || (from === "US" && expectedCountries.has(country) && site === "us")) && cur === (site === "uk" ? "GBP" : "USD");
-      })
+        return (from === "ALL" || country === from || (from === "GB" && expectedCountries.has(country) && site === "uk") || (from === "US" && expectedCountries.has(country) && site === "us")) && cur === (site === "uk" ? "GBP" : "USD");
+      });
+    const products = eligible
       .map(p => {
         const priceObj      = (p.price as Record<string, unknown>) ?? {};
         const price         = parseFloat(String(priceObj.value ?? "").replace(/[^0-9.]/g, "")) || 0;
@@ -2199,7 +2206,9 @@ router.get("/admin/search-ebay", async (req, res) => {
       })
       .filter(p => p.price > 0 && (condition === "all" || (condition === "new" ? /^new\b/i.test(p.condition) : condition === "used" ? /used|pre-owned/i.test(p.condition) : condition === "refurbished" ? /refurbished/i.test(p.condition) : condition === "open-box" ? /open.box/i.test(p.condition) : condition === "parts" ? /parts|not working/i.test(p.condition) : false)));
 
-    res.json({ products, total: (data.total as number) ?? products.length });
+    const diagnostics = {providerCount:raw.length,locationAndCurrencyCount:eligible.length,returnedCount:products.length,condition,shipsFrom:from,shipsTo:to};
+    if(raw.length && !products.length)logger.info({diagnostics},"eBay items filtered from search");
+    res.json({ products, total: (data.total as number) ?? products.length, diagnostics, notice:raw.length&&!products.length?"The provider returned listings but all were excluded by selected condition, location or currency filters. Try All conditions and All locations.":undefined });
   } catch (err) {
     logger.error({ err }, "eBay search failed");
     res.status(500).json({ error: "eBay search failed" });
