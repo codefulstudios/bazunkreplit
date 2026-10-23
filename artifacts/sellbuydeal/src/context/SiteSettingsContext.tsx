@@ -157,8 +157,30 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
       element.style.outline="3px solid #2563eb";element.style.outlineOffset="3px";
       window.parent.postMessage({type:"bazunk:theme-preview-select",field,section,cardIndex,cardField},window.location.origin);
     };
+    const editable=(element:HTMLElement)=>Boolean(element.dataset.themeEdit||element.dataset.themeCardField&&["title","description"].includes(element.dataset.themeCardField));
+    const begin=(event:MouseEvent)=>{
+      if(event.detail!==2)return;
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      const element=target.closest<HTMLElement>("[data-theme-edit],[data-theme-card-field]");
+      if(!element||!editable(element))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      element.contentEditable="plaintext-only";
+      element.focus();
+      const selection=window.getSelection(),range=document.createRange();
+      range.selectNodeContents(element);selection?.removeAllRanges();selection?.addRange(range);
+      const finish=()=>{
+        const value=(element.innerText||"").trim();
+        element.removeAttribute("contenteditable");
+        element.removeEventListener("blur",finish);
+        window.parent.postMessage({type:"bazunk:theme-preview-inline",field:element.dataset.themeEdit,section:element.dataset.themeSection,cardIndex:element.dataset.themeCard,cardField:element.dataset.themeCardField,value},window.location.origin);
+      };
+      element.addEventListener("blur",finish,{once:true});
+      element.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();element.blur()}if(e.key==="Escape"){e.preventDefault();element.removeAttribute("contenteditable");element.removeEventListener("blur",finish)}},{once:false});
+    };
+    document.addEventListener("dblclick",begin,true);
     document.addEventListener("click",choose,true);
-    return()=>document.removeEventListener("click",choose,true);
+    return()=>{document.removeEventListener("click",choose,true);document.removeEventListener("dblclick",begin,true)};
   },[]);
 
   useEffect(() => {
