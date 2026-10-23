@@ -82,7 +82,7 @@ function validSectionContent(raw:string){
   if(Object.keys(obj).sort().join(",")!==HOME_LAYOUT_DEFAULT.map(x=>x.id).sort().join(","))return false;
   return Object.entries(obj).every(([id,value]:[string,any])=>{
    if(!value||typeof value!=="object"||Array.isArray(value))return false;
-   const cardsValid=value.cards===undefined||(["promos","perks"].includes(id)&&Array.isArray(value.cards)&&value.cards.length===(id==="promos"?4:5)&&value.cards.every((card:any)=>card&&["title","description","url"].every(key=>typeof card[key]==="string"&&card[key].length<=500&&!/[<>]/.test(card[key])&&(key!=="url"||card[key]===""||(card[key].startsWith("/")&&!card[key].startsWith("//")&&!card[key].includes(":")))));
+   const cardsValid=value.cards===undefined||(["promos","perks"].includes(id)&&Array.isArray(value.cards)&&value.cards.length===(id==="promos"?4:5)&&value.cards.every((card:any)=>card&&["title","description","url"].every(key=>typeof card[key]==="string"&&card[key].length<=500&&!/[<>]/.test(card[key])&&(key!=="url"||card[key]===""||(card[key].startsWith("/")&&!card[key].startsWith("//")&&!card[key].includes(":"))));
    return cardsValid&&["title","description","button","url"].every(key=>{
     const str=value[key];
     return typeof str==="string"&&str.length<=(key==="description"?500:key==="url"?200:140)
