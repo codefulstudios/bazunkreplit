@@ -69,12 +69,15 @@ export function AdminListingsPage() {
   }
   async function deleteListing(id:number) {
     if(!window.confirm("Permanently delete this listing? Listings associated with transactions must be preserved. This action cannot be undone."))return;
-    setRowBusy(id);setActionError("");
+    setRowBusy(id);setActionError("");setActionSuccess("");
     try {
       const res=await authFetch(`/api/admin/listings/${id}/safe-delete`,{method:"DELETE"});
       const data=await res.json().catch(()=>null);
       if(!res.ok)throw Error(data?.error||"Could not delete listing");
       setListings(prev=>prev.filter(l=>l.id!==id));setTotal(t=>Math.max(0,t-1));setSelectedIds(prev=>prev.filter(x=>x!==String(id)));
+      setActionSuccess("Listing deleted successfully.");
+      // Refresh from the database so the table, pagination and listing total stay in sync.
+      await load();
     }catch(e){setActionError(e instanceof Error?e.message:"Action failed");}
     finally{setRowBusy(null);}
   }
@@ -184,6 +187,7 @@ export function AdminListingsPage() {
         {([{id:"listings",label:"All Listings"},{id:"categories",label:"Categories"},{id:"import-export",label:"Import / Export"}] as const).map(item=><button role="tab" aria-selected={view===item.id} key={item.id} type="button" onClick={()=>setView(item.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${view===item.id?"bg-blue-600 text-white border-blue-600":"border-slate-400 bg-white text-slate-950 dark:bg-slate-800 dark:text-white"}`}>{item.label}</button>)}
       </div>
       {view!=="listings" ? <AdminListingCatalogueTools section={view}/> : <>
+      {actionSuccess&&<p role="status" className="my-2 rounded-lg border border-emerald-500 p-3 font-bold text-emerald-600 dark:text-emerald-300">{actionSuccess}</p>}
       {actionError&&<p role="alert" className="my-2 rounded-lg border border-red-500 p-3 font-bold text-red-500">{actionError}</p>}
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
