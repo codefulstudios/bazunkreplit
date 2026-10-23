@@ -1231,6 +1231,16 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
                 </>
               )}
 
+              {ebayHasSearched && ebayResults.length === 0 && !ebaySearching && ebayProviderCount > 0 && (
+                <div className="px-5 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-slate-700">No matching listings in provider batch {ebayPage} ({ebayProviderCount} checked). You can check the next batch.</p>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => void handleEbaySearch(undefined,Math.max(1,ebayPage-1))} disabled={ebayPage===1||ebaySearching} className="border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:opacity-40">Previous</button>
+                    <span className="text-sm font-semibold">Page {ebayPage}</span>
+                    <button type="button" onClick={() => void handleEbaySearch(undefined,ebayPage+1)} disabled={ebaySearching||ebayProviderCount<50||(ebayTotalResults!==null&&ebayPage*50>=ebayTotalResults)} className="bg-indigo-600 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-40">Next</button>
+                  </div>
+                </div>
+              )}
               {ebayHasSearched && ebayResults.length === 0 && !ebaySearching && !ebaySearchErr && (
                 <div className="py-10 text-center text-gray-400 text-sm">No results found. Try a different search.</div>
               )}
