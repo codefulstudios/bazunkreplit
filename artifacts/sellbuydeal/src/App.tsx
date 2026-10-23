@@ -75,6 +75,7 @@ import { ChatwootWidget } from "@/components/ChatwootWidget";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
+import { HomepageVisualElements } from "@/components/HomepageVisualElements";
 import { HomepagePromoCards } from "@/components/HomepagePromoCards";
 import { useRawSettings } from "@/context/SiteSettingsContext";
 import { parseHomeSections, parseSectionContent, type HomeSectionId } from "@/design-system/homepageSections";
@@ -327,6 +328,7 @@ function Home() {
         <Hero />
         <CategorySection />
         <FeaturedListings mode="recent" />
+        <HomepageVisualElements />
         {optionalSections.filter(section=>section.enabled).map(section=>
           <div key={section.id} data-theme-section={section.id}>
             {section.id!=="features"&&section.id!=="announcement"&&section.id!=="rewards"&&<div className="bg-white px-5 py-5 text-slate-950 dark:bg-[#17243a] dark:text-white"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">{sectionContent[section.id].title}</h2>{sectionContent[section.id].description&&<p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-100">{sectionContent[section.id].description}</p>}</div>{sectionContent[section.id].button&&sectionContent[section.id].url.startsWith("/")&&!sectionContent[section.id].url.startsWith("//")&&<a href={sectionContent[section.id].url} className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white">{sectionContent[section.id].button}</a>}</div></div>}
