@@ -849,3 +849,29 @@ function ImportExportTab({ authFetch, categories }: {
     </div>
   );
 }
+
+export function AdminListingEditor({listingId,onClose,onSaved}:{listingId:number|null;onClose:()=>void;onSaved:()=>void}) {
+  const {authFetch}=useAdmin();
+  const [product,setProduct]=useState<Product|null>(null);
+  const [loading,setLoading]=useState(true);
+  const categories=SITE_CATEGORIES.map(c=>({id:c.slug,name:c.name,slug:c.slug,description:null,product_count:0}));
+  useEffect(()=>{
+    let cancelled=false;
+    if(listingId===null){setProduct(null);setLoading(false);return;}
+    setLoading(true);
+    void authFetch(`/api/admin/products/${listingId}`).then(async r=>{
+      if(!r.ok)throw new Error("Could not load listing for editing");
+      const value=await r.json();if(!cancelled)setProduct(value);
+    }).catch(()=>{if(!cancelled)onClose();}).finally(()=>{if(!cancelled)setLoading(false);});
+    return ()=>{cancelled=true;};
+  },[listingId]);
+  if(loading)return <p role="status" className="p-4 text-white">Loading listing editor…</p>;
+  return <ProductDrawer product={product} categories={categories} authFetch={authFetch} onClose={onClose} onSaved={onSaved}/>;
+}
+export function AdminListingCatalogueTools({section}:{section:"categories"|"import-export"}) {
+  const {authFetch}=useAdmin();
+  const categories=SITE_CATEGORIES.map(c=>({id:c.slug,name:c.name,slug:c.slug,description:null,product_count:0}));
+  return section==="categories"
+    ? <CategoriesTab authFetch={authFetch} categories={categories} onRefresh={()=>{}}/>
+    : <ImportExportTab authFetch={authFetch} categories={categories}/>;
+}
