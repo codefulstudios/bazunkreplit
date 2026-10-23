@@ -69,7 +69,7 @@ function normaliseCondition(raw: unknown): string {
 }
 
 type SpecRow = { key: string; value: string };
-type ApiListingExtra = { _gallery?: string[]; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
+type ApiListingExtra = { _publicUrlToken?: string | null; _gallery?: string[]; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
 
 const TAG_COLORS = [
   "bg-[#4A5CE8]/10 text-[#4A5CE8]",
@@ -109,6 +109,7 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
     _sellerName: (l.sellerName as string) ?? "Seller",
     _sellerUsername: (l.sellerUsername as string) ?? undefined,
     _publicId: (l.publicId as string) ?? null,
+    _publicUrlToken: (l.publicUrlToken as string) ?? null,
     _promotions: Array.isArray(l.promotions) ? (l.promotions as string[]) : [],
     _tags: tagsRaw,
     _specifications: parsedSpecs,
@@ -143,6 +144,13 @@ export function ListingPage() {
   }, [id, staticProduct]);
 
   const product = staticProduct ?? apiProduct;
+  // Keep numeric and importer URLs working, but show the canonical public token after loading.
+  useEffect(() => {
+    const token=apiProduct?._publicUrlToken;
+    if(token && id!==token && /^[A-Za-z0-9]{15}$/.test(token)) {
+      window.history.replaceState(window.history.state,"",`/listing/${token}`);
+    }
+  },[apiProduct?._publicUrlToken,id]);
   useEffect(() => { if (apiProduct?.id) rememberViewedListing(Number(apiProduct.id)); }, [apiProduct?.id]);
   const { user: viewer } = useAuth();
   const { session } = useSession();
