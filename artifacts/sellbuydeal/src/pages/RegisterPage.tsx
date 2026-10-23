@@ -37,7 +37,7 @@ export function RegisterPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="bg-gradient-to-r from-[#F26B21] to-[#D97706] px-8 py-8 text-center">
               <div className="mb-1">
-                <img src="/bazunk-logo.png" alt="Bazunk" className="h-10 w-auto object-contain mx-auto rounded bg-white px-3 py-1" />
+                <img src="/bazunk-brand-dark.png" alt="Bazunk" className="h-10 w-auto object-contain mx-auto rounded bg-white px-3 py-1" />
               </div>
               <p className="text-orange-100 text-sm mt-1">Create your free account</p>
             </div>
