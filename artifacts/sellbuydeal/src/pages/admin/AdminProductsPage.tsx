@@ -393,9 +393,10 @@ function ProductDrawer({
 
   const set = (key: keyof ProductForm, val: any) => {setDirty(true);setForm(f => ({ ...f, [key]: val }));};
 
-  function addImage() { set("images", [...form.images, ""]); }
+  function addImage() { if(form.images.length<12)set("images", [...form.images, ""]); }
   function setImage(i: number, val: string) { const imgs = [...form.images]; imgs[i] = val; set("images", imgs); }
   function removeImage(i: number) { set("images", form.images.filter((_, idx) => idx !== i)); }
+  function makeCover(i:number){const copy=[...form.images];const [chosen]=copy.splice(i,1);set("images",[chosen,...copy]);}
 
   function addVariant() { set("variants", [...form.variants, { type: "size", value: "", priceModifier: "0", inventory: "0" }]); }
   function setVariant(i: number, key: keyof Variant, val: string) {
@@ -455,6 +456,10 @@ function ProductDrawer({
           )}
 
           <div id="product-editor-details" />
+          {isEdit&&<div className="rounded-lg border-2 border-slate-500 bg-slate-100 p-3 text-slate-950 dark:bg-slate-800 dark:text-white">
+            <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
+            <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
+          </div>}
           {/* Core fields */}
           <div className="space-y-3">
             <label className="block">
@@ -561,7 +566,7 @@ function ProductDrawer({
                 <input value={form.sku} onChange={e => set("sku", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" /></label>
             </div>
 
-            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+            <div id="product-editor-pricing" className="rounded-xl border border-gray-200 p-4 space-y-3">
               <div><h3 className="text-sm font-black text-gray-800">Shipping & fulfilment</h3><p className="text-xs text-gray-400">Customer-facing delivery information for this listing.</p></div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Ships from country</span>
@@ -580,6 +585,7 @@ function ProductDrawer({
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700"><input type="checkbox" checked={form.free_shipping} onChange={e => set("free_shipping", e.target.checked)} /> Free shipping</label>
             </div>
 
+            <div id="product-editor-more" />
             {isEdit && product?.source && (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2">
                 <div><h3 className="text-sm font-black text-gray-800">Source & Sync</h3><p className="text-xs text-gray-500">Private sourcing data. Editing the product above does not remove this information.</p></div>
@@ -623,6 +629,7 @@ function ProductDrawer({
                   <input value={url} onChange={e => setImage(i, e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]" />
+                  {i===0 ? <span className="rounded bg-emerald-700 px-2 py-1 text-xs font-black text-white">Cover</span> : <button type="button" onClick={()=>makeCover(i)} className="rounded bg-blue-700 px-2 py-1 text-xs font-black text-white">Set cover</button>}
                   <button onClick={() => removeImage(i)} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -672,11 +679,11 @@ function ProductDrawer({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={tryClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+          <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 bg-slate-700 py-2.5 text-sm font-black text-white hover:bg-slate-600 transition-colors">
             Cancel
           </button>
-          <button onClick={save} disabled={saving}
-            className="flex-1 py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+          <button onClick={save} disabled={saving||uploading}
+            className="flex-1 py-2.5 rounded-xl bg-[#c2410c] text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
