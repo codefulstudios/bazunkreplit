@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package } from "lucide-react";
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
+import { ACTIVE_CATEGORIES } from "@/data/categories";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { AdminManagementHeader, AdminStatusTabs } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
@@ -63,6 +64,43 @@ export function AdminListingsPage() {
   const [imageDraft, setImageDraft] = useState("");
   const [imageSaving, setImageSaving] = useState<number | null>(null);
   const [imageError, setImageError] = useState("");
+  const [categoryEditing, setCategoryEditing] = useState<number | "bulk" | null>(null);
+  const [categoryDraft, setCategoryDraft] = useState("electronics");
+  const [subcategoryDraft, setSubcategoryDraft] = useState("audio");
+  const [categorySaving, setCategorySaving] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+  const categoryOptions = ACTIVE_CATEGORIES;
+  function beginCategoryEdit(listing?: Listing) {
+    setCategoryEditing(listing?.id ?? "bulk");
+    const found=categoryOptions.find(c=>c.slug===listing?.category);
+    setCategoryDraft(found?.slug ?? "electronics");
+    setSubcategoryDraft(found?.subcategories.some(s=>s.slug===listing?.subcategory)?listing!.subcategory!:"audio");
+    setCategoryError("");
+  }
+  async function saveCategories() {
+    const ids=categoryEditing==="bulk"?selectedIds.map(Number):[Number(categoryEditing)];
+    if (!ids.length) return;
+    setCategorySaving(true);setCategoryError("");
+    try {
+      const res=await authFetch("/api/admin/listings/categories",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids,category:categoryDraft,subcategory:subcategoryDraft})});
+      const data=await res.json().catch(()=>null);
+      if (!res.ok) throw new Error(data?.error || "Could not save categories.");
+      const changed=new Set(ids);
+      setListings(prev=>prev.map(l=>changed.has(l.id)?{...l,category:categoryDraft,subcategory:subcategoryDraft}:l));
+      setCategoryEditing(null);setSelectedIds([]);
+    } catch(e) {setCategoryError(e instanceof Error?e.message:"Could not save categories.");}
+    finally {setCategorySaving(false);}
+  }
+  const categoryFields=(<div className="flex flex-wrap items-center gap-2">
+    <select aria-label="New listing category" value={categoryDraft} onChange={e=>{setCategoryDraft(e.target.value);setSubcategoryDraft(categoryOptions.find(c=>c.slug===e.target.value)?.subcategories[0]?.slug??"");}} className="min-h-9 max-w-48 rounded-lg border border-slate-400 bg-white px-2 text-xs font-semibold text-slate-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white">
+      {categoryOptions.map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}
+    </select>
+    <select aria-label="New listing subcategory" value={subcategoryDraft} onChange={e=>setSubcategoryDraft(e.target.value)} className="min-h-9 max-w-48 rounded-lg border border-slate-400 bg-white px-2 text-xs font-semibold text-slate-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white">
+      {categoryOptions.find(c=>c.slug===categoryDraft)?.subcategories.map(s=><option key={s.slug} value={s.slug}>{s.name}</option>)}
+    </select>
+    <button type="button" disabled={categorySaving} onClick={()=>void saveCategories()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{categorySaving?"Saving…":"Save category"}</button>
+    <button type="button" disabled={categorySaving} onClick={()=>{setCategoryEditing(null);setCategoryError("");}} className="rounded-lg border border-slate-400 px-3 py-2 text-xs font-bold text-slate-900 dark:text-white">Cancel</button>
+  </div>);
   const LIMIT = 50;
 
   useEffect(() => { if (!isAdmin) setLocation("/admin"); }, [isAdmin]);
@@ -144,6 +182,8 @@ export function AdminListingsPage() {
       <div className="mb-3"><AdminBulkSelection selected={selectedIds}
         rows={listings.map(l=>({id:String(l.id),cells:[l.public_id??"",l.title,l.status,l.category,l.price,l.currency,l.seller_email]}))}
         columns={["Public ID","Title","Status","Category","Price","Currency","Seller"]} filename="bazunk-admin-selected-listings" onClear={()=>setSelectedIds([])}/></div>
+      {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>beginCategoryEdit()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Change category for {selectedIds.length} selected</button></div>}
+      {categoryEditing==="bulk"&&<div className="mb-3 rounded-xl border border-blue-400 bg-blue-50 p-3 text-slate-950 dark:bg-slate-900 dark:text-white"><p className="mb-2 text-xs font-bold">Change category for {selectedIds.length} selected listings</p>{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
       {/* Table */}
       <div className="wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -204,7 +244,9 @@ export function AdminListingsPage() {
                     {/* Category */}
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
                       <span className="capitalize">{l.category.replace(/-/g, " ")}</span>
-                      {l.subcategory && <span className="text-gray-300"> · {l.subcategory.replace(/-/g, " ")}</span>}
+                      {l.subcategory && <span className="text-slate-600 dark:text-slate-200"> · {l.subcategory.replace(/-/g, " ")}</span>}
+                      <button type="button" onClick={()=>beginCategoryEdit(l)} className="ml-2 rounded-md border border-blue-400 px-2 py-1 font-bold text-blue-700 dark:text-blue-300">Edit category</button>
+                      {categoryEditing===l.id && <div className="mt-2 min-w-56 rounded-lg border border-slate-400 bg-white p-2 dark:bg-slate-900">{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
                     </td>
 
                     {/* Price */}
