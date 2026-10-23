@@ -87,7 +87,7 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
   try {
     const parsed = typeof l.specifications === "string" ? JSON.parse(l.specifications) : l.specifications;
     parsedSpecs = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.details) ? parsed.details : [];
-    gallery = Array.isArray(parsed?.photos) ? parsed.photos.filter((p: unknown) => typeof p === "string").slice(0, 10) : [];
+    gallery = Array.isArray(parsed?.admin_gallery_images) ? parsed.admin_gallery_images.filter((p: unknown) => typeof p === "string").slice(0, 12) : Array.isArray(parsed?.photos) ? parsed.photos.filter((p: unknown) => typeof p === "string").slice(0, 10) : [];
   } catch { parsedSpecs = []; }
   const tagsRaw = typeof l.tags === "string" && l.tags.trim() ? l.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined;
   return {
