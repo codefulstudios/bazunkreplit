@@ -1,5 +1,5 @@
 export const ELEMENT_KINDS=["heading","paragraph","image","button","banner","card"] as const;
-export type ElementStyle={fontFamily?:string;fontSize?:number;fontWeight?:number;borderWidth?:number;borderRadius?:number;borderColor?:string;shadow?:string;padding?:number;gap?:number;width?:number;align?:string;columns?:number;sectionSpacing?:number};
+export type ElementStyle={fontFamily?:string;fontSize?:number;fontWeight?:number;borderWidth?:number;borderRadius?:number;borderColor?:string;shadow?:string;padding?:number;gap?:number;width?:number;align?:string;columns?:number;sectionSpacing?:number;imageHeight?:number;imageFit?:"cover"|"contain"|"fill";imagePositionX?:number;imagePositionY?:number;buttonHoverBackground?:string;buttonHoverColor?:string;buttonVariant?:"solid"|"outline"|"ghost"};
 export type VisualElement={style?:ElementStyle;id:string;type:(typeof ELEMENT_KINDS)[number];text:string;url:string;image:string;background:string;color:string};
 export function parseVisualElements(raw:unknown):VisualElement[]{
  try{
