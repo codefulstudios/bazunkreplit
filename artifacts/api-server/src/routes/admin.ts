@@ -1332,6 +1332,43 @@ router.patch("/admin/listings/categories", async (req, res) => {
   } catch (err) { logger.error({err}, "Failed to recategorize listings"); res.status(500).json({error:"Could not update listing categories."}); }
 });
 
+// Shared actions for the unified Listings administration page.
+router.patch("/admin/listings/:id/visibility",async(req,res)=>{
+ const id=Number(req.params.id);
+ if(!Number.isSafeInteger(id)||id<1||typeof req.body?.hidden!=="boolean"){res.status(400).json({error:"Invalid visibility request"});return;}
+ try{
+  const existing=await db.execute(sql`SELECT id,status FROM listings WHERE id=${id}`).then(r=>r.rows);
+  if(!existing.length){res.status(404).json({error:"Listing not found"});return;}
+  if(["sold","suspended"].includes(String(existing[0].status))){res.status(409).json({error:"Cannot override sold or suspended listings"});return;}
+  const status=req.body.hidden?"inactive":"active";
+  await db.execute(sql`UPDATE listings SET status=${status},updated_at=NOW() WHERE id=${id}`);
+  await recordAdminAudit({req,category:"listings",action:"listings.visibility",targetType:"listing",targetId:String(id),summary:`Changed listing visibility to ${status}`,before:existing[0],after:{status}});
+  res.json({id,status});
+ }catch(err){logger.error({err},"Listing visibility update failed");res.status(500).json({error:"Could not change listing visibility"});}
+});
+router.delete("/admin/listings/:id/safe-delete",async(req,res)=>{
+ const id=Number(req.params.id);
+ if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid listing ID"});return;}
+ try{
+  const rows=await db.execute(sql`SELECT id,public_id,status,title FROM listings WHERE id=${id}`).then(r=>r.rows);
+  if(!rows.length){res.status(404).json({error:"Listing not found"});return;}
+  const item=rows[0] as any;
+  if(item.status==="sold"){res.status(409).json({error:"Sold listings cannot be deleted because their transaction history must be preserved. Hide instead."});return;}
+  if(/^(BZK-(EBY|AMZ|ALI)-)/.test(String(item.public_id??""))){res.status(409).json({error:"Imported listing deletion requires a permanent reimport exclusion. Use Hide until exclusion rules are enabled."});return;}
+  // Decline hard deletion when any database relationship references this listing.
+  const refs=await db.execute(sql`SELECT tc.table_schema,tc.table_name,kcu.column_name FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu ON tc.constraint_name=kcu.constraint_name AND tc.table_schema=kcu.table_schema JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name=tc.constraint_name AND ccu.table_schema=tc.table_schema WHERE tc.constraint_type='FOREIGN KEY' AND ccu.table_name='listings' AND ccu.column_name='id' AND tc.table_schema=current_schema()`).then(r=>r.rows);
+  for(const ref of refs){
+    const schema=String(ref.table_schema),table=String(ref.table_name),column=String(ref.column_name);
+    if(!/^[a-z_][a-z0-9_]*$/.test(schema)||!/^[a-z_][a-z0-9_]*$/.test(table)||!/^[a-z_][a-z0-9_]*$/.test(column))continue;
+    const check=await db.execute(sql.raw(`SELECT 1 FROM "${schema}"."${table}" WHERE "${column}" = ${id} LIMIT 1`)).then(r=>r.rows);
+    if(check.length){res.status(409).json({error:"This listing has related records and cannot be permanently deleted. Hide it instead."});return;}
+  }
+  await db.execute(sql`DELETE FROM listings WHERE id=${id}`);
+  await recordAdminAudit({req,category:"listings",action:"listings.delete",targetType:"listing",targetId:String(id),summary:`Deleted listing ${item.title}`,before:item});
+  res.json({deleted:true,id});
+ }catch(err){logger.error({err},"Safe listing deletion failed");res.status(500).json({error:"Deletion blocked to protect related records; hide the listing instead."});}
+});
+
 // PATCH /api/admin/listings/:id/image — set or replace a listing image from Admin
 router.patch("/admin/listings/:id/image", async (req, res) => {
   try {
