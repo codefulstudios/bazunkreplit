@@ -122,16 +122,20 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
         event.data?.type!=="bazunk:theme-preview-settings")return;
       const proposed=event.data?.settings;
       if(!proposed||typeof proposed!=="object"||Array.isArray(proposed))return;
-      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url","home_sections_layout","hero_title","hero_subtitle",
+      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url","home_sections_layout","home_sections_content","hero_title","hero_subtitle",
         "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright",
         "footer_facebook","footer_twitter","footer_instagram","footer_youtube",
         "announcement_enabled","announcement_text","announcement_color",
         "categories_title","categories_subtitle","features_title","features_subtitle",
         "header_search_placeholder","seo_title","seo_description","icon_overrides"];
-      if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=800))return;
+      if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=(k==="home_sections_content"?12000:800)))return;
       const safe=Object.fromEntries(keys.map(k=>[k,proposed[k]]));
       setSettings(prev=>({...prev,...safe}));
       setRawSettings(prev=>({...prev,...safe,theme_studio_enabled:"true"}));
+      if(event.data.previewTheme==="light"||event.data.previewTheme==="dark"){
+        document.documentElement.classList.toggle("dark",event.data.previewTheme==="dark");
+        document.documentElement.style.colorScheme=event.data.previewTheme;
+      }
     };
     window.addEventListener("message",listener);
     return()=>window.removeEventListener("message",listener);
