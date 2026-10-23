@@ -52,7 +52,7 @@ export function AdminDesignCenterPage(){
  const [auto,setAuto]=useState("Ready");
  const [dirty,setDirty]=useState(false);
  const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
- const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements">("content");
+ const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements"|"style"|"layout">("content");
  const [selectedElement,setSelectedElement]=useState<string|null>(null);
  const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
  const [selectedCard,setSelectedCard]=useState<number|null>(null);
@@ -154,6 +154,7 @@ export function AdminDesignCenterPage(){
  const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
  const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
  const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
+ const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(element)patchElement(id,{style:{...element.style,[field]:value}})};
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
@@ -182,7 +183,7 @@ export function AdminDesignCenterPage(){
    const field=String(event.data.field||""),section=String(event.data.section||"");
    const cardIndex=event.data.cardIndex,cardField=event.data.cardField;
    if(tab==="visual"){
-    if(event.data.elementId){setSelectedElement(String(event.data.elementId));setVisualMode("elements");return}
+    if(event.data.elementId){setSelectedElement(String(event.data.elementId));setVisualMode("style");return}
     if(field==="site_logo_url"){setVisualMode("media");setMediaTarget("site_logo_url")}
     else if(section){setActiveBlock(section);setSelectedCard(cardIndex!==undefined&&cardIndex!==""&&Number.isInteger(Number(cardIndex))?Number(cardIndex):null);setSelectedField(String(cardField||""));setVisualMode("content")}
     else if(field){setActiveBlock("hero");setSelectedField(field);setSelectedCard(null);setVisualMode("content")}
@@ -306,7 +307,7 @@ export function AdminDesignCenterPage(){
        <aside className="bzve-controls">
         <div className="bzdc-panel-title"><div><h3>Visual Editor</h3><small>Homepage · Private draft</small></div></div>
         <div className="bzve-tabs">
-         {(["elements","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
+         {(["elements","style","layout","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
         </div>
         {visualMode==="sections"&&<div className="bzve-items">
          <p className="bzdc-help">Drag promotional sections to change their order. Marketplace sections remain fixed.</p>
@@ -337,6 +338,28 @@ export function AdminDesignCenterPage(){
           {["image","card","banner"].includes(element.type)&&<label className="bzdc-field"><span>Media Library image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>}
           {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{field==="background"?"Background":"Text colour"}</span><input type="color" value={element[field]||"#17253c"} onChange={e=>patchElement(element.id,{[field]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[field]:""})}>Reset</button></label>)}
          </div>)}
+        </div>}
+        {(visualMode==="style"||visualMode==="layout")&&<div className="bzve-fields">
+         <label className="bzdc-field"><span>Selected element</span><select value={selectedElement||""} onChange={e=>setSelectedElement(e.target.value)}><option value="">Choose an element</option>{visualElements.map(e=><option key={e.id} value={e.id}>{e.type} — {e.text.slice(0,30)}</option>)}</select></label>
+         {visualElements.filter(e=>e.id===selectedElement).map(element=><div key={element.id} className="bzve-cardfields">
+          <h3>{visualMode==="style"?"Style":"Layout"} · {element.type}</h3>
+          {visualMode==="style"?<>
+           <label className="bzdc-field"><span>Font family</span><select value={element.style?.fontFamily||""} onChange={e=>patchStyle(element.id,"fontFamily",e.target.value)}>{["","inherit","Arial","Georgia","Verdana","system-ui","Tahoma"].map(v=><option key={v} value={v}>{v||"Default"}</option>)}</select></label>
+           <label className="bzdc-field"><span>Font size (px)</span><input type="number" min={10} max={96} value={element.style?.fontSize??24} onChange={e=>patchStyle(element.id,"fontSize",Math.max(10,Math.min(96,Number(e.target.value)||10)))}/></label>
+           <label className="bzdc-field"><span>Font weight</span><select value={element.style?.fontWeight??400} onChange={e=>patchStyle(element.id,"fontWeight",Number(e.target.value))}>{[100,300,400,500,600,700,800,900].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
+           {(["background","color"] as const).map(key=><label className="bzdc-field" key={key}><span>{key==="background"?"Background colour":"Text colour"}</span><input type="color" value={element[key]||"#17253c"} onChange={e=>patchElement(element.id,{[key]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[key]:""})}>Reset</button></label>)}
+           <label className="bzdc-field"><span>Border width (px)</span><input type="number" min={0} max={12} value={element.style?.borderWidth??0} onChange={e=>patchStyle(element.id,"borderWidth",Math.max(0,Math.min(12,Number(e.target.value)||0)))}/></label>
+           <label className="bzdc-field"><span>Border radius (px)</span><input type="number" min={0} max={80} value={element.style?.borderRadius??12} onChange={e=>patchStyle(element.id,"borderRadius",Math.max(0,Math.min(80,Number(e.target.value)||0)))}/></label>
+           <label className="bzdc-field"><span>Border colour</span><input type="color" value={element.style?.borderColor||"#64748b"} onChange={e=>patchStyle(element.id,"borderColor",e.target.value)}/></label>
+           <label className="bzdc-field"><span>Shadow</span><select value={element.style?.shadow||""} onChange={e=>patchStyle(element.id,"shadow",e.target.value)}>{["","none","small","medium","large"].map(v=><option key={v} value={v}>{v||"Default"}</option>)}</select></label>
+          </>:<>
+           <label className="bzdc-field"><span>Width (%)</span><input type="number" min={10} max={100} value={element.style?.width??100} onChange={e=>patchStyle(element.id,"width",Math.max(10,Math.min(100,Number(e.target.value)||10)))}/></label>
+           <label className="bzdc-field"><span>Alignment</span><select value={element.style?.align||"left"} onChange={e=>patchStyle(element.id,"align",e.target.value)}>{["left","center","right"].map(v=><option key={v}>{v}</option>)}</select></label>
+           <label className="bzdc-field"><span>Columns</span><select value={element.style?.columns??1} onChange={e=>patchStyle(element.id,"columns",Number(e.target.value))}>{[1,2,3,4].map(n=><option key={n}>{n}</option>)}</select></label>
+           {([["padding","Padding",120],["gap","Content gap",100],["sectionSpacing","Section spacing",120]] as const).map(([key,label,max])=><label key={key} className="bzdc-field"><span>{label} (px)</span><input type="number" min={0} max={max} value={element.style?.[key]??0} onChange={e=>patchStyle(element.id,key,Math.max(0,Math.min(max,Number(e.target.value)||0)))}/></label>)}
+          </>}
+         </div>)}
+         {!selectedElement&&<p className="bzdc-help">Select a custom element in the preview or Elements tab to edit its {visualMode}.</p>}
         </div>}
         {visualMode==="content"&&<div className="bzve-fields">
          <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>{setActiveBlock(e.target.value);setSelectedCard(null);setSelectedField("")}}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
