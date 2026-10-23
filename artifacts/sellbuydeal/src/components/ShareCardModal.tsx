@@ -62,7 +62,7 @@ async function drawCard(canvas: HTMLCanvasElement, listing: ShareListing, format
   const { w, h } = SIZES[format];
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext("2d")!;
-  const [photo, logo] = await Promise.all([listing.image ? loadImage(listing.image) : Promise.resolve(null), loadImage("/bazunk-logo-header.png")]);
+  const [photo, logo] = await Promise.all([listing.image ? loadImage(listing.image) : Promise.resolve(null), loadImage("/bazunk-brand-orange.png")]);
 
   // Background
   const bg = ctx.createLinearGradient(0, 0, w, h);
