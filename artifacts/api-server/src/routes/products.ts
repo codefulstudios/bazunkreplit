@@ -22,7 +22,7 @@ router.get("/listing-media/:id", async (req,res)=>{
 router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
  const {filename,dataUrl}=req.body||{};
  if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
- const matched=/^data:(image\\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
+ const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
  if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
  const bytes=Buffer.from(matched[2],"base64");
  if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
