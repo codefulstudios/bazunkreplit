@@ -439,7 +439,8 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
       else {
         setEbayResults(d.products ?? []); setEbayHasSearched(true);setEbayPage(requestedPage);
         setEbayProviderCount(d.diagnostics?.providerCount??(d.products?.length??0));
-        setEbayTotalResults(typeof d.total==="number"&&d.total>=0?d.total:null);
+        if(requestedPage>1 && (d.diagnostics?.providerCount??d.products?.length??0)===0)setEbaySearchErr("End of provider results. Go back to the previous page.");
+        setEbayTotalResults(typeof d.total==="number"&&d.total>requestedPage*50?d.total:null);
         if(d.notice)setEbaySearchErr(d.notice);
       }
     } catch {
@@ -1222,7 +1223,7 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
                         <ChevronLeft className="w-3 h-3" /> Prev
                       </button>
                       <span className="text-xs text-gray-500">Page {ebayPage}</span>
-                      <button onClick={() => void handleEbaySearch(undefined, ebayPage + 1)} disabled={ebaySearching || ebayProviderCount < 50 || (ebayTotalResults !== null && ebayPage * 50 >= ebayTotalResults)}
+                      <button onClick={() => void handleEbaySearch(undefined, ebayPage + 1)} disabled={ebaySearching || ebayProviderCount === 0}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
@@ -1237,7 +1238,7 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => void handleEbaySearch(undefined,Math.max(1,ebayPage-1))} disabled={ebayPage===1||ebaySearching} className="border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:opacity-40">Previous</button>
                     <span className="text-sm font-semibold">Page {ebayPage}</span>
-                    <button type="button" onClick={() => void handleEbaySearch(undefined,ebayPage+1)} disabled={ebaySearching||ebayProviderCount<50||(ebayTotalResults!==null&&ebayPage*50>=ebayTotalResults)} className="bg-indigo-600 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-40">Next</button>
+                    <button type="button" onClick={() => void handleEbaySearch(undefined,ebayPage+1)} disabled={ebaySearching||ebayProviderCount===0} className="bg-indigo-600 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-40">Next</button>
                   </div>
                 </div>
               )}
