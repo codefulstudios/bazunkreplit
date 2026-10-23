@@ -52,13 +52,10 @@ async function ensureListingUrlTokens() {
     // public_id is the legacy/import source identifier. Never rewrite it.
     await db.execute(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS public_url_token VARCHAR(15)`);
     await db.execute(sql`CREATE UNIQUE INDEX IF NOT EXISTS listings_public_url_token_unique ON listings(public_url_token)`);
-    await db.execute(sql.raw(`
-      CREATE OR REPLACE FUNCTION bazunk_listing_token() RETURNS text AS $
-      BEGIN
-        RETURN LEFT(translate(encode(decode(replace(gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/', 'AZ'),15);
-      END;
-      $ LANGUAGE plpgsql;
-      CREATE OR REPLACE FUNCTION bazunk_assign_listing_token() RETURNS trigger AS $
+    await db.execute(sql.raw(`CREATE OR REPLACE FUNCTION bazunk_listing_token() RETURNS text AS $$
+      BEGIN RETURN LEFT(translate(encode(decode(replace(gen_random_uuid()::text, '-', ''), 'hex'), 'base64'), '+/', 'AZ'),15); END;
+      $$ LANGUAGE plpgsql`));
+    await db.execute(sql.raw(`CREATE OR REPLACE FUNCTION bazunk_assign_listing_token() RETURNS trigger AS $$
       DECLARE candidate text;
       BEGIN
         IF NEW.public_url_token IS NULL THEN
@@ -70,11 +67,9 @@ async function ensureListingUrlTokens() {
         END IF;
         RETURN NEW;
       END;
-      $ LANGUAGE plpgsql;
-      DROP TRIGGER IF EXISTS bazunk_listing_url_trigger ON listings;
-      CREATE TRIGGER bazunk_listing_url_trigger BEFORE INSERT ON listings
-        FOR EACH ROW EXECUTE FUNCTION bazunk_assign_listing_token();
-    `));
+      $$ LANGUAGE plpgsql`));
+    await db.execute(sql.raw("DROP TRIGGER IF EXISTS bazunk_listing_url_trigger ON listings"));
+    await db.execute(sql.raw("CREATE TRIGGER bazunk_listing_url_trigger BEFORE INSERT ON listings FOR EACH ROW EXECUTE FUNCTION bazunk_assign_listing_token()"));
     // Idempotent backfill, preserving all listing IDs and source identifiers.
     await db.execute(sql`UPDATE listings SET public_url_token=bazunk_listing_token() WHERE public_url_token IS NULL`);
     await db.execute(sql`ALTER TABLE listings ALTER COLUMN public_url_token SET NOT NULL`);
