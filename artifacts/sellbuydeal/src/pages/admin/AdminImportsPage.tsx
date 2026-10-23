@@ -81,9 +81,9 @@ function parseSpecs(raw: string | null): Specs {
 
 interface UserOption { email: string; name: string | null; }
 
-export function AdminImportsPage() {
+export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "ebay" | "aliexpress" | "gumtree" }) {
   const { authFetch } = useAdmin();
-  const [tab, setTab] = useState<Tab>("amazon");
+  const tab: Tab = source;
 
   // ── Search state ──────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
@@ -244,7 +244,7 @@ export function AdminImportsPage() {
     }
   }, [authFetch, page, tableSearch, amazonSite]);
 
-  useEffect(() => { loadListings(); }, [loadListings]);
+  useEffect(() => { if (tab === "amazon") void loadListings(); }, [loadListings, tab]);
 
   // ── Search ────────────────────────────────────────────────────
   async function handleSearch(e?: React.FormEvent) {
@@ -605,29 +605,12 @@ export function AdminImportsPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-gray-900">Imports</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Search Amazon UK, Amazon USA or eBay, choose products, import with your markup</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white">{source === "amazon" ? "Amazon importer" : source === "ebay" ? "eBay importer" : source === "aliexpress" ? "AliExpress importer" : "Gumtree importer"}</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Manage this source independently. Configure shared API credentials under Importers → General Settings.</p>
         </div>
       </div>
 
-      <RapidApiPanel />
-      <CraigslistAdminImporter />
-      <OLXAdminImporter />
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit flex-wrap">
-        {(["amazon", "ebay", "aliexpress"] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-              tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {t === "amazon" ? "🛒 Amazon UK / USA" : t === "ebay" ? "🏷️ eBay" : "📦 AliExpress"}
-          </button>
-        ))}
-      </div>
 
       {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("uk");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("us");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇺🇸 Amazon USA imports</button></div>}
       <AnimatePresence mode="wait">
