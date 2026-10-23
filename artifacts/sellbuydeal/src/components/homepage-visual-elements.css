@@ -6,3 +6,4 @@
 
 @media(max-width:1023px){.bzve-responsive-layer h2,.bzve-responsive-layer h3,.bzve-responsive-layer p,.bzve-responsive-layer .bzve-button{font-size:var(--bzve-tablet-fontSize,inherit)}}
 @media(max-width:639px){.bzve-responsive-layer h2,.bzve-responsive-layer h3,.bzve-responsive-layer p,.bzve-responsive-layer .bzve-button{font-size:var(--bzve-mobile-fontSize,var(--bzve-tablet-fontSize,inherit))}}
+\n.bzve-theme-layer{background-color:var(--bzve-light-bg)!important;color:var(--bzve-light-fg)!important}\n.dark .bzve-theme-layer{background-color:var(--bzve-dark-bg)!important;color:var(--bzve-dark-fg)!important}\n
