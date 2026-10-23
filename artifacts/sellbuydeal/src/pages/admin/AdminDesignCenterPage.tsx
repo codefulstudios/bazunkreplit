@@ -52,7 +52,7 @@ export function AdminDesignCenterPage(){
  const [auto,setAuto]=useState("Ready");
  const [dirty,setDirty]=useState(false);
  const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
- const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements"|"style"|"layout">("content");
+ const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements"|"style"|"layout"|"layers">("content");
  const [selectedElement,setSelectedElement]=useState<string|null>(null);
  const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
  const [selectedCard,setSelectedCard]=useState<number|null>(null);
@@ -154,7 +154,7 @@ export function AdminDesignCenterPage(){
  const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
  const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
  const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
- const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(element)patchElement(id,{style:{...element.style,[field]:value}})};
+ const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(!element)return;if(device==="desktop")patchElement(id,{style:{...element.style,[field]:value}});else patchElement(id,{responsive:{...element.responsive,[device]:{...element.responsive?.[device],[field]:value}}})};
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
@@ -307,7 +307,7 @@ export function AdminDesignCenterPage(){
        <aside className="bzve-controls">
         <div className="bzdc-panel-title"><div><h3>Visual Editor</h3><small>Homepage · Private draft</small></div></div>
         <div className="bzve-tabs">
-         {(["elements","style","layout","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
+         {(["elements","layers","style","layout","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
         </div>
         {visualMode==="sections"&&<div className="bzve-items">
          <p className="bzdc-help">Drag promotional sections to change their order. Marketplace sections remain fixed.</p>
@@ -321,6 +321,14 @@ export function AdminDesignCenterPage(){
            <button type="button" disabled={index===homeSections.length-1} onClick={()=>move(item.id,1)} aria-label={"Move "+item.id+" down"}><ArrowDown size={14}/></button>
           </div>)}
          </div>}
+        {visualMode==="layers"&&<div className="bzve-fields"><strong>Homepage layers</strong><p className="bzdc-help">Custom layers can be selected, reordered and hidden. Core marketplace sections remain protected.</p>
+         {visualElements.map((element,index)=><div className="bzve-item" key={element.id} draggable onDragStart={e=>e.dataTransfer.setData("text/plain",element.id)} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=e.dataTransfer.getData("text/plain");const list=[...visualElements];const a=list.findIndex(x=>x.id===from),b=list.findIndex(x=>x.id===element.id);if(a>=0&&b>=0){const [m]=list.splice(a,1);list.splice(b,0,m);updateElements(list)}}}>
+          <button type="button" aria-pressed={selectedElement===element.id} onClick={()=>{setSelectedElement(element.id);setVisualMode("style")}}>☰ {element.type}: {element.text.slice(0,22)}</button>
+          <button type="button" onClick={()=>patchElement(element.id,{hidden:!element.hidden})} aria-label={element.hidden?"Show layer":"Hide layer"}>{element.hidden?"Show":"Hide"}</button>
+          <button type="button" disabled={index===0} onClick={()=>{const list=[...visualElements];[list[index-1],list[index]]=[list[index],list[index-1]];updateElements(list)}}>↑</button>
+          <button type="button" disabled={index===visualElements.length-1} onClick={()=>{const list=[...visualElements];[list[index+1],list[index]]=[list[index],list[index+1]];updateElements(list)}}>↓</button>
+         </div>)}
+        </div>}
         {visualMode==="elements"&&<div className="bzve-fields">
          <strong>Add an element</strong>
          <div className="bzve-images">{ELEMENT_KINDS.map(kind=><button key={kind} type="button" className="bzdc-mini" onClick={()=>addElement(kind)}>+ {kind}</button>)}</div>
@@ -356,6 +364,7 @@ export function AdminDesignCenterPage(){
          <label className="bzdc-field"><span>Selected element</span><select value={selectedElement||""} onChange={e=>setSelectedElement(e.target.value)}><option value="">Choose an element</option>{visualElements.map(e=><option key={e.id} value={e.id}>{e.type} — {e.text.slice(0,30)}</option>)}</select></label>
          {visualElements.filter(e=>e.id===selectedElement).map(element=><div key={element.id} className="bzve-cardfields">
           <h3>{visualMode==="style"?"Style":"Layout"} · {element.type}</h3>
+          <p className="bzdc-help">Editing {device} settings. Desktop settings are the default; tablet and mobile can override them.</p>
           {visualMode==="style"?<>
            <label className="bzdc-field"><span>Font family</span><select value={element.style?.fontFamily||""} onChange={e=>patchStyle(element.id,"fontFamily",e.target.value)}>{["","inherit","Arial","Georgia","Verdana","system-ui","Tahoma"].map(v=><option key={v} value={v}>{v||"Default"}</option>)}</select></label>
            <label className="bzdc-field"><span>Font size (px)</span><input type="number" min={10} max={96} value={element.style?.fontSize??24} onChange={e=>patchStyle(element.id,"fontSize",Math.max(10,Math.min(96,Number(e.target.value)||10)))}/></label>
