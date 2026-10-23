@@ -1,9 +1,10 @@
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package } from "lucide-react";
+import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package, Pencil, Trash2, EyeOff } from "lucide-react";
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
+import { AdminListingEditor, AdminListingCatalogueTools } from "./AdminProductsPage";
 import { ACTIVE_CATEGORIES } from "@/data/categories";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { AdminManagementHeader, AdminStatusTabs } from "@/components/admin/AdminUi";
@@ -52,6 +53,31 @@ export function AdminListingsPage() {
   const [, setLocation] = useLocation();
 
   const [listings, setListings] = useState<Listing[]>([]);
+  const [view,setView]=useState<"listings"|"categories"|"import-export">("listings");
+  const [editingId,setEditingId]=useState<number|null>(null);
+  const [rowBusy,setRowBusy]=useState<number|null>(null);
+  const [actionError,setActionError]=useState("");
+  async function hideListing(id:number) {
+    setRowBusy(id);setActionError("");
+    try {
+      const res=await authFetch(`/api/admin/listings/${id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});
+      const data=await res.json().catch(()=>null);
+      if(!res.ok)throw Error(data?.error||"Could not hide listing");
+      setListings(prev=>prev.map(l=>l.id===id?{...l,status:"inactive"}:l));
+    }catch(e){setActionError(e instanceof Error?e.message:"Action failed");}
+    finally{setRowBusy(null);}
+  }
+  async function deleteListing(id:number) {
+    if(!window.confirm("Permanently delete this listing? Listings associated with transactions must be preserved. This action cannot be undone."))return;
+    setRowBusy(id);setActionError("");
+    try {
+      const res=await authFetch(`/api/admin/listings/${id}/safe-delete`,{method:"DELETE"});
+      const data=await res.json().catch(()=>null);
+      if(!res.ok)throw Error(data?.error||"Could not delete listing");
+      setListings(prev=>prev.filter(l=>l.id!==id));setTotal(t=>Math.max(0,t-1));setSelectedIds(prev=>prev.filter(x=>x!==String(id)));
+    }catch(e){setActionError(e instanceof Error?e.message:"Action failed");}
+    finally{setRowBusy(null);}
+  }
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
@@ -154,6 +180,11 @@ export function AdminListingsPage() {
         {value:"all",label:"All listings"},{value:"active",label:"Live"},{value:"pending",label:"Pending"},
         {value:"draft",label:"Drafts"},{value:"suspended",label:"Suspended"},{value:"inactive",label:"Inactive"},{value:"sold",label:"Sold"}
       ]}/>
+      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Listings management">
+        {([{id:"listings",label:"All Listings"},{id:"categories",label:"Categories"},{id:"import-export",label:"Import / Export"}] as const).map(item=><button role="tab" aria-selected={view===item.id} key={item.id} type="button" onClick={()=>setView(item.id)} className={`rounded-lg border px-3 py-2 text-xs font-bold ${view===item.id?"bg-blue-600 text-white border-blue-600":"border-slate-400 bg-white text-slate-950 dark:bg-slate-800 dark:text-white"}`}>{item.label}</button>)}
+      </div>
+      {view!=="listings" ? <AdminListingCatalogueTools section={view}/> : <>
+      {actionError&&<p role="alert" className="my-2 rounded-lg border border-red-500 p-3 font-bold text-red-500">{actionError}</p>}
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-48">
@@ -193,14 +224,14 @@ export function AdminListingsPage() {
                 <th className="px-3 py-2"><input type="checkbox" aria-label="Select all listings on current page" className="h-4 w-4"
                   checked={visibleIds.length>0&&visibleIds.every(id=>selectedIds.includes(id))}
                   onChange={e=>setSelectedIds(e.target.checked?visibleIds:[])}/></th>
-                {["ID", "Title", "Category", "Price", "Seller", "Status", "Source listing"].map(h => (
+                {["ID", "Title", "Category", "Price", "Seller", "Status", "Source listing", "Actions"].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={8} className="text-center py-16">
+                <tr><td colSpan={9} className="text-center py-16">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-300" />
                 </td></tr>
               )}
@@ -285,6 +316,13 @@ export function AdminListingsPage() {
                         <span className="text-[10px] text-gray-300">—</span>
                       )}
                     </td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap gap-1.5 min-w-32">
+                        <button type="button" onClick={()=>setEditingId(l.id)} className="rounded border border-blue-500 px-2 py-1 text-xs font-bold text-blue-700 dark:text-blue-300"><Pencil className="inline h-3 w-3"/> Edit</button>
+                        <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="rounded border border-amber-500 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 disabled:opacity-40"><EyeOff className="inline h-3 w-3"/> Hide</button>
+                        <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="rounded border border-red-500 px-2 py-1 text-xs font-bold text-red-700 dark:text-red-300 disabled:opacity-40"><Trash2 className="inline h-3 w-3"/> Delete</button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -314,6 +352,8 @@ export function AdminListingsPage() {
           </div>
         )}
       </div>
+      </>}
+      {editingId!==null&&<AdminListingEditor listingId={editingId} onClose={()=>setEditingId(null)} onSaved={()=>{setEditingId(null);void load();}}/>}
       </div>
     </AdminLayout>
   );
