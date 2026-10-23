@@ -9,6 +9,7 @@ import {
 import { AdminLayout } from "./AdminLayout";
 import { RapidApiPanel } from "./RapidApiPanel";
 import { CraigslistAdminImporter } from "./CraigslistAdminImporter";
+import { OLXAdminImporter } from "./OlxAdminImporter";
 import { ImportModal } from "@/components/ImporterSection";
 import { useAdmin } from "@/context/AdminContext";
 import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
@@ -611,6 +612,7 @@ export function AdminImportsPage() {
 
       <RapidApiPanel />
       <CraigslistAdminImporter />
+      <OLXAdminImporter />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit flex-wrap">
