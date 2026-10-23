@@ -2125,10 +2125,19 @@ router.get("/admin/search-ebay", async (req, res) => {
   try {
     const marketplaceId = site === "uk" ? "EBAY_GB" : "EBAY_US";
     const offset        = (page - 1) * 50;
-    const locationFilter = from === "ALL" ? "" : `&item_location_country=${from}`;
+    // Ask eBay to filter before applying the 50-item page limit. This follows
+    // eBay Browse filter syntax; keep local validation in case a proxy ignores it.
+    const browseCondition = ({new:"conditions:{NEW}",used:"conditions:{USED}",refurbished:"conditionIds:{2000|2500}", "open-box":"conditionIds:{1500}",parts:"conditionIds:{7000}"} as Record<string,string>)[condition];
+    const upstreamUrl = new URL("https://real-time-ebay-data.p.rapidapi.com/ebay_search");
+    upstreamUrl.searchParams.set("q",query);
+    upstreamUrl.searchParams.set("marketplace_id",marketplaceId);
+    if(from!=="ALL")upstreamUrl.searchParams.set("item_location_country",from);
+    upstreamUrl.searchParams.set("delivery_country",to);
+    upstreamUrl.searchParams.set("offset",String(offset));
+    if(browseCondition)upstreamUrl.searchParams.set("filter",browseCondition);
     const reservation=await reserveEbayApiRequest(site==="uk"?"search-uk":"search-us");
     const resp = await fetch(
-      `https://real-time-ebay-data.p.rapidapi.com/ebay_search?q=${encodeURIComponent(query)}&marketplace_id=${marketplaceId}${locationFilter}&delivery_country=${to}&offset=${offset}`,
+      upstreamUrl.toString(),
       { headers: { "X-RapidAPI-Key": apiKey, "X-RapidAPI-Host": "real-time-ebay-data.p.rapidapi.com" } }
     );
     await finishEbayApiRequest(reservation,resp.status);
@@ -2222,7 +2231,7 @@ router.get("/admin/search-ebay", async (req, res) => {
     const unverifiedFallback = condition!=="all" && filtered.length===0 && unknownConditions===products.length && products.length>0;
     const shown = unverifiedFallback ? products.map(p=>({...p,condition:"Condition not supplied — verify on eBay"})) : filtered;
 
-    const diagnostics = {providerCount:raw.length,locationAndCurrencyCount:eligible.length,returnedCount:shown.length,conditionMatchedCount:filtered.length,unknownConditions,conditionExamples:[...new Set(products.map(p=>p.condition).filter(Boolean))].slice(0,5),condition,shipsFrom:from,shipsTo:to};
+    const diagnostics = {providerCount:raw.length,locationAndCurrencyCount:eligible.length,returnedCount:shown.length,conditionMatchedCount:filtered.length,unknownConditions,conditionExamples:[...new Set(products.map(p=>p.condition).filter(Boolean))].slice(0,5),condition,upstreamConditionFilter:browseCondition??null,shipsFrom:from,shipsTo:to};
     if(raw.length && !shown.length)logger.info({diagnostics},"eBay items filtered from search");
     res.json({ products:shown, total: (data.total as number) ?? shown.length, diagnostics, notice:unverifiedFallback?"The provider supplied no condition information. Results are for review only: verify the condition on eBay before importing.":raw.length&&!shown.length?(eligible.length===0?"No listings passed required item, location and currency checks.":"The provider returned "+eligible.length+" eligible listings, but none matched the requested condition. Sample conditions: "+(diagnostics.conditionExamples.join(", ")||"none supplied")+". Try All conditions."):undefined });
   } catch (err) {
