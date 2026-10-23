@@ -74,7 +74,7 @@ export function AdminListingsPage() {
     setCategoryEditing(listing?.id ?? "bulk");
     const found=categoryOptions.find(c=>c.slug===listing?.category);
     setCategoryDraft(found?.slug ?? "electronics");
-    setSubcategoryDraft(found?.subcategories.some(s=>s.slug===listing?.subcategory)?listing!.subcategory!:"audio");
+    setSubcategoryDraft(found?.subcategories.some(s=>s.slug===listing?.subcategory)?listing!.subcategory!:((found??categoryOptions.find(c=>c.slug==="electronics"))?.subcategories[0]?.slug??""));
     setCategoryError("");
   }
   async function saveCategories() {
