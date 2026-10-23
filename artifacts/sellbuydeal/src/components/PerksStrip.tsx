@@ -52,8 +52,8 @@ export function PerksStrip() {
                 <Icon className={`w-4.5 h-4.5 ${color}`} style={{ width: "18px", height: "18px" }} />
               </div>
               <div>
-                <p className="font-semibold text-slate-900 dark:text-white text-base leading-tight">{cards?.[index]?.title||title}</p>
-                <p className="text-sm !text-slate-700 dark:!text-slate-100 leading-snug mt-0.5">{cards?.[index]?.description||sub}</p>
+                <p data-theme-section="perks" data-theme-card={index} data-theme-card-field="title" className="font-semibold text-slate-900 dark:text-white text-base leading-tight">{cards?.[index]?.title||title}</p>
+                <p data-theme-section="perks" data-theme-card={index} data-theme-card-field="description" className="text-sm !text-slate-700 dark:!text-slate-100 leading-snug mt-0.5">{cards?.[index]?.description||sub}</p>
               </div>
             </div>
           ))}
