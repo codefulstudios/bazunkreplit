@@ -1285,11 +1285,11 @@ router.get("/admin/listings", async (req, res) => {
         : sql`TRUE`;
 
     const rows = await db.execute(sql`
-      SELECT id, public_id, title, price, price_gbp, currency, category, subcategory,
+      SELECT id, public_id, public_url_token, title, price, price_gbp, currency, category, subcategory,
              condition, status, seller_email, seller_username, image, specifications,
              created_at
       FROM listings
-      WHERE (${search ? sql`(title ILIKE ${'%' + search + '%'} OR public_id ILIKE ${'%' + search + '%'} OR seller_email ILIKE ${'%' + search + '%'})` : sql`TRUE`})
+      WHERE (${search ? sql`(title ILIKE ${'%' + search + '%'} OR public_id ILIKE ${'%' + search + '%'} OR public_url_token ILIKE ${'%' + search + '%'} OR seller_email ILIKE ${'%' + search + '%'})` : sql`TRUE`})
       AND (${importedFilter})
       AND (${sourceFilter})
       AND (${statusFilter})
