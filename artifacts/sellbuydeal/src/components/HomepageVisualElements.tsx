@@ -8,6 +8,8 @@ export function HomepageVisualElements(){
  return <section aria-label="Custom homepage content" className="bg-white text-slate-900 dark:bg-slate-950 dark:text-white py-6"><div className="mx-auto max-w-6xl px-4 grid gap-4">
  {elements.map(element=>{
   const opts=element.style||{};
+  const responsive=element.responsive||{};
+  const cssVars=(mode:"tablet"|"mobile")=>Object.fromEntries(Object.entries(responsive[mode]||{}).filter(([key,value])=>["fontSize","padding","width","sectionSpacing","align"].includes(key)&&value!==undefined).map(([key,value])=>["--bzve-"+mode+"-"+key,typeof value==="number"?value+(key==="width"?"%":"px"):value]));
   const style:import("react").CSSProperties={
    backgroundColor:element.background||undefined,color:element.color||undefined,
    fontFamily:opts.fontFamily||undefined,fontSize:opts.fontSize?opts.fontSize+"px":undefined,
@@ -27,6 +29,6 @@ export function HomepageVisualElements(){
    element.type==="button"?<a {...marker} href={element.url.startsWith("/")&&!element.url.startsWith("//")?element.url:"#"} style={hoverCss} className={"bzve-button inline-block rounded-lg px-5 py-3 font-bold transition-colors "+(opts.buttonVariant==="outline"?"border-2 border-current bg-transparent":opts.buttonVariant==="ghost"?"bg-transparent":"bg-orange-600 text-white")}>{element.text}</a>:
    element.type==="banner"?<div {...marker} className="rounded-xl p-8 font-bold text-xl bg-blue-900 text-white">{element.text}</div>:
    <div {...marker} className="rounded-xl border border-slate-400 p-6 shadow-sm">{media(element.image)&&<img src={media(element.image)} alt="" className="mb-3 rounded" style={imageStyle}/>}<h3 className="text-xl font-bold">{element.text}</h3>{element.url.startsWith("/")&&!element.url.startsWith("//")&&<a href={element.url} className="underline">Explore</a>}</div>;
-  return <div key={element.id} style={{...style,display:element.type==="card"?"grid":undefined,gridTemplateColumns:element.type==="card"&&opts.columns&&opts.columns>1?`repeat(${opts.columns},minmax(0,1fr))`:undefined,gap:opts.gap===undefined?undefined:opts.gap+"px"}}>{content}</div>;
+  return <div key={element.id} className={"bzve-responsive-layer"+(element.hidden?" bzve-layer-hidden":"")} style={{...style,...cssVars("tablet"),...cssVars("mobile"),display:element.type==="card"?"grid":undefined,gridTemplateColumns:element.type==="card"&&opts.columns&&opts.columns>1?`repeat(${opts.columns},minmax(0,1fr))`:undefined,gap:opts.gap===undefined?undefined:opts.gap+"px"}}>{content}</div>;
  })}</div></section>;
 }
