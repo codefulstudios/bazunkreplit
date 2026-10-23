@@ -57,6 +57,7 @@ export function AdminListingsPage() {
   const [editingId,setEditingId]=useState<number|null>(null);
   const [rowBusy,setRowBusy]=useState<number|null>(null);
   const [actionError,setActionError]=useState("");
+  const [actionSuccess,setActionSuccess]=useState("");
   async function hideListing(id:number) {
     setRowBusy(id);setActionError("");
     try {
