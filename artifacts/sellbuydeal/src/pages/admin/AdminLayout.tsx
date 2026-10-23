@@ -143,7 +143,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
      <button type="button" onClick={()=>{setMenuOpen(false);setLocation(group.href)}} aria-current={active?"page":undefined} className={"admin-nav-link wp-nav-link "+(active?"wp-nav-active":"")}>
       <Icon className="wp-nav-icon h-5 w-5" aria-hidden="true"/><span className="admin-nav-page-label">{group.label}</span>
      </button>
-     {(children.length>0||group.id==="design")&&<button type="button" aria-label={"Toggle "+group.label+" submenu"} title={group.label+" submenu"} onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false)}toggleGroup(group.id)}} aria-expanded={expanded} aria-controls={`admin-nav-${group.id}`} className="admin-nav-group-trigger wp-nav-expand">
+     {(children.length>0&&group.id!=="design")&&<button type="button" aria-label={"Toggle "+group.label+" submenu"} title={group.label+" submenu"} onClick={()=>{if(sidebarCollapsed){savedSidebarCollapsed=false;setSidebarCollapsed(false)}toggleGroup(group.id)}} aria-expanded={expanded} aria-controls={`admin-nav-${group.id}`} className="admin-nav-group-trigger wp-nav-expand">
       <ChevronDown className={"admin-nav-chevron h-4 w-4 transition-transform "+(expanded?"rotate-180":"")}/>
      </button>}
     </div>
