@@ -55,6 +55,7 @@ export function AdminListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [view,setView]=useState<"listings"|"categories"|"import-export">("listings");
   const [editingId,setEditingId]=useState<number|null>(null);
+  const [quickEdit,setQuickEdit]=useState<{id:number;kind:"images"|"variants"}|null>(null);
   const [rowBusy,setRowBusy]=useState<number|null>(null);
   const [actionError,setActionError]=useState("");
   const [actionSuccess,setActionSuccess]=useState("");
@@ -280,6 +281,9 @@ export function AdminListingsPage() {
                           : specs.amazon_url ? <a href={specs.amazon_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-lg border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-950 no-underline hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-900 dark:text-white dark:hover:bg-amber-800"><ExternalLink className="h-3 w-3"/> {specs.asin ?? "View on Amazon"}</a> : null}
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2" aria-label={`Actions for ${l.title}`}>
+                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"images"})} className="min-h-9 rounded-lg border border-teal-500 bg-teal-100 px-3 py-2 text-xs font-bold text-teal-950 dark:bg-teal-900 dark:text-white">Images</button>
+                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"variants"})} className="min-h-9 rounded-lg border border-violet-500 bg-violet-100 px-3 py-2 text-xs font-bold text-violet-950 dark:bg-violet-900 dark:text-white">Variants</button>
+                        <a href={`/listing/${l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 dark:bg-slate-700 dark:text-white">View on Bazunk</a>
                         <button type="button" onClick={()=>beginCategoryEdit(l)} className="inline-flex min-h-9 items-center rounded-lg border border-sky-400 bg-sky-100 px-3 py-2 text-xs font-bold text-sky-950 hover:bg-sky-200 dark:border-sky-500 dark:bg-sky-900 dark:text-white dark:hover:bg-sky-800">Category</button>
                         
                         <button type="button" onClick={()=>setEditingId(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-blue-500 bg-blue-100 px-3 py-2 text-xs font-bold text-blue-950 hover:bg-blue-200 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-700"><Pencil className="inline h-3 w-3"/> Edit</button>
@@ -338,8 +342,53 @@ export function AdminListingsPage() {
         )}
       </div>
       </>}
+      {quickEdit&&<ListingQuickModal key={`${quickEdit.id}:${quickEdit.kind}`} id={quickEdit.id} kind={quickEdit.kind} authFetch={authFetch} onClose={()=>setQuickEdit(null)} onSaved={()=>{setQuickEdit(null);void load();}}/>}
       {editingId!==null&&<AdminListingEditor listingId={editingId} onClose={()=>setEditingId(null)} onSaved={()=>{setEditingId(null);void load();}}/>}
       </div>
     </AdminLayout>
   );
+}
+
+function ListingQuickModal({id,kind,authFetch,onClose,onSaved}:{id:number;kind:"images"|"variants";authFetch:(url:string,opts?:RequestInit)=>Promise<Response>;onClose:()=>void;onSaved:()=>void}) {
+  type Variant={type:string;value:string;priceModifier:string;inventory:string};
+  const [images,setImages]=useState<string[]>([]);
+  const [variants,setVariants]=useState<Variant[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [error,setError]=useState("");
+  useEffect(()=>{let active=true;void authFetch(`/api/admin/products/${id}`).then(async r=>{if(!r.ok)throw Error("Cannot load listing");const d=await r.json();if(active){setImages(d.images||[]);setVariants(d.variants||[]);}}).catch(e=>{if(active)setError(String(e));}).finally(()=>{if(active)setLoading(false);});return ()=>{active=false;};},[id]);
+  async function save(){
+    setSaving(true);setError("");
+    try{
+      const payload=kind==="images"?{images:images.map(x=>x.trim()).filter(Boolean)}:{variants};
+      const r=await authFetch(`/api/admin/products/${id}/media-variants`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok)throw Error(d.error||"Save failed");
+      onSaved();
+    }catch(e){setError(e instanceof Error?e.message:"Save failed");}
+    finally{setSaving(false);}
+  }
+  const field="min-w-0 rounded-lg border border-slate-400 bg-white px-2 py-2 text-sm text-slate-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white";
+  return <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 p-3">
+    <div role="dialog" aria-modal="true" aria-label={kind==="images"?"Edit listing gallery":"Edit listing variants"} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl border border-slate-300 bg-white p-4 text-slate-950 shadow-xl dark:border-slate-600 dark:bg-slate-900 dark:text-white">
+      <div className="mb-3 flex items-center justify-between"><h2 className="text-lg font-bold">{kind==="images"?"Manage images":"Manage variants"}</h2><button onClick={onClose} className="rounded-lg border px-3 py-2 text-xs font-bold">Close</button></div>
+      {loading?<p>Loading listing…</p>:kind==="images"?<div className="space-y-2">
+        <p className="text-xs">Up to 12 HTTPS URLs. First image is the cover.</p>
+        {images.map((url,i)=><div key={i} className="flex gap-2"><input aria-label={`Image ${i+1} URL`} value={url} onChange={e=>setImages(p=>p.map((v,j)=>i===j?e.target.value:v))} className={field+" flex-1"} placeholder="https://..." /><button className="rounded border border-red-400 px-2 text-xs font-bold" onClick={()=>setImages(p=>p.filter((_,j)=>i!==j))}>Remove</button></div>)}
+        <button disabled={images.length>=12} onClick={()=>setImages(p=>[...p,""])} className="rounded-lg bg-sky-100 px-3 py-2 text-xs font-bold text-sky-950 disabled:opacity-50">+ Add image</button>
+      </div>:<div className="space-y-2">
+        <p className="text-xs">Save size, colour and other variants. Buyer checkout support for variant stock and pricing requires separate integration.</p>
+        {variants.map((v,i)=><div key={i} className="grid grid-cols-2 gap-2 rounded-lg border border-slate-400 p-2">
+          <select aria-label="Variant type" className={field} value={v.type} onChange={e=>setVariants(p=>p.map((x,j)=>i===j?{...x,type:e.target.value}:x))}>{["size","color","condition","material","style","other"].map(t=><option key={t} value={t}>{t}</option>)}</select>
+          <input aria-label="Variant value" placeholder="Size or colour" className={field} value={v.value} onChange={e=>setVariants(p=>p.map((x,j)=>i===j?{...x,value:e.target.value}:x))}/>
+          <input aria-label="Price adjustment" type="number" step="0.01" className={field} value={v.priceModifier} onChange={e=>setVariants(p=>p.map((x,j)=>i===j?{...x,priceModifier:e.target.value}:x))}/>
+          <input aria-label="Stock" type="number" min="0" className={field} value={v.inventory} onChange={e=>setVariants(p=>p.map((x,j)=>i===j?{...x,inventory:e.target.value}:x))}/>
+          <button className="col-span-2 rounded border border-red-500 px-2 py-1 text-xs font-bold text-red-600 dark:text-red-300" onClick={()=>setVariants(p=>p.filter((_,j)=>i!==j))}>Remove variant</button>
+        </div>)}
+        <button disabled={variants.length>=50} onClick={()=>setVariants(p=>[...p,{type:"size",value:"",priceModifier:"0",inventory:"0"}])} className="rounded-lg bg-violet-100 px-3 py-2 text-xs font-bold text-violet-950 disabled:opacity-50">+ Add variant</button>
+      </div>}
+      {error&&<p role="alert" className="mt-3 text-sm font-bold text-red-600 dark:text-red-300">{error}</p>}
+      <div className="mt-4 flex justify-end gap-2"><button onClick={onClose} className="rounded-lg border border-slate-500 px-3 py-2 text-sm font-bold">Cancel</button><button disabled={saving||loading} onClick={()=>void save()} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white disabled:opacity-50">{saving?"Saving…":"Save changes"}</button></div>
+    </div>
+  </div>;
 }
