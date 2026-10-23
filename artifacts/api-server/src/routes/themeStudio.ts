@@ -115,9 +115,10 @@ function validElements(raw:string){
   if(!Array.isArray(items)||items.length>24)return false;
   const ids=new Set();
   return items.every((item:any)=>{
-   if(!item||typeof item!=="object"||!["heading","paragraph","image","button","banner","card"].includes(item.type))return false;
+   if(!item||typeof item!=="object"||!["heading","paragraph","image","button","banner","card","section","promo-section"].includes(item.type))return false;
    if(typeof item.id!=="string"||!/^[a-z0-9-]{1,64}$/.test(item.id)||ids.has(item.id))return false;
    ids.add(item.id);
+   if(item.themeColors!==undefined){if(!item.themeColors||typeof item.themeColors!=="object"||Array.isArray(item.themeColors)||Object.keys(item.themeColors).some(k=>!["light","dark"].includes(k)))return false;for(const mode of Object.values(item.themeColors) as any[]){if(!mode||typeof mode!=="object"||Array.isArray(mode)||Object.keys(mode).some(k=>!["background","color"].includes(k)))return false;for(const value of Object.values(mode)){if(typeof value!=="string"&&(value!==undefined))return false;if(value!==undefined&&value!==""&&!/^#[0-9a-fA-F]{6}$/.test(value as string))return false}}}
    if(item.hidden!==undefined&&typeof item.hidden!=="boolean")return false;
    if(item.responsive!==undefined){
     if(!item.responsive||typeof item.responsive!=="object"||Array.isArray(item.responsive)||Object.keys(item.responsive).some(k=>!["tablet","mobile"].includes(k)))return false;
