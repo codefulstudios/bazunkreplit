@@ -431,9 +431,9 @@ function ProductDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
-      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed inset-x-3 inset-y-3 z-[100] mx-auto flex w-auto max-w-5xl flex-col rounded-xl border-2 border-slate-500 bg-white text-slate-950 shadow-2xl dark:bg-[#111e33] dark:text-white dark:[&_h3]:!text-white dark:[&_p]:!text-slate-100 md:inset-x-8 md:inset-y-7">
+      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-400 dark:border-slate-600">
+        <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
           <div>
             <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Listing" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
@@ -443,12 +443,12 @@ function ProductDrawer({
           </button>
         </div>
 
-        <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-400 px-4 py-3 dark:border-slate-600">
+        <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-600 bg-slate-100 px-4 py-3 dark:bg-[#172943]">
           {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
-            <button key={t.id} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"border-white bg-blue-700 text-white":"border-slate-500 bg-slate-700 text-white hover:bg-slate-600"}`}>{t.label}</button>)}
+            <button key={t.id} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
         </nav>
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 [&_input]:!text-slate-950 [&_textarea]:!text-slate-950 [&_select]:!text-slate-950 dark:[&_input]:!bg-white dark:[&_textarea]:!bg-white dark:[&_select]:!bg-white dark:[&_label_span]:!text-white">
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -456,12 +456,12 @@ function ProductDrawer({
           )}
 
           <div id="product-editor-details" />
-          {isEdit&&<div className="flex flex-wrap gap-2 rounded-lg border-2 border-slate-500 bg-slate-100 p-3 dark:bg-slate-800">
-            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-black text-white">View on Bazunk ↗</a>
-            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-black text-white">Hide listing</button>
-            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} className="rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white">Delete listing</button>
+          {isEdit&&<div className="flex flex-wrap gap-2 rounded-xl border border-slate-400 bg-white p-3 dark:border-slate-600 dark:!bg-[#1b304d]">
+            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-500 !bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:!bg-[#475569]">View on Bazunk ↗</a>
+            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} className="rounded-lg border border-amber-500 !bg-[#92400e] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b45309]">Hide listing</button>
+            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} className="rounded-lg border border-red-500 !bg-[#991b1b] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b91c1c]">Delete listing</button>
           </div>}
-          {isEdit&&<div className="rounded-lg border-2 border-slate-500 bg-slate-100 p-3 text-slate-950 dark:bg-slate-800 dark:text-white">
+          {isEdit&&<div className="rounded-xl border border-slate-400 bg-white p-3 text-slate-950 dark:border-slate-600 dark:!bg-[#1b304d] dark:text-white">
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
             <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
           </div>}
@@ -686,12 +686,12 @@ function ProductDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 bg-slate-700 py-2.5 text-sm font-black text-white hover:bg-slate-600 transition-colors">
+        <div className="flex gap-3 border-t border-slate-500 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
+          <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 !bg-[#334155] py-2.5 text-sm font-black !text-white hover:!bg-[#475569] transition-colors">
             Cancel
           </button>
           <button onClick={save} disabled={saving||uploading}
-            className="flex-1 py-2.5 rounded-xl bg-[#c2410c] text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+            className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
