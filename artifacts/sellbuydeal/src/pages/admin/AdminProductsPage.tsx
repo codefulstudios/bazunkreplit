@@ -432,33 +432,49 @@ function ProductDrawer({
     <>
       <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
       <style>{`
-        #bazunk-listing-editor button, #bazunk-listing-editor a.editor-action {
-          background-color: #334155 !important;
+        #bazunk-listing-editor#bazunk-listing-editor button,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
+          background: #263b57 !important;
+          background-color: #263b57 !important;
           color: #ffffff !important;
-          border: 1px solid #94a3b8 !important;
+          -webkit-text-fill-color: #ffffff !important;
+          border: 2px solid #8195ad !important;
+          box-shadow: none !important;
           opacity: 1 !important;
-          font-weight: 700 !important;
+          font-weight: 800 !important;
           text-shadow: none !important;
+          filter: none !important;
         }
-        #bazunk-listing-editor button:hover:not(:disabled), #bazunk-listing-editor a.editor-action:hover {
-          background-color: #475569 !important;
-          color: #ffffff !important;
+        #bazunk-listing-editor#bazunk-listing-editor button *,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action * {
+          color: #fff !important;
+          -webkit-text-fill-color: #fff !important;
+          opacity: 1 !important;
         }
-        #bazunk-listing-editor button:disabled { opacity: .55 !important; cursor: not-allowed; }
-        #bazunk-listing-editor button[data-editor-tone="primary"],
-        #bazunk-listing-editor button[data-editor-tab="selected"] {
-          background-color: #1d4ed8 !important; color: #fff !important; border-color: #93c5fd !important;
+        #bazunk-listing-editor#bazunk-listing-editor button:hover:not(:disabled),
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action:hover {
+          background: #405c80 !important;
         }
-        #bazunk-listing-editor button[data-editor-tone="danger"] {
-          background-color: #b91c1c !important; color: #fff !important; border-color: #fca5a5 !important;
+        #bazunk-listing-editor#bazunk-listing-editor button:disabled {opacity:.55 !important;cursor:not-allowed;}
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="primary"],
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tab="selected"] {
+          background: #1748bb !important;
+          border-color: #93c5fd !important;
         }
-        #bazunk-listing-editor button[data-editor-tone="warning"] {
-          background-color: #92400e !important; color: #fff !important; border-color: #fcd34d !important;
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="danger"] {
+          background: #9f1d28 !important;border-color:#fca5a5 !important;
         }
-        #bazunk-listing-editor button:focus-visible, #bazunk-listing-editor a:focus-visible {
-          outline: 3px solid #fbbf24 !important; outline-offset: 2px;
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="warning"] {
+          background: #92500c !important;border-color:#fcd34d !important;
         }
-        #bazunk-listing-editor button svg {color:#fff !important;}
+        #bazunk-listing-editor#bazunk-listing-editor button:focus-visible,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action:focus-visible {
+          outline: 3px solid #fbbf24 !important;outline-offset:2px;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor .editor-panel {
+          background: #1b304d !important;color:#ffffff !important;
+          border:1px solid #566c87 !important;
+        }
       `}</style>
       <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
         {/* Header */}
@@ -485,12 +501,12 @@ function ProductDrawer({
           )}
 
           <div id="product-editor-details" />
-          {isEdit&&<div className="flex flex-wrap gap-2 rounded-xl border border-slate-400 bg-white p-3 dark:border-slate-600 dark:!bg-[#1b304d]">
+          {isEdit&&<div className="editor-panel flex flex-wrap gap-2 rounded-xl p-3">
             <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="editor-action rounded-lg border border-slate-500 !bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:!bg-[#475569]">View on Bazunk ↗</a>
             <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} data-editor-tone="warning" className="rounded-lg border border-amber-500 !bg-[#92400e] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b45309]">Hide listing</button>
             <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} data-editor-tone="danger" className="rounded-lg border border-red-500 !bg-[#991b1b] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b91c1c]">Delete listing</button>
           </div>}
-          {isEdit&&<div className="rounded-xl border border-slate-400 bg-white p-3 text-slate-950 dark:border-slate-600 dark:!bg-[#1b304d] dark:text-white">
+          {isEdit&&<div className="editor-panel rounded-xl p-3">
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
             <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
           </div>}
