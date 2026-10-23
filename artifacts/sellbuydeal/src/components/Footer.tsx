@@ -25,7 +25,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1 md:pr-5">
             <Link href="/" className="inline-block mb-3">
               <img
-                src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url:"/bazunk-logo-header.png"}
+                src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url : "/bazunk-brand-dark.png"}
                 alt={s.site_name||"Bazunk"} data-theme-edit="site_logo_url"
                 className="h-9 md:h-10 w-auto object-contain"
               />
