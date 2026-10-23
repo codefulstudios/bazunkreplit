@@ -456,6 +456,11 @@ function ProductDrawer({
           )}
 
           <div id="product-editor-details" />
+          {isEdit&&<div className="flex flex-wrap gap-2 rounded-lg border-2 border-slate-500 bg-slate-100 p-3 dark:bg-slate-800">
+            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-black text-white">View on Bazunk ↗</a>
+            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} className="rounded-lg bg-amber-700 px-3 py-2 text-xs font-black text-white">Hide listing</button>
+            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} className="rounded-lg bg-red-700 px-3 py-2 text-xs font-black text-white">Delete listing</button>
+          </div>}
           {isEdit&&<div className="rounded-lg border-2 border-slate-500 bg-slate-100 p-3 text-slate-950 dark:bg-slate-800 dark:text-white">
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
             <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
@@ -519,6 +524,9 @@ function ProductDrawer({
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
+                  <option value="inactive">Hidden</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="sold" disabled>Sold (read-only status)</option>
                 </select>
               </label>
               <label className="block">
@@ -613,8 +621,8 @@ function ProductDrawer({
                 <Plus className="w-3 h-3" /> Add URL
               </button>
             </div>
-            <label className="mb-3 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-blue-500 bg-blue-50 p-4 text-center font-bold text-slate-950 dark:bg-slate-800 dark:text-white">
-              <Upload className="h-5 w-5"/>{uploading?"Uploading images…":"Upload images from computer"}
+            <label onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();void uploadFiles(e.dataTransfer.files);}} className="mb-3 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-blue-500 bg-blue-50 p-4 text-center font-bold text-slate-950 dark:bg-slate-800 dark:text-white">
+              <Upload className="h-5 w-5"/>{uploading?"Uploading images…":"Upload or drop images here"}
               <span className="text-xs">JPG, PNG, WebP · 3 MB each · up to 12</span>
               <input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={uploading} className="max-w-full text-xs" onChange={e=>{void uploadFiles(e.target.files);e.target.value="";}}/>
             </label>
