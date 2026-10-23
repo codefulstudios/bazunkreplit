@@ -118,6 +118,11 @@ function validElements(raw:string){
    if(!item||typeof item!=="object"||!["heading","paragraph","image","button","banner","card"].includes(item.type))return false;
    if(typeof item.id!=="string"||!/^[a-z0-9-]{1,64}$/.test(item.id)||ids.has(item.id))return false;
    ids.add(item.id);
+   if(item.hidden!==undefined&&typeof item.hidden!=="boolean")return false;
+   if(item.responsive!==undefined){
+    if(!item.responsive||typeof item.responsive!=="object"||Array.isArray(item.responsive)||Object.keys(item.responsive).some(k=>!["tablet","mobile"].includes(k)))return false;
+    for(const responsive of Object.values(item.responsive) as any[]){if(!responsive||typeof responsive!=="object"||Array.isArray(responsive))return false;for(const [key,v] of Object.entries(responsive)){if(key==="align"){if(!["left","center","right"].includes(v as string))return false}else if(!["fontSize","padding","width","sectionSpacing"].includes(key)||typeof v!=="number"||!Number.isInteger(v)||v<(key==="width"?10:key==="fontSize"?10:0)||v>(key==="fontSize"?96:key==="width"?100:120))return false}}
+   }
    if(item.style!==undefined){
     const st=item.style;
     if(!st||typeof st!=="object"||Array.isArray(st))return false;
