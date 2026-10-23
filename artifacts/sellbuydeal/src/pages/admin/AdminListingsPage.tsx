@@ -1,5 +1,5 @@
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package, Pencil, Trash2, EyeOff } from "lucide-react";
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
@@ -222,17 +222,19 @@ export function AdminListingsPage() {
       {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>beginCategoryEdit()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Change category for {selectedIds.length} selected</button></div>}
       {categoryEditing==="bulk"&&<div className="mb-3 rounded-xl border border-blue-400 bg-blue-50 p-3 text-slate-950 dark:bg-slate-900 dark:text-white"><p className="mb-2 text-xs font-bold">Change category for {selectedIds.length} selected listings</p>{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
       {/* Table */}
-      <div className="wp-management-table-card bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+      <div className="wp-management-table-card rounded-xl border border-slate-300 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-900">
+        <div className="w-full overflow-x-hidden">
+          <table className="w-full table-fixed text-sm">
             <thead>
               <tr className="bg-gray-50">
-                <th className="px-3 py-2"><input type="checkbox" aria-label="Select all listings on current page" className="h-4 w-4"
+                <th className="w-9 px-2 py-2"><input type="checkbox" aria-label="Select all listings on current page" className="h-4 w-4"
                   checked={visibleIds.length>0&&visibleIds.every(id=>selectedIds.includes(id))}
                   onChange={e=>setSelectedIds(e.target.checked?visibleIds:[])}/></th>
-                {["ID", "Title", "Category", "Price", "Seller"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
+                <th className="w-[19%] px-2 py-3 text-left text-xs font-bold text-slate-800 dark:text-white">ID</th>
+                <th className="w-[35%] px-2 py-3 text-left text-xs font-bold text-slate-800 dark:text-white">Title</th>
+                <th className="w-[19%] px-2 py-3 text-left text-xs font-bold text-slate-800 dark:text-white">Category</th>
+                <th className="w-[10%] px-2 py-3 text-left text-xs font-bold text-slate-800 dark:text-white">Price</th>
+                <th className="w-[17%] px-2 py-3 text-left text-xs font-bold text-slate-800 dark:text-white">Seller</th>
               </tr>
             </thead>
             <tbody>
@@ -253,14 +255,15 @@ export function AdminListingsPage() {
                 const ebayItemId = specs.item_id ?? specs.own_ebay_item_id;
                 const ebayUrl = specs.ebay_url ?? (ebayItemId ? `https://www.ebay.co.uk/itm/${ebayItemId}` : undefined);
                 return (
-                  <tr key={l.id} className="border-t border-gray-50 hover:bg-gray-50/50">
+                  <Fragment key={l.id}>
+                  <tr className="border-t border-slate-300 dark:border-slate-700">
                     <td className="px-3 py-2"><input type="checkbox" aria-label={`Select listing ${l.public_id||l.id}`} className="h-4 w-4"
                       checked={selectedIds.includes(String(l.id))}
                       onChange={e=>setSelectedIds(p=>e.target.checked?[...new Set([...p,String(l.id)])]:p.filter(x=>x!==String(l.id)))}/></td>
                     {/* ID */}
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-2 py-3 break-all align-top">
                       <div className="flex flex-col gap-1">
-                        <span className="font-mono text-xs text-gray-500">{l.public_id ?? `#${l.id}`}</span>
+                        <span className="font-mono text-[11px] text-slate-700 dark:text-slate-200 break-all">{l.public_id ?? `#${l.id}`}</span>
                         {isImported && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 text-[10px] font-bold w-fit">
                             <ShoppingCart className="w-2.5 h-2.5" />
@@ -271,9 +274,33 @@ export function AdminListingsPage() {
                     </td>
 
                     {/* Title */}
-                    <td className="px-4 py-3 min-w-64 w-[36%] align-top">
+                    <td className="px-2 py-3 align-top">
                       <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
                       <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{l.condition}</p>
+                    </td>
+
+                    {/* Category */}
+                    <td className="px-2 py-3 break-words text-xs text-slate-700 dark:text-slate-200 align-top">
+                      <span className="capitalize">{l.category.replace(/-/g, " ")}</span>
+                      {l.subcategory && <span className="text-slate-600 dark:text-slate-200"> · {l.subcategory.replace(/-/g, " ")}</span>}
+                    </td>
+
+                    {/* Price */}
+                    <td className="px-2 py-3 font-bold text-slate-950 dark:text-white align-top">
+                      £{parseFloat(l.price).toFixed(2)}
+                    </td>
+
+                    {/* Seller */}
+                    <td className="px-2 py-3 min-w-0 align-top">
+                      <p className="text-xs text-slate-800 dark:text-white break-all">{l.seller_email}</p>
+                      {l.seller_username && <p className="text-[10px] text-slate-600 dark:text-slate-300">@{l.seller_username}</p>}
+                    </td>
+
+                  </tr>
+                  <tr className="border-b border-slate-300 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-900/60">
+                    <td />
+                    <td colSpan={5} className="px-3 pb-3 pt-1 align-top">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <div className="mt-2 flex flex-wrap gap-2 items-center"><AdminListingPromotion listingId={l.id} title={l.title} status={l.status} /><button onClick={() => { setImageEditing(l.id); setImageDraft(l.image ?? ""); setImageError(""); }} className="min-h-9 rounded-lg border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-slate-200 dark:border-slate-500 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">{l.image ? "Change image" : "Add image"}</button></div>
                       <div className="mt-2 flex flex-wrap items-center gap-2" aria-label="Listing status and source">
                         <span className={`rounded-full px-2 py-1 text-xs font-bold capitalize ${STATUS_STYLE[l.status] ?? "bg-gray-200 text-gray-900"}`}>{l.status}</span>
@@ -281,38 +308,23 @@ export function AdminListingsPage() {
                           : specs.amazon_url ? <a href={specs.amazon_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-lg border border-amber-400 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-950 no-underline hover:bg-amber-200 dark:border-amber-500 dark:bg-amber-900 dark:text-white dark:hover:bg-amber-800"><ExternalLink className="h-3 w-3"/> {specs.asin ?? "View on Amazon"}</a> : null}
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2" aria-label={`Actions for ${l.title}`}>
-                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"images"})} className="min-h-9 rounded-lg border border-teal-500 bg-teal-100 px-3 py-2 text-xs font-bold text-teal-950 dark:bg-teal-900 dark:text-white">Images</button>
-                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"variants"})} className="min-h-9 rounded-lg border border-violet-500 bg-violet-100 px-3 py-2 text-xs font-bold text-violet-950 dark:bg-violet-900 dark:text-white">Variants</button>
-                        <a href={`/listing/${l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 dark:bg-slate-700 dark:text-white">View on Bazunk</a>
-                        <button type="button" onClick={()=>beginCategoryEdit(l)} className="inline-flex min-h-9 items-center rounded-lg border border-sky-400 bg-sky-100 px-3 py-2 text-xs font-bold text-sky-950 hover:bg-sky-200 dark:border-sky-500 dark:bg-sky-900 dark:text-white dark:hover:bg-sky-800">Category</button>
+                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"images"})} className="min-h-9 rounded-lg border border-teal-500 bg-teal-700 px-3 py-2 text-xs font-bold text-white hover:bg-teal-600 dark:bg-teal-600 dark:text-white">Images</button>
+                        <button type="button" onClick={()=>setQuickEdit({id:l.id,kind:"variants"})} className="min-h-9 rounded-lg border border-violet-500 bg-violet-700 px-3 py-2 text-xs font-bold text-white hover:bg-violet-600 dark:bg-violet-600 dark:text-white">Variants</button>
+                        <a href={`/listing/${l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border border-slate-400 bg-slate-700 px-3 py-2 text-xs font-bold text-white hover:bg-slate-600 dark:bg-slate-600 dark:text-white">View on Bazunk</a>
+                        <button type="button" onClick={()=>beginCategoryEdit(l)} className="inline-flex min-h-9 items-center rounded-lg border border-sky-400 bg-sky-700 px-3 py-2 text-xs font-bold text-white hover:bg-sky-600 dark:bg-sky-600 dark:text-white">Category</button>
                         
-                        <button type="button" onClick={()=>setEditingId(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-blue-500 bg-blue-100 px-3 py-2 text-xs font-bold text-blue-950 hover:bg-blue-200 dark:bg-blue-800 dark:text-white dark:hover:bg-blue-700"><Pencil className="inline h-3 w-3"/> Edit</button>
-                        <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-500 bg-amber-100 px-3 py-2 text-xs font-bold text-amber-950 hover:bg-amber-200 dark:bg-amber-800 dark:text-white dark:hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"><EyeOff className="inline h-3 w-3"/> Hide</button>
-                        <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-red-500 bg-red-100 px-3 py-2 text-xs font-bold text-red-950 hover:bg-red-200 dark:bg-red-900 dark:text-white dark:hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-60"><Trash2 className="inline h-3 w-3"/> Delete</button>
+                        <button type="button" onClick={()=>setEditingId(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-blue-500 bg-blue-700 px-3 py-2 text-xs font-bold text-white hover:bg-blue-600 dark:bg-blue-600 dark:text-white"><Pencil className="inline h-3 w-3"/> Edit</button>
+                        <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-500 bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-500 dark:bg-amber-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><EyeOff className="inline h-3 w-3"/> Hide</button>
+                        <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-red-500 bg-red-700 px-3 py-2 text-xs font-bold text-white hover:bg-red-600 dark:bg-red-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><Trash2 className="inline h-3 w-3"/> Delete</button>
                       
                       </div>
                       {categoryEditing===l.id && <div className="mt-2 rounded-lg border border-slate-400 bg-white p-2 dark:bg-slate-900">{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
                       {imageEditing === l.id && <div className="mt-2 rounded-lg border border-gray-200 p-2 bg-gray-50"><input autoFocus value={imageDraft} onChange={e=>setImageDraft(e.target.value)} placeholder="https://… image URL" className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800" /><div className="mt-2 flex gap-2"><button disabled={imageSaving===l.id} onClick={()=>void saveImage(l)} className="rounded-md bg-[#4A5CE8] text-white px-2 py-1 text-[10px] font-bold disabled:opacity-50">{imageSaving===l.id?"Saving…":"Save image"}</button><button onClick={()=>{setImageEditing(null);setImageDraft("");setImageError("");}} className="rounded-md border px-2 py-1 text-[10px] font-bold">Cancel</button>{l.image&&<button disabled={imageSaving===l.id} onClick={()=>void saveImage(l,"")} className="text-[10px] text-red-600 ml-auto">Remove</button>}</div>{imageError&&<p className="text-[10px] text-red-600 mt-1">{imageError}</p>}</div>}
-                    </td>
 
-                    {/* Category */}
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
-                      <span className="capitalize">{l.category.replace(/-/g, " ")}</span>
-                      {l.subcategory && <span className="text-slate-600 dark:text-slate-200"> · {l.subcategory.replace(/-/g, " ")}</span>}
+                      </div>
                     </td>
-
-                    {/* Price */}
-                    <td className="px-4 py-3 font-bold text-gray-800 whitespace-nowrap">
-                      £{parseFloat(l.price).toFixed(2)}
-                    </td>
-
-                    {/* Seller */}
-                    <td className="px-4 py-3 max-w-36">
-                      <p className="text-xs text-gray-600 truncate">{l.seller_email}</p>
-                      {l.seller_username && <p className="text-[10px] text-gray-400">@{l.seller_username}</p>}
-                    </td>
-
                   </tr>
+                  </Fragment>
                 );
               })}
             </tbody>
