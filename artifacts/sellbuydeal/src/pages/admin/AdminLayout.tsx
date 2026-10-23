@@ -33,6 +33,14 @@ const NAV = [
   { label: "DealPilot", href: "/admin/deal-pilot", icon: Search },
   { label: "Find It", href: "/admin/find-it", icon: Search },
   { label: "Importers", href: "/admin/imports", icon: ArrowDownToLine },
+  { label: "Amazon", href: "/admin/importers/amazon", icon: ArrowDownToLine },
+  { label: "eBay", href: "/admin/importers/ebay", icon: ArrowDownToLine },
+  { label: "AliExpress", href: "/admin/importers/aliexpress", icon: ArrowDownToLine },
+  { label: "Gumtree", href: "/admin/importers/gumtree", icon: ArrowDownToLine },
+  { label: "Craigslist", href: "/admin/importers/craigslist", icon: ArrowDownToLine },
+  { label: "OLX", href: "/admin/importers/olx", icon: ArrowDownToLine },
+  { label: "General Settings", href: "/admin/importers/settings", icon: ArrowDownToLine },
+  { label: "Apply Update to All", href: "/admin/importers/bulk-update", icon: ArrowDownToLine },
   { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
   { label: "Cashback", href: "/admin/cashback", icon: Gift },
   { label: "Classifieds",  href: "/admin/classifieds",  icon: FileText        },
@@ -65,7 +73,7 @@ const NAV_GROUPS = [
  {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
- {id:"importers",label:"Importers",href:"/admin/importer-overview",icon:ArrowDownToLine,pages:["Importer Overview","Importers","Importer Control"]},
+ {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","Craigslist","OLX","General Settings","Apply Update to All","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
  {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
