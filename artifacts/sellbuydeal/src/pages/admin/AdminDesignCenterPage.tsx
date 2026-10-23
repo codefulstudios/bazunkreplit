@@ -1,3 +1,4 @@
+import {ELEMENT_KINDS,parseVisualElements,type VisualElement} from "@/design-system/visualElements";
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useLocation} from "wouter";
 import {Home,PanelTop,PanelBottom,Palette,Type,Shapes,Search,Image as ImageIcon,Layers3,History,LayoutTemplate,Monitor,Smartphone,Save,Upload,ExternalLink,ArrowUp,ArrowDown,GripVertical,Eye,ChevronRight,CheckCircle2,AlertCircle,Trash2,RefreshCw,ShoppingBag} from "lucide-react";
@@ -51,7 +52,8 @@ export function AdminDesignCenterPage(){
  const [auto,setAuto]=useState("Ready");
  const [dirty,setDirty]=useState(false);
  const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
- const [visualMode,setVisualMode]=useState<"content"|"sections"|"media">("content");
+ const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements">("content");
+ const [selectedElement,setSelectedElement]=useState<string|null>(null);
  const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
  const [selectedCard,setSelectedCard]=useState<number|null>(null);
  const [selectedField,setSelectedField]=useState<string>("");
@@ -63,6 +65,7 @@ export function AdminDesignCenterPage(){
  const editVersion=useRef(0);
  const pendingSave=useRef<Promise<void>|null>(null);
  const homeSections=parseHomeSections(draft.home_sections_layout);
+ const visualElements=parseVisualElements(draft.visual_elements_v1);
  const sectionContent=parseSectionContent(draft.home_sections_content);
  const icons=parseIconOverrides(draft.icon_overrides);
  const unpublished=JSON.stringify(draft)!==JSON.stringify(published);
@@ -148,6 +151,9 @@ export function AdminDesignCenterPage(){
  const applyLayout=(entries:HomeSectionEntry[])=>update("home_sections_layout",JSON.stringify(entries));
  const updateSection=(id:keyof typeof sectionContent,field:"title"|"description"|"button"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],[field]:value}}));
  const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url"|"image"|"background"|"textColor",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
+ const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
+ const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
+ const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
@@ -176,6 +182,7 @@ export function AdminDesignCenterPage(){
    const field=String(event.data.field||""),section=String(event.data.section||"");
    const cardIndex=event.data.cardIndex,cardField=event.data.cardField;
    if(tab==="visual"){
+    if(event.data.elementId){setSelectedElement(String(event.data.elementId));setVisualMode("elements");return}
     if(field==="site_logo_url"){setVisualMode("media");setMediaTarget("site_logo_url")}
     else if(section){setActiveBlock(section);setSelectedCard(cardIndex!==undefined&&cardIndex!==""&&Number.isInteger(Number(cardIndex))?Number(cardIndex):null);setSelectedField(String(cardField||""));setVisualMode("content")}
     else if(field){setActiveBlock("hero");setSelectedField(field);setSelectedCard(null);setVisualMode("content")}
@@ -299,7 +306,7 @@ export function AdminDesignCenterPage(){
        <aside className="bzve-controls">
         <div className="bzdc-panel-title"><div><h3>Visual Editor</h3><small>Homepage · Private draft</small></div></div>
         <div className="bzve-tabs">
-         {(["content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
+         {(["elements","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
         </div>
         {visualMode==="sections"&&<div className="bzve-items">
          <p className="bzdc-help">Drag promotional sections to change their order. Marketplace sections remain fixed.</p>
@@ -313,6 +320,24 @@ export function AdminDesignCenterPage(){
            <button type="button" disabled={index===homeSections.length-1} onClick={()=>move(item.id,1)} aria-label={"Move "+item.id+" down"}><ArrowDown size={14}/></button>
           </div>)}
          </div>}
+        {visualMode==="elements"&&<div className="bzve-fields">
+         <strong>Add an element</strong>
+         <div className="bzve-images">{ELEMENT_KINDS.map(kind=><button key={kind} type="button" className="bzdc-mini" onClick={()=>addElement(kind)}>+ {kind}</button>)}</div>
+         <strong>Page elements ({visualElements.length}/24)</strong>
+         {visualElements.map((item,index)=><div key={item.id} className="bzve-item">
+          <button type="button" aria-pressed={selectedElement===item.id} onClick={()=>setSelectedElement(item.id)}>{item.type}: {item.text.slice(0,28)}</button>
+          <button type="button" disabled={index===0} onClick={()=>{const list=[...visualElements];[list[index-1],list[index]]=[list[index],list[index-1]];updateElements(list)}} aria-label="Move up">↑</button>
+          <button type="button" disabled={index===visualElements.length-1} onClick={()=>{const list=[...visualElements];[list[index+1],list[index]]=[list[index],list[index+1]];updateElements(list)}} aria-label="Move down">↓</button>
+          <button type="button" onClick={()=>{updateElements(visualElements.filter(x=>x.id!==item.id));setSelectedElement(null)}} aria-label="Delete element"><Trash2 size={14}/></button>
+         </div>)}
+         {visualElements.filter(e=>e.id===selectedElement).map(element=><div className="bzve-cardfields" key={element.id}>
+          <h3>Edit {element.type}</h3>
+          <label className="bzdc-field"><span>{element.type==="image"?"Alt text":"Content"}</span><textarea rows={3} maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
+          {["button","card"].includes(element.type)&&<label className="bzdc-field"><span>Destination path</span><input value={element.url} placeholder="/browse" onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>}
+          {["image","card","banner"].includes(element.type)&&<label className="bzdc-field"><span>Media Library image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>}
+          {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{field==="background"?"Background":"Text colour"}</span><input type="color" value={element[field]||"#17253c"} onChange={e=>patchElement(element.id,{[field]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[field]:""})}>Reset</button></label>)}
+         </div>)}
+        </div>}
         {visualMode==="content"&&<div className="bzve-fields">
          <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>{setActiveBlock(e.target.value);setSelectedCard(null);setSelectedField("")}}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
          {selectedField&&<p className="bzdc-help">Selected element: <strong>{selectedField}</strong></p>}
