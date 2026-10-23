@@ -13,6 +13,7 @@ import { useAdmin } from "@/context/AdminContext";
 interface Listing {
   id: number;
   public_id: string | null;
+  public_url_token: string | null;
   title: string;
   price: string;
   currency: string;
@@ -308,7 +309,7 @@ export function AdminListingsPage() {
                           : specs.amazon_url ? <a href={specs.amazon_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-lg border-2 border-white bg-[#92400e] px-3 py-2 text-xs font-black !text-white no-underline hover:bg-[#b45309]"><ExternalLink className="h-3 w-3"/> {specs.asin ?? "View on Amazon"}</a> : null}
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2" aria-label={`Actions for ${l.title}`}>
-                        <a href={`/listing/${l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border-2 border-white bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:bg-[#475569]">View on Bazunk</a>
+                        <a href={`/listing/${l.public_url_token||l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border-2 border-white bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:bg-[#475569]">View on Bazunk</a>
                         <button type="button" onClick={()=>setEditingId(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-blue-700 px-3 py-2 text-xs font-black !text-white hover:bg-blue-600 dark:bg-blue-600 dark:text-white"><Pencil className="inline h-3 w-3"/> Edit Listing</button>
                         <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-amber-700 px-3 py-2 text-xs font-black !text-white hover:bg-amber-500 dark:bg-amber-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><EyeOff className="inline h-3 w-3"/> Hide</button>
                         <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-red-700 px-3 py-2 text-xs font-black !text-white hover:bg-red-600 dark:bg-red-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><Trash2 className="inline h-3 w-3"/> Delete</button>
