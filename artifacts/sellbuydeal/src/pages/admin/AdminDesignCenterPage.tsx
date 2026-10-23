@@ -153,7 +153,8 @@ export function AdminDesignCenterPage(){
  const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url"|"image"|"background"|"textColor",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
  const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
  const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
- const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
+ const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":type==="section"?"New content section":type==="promo-section"?"New promotional section":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
+ const patchPalette=(id:string,field:"background"|"color",value:string)=>{const element=visualElements.find(x=>x.id===id);if(element)patchElement(id,{themeColors:{...element.themeColors,[visualTheme]:{...element.themeColors?.[visualTheme],[field]:value}}})};
  const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(!element)return;if(device==="desktop"||!["fontSize","padding","width","sectionSpacing","align"].includes(field))patchElement(id,{style:{...element.style,[field]:value}});else patchElement(id,{responsive:{...element.responsive,[device]:{...element.responsive?.[device],[field]:value}}})};
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
@@ -330,7 +331,7 @@ export function AdminDesignCenterPage(){
          </div>)}
         </div>}
         {visualMode==="elements"&&<div className="bzve-fields">
-         <strong>Add an element</strong>
+         <strong>Add an element or section</strong><p className="bzdc-help">Insert content and promotional sections without changing site code.</p>
          <div className="bzve-images">{ELEMENT_KINDS.map(kind=><button key={kind} type="button" className="bzdc-mini" onClick={()=>addElement(kind)}>+ {kind}</button>)}</div>
          <strong>Page elements ({visualElements.length}/24)</strong>
          {visualElements.map((item,index)=><div key={item.id} className="bzve-item">
@@ -340,7 +341,7 @@ export function AdminDesignCenterPage(){
           <button type="button" onClick={()=>{updateElements(visualElements.filter(x=>x.id!==item.id));setSelectedElement(null)}} aria-label="Delete element"><Trash2 size={14}/></button>
          </div>)}
          {visualElements.filter(e=>e.id===selectedElement).map(element=><div className="bzve-cardfields" key={element.id}>
-          <h3>Edit {element.type}</h3>
+          <h3>Edit {element.type}</h3><p className="bzdc-help">Editing {visualTheme} colours; switch the preview theme to edit the other palette.</p>
           <label className="bzdc-field"><span>{element.type==="image"?"Alt text":"Content"}</span><textarea rows={3} maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
           {["button","card"].includes(element.type)&&<label className="bzdc-field"><span>Destination path</span><input value={element.url} placeholder="/browse" onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>}
           {["image","card","banner"].includes(element.type)&&<label className="bzdc-field"><span>Media Library image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>}
@@ -357,7 +358,7 @@ export function AdminDesignCenterPage(){
            <label className="bzdc-field"><span>Appearance</span><select value={element.style?.buttonVariant||"solid"} onChange={e=>patchStyle(element.id,"buttonVariant",e.target.value)}><option value="solid">Solid</option><option value="outline">Outline</option><option value="ghost">Ghost</option></select></label>
            {(["buttonHoverBackground","buttonHoverColor"] as const).map((key,i)=><label className="bzdc-field" key={key}><span>{i===0?"Hover background":"Hover text colour"}</span><input type="color" value={element.style?.[key]||(i===0?"#c2410c":"#ffffff")} onChange={e=>patchStyle(element.id,key,e.target.value)}/></label>)}
           </fieldset>}
-          {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{field==="background"?"Background":"Text colour"}</span><input type="color" value={element[field]||"#17253c"} onChange={e=>patchElement(element.id,{[field]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[field]:""})}>Reset</button></label>)}
+          {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{visualTheme==="light"?"Light":"Dark"} · {field==="background"?"Background":"Text colour"}</span><input type="color" value={element.themeColors?.[visualTheme]?.[field]||element[field]||(field==="background"?"#ffffff":"#17253c")} onChange={e=>patchPalette(element.id,field,e.target.value)}/><button type="button" onClick={()=>patchPalette(element.id,field,"")}>Reset</button></label>)}
          </div>)}
         </div>}
         {(visualMode==="style"||visualMode==="layout")&&<div className="bzve-fields">
