@@ -9,6 +9,7 @@ import adminFinanceMonitorRouter from "./adminFinanceMonitor.js";
 import adminComplianceReviewRouter from "./adminComplianceReview.js";
 import adminImporterMonitorRouter from "./adminImporterMonitor.js";
 import adminCraigslistRouter from "./adminCraigslist.js";
+import adminOlxRouter from "./adminOlx.js";
 import { scanSellerCompliance } from "../lib/sellerComplianceScan.js";
 import { syncAllImports } from "../lib/syncJob.js";
 import { attachStripePaymentAmounts } from "../lib/adminPaymentRevenue.js";
@@ -130,6 +131,7 @@ router.use(adminFinanceMonitorRouter);
 router.use(adminComplianceReviewRouter);
 router.use(adminImporterMonitorRouter);
 router.use(adminCraigslistRouter);
+router.use(adminOlxRouter);
 router.use(adminActionRequiredRouter); // refund/dispute/compliance/Stripe review, also admin-only
 
 // Seller compliance: restricted to authenticated administrators by router.use above.
