@@ -336,6 +336,19 @@ export function AdminDesignCenterPage(){
           <label className="bzdc-field"><span>{element.type==="image"?"Alt text":"Content"}</span><textarea rows={3} maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
           {["button","card"].includes(element.type)&&<label className="bzdc-field"><span>Destination path</span><input value={element.url} placeholder="/browse" onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>}
           {["image","card","banner"].includes(element.type)&&<label className="bzdc-field"><span>Media Library image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>}
+          {["image","card"].includes(element.type)&&<fieldset className="bzve-cardfields"><legend>Image editor</legend>
+           <label className="bzdc-field"><span>Replace image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>
+           <button type="button" className="bzdc-mini" onClick={()=>{setMediaTarget("hero_image_url");setVisualMode("media")}}>Open Media Library</button>
+           <label className="bzdc-field"><span>Image height (px)</span><input type="number" min={40} max={1000} value={element.style?.imageHeight??240} onChange={e=>patchStyle(element.id,"imageHeight",Math.max(40,Math.min(1000,Number(e.target.value)||40)))}/></label>
+           <label className="bzdc-field"><span>Crop mode</span><select value={element.style?.imageFit||"cover"} onChange={e=>patchStyle(element.id,"imageFit",e.target.value)}><option value="cover">Crop to fill</option><option value="contain">Fit entire image</option><option value="fill">Stretch</option></select></label>
+           {(["imagePositionX","imagePositionY"] as const).map((key,i)=><label className="bzdc-field" key={key}><span>{i===0?"Horizontal focal point":"Vertical focal point"} (%)</span><input type="range" min={0} max={100} value={element.style?.[key]??50} onChange={e=>patchStyle(element.id,key,Number(e.target.value))}/><small>{element.style?.[key]??50}%</small></label>)}
+          </fieldset>}
+          {element.type==="button"&&<fieldset className="bzve-cardfields"><legend>Button editor</legend>
+           <label className="bzdc-field"><span>Button label</span><input maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
+           <label className="bzdc-field"><span>Destination (internal path)</span><input placeholder="/browse" value={element.url} onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>
+           <label className="bzdc-field"><span>Appearance</span><select value={element.style?.buttonVariant||"solid"} onChange={e=>patchStyle(element.id,"buttonVariant",e.target.value)}><option value="solid">Solid</option><option value="outline">Outline</option><option value="ghost">Ghost</option></select></label>
+           {(["buttonHoverBackground","buttonHoverColor"] as const).map((key,i)=><label className="bzdc-field" key={key}><span>{i===0?"Hover background":"Hover text colour"}</span><input type="color" value={element.style?.[key]||(i===0?"#c2410c":"#ffffff")} onChange={e=>patchStyle(element.id,key,e.target.value)}/></label>)}
+          </fieldset>}
           {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{field==="background"?"Background":"Text colour"}</span><input type="color" value={element[field]||"#17253c"} onChange={e=>patchElement(element.id,{[field]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[field]:""})}>Reset</button></label>)}
          </div>)}
         </div>}
