@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Zap, Handshake, ArrowRight, Shield, Tag, Radio, BadgePoundSterling } from "lucide-react";
 import { Link } from "wouter";
 import { useRawSettings } from "@/context/SiteSettingsContext";
+import {parseSectionContent} from "@/design-system/homepageSections";
 import { isFeatureEnabled } from "@/components/FeatureGate";
 
 const FEATURE_BLOCKS = [
@@ -60,8 +61,9 @@ const TRUST_ITEMS = [
 
 export function FeaturedFeatures() {
   const flags = useRawSettings();
-  const sectionTitle=flags.features_title||"Why Bazunk?";
-  const sectionSubtitle=flags.features_subtitle||"Everything in one place";
+  const config=parseSectionContent(flags.home_sections_content).features;
+  const sectionTitle=config.title||flags.features_title||"Why Bazunk?";
+  const sectionSubtitle=config.description||flags.features_subtitle||"Everything in one place";
   const blocks = FEATURE_BLOCKS.filter(x => isFeatureEnabled(flags, x.feature));
   const trustItems = TRUST_ITEMS.filter(x => isFeatureEnabled(flags, x.feature));
   return (
