@@ -147,7 +147,7 @@ export function AdminDesignCenterPage(){
  const setIcon=(placement:IconPlacement,choice:IconChoice)=>update("icon_overrides",JSON.stringify({...icons,[placement]:choice}));
  const applyLayout=(entries:HomeSectionEntry[])=>update("home_sections_layout",JSON.stringify(entries));
  const updateSection=(id:keyof typeof sectionContent,field:"title"|"description"|"button"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],[field]:value}}));
- const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
+ const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url"|"image"|"background"|"textColor",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
  const reorder=(from:string,to:string)=>{
   if(from===to)return;
   const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
@@ -159,7 +159,20 @@ export function AdminDesignCenterPage(){
  useEffect(()=>{sendPreview()},[sendPreview,tab,device]);
  useEffect(()=>{
   const listener=(event:MessageEvent)=>{
-   if(event.origin!==window.location.origin||event.source!==frame.current?.contentWindow||event.data?.type!=="bazunk:theme-preview-select")return;
+   if(event.origin!==window.location.origin||event.source!==frame.current?.contentWindow||!["bazunk:theme-preview-select","bazunk:theme-preview-inline"].includes(event.data?.type))return;
+   if(event.data.type==="bazunk:theme-preview-inline"&&tab==="visual"){
+    const value=String(event.data.value||"").slice(0,500);
+    const field=String(event.data.field||""),section=String(event.data.section||"");
+    const index=Number(event.data.cardIndex),cardField=String(event.data.cardField||"");
+    if(/[<>]/.test(value))return;
+    if(["hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary","categories_title","categories_subtitle"].includes(field)){
+      update(field as keyof DesignFields,value.slice(0,field==="hero_subtitle"?500:field.startsWith("hero_cta")?50:160));
+    }else if((section==="promos"||section==="perks")&&Number.isInteger(index)&&index>=0&&index<(section==="promos"?4:5)&&["title","description"].includes(cardField)){
+      updateCard(section,index,cardField as "title"|"description",value.slice(0,cardField==="title"?140:500));
+      setActiveBlock(section);setSelectedCard(index);setSelectedField(cardField);
+    }
+    return;
+   }
    const field=String(event.data.field||""),section=String(event.data.section||"");
    const cardIndex=event.data.cardIndex,cardField=event.data.cardField;
    if(tab==="visual"){
@@ -176,7 +189,7 @@ export function AdminDesignCenterPage(){
    else if(section){changeTab("homepage");setActiveBlock(section)}
   };
   window.addEventListener("message",listener);return()=>window.removeEventListener("message",listener);
- },[changeTab,tab]);
+ },[changeTab,tab,draft]);
  const input=(key:keyof DesignFields,label:string,description?:string,max=180,multiline=false)=><label key={key} className="bzdc-field">
   <span>{label}</span>{description&&<small>{description}</small>}
   {multiline?<textarea value={draft[key]} maxLength={max} rows={3} onChange={e=>update(key,e.target.value)}/>:<input type="text" value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>}
@@ -307,7 +320,7 @@ export function AdminDesignCenterPage(){
          activeBlock==="categories"?<>{input("categories_title","Heading",undefined,120)}{input("categories_subtitle","Description",undefined,240,true)}</>:
          activeBlock==="recent"?<p className="bzdc-help">Newest listings are populated from real marketplace data. They cannot be modified here.</p>:
          (OPTIONAL_HOME_SECTIONS.some(x=>x.id===activeBlock))?<>{(["title","description","button","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={sectionContent[activeBlock as keyof typeof sectionContent][field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateSection(activeBlock as keyof typeof sectionContent,field,e.target.value)}/></label>)}
-         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index} style={selectedCard===index?{outline:"3px solid #2563eb",outlineOffset:2}:undefined}><strong>Card {index+1}{selectedCard===index?" · Selected in preview":""}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}</div>)}</>:null}
+         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index} style={selectedCard===index?{outline:"3px solid #2563eb",outlineOffset:2}:undefined}><strong>Card {index+1}{selectedCard===index?" · Selected in preview":""}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}{activeBlock==="promos"&&<><label className="bzdc-field"><span>Card image</span><select value={card.image||""} onChange={e=>updateCard("promos",index,"image",e.target.value)}><option value="">No image</option>{assets.map(asset=><option key={asset.id} value={asset.url}>{asset.filename}</option>)}</select></label>{(["background","textColor"] as const).map(key=><label className="bzdc-field" key={key}><span>{key==="background"?"Background colour":"Text colour"}</span><input type="color" value={card[key]||"#17253c"} onChange={e=>updateCard("promos",index,key,e.target.value)}/><button type="button" onClick={()=>updateCard("promos",index,key,"")}>Reset colour</button></label>)}</>}</div>)}</>:null}
         </div>}
         {visualMode==="media"&&<div className="bzve-fields"><label className="bzdc-field"><span>Image placement</span><select value={mediaTarget} onChange={e=>setMediaTarget(e.target.value as MediaTarget)}>{imageTargets.map(x=><option value={x.key} key={x.key}>{x.title}</option>)}</select></label>
          <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>void upload(e.target.files?.[0]||null)} ref={tab==="visual"?file:undefined}/><button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
@@ -323,7 +336,7 @@ export function AdminDesignCenterPage(){
         <div className={"bzve-viewport "+(device==="mobile"?"bzve-mobile":device==="tablet"?"bzve-tablet":"bzve-desktop")}>
          <iframe ref={frame} title="Bazunk visual editing live storefront" key={"visual-"+device} src="/?bazunk-theme-preview=1" onLoad={sendPreview}/>
         </div>
-        <p className="bzdc-help">Click an editable element in the preview to select its section. Changes update the private preview and are published only with Publish changes. Styling controls for light and dark themes remain in Theme Gallery & Colours.</p>
+        <p className="bzdc-help">Click an editable element to select it; double-click text to type on the preview. Changes update the private preview and are published only with Publish changes. Styling controls for light and dark themes remain in Theme Gallery & Colours.</p>
        </section>
       </div>}
       {tab==="homepage"&&<div className="bzdc-builder-grid">
