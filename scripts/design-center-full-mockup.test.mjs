@@ -66,3 +66,13 @@ test("Legacy advanced appearance settings are preserved as an isolated destinati
  assert.match(fields,/DEFAULT_ICON_OVERRIDES/);
  assert.match(page,/Restore to draft/);
 });
+
+test("Every optional homepage block has published text controls",()=>{
+ const sections=read(root+"design-system/homepageSections.ts");
+ for(const key of ["promoted","live","promos","perks","features","rewards","announcement","ads"])assert.match(sections,new RegExp(' '+key+':\\{title:'));
+ assert.match(page,/home_sections_content/);
+ assert.match(page,/Section title/);
+ assert.match(page,/Card title/);
+ assert.match(app,/parseSectionContent/);
+ assert.match(api,/validSectionContent/);
+});
