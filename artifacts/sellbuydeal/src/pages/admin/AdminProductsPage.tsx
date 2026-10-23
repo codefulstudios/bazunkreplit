@@ -367,8 +367,31 @@ function ProductDrawer({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [section,setSection] = useState("details");
+  const [dirty,setDirty] = useState(false);
+  const tryClose=()=>{if(!dirty||window.confirm("Discard unsaved listing changes?"))onClose();};
+  async function uploadFiles(files:FileList|null){
+    if(!files?.length)return;
+    setUploading(true);setError("");
+    try{
+      const next:string[]=[];
+      for(const file of Array.from(files).slice(0,Math.max(0,12-form.images.filter(Boolean).length))){
+        if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3145728)throw Error("Choose JPG, PNG or WebP files under 3 MB");
+        const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Could not read image"));reader.readAsDataURL(file);});
+        const response=await authFetch("/api/admin/products/media-upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:file.name,dataUrl})});
+        const data=await response.json().catch(()=>null);
+        if(!response.ok)throw Error(data?.error||"Could not upload image");
+        next.push(data.url);
+      }
+      setForm(f=>({...f,images:[...f.images.filter(Boolean),...next].slice(0,12)}));
+      setDirty(true);
+      setSection("images");
+    }catch(e){setError(e instanceof Error?e.message:"Upload failed");}
+    finally{setUploading(false);}
+  }
 
-  const set = (key: keyof ProductForm, val: any) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key: keyof ProductForm, val: any) => {setDirty(true);setForm(f => ({ ...f, [key]: val }));};
 
   function addImage() { set("images", [...form.images, ""]); }
   function setImage(i: number, val: string) { const imgs = [...form.images]; imgs[i] = val; set("images", imgs); }
@@ -382,6 +405,7 @@ function ProductDrawer({
 
   async function save() {
     if (!form.title.trim()) { setError("Title is required"); return; }
+    if(uploading)return;
     setSaving(true);
     setError("");
     const body = {
@@ -398,34 +422,39 @@ function ProductDrawer({
     };
     const url = isEdit ? `/api/admin/products/${product!.id}` : "/api/admin/products";
     const res = await authFetch(url, { method: isEdit ? "PUT" : "POST", body: JSON.stringify(body) });
-    if (res.ok) { onSaved(); }
+    if (res.ok) { setDirty(false);onSaved(); }
     else { const d = await res.json(); setError(d.error ?? "Failed to save"); }
     setSaving(false);
   }
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white z-50 flex flex-col shadow-2xl">
+      <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
+      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed inset-x-3 inset-y-3 z-[100] mx-auto flex w-auto max-w-5xl flex-col rounded-xl border-2 border-slate-500 bg-white text-slate-950 shadow-2xl dark:bg-[#111e33] dark:text-white md:inset-x-8 md:inset-y-7">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-400 dark:border-slate-600">
           <div>
-            <h2 className="font-black text-gray-900">{isEdit ? "Edit Product" : "New Product"}</h2>
+            <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Product" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-gray-500" />
+          <button onClick={tryClose} className="w-9 h-9 rounded-lg bg-slate-700 text-white hover:bg-slate-600 flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
+        <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-400 px-4 py-3 dark:border-slate-600">
+          {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
+            <button key={t.id} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"border-white bg-blue-700 text-white":"border-slate-500 bg-slate-700 text-white hover:bg-slate-600"}`}>{t.label}</button>)}
+        </nav>
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 [&_input]:!text-slate-950 [&_textarea]:!text-slate-950 [&_select]:!text-slate-950 dark:[&_input]:!bg-white dark:[&_textarea]:!bg-white dark:[&_select]:!bg-white dark:[&_label_span]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
             </div>
           )}
 
+          <div id="product-editor-details" />
           {/* Core fields */}
           <div className="space-y-3">
             <label className="block">
@@ -569,6 +598,7 @@ function ProductDrawer({
             )}
           </div>
 
+          <div id="product-editor-images" />
           {/* Images */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -577,6 +607,11 @@ function ProductDrawer({
                 <Plus className="w-3 h-3" /> Add URL
               </button>
             </div>
+            <label className="mb-3 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-blue-500 bg-blue-50 p-4 text-center font-bold text-slate-950 dark:bg-slate-800 dark:text-white">
+              <Upload className="h-5 w-5"/>{uploading?"Uploading images…":"Upload images from computer"}
+              <span className="text-xs">JPG, PNG, WebP · 3 MB each · up to 12</span>
+              <input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={uploading} className="max-w-full text-xs" onChange={e=>{void uploadFiles(e.target.files);e.target.value="";}}/>
+            </label>
             {form.images.length === 0 && (
               <p className="text-xs text-gray-400 italic">No images — click "Add URL" to add image links</p>
             )}
@@ -596,6 +631,7 @@ function ProductDrawer({
             </div>
           </div>
 
+          <div id="product-editor-variants" />
           {/* Variants */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -636,7 +672,7 @@ function ProductDrawer({
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+          <button onClick={tryClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
           <button onClick={save} disabled={saving}
