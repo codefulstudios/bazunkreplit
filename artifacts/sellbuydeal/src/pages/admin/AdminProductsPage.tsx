@@ -431,11 +431,11 @@ function ProductDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
-      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed inset-x-3 inset-y-3 z-[100] mx-auto flex w-auto max-w-5xl flex-col rounded-xl border-2 border-slate-500 bg-white text-slate-950 shadow-2xl dark:bg-[#111e33] dark:text-white md:inset-x-8 md:inset-y-7">
+      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed inset-x-3 inset-y-3 z-[100] mx-auto flex w-auto max-w-5xl flex-col rounded-xl border-2 border-slate-500 bg-white text-slate-950 shadow-2xl dark:bg-[#111e33] dark:text-white dark:[&_h3]:!text-white dark:[&_p]:!text-slate-100 md:inset-x-8 md:inset-y-7">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-400 dark:border-slate-600">
           <div>
-            <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Product" : "New Product"}</h2>
+            <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Listing" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
           </div>
           <button onClick={tryClose} className="w-9 h-9 rounded-lg bg-slate-700 text-white hover:bg-slate-600 flex items-center justify-center transition-colors">
@@ -617,7 +617,7 @@ function ProductDrawer({
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Images</span>
-              <button onClick={addImage} className="flex items-center gap-1 text-xs font-semibold text-[#4A5CE8] hover:underline">
+              <button onClick={addImage} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-600">
                 <Plus className="w-3 h-3" /> Add URL
               </button>
             </div>
@@ -638,7 +638,7 @@ function ProductDrawer({
                     placeholder="https://example.com/image.jpg"
                     className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]" />
                   {i===0 ? <span className="rounded bg-emerald-700 px-2 py-1 text-xs font-black text-white">Cover</span> : <button type="button" onClick={()=>makeCover(i)} className="rounded bg-blue-700 px-2 py-1 text-xs font-black text-white">Set cover</button>}
-                  <button onClick={() => removeImage(i)} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors">
+                  <button onClick={() => removeImage(i)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-700 text-white hover:bg-red-600 transition-colors">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
