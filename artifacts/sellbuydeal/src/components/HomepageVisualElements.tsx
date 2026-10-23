@@ -6,14 +6,24 @@ export function HomepageVisualElements(){
  if(!elements.length)return null;
  return <section aria-label="Custom homepage content" className="bg-white text-slate-900 dark:bg-slate-950 dark:text-white py-6"><div className="mx-auto max-w-6xl px-4 grid gap-4">
  {elements.map(element=>{
-  const style={backgroundColor:element.background||undefined,color:element.color||undefined};
+  const opts=element.style||{};
+  const style:import("react").CSSProperties={
+   backgroundColor:element.background||undefined,color:element.color||undefined,
+   fontFamily:opts.fontFamily||undefined,fontSize:opts.fontSize?opts.fontSize+"px":undefined,
+   fontWeight:opts.fontWeight||undefined,borderWidth:opts.borderWidth??undefined,
+   borderStyle:opts.borderWidth?"solid":undefined,borderColor:opts.borderColor||undefined,
+   borderRadius:opts.borderRadius===undefined?undefined:opts.borderRadius+"px",
+   boxShadow:opts.shadow==="small"?"0 2px 6px #0002":opts.shadow==="medium"?"0 8px 22px #0003":opts.shadow==="large"?"0 16px 32px #0004":undefined,
+   padding:opts.padding===undefined?undefined:opts.padding+"px",width:opts.width?Math.min(opts.width,100)+"%":undefined,
+   textAlign:opts.align==="center"?"center":opts.align==="right"?"right":"left",marginBlock:opts.sectionSpacing===undefined?undefined:opts.sectionSpacing+"px",
+  };
   const marker={"data-theme-element":element.id,"data-theme-section":"visual-elements"};
   const content=element.type==="heading"?<h2 {...marker} className="text-3xl font-black">{element.text}</h2>:
    element.type==="paragraph"?<p {...marker} className="text-base leading-relaxed">{element.text}</p>:
    element.type==="image"?<div {...marker}>{media(element.image)?<img src={media(element.image)} alt={element.text||"Homepage image"} className="max-h-96 w-full object-contain"/>:<div className="border border-dashed rounded-xl p-6">Choose an image in Elements</div>}</div>:
    element.type==="button"?<a {...marker} href={element.url.startsWith("/")&&!element.url.startsWith("//")?element.url:"#"} className="inline-block rounded-lg bg-orange-600 px-5 py-3 font-bold text-white">{element.text}</a>:
-   element.type==="banner"?<div {...marker} className="rounded-xl p-8 font-bold text-xl bg-blue-900 text-white" style={style}>{element.text}</div>:
-   <div {...marker} className="rounded-xl border border-slate-400 p-6 shadow-sm" style={style}>{media(element.image)&&<img src={media(element.image)} alt="" className="mb-3 max-h-48 w-full object-cover rounded"/>}<h3 className="text-xl font-bold">{element.text}</h3>{element.url.startsWith("/")&&!element.url.startsWith("//")&&<a href={element.url} className="underline">Explore</a>}</div>;
-  return <div key={element.id} style={element.type==="heading"||element.type==="paragraph"?style:undefined}>{content}</div>;
+   element.type==="banner"?<div {...marker} className="rounded-xl p-8 font-bold text-xl bg-blue-900 text-white">{element.text}</div>:
+   <div {...marker} className="rounded-xl border border-slate-400 p-6 shadow-sm">{media(element.image)&&<img src={media(element.image)} alt="" className="mb-3 max-h-48 w-full object-cover rounded"/>}<h3 className="text-xl font-bold">{element.text}</h3>{element.url.startsWith("/")&&!element.url.startsWith("//")&&<a href={element.url} className="underline">Explore</a>}</div>;
+  return <div key={element.id} style={{...style,display:element.type==="card"?"grid":undefined,gridTemplateColumns:element.type==="card"&&opts.columns&&opts.columns>1?`repeat(${opts.columns},minmax(0,1fr))`:undefined,gap:opts.gap===undefined?undefined:opts.gap+"px"}}>{content}</div>;
  })}</div></section>;
 }
