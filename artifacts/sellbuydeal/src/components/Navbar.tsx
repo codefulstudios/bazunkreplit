@@ -127,9 +127,10 @@ export function Navbar() {
   const featureSettings = useRawSettings();
   const { resolvedTheme } = useTheme();
   const defaultLogo = resolvedTheme === "dark" ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png";
-  // The dark PNG has substantially more transparent padding than the light asset.
-  // Scale only the built-in dark logo, not logos uploaded through Design Center.
-  const enlargeDefaultDarkLogo = resolvedTheme === "dark" && !featureSettings.site_logo_url?.startsWith("/api/site-media/");
+  // The dark PNG is 1061×600 but its visible pixels occupy only the top ~257px.
+  // Fit the artwork inside a light-logo aspect ratio frame instead of transforming
+  // the image (which previously overlapped navigation and still looked too small).
+  const useDefaultDarkLogo = resolvedTheme === "dark" && !featureSettings.site_logo_url?.startsWith("/api/site-media/");
   const studioIcons=parseIconOverrides(featureSettings.icon_overrides);
   const HomeHeaderIcon=iconForPlacement(studioIcons,"header_home");
   const SearchHeaderIcon=iconForPlacement(studioIcons,"header_search");
@@ -318,7 +319,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className={`h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain ${enlargeDefaultDarkLogo ? "scale-[1.55] origin-left" : ""}`} />
+              {useDefaultDarkLogo ? <span data-theme-edit="site_logo_url" className="relative block h-7 aspect-[1142/289] shrink-0 overflow-hidden sm:h-9 md:h-12 xl:h-14"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />}
             </Link>
             <Link
               href="/"
@@ -715,7 +716,7 @@ export function Navbar() {
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center">
-                   <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} className={`h-7 w-auto max-w-[200px] object-contain ${enlargeDefaultDarkLogo ? "scale-[1.55] origin-left" : ""}`} />
+                   {useDefaultDarkLogo ? <span className="relative block h-7 aspect-[1142/289] max-w-[200px] shrink-0 overflow-hidden"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} className="h-7 w-auto max-w-[200px] object-contain" />}
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
