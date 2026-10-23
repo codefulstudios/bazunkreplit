@@ -53,6 +53,8 @@ export function AdminDesignCenterPage(){
  const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
  const [visualMode,setVisualMode]=useState<"content"|"sections"|"media">("content");
  const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
+ const [selectedCard,setSelectedCard]=useState<number|null>(null);
+ const [selectedField,setSelectedField]=useState<string>("");
  const undoStack=useRef<DesignFields[]>([]),redoStack=useRef<DesignFields[]>([]);
  const [activeBlock,setActiveBlock]=useState("hero");
  const [mediaTarget,setMediaTarget]=useState<MediaTarget>("site_logo_url");
@@ -159,10 +161,11 @@ export function AdminDesignCenterPage(){
   const listener=(event:MessageEvent)=>{
    if(event.origin!==window.location.origin||event.source!==frame.current?.contentWindow||event.data?.type!=="bazunk:theme-preview-select")return;
    const field=String(event.data.field||""),section=String(event.data.section||"");
+   const cardIndex=event.data.cardIndex,cardField=event.data.cardField;
    if(tab==="visual"){
     if(field==="site_logo_url"){setVisualMode("media");setMediaTarget("site_logo_url")}
-    else if(section){setActiveBlock(section);setVisualMode("content")}
-    else if(field){setActiveBlock("hero");setVisualMode("content")}
+    else if(section){setActiveBlock(section);setSelectedCard(cardIndex!==undefined&&cardIndex!==""&&Number.isInteger(Number(cardIndex))?Number(cardIndex):null);setSelectedField(String(cardField||""));setVisualMode("content")}
+    else if(field){setActiveBlock("hero");setSelectedField(field);setSelectedCard(null);setVisualMode("content")}
     return;
    }
    if(field==="site_logo_url"){changeTab("branding");setMediaTarget("site_logo_url")}
@@ -298,12 +301,13 @@ export function AdminDesignCenterPage(){
           </div>)}
          </div>}
         {visualMode==="content"&&<div className="bzve-fields">
-         <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>setActiveBlock(e.target.value)}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
+         <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>{setActiveBlock(e.target.value);setSelectedCard(null);setSelectedField("")}}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
+         {selectedField&&<p className="bzdc-help">Selected element: <strong>{selectedField}</strong></p>}
          {activeBlock==="hero"?<>{input("hero_title","Heading",undefined,160)}{input("hero_subtitle","Description",undefined,600,true)}{input("hero_cta_primary","Primary button",undefined,50)}{input("hero_cta_secondary","Secondary button",undefined,50)}{imageControl("hero_image_url","Hero image")}</>:
          activeBlock==="categories"?<>{input("categories_title","Heading",undefined,120)}{input("categories_subtitle","Description",undefined,240,true)}</>:
          activeBlock==="recent"?<p className="bzdc-help">Newest listings are populated from real marketplace data. They cannot be modified here.</p>:
          (OPTIONAL_HOME_SECTIONS.some(x=>x.id===activeBlock))?<>{(["title","description","button","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={sectionContent[activeBlock as keyof typeof sectionContent][field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateSection(activeBlock as keyof typeof sectionContent,field,e.target.value)}/></label>)}
-         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index}><strong>Card {index+1}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}</div>)}</>:null}
+         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index} style={selectedCard===index?{outline:"3px solid #2563eb",outlineOffset:2}:undefined}><strong>Card {index+1}{selectedCard===index?" · Selected in preview":""}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}</div>)}</>:null}
         </div>}
         {visualMode==="media"&&<div className="bzve-fields"><label className="bzdc-field"><span>Image placement</span><select value={mediaTarget} onChange={e=>setMediaTarget(e.target.value as MediaTarget)}>{imageTargets.map(x=><option value={x.key} key={x.key}>{x.title}</option>)}</select></label>
          <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>void upload(e.target.files?.[0]||null)} ref={tab==="visual"?file:undefined}/><button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
