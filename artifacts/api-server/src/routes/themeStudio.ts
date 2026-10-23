@@ -63,7 +63,7 @@ const defaults:ThemeFields={
 };
 const lengths:Record<string,number>={
  site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,
- seo_og_image_url:100,home_sections_layout:600,home_sections_content:7500,
+ seo_og_image_url:100,home_sections_layout:600,home_sections_content:12000,
  hero_title:160,hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,
  footer_about:800,footer_copyright:160,
  footer_facebook:220,footer_twitter:220,footer_instagram:220,footer_youtube:220,
@@ -80,9 +80,10 @@ function validSectionContent(raw:string){
   const obj=JSON.parse(raw);
   if(!obj||typeof obj!=="object"||Array.isArray(obj))return false;
   if(Object.keys(obj).sort().join(",")!==HOME_LAYOUT_DEFAULT.map(x=>x.id).sort().join(","))return false;
-  return Object.values(obj).every((value:any)=>{
+  return Object.entries(obj).every(([id,value]:[string,any])=>{
    if(!value||typeof value!=="object"||Array.isArray(value))return false;
-   return ["title","description","button","url"].every(key=>{
+   const cardsValid=value.cards===undefined||(["promos","perks"].includes(id)&&Array.isArray(value.cards)&&value.cards.length===(id==="promos"?4:5)&&value.cards.every((card:any)=>card&&["title","description","url"].every(key=>typeof card[key]==="string"&&card[key].length<=500&&!/[<>]/.test(card[key])&&(key!=="url"||card[key]===""||(card[key].startsWith("/")&&!card[key].startsWith("//")&&!card[key].includes(":")))));
+   return cardsValid&&["title","description","button","url"].every(key=>{
     const str=value[key];
     return typeof str==="string"&&str.length<=(key==="description"?500:key==="url"?200:140)
       && !/[<>]/.test(str) && !Array.from(str).some(char=>char.charCodeAt(0)<32)
