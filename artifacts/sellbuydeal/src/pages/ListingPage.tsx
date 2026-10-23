@@ -54,7 +54,7 @@ const CONDITION_DESC: Record<string, string> = {
 
 function getProductImages(image: string, gallery?: string[]) {
   return [...new Set([image, ...(gallery ?? [])].filter((src): src is string =>
-    typeof src === "string" && src.trim().length > 0))].slice(0, 10);
+    typeof src === "string" && src.trim().length > 0))].slice(0, 12);
 }
 
 function normaliseCondition(raw: unknown): string {
