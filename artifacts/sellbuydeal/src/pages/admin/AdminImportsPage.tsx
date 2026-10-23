@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
 import { RapidApiPanel } from "./RapidApiPanel";
+import { CraigslistAdminImporter } from "./CraigslistAdminImporter";
 import { ImportModal } from "@/components/ImporterSection";
 import { useAdmin } from "@/context/AdminContext";
 import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
@@ -609,6 +610,7 @@ export function AdminImportsPage() {
       </div>
 
       <RapidApiPanel />
+      <CraigslistAdminImporter />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit flex-wrap">
