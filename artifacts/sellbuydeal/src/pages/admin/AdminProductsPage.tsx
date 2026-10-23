@@ -431,7 +431,36 @@ function ProductDrawer({
   return (
     <>
       <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
-      <div role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
+      <style>{`
+        #bazunk-listing-editor button, #bazunk-listing-editor a.editor-action {
+          background-color: #334155 !important;
+          color: #ffffff !important;
+          border: 1px solid #94a3b8 !important;
+          opacity: 1 !important;
+          font-weight: 700 !important;
+          text-shadow: none !important;
+        }
+        #bazunk-listing-editor button:hover:not(:disabled), #bazunk-listing-editor a.editor-action:hover {
+          background-color: #475569 !important;
+          color: #ffffff !important;
+        }
+        #bazunk-listing-editor button:disabled { opacity: .55 !important; cursor: not-allowed; }
+        #bazunk-listing-editor button[data-editor-tone="primary"],
+        #bazunk-listing-editor button[data-editor-tab="selected"] {
+          background-color: #1d4ed8 !important; color: #fff !important; border-color: #93c5fd !important;
+        }
+        #bazunk-listing-editor button[data-editor-tone="danger"] {
+          background-color: #b91c1c !important; color: #fff !important; border-color: #fca5a5 !important;
+        }
+        #bazunk-listing-editor button[data-editor-tone="warning"] {
+          background-color: #92400e !important; color: #fff !important; border-color: #fcd34d !important;
+        }
+        #bazunk-listing-editor button:focus-visible, #bazunk-listing-editor a:focus-visible {
+          outline: 3px solid #fbbf24 !important; outline-offset: 2px;
+        }
+        #bazunk-listing-editor button svg {color:#fff !important;}
+      `}</style>
+      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
           <div>
@@ -445,7 +474,7 @@ function ProductDrawer({
 
         <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-600 bg-slate-100 px-4 py-3 dark:bg-[#172943]">
           {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
-            <button key={t.id} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
+            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
         </nav>
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
@@ -457,9 +486,9 @@ function ProductDrawer({
 
           <div id="product-editor-details" />
           {isEdit&&<div className="flex flex-wrap gap-2 rounded-xl border border-slate-400 bg-white p-3 dark:border-slate-600 dark:!bg-[#1b304d]">
-            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-500 !bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:!bg-[#475569]">View on Bazunk ↗</a>
-            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} className="rounded-lg border border-amber-500 !bg-[#92400e] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b45309]">Hide listing</button>
-            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} className="rounded-lg border border-red-500 !bg-[#991b1b] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b91c1c]">Delete listing</button>
+            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="editor-action rounded-lg border border-slate-500 !bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:!bg-[#475569]">View on Bazunk ↗</a>
+            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} data-editor-tone="warning" className="rounded-lg border border-amber-500 !bg-[#92400e] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b45309]">Hide listing</button>
+            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} data-editor-tone="danger" className="rounded-lg border border-red-500 !bg-[#991b1b] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b91c1c]">Delete listing</button>
           </div>}
           {isEdit&&<div className="rounded-xl border border-slate-400 bg-white p-3 text-slate-950 dark:border-slate-600 dark:!bg-[#1b304d] dark:text-white">
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
@@ -691,7 +720,7 @@ function ProductDrawer({
             Cancel
           </button>
           <button onClick={save} disabled={saving||uploading}
-            className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+            data-editor-tone="primary" className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
