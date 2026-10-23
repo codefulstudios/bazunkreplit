@@ -115,7 +115,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{fontFamily:componentStyle.font+", ui-sans-serif, system-ui, sans-serif","--bz-admin-sidebar-width":`${componentStyle.sidebar}px`,"--bz-admin-radius":`${componentStyle.radius}px`,"--bz-admin-font-size":`${componentStyle.body}px`,"--bz-admin-heading-size":`${componentStyle.heading}px`,"--bz-admin-density":componentStyle.density,"--bz-admin-card-shadow":componentStyle.shadow==="none"?"none":componentStyle.shadow==="medium"?"0 8px 24px rgb(15 23 42 / 12%)":"0 2px 10px rgb(15 23 42 / 4%)"} as React.CSSProperties} data-admin-button={componentStyle.button} data-admin-header={componentStyle.header} data-admin-sidebar={componentStyle.sidebarStyle} data-admin-sticky={componentStyle.stickyHeader} data-sidebar-collapsed={sidebarCollapsed} className="bazunk-admin bazunk-admin-wordpress min-h-screen bg-[#f5f8fd] text-[#0f172a] dark:bg-[#0b1427] dark:text-slate-100 lg:flex">
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 lg:hidden">
-        <img src="/bazunk-logo.png" alt="Bazunk admin" className="h-8 w-auto object-contain" />
+        <img src={isDark ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png"} alt="Bazunk admin" className="h-8 w-auto object-contain" />
         <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open admin menu" aria-expanded={menuOpen} className="rounded-lg p-2 text-gray-900 hover:bg-gray-100"><Menu className="h-6 w-6" /></button>
       </header>
       {menuOpen && <button type="button" aria-label="Close admin menu" className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setMenuOpen(false)} />}
@@ -125,7 +125,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="admin-sidebar-brand wp-admin-brand px-4 pt-5 pb-4 border-b border-slate-200 dark:border-white/10 flex flex-col gap-2 relative">
           <button type="button" onClick={() => setMenuOpen(false)} aria-label="Close admin menu" className="absolute right-3 top-4 rounded-lg p-2 text-slate-800 dark:text-white lg:hidden"><X className="h-5 w-5" /></button>
-          <img src="/bazunk-logo.png" alt="Bazunk" className="h-9 w-auto object-contain self-start rounded bg-white px-2 py-0.5" />
+          <img src={isDark ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png"} alt="Bazunk" className="h-9 w-auto object-contain self-start" />
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
             <span className="font-bold text-blue-700 dark:text-white text-xs tracking-wide uppercase">Admin Panel</span>
