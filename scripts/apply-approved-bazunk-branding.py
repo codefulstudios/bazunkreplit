@@ -25,7 +25,7 @@ replacements = {
     "components/Footer.tsx": [('"/bazunk-logo-header.png"', '"/bazunk-brand-dark.png"')],
     "pages/admin/AdminLayout.tsx": [('src="/bazunk-logo.png"', 'src={isDark ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png"}')],
     "pages/LoginPage.tsx": [('src="/bazunk-logo.png"', 'src="/bazunk-brand-dark.png"')],
-    "App.tsx": [('\${window.location.origin}\${basePath}/bazunk-logo.png', '\${window.location.origin}\${basePath}/bazunk-brand-orange.png')],
+    "App.tsx": [('${window.location.origin}${basePath}/bazunk-logo.png', '${window.location.origin}${basePath}/bazunk-brand-orange.png')],
     "components/ShareCardModal.tsx": [('"/bazunk-logo-header.png"', '"/bazunk-brand-orange.png"')],
 }
 for name, changes in replacements.items():
