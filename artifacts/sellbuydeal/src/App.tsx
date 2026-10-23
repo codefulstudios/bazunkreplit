@@ -300,7 +300,7 @@ function SignUpPage() {
   );
 }
 
-// ─── Homepage ─────────────────────────────────────────────────────────────────
+// ─── Homepage: published Design Center sections ─────────────────────────────
 
 function Home() {
   const settings=useRawSettings();
