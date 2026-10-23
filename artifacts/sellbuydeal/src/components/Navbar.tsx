@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -124,6 +125,8 @@ export function Navbar() {
   const { t } = useLanguage();
   const changeCountry = (code: string) => { setCountry(code); };
   const featureSettings = useRawSettings();
+  const { resolvedTheme } = useTheme();
+  const defaultLogo = resolvedTheme === "dark" ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png";
   const studioIcons=parseIconOverrides(featureSettings.icon_overrides);
   const HomeHeaderIcon=iconForPlacement(studioIcons,"header_home");
   const SearchHeaderIcon=iconForPlacement(studioIcons,"header_search");
@@ -312,7 +315,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url : "/bazunk-brand-orange.png"} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
+              <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
             </Link>
             <Link
               href="/"
@@ -709,7 +712,7 @@ export function Navbar() {
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center">
-                   <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/")?API_BASE+featureSettings.site_logo_url : "/bazunk-brand-orange.png"} alt={featureSettings.site_name||"Bazunk"} className="h-7 w-auto max-w-[200px] object-contain" />
+                   <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} className="h-7 w-auto max-w-[200px] object-contain" />
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
