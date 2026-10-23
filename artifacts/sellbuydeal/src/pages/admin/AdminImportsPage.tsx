@@ -428,9 +428,9 @@ export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "e
     setEbayImportMsg(null);
     try {
       const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
-      const d = await r.json() as { products?: EbaySearchResult[]; error?: string };
+      const d = await r.json() as { products?: EbaySearchResult[]; error?: string; notice?:string; diagnostics?:{providerCount:number;locationAndCurrencyCount:number;returnedCount:number} };
       if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); setEbayResults([]); }
-      else { setEbayResults(d.products ?? []); setEbayHasSearched(true); }
+      else { setEbayResults(d.products ?? []); setEbayHasSearched(true); if(d.notice)setEbaySearchErr(`${d.notice} Provider returned ${d.diagnostics?.providerCount??0}; eligible after location/currency: ${d.diagnostics?.locationAndCurrencyCount??0}.`); }
     } catch {
       setEbaySearchErr("Network error — check your connection");
       setEbayResults([]);
