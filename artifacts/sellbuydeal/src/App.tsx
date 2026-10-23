@@ -204,7 +204,7 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/bazunk-logo.png`,
+    logoImageUrl: `${window.location.origin}${basePath}/bazunk-brand-orange.png`,
   },
   variables: {
     colorPrimary: "#F26B21",
