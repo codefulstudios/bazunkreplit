@@ -10,7 +10,7 @@ export const adminThemeStudioRouter = Router();
 
 const keys = [
  "site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url",
- "home_sections_layout","hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary",
+ "home_sections_layout","home_sections_content","hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary",
  "footer_about","footer_copyright","footer_facebook","footer_twitter","footer_instagram","footer_youtube",
  "announcement_enabled","announcement_text","announcement_color",
  "categories_title","categories_subtitle","features_title","features_subtitle",
@@ -46,6 +46,7 @@ const defaults:ThemeFields={
  site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",
  site_logo_url:"",site_favicon_url:"",hero_image_url:"",seo_og_image_url:"",
  home_sections_layout:JSON.stringify(HOME_LAYOUT_DEFAULT),
+ home_sections_content:JSON.stringify(Object.fromEntries(HOME_LAYOUT_DEFAULT.map(x=>[x.id,{title:x.id,description:"",button:"",url:""}]))),
  hero_title:"Buy, Make an Offer & List for Free!",
  hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
  hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
@@ -62,7 +63,7 @@ const defaults:ThemeFields={
 };
 const lengths:Record<string,number>={
  site_name:90,site_tagline:180,site_logo_url:100,site_favicon_url:100,hero_image_url:100,
- seo_og_image_url:100,home_sections_layout:600,
+ seo_og_image_url:100,home_sections_layout:600,home_sections_content:7500,
  hero_title:160,hero_subtitle:600,hero_cta_primary:50,hero_cta_secondary:50,
  footer_about:800,footer_copyright:160,
  footer_facebook:220,footer_twitter:220,footer_instagram:220,footer_youtube:220,
@@ -74,6 +75,7 @@ const assetPath=/^\/api\/site-media\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[8
 const assetId=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const mediaKeys=["site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url"] as const;
 const socialKeys=["footer_facebook","footer_twitter","footer_instagram","footer_youtube"] as const;
+function validSectionContent(raw:string){try{const obj=JSON.parse(raw);return obj&&typeof obj==="object"&&!Array.isArray(obj)&&Object.keys(obj).sort().join(",")===HOME_LAYOUT_DEFAULT.map(x=>x.id).sort().join(",")&&Object.values(obj).every((v:any)=>v&&typeof v==="object"&&["title","description","button","url"].every(k=>typeof v[k]==="string"&&v[k].length<= (k==="description"?500:k==="url"?200:140)&&!/[<>\\u0000-\\u001f]/.test(v[k]))&&(!v.url||/^\\/(?!\\/)[a-z0-9/?=&_#%-]*$/i.test(v.url)));}catch{return false}}
 function validTheme(raw:unknown):raw is ThemeFields{
  if(!raw||typeof raw!=="object"||Array.isArray(raw))return false;
  const v=raw as Record<string,unknown>;
@@ -86,6 +88,7 @@ function validTheme(raw:unknown):raw is ThemeFields{
    (key!=="announcement_enabled"||str==="true"||str==="false")&&
    (key!=="announcement_color"||/^#[0-9a-fA-F]{6}$/.test(str))&&
    (key!=="home_sections_layout"||validHomeLayout(str))&&
+   (key!=="home_sections_content"||validSectionContent(str))&&
    (key!=="icon_overrides"||validIconOverrides(str));
  });
 }
