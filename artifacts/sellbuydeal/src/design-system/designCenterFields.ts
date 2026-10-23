@@ -37,7 +37,7 @@ export function iconForPlacement(config:IconOverrides,placement:IconPlacement):L
 export const THEME_CENTER_DEFAULTS={
  site_name:"Bazunk",site_tagline:"Buy and sell anything, locally.",
  site_logo_url:"",site_favicon_url:"",hero_image_url:"",seo_og_image_url:"",
- home_sections_layout:HOME_SECTIONS_DEFAULT_JSON,home_sections_content:SECTION_CONTENT_DEFAULT_JSON,
+ visual_elements_v1:"[]",home_sections_layout:HOME_SECTIONS_DEFAULT_JSON,home_sections_content:SECTION_CONTENT_DEFAULT_JSON,
  hero_title:"Buy, Make an Offer & List for Free!",
  hero_subtitle:"The smarter way to buy and sell — fixed prices, open offers, and free listings.",
  hero_cta_primary:"Start Shopping",hero_cta_secondary:"Become a Seller",
