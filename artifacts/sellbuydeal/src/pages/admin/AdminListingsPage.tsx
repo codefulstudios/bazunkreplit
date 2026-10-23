@@ -224,14 +224,14 @@ export function AdminListingsPage() {
                 <th className="px-3 py-2"><input type="checkbox" aria-label="Select all listings on current page" className="h-4 w-4"
                   checked={visibleIds.length>0&&visibleIds.every(id=>selectedIds.includes(id))}
                   onChange={e=>setSelectedIds(e.target.checked?visibleIds:[])}/></th>
-                {["ID", "Title", "Category", "Price", "Seller", "Status", "Source listing", "Actions"].map(h => (
+                {["ID", "Title", "Category", "Price", "Seller", "Status", "Source listing"].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={9} className="text-center py-16">
+                <tr><td colSpan={8} className="text-center py-16">
                   <Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-300" />
                 </td></tr>
               )}
@@ -265,10 +265,19 @@ export function AdminListingsPage() {
                     </td>
 
                     {/* Title */}
-                    <td className="px-4 py-3 max-w-56">
-                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-gray-800 text-xs leading-snug">{l.title}</p></div>
+                    <td className="px-4 py-3 min-w-64 w-[36%] align-top">
+                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
                       <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{l.condition}</p>
                       <div className="mt-2 flex flex-wrap gap-2 items-center"><AdminListingPromotion listingId={l.id} title={l.title} status={l.status} /><button onClick={() => { setImageEditing(l.id); setImageDraft(l.image ?? ""); setImageError(""); }} className="text-[10px] font-bold px-2 py-1 rounded-md border border-gray-200 hover:bg-gray-50">{l.image ? "Change image" : "Add image"}</button></div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label={`Actions for ${l.title}`}>
+                        <button type="button" onClick={()=>beginCategoryEdit(l)} className="rounded-md border border-blue-400 bg-blue-50 px-2 py-1 text-xs font-bold text-blue-800 dark:bg-slate-800 dark:text-blue-200">Category</button>
+                        
+                        <button type="button" onClick={()=>setEditingId(l.id)} className="rounded border border-blue-500 px-2 py-1 text-xs font-bold text-blue-700 dark:text-blue-300"><Pencil className="inline h-3 w-3"/> Edit</button>
+                        <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="rounded border border-amber-500 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 disabled:opacity-40"><EyeOff className="inline h-3 w-3"/> Hide</button>
+                        <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="rounded border border-red-500 px-2 py-1 text-xs font-bold text-red-700 dark:text-red-300 disabled:opacity-40"><Trash2 className="inline h-3 w-3"/> Delete</button>
+                      
+                      </div>
+                      {categoryEditing===l.id && <div className="mt-2 rounded-lg border border-slate-400 bg-white p-2 dark:bg-slate-900">{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
                       {imageEditing === l.id && <div className="mt-2 rounded-lg border border-gray-200 p-2 bg-gray-50"><input autoFocus value={imageDraft} onChange={e=>setImageDraft(e.target.value)} placeholder="https://… image URL" className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800" /><div className="mt-2 flex gap-2"><button disabled={imageSaving===l.id} onClick={()=>void saveImage(l)} className="rounded-md bg-[#4A5CE8] text-white px-2 py-1 text-[10px] font-bold disabled:opacity-50">{imageSaving===l.id?"Saving…":"Save image"}</button><button onClick={()=>{setImageEditing(null);setImageDraft("");setImageError("");}} className="rounded-md border px-2 py-1 text-[10px] font-bold">Cancel</button>{l.image&&<button disabled={imageSaving===l.id} onClick={()=>void saveImage(l,"")} className="text-[10px] text-red-600 ml-auto">Remove</button>}</div>{imageError&&<p className="text-[10px] text-red-600 mt-1">{imageError}</p>}</div>}
                     </td>
 
@@ -276,8 +285,6 @@ export function AdminListingsPage() {
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
                       <span className="capitalize">{l.category.replace(/-/g, " ")}</span>
                       {l.subcategory && <span className="text-slate-600 dark:text-slate-200"> · {l.subcategory.replace(/-/g, " ")}</span>}
-                      <button type="button" onClick={()=>beginCategoryEdit(l)} className="ml-2 rounded-md border border-blue-400 px-2 py-1 font-bold text-blue-700 dark:text-blue-300">Edit category</button>
-                      {categoryEditing===l.id && <div className="mt-2 min-w-56 rounded-lg border border-slate-400 bg-white p-2 dark:bg-slate-900">{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
                     </td>
 
                     {/* Price */}
@@ -316,13 +323,7 @@ export function AdminListingsPage() {
                         <span className="text-[10px] text-gray-300">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-3">
-                      <div className="flex flex-wrap gap-1.5 min-w-32">
-                        <button type="button" onClick={()=>setEditingId(l.id)} className="rounded border border-blue-500 px-2 py-1 text-xs font-bold text-blue-700 dark:text-blue-300"><Pencil className="inline h-3 w-3"/> Edit</button>
-                        <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="rounded border border-amber-500 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300 disabled:opacity-40"><EyeOff className="inline h-3 w-3"/> Hide</button>
-                        <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="rounded border border-red-500 px-2 py-1 text-xs font-bold text-red-700 dark:text-red-300 disabled:opacity-40"><Trash2 className="inline h-3 w-3"/> Delete</button>
-                      </div>
-                    </td>
+
                   </tr>
                 );
               })}
