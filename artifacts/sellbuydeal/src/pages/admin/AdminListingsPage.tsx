@@ -115,8 +115,26 @@ export function AdminListingsPage() {
       ]);
       const d=await a.json();
       if(!a.ok)throw Error(d.error||"Category check failed");
-      setReviews(d.results||[]);
-      if(b.ok){const t=await b.json();setTaxonomy(t.categories||[]);}
+      if(!b.ok)throw Error("Third-level taxonomy could not load (HTTP "+b.status+"). Review disabled rather than showing empty choices.");
+      const t=await b.json();
+      const entries=Array.isArray(t.categories)?t.categories:Array.isArray(t)?t:[];
+      if(!entries.length)throw Error("No third-level taxonomy entries returned. Category review requires taxonomy data.");
+      setTaxonomy(entries);
+      const suggestion=(title:string, options:typeof entries)=>{
+        const normalized=(v:string)=>v.toLowerCase().replace(/[^a-z0-9]+/g," ");
+        const words=new Set(normalized(title).split(" ").filter(Boolean));
+        const ranked=options.map((o:{slug:string;name:string})=>{
+          const tokens=normalized(o.name).split(" ").filter(k=>k.length>3&&!["parts","other","accessories","products"].includes(k));
+          const matched=tokens.filter(k=>words.has(k)||[...words].some(w=>w.startsWith(k)||k.startsWith(w))).length;
+          return {o,matched,score:tokens.length?matched/tokens.length:0};
+        }).filter((o:{matched:number})=>o.matched>0).sort((a:{score:number;matched:number},b:{score:number;matched:number})=>b.score-a.score||b.matched-a.matched);
+        return ranked[0]?.o?.slug||"";
+      };
+      setReviews((d.results||[]).map((x:Review)=>{
+        const choices=entries.filter((v:{category:string;subcategory:string})=>v.category===x.suggestedCategory&&v.subcategory===x.suggestedSubcategory);
+        const suggestedThird=choices.some((v:{slug:string})=>v.slug===x.suggestedThird)?x.suggestedThird:suggestion(x.title,choices);
+        return {...x,suggestedThird};
+      }));
     }catch(e){setReviewError(e instanceof Error?e.message:String(e));}
     finally{setReviewLoading(false)}
   }
@@ -230,12 +248,12 @@ export function AdminListingsPage() {
       </div>
       {view!=="listings" ? <AdminListingCatalogueTools section={view}/> : <>
       {reviewOpen&&<div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-3"><section role="dialog" aria-modal="true" aria-label="Review listing categories" className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border-2 border-slate-500 !bg-[#14243c] !text-white shadow-2xl">
-        <header className="flex items-center justify-between gap-3 border-b border-slate-500 p-4"><div><h2 className="text-xl font-black text-white">Check listing categories</h2><p className="text-xs text-slate-200">Suggestions are title-based and must be approved. Change any category before saving.</p></div><button className="rounded-lg !bg-slate-700 px-4 py-2 font-black !text-white" onClick={()=>setReviewOpen(false)}>Close</button></header>
+        <header className="flex items-center justify-between gap-3 border-b border-slate-500 p-4"><div><h2 className="text-xl font-black text-white">Check listing categories</h2><p className="text-xs text-slate-200">Suggestions are title-based and must be approved. Change any category before saving.</p></div><button className="rounded-lg border-2 border-slate-400 !bg-[#273b56] px-4 py-2 font-black !text-white" onClick={()=>setReviewOpen(false)}>Close</button></header>
         {reviewError&&<p role="alert" className="m-3 rounded-lg border border-red-400 !bg-red-900 p-3 font-bold text-white">{reviewError}</p>}
         <div className="flex-1 space-y-3 overflow-y-auto p-4">{reviewLoading?<p className="text-white">Checking categories…</p>:reviews.map(x=>{const choices=ACTIVE_CATEGORIES.find(c=>c.slug===x.suggestedCategory)?.subcategories||[];const thirdOptions=taxonomy.filter(t=>t.category===x.suggestedCategory&&t.subcategory===x.suggestedSubcategory);const chosen=thirdOptions.find(t=>t.slug===x.suggestedThird);return <div key={x.id} className="rounded-xl border border-slate-500 !bg-[#213651] p-4 text-white">
-          <div className="mb-3 flex flex-wrap items-start justify-between gap-2"><div className="max-w-2xl"><strong className="text-sm text-white">{x.title}</strong><p className="mt-1 text-xs text-slate-200">Current: {x.category} / {x.subcategory||"none"} / {x.currentThird||"none"}</p></div><span className="rounded bg-slate-700 px-2 py-1 text-xs font-bold text-white">Suggestion confidence: {x.confidence}</span></div>
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-2"><div className="max-w-2xl"><strong className="text-sm text-white">{x.title}</strong><p className="mt-1 text-xs text-slate-200">Current: {x.category} / {x.subcategory||"none"} / {x.currentThird||"none"}</p></div><span className="rounded border border-sky-300 !bg-[#194b83] px-2 py-1 text-xs font-black !text-white">Suggestion confidence: {x.confidence}</span></div>
           <div className="grid gap-2 md:grid-cols-3">{[1].map(()=> <Fragment key="fields"><label className="text-xs font-bold text-white">Main category<select className="mt-1 w-full rounded border-2 border-slate-400 !bg-white p-2 !text-slate-950" value={x.suggestedCategory} onChange={e=>{const cat=ACTIVE_CATEGORIES.find(c=>c.slug===e.target.value);patchReview(x.id,{suggestedCategory:e.target.value,suggestedSubcategory:cat?.subcategories[0]?.slug||"",suggestedThird:""});}}>{ACTIVE_CATEGORIES.map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}</select></label><label className="text-xs font-bold text-white">Subcategory<select className="mt-1 w-full rounded border-2 border-slate-400 !bg-white p-2 !text-slate-950" value={x.suggestedSubcategory} onChange={e=>patchReview(x.id,{suggestedSubcategory:e.target.value,suggestedThird:""})}>{choices.map(c=><option key={c.slug} value={c.slug}>{c.name}</option>)}</select></label><label className="text-xs font-bold text-white">Third-level category<select className="mt-1 w-full rounded border-2 border-slate-400 !bg-white p-2 !text-slate-950" value={x.suggestedThird} onChange={e=>patchReview(x.id,{suggestedThird:e.target.value})}><option value="">None / review later</option>{thirdOptions.map(t=><option key={t.slug} value={t.slug}>{t.name}{t.visible?"":" (hidden)"}</option>)}</select></label></Fragment>)}</div>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">{chosen&&!chosen.visible?<label className="flex items-center gap-2 text-xs font-bold text-white"><input type="checkbox" checked={enableThirdIds.includes(x.id)} onChange={e=>setEnableThirdIds(prev=>e.target.checked?[...prev,x.id]:prev.filter(id=>id!==x.id))}/> Enable this hidden third-level category on the site</label>:<span className="text-xs text-slate-200">{chosen?"Third-level already enabled":"No third-level selected"}</span>}<button disabled={reviewBusy===x.id} onClick={()=>void approveReview(x)} className="rounded-lg border-2 border-blue-300 !bg-blue-700 px-4 py-2 text-sm font-black !text-white hover:!bg-blue-600">{reviewBusy===x.id?"Saving…":"Approve & Move Listing"}</button></div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">{chosen&&!chosen.visible?<label className="flex items-center gap-2 text-xs font-bold text-white"><input type="checkbox" checked={enableThirdIds.includes(x.id)} onChange={e=>setEnableThirdIds(prev=>e.target.checked?[...prev,x.id]:prev.filter(id=>id!==x.id))}/> Enable this hidden third-level category on the site</label>:<span className="text-xs text-slate-200">{chosen?"Third-level already enabled":"No third-level selected"}</span>}<button disabled={reviewBusy===x.id} onClick={()=>void approveReview(x)} className="rounded-lg border-2 border-blue-200 !bg-[#114ab1] px-4 py-2 text-sm font-black !text-white hover:!bg-[#1d63c7]">{reviewBusy===x.id?"Saving…":"Approve & Move Listing"}</button></div>
         </div>})}{!reviewLoading&&!reviews.length&&<p className="text-white">No listings left to review.</p>}</div></section></div>}
       {actionSuccess&&<p role="status" className="my-2 rounded-lg border border-emerald-500 p-3 font-bold text-emerald-600 dark:text-emerald-300">{actionSuccess}</p>}
       {actionError&&<p role="alert" className="my-2 rounded-lg border border-red-500 p-3 font-bold text-red-500">{actionError}</p>}
