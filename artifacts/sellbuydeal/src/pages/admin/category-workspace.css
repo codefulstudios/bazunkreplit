@@ -60,3 +60,8 @@
 .bazunk-admin-wordpress .bz-taxonomy-message{border:1px solid #a3b5cb;background:#274260;color:#fff;padding:10px;border-radius:8px}
 @media(max-width:1100px){.bazunk-admin-wordpress .bz-taxonomy-subrow{grid-template-columns:30px 1fr 1fr;}.bazunk-admin-wordpress .bz-taxonomy-stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.bazunk-admin-wordpress .bz-taxonomy{padding:12px}.bazunk-admin-wordpress .bz-taxonomy-columns,.bazunk-admin-wordpress .bz-taxonomy-form{grid-template-columns:1fr}.bazunk-admin-wordpress .bz-taxonomy-tree{max-height:330px}.bazunk-admin-wordpress .bz-taxonomy-subrow{grid-template-columns:30px 1fr 1fr}.bazunk-admin-wordpress .bz-taxonomy-suggestions>div{flex-wrap:wrap}}
+
+.bazunk-admin-wordpress .bz-taxonomy .bz-taxonomy-third{grid-template-columns:minmax(0,1fr) 90px 70px 76px}
+.bazunk-admin-wordpress .bz-taxonomy button.bz-taxonomy-delete{background:#991b1b!important;border:2px solid #fca5a5!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy button.bz-taxonomy-delete:hover{background:#b91c1c!important}
+@media(max-width:760px){.bazunk-admin-wordpress .bz-taxonomy .bz-taxonomy-third{grid-template-columns:minmax(0,1fr) 90px 70px 76px;overflow-x:auto}}
