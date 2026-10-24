@@ -682,6 +682,16 @@ const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
  "adult-media":["Calendars","Collectible Print Media"],
 };
 const EXPANDED_THIRD_LEVEL: Record<string,string[]> = {
+ "laptops": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"],
+ "desktops": ["Desktop PCs","All-in-One PCs","Gaming Desktops","Mini PCs","Barebone PCs"],
+ "components": ["Processors (CPUs)","Graphics Cards (GPUs)","Motherboards","Power Supplies","PC Cases","Cooling & Fans"],
+ "monitors": ["Gaming Monitors","4K Monitors","Ultrawide Monitors","Portable Monitors","Monitor Arms"],
+ "storage-memory": ["SSD Drives","Hard Drives","External Storage","USB Flash Drives","RAM Memory","Memory Cards"],
+ "peripherals": ["Keyboards","Mice & Trackballs","Webcams","Headsets","Speakers","Docking Stations"],
+ "networking": ["Routers","Mesh Wi-Fi","Network Switches","Wi-Fi Adapters","Network Cables","Modems"],
+ "printers-scanners": ["Inkjet Printers","Laser Printers","3D Printers","Document Scanners","Printer Ink & Toner"],
+ "computer-accessories": ["Laptop Chargers","Laptop Bags & Sleeves","USB Hubs","Cables & Adapters","Stands & Cooling Pads","Screen Protectors"],
+ "servers-workstations": ["Rack Servers","Tower Servers","Workstations","Network Attached Storage (NAS)","Server Components"],
  "painting": [
   "Acrylic Paints",
   "Watercolours",
