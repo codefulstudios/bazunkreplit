@@ -675,131 +675,728 @@ const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
  "adult-media":["Calendars","Collectible Print Media"],
 };
 const EXPANDED_THIRD_LEVEL: Record<string,string[]> = {
- "painting": "Acrylic Paints|Watercolours|Oil Paints|Brushes|Canvases|Drawing Sets",
- "knitting": "Yarn|Knitting Needles|Crochet Hooks|Patterns|Kits",
- "sewing": "Sewing Machines|Fabric|Thread|Quilting Kits|Sewing Accessories",
- "scrapbooking": "Albums|Stickers|Paper|Stamping|Cutting Tools",
- "printmaking": "Printing Ink|Blocks|Screens|Brayers|Printing Tools",
- "car-electronics": "Dash Cameras|Car Audio|Satellite Navigation|Parking Sensors|Car Chargers",
- "motorcycles": "Motorcycles|Scooters|Protective Gear|Motorcycle Parts",
- "auto-tools": "Diagnostic Tools|Jacks|Mechanics Tool Sets|Tyre Tools",
- "car-care": "Cleaning Products|Polishing Products|Interior Care|Pressure Washers",
- "baby-clothing": "Bodysuits|Baby Sleepwear|Baby Outfits|Baby Shoes|Baby Accessories",
- "feeding": "Bottles|Sterilisers|High Chairs|Breastfeeding Supplies|Feeding Accessories",
- "nursery": "Cots|Cribs|Changing Tables|Nursery Storage|Mattresses",
- "strollers": "Pushchairs|Travel Systems|Prams|Baby Carriers|Travel Accessories",
- "car-seats": "Infant Car Seats|Toddler Car Seats|Booster Seats|Car Seat Accessories",
- "baby-toys": "Soft Toys|Rattles|Activity Mats|Developmental Toys",
- "haircare": "Shampoos|Conditioners|Styling Products|Hair Tools|Hair Treatments",
- "makeup": "Face Makeup|Eye Makeup|Lip Makeup|Makeup Brushes|Makeup Sets",
- "mens-grooming": "Shaving|Beard Care|Grooming Kits|Clippers",
- "oral-care": "Toothbrushes|Toothpaste|Floss & Interdental|Whitening|Mouthwash",
- "non-fiction": "Biography|History|Business|Self Help|Science|Travel",
- "childrens-books": "Picture Books|Early Readers|Young Adult|Activity Books",
- "textbooks": "School Textbooks|University Textbooks|Language Learning|Revision Guides",
- "comics": "Superhero Comics|Manga|Graphic Novels|Comic Collections",
- "rare-books": "First Editions|Signed Books|Antiquarian Books|Collectible Sets",
- "cassettes": "Cassette Albums|Cassette Singles|Cassette Box Sets",
- "music-box-sets": "CD Box Sets|Vinyl Box Sets|Collector Editions",
- "other-music-formats": "MiniDiscs|8-Track Tapes|Music Accessories",
- "vinyl": "LP Albums|7 Inch Singles|12 Inch Singles|Picture Discs|Collectors Vinyl",
- "screen-protectors": "Tempered Glass|Privacy Protectors|Film Protectors",
- "smartwatches": "Apple Watch|Samsung Watch|Fitness Watches|Accessories",
- "womens-clothing": "Dresses|Tops|Jackets & Coats|Jeans & Trousers|Knitwear|Underwear",
- "kids-clothing": "Boys Clothing|Girls Clothing|Coats|School Uniform|Footwear",
- "shoes": "Trainers|Boots|Formal Shoes|Sandals|Slippers",
- "bags": "Handbags|Backpacks|Wallets|Belts|Travel Bags",
- "tvs": "Smart TVs|4K TVs|Projectors|TV Mounts|Streaming Devices",
- "solar": "Solar Panels|Solar Batteries|Solar Chargers|Renewable Accessories",
- "organic-food": "Organic Pantry|Organic Snacks|Natural Beverages",
- "reusable": "Reusable Bags|Reusable Bottles|Food Storage|Zero Waste Accessories",
- "natural-cleaning": "Laundry Products|Surface Cleaners|Dishwashing",
- "sustainable-fashion": "Second-Hand Clothing|Sustainable Accessories",
- "green-tech": "Smart Energy Devices|Energy Monitors|Eco Gadgets",
- "vitamins": "Multivitamins|Single Vitamins|Minerals|Nutrition Supplements",
- "medical": "First Aid Kits|Bandages|Dressings|Medical Equipment",
- "cleaning": "Laundry|Surface Cleaning|Bathroom Cleaning|Dishwashing",
- "air-fresheners": "Room Sprays|Diffusers|Air Freshener Refills",
- "pest-control": "Insect Control|Rodent Control|Traps|Repellents",
- "home-decor": "Wall Art|Mirrors|Vases|Clocks|Decorative Objects",
- "lighting": "Ceiling Lights|Table Lamps|Floor Lamps|LED Lighting",
- "lab-equipment": "Microscopes|Measuring Equipment|Glassware|Lab Accessories",
- "safety": "Gloves|Eye Protection|Respiratory Protection|Workwear",
- "electrical": "Connectors|Switches|Sensors|Cables|Components",
- "hydraulics": "Hydraulic Pumps|Cylinders|Pneumatic Parts|Fittings",
- "janitorial": "Cleaning Machines|Cleaning Supplies|Facility Equipment",
- "blu-ray": "Blu-ray Films|Blu-ray TV Box Sets|Special Editions",
- "dvd": "DVD Films|TV Series|Box Sets|Special Editions",
- "4k-uhd": "4K Films|4K Box Sets|Collector Editions",
- "tv-series": "Drama Series|Comedy Series|Documentaries|Complete Collections",
- "foreign-films": "World Cinema|Arthouse|Cult Films",
- "guitars": "Electric Guitars|Acoustic Guitars|Bass Guitars|Guitar Amplifiers",
- "pianos": "Digital Pianos|Acoustic Pianos|Keyboards|Synthesizers",
- "drums": "Drum Kits|Cymbals|Electronic Drums|Percussion",
- "wind": "Woodwind|Brass|Flutes|Saxophones",
- "dj-equipment": "DJ Controllers|Mixers|Audio Interfaces|Studio Monitors",
- "instrument-accessories": "Strings|Cases|Stands|Cables|Replacement Parts",
- "printers": "Inkjet Printers|Laser Printers|Scanners|All-in-One Printers|Ink & Toner",
- "desk-accessories": "Desk Organisers|Desk Lamps|Keyboard Trays",
- "filing": "Filing Cabinets|Folders|Document Storage",
- "pens": "Ballpoint Pens|Gel Pens|Fountain Pens|Markers",
- "paper": "Copy Paper|Notebooks|Sticky Notes|Stationery Sets",
- "calendars": "Wall Calendars|Desk Calendars|Diaries|Planners",
- "outdoor-furniture": "Garden Tables|Garden Chairs|Outdoor Sofas|Sun Loungers",
- "grills": "Charcoal Barbecues|Gas Barbecues|Portable Barbecues|Accessories",
- "gardening-tools": "Lawnmowers|Trimmers|Hand Tools|Watering Equipment",
- "plants": "Indoor Plants|Garden Plants|Flower Seeds|Vegetable Seeds",
- "outdoor-decor": "Planters|Garden Ornaments|Outdoor Lighting",
- "cats": "Cat Food|Litter & Trays|Cat Beds|Toys|Scratching Posts",
- "birds": "Bird Food|Cages|Perches|Bird Toys",
- "fish": "Aquariums|Filters|Fish Food|Aquatic Decor",
- "small-animals": "Cages|Bedding|Food|Toys",
- "reptiles": "Terrariums|Heating|Reptile Food|Habitat Decor",
- "cycling": "Bicycles|Helmets|Bike Parts|Cycling Accessories",
- "camping": "Tents|Sleeping Bags|Backpacks|Camping Cooking",
- "water-sports": "Swimming|Surfing|Paddleboarding|Boating Equipment",
- "team-sports": "Football|Basketball|Cricket|Rugby|Training Gear",
- "winter-sports": "Skiing|Snowboarding|Ice Skating|Accessories",
- "hand-tools": "Spanners|Screwdrivers|Pliers|Tool Sets",
- "electrical-installation": "Cables|Sockets|Switches|Circuit Protection",
- "electrical-tools": "Electrical Testers|Installation Tools|Lighting Accessories",
- "plumbing": "Pipes|Fittings|Taps|Plumbing Tools",
- "paint": "Paints|Brushes|Rollers|Decorating Supplies",
- "safety-tools": "Protective Gloves|Safety Goggles|Dust Masks",
- "action-figures": "Collectible Figures|Playsets|Figure Accessories",
- "board-games": "Board Games|Card Games|Jigsaw Puzzles|Strategy Games",
- "dolls": "Fashion Dolls|Baby Dolls|Dollhouses|Doll Accessories",
- "outdoor-toys": "Ride-On Toys|Outdoor Games|Water Toys",
- "stem": "Science Kits|Robotics|Learning Toys|Coding Toys",
- "building-sets": "Construction Bricks|Model Kits|Magnetic Tiles",
- "pc-gaming": "PC Games|Gaming Keyboards|Gaming Mice|Controllers",
- "vr-gaming": "VR Headsets|VR Games|VR Accessories",
- "documents-ebooks": "Ebooks|Guides|Templates|Digital Documents",
- "graphics-design": "Design Templates|Fonts|Icons|Digital Artwork",
- "photography": "Stock Photos|Photo Presets|Photography Tools",
- "video": "Stock Footage|Video Templates|Editing Presets",
- "audio-music": "Music Tracks|Sound Effects|Audio Templates",
- "games-gaming": "Digital Games|Game Assets|Gaming Tools",
- "education-courses": "Online Courses|Workbooks|Learning Materials",
- "business-marketing": "Marketing Templates|Business Plans|Social Media Assets",
- "ai-automation": "AI Prompts|Automation Templates|AI Workflows",
- "3d-cad": "3D Models|CAD Templates|3D Printing Files",
- "websites-online-assets": "Website Templates|Domain Assets|Site Components",
- "virtual-goods": "Virtual Collectibles|Digital Items|Game Virtual Goods",
- "other-digital": "Mixed Digital Bundles|Other Downloads",
- "fine-jewellery": "Gold Jewellery|Silver Jewellery|Precious Gem Jewellery",
- "fashion-jewellery": "Costume Jewellery|Statement Pieces|Jewellery Sets",
- "rings": "Engagement Rings|Wedding Bands|Fashion Rings",
- "necklaces": "Chains|Pendants|Necklace Sets",
- "bracelets-earrings": "Bracelets|Stud Earrings|Drop Earrings",
- "watch-parts": "Watch Straps|Watch Batteries|Watch Tools",
- "gemstones": "Loose Gemstones|Gemstone Beads|Specimens",
- "adult-collectibles": "Collectible Memorabilia|Vintage Collectibles",
- "adult-accessories": "Novelty Accessories|Specialist Accessories",
- "adult-digital": "Restricted Digital Collectibles",
- "adult-services": "Other Restricted Services",
- "adult-vintage-collectors": "Vintage Media|Collectors Prints",
- "other-adult": "Other Adult Collectibles"
+ "painting": [
+  "Acrylic Paints",
+  "Watercolours",
+  "Oil Paints",
+  "Brushes",
+  "Canvases",
+  "Drawing Sets"
+ ],
+ "knitting": [
+  "Yarn",
+  "Knitting Needles",
+  "Crochet Hooks",
+  "Patterns",
+  "Kits"
+ ],
+ "sewing": [
+  "Sewing Machines",
+  "Fabric",
+  "Thread",
+  "Quilting Kits",
+  "Sewing Accessories"
+ ],
+ "scrapbooking": [
+  "Albums",
+  "Stickers",
+  "Paper",
+  "Stamping",
+  "Cutting Tools"
+ ],
+ "printmaking": [
+  "Printing Ink",
+  "Blocks",
+  "Screens",
+  "Brayers",
+  "Printing Tools"
+ ],
+ "car-electronics": [
+  "Dash Cameras",
+  "Car Audio",
+  "Satellite Navigation",
+  "Parking Sensors",
+  "Car Chargers"
+ ],
+ "motorcycles": [
+  "Motorcycles",
+  "Scooters",
+  "Protective Gear",
+  "Motorcycle Parts"
+ ],
+ "auto-tools": [
+  "Diagnostic Tools",
+  "Jacks",
+  "Mechanics Tool Sets",
+  "Tyre Tools"
+ ],
+ "car-care": [
+  "Cleaning Products",
+  "Polishing Products",
+  "Interior Care",
+  "Pressure Washers"
+ ],
+ "baby-clothing": [
+  "Bodysuits",
+  "Baby Sleepwear",
+  "Baby Outfits",
+  "Baby Shoes",
+  "Baby Accessories"
+ ],
+ "feeding": [
+  "Bottles",
+  "Sterilisers",
+  "High Chairs",
+  "Breastfeeding Supplies",
+  "Feeding Accessories"
+ ],
+ "nursery": [
+  "Cots",
+  "Cribs",
+  "Changing Tables",
+  "Nursery Storage",
+  "Mattresses"
+ ],
+ "strollers": [
+  "Pushchairs",
+  "Travel Systems",
+  "Prams",
+  "Baby Carriers",
+  "Travel Accessories"
+ ],
+ "car-seats": [
+  "Infant Car Seats",
+  "Toddler Car Seats",
+  "Booster Seats",
+  "Car Seat Accessories"
+ ],
+ "baby-toys": [
+  "Soft Toys",
+  "Rattles",
+  "Activity Mats",
+  "Developmental Toys"
+ ],
+ "haircare": [
+  "Shampoos",
+  "Conditioners",
+  "Styling Products",
+  "Hair Tools",
+  "Hair Treatments"
+ ],
+ "makeup": [
+  "Face Makeup",
+  "Eye Makeup",
+  "Lip Makeup",
+  "Makeup Brushes",
+  "Makeup Sets"
+ ],
+ "mens-grooming": [
+  "Shaving",
+  "Beard Care",
+  "Grooming Kits",
+  "Clippers"
+ ],
+ "oral-care": [
+  "Toothbrushes",
+  "Toothpaste",
+  "Floss & Interdental",
+  "Whitening",
+  "Mouthwash"
+ ],
+ "non-fiction": [
+  "Biography",
+  "History",
+  "Business",
+  "Self Help",
+  "Science",
+  "Travel"
+ ],
+ "childrens-books": [
+  "Picture Books",
+  "Early Readers",
+  "Young Adult",
+  "Activity Books"
+ ],
+ "textbooks": [
+  "School Textbooks",
+  "University Textbooks",
+  "Language Learning",
+  "Revision Guides"
+ ],
+ "comics": [
+  "Superhero Comics",
+  "Manga",
+  "Graphic Novels",
+  "Comic Collections"
+ ],
+ "rare-books": [
+  "First Editions",
+  "Signed Books",
+  "Antiquarian Books",
+  "Collectible Sets"
+ ],
+ "cassettes": [
+  "Cassette Albums",
+  "Cassette Singles",
+  "Cassette Box Sets"
+ ],
+ "music-box-sets": [
+  "CD Box Sets",
+  "Vinyl Box Sets",
+  "Collector Editions"
+ ],
+ "other-music-formats": [
+  "MiniDiscs",
+  "8-Track Tapes",
+  "Music Accessories"
+ ],
+ "vinyl": [
+  "LP Albums",
+  "7 Inch Singles",
+  "12 Inch Singles",
+  "Picture Discs",
+  "Collectors Vinyl"
+ ],
+ "screen-protectors": [
+  "Tempered Glass",
+  "Privacy Protectors",
+  "Film Protectors"
+ ],
+ "smartwatches": [
+  "Apple Watch",
+  "Samsung Watch",
+  "Fitness Watches",
+  "Accessories"
+ ],
+ "womens-clothing": [
+  "Dresses",
+  "Tops",
+  "Jackets & Coats",
+  "Jeans & Trousers",
+  "Knitwear",
+  "Underwear"
+ ],
+ "kids-clothing": [
+  "Boys Clothing",
+  "Girls Clothing",
+  "Coats",
+  "School Uniform",
+  "Footwear"
+ ],
+ "shoes": [
+  "Trainers",
+  "Boots",
+  "Formal Shoes",
+  "Sandals",
+  "Slippers"
+ ],
+ "bags": [
+  "Handbags",
+  "Backpacks",
+  "Wallets",
+  "Belts",
+  "Travel Bags"
+ ],
+ "tvs": [
+  "Smart TVs",
+  "4K TVs",
+  "Projectors",
+  "TV Mounts",
+  "Streaming Devices"
+ ],
+ "solar": [
+  "Solar Panels",
+  "Solar Batteries",
+  "Solar Chargers",
+  "Renewable Accessories"
+ ],
+ "organic-food": [
+  "Organic Pantry",
+  "Organic Snacks",
+  "Natural Beverages"
+ ],
+ "reusable": [
+  "Reusable Bags",
+  "Reusable Bottles",
+  "Food Storage",
+  "Zero Waste Accessories"
+ ],
+ "natural-cleaning": [
+  "Laundry Products",
+  "Surface Cleaners",
+  "Dishwashing"
+ ],
+ "sustainable-fashion": [
+  "Second-Hand Clothing",
+  "Sustainable Accessories"
+ ],
+ "green-tech": [
+  "Smart Energy Devices",
+  "Energy Monitors",
+  "Eco Gadgets"
+ ],
+ "vitamins": [
+  "Multivitamins",
+  "Single Vitamins",
+  "Minerals",
+  "Nutrition Supplements"
+ ],
+ "medical": [
+  "First Aid Kits",
+  "Bandages",
+  "Dressings",
+  "Medical Equipment"
+ ],
+ "cleaning": [
+  "Laundry",
+  "Surface Cleaning",
+  "Bathroom Cleaning",
+  "Dishwashing"
+ ],
+ "air-fresheners": [
+  "Room Sprays",
+  "Diffusers",
+  "Air Freshener Refills"
+ ],
+ "pest-control": [
+  "Insect Control",
+  "Rodent Control",
+  "Traps",
+  "Repellents"
+ ],
+ "home-decor": [
+  "Wall Art",
+  "Mirrors",
+  "Vases",
+  "Clocks",
+  "Decorative Objects"
+ ],
+ "lighting": [
+  "Ceiling Lights",
+  "Table Lamps",
+  "Floor Lamps",
+  "LED Lighting"
+ ],
+ "lab-equipment": [
+  "Microscopes",
+  "Measuring Equipment",
+  "Glassware",
+  "Lab Accessories"
+ ],
+ "safety": [
+  "Gloves",
+  "Eye Protection",
+  "Respiratory Protection",
+  "Workwear"
+ ],
+ "electrical": [
+  "Connectors",
+  "Switches",
+  "Sensors",
+  "Cables",
+  "Components"
+ ],
+ "hydraulics": [
+  "Hydraulic Pumps",
+  "Cylinders",
+  "Pneumatic Parts",
+  "Fittings"
+ ],
+ "janitorial": [
+  "Cleaning Machines",
+  "Cleaning Supplies",
+  "Facility Equipment"
+ ],
+ "blu-ray": [
+  "Blu-ray Films",
+  "Blu-ray TV Box Sets",
+  "Special Editions"
+ ],
+ "dvd": [
+  "DVD Films",
+  "TV Series",
+  "Box Sets",
+  "Special Editions"
+ ],
+ "4k-uhd": [
+  "4K Films",
+  "4K Box Sets",
+  "Collector Editions"
+ ],
+ "tv-series": [
+  "Drama Series",
+  "Comedy Series",
+  "Documentaries",
+  "Complete Collections"
+ ],
+ "foreign-films": [
+  "World Cinema",
+  "Arthouse",
+  "Cult Films"
+ ],
+ "guitars": [
+  "Electric Guitars",
+  "Acoustic Guitars",
+  "Bass Guitars",
+  "Guitar Amplifiers"
+ ],
+ "pianos": [
+  "Digital Pianos",
+  "Acoustic Pianos",
+  "Keyboards",
+  "Synthesizers"
+ ],
+ "drums": [
+  "Drum Kits",
+  "Cymbals",
+  "Electronic Drums",
+  "Percussion"
+ ],
+ "wind": [
+  "Woodwind",
+  "Brass",
+  "Flutes",
+  "Saxophones"
+ ],
+ "dj-equipment": [
+  "DJ Controllers",
+  "Mixers",
+  "Audio Interfaces",
+  "Studio Monitors"
+ ],
+ "instrument-accessories": [
+  "Strings",
+  "Cases",
+  "Stands",
+  "Cables",
+  "Replacement Parts"
+ ],
+ "printers": [
+  "Inkjet Printers",
+  "Laser Printers",
+  "Scanners",
+  "All-in-One Printers",
+  "Ink & Toner"
+ ],
+ "desk-accessories": [
+  "Desk Organisers",
+  "Desk Lamps",
+  "Keyboard Trays"
+ ],
+ "filing": [
+  "Filing Cabinets",
+  "Folders",
+  "Document Storage"
+ ],
+ "pens": [
+  "Ballpoint Pens",
+  "Gel Pens",
+  "Fountain Pens",
+  "Markers"
+ ],
+ "paper": [
+  "Copy Paper",
+  "Notebooks",
+  "Sticky Notes",
+  "Stationery Sets"
+ ],
+ "calendars": [
+  "Wall Calendars",
+  "Desk Calendars",
+  "Diaries",
+  "Planners"
+ ],
+ "outdoor-furniture": [
+  "Garden Tables",
+  "Garden Chairs",
+  "Outdoor Sofas",
+  "Sun Loungers"
+ ],
+ "grills": [
+  "Charcoal Barbecues",
+  "Gas Barbecues",
+  "Portable Barbecues",
+  "Accessories"
+ ],
+ "gardening-tools": [
+  "Lawnmowers",
+  "Trimmers",
+  "Hand Tools",
+  "Watering Equipment"
+ ],
+ "plants": [
+  "Indoor Plants",
+  "Garden Plants",
+  "Flower Seeds",
+  "Vegetable Seeds"
+ ],
+ "outdoor-decor": [
+  "Planters",
+  "Garden Ornaments",
+  "Outdoor Lighting"
+ ],
+ "cats": [
+  "Cat Food",
+  "Litter & Trays",
+  "Cat Beds",
+  "Toys",
+  "Scratching Posts"
+ ],
+ "birds": [
+  "Bird Food",
+  "Cages",
+  "Perches",
+  "Bird Toys"
+ ],
+ "fish": [
+  "Aquariums",
+  "Filters",
+  "Fish Food",
+  "Aquatic Decor"
+ ],
+ "small-animals": [
+  "Cages",
+  "Bedding",
+  "Food",
+  "Toys"
+ ],
+ "reptiles": [
+  "Terrariums",
+  "Heating",
+  "Reptile Food",
+  "Habitat Decor"
+ ],
+ "cycling": [
+  "Bicycles",
+  "Helmets",
+  "Bike Parts",
+  "Cycling Accessories"
+ ],
+ "camping": [
+  "Tents",
+  "Sleeping Bags",
+  "Backpacks",
+  "Camping Cooking"
+ ],
+ "water-sports": [
+  "Swimming",
+  "Surfing",
+  "Paddleboarding",
+  "Boating Equipment"
+ ],
+ "team-sports": [
+  "Football",
+  "Basketball",
+  "Cricket",
+  "Rugby",
+  "Training Gear"
+ ],
+ "winter-sports": [
+  "Skiing",
+  "Snowboarding",
+  "Ice Skating",
+  "Accessories"
+ ],
+ "hand-tools": [
+  "Spanners",
+  "Screwdrivers",
+  "Pliers",
+  "Tool Sets"
+ ],
+ "electrical-installation": [
+  "Cables",
+  "Sockets",
+  "Switches",
+  "Circuit Protection"
+ ],
+ "electrical-tools": [
+  "Electrical Testers",
+  "Installation Tools",
+  "Lighting Accessories"
+ ],
+ "plumbing": [
+  "Pipes",
+  "Fittings",
+  "Taps",
+  "Plumbing Tools"
+ ],
+ "paint": [
+  "Paints",
+  "Brushes",
+  "Rollers",
+  "Decorating Supplies"
+ ],
+ "safety-tools": [
+  "Protective Gloves",
+  "Safety Goggles",
+  "Dust Masks"
+ ],
+ "action-figures": [
+  "Collectible Figures",
+  "Playsets",
+  "Figure Accessories"
+ ],
+ "board-games": [
+  "Board Games",
+  "Card Games",
+  "Jigsaw Puzzles",
+  "Strategy Games"
+ ],
+ "dolls": [
+  "Fashion Dolls",
+  "Baby Dolls",
+  "Dollhouses",
+  "Doll Accessories"
+ ],
+ "outdoor-toys": [
+  "Ride-On Toys",
+  "Outdoor Games",
+  "Water Toys"
+ ],
+ "stem": [
+  "Science Kits",
+  "Robotics",
+  "Learning Toys",
+  "Coding Toys"
+ ],
+ "building-sets": [
+  "Construction Bricks",
+  "Model Kits",
+  "Magnetic Tiles"
+ ],
+ "pc-gaming": [
+  "PC Games",
+  "Gaming Keyboards",
+  "Gaming Mice",
+  "Controllers"
+ ],
+ "vr-gaming": [
+  "VR Headsets",
+  "VR Games",
+  "VR Accessories"
+ ],
+ "documents-ebooks": [
+  "Ebooks",
+  "Guides",
+  "Templates",
+  "Digital Documents"
+ ],
+ "graphics-design": [
+  "Design Templates",
+  "Fonts",
+  "Icons",
+  "Digital Artwork"
+ ],
+ "photography": [
+  "Stock Photos",
+  "Photo Presets",
+  "Photography Tools"
+ ],
+ "video": [
+  "Stock Footage",
+  "Video Templates",
+  "Editing Presets"
+ ],
+ "audio-music": [
+  "Music Tracks",
+  "Sound Effects",
+  "Audio Templates"
+ ],
+ "games-gaming": [
+  "Digital Games",
+  "Game Assets",
+  "Gaming Tools"
+ ],
+ "education-courses": [
+  "Online Courses",
+  "Workbooks",
+  "Learning Materials"
+ ],
+ "business-marketing": [
+  "Marketing Templates",
+  "Business Plans",
+  "Social Media Assets"
+ ],
+ "ai-automation": [
+  "AI Prompts",
+  "Automation Templates",
+  "AI Workflows"
+ ],
+ "3d-cad": [
+  "3D Models",
+  "CAD Templates",
+  "3D Printing Files"
+ ],
+ "websites-online-assets": [
+  "Website Templates",
+  "Domain Assets",
+  "Site Components"
+ ],
+ "virtual-goods": [
+  "Virtual Collectibles",
+  "Digital Items",
+  "Game Virtual Goods"
+ ],
+ "other-digital": [
+  "Mixed Digital Bundles",
+  "Other Downloads"
+ ],
+ "fine-jewellery": [
+  "Gold Jewellery",
+  "Silver Jewellery",
+  "Precious Gem Jewellery"
+ ],
+ "fashion-jewellery": [
+  "Costume Jewellery",
+  "Statement Pieces",
+  "Jewellery Sets"
+ ],
+ "rings": [
+  "Engagement Rings",
+  "Wedding Bands",
+  "Fashion Rings"
+ ],
+ "necklaces": [
+  "Chains",
+  "Pendants",
+  "Necklace Sets"
+ ],
+ "bracelets-earrings": [
+  "Bracelets",
+  "Stud Earrings",
+  "Drop Earrings"
+ ],
+ "watch-parts": [
+  "Watch Straps",
+  "Watch Batteries",
+  "Watch Tools"
+ ],
+ "gemstones": [
+  "Loose Gemstones",
+  "Gemstone Beads",
+  "Specimens"
+ ],
+ "adult-collectibles": [
+  "Collectible Memorabilia",
+  "Vintage Collectibles"
+ ],
+ "adult-accessories": [
+  "Novelty Accessories",
+  "Specialist Accessories"
+ ],
+ "adult-digital": [
+  "Restricted Digital Collectibles"
+ ],
+ "adult-services": [
+  "Other Restricted Services"
+ ],
+ "adult-vintage-collectors": [
+  "Vintage Media",
+  "Collectors Prints"
+ ],
+ "other-adult": [
+  "Other Adult Collectibles"
+ ]
 };
 export function thirdLevelProposals(categorySlug:string,subcategorySlug:string,subcategoryName:string):string[]{
  const expanded=EXPANDED_THIRD_LEVEL[subcategorySlug];
