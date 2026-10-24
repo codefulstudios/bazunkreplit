@@ -2,44 +2,58 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "appliances",
   "subcategory": "refrigerators",
-  "slug": "refrigerators-and-freezers-main-products",
-  "name": "Refrigerators & Freezers - Main Products",
+  "slug": "fridges",
+  "name": "Fridges",
   "sort_order": 0
  },
  {
   "category": "appliances",
   "subcategory": "refrigerators",
-  "slug": "refrigerators-and-freezers-accessories",
-  "name": "Refrigerators & Freezers - Accessories",
+  "slug": "freezers",
+  "name": "Freezers",
   "sort_order": 1
  },
  {
   "category": "appliances",
   "subcategory": "refrigerators",
-  "slug": "refrigerators-and-freezers-parts-and-supplies",
-  "name": "Refrigerators & Freezers - Parts & Supplies",
+  "slug": "fridge-freezers",
+  "name": "Fridge Freezers",
   "sort_order": 2
  },
  {
   "category": "appliances",
+  "subcategory": "refrigerators",
+  "slug": "mini-fridges",
+  "name": "Mini Fridges",
+  "sort_order": 3
+ },
+ {
+  "category": "appliances",
   "subcategory": "washing-machines",
-  "slug": "washing-machines-and-dryers-main-products",
-  "name": "Washing Machines & Dryers - Main Products",
+  "slug": "washing-machines",
+  "name": "Washing Machines",
   "sort_order": 0
  },
  {
   "category": "appliances",
   "subcategory": "washing-machines",
-  "slug": "washing-machines-and-dryers-accessories",
-  "name": "Washing Machines & Dryers - Accessories",
+  "slug": "tumble-dryers",
+  "name": "Tumble Dryers",
   "sort_order": 1
  },
  {
   "category": "appliances",
   "subcategory": "washing-machines",
-  "slug": "washing-machines-and-dryers-parts-and-supplies",
-  "name": "Washing Machines & Dryers - Parts & Supplies",
+  "slug": "washer-dryers",
+  "name": "Washer Dryers",
   "sort_order": 2
+ },
+ {
+  "category": "appliances",
+  "subcategory": "washing-machines",
+  "slug": "accessories",
+  "name": "Accessories",
+  "sort_order": 3
  },
  {
   "category": "appliances",
@@ -65,65 +79,93 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "appliances",
   "subcategory": "microwaves",
-  "slug": "microwaves-and-ovens-main-products",
-  "name": "Microwaves & Ovens - Main Products",
+  "slug": "microwave-ovens",
+  "name": "Microwave Ovens",
   "sort_order": 0
  },
  {
   "category": "appliances",
   "subcategory": "microwaves",
-  "slug": "microwaves-and-ovens-accessories",
-  "name": "Microwaves & Ovens - Accessories",
+  "slug": "combination-ovens",
+  "name": "Combination Ovens",
   "sort_order": 1
  },
  {
   "category": "appliances",
   "subcategory": "microwaves",
-  "slug": "microwaves-and-ovens-parts-and-supplies",
-  "name": "Microwaves & Ovens - Parts & Supplies",
+  "slug": "accessories",
+  "name": "Accessories",
   "sort_order": 2
  },
  {
   "category": "appliances",
   "subcategory": "air-conditioners",
-  "slug": "air-conditioners-and-fans-main-products",
-  "name": "Air Conditioners & Fans - Main Products",
+  "slug": "portable-air-conditioners",
+  "name": "Portable Air Conditioners",
   "sort_order": 0
  },
  {
   "category": "appliances",
   "subcategory": "air-conditioners",
-  "slug": "air-conditioners-and-fans-accessories",
-  "name": "Air Conditioners & Fans - Accessories",
+  "slug": "fans",
+  "name": "Fans",
   "sort_order": 1
  },
  {
   "category": "appliances",
   "subcategory": "air-conditioners",
-  "slug": "air-conditioners-and-fans-parts-and-supplies",
-  "name": "Air Conditioners & Fans - Parts & Supplies",
+  "slug": "air-purifiers",
+  "name": "Air Purifiers",
   "sort_order": 2
  },
  {
   "category": "appliances",
+  "subcategory": "air-conditioners",
+  "slug": "parts-and-accessories",
+  "name": "Parts & Accessories",
+  "sort_order": 3
+ },
+ {
+  "category": "appliances",
   "subcategory": "vacuums",
-  "slug": "vacuum-cleaners-main-products",
-  "name": "Vacuum Cleaners - Main Products",
+  "slug": "cordless-vacuums",
+  "name": "Cordless Vacuums",
   "sort_order": 0
  },
  {
   "category": "appliances",
   "subcategory": "vacuums",
-  "slug": "vacuum-cleaners-accessories",
-  "name": "Vacuum Cleaners - Accessories",
+  "slug": "upright-vacuums",
+  "name": "Upright Vacuums",
   "sort_order": 1
  },
  {
   "category": "appliances",
   "subcategory": "vacuums",
-  "slug": "vacuum-cleaners-parts-and-supplies",
-  "name": "Vacuum Cleaners - Parts & Supplies",
+  "slug": "cylinder-vacuums",
+  "name": "Cylinder Vacuums",
   "sort_order": 2
+ },
+ {
+  "category": "appliances",
+  "subcategory": "vacuums",
+  "slug": "robot-vacuums",
+  "name": "Robot Vacuums",
+  "sort_order": 3
+ },
+ {
+  "category": "appliances",
+  "subcategory": "vacuums",
+  "slug": "wet-and-dry-vacuums",
+  "name": "Wet & Dry Vacuums",
+  "sort_order": 4
+ },
+ {
+  "category": "appliances",
+  "subcategory": "vacuums",
+  "slug": "parts-and-accessories",
+  "name": "Parts & Accessories",
+  "sort_order": 5
  },
  {
   "category": "arts-crafts-sewing",
@@ -310,65 +352,100 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "arts-crafts-sewing",
   "subcategory": "beading",
-  "slug": "beading-and-jewelry-making-main-products",
-  "name": "Beading & Jewelry Making - Main Products",
+  "slug": "gemstone-beads",
+  "name": "Gemstone Beads",
   "sort_order": 0
  },
  {
   "category": "arts-crafts-sewing",
   "subcategory": "beading",
-  "slug": "beading-and-jewelry-making-accessories",
-  "name": "Beading & Jewelry Making - Accessories",
+  "slug": "glass-beads",
+  "name": "Glass Beads",
   "sort_order": 1
  },
  {
   "category": "arts-crafts-sewing",
   "subcategory": "beading",
-  "slug": "beading-and-jewelry-making-parts-and-supplies",
-  "name": "Beading & Jewelry Making - Parts & Supplies",
+  "slug": "jewellery-findings",
+  "name": "Jewellery Findings",
   "sort_order": 2
+ },
+ {
+  "category": "arts-crafts-sewing",
+  "subcategory": "beading",
+  "slug": "beading-kits",
+  "name": "Beading Kits",
+  "sort_order": 3
  },
  {
   "category": "automotive",
   "subcategory": "car-parts",
-  "slug": "car-parts-and-accessories-main-products",
-  "name": "Car Parts & Accessories - Main Products",
+  "slug": "interior-accessories",
+  "name": "Interior Accessories",
   "sort_order": 0
  },
  {
   "category": "automotive",
   "subcategory": "car-parts",
-  "slug": "car-parts-and-accessories-accessories",
-  "name": "Car Parts & Accessories - Accessories",
+  "slug": "exterior-and-body-parts",
+  "name": "Exterior & Body Parts",
   "sort_order": 1
  },
  {
   "category": "automotive",
   "subcategory": "car-parts",
-  "slug": "car-parts-and-accessories-parts-and-supplies",
-  "name": "Car Parts & Accessories - Parts & Supplies",
+  "slug": "engine-parts",
+  "name": "Engine Parts",
   "sort_order": 2
  },
  {
   "category": "automotive",
+  "subcategory": "car-parts",
+  "slug": "brakes",
+  "name": "Brakes",
+  "sort_order": 3
+ },
+ {
+  "category": "automotive",
+  "subcategory": "car-parts",
+  "slug": "car-lighting",
+  "name": "Car Lighting",
+  "sort_order": 4
+ },
+ {
+  "category": "automotive",
   "subcategory": "tires",
-  "slug": "tires-and-wheels-main-products",
-  "name": "Tires & Wheels - Main Products",
+  "slug": "car-tyres",
+  "name": "Car Tyres",
   "sort_order": 0
  },
  {
   "category": "automotive",
   "subcategory": "tires",
-  "slug": "tires-and-wheels-accessories",
-  "name": "Tires & Wheels - Accessories",
+  "slug": "motorcycle-tyres",
+  "name": "Motorcycle Tyres",
   "sort_order": 1
  },
  {
   "category": "automotive",
   "subcategory": "tires",
-  "slug": "tires-and-wheels-parts-and-supplies",
-  "name": "Tires & Wheels - Parts & Supplies",
+  "slug": "alloy-wheels",
+  "name": "Alloy Wheels",
   "sort_order": 2
+ },
+ {
+  "category": "automotive",
+  "subcategory": "tires",
+  "slug": "steel-wheels",
+  "name": "Steel Wheels",
+  "sort_order": 3
+ },
+ {
+  "category": "automotive",
+  "subcategory": "tires",
+  "slug": "wheel-accessories",
+  "name": "Wheel Accessories",
+  "sort_order": 4
  },
  {
   "category": "automotive",
@@ -688,23 +765,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "beauty-personal-care",
   "subcategory": "skincare",
-  "slug": "skincare-main-products",
-  "name": "Skincare - Main Products",
+  "slug": "cleansers",
+  "name": "Cleansers",
   "sort_order": 0
  },
  {
   "category": "beauty-personal-care",
   "subcategory": "skincare",
-  "slug": "skincare-accessories",
-  "name": "Skincare - Accessories",
+  "slug": "moisturisers",
+  "name": "Moisturisers",
   "sort_order": 1
  },
  {
   "category": "beauty-personal-care",
   "subcategory": "skincare",
-  "slug": "skincare-parts-and-supplies",
-  "name": "Skincare - Parts & Supplies",
+  "slug": "sunscreen",
+  "name": "Sunscreen",
   "sort_order": 2
+ },
+ {
+  "category": "beauty-personal-care",
+  "subcategory": "skincare",
+  "slug": "serums",
+  "name": "Serums",
+  "sort_order": 3
  },
  {
   "category": "beauty-personal-care",
@@ -779,23 +863,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "beauty-personal-care",
   "subcategory": "fragrances",
-  "slug": "fragrances-main-products",
-  "name": "Fragrances - Main Products",
+  "slug": "men-s-fragrances",
+  "name": "Men's Fragrances",
   "sort_order": 0
  },
  {
   "category": "beauty-personal-care",
   "subcategory": "fragrances",
-  "slug": "fragrances-accessories",
-  "name": "Fragrances - Accessories",
+  "slug": "women-s-fragrances",
+  "name": "Women's Fragrances",
   "sort_order": 1
  },
  {
   "category": "beauty-personal-care",
   "subcategory": "fragrances",
-  "slug": "fragrances-parts-and-supplies",
-  "name": "Fragrances - Parts & Supplies",
+  "slug": "unisex-fragrances",
+  "name": "Unisex Fragrances",
   "sort_order": 2
+ },
+ {
+  "category": "beauty-personal-care",
+  "subcategory": "fragrances",
+  "slug": "gift-sets",
+  "name": "Gift Sets",
+  "sort_order": 3
  },
  {
   "category": "beauty-personal-care",
@@ -863,23 +954,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "books",
   "subcategory": "fiction",
-  "slug": "fiction-main-products",
-  "name": "Fiction - Main Products",
+  "slug": "crime-and-thriller",
+  "name": "Crime & Thriller",
   "sort_order": 0
  },
  {
   "category": "books",
   "subcategory": "fiction",
-  "slug": "fiction-accessories",
-  "name": "Fiction - Accessories",
+  "slug": "romance",
+  "name": "Romance",
   "sort_order": 1
  },
  {
   "category": "books",
   "subcategory": "fiction",
-  "slug": "fiction-parts-and-supplies",
-  "name": "Fiction - Parts & Supplies",
+  "slug": "fantasy",
+  "name": "Fantasy",
   "sort_order": 2
+ },
+ {
+  "category": "books",
+  "subcategory": "fiction",
+  "slug": "science-fiction",
+  "name": "Science Fiction",
+  "sort_order": 3
+ },
+ {
+  "category": "books",
+  "subcategory": "fiction",
+  "slug": "historical-fiction",
+  "name": "Historical Fiction",
+  "sort_order": 4
  },
  {
   "category": "books",
@@ -1038,23 +1143,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "cds-vinyl",
   "subcategory": "cds",
-  "slug": "cds-main-products",
-  "name": "CDs - Main Products",
+  "slug": "albums",
+  "name": "Albums",
   "sort_order": 0
  },
  {
   "category": "cds-vinyl",
   "subcategory": "cds",
-  "slug": "cds-accessories",
-  "name": "CDs - Accessories",
+  "slug": "singles",
+  "name": "Singles",
   "sort_order": 1
  },
  {
   "category": "cds-vinyl",
   "subcategory": "cds",
-  "slug": "cds-parts-and-supplies",
-  "name": "CDs - Parts & Supplies",
+  "slug": "compilations",
+  "name": "Compilations",
   "sort_order": 2
+ },
+ {
+  "category": "cds-vinyl",
+  "subcategory": "cds",
+  "slug": "box-sets",
+  "name": "Box Sets",
+  "sort_order": 3
  },
  {
   "category": "cds-vinyl",
@@ -1157,65 +1269,86 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "cell-phones",
   "subcategory": "smartphones",
-  "slug": "smartphones-main-products",
-  "name": "Smartphones - Main Products",
+  "slug": "apple-iphone",
+  "name": "Apple iPhone",
   "sort_order": 0
  },
  {
   "category": "cell-phones",
   "subcategory": "smartphones",
-  "slug": "smartphones-accessories",
-  "name": "Smartphones - Accessories",
+  "slug": "samsung-galaxy",
+  "name": "Samsung Galaxy",
   "sort_order": 1
  },
  {
   "category": "cell-phones",
   "subcategory": "smartphones",
-  "slug": "smartphones-parts-and-supplies",
-  "name": "Smartphones - Parts & Supplies",
+  "slug": "google-pixel",
+  "name": "Google Pixel",
   "sort_order": 2
  },
  {
   "category": "cell-phones",
+  "subcategory": "smartphones",
+  "slug": "xiaomi",
+  "name": "Xiaomi",
+  "sort_order": 3
+ },
+ {
+  "category": "cell-phones",
+  "subcategory": "smartphones",
+  "slug": "other-android-phones",
+  "name": "Other Android Phones",
+  "sort_order": 4
+ },
+ {
+  "category": "cell-phones",
   "subcategory": "phone-cases",
-  "slug": "cases-and-covers-main-products",
-  "name": "Cases & Covers - Main Products",
+  "slug": "iphone-cases",
+  "name": "iPhone Cases",
   "sort_order": 0
  },
  {
   "category": "cell-phones",
   "subcategory": "phone-cases",
-  "slug": "cases-and-covers-accessories",
-  "name": "Cases & Covers - Accessories",
+  "slug": "samsung-cases",
+  "name": "Samsung Cases",
   "sort_order": 1
  },
  {
   "category": "cell-phones",
   "subcategory": "phone-cases",
-  "slug": "cases-and-covers-parts-and-supplies",
-  "name": "Cases & Covers - Parts & Supplies",
+  "slug": "other-phone-cases",
+  "name": "Other Phone Cases",
   "sort_order": 2
  },
  {
   "category": "cell-phones",
   "subcategory": "chargers",
-  "slug": "chargers-and-cables-main-products",
-  "name": "Chargers & Cables - Main Products",
+  "slug": "wall-chargers",
+  "name": "Wall Chargers",
   "sort_order": 0
  },
  {
   "category": "cell-phones",
   "subcategory": "chargers",
-  "slug": "chargers-and-cables-accessories",
-  "name": "Chargers & Cables - Accessories",
+  "slug": "charging-cables",
+  "name": "Charging Cables",
   "sort_order": 1
  },
  {
   "category": "cell-phones",
   "subcategory": "chargers",
-  "slug": "chargers-and-cables-parts-and-supplies",
-  "name": "Chargers & Cables - Parts & Supplies",
+  "slug": "wireless-chargers",
+  "name": "Wireless Chargers",
   "sort_order": 2
+ },
+ {
+  "category": "cell-phones",
+  "subcategory": "chargers",
+  "slug": "power-banks",
+  "name": "Power Banks",
+  "sort_order": 3
  },
  {
   "category": "cell-phones",
@@ -1290,23 +1423,44 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "clothing-shoes-jewelry",
   "subcategory": "mens-clothing",
-  "slug": "men-s-clothing-main-products",
-  "name": "Men's Clothing - Main Products",
+  "slug": "jackets-and-coats",
+  "name": "Jackets & Coats",
   "sort_order": 0
  },
  {
   "category": "clothing-shoes-jewelry",
   "subcategory": "mens-clothing",
-  "slug": "men-s-clothing-accessories",
-  "name": "Men's Clothing - Accessories",
+  "slug": "shirts",
+  "name": "Shirts",
   "sort_order": 1
  },
  {
   "category": "clothing-shoes-jewelry",
   "subcategory": "mens-clothing",
-  "slug": "men-s-clothing-parts-and-supplies",
-  "name": "Men's Clothing - Parts & Supplies",
+  "slug": "t-shirts",
+  "name": "T-Shirts",
   "sort_order": 2
+ },
+ {
+  "category": "clothing-shoes-jewelry",
+  "subcategory": "mens-clothing",
+  "slug": "jeans-and-trousers",
+  "name": "Jeans & Trousers",
+  "sort_order": 3
+ },
+ {
+  "category": "clothing-shoes-jewelry",
+  "subcategory": "mens-clothing",
+  "slug": "underwear",
+  "name": "Underwear",
+  "sort_order": 4
+ },
+ {
+  "category": "clothing-shoes-jewelry",
+  "subcategory": "mens-clothing",
+  "slug": "activewear",
+  "name": "Activewear",
+  "sort_order": 5
  },
  {
   "category": "clothing-shoes-jewelry",
@@ -1479,23 +1633,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "electronics",
   "subcategory": "computers",
-  "slug": "computers-and-laptops-main-products",
-  "name": "Computers & Laptops - Main Products",
+  "slug": "laptops",
+  "name": "Laptops",
   "sort_order": 0
  },
  {
   "category": "electronics",
   "subcategory": "computers",
-  "slug": "computers-and-laptops-accessories",
-  "name": "Computers & Laptops - Accessories",
+  "slug": "desktop-pcs",
+  "name": "Desktop PCs",
   "sort_order": 1
  },
  {
   "category": "electronics",
   "subcategory": "computers",
-  "slug": "computers-and-laptops-parts-and-supplies",
-  "name": "Computers & Laptops - Parts & Supplies",
+  "slug": "monitors",
+  "name": "Monitors",
   "sort_order": 2
+ },
+ {
+  "category": "electronics",
+  "subcategory": "computers",
+  "slug": "computer-components",
+  "name": "Computer Components",
+  "sort_order": 3
+ },
+ {
+  "category": "electronics",
+  "subcategory": "computers",
+  "slug": "computer-accessories",
+  "name": "Computer Accessories",
+  "sort_order": 4
  },
  {
   "category": "electronics",
@@ -1535,44 +1703,79 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "electronics",
   "subcategory": "audio",
-  "slug": "audio-and-headphones-main-products",
-  "name": "Audio & Headphones - Main Products",
+  "slug": "in-ear-headphones",
+  "name": "In-Ear Headphones",
   "sort_order": 0
  },
  {
   "category": "electronics",
   "subcategory": "audio",
-  "slug": "audio-and-headphones-accessories",
-  "name": "Audio & Headphones - Accessories",
+  "slug": "over-ear-headphones",
+  "name": "Over-Ear Headphones",
   "sort_order": 1
  },
  {
   "category": "electronics",
   "subcategory": "audio",
-  "slug": "audio-and-headphones-parts-and-supplies",
-  "name": "Audio & Headphones - Parts & Supplies",
+  "slug": "speakers",
+  "name": "Speakers",
   "sort_order": 2
  },
  {
   "category": "electronics",
+  "subcategory": "audio",
+  "slug": "soundbars",
+  "name": "Soundbars",
+  "sort_order": 3
+ },
+ {
+  "category": "electronics",
+  "subcategory": "audio",
+  "slug": "hi-fi-equipment",
+  "name": "Hi-Fi Equipment",
+  "sort_order": 4
+ },
+ {
+  "category": "electronics",
   "subcategory": "cameras",
-  "slug": "cameras-and-photography-main-products",
-  "name": "Cameras & Photography - Main Products",
+  "slug": "digital-cameras",
+  "name": "Digital Cameras",
   "sort_order": 0
  },
  {
   "category": "electronics",
   "subcategory": "cameras",
-  "slug": "cameras-and-photography-accessories",
-  "name": "Cameras & Photography - Accessories",
+  "slug": "security-cameras",
+  "name": "Security Cameras",
   "sort_order": 1
  },
  {
   "category": "electronics",
   "subcategory": "cameras",
-  "slug": "cameras-and-photography-parts-and-supplies",
-  "name": "Cameras & Photography - Parts & Supplies",
+  "slug": "dash-cams",
+  "name": "Dash Cams",
   "sort_order": 2
+ },
+ {
+  "category": "electronics",
+  "subcategory": "cameras",
+  "slug": "drones",
+  "name": "Drones",
+  "sort_order": 3
+ },
+ {
+  "category": "electronics",
+  "subcategory": "cameras",
+  "slug": "action-cameras",
+  "name": "Action Cameras",
+  "sort_order": 4
+ },
+ {
+  "category": "electronics",
+  "subcategory": "cameras",
+  "slug": "camera-accessories",
+  "name": "Camera Accessories",
+  "sort_order": 5
  },
  {
   "category": "electronics",
@@ -1598,23 +1801,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "electronics",
   "subcategory": "smart-home",
-  "slug": "smart-home-devices-main-products",
-  "name": "Smart Home Devices - Main Products",
+  "slug": "smart-plugs",
+  "name": "Smart Plugs",
   "sort_order": 0
  },
  {
   "category": "electronics",
   "subcategory": "smart-home",
-  "slug": "smart-home-devices-accessories",
-  "name": "Smart Home Devices - Accessories",
+  "slug": "smart-sensors",
+  "name": "Smart Sensors",
   "sort_order": 1
  },
  {
   "category": "electronics",
   "subcategory": "smart-home",
-  "slug": "smart-home-devices-parts-and-supplies",
-  "name": "Smart Home Devices - Parts & Supplies",
+  "slug": "smart-lighting",
+  "name": "Smart Lighting",
   "sort_order": 2
+ },
+ {
+  "category": "electronics",
+  "subcategory": "smart-home",
+  "slug": "home-security",
+  "name": "Home Security",
+  "sort_order": 3
+ },
+ {
+  "category": "electronics",
+  "subcategory": "smart-home",
+  "slug": "smart-hubs",
+  "name": "Smart Hubs",
+  "sort_order": 4
  },
  {
   "category": "eco-friendly",
@@ -1885,65 +2102,93 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "home-kitchen",
   "subcategory": "cookware",
-  "slug": "cookware-and-bakeware-main-products",
-  "name": "Cookware & Bakeware - Main Products",
+  "slug": "pots-and-pans",
+  "name": "Pots & Pans",
   "sort_order": 0
  },
  {
   "category": "home-kitchen",
   "subcategory": "cookware",
-  "slug": "cookware-and-bakeware-accessories",
-  "name": "Cookware & Bakeware - Accessories",
+  "slug": "cookware-sets",
+  "name": "Cookware Sets",
   "sort_order": 1
  },
  {
   "category": "home-kitchen",
   "subcategory": "cookware",
-  "slug": "cookware-and-bakeware-parts-and-supplies",
-  "name": "Cookware & Bakeware - Parts & Supplies",
+  "slug": "bakeware",
+  "name": "Bakeware",
   "sort_order": 2
  },
  {
   "category": "home-kitchen",
+  "subcategory": "cookware",
+  "slug": "cooking-utensils",
+  "name": "Cooking Utensils",
+  "sort_order": 3
+ },
+ {
+  "category": "home-kitchen",
   "subcategory": "bedding",
-  "slug": "bedding-and-pillows-main-products",
-  "name": "Bedding & Pillows - Main Products",
+  "slug": "duvets",
+  "name": "Duvets",
   "sort_order": 0
  },
  {
   "category": "home-kitchen",
   "subcategory": "bedding",
-  "slug": "bedding-and-pillows-accessories",
-  "name": "Bedding & Pillows - Accessories",
+  "slug": "pillows",
+  "name": "Pillows",
   "sort_order": 1
  },
  {
   "category": "home-kitchen",
   "subcategory": "bedding",
-  "slug": "bedding-and-pillows-parts-and-supplies",
-  "name": "Bedding & Pillows - Parts & Supplies",
+  "slug": "sheets",
+  "name": "Sheets",
   "sort_order": 2
  },
  {
   "category": "home-kitchen",
+  "subcategory": "bedding",
+  "slug": "bed-linen-sets",
+  "name": "Bed Linen Sets",
+  "sort_order": 3
+ },
+ {
+  "category": "home-kitchen",
   "subcategory": "furniture",
-  "slug": "furniture-main-products",
-  "name": "Furniture - Main Products",
+  "slug": "office-and-gaming-chairs",
+  "name": "Office & Gaming Chairs",
   "sort_order": 0
  },
  {
   "category": "home-kitchen",
   "subcategory": "furniture",
-  "slug": "furniture-accessories",
-  "name": "Furniture - Accessories",
+  "slug": "sofas",
+  "name": "Sofas",
   "sort_order": 1
  },
  {
   "category": "home-kitchen",
   "subcategory": "furniture",
-  "slug": "furniture-parts-and-supplies",
-  "name": "Furniture - Parts & Supplies",
+  "slug": "tables",
+  "name": "Tables",
   "sort_order": 2
+ },
+ {
+  "category": "home-kitchen",
+  "subcategory": "furniture",
+  "slug": "cabinets-and-storage",
+  "name": "Cabinets & Storage",
+  "sort_order": 3
+ },
+ {
+  "category": "home-kitchen",
+  "subcategory": "furniture",
+  "slug": "beds",
+  "name": "Beds",
+  "sort_order": 4
  },
  {
   "category": "home-kitchen",
@@ -1983,23 +2228,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "home-kitchen",
   "subcategory": "storage",
-  "slug": "storage-and-organization-main-products",
-  "name": "Storage & Organization - Main Products",
+  "slug": "kitchen-storage",
+  "name": "Kitchen Storage",
   "sort_order": 0
  },
  {
   "category": "home-kitchen",
   "subcategory": "storage",
-  "slug": "storage-and-organization-accessories",
-  "name": "Storage & Organization - Accessories",
+  "slug": "bathroom-storage",
+  "name": "Bathroom Storage",
   "sort_order": 1
  },
  {
   "category": "home-kitchen",
   "subcategory": "storage",
-  "slug": "storage-and-organization-parts-and-supplies",
-  "name": "Storage & Organization - Parts & Supplies",
+  "slug": "shelving",
+  "name": "Shelving",
   "sort_order": 2
+ },
+ {
+  "category": "home-kitchen",
+  "subcategory": "storage",
+  "slug": "storage-boxes",
+  "name": "Storage Boxes",
+  "sort_order": 3
  },
  {
   "category": "home-kitchen",
@@ -2760,23 +3012,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "pet-supplies",
   "subcategory": "dogs",
-  "slug": "dogs-main-products",
-  "name": "Dogs - Main Products",
+  "slug": "dog-food",
+  "name": "Dog Food",
   "sort_order": 0
  },
  {
   "category": "pet-supplies",
   "subcategory": "dogs",
-  "slug": "dogs-accessories",
-  "name": "Dogs - Accessories",
+  "slug": "leads-and-collars",
+  "name": "Leads & Collars",
   "sort_order": 1
  },
  {
   "category": "pet-supplies",
   "subcategory": "dogs",
-  "slug": "dogs-parts-and-supplies",
-  "name": "Dogs - Parts & Supplies",
+  "slug": "dog-beds",
+  "name": "Dog Beds",
   "sort_order": 2
+ },
+ {
+  "category": "pet-supplies",
+  "subcategory": "dogs",
+  "slug": "dog-toys",
+  "name": "Dog Toys",
+  "sort_order": 3
+ },
+ {
+  "category": "pet-supplies",
+  "subcategory": "dogs",
+  "slug": "grooming",
+  "name": "Grooming",
+  "sort_order": 4
  },
  {
   "category": "pet-supplies",
@@ -2928,23 +3194,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "sports-outdoors",
   "subcategory": "fitness",
-  "slug": "fitness-and-exercise-main-products",
-  "name": "Fitness & Exercise - Main Products",
+  "slug": "weights",
+  "name": "Weights",
   "sort_order": 0
  },
  {
   "category": "sports-outdoors",
   "subcategory": "fitness",
-  "slug": "fitness-and-exercise-accessories",
-  "name": "Fitness & Exercise - Accessories",
+  "slug": "cardio-equipment",
+  "name": "Cardio Equipment",
   "sort_order": 1
  },
  {
   "category": "sports-outdoors",
   "subcategory": "fitness",
-  "slug": "fitness-and-exercise-parts-and-supplies",
-  "name": "Fitness & Exercise - Parts & Supplies",
+  "slug": "resistance-bands",
+  "name": "Resistance Bands",
   "sort_order": 2
+ },
+ {
+  "category": "sports-outdoors",
+  "subcategory": "fitness",
+  "slug": "yoga-equipment",
+  "name": "Yoga Equipment",
+  "sort_order": 3
  },
  {
   "category": "sports-outdoors",
@@ -3096,23 +3369,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "tools-home-improvement",
   "subcategory": "power-tools",
-  "slug": "power-tools-main-products",
-  "name": "Power Tools - Main Products",
+  "slug": "drills",
+  "name": "Drills",
   "sort_order": 0
  },
  {
   "category": "tools-home-improvement",
   "subcategory": "power-tools",
-  "slug": "power-tools-accessories",
-  "name": "Power Tools - Accessories",
+  "slug": "saws",
+  "name": "Saws",
   "sort_order": 1
  },
  {
   "category": "tools-home-improvement",
   "subcategory": "power-tools",
-  "slug": "power-tools-parts-and-supplies",
-  "name": "Power Tools - Parts & Supplies",
+  "slug": "sanders",
+  "name": "Sanders",
   "sort_order": 2
+ },
+ {
+  "category": "tools-home-improvement",
+  "subcategory": "power-tools",
+  "slug": "grinders",
+  "name": "Grinders",
+  "sort_order": 3
+ },
+ {
+  "category": "tools-home-improvement",
+  "subcategory": "power-tools",
+  "slug": "batteries",
+  "name": "Batteries",
+  "sort_order": 4
  },
  {
   "category": "tools-home-improvement",
@@ -3418,86 +3705,114 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "video-games",
   "subcategory": "consoles",
-  "slug": "gaming-consoles-main-products",
-  "name": "Gaming Consoles - Main Products",
+  "slug": "playstation-consoles",
+  "name": "PlayStation Consoles",
   "sort_order": 0
  },
  {
   "category": "video-games",
   "subcategory": "consoles",
-  "slug": "gaming-consoles-accessories",
-  "name": "Gaming Consoles - Accessories",
+  "slug": "xbox-consoles",
+  "name": "Xbox Consoles",
   "sort_order": 1
  },
  {
   "category": "video-games",
   "subcategory": "consoles",
-  "slug": "gaming-consoles-parts-and-supplies",
-  "name": "Gaming Consoles - Parts & Supplies",
+  "slug": "nintendo-consoles",
+  "name": "Nintendo Consoles",
   "sort_order": 2
  },
  {
   "category": "video-games",
+  "subcategory": "consoles",
+  "slug": "retro-consoles",
+  "name": "Retro Consoles",
+  "sort_order": 3
+ },
+ {
+  "category": "video-games",
+  "subcategory": "consoles",
+  "slug": "console-accessories",
+  "name": "Console Accessories",
+  "sort_order": 4
+ },
+ {
+  "category": "video-games",
   "subcategory": "playstation",
-  "slug": "playstation-main-products",
-  "name": "PlayStation - Main Products",
+  "slug": "ps5-games",
+  "name": "PS5 Games",
   "sort_order": 0
+ },
+ {
+  "category": "video-games",
+  "subcategory": "playstation",
+  "slug": "ps4-games",
+  "name": "PS4 Games",
+  "sort_order": 1
+ },
+ {
+  "category": "video-games",
+  "subcategory": "playstation",
+  "slug": "controllers",
+  "name": "Controllers",
+  "sort_order": 2
  },
  {
   "category": "video-games",
   "subcategory": "playstation",
   "slug": "playstation-accessories",
-  "name": "PlayStation - Accessories",
-  "sort_order": 1
- },
- {
-  "category": "video-games",
-  "subcategory": "playstation",
-  "slug": "playstation-parts-and-supplies",
-  "name": "PlayStation - Parts & Supplies",
-  "sort_order": 2
+  "name": "PlayStation Accessories",
+  "sort_order": 3
  },
  {
   "category": "video-games",
   "subcategory": "xbox",
-  "slug": "xbox-main-products",
-  "name": "Xbox - Main Products",
+  "slug": "xbox-games",
+  "name": "Xbox Games",
   "sort_order": 0
+ },
+ {
+  "category": "video-games",
+  "subcategory": "xbox",
+  "slug": "controllers",
+  "name": "Controllers",
+  "sort_order": 1
  },
  {
   "category": "video-games",
   "subcategory": "xbox",
   "slug": "xbox-accessories",
-  "name": "Xbox - Accessories",
-  "sort_order": 1
- },
- {
-  "category": "video-games",
-  "subcategory": "xbox",
-  "slug": "xbox-parts-and-supplies",
-  "name": "Xbox - Parts & Supplies",
+  "name": "Xbox Accessories",
   "sort_order": 2
  },
  {
   "category": "video-games",
   "subcategory": "nintendo",
-  "slug": "nintendo-main-products",
-  "name": "Nintendo - Main Products",
+  "slug": "switch-games",
+  "name": "Switch Games",
   "sort_order": 0
  },
  {
   "category": "video-games",
   "subcategory": "nintendo",
-  "slug": "nintendo-accessories",
-  "name": "Nintendo - Accessories",
+  "slug": "nintendo-consoles",
+  "name": "Nintendo Consoles",
   "sort_order": 1
  },
  {
   "category": "video-games",
   "subcategory": "nintendo",
-  "slug": "nintendo-parts-and-supplies",
-  "name": "Nintendo - Parts & Supplies",
+  "slug": "controllers",
+  "name": "Controllers",
   "sort_order": 2
+ },
+ {
+  "category": "video-games",
+  "subcategory": "nintendo",
+  "slug": "accessories",
+  "name": "Accessories",
+  "sort_order": 3
  },
  {
   "category": "video-games",
@@ -3677,23 +3992,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "digital",
   "subcategory": "software-apps",
-  "slug": "software-and-apps-main-products",
-  "name": "Software & Apps - Main Products",
+  "slug": "desktop-software",
+  "name": "Desktop Software",
   "sort_order": 0
  },
  {
   "category": "digital",
   "subcategory": "software-apps",
-  "slug": "software-and-apps-accessories",
-  "name": "Software & Apps - Accessories",
+  "slug": "mobile-apps",
+  "name": "Mobile Apps",
   "sort_order": 1
  },
  {
   "category": "digital",
   "subcategory": "software-apps",
-  "slug": "software-and-apps-parts-and-supplies",
-  "name": "Software & Apps - Parts & Supplies",
+  "slug": "plugins",
+  "name": "Plugins",
   "sort_order": 2
+ },
+ {
+  "category": "digital",
+  "subcategory": "software-apps",
+  "slug": "utilities",
+  "name": "Utilities",
+  "sort_order": 3
  },
  {
   "category": "digital",
@@ -4083,23 +4405,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "jewellery-watches",
   "subcategory": "watches",
-  "slug": "watches-main-products",
-  "name": "Watches - Main Products",
+  "slug": "analogue-watches",
+  "name": "Analogue Watches",
   "sort_order": 0
  },
  {
   "category": "jewellery-watches",
   "subcategory": "watches",
-  "slug": "watches-accessories",
-  "name": "Watches - Accessories",
+  "slug": "digital-watches",
+  "name": "Digital Watches",
   "sort_order": 1
  },
  {
   "category": "jewellery-watches",
   "subcategory": "watches",
-  "slug": "watches-parts-and-supplies",
-  "name": "Watches - Parts & Supplies",
+  "slug": "luxury-watches",
+  "name": "Luxury Watches",
   "sort_order": 2
+ },
+ {
+  "category": "jewellery-watches",
+  "subcategory": "watches",
+  "slug": "watch-accessories",
+  "name": "Watch Accessories",
+  "sort_order": 3
  },
  {
   "category": "jewellery-watches",
@@ -4146,44 +4475,37 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "adult",
   "subcategory": "adult-clothing",
-  "slug": "adult-clothing-main-products",
-  "name": "Adult Clothing - Main Products",
+  "slug": "lingerie",
+  "name": "Lingerie",
   "sort_order": 0
  },
  {
   "category": "adult",
   "subcategory": "adult-clothing",
-  "slug": "adult-clothing-accessories",
-  "name": "Adult Clothing - Accessories",
+  "slug": "costumes",
+  "name": "Costumes",
   "sort_order": 1
  },
  {
   "category": "adult",
   "subcategory": "adult-clothing",
-  "slug": "adult-clothing-parts-and-supplies",
-  "name": "Adult Clothing - Parts & Supplies",
+  "slug": "specialist-clothing",
+  "name": "Specialist Clothing",
   "sort_order": 2
  },
  {
   "category": "adult",
   "subcategory": "adult-media",
-  "slug": "adult-media-main-products",
-  "name": "Adult Media - Main Products",
+  "slug": "calendars",
+  "name": "Calendars",
   "sort_order": 0
  },
  {
   "category": "adult",
   "subcategory": "adult-media",
-  "slug": "adult-media-accessories",
-  "name": "Adult Media - Accessories",
+  "slug": "collectible-print-media",
+  "name": "Collectible Print Media",
   "sort_order": 1
- },
- {
-  "category": "adult",
-  "subcategory": "adult-media",
-  "slug": "adult-media-parts-and-supplies",
-  "name": "Adult Media - Parts & Supplies",
-  "sort_order": 2
  },
  {
   "category": "adult",
@@ -4216,44 +4538,30 @@ export const COMPLETE_THIRD_LEVEL_LIBRARY = [
  {
   "category": "adult",
   "subcategory": "adult-wellness",
-  "slug": "adult-wellness-main-products",
-  "name": "Adult Wellness - Main Products",
+  "slug": "condoms-and-protection",
+  "name": "Condoms & Protection",
   "sort_order": 0
  },
  {
   "category": "adult",
   "subcategory": "adult-wellness",
-  "slug": "adult-wellness-accessories",
-  "name": "Adult Wellness - Accessories",
+  "slug": "intimate-care",
+  "name": "Intimate Care",
   "sort_order": 1
  },
  {
   "category": "adult",
   "subcategory": "adult-wellness",
-  "slug": "adult-wellness-parts-and-supplies",
-  "name": "Adult Wellness - Parts & Supplies",
+  "slug": "wellness-accessories",
+  "name": "Wellness Accessories",
   "sort_order": 2
  },
  {
   "category": "adult",
   "subcategory": "adult-toys",
-  "slug": "adult-toys-main-products",
-  "name": "Adult Toys - Main Products",
+  "slug": "adult-accessories",
+  "name": "Adult Accessories",
   "sort_order": 0
- },
- {
-  "category": "adult",
-  "subcategory": "adult-toys",
-  "slug": "adult-toys-accessories",
-  "name": "Adult Toys - Accessories",
-  "sort_order": 1
- },
- {
-  "category": "adult",
-  "subcategory": "adult-toys",
-  "slug": "adult-toys-parts-and-supplies",
-  "name": "Adult Toys - Parts & Supplies",
-  "sort_order": 2
  },
  {
   "category": "adult",
