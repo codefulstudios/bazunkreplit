@@ -413,6 +413,12 @@ export async function loadCategoryPresentation():Promise<void>{
    if(typeof o.category_slug==="string"&&typeof o.subcategory_slug==="string"&&typeof o.name==="string")
     overrides.set(o.category_slug+":"+o.subcategory_slug,o);
   }
+  for(const c of CATEGORIES){
+   const o=overrides.get(c.slug+":");if(o)c.name=o.name;
+   for(const sub of c.subcategories){const setting=overrides.get(c.slug+":"+sub.slug);if(setting)sub.name=setting.name;}
+   c.subcategories.sort((a,b)=>(overrides.get(c.slug+":"+a.slug)?.sort_order??9999)-(overrides.get(c.slug+":"+b.slug)?.sort_order??9999));
+  }
+  CATEGORIES.sort((a,b)=>(overrides.get(a.slug+":")?.sort_order??9999)-(overrides.get(b.slug+":")?.sort_order??9999));
   for(const c of ACTIVE_CATEGORIES){
    const o=overrides.get(c.slug+":");
    if(o){c.name=o.name;}
