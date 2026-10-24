@@ -1,4 +1,13 @@
 export const COMPLETE_THIRD_LEVEL_LIBRARY = [
+ {"category":"computing","subcategory":"tablets","slug":"ipads","name":"iPads","sort_order":0},
+ {"category":"computing","subcategory":"tablets","slug":"android-tablets","name":"Android Tablets","sort_order":1},
+ {"category":"computing","subcategory":"tablets","slug":"windows-tablets","name":"Windows Tablets","sort_order":2},
+ {"category":"computing","subcategory":"tablets","slug":"kids-tablets","name":"Kids Tablets","sort_order":3},
+ {"category":"computing","subcategory":"tablets","slug":"drawing-tablets","name":"Drawing Tablets","sort_order":4},
+ {"category":"computing","subcategory":"tablets","slug":"e-readers","name":"E-Readers","sort_order":5},
+ {"category":"computing","subcategory":"tablets","slug":"tablet-cases-and-covers","name":"Tablet Cases & Covers","sort_order":6},
+ {"category":"computing","subcategory":"tablets","slug":"tablet-keyboards-and-styluses","name":"Tablet Keyboards & Styluses","sort_order":7},
+ {"category":"computing","subcategory":"tablets","slug":"tablet-chargers-and-docks","name":"Tablet Chargers & Docks","sort_order":8},
  {"category":"computing","subcategory":"laptops","slug":"windows-laptops","name":"Windows Laptops","sort_order":0},
  {"category":"computing","subcategory":"laptops","slug":"macbooks","name":"MacBooks","sort_order":1},
  {"category":"computing","subcategory":"laptops","slug":"chromebooks","name":"Chromebooks","sort_order":2},
