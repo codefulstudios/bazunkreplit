@@ -287,3 +287,52 @@
 .dark .bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,button,a,[role="combobox"]):focus-visible{
   outline-color:#93c5fd!important;
 }
+
+/* Dark admin: never combine pale blue/white utility panels with white text.
+   Convert pale tinted panels to genuinely dark surfaces, including nested text. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ .bg-blue-50,.bg-blue-100,.bg-blue-200,.bg-blue-300,
+ .bg-sky-50,.bg-sky-100,.bg-sky-200,.bg-sky-300,
+ .bg-cyan-50,.bg-cyan-100,.bg-cyan-200,.bg-cyan-300,
+ .bg-indigo-50,.bg-indigo-100,.bg-indigo-200,
+ .bg-slate-50,.bg-slate-100,.bg-slate-200,
+ .bg-gray-50,.bg-gray-100,.bg-gray-200,
+ .bg-white
+):not([class*="dark:bg-"]):not([class*="dark:!bg-"]){
+ background-color:#192c47!important;
+ color:#f1f6ff!important;
+ border-color:#526b8c!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ .bg-blue-50,.bg-blue-100,.bg-blue-200,.bg-blue-300,
+ .bg-sky-50,.bg-sky-100,.bg-sky-200,.bg-sky-300,
+ .bg-cyan-50,.bg-cyan-100,.bg-cyan-200,.bg-cyan-300,
+ .bg-indigo-50,.bg-indigo-100,.bg-indigo-200
+):not([class*="dark:bg-"]):not([class*="dark:!bg-"]) :is(
+ .text-white,.text-blue-50,.text-blue-100,.text-sky-100,.text-slate-100,
+ .text-blue-500,.text-blue-600,.text-blue-700,.text-slate-500,.text-slate-600
+){
+ color:#eef5ff!important;
+ -webkit-text-fill-color:#eef5ff!important;
+}
+/* When a component intentionally retains a WHITE surface in dark mode,
+   its text must switch to dark ink — including common nested headings and labels. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ [class*="dark:bg-white"],[class*="dark:!bg-white"],
+ [class*="dark:bg-blue-50"],[class*="dark:bg-blue-100"],
+ [class*="dark:bg-sky-50"],[class*="dark:bg-sky-100"]
+):not(input):not(select):not(textarea){
+ color:#172943!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ [class*="dark:bg-white"],[class*="dark:!bg-white"],
+ [class*="dark:bg-blue-50"],[class*="dark:bg-blue-100"],
+ [class*="dark:bg-sky-50"],[class*="dark:bg-sky-100"]
+) :is(h1,h2,h3,h4,p,label,span,strong,small):not([class*="bg-"]){
+ color:#172943!important;
+ -webkit-text-fill-color:#172943!important;
+}
+/* White and pale-blue native selection menus always use dark text. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(option,optgroup){
+ background:#203550!important;color:#f1f6ff!important;
+}
