@@ -307,19 +307,6 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Digital Products (Legacy)",
-    slug: "digital-products",
-    icon: "Download",
-    subcategories: [
-      { name: "Software & Apps", slug: "software" },
-      { name: "eBooks", slug: "ebooks" },
-      { name: "Music Downloads", slug: "music-downloads" },
-      { name: "Stock Photos & Videos", slug: "stock-media" },
-      { name: "Templates & Themes", slug: "templates" },
-      { name: "Online Courses", slug: "online-courses" },
-    ],
-  },
-  {
     name: "Digital Products",
     slug: "digital",
     icon: "MonitorSmartphone",
