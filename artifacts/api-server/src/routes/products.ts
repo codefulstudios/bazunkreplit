@@ -1,3 +1,4 @@
+import { COMPLETE_THIRD_LEVEL_LIBRARY } from "../data/thirdLevelLibrary.js";
 import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -41,9 +42,22 @@ router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
 router.use("/admin/products", requireAdmin);
 router.use("/admin/categories", requireAdmin);
 
+// Populate complete third-level taxonomy idempotently. Existing names and visibility are never changed.
+let seedPromise:Promise<void>|undefined;
+async function ensureCompleteThirdLevelLibrary(){
+ if(!seedPromise)seedPromise=(async()=>{
+  const batches=[] as (typeof COMPLETE_THIRD_LEVEL_LIBRARY[number])[][];
+  for(let i=0;i<COMPLETE_THIRD_LEVEL_LIBRARY.length;i+=120)batches.push(COMPLETE_THIRD_LEVEL_LIBRARY.slice(i,i+120) as any);
+  for(const batch of batches)await db.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order)
+   VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order})`),sql`,`)}
+   ON CONFLICT(category,subcategory,slug) DO NOTHING`);
+ })().catch(e=>{seedPromise=undefined;throw e});
+ return seedPromise;
+}
 // Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
 router.get("/taxonomy/third-level", async (_req, res) => {
   try {
+    await ensureCompleteThirdLevelLibrary();
     const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
     res.json({ categories: rows.rows });
   } catch (err) {
@@ -53,6 +67,7 @@ router.get("/taxonomy/third-level", async (_req, res) => {
 });
 router.get("/admin/taxonomy/third-level", requireAdmin, async (_req, res) => {
   try {
+    await ensureCompleteThirdLevelLibrary();
     const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
     res.json({ categories: rows.rows });
   } catch (err) { res.status(500).json({ error: "Could not load taxonomy" }); }
