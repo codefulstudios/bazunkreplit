@@ -700,7 +700,7 @@ export function suggestedThirdLevel(categorySlug: string, subcategorySlug: strin
   if (!taxonomyLoaded) return original;
   const overrides = taxonomyOverrides.filter(e => e.category === categorySlug && e.subcategory === subcategorySlug);
   const saved = overrides.filter(e => e.visible).sort((a,b) => a.sort_order-b.sort_order).map(e => e.name);
-  return [...saved, ...original.filter(name => !overrides.some(e => e.slug === thirdLevelSlug(name)))];
+  return saved; // A saved hidden category must never leak through static fallback suggestions.
 }
 
 export function thirdLevelSlug(name: string): string {
