@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Bazunk",
+    "slug": "bazunk-android",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android"
+    ],
+    "scheme": "bazunk",
+    "android": {
+      "package": "com.bazunk.marketplace",
+      "versionCode": 1
+    },
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "@clerk/expo",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Bazunk to take listing photos",
+          "photosPermission": "Allow Bazunk to select listing photos",
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser"
+    ]
+  }
+}
