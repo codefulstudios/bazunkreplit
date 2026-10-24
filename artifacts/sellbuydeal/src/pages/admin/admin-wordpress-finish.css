@@ -224,3 +224,66 @@
   display:block;width:100%!important
  }
 }
+
+
+/* Admin theme contrast contract — applied last, without changing storefront or
+   semantic coloured buttons, alerts, charts, or user-authored Design Center previews. */
+.bazunk-admin.bazunk-admin-wordpress{
+  --admin-readable-ink:#182b45;
+  --admin-readable-muted:#475569;
+  --admin-readable-panel:#ffffff;
+  --admin-readable-field:#ffffff;
+  --admin-readable-border:#94a3b8;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress{
+  --admin-readable-ink:#f1f6ff;
+  --admin-readable-muted:#cbd8e9;
+  --admin-readable-panel:#18283e;
+  --admin-readable-field:#203550;
+  --admin-readable-border:#7184a1;
+}
+/* Neutral controls have one foreground/background contract across all routes. */
+.bazunk-admin.bazunk-admin-wordpress main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),textarea,select,[role="combobox"]){
+  background-color:var(--admin-readable-field)!important;
+  color:var(--admin-readable-ink)!important;
+  border-color:var(--admin-readable-border)!important;
+  opacity:1;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,textarea)::placeholder{
+  color:var(--admin-readable-muted)!important;
+  opacity:1!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(select option,select optgroup){
+  color:var(--admin-readable-ink)!important;
+  background:var(--admin-readable-field)!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,[role="combobox"]):disabled{
+  opacity:.7!important;
+}
+/* Unstyled neutral button/chip classes must not inherit inverted foregrounds.
+   Keep bright primary/semantic actions intact by restricting to neutral utilities. */
+.bazunk-admin.bazunk-admin-wordpress main :is(button,a,[role="button"]):is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100):not([class*="dark:bg-"]):not([class*="!bg-"]){
+  background-color:var(--admin-readable-panel)!important;
+  color:var(--admin-readable-ink)!important;
+  border-color:var(--admin-readable-border);
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100):not([class*="dark:bg-"]):not([class*="!bg-"]):not(button):not(a):not([role="button"]){
+  background-color:var(--admin-readable-panel)!important;
+}
+/* Secondary copy rendered on generic dark panels should remain readable. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(.text-slate-400,.text-slate-500,.text-slate-600,.text-slate-700,.text-gray-400,.text-gray-500,.text-gray-600,.text-gray-700):not([class*="dark:text-"]):not([class*="!text-"]){
+  color:var(--admin-readable-muted)!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(th,[role="columnheader"]){
+  opacity:1;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(th,[role="columnheader"]):not([class*="dark:text-"]):not([class*="!text-"]){
+  color:var(--admin-readable-ink);
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,button,a,[role="combobox"]):focus-visible{
+  outline:3px solid #2563eb!important;
+  outline-offset:2px;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,button,a,[role="combobox"]):focus-visible{
+  outline-color:#93c5fd!important;
+}
