@@ -1,7 +1,7 @@
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { Fragment, useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package, Pencil, Trash2, EyeOff } from "lucide-react";
+import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package, Pencil, Trash2, EyeOff, Copy, Share2, Flag, Link2 } from "lucide-react";
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { AdminListingEditor, AdminListingCatalogueTools } from "./AdminProductsPage";
@@ -58,6 +58,11 @@ export function AdminListingsPage() {
   const [editingId,setEditingId]=useState<number|null>(null);
 
   const [rowBusy,setRowBusy]=useState<number|null>(null);
+  const [sharingId,setSharingId]=useState<number|null>(null);
+  const [copiedId,setCopiedId]=useState<number|null>(null);
+  const publicListingUrl=(l:Listing)=>window.location.origin+"/listing/"+(l.public_url_token||l.public_id||l.id);
+  async function copyAdminListingLink(l:Listing){try{await navigator.clipboard.writeText(publicListingUrl(l));setCopiedId(l.id);}catch{setActionError("Unable to copy link. Please copy it from the public listing.");}}
+  function shareAdminListing(l:Listing){const url=publicListingUrl(l);if(navigator.share){void navigator.share({title:l.title,url}).catch(()=>{});}else{window.open("https://wa.me/?text="+encodeURIComponent(l.title+" "+url),"_blank","noopener,noreferrer");}}
   const [actionError,setActionError]=useState("");
   const [actionSuccess,setActionSuccess]=useState("");
   async function hideListing(id:number) {
@@ -395,11 +400,15 @@ export function AdminListingsPage() {
                       </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2" aria-label={`Actions for ${l.title}`}>
                         <a href={`/listing/${l.public_url_token||l.public_id||l.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center rounded-lg border-2 border-white bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:bg-[#475569]">View on Bazunk</a>
+                        <button type="button" onClick={()=>void copyAdminListingLink(l)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#6782a8] bg-[#1b385c] px-3 py-2 text-xs font-bold text-white hover:bg-[#2e527d]"><Copy className="h-3.5 w-3.5"/>{copiedId===l.id?"Copied":"Copy public link"}</button>
+                        <button type="button" onClick={()=>shareAdminListing(l)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#6782a8] bg-[#1b385c] px-3 py-2 text-xs font-bold text-white hover:bg-[#2e527d]"><Share2 className="h-3.5 w-3.5"/>Share preview</button>
+                        <button type="button" onClick={()=>setSharingId(sharingId===l.id?null:l.id)} aria-expanded={sharingId===l.id} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-orange-500 bg-[#2d344b] px-3 py-2 text-xs font-bold text-white hover:bg-[#3d4f68]"><Flag className="h-3.5 w-3.5"/>Sharing &amp; trust</button>
                         <button type="button" onClick={()=>setEditingId(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-blue-700 px-3 py-2 text-xs font-black !text-white hover:bg-blue-600 dark:bg-blue-600 dark:text-white"><Pencil className="inline h-3 w-3"/> Edit Listing</button>
                         <button type="button" disabled={rowBusy===l.id||l.status==="inactive"} onClick={()=>void hideListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-amber-700 px-3 py-2 text-xs font-black !text-white hover:bg-amber-500 dark:bg-amber-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><EyeOff className="inline h-3 w-3"/> Hide</button>
                         <button type="button" disabled={rowBusy===l.id} onClick={()=>void deleteListing(l.id)} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border-2 border-white bg-red-700 px-3 py-2 text-xs font-black !text-white hover:bg-red-600 dark:bg-red-600 dark:text-white disabled:cursor-not-allowed disabled:opacity-60"><Trash2 className="inline h-3 w-3"/> Delete</button>
                       
                       </div>
+                      {sharingId===l.id&&<div className="mt-3 rounded-xl border border-orange-500 bg-[#132a48] p-4 text-white"><h4 className="mb-2 text-sm font-extrabold">Sharing &amp; trust · Listing #{l.id}</h4><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>void copyAdminListingLink(l)} className="rounded-lg border border-[#6b88ab] px-3 py-2 text-xs font-bold hover:bg-[#284a70]"><Link2 className="mr-1 inline h-3.5 w-3.5"/>Copy public URL</button><a href={publicListingUrl(l)} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[#6b88ab] px-3 py-2 text-xs font-bold text-white hover:bg-[#284a70]"><ExternalLink className="mr-1 inline h-3.5 w-3.5"/>Open listing</a><a href="/admin/support" className="rounded-lg border border-orange-500 px-3 py-2 text-xs font-bold text-orange-200 hover:bg-[#284a70]"><Flag className="mr-1 inline h-3.5 w-3.5"/>Review support tickets</a></div><p className="mt-2 text-xs text-slate-200">Listing reports are submitted as support tickets. Review incoming reports in the support workspace before changing listing visibility.</p></div>}
                       {categoryEditing===l.id && <div className="mt-2 rounded-lg border border-slate-400 bg-white p-2 dark:bg-slate-900">{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
                       {imageEditing === l.id && <div className="mt-2 rounded-lg border border-gray-200 p-2 bg-gray-50"><input autoFocus value={imageDraft} onChange={e=>setImageDraft(e.target.value)} placeholder="https://… image URL" className="w-full rounded-md border bg-white px-2 py-1.5 text-xs text-gray-800" /><div className="mt-2 flex gap-2"><button disabled={imageSaving===l.id} onClick={()=>void saveImage(l)} className="rounded-md bg-[#4A5CE8] text-white px-2 py-1 text-[10px] font-bold disabled:opacity-50">{imageSaving===l.id?"Saving…":"Save image"}</button><button onClick={()=>{setImageEditing(null);setImageDraft("");setImageError("");}} className="rounded-md border px-2 py-1 text-[10px] font-bold">Cancel</button>{l.image&&<button disabled={imageSaving===l.id} onClick={()=>void saveImage(l,"")} className="text-[10px] text-red-600 ml-auto">Remove</button>}</div>{imageError&&<p className="text-[10px] text-red-600 mt-1">{imageError}</p>}</div>}
 
