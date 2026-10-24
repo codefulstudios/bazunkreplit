@@ -94,7 +94,7 @@ router.post("/admin/taxonomy/third-level/seed",requireAdmin,async(req,res)=>{
   await ensureDeletedThirdLevelTable();
   let created=0;
   await db.transaction(async tx=>{for(const v of entries){
-   const inserted=await tx.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order) VALUES(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sortOrder}) ON CONFLICT(category,subcategory,slug) DO NOTHING RETURNING slug`);
+   const inserted=await tx.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order) SELECT ${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sortOrder} WHERE NOT EXISTS (SELECT 1 FROM deleted_third_level_categories WHERE category=${v.category} AND subcategory=${v.subcategory} AND slug=${v.slug}) ON CONFLICT(category,subcategory,slug) DO NOTHING RETURNING slug`);
    if(inserted.rows.length)created++;
   }});
   res.json({created,total:entries.length});
