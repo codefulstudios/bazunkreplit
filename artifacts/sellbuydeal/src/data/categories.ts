@@ -311,7 +311,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Video Games",
+    name: "Gaming",
     slug: "video-games",
     icon: "Gamepad",
     subcategories: [
@@ -321,6 +321,7 @@ export const CATEGORIES: Category[] = [
       { name: "Nintendo", slug: "nintendo" },
       { name: "PC Gaming", slug: "pc-gaming" },
       { name: "VR Gaming", slug: "vr-gaming" },
+      { name: "Gaming Furniture", slug: "gaming-furniture" },
     ],
   },
   {
@@ -683,6 +684,7 @@ const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
  "adult-media":["Calendars","Collectible Print Media"],
 };
 const EXPANDED_THIRD_LEVEL: Record<string,string[]> = {
+ "gaming-furniture": ["Gaming Chairs","Gaming Desks","Racing Simulator Cockpits","Gaming Chair Accessories","Gaming Desk Accessories"],
  "tablets": ["iPads","Android Tablets","Windows Tablets","Kids Tablets","Drawing Tablets","E-Readers","Tablet Cases & Covers","Tablet Keyboards & Styluses","Tablet Chargers & Docks"],
  "laptops": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"],
  "desktops": ["Desktop PCs","All-in-One PCs","Gaming Desktops","Mini PCs","Barebone PCs"],
