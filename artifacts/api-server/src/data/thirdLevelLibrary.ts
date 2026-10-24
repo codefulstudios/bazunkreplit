@@ -1,4 +1,9 @@
 export const COMPLETE_THIRD_LEVEL_LIBRARY = [
+ {"category":"video-games","subcategory":"gaming-furniture","slug":"gaming-chairs","name":"Gaming Chairs","sort_order":0},
+ {"category":"video-games","subcategory":"gaming-furniture","slug":"gaming-desks","name":"Gaming Desks","sort_order":1},
+ {"category":"video-games","subcategory":"gaming-furniture","slug":"racing-simulator-cockpits","name":"Racing Simulator Cockpits","sort_order":2},
+ {"category":"video-games","subcategory":"gaming-furniture","slug":"gaming-chair-accessories","name":"Gaming Chair Accessories","sort_order":3},
+ {"category":"video-games","subcategory":"gaming-furniture","slug":"gaming-desk-accessories","name":"Gaming Desk Accessories","sort_order":4},
  {"category":"computing","subcategory":"tablets","slug":"ipads","name":"iPads","sort_order":0},
  {"category":"computing","subcategory":"tablets","slug":"android-tablets","name":"Android Tablets","sort_order":1},
  {"category":"computing","subcategory":"tablets","slug":"windows-tablets","name":"Windows Tablets","sort_order":2},
