@@ -204,7 +204,7 @@ export function CategoriesPage() {
   const visibleSubs = curated.filter(sub => !search.trim() || sub.name.toLowerCase().includes(search.toLowerCase()) || suggestedThirdLevel(featuredCategory!.slug,sub.slug).some(name=>name.toLowerCase().includes(search.toLowerCase())));
   const selectedSub = visibleSubs.find(sub=>sub.slug===activeSub) ?? visibleSubs[0];
   const selectedThird = selectedSub && featuredCategory ? suggestedThirdLevel(featuredCategory.slug,selectedSub.slug) : [];
-  const currentExpandedSub = expandedSub ?? selectedSub?.slug ?? null;
+  const currentExpandedSub = expandedSub;
   const products = categoryListings;
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
     <Navbar />
@@ -232,13 +232,20 @@ export function CategoriesPage() {
                     const subIsOpen=currentExpandedSub===sub.slug;
                     const third=suggestedThirdLevel(cat.slug,sub.slug);
                     return <div key={sub.slug} className="min-w-0">
-                      <div className={`flex items-center rounded-lg ${subIsOpen?"bg-blue-100 dark:bg-[#234066]":"hover:bg-slate-100 dark:hover:bg-[#1d3658]"}`}>
-                        <Link href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)} className="min-w-0 flex-1 px-2 py-2.5 text-xs font-bold text-slate-900 dark:text-white leading-snug">{sub.name}</Link>
-                        <button type="button" aria-label={(subIsOpen?"Collapse ":"Expand ")+sub.name} aria-expanded={subIsOpen} onClick={()=>{setActiveSub(sub.slug);setExpandedSub(subIsOpen?"__none__":sub.slug);}} className="grid h-10 w-9 shrink-0 place-items-center rounded-lg text-slate-800 hover:bg-blue-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-white dark:hover:bg-[#31527e]">{subIsOpen?<ChevronDown className="h-4 w-4"/>:<ChevronRight className="h-4 w-4"/>}</button>
-                      </div>
-                      {subIsOpen && <div className="ml-3 border-l border-slate-300 pl-2 dark:border-[#456084]">
-                        {third.length?third.map(name=><Link key={name} href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)+"&subsubcategory="+encodeURIComponent(thirdLevelSlug(name))} className="block rounded-lg px-2 py-2 text-xs font-medium leading-snug text-slate-800 hover:bg-blue-100 dark:text-slate-200 dark:hover:bg-[#29466e]">• {name}</Link>):<p className="px-2 py-2 text-xs text-slate-600 dark:text-slate-300">No enabled third-level categories</p>}
-                      </div>}
+                      <button type="button" aria-expanded={subIsOpen} aria-controls={"third-level-"+cat.slug+"-"+sub.slug} onClick={()=>{setActiveSub(sub.slug);setExpandedSub(subIsOpen?null:sub.slug);}} className={`group flex w-full min-h-11 items-center gap-2 rounded-xl border px-2.5 py-2.5 text-left text-xs font-bold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${subIsOpen?"border-orange-400 bg-orange-50 text-slate-950 shadow-sm dark:border-orange-500/70 dark:bg-[#294363] dark:text-white":"border-transparent text-slate-900 hover:border-slate-300 hover:bg-slate-100 dark:text-slate-100 dark:hover:border-[#526a8a] dark:hover:bg-[#1d3658]"}`}>
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${subIsOpen?"bg-orange-500":"bg-slate-400 dark:bg-slate-500"}`} />
+                        <span className="min-w-0 flex-1 leading-snug">{sub.name}</span>
+                        <span className="text-[10px] font-semibold tabular-nums text-slate-600 dark:text-slate-300">{countsLoading?"":subCount(cat.slug,sub.slug)}</span>
+                        <ChevronDown className={`h-4 w-4 shrink-0 transition-transform duration-300 motion-reduce:transition-none ${subIsOpen?"rotate-180 text-orange-600 dark:text-orange-300":"-rotate-90 text-slate-600 dark:text-slate-300"}`} />
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {subIsOpen && <motion.div key={sub.slug} id={"third-level-"+cat.slug+"-"+sub.slug} initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} transition={{duration:0.25,ease:[0.2,0.8,0.2,1]}} className="overflow-hidden motion-reduce:transition-none">
+                          <div className="mb-2 ml-3 mt-1 space-y-0.5 border-l-2 border-orange-400/70 pl-2 dark:border-orange-500/70">
+                            <Link href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)} className="block rounded-lg px-2 py-2 text-xs font-bold text-orange-700 hover:bg-orange-50 dark:text-orange-300 dark:hover:bg-[#294363]">View all {sub.name} →</Link>
+                            {third.length?third.map(name=><Link key={name} href={"/browse?category="+encodeURIComponent(cat.slug)+"&sub="+encodeURIComponent(sub.slug)+"&subsubcategory="+encodeURIComponent(thirdLevelSlug(name))} className="flex min-h-9 items-center gap-2 rounded-lg px-2 py-2 text-xs font-medium leading-snug text-slate-800 transition-colors hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 dark:text-slate-100 dark:hover:bg-[#29466e]"><span className="text-orange-600 dark:text-orange-300">•</span>{name}</Link>):<p className="px-2 py-2 text-xs text-slate-600 dark:text-slate-300">No enabled third-level categories</p>}
+                          </div>
+                        </motion.div>}
+                      </AnimatePresence>
                     </div>;
                   })}
                 </div>}
