@@ -7,7 +7,7 @@ import {
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
-import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { CATEGORIES, ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
 
 const SITE_CATEGORIES = ACTIVE_CATEGORIES;
 
@@ -752,7 +752,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
   const [entries, setEntries] = useState<Entry[]>([]);
   type DisplayEntry={category_slug:string;subcategory_slug:string;name:string;visible:boolean;sort_order:number};
   const [display,setDisplay]=useState<DisplayEntry[]>([]);
-  const [selectedTop,setSelectedTop]=useState(SITE_CATEGORIES[0]?.slug??"");
+  const [selectedTop,setSelectedTop]=useState(CATEGORIES[0]?.slug??"");
   const [displayError,setDisplayError]=useState("");
   const [displayBusy,setDisplayBusy]=useState(false);
   useEffect(()=>{
@@ -761,7 +761,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       const data=await r.json();
       const overrides=new Map<string,DisplayEntry>((data.overrides??[]).map((x:DisplayEntry)=>[x.category_slug+":"+x.subcategory_slug,x]));
       const all:DisplayEntry[]=[];
-      SITE_CATEGORIES.forEach((c,i)=>{
+      CATEGORIES.forEach((c,i)=>{
         all.push(overrides.get(c.slug+":")??{category_slug:c.slug,subcategory_slug:"",name:c.name,visible:true,sort_order:i});
         c.subcategories.forEach((sub,j)=>all.push(overrides.get(c.slug+":"+sub.slug)??{category_slug:c.slug,subcategory_slug:sub.slug,name:sub.name,visible:true,sort_order:j}));
       });
@@ -781,7 +781,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [category, setCategory] = useState(SITE_CATEGORIES[0]?.slug ?? "");
+  const [category, setCategory] = useState(CATEGORIES[0]?.slug ?? "");
   const [subcategory, setSubcategory] = useState("");
   const [name, setName] = useState("");
   useEffect(() => {
@@ -791,7 +791,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       setEntries(data.categories ?? []);
     }).catch(error => setMessage(String(error))).finally(() => setLoading(false));
   }, [authFetch]);
-  const options = SITE_CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
+  const options = CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
   function add() {
     const clean = name.trim(), slug = thirdLevelSlug(clean);
     if (!clean || !slug || !subcategory) { setMessage("Choose a subcategory and enter a name."); return; }
@@ -838,7 +838,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
     </section>
     <p className="text-sm text-gray-600 dark:text-white">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
     <div className="flex flex-wrap gap-2">
-      <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{SITE_CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
+      <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
       <select value={subcategory} onChange={e => setSubcategory(e.target.value)} className="border rounded-lg p-2 bg-white text-gray-900"><option value="">Choose subcategory</option>{options.map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}</select>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="New third-level category" className="border rounded-lg p-2 text-gray-900" />
       <button onClick={add} className="bg-indigo-600 text-white px-4 rounded-lg">Add</button>
