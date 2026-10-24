@@ -634,6 +634,55 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   }
 };
+// Editorial suggestion library. Applies to every current subcategory; never automatically publishes taxonomy.
+const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
+ tires:["Car Tyres","Motorcycle Tyres","Alloy Wheels","Steel Wheels","Wheel Accessories"],
+ vacuums:["Cordless Vacuums","Upright Vacuums","Cylinder Vacuums","Robot Vacuums","Wet & Dry Vacuums","Parts & Accessories"],
+ "smart-home":["Smart Plugs","Smart Sensors","Smart Lighting","Home Security","Smart Hubs"],
+ cameras:["Digital Cameras","Security Cameras","Dash Cams","Drones","Action Cameras","Camera Accessories"],
+ computers:["Laptops","Desktop PCs","Monitors","Computer Components","Computer Accessories"],
+ "car-parts":["Interior Accessories","Exterior & Body Parts","Engine Parts","Brakes","Car Lighting"],
+ "mens-clothing":["Jackets & Coats","Shirts","T-Shirts","Jeans & Trousers","Underwear","Activewear"],
+ cookware:["Pots & Pans","Cookware Sets","Bakeware","Cooking Utensils"],
+ furniture:["Office & Gaming Chairs","Sofas","Tables","Cabinets & Storage","Beds"],
+ beading:["Gemstone Beads","Glass Beads","Jewellery Findings","Beading Kits"],
+ storage:["Kitchen Storage","Bathroom Storage","Shelving","Storage Boxes"],
+ audio:["In-Ear Headphones","Over-Ear Headphones","Speakers","Soundbars","Hi-Fi Equipment"],
+ consoles:["PlayStation Consoles","Xbox Consoles","Nintendo Consoles","Retro Consoles","Console Accessories"],
+ "adult-wellness":["Condoms & Protection","Intimate Care","Wellness Accessories"],
+ "adult-toys":["Adult Accessories"],
+ refrigerators:["Fridges","Freezers","Fridge Freezers","Mini Fridges"],
+ "air-conditioners":["Portable Air Conditioners","Fans","Air Purifiers","Parts & Accessories"],
+ smartphones:["Apple iPhone","Samsung Galaxy","Google Pixel","Xiaomi","Other Android Phones"],
+ "phone-cases":["iPhone Cases","Samsung Cases","Other Phone Cases"],
+ chargers:["Wall Chargers","Charging Cables","Wireless Chargers","Power Banks"],
+ "washing-machines":["Washing Machines","Tumble Dryers","Washer Dryers","Accessories"],
+ microwaves:["Microwave Ovens","Combination Ovens","Accessories"],
+ skincare:["Cleansers","Moisturisers","Sunscreen","Serums"],
+ fragrances:["Men's Fragrances","Women's Fragrances","Unisex Fragrances","Gift Sets"],
+ fiction:["Crime & Thriller","Romance","Fantasy","Science Fiction","Historical Fiction"],
+ cds:["Albums","Singles","Compilations","Box Sets"],
+ bedding:["Duvets","Pillows","Sheets","Bed Linen Sets"],
+ dogs:["Dog Food","Leads & Collars","Dog Beds","Dog Toys","Grooming"],
+ fitness:["Weights","Cardio Equipment","Resistance Bands","Yoga Equipment"],
+ "power-tools":["Drills","Saws","Sanders","Grinders","Batteries"],
+ playstation:["PS5 Games","PS4 Games","Controllers","PlayStation Accessories"],
+ xbox:["Xbox Games","Controllers","Xbox Accessories"],
+ nintendo:["Switch Games","Nintendo Consoles","Controllers","Accessories"],
+ "software-apps":["Desktop Software","Mobile Apps","Plugins","Utilities"],
+ watches:["Analogue Watches","Digital Watches","Luxury Watches","Watch Accessories"],
+ "adult-clothing":["Lingerie","Costumes","Specialist Clothing"],
+ "adult-media":["Calendars","Collectible Print Media"],
+};
+export function thirdLevelProposals(categorySlug:string,subcategorySlug:string,subcategoryName:string):string[]{
+ const specific=THIRD_LEVEL_BY_SUBCATEGORY[subcategorySlug];
+ if(specific)return specific;
+ const curated=THIRD_LEVEL_SUGGESTIONS[categorySlug];
+ if(curated?.subcategory===subcategorySlug)return curated.suggestions;
+ const base=subcategoryName.replace(/\s*\(Legacy\)/g,"").trim();
+ // A conservative fallback for niche areas: meaningful options can be reviewed/renamed by admin.
+ return [base+" - Main Products",base+" - Accessories",base+" - Parts & Supplies"];
+}
 type ThirdLevelEntry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
 let taxonomyOverrides: ThirdLevelEntry[] = [];
 let taxonomyLoaded = false;
