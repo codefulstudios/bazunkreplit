@@ -157,3 +157,14 @@
 }
 .dark .bazunk-admin-wordpress .wp-metric-action:hover,
 .bazunk-admin-wordpress.dark .wp-metric-action:hover {background:#253c60 !important;}
+
+/* Listing category review uses explicit, accessible colours regardless of global admin theme. */
+.bazunk-admin-wordpress #bazunk-listing-category-review {background:#14243c!important;color:#fff!important;border:2px solid #94a3b8!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review .bg-slate-700,
+.bazunk-admin-wordpress #bazunk-listing-category-review .rounded.bg-slate-700 {background:#25456c!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #84b8e9!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review button {background:#1356ba!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid #93c5fd!important;opacity:1!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review button:hover:not(:disabled){background:#1d70d3!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review button:disabled{background:#334155!important;color:#e2e8f0!important;opacity:.7!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review :is(label,p,strong,h2,span){color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:none!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review select{background:#fff!important;color:#111827!important;-webkit-text-fill-color:#111827!important;border:2px solid #64748b!important;opacity:1!important}
+.bazunk-admin-wordpress #bazunk-listing-category-review select option{background:#fff!important;color:#111827!important}
