@@ -28,6 +28,7 @@ const NAV = [
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "TrustProof", href: "/admin/trust-proof", icon: ShieldCheck },
   { label: "Listings", href: "/admin/listings", icon: Package },
+  { label: "Categories", href: "/admin/listings/categories", icon: Package },
   { label: "Importer Control", href: "/admin/importer-control", icon: Package },
   { label: "Snap & Sell AI", href: "/admin/snap-sell", icon: Camera },
   { label: "DealPilot", href: "/admin/deal-pilot", icon: Search },
@@ -65,7 +66,7 @@ const NAV = [
 ];
 
 const NAV_GROUPS = [
- {id:"listings",label:"Listings",href:"/admin/listings",icon:Package,pages:["Listings","Classifieds","Auctions","Flash Sales","Snap & Sell AI","DealPilot","Find It","Demo Creator"]},
+ {id:"listings",label:"Listings",href:"/admin/listings",icon:Package,pages:["Listings","Categories","Classifieds","Auctions","Flash Sales","Snap & Sell AI","DealPilot","Find It","Demo Creator"]},
  {id:"orders",label:"Orders",href:"/admin/orders",icon:ShoppingCart,pages:["Orders","Disputes","Returns"]},
  {id:"customers",label:"Customers",href:"/admin/users",icon:Users,pages:["Users"]},
  {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
