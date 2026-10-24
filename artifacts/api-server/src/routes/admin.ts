@@ -1343,10 +1343,26 @@ router.post("/admin/listings/category-review", async (req,res)=>{
  const results=(rows.rows as any[]).map(l=>{
   const title=String(l.title||"").toLowerCase();
   const words=new Set(title.match(/[a-z0-9]+/g)||[]);
-  const inSub=all.filter(x=>x.category===l.category&&x.subcategory===l.subcategory);
+  // Conservative product-type cues: only override an existing parent when a clear product signal is present.
+  const cues:{re:RegExp;category:string;subcategory:string}[]=[
+   {re:/\\b(tyres?|tires?|wheel rims?|alloy wheels?)\\b/i,category:"automotive",subcategory:"tires"},
+   {re:/\\b(vacuum cleaner|hoover|robot vacuum)\\b/i,category:"appliances",subcategory:"vacuums"},
+   {re:/\\b(smart plugs?|zigbee|smart sensors?|wifi sockets?)\\b/i,category:"electronics",subcategory:"smart-home"},
+   {re:/\\b(dash cams?|security cameras?|cctv cameras?|drones?)\\b/i,category:"electronics",subcategory:"cameras"},
+   {re:/\\b(gaming chairs?|office chairs?)\\b/i,category:"home-kitchen",subcategory:"furniture"},
+   {re:/\\b(cookware sets?|frying pans?|saucepans?|cooking pots?)\\b/i,category:"home-kitchen",subcategory:"cookware"},
+   {re:/\\b(beads?|jewellery findings?)\\b/i,category:"arts-crafts-sewing",subcategory:"beading"},
+   {re:/\\b(iphone|galaxy phone|redmi phone|smartphone)\\b/i,category:"cell-phones",subcategory:"smartphones"},
+   {re:/\\b(laptops?|notebooks? computers?|desktop pcs?)\\b/i,category:"electronics",subcategory:"computers"},
+   {re:/\\b(earbuds?|headphones?|soundbars?)\\b/i,category:"electronics",subcategory:"audio"}
+  ];
+  const cue=cues.find(c=>c.re.test(title));
+  const proposedCat=cue?.category||l.category;
+  const proposedSub=cue?.subcategory||l.subcategory;
+  const inSub=all.filter(x=>x.category===proposedCat&&x.subcategory===proposedSub);
   const ranked=inSub.map(x=>{const key=String(x.name).toLowerCase().match(/[a-z0-9]+/g)||[];const meaningful=key.filter(k=>k.length>3&&!["with","parts","other","accessories","products","main"].includes(k));const matched=meaningful.filter(k=>words.has(k)||[...words].some(w=>w.startsWith(k)||k.startsWith(w))).length;return {...x,score:meaningful.length?matched/meaningful.length:0,matched};}).filter(x=>x.matched>0).sort((a,b)=>b.score-a.score||b.matched-a.matched);
   const best=ranked[0];
-  return {id:l.id,title:l.title,category:l.category,subcategory:l.subcategory,currentThird:(()=>{try{return JSON.parse(l.specifications||"{}").admin_third_level_slug||""}catch{return ""}})(),suggestedCategory:l.category,suggestedSubcategory:l.subcategory,suggestedThird:best?.slug||"",thirdName:best?.name||"",thirdVisible:best?.visible??false,confidence:best?.score>=0.8?"high":best?.score>=0.5?"medium":"low",needsReview:true};
+  return {id:l.id,title:l.title,category:l.category,subcategory:l.subcategory,currentThird:(()=>{try{return JSON.parse(l.specifications||"{}").admin_third_level_slug||""}catch{return ""}})(),suggestedCategory:proposedCat,suggestedSubcategory:proposedSub,suggestedThird:best?.slug||"",thirdName:best?.name||"",thirdVisible:best?.visible??false,confidence:best?.score>=0.8?"high":best?.score>=0.5?"medium":"low",needsReview:true};
  });
  res.json({results});
  }catch(err){logger.error({err},"Listing taxonomy review failed");res.status(503).json({error:"Category review unavailable"});}
