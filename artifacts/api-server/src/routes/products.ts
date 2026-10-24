@@ -57,10 +57,31 @@ router.get("/admin/taxonomy/third-level", requireAdmin, async (_req, res) => {
     res.json({ categories: rows.rows });
   } catch (err) { res.status(500).json({ error: "Could not load taxonomy" }); }
 });
+// Safe bulk creation: never overwrite an existing taxonomy entry or its visibility.
+router.post("/admin/taxonomy/third-level/seed",requireAdmin,async(req,res)=>{
+ const input=req.body?.categories;
+ if(!Array.isArray(input)||input.length>1600){res.status(400).json({error:"Invalid taxonomy library"});return;}
+ const seen=new Set<string>();
+ const entries:{category:string;subcategory:string;slug:string;name:string;sortOrder:number}[]=[];
+ for(const v of input){
+  const category=String(v.category??""),subcategory=String(v.subcategory??""),slug=String(v.slug??""),name=String(v.name??"").trim();
+  const key=category+":"+subcategory+":"+slug;
+  if(![category,subcategory,slug].every(x=>/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(x))||!name||name.length>100||seen.has(key)){res.status(400).json({error:"Invalid or duplicate taxonomy entry"});return;}
+  seen.add(key);entries.push({category,subcategory,slug,name,sortOrder:Math.max(0,Math.min(9999,Number(v.sort_order)||0))});
+ }
+ try{
+  let created=0;
+  await db.transaction(async tx=>{for(const v of entries){
+   const inserted=await tx.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order) VALUES(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sortOrder}) ON CONFLICT(category,subcategory,slug) DO NOTHING RETURNING slug`);
+   if(inserted.rows.length)created++;
+  }});
+  res.json({created,total:entries.length});
+ }catch(err){logger.error({err},"Third-level seed failed");res.status(503).json({error:"Unable to populate taxonomy"});}
+});
 router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
   try {
     const items = req.body?.categories;
-    if (!Array.isArray(items) || items.length > 500) { res.status(400).json({ error: "Invalid taxonomy" }); return; }
+    if (!Array.isArray(items) || items.length > 1600) { res.status(400).json({ error: "Invalid taxonomy" }); return; }
     const cleaned: { category: string; subcategory: string; name: string; slug: string; visible: boolean; sortOrder: number }[] = [];
     for (const item of items) {
       const category = String(item.category ?? ""), subcategory = String(item.subcategory ?? "");
