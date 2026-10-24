@@ -24,6 +24,7 @@ export function AdminCategoryManagerPage(){
  const [draftNew,setDraftNew]=useState("");
  const [thirdParent,setThirdParent]=useState(CATEGORIES[0]?.subcategories[0]?.slug??"");
  const [suggestions,setSuggestions]=useState<string[]>([]);
+ const [seeded,setSeeded]=useState(false);
  const [dirty,setDirty]=useState(false);
  useEffect(()=>{let active=true;Promise.all([
   authFetch("/api/taxonomy/category-overrides").then(r=>r.ok?r.json():{overrides:[]}),
@@ -34,6 +35,24 @@ export function AdminCategoryManagerPage(){
   setItems(CATEGORIES.flatMap((c,i)=>[map.get(c.slug+":")??{category_slug:c.slug,subcategory_slug:"",name:c.name,visible:true,sort_order:i},...c.subcategories.map((sub,j)=>map.get(c.slug+":"+sub.slug)??{category_slug:c.slug,subcategory_slug:sub.slug,name:sub.name,visible:true,sort_order:j})]));
   setThird(three.categories??[]);setEvidence(ev.groups??[]);
  }).catch(e=>setMessage(String(e)));return()=>{active=false}},[authFetch]);
+ const library=useMemo(()=>CATEGORIES.flatMap(c=>c.subcategories.flatMap(sub=>thirdLevelProposals(c.slug,sub.slug,sub.name).map((name,index)=>({category:c.slug,subcategory:sub.slug,slug:thirdLevelSlug(name),name,sort_order:index})))),[]);
+ const seed=async()=>{
+  if(seeded)return;
+  setSeeded(true);
+  try{
+   const response=await authFetch("/api/admin/taxonomy/third-level/seed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:library})});
+   if(!response.ok)throw Error((await response.json().catch(()=>({})).error||"Cannot create taxonomy library"));
+   const data=await response.json();
+   const reload=await authFetch("/api/admin/taxonomy/third-level");
+   if(reload.ok){const json=await reload.json();setThird(json.categories??[]);}
+   setMessage(data.created?data.created+" new third-level categories created, all hidden. Existing settings preserved.":"Third-level library already populated. Existing visibility preserved.");
+  }catch(e){setMessage("Unable to populate third-level taxonomy: "+String(e));setSeeded(false);}
+ };
+ useEffect(()=>{if(items.length>0&&!seeded){void seed();}},[items.length,seeded]);
+ const setGroupVisibility=(subcategory:string,visible:boolean)=>{
+  setThird(prev=>prev.map(x=>x.category===selected&&x.subcategory===subcategory?{...x,visible}:x));
+  setDirty(true);
+ };
  const top=items.filter(x=>!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order);
  const subs=items.filter(x=>x.category_slug===selected&&!!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order);
  const picked=top.find(x=>x.category_slug===selected);
@@ -77,6 +96,7 @@ export function AdminCategoryManagerPage(){
      <div className="bz-taxonomy-list">{subs.map(sub=><div key={sub.subcategory_slug} className="bz-taxonomy-subrow"><div className="bz-taxonomy-reorder"><button aria-label={"Move "+sub.name+" up"} onClick={()=>move(sub,-1)}><ArrowUp size={14}/></button><button aria-label={"Move "+sub.name+" down"} onClick={()=>move(sub,1)}><ArrowDown size={14}/></button></div><label><span>Name</span><input value={sub.name} onChange={e=>change(sub,{name:e.target.value})}/></label><label><span>Slug</span><input readOnly value={sub.subcategory_slug}/></label><label className="bz-taxonomy-checkbox"><input type="checkbox" checked={sub.visible} onChange={e=>change(sub,{visible:e.target.checked})}/> Visible</label><span className="bz-taxonomy-pill">{count(selected,sub.subcategory_slug)} items</span><button onClick={()=>{setThirdParent(sub.subcategory_slug);setView("third")}}>Edit levels</button></div>)}</div>
     </section>}
     {(view==="third"||view==="overview"||view==="tree")&&<section className="bz-taxonomy-panel"><div className="bz-taxonomy-panel-head"><div><h3>3rd-Level Taxonomy</h3><p>Draft, approve and edit specific product classifications.</p></div></div><div className="bz-taxonomy-inline"><select value={thirdParent} onChange={e=>setThirdParent(e.target.value)}>{subs.map(s=><option key={s.subcategory_slug} value={s.subcategory_slug}>{s.name}</option>)}</select><input placeholder="New third-level category…" value={draftNew} onChange={e=>setDraftNew(e.target.value)}/><button className="primary" onClick={()=>{addThird(draftNew,thirdParent);setDraftNew("")}}><Plus size={14}/> Add</button></div>
+     <div className="bz-taxonomy-inline"><strong>{currentThird.filter(x=>x.subcategory===thirdParent).length} entries · {currentThird.filter(x=>x.subcategory===thirdParent&&x.visible).length} enabled</strong><button onClick={()=>setGroupVisibility(thirdParent,true)}>Enable all in this subcategory</button><button onClick={()=>setGroupVisibility(thirdParent,false)}>Disable all in this subcategory</button></div>
      {currentThird.filter(x=>x.subcategory===thirdParent).map(x=><div key={x.slug} className="bz-taxonomy-third"><input value={x.name} onChange={e=>changeThird(x,{name:e.target.value})}/><label><input type="checkbox" checked={x.visible} onChange={e=>changeThird(x,{visible:e.target.checked})}/> Visible</label><input aria-label="Order" type="number" value={x.sort_order} onChange={e=>changeThird(x,{sort_order:Number(e.target.value)})}/></div>)}
     </section>}
     {(view==="overview"||view==="third")&&<section className="bz-taxonomy-panel"><div className="bz-taxonomy-panel-head"><div><h3>Taxonomy Suggestions</h3><p>Editorial suggestions based on category types. Counts reflect parent listings, not confirmed matches.</p></div><span className="bz-taxonomy-pill">{proposals.length} proposals</span></div><div className="bz-taxonomy-suggestions">{proposals.filter(x=>!suggestions.includes(x.subcategory+":"+x.slug)).slice(0,35).map(x=><div key={x.subcategory+":"+x.slug}><div><strong>{x.name}</strong><small>{x.subcategory} · {count(selected,x.subcategory)} parent listings</small></div><button className="primary" onClick={()=>addThird(x.name,x.subcategory)}><Check size={14}/> Approve to draft</button><button onClick={()=>setSuggestions(v=>[...v,x.subcategory+":"+x.slug])}><X size={14}/> Dismiss</button></div>).filter(Boolean)}</div></section>}
