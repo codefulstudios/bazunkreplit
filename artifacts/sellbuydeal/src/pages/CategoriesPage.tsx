@@ -137,6 +137,7 @@ export function CategoriesPage() {
   const [featuredLoading,setFeaturedLoading]=useState(true);
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeSub, setActiveSub] = useState<string | null>(null);
   const [counts, setCounts] = useState<CategoryCount[]>([]);
   const [countsLoading,setCountsLoading] = useState(true);
   const [hidden, setHidden] = useState<string[]>([]);
@@ -199,6 +200,9 @@ export function CategoriesPage() {
   const featuredCategory = selected ?? activeCategories.find(cat=>cat.slug==="electronics") ?? activeCategories[0];
   const curated = featuredCategory?.subcategories.filter(sub=>statusFor(featuredCategory.slug,sub.slug)==="active") ?? [];
   const categoryListings = featuredCategory ? featuredListings.filter(item => resolveCategory(item.category).category===featuredCategory.slug).slice(0,4) : [];
+  const visibleSubs = curated.filter(sub => !search.trim() || sub.name.toLowerCase().includes(search.toLowerCase()) || suggestedThirdLevel(featuredCategory!.slug,sub.slug).some(name=>name.toLowerCase().includes(search.toLowerCase())));
+  const selectedSub = visibleSubs.find(sub=>sub.slug===activeSub) ?? visibleSubs[0];
+  const selectedThird = selectedSub && featuredCategory ? suggestedThirdLevel(featuredCategory.slug,selectedSub.slug) : [];
   const products = categoryListings;
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
     <Navbar />
@@ -232,28 +236,51 @@ export function CategoriesPage() {
         </aside>
         <div className="min-w-0 space-y-6">
 
-          <section className="bz-contrast-hero relative overflow-hidden rounded-2xl border border-violet-300 bg-gradient-to-r from-indigo-800 via-violet-700 to-fuchsia-600 px-5 py-7 text-white shadow-sm dark:border-violet-700 sm:px-8 sm:py-9">
-            <div className="relative z-10 max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-widest text-white/90">Home / Categories{selected ? " / "+selected.name : ""}</p>
-              <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{featuredCategory ? featuredCategory.name : "Discover the marketplace"}</h1>
-              <p className="mt-2 max-w-xl text-sm font-medium leading-relaxed text-white/95">Explore real products from Bazunk sellers. Choose a subcategory, compare listings and find your next great buy.</p>
-              <div className="mt-4 flex flex-wrap gap-3 text-xs font-semibold text-white"><span>✓ Buyer Protection on eligible orders</span><span>✓ Secure checkout</span><span>{marketRegion==="uk"?"🇬🇧 UK marketplace":"🇺🇸 USA marketplace"}</span></div>
+          <header className="flex flex-wrap items-center justify-between gap-4 py-2">
+            <div>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Categories / {featuredCategory?.name || "All categories"}</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white">{featuredCategory?.name || "Discover the marketplace"}</h1>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">Browse subcategories and find exactly what you need.</p>
             </div>
-            {featuredCategory && CATEGORY_ART[featuredCategory.slug] && <img src={CATEGORY_ART[featuredCategory.slug]} alt="" loading="lazy" className="pointer-events-none absolute -bottom-8 right-3 hidden h-56 w-56 object-contain opacity-80 md:block" />}
+            {featuredCategory && <div className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 dark:border-[#304461] dark:bg-[#10213c] dark:text-slate-100">
+              {curated.length} subcategories <span className="mx-2 text-slate-400">·</span> {countsLoading?"Loading listings…":catCount(featuredCategory.slug)+" listings"}
+            </div>}
+          </header>
+          <section aria-label="Search categories" className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-[#304461] dark:bg-[#111f36] sm:p-4">
+            <label htmlFor="category-search" className="sr-only">Search categories and third-level categories</label>
+            <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600 dark:text-slate-300"/>
+              <input id="category-search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories, laptops, monitors, headphones…" className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-950 placeholder:text-slate-600 focus:outline focus:outline-2 focus:outline-orange-500 dark:border-[#425676] dark:bg-[#162842] dark:text-white dark:placeholder:text-slate-300"/>
+            </div>
           </section>
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-[#304461] dark:bg-[#111f36] sm:p-5" aria-label="Explore selected category">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Explore {featuredCategory?.name || "categories"}</h2>
-                <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{featuredCategory ? featuredCategory.subcategories.length+" subcategories to explore" : "Select a department from the left"}</p>
-              </div>
-              {featuredCategory && <Link href={"/browse?category="+encodeURIComponent(featuredCategory.slug)} className="rounded-full border border-blue-400 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-slate-800">Shop all {featuredCategory.name} →</Link>}
+          {featuredCategory && <section aria-label="Browse category hierarchy" className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[#304461] dark:bg-[#111f36] sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div><h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Browse {featuredCategory.name} categories</h2>
+                <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">Choose a subcategory to see its available third-level categories.</p></div>
+              <Link href={"/browse?category="+encodeURIComponent(featuredCategory.slug)} className="text-sm font-bold text-orange-700 hover:underline dark:text-orange-300">View all listings →</Link>
             </div>
-            <div className="relative mt-4"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600 dark:text-slate-300"/><input value={search} onChange={e=>setSearch(e.target.value)} aria-label="Search categories" placeholder="Search all categories and subcategories..." className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm text-slate-950 placeholder:text-slate-600 focus:outline focus:outline-2 focus:outline-blue-500 dark:border-slate-600 dark:bg-[#162842] dark:text-white dark:placeholder:text-slate-300"/></div>
+            {visibleSubs.length ? <div className="grid gap-3 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+              <div role="group" aria-label="Subcategories" className="space-y-1 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-[#304461] dark:bg-[#10213c]">
+                {visibleSubs.map(sub=><button key={sub.slug} type="button" aria-pressed={selectedSub?.slug===sub.slug} onClick={()=>setActiveSub(sub.slug)}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-3 text-left text-sm font-bold transition-colors ${selectedSub?.slug===sub.slug?"bg-blue-700 text-white":"text-slate-900 hover:bg-blue-100 dark:text-slate-100 dark:hover:bg-[#254368]"}`}>
+                  <span>{sub.name}</span><ChevronRight className="h-4 w-4 shrink-0"/>
+                </button>)}
+              </div>
+              {selectedSub && <div className="rounded-xl border border-slate-200 p-3 dark:border-[#304461] dark:bg-[#142844]">
+                <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-200 pb-3 dark:border-[#304461]">
+                  <div><h3 className="font-extrabold text-slate-950 dark:text-white">{selectedSub.name}</h3>
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">{subCount(featuredCategory.slug,selectedSub.slug)} listings</p></div>
+                  <Link href={"/browse?category="+encodeURIComponent(featuredCategory.slug)+"&sub="+encodeURIComponent(selectedSub.slug)} className="text-xs font-bold text-blue-700 dark:text-sky-300">View all →</Link>
+                </div>
+                {selectedThird.length ? <div className="divide-y divide-slate-200 dark:divide-[#304461]">
+                  {selectedThird.map(name=><Link key={name} href={"/browse?category="+encodeURIComponent(featuredCategory.slug)+"&sub="+encodeURIComponent(selectedSub.slug)+"&subsubcategory="+encodeURIComponent(thirdLevelSlug(name))}
+                    className="flex min-h-12 items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-blue-50 dark:text-white dark:hover:bg-[#254368]"><span>{name}</span><ChevronRight className="h-4 w-4 shrink-0 text-orange-600 dark:text-orange-300"/></Link>)}
+                </div> : <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700 dark:bg-[#10213c] dark:text-slate-200">No third-level categories are currently enabled. You can still browse all {selectedSub.name} listings.</p>}
+              </div>}
+            </div> : <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-700 dark:bg-[#10213c] dark:text-slate-200">No matching enabled subcategories.</p>}
           </section>
           {featuredCategory && <section aria-label="Shop subcategories">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Shop subcategories</h2><span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{curated.length} available</span></div>
-            {curated.length ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{curated.map((sub,i)=>{
+            {visibleSubs.length ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{visibleSubs.map((sub,i)=>{
               const art=subcategoryArtwork(featuredCategory.slug,sub.name,i);
               const count=subCount(featuredCategory.slug,sub.slug);
               return <Link key={sub.slug} href={"/browse?category="+encodeURIComponent(featuredCategory.slug)+"&sub="+encodeURIComponent(sub.slug)} className="group flex min-h-24 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition-colors hover:border-blue-500 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 dark:border-[#304461] dark:bg-[#142844] dark:hover:bg-[#1c3658]">
