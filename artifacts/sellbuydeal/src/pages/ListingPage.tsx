@@ -10,7 +10,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart, Eye, Users, MapPin, CheckCircle2, Star, Share2,
+  Heart, Eye, Users, MapPin, CheckCircle2, Star, Share2, Copy, Link2, ExternalLink,
   ShoppingCart, Tag, MessageSquare, Shield, Truck,
   ChevronLeft, ChevronRight, Package, Calendar, Flag, ArrowRight, Zap, TrendingUp,
   BookOpen, Hash, Info, List, FileText, Flame, Phone, Mail, Globe2, Plane, Box, BadgeCheck,
@@ -213,6 +213,13 @@ export function ListingPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reported, setReported] = useState(false);
+  const [shareOpen,setShareOpen]=useState(false);
+  const [reportOpen,setReportOpen]=useState(false);
+  const [reportReason,setReportReason]=useState("");
+  const [reportDetails,setReportDetails]=useState("");
+  const [reportEmail,setReportEmail]=useState("");
+  const [reportBusy,setReportBusy]=useState(false);
+  const [reportError,setReportError]=useState("");
   const [watchToast, setWatchToast] = useState<"added" | "removed" | null>(null);
 
   const delayedLoading = useMarketplaceLoadingDelay(loading, "listing");
@@ -275,21 +282,29 @@ export function ListingPage() {
     if (product && !isDemoListing) { addToCart(product); openCart(); }
   }
 
-  function handleShare() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: product?.title ?? "Bazunk listing", url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }).catch(() => {});
-    }
+  const listingUrl = typeof window!=="undefined" ? window.location.origin+"/listing/"+(apiProduct?._publicUrlToken || id) : "";
+  async function copyListingUrl(){
+    try { await navigator.clipboard.writeText(listingUrl);setCopied(true);setTimeout(()=>setCopied(false),2200); } catch { setCopied(false); }
   }
-
-  function handleReport() {
-    setReported(true);
-    setTimeout(() => setReported(false), 3000);
+  function shareTo(destination:"whatsapp"|"facebook"|"x"|"email"|"native"){
+    const url=encodeURIComponent(listingUrl), title=encodeURIComponent(product?.title||"Bazunk listing");
+    if(destination==="native") { if(navigator.share) void navigator.share({title:product?.title||"Bazunk listing",url:listingUrl}).catch(()=>{}); else void copyListingUrl(); }
+    else if(destination==="email") window.location.href="mailto:?subject="+title+"&body="+url;
+    else window.open(destination==="whatsapp"?"https://wa.me/?text="+title+"%20"+url:destination==="facebook"?"https://www.facebook.com/sharer/sharer.php?u="+url:"https://twitter.com/intent/tweet?text="+title+"&url="+url,"_blank","noopener,noreferrer");
+    setShareOpen(false);
+  }
+  async function submitListingReport(e:React.FormEvent){
+    e.preventDefault();setReportError("");
+    const email=(viewer?.email||reportEmail).trim();
+    if(!email||!reportReason){setReportError("Please provide an email and select a reason.");return;}
+    setReportBusy(true);
+    try {
+      const response=await fetch(API_BASE+"/api/support/tickets",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,subject:"Listing report #"+(product?.id||id)+" - "+reportReason,category:"listing_report",body:"Listing: "+listingUrl+"\\nReason: "+reportReason+"\\nDetails: "+(reportDetails.trim()||"No additional details")})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Could not submit report");
+      setReported(true);setReportOpen(false);setReportDetails("");setReportReason("");
+    }catch(error){setReportError(error instanceof Error?error.message:"Could not submit report");}
+    finally{setReportBusy(false);}
   }
 
   function handleWatchlist() {
@@ -558,12 +573,17 @@ export function ListingPage() {
                     <div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
                       <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{product.views.toLocaleString()} views</span>
                       <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
-                      <button onClick={handleShare} className={`flex items-center gap-1.5 ml-auto transition-colors ${copied ? "text-emerald-600" : "hover:text-[#4A5CE8]"}`} data-testid="button-share">
-                        <Share2 className="w-3.5 h-3.5" /> {copied ? "Copied!" : "Share"}
-                      </button>
-                      <button onClick={handleReport} className={`flex items-center gap-1.5 transition-colors ${reported ? "text-emerald-600" : "text-red-400 hover:text-red-500"}`} data-testid="button-report">
-                        <Flag className="w-3.5 h-3.5" /> {reported ? "Reported" : "Report"}
-                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2.5 dark:border-[#3b5172] dark:bg-[#10223d]">
+                      <div className="relative">
+                        <button type="button" onClick={()=>{setShareOpen(!shareOpen);setReportOpen(false);}} aria-expanded={shareOpen} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-orange-500 px-3 font-bold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#2d4264]" data-testid="button-share"><Share2 className="h-4 w-4 text-orange-600 dark:text-orange-300"/>Share listing<ChevronRight className={`h-4 w-4 transition-transform ${shareOpen?"rotate-90":""}`}/></button>
+                        {shareOpen&&<div className="absolute left-0 top-full z-40 mt-2 w-60 rounded-xl border border-slate-300 bg-white p-2 shadow-2xl dark:border-[#496286] dark:bg-[#132742]">{([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["X (Twitter)",()=>shareTo("x")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,fn])=><button type="button" key={label} onClick={()=>{fn();if(label==="Copy link")setShareOpen(false);}} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}</div>}
+                      </div>
+                      <button type="button" onClick={()=>void copyListingUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Copy className="h-4 w-4"/>{copied?"Copied!":"Copy link"}</button>
+                      <button type="button" onClick={handleWatchlist} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Heart className="h-4 w-4"/>Save</button>
+                      <button type="button" onClick={()=>{setReportOpen(true);setShareOpen(false);}} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-rose-400 px-3 text-sm font-bold text-rose-800 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-[#3c2740]" data-testid="button-report"><Flag className="h-4 w-4"/>{reported?"Report submitted":"Report listing"}</button>
+                    </div>
+                    {reportOpen&&<div className="mt-3 rounded-xl border border-orange-400 bg-white p-4 shadow-lg dark:bg-[#10223d] dark:text-white"><h3 className="text-lg font-bold">Report this listing</h3><p className="mb-3 text-sm text-slate-600 dark:text-slate-200">Your report goes to Bazunk support for review. Reporting does not automatically remove a listing.</p><form onSubmit={e=>void submitListingReport(e)} className="space-y-3"><label className="block text-sm font-semibold">Reason<select required value={reportReason} onChange={e=>setReportReason(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"><option value="">Select a reason</option>{["Scam or fraudulent","Prohibited item","Wrong category","Counterfeit / fake item","Abusive content","Misleading description","Other"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>{!viewer?.email&&<label className="block text-sm font-semibold">Your email<input required type="email" value={reportEmail} onChange={e=>setReportEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>}<label className="block text-sm font-semibold">Additional details<textarea value={reportDetails} maxLength={2000} onChange={e=>setReportDetails(e.target.value)} placeholder="Explain the issue (optional)" className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>{reportError&&<p role="alert" className="text-sm font-semibold text-red-700 dark:text-red-300">{reportError}</p>}<div className="flex gap-2"><button type="submit" disabled={reportBusy} className="rounded-lg bg-orange-600 px-4 py-2.5 font-bold text-white hover:bg-orange-700 disabled:opacity-50">{reportBusy?"Submitting…":"Submit report"}</button><button type="button" onClick={()=>setReportOpen(false)} className="rounded-lg border border-slate-400 px-4 py-2.5 font-bold text-slate-800 dark:text-white">Cancel</button></div></form></div>}
                     </div>
                   </div>
                 </ListingDetailsSection>
