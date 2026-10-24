@@ -401,6 +401,30 @@ export const ACTIVE_CATEGORIES = CATEGORIES.filter(c => !["digital-products", "e
   )),
 }));
 
+/** Load display-only category settings before the storefront mounts. Permanent slugs never change. */
+export async function loadCategoryPresentation():Promise<void>{
+ try{
+  const response=await fetch("/api/taxonomy/category-overrides");
+  if(!response.ok)return;
+  const data=await response.json();
+  if(!Array.isArray(data.overrides))return;
+  const overrides=new Map<string,{name:string;visible:boolean;sort_order:number}>();
+  for(const o of data.overrides){
+   if(typeof o.category_slug==="string"&&typeof o.subcategory_slug==="string"&&typeof o.name==="string")
+    overrides.set(o.category_slug+":"+o.subcategory_slug,o);
+  }
+  for(const c of ACTIVE_CATEGORIES){
+   const o=overrides.get(c.slug+":");
+   if(o){c.name=o.name;}
+   for(const sub of c.subcategories){const setting=overrides.get(c.slug+":"+sub.slug);if(setting)sub.name=setting.name;}
+   c.subcategories.sort((a,b)=>(overrides.get(c.slug+":"+a.slug)?.sort_order??9999)-(overrides.get(c.slug+":"+b.slug)?.sort_order??9999));
+  }
+  ACTIVE_CATEGORIES.sort((a,b)=>(overrides.get(a.slug+":")?.sort_order??9999)-(overrides.get(b.slug+":")?.sort_order??9999));
+  for(let i=ACTIVE_CATEGORIES.length-1;i>=0;i--){if(overrides.get(ACTIVE_CATEGORIES[i].slug+":")?.visible===false)ACTIVE_CATEGORIES.splice(i,1);}
+  for(const c of ACTIVE_CATEGORIES){for(let i=c.subcategories.length-1;i>=0;i--){if(overrides.get(c.slug+":"+c.subcategories[i].slug)?.visible===false)c.subcategories.splice(i,1);}}
+ }catch{/* Use built-in taxonomy if the API is unavailable. */}
+}
+
 /** Suggested third-level taxonomy. Suggestions are editorial only until listing and search APIs support a third slug. */
 export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; suggestions: string[]}> = {
   "appliances": {
