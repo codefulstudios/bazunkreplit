@@ -78,6 +78,15 @@ router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
   } catch (err) { logger.error({ err }, "Taxonomy save failed"); res.status(500).json({ error: "Taxonomy save failed" }); }
 });
 
+// Read-only listing evidence for third-level taxonomy proposals; no records are reclassified here.
+router.get("/admin/taxonomy/listing-evidence", requireAdmin, async (_req,res)=>{
+ try{
+  const rows=await db.execute(sql`SELECT category,COALESCE(subcategory,'') AS subcategory, COUNT(*)::int AS count,
+    (ARRAY_AGG(LEFT(title,140) ORDER BY id DESC))[1:8] AS titles
+    FROM listings GROUP BY category,subcategory ORDER BY count DESC LIMIT 350`);
+  res.json({groups:rows.rows});
+ }catch(err){logger.error({err},"Taxonomy evidence unavailable");res.status(503).json({error:"Cannot load listing evidence"});}
+});
 // First- and second-level presentation overrides. Slugs are immutable so listing references survive renames.
 router.get("/taxonomy/category-overrides", async (_req,res)=>{
  try{
