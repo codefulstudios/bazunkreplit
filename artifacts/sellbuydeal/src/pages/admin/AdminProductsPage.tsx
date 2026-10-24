@@ -750,6 +750,34 @@ function ProductDrawer({
 function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestInit) => Promise<Response>; categories: Category[]; onRefresh: () => void }) {
   type Entry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
   const [entries, setEntries] = useState<Entry[]>([]);
+  type DisplayEntry={category_slug:string;subcategory_slug:string;name:string;visible:boolean;sort_order:number};
+  const [display,setDisplay]=useState<DisplayEntry[]>([]);
+  const [selectedTop,setSelectedTop]=useState(SITE_CATEGORIES[0]?.slug??"");
+  const [displayError,setDisplayError]=useState("");
+  const [displayBusy,setDisplayBusy]=useState(false);
+  useEffect(()=>{
+    authFetch("/api/taxonomy/category-overrides").then(async r=>{
+      if(!r.ok)throw Error("Cannot load saved category display names");
+      const data=await r.json();
+      const overrides=new Map<string,DisplayEntry>((data.overrides??[]).map((x:DisplayEntry)=>[x.category_slug+":"+x.subcategory_slug,x]));
+      const all:DisplayEntry[]=[];
+      SITE_CATEGORIES.forEach((c,i)=>{
+        all.push(overrides.get(c.slug+":")??{category_slug:c.slug,subcategory_slug:"",name:c.name,visible:true,sort_order:i});
+        c.subcategories.forEach((sub,j)=>all.push(overrides.get(c.slug+":"+sub.slug)??{category_slug:c.slug,subcategory_slug:sub.slug,name:sub.name,visible:true,sort_order:j}));
+      });
+      setDisplay(all);
+    }).catch(e=>setDisplayError(String(e)));
+  },[authFetch]);
+  const changeDisplay=(key:string,changes:Partial<DisplayEntry>)=>setDisplay(prev=>prev.map(x=>x.category_slug+":"+x.subcategory_slug===key?{...x,...changes}:x));
+  async function saveDisplay(){
+    setDisplayBusy(true);setDisplayError("");
+    try{
+      const response=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:display})});
+      if(!response.ok)throw Error((await response.json().catch(()=>({})).error??"Could not save categories"));
+      setDisplayError("Saved category names, order and visibility. Category slugs and existing listings were retained.");
+    }catch(e){setDisplayError(String(e));}finally{setDisplayBusy(false);}
+  }
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -780,7 +808,35 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
     } catch (error) { setMessage(String(error)); } finally { setSaving(false); }
   }
   return <div className="space-y-4">
-    <p className="text-sm text-gray-600">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
+    <section className="rounded-xl border-2 border-slate-500 bg-white p-4 text-slate-950 dark:bg-[#13243b] dark:text-white">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div><h3 className="text-lg font-black">Main categories & subcategories</h3>
+        <p className="text-xs text-slate-700 dark:text-slate-200">Rename display labels, change their order or visibility without modifying permanent slugs or existing listings.</p></div>
+        <button type="button" onClick={saveDisplay} disabled={displayBusy||!display.length} className="rounded-lg !bg-blue-700 px-4 py-2 font-black !text-white hover:!bg-blue-600 disabled:opacity-60">{displayBusy?"Saving…":"Save categories"}</button>
+      </div>
+      {displayError&&<p role="status" className="mb-3 rounded bg-slate-700 p-2 text-sm font-bold text-white">{displayError}</p>}
+      <div className="grid gap-3 md:grid-cols-[240px_1fr]">
+        <div className="max-h-[460px] space-y-1 overflow-y-auto">
+          {display.filter(x=>!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order).map(x=>
+            <button key={x.category_slug} type="button" onClick={()=>setSelectedTop(x.category_slug)} className={`block w-full rounded-lg border px-3 py-2 text-left text-sm font-bold !text-white ${selectedTop===x.category_slug?"!bg-blue-700 border-blue-300":"!bg-slate-700 border-slate-500 hover:!bg-slate-600"}`}>{x.name}</button>)}
+        </div>
+        <div className="space-y-3">
+          {display.filter(x=>x.category_slug===selectedTop).sort((a,b)=>(!a.subcategory_slug?-1:!b.subcategory_slug?1:a.sort_order-b.sort_order)).map(x=>
+            <div key={x.category_slug+":"+x.subcategory_slug} className="rounded-lg border border-slate-400 bg-slate-100 p-3 dark:border-slate-600 dark:bg-slate-800">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <strong className="text-sm">{x.subcategory_slug?"Subcategory":"Main category"}</strong>
+                <code className="text-xs text-slate-700 dark:text-slate-200">{x.subcategory_slug||x.category_slug}</code>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input aria-label="Display name" value={x.name} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{name:e.target.value})} className="min-w-36 flex-1 rounded border border-slate-500 bg-white p-2 text-sm font-semibold text-slate-950"/>
+                <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={x.visible} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{visible:e.target.checked})}/> Visible</label>
+                <label className="flex items-center gap-1 text-xs font-bold">Order <input aria-label="Sort order" type="number" min="0" max="9999" value={x.sort_order} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{sort_order:Number(e.target.value)})} className="w-16 rounded border border-slate-500 bg-white p-2 text-slate-950"/></label>
+              </div>
+            </div>)}
+        </div>
+      </div>
+    </section>
+    <p className="text-sm text-gray-600 dark:text-white">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
     <div className="flex flex-wrap gap-2">
       <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{SITE_CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
       <select value={subcategory} onChange={e => setSubcategory(e.target.value)} className="border rounded-lg p-2 bg-white text-gray-900"><option value="">Choose subcategory</option>{options.map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}</select>
