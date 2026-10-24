@@ -133,6 +133,7 @@ export const CATEGORIES: Category[] = [
     icon: "Laptop",
     subcategories: [
       { name: "Laptops", slug: "laptops" },
+      { name: "Tablets & E-Readers", slug: "tablets" },
       { name: "Desktop Computers", slug: "desktops" },
       { name: "Computer Components", slug: "components" },
       { name: "Monitors & Displays", slug: "monitors" },
@@ -682,6 +683,7 @@ const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
  "adult-media":["Calendars","Collectible Print Media"],
 };
 const EXPANDED_THIRD_LEVEL: Record<string,string[]> = {
+ "tablets": ["iPads","Android Tablets","Windows Tablets","Kids Tablets","Drawing Tablets","E-Readers","Tablet Cases & Covers","Tablet Keyboards & Styluses","Tablet Chargers & Docks"],
  "laptops": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"],
  "desktops": ["Desktop PCs","All-in-One PCs","Gaming Desktops","Mini PCs","Barebone PCs"],
  "components": ["Processors (CPUs)","Graphics Cards (GPUs)","Motherboards","Power Supplies","PC Cases","Cooling & Fans"],
