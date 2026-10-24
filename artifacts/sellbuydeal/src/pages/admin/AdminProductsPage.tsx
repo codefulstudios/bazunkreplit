@@ -829,13 +829,13 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-lg font-black">Main categories & subcategories</h3>
         <p className="text-xs text-slate-700 dark:text-slate-200">Rename display labels, change their order or visibility without modifying permanent slugs or existing listings.</p></div>
-        <button type="button" onClick={saveDisplay} disabled={displayBusy||!display.length} className="rounded-lg !bg-blue-700 px-4 py-2 font-black !text-white hover:!bg-blue-600 disabled:opacity-60">{displayBusy?"Saving…":"Save categories"}</button>
+        <button type="button" onClick={saveDisplay} disabled={displayBusy||!display.length} className="category-save rounded-lg !bg-blue-700 px-4 py-2 font-black !text-white hover:!bg-blue-600" className="rounded-lg !bg-blue-700 px-4 py-2 font-black !text-white hover:!bg-blue-600 disabled:opacity-60">{displayBusy?"Saving…":"Save categories"}</button>
       </div>
       {displayError&&<p role="status" className="mb-3 rounded bg-slate-700 p-2 text-sm font-bold text-white">{displayError}</p>}
       <div className="grid gap-3 md:grid-cols-[240px_1fr]">
         <div className="max-h-[460px] space-y-1 overflow-y-auto">
           {display.filter(x=>!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order).map(x=>
-            <button key={x.category_slug} type="button" onClick={()=>setSelectedTop(x.category_slug)} className={`block w-full rounded-lg border px-3 py-2 text-left text-sm font-bold !text-white ${selectedTop===x.category_slug?"!bg-blue-700 border-blue-300":"!bg-slate-700 border-slate-500 hover:!bg-slate-600"}`}>{x.name}</button>)}
+            <button key={x.category_slug} type="button" aria-pressed={selectedTop===x.category_slug} onClick={()=>setSelectedTop(x.category_slug)} className={`block w-full rounded-lg border px-3 py-2 text-left text-sm font-bold !text-white ${selectedTop===x.category_slug?"!bg-blue-700 border-blue-300":"!bg-slate-700 border-slate-500 hover:!bg-slate-600"}`}>{x.name}</button>)}
         </div>
         <div className="space-y-3">
           {display.filter(x=>x.category_slug===selectedTop).sort((a,b)=>(!a.subcategory_slug?-1:!b.subcategory_slug?1:a.sort_order-b.sort_order)).map(x=>
