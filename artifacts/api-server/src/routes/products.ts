@@ -50,7 +50,7 @@ async function ensureCompleteThirdLevelLibrary(){
   const batches=[] as (typeof COMPLETE_THIRD_LEVEL_LIBRARY[number])[][];
   for(let i=0;i<COMPLETE_THIRD_LEVEL_LIBRARY.length;i+=120)batches.push(COMPLETE_THIRD_LEVEL_LIBRARY.slice(i,i+120) as any);
   for(const batch of batches)await db.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order)
-   SELECT candidate.* FROM (VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order})`),sql`,`)}) AS candidate(category,subcategory,slug,name,visible,sort_order)
+   SELECT candidate.* FROM (VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order}::integer)`),sql`,`)}) AS candidate(category,subcategory,slug,name,visible,sort_order)
    WHERE NOT EXISTS (SELECT 1 FROM deleted_third_level_categories deleted WHERE deleted.category=candidate.category AND deleted.subcategory=candidate.subcategory AND deleted.slug=candidate.slug)
    ON CONFLICT(category,subcategory,slug) DO NOTHING`);
  })().catch(e=>{seedPromise=undefined;throw e});
@@ -63,7 +63,6 @@ async function ensureDeletedThirdLevelTable(){await db.execute(sql`CREATE TABLE 
 // Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
 router.get("/taxonomy/third-level", async (_req, res) => {
   try {
-    await ensureCompleteThirdLevelLibrary();
     const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
     res.json({ categories: rows.rows });
   } catch (err) {
@@ -73,7 +72,6 @@ router.get("/taxonomy/third-level", async (_req, res) => {
 });
 router.get("/admin/taxonomy/third-level", requireAdmin, async (_req, res) => {
   try {
-    await ensureCompleteThirdLevelLibrary();
     const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
     res.json({ categories: rows.rows });
   } catch (err) { res.status(500).json({ error: "Could not load taxonomy" }); }
