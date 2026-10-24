@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { loadCategoryPresentation } from "./data/categories";
 import "./index.css";
 import "./design-system/protected.css";
 
@@ -29,5 +30,5 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 if (window.location.hostname === "bazunk-web.onrender.com") {
   window.location.replace(`https://bazunk.com${window.location.pathname}${window.location.search}${window.location.hash}`);
 } else {
-  createRoot(document.getElementById("root")!).render(<App />);
+  void loadCategoryPresentation().finally(()=>createRoot(document.getElementById("root")!).render(<App />));
 }
