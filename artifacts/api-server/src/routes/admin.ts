@@ -1345,16 +1345,16 @@ router.post("/admin/listings/category-review", async (req,res)=>{
   const words=new Set(title.match(/[a-z0-9]+/g)||[]);
   // Conservative product-type cues: only override an existing parent when a clear product signal is present.
   const cues:{re:RegExp;category:string;subcategory:string}[]=[
-   {re:/\\b(tyres?|tires?|wheel rims?|alloy wheels?)\\b/i,category:"automotive",subcategory:"tires"},
-   {re:/\\b(vacuum cleaner|hoover|robot vacuum)\\b/i,category:"appliances",subcategory:"vacuums"},
-   {re:/\\b(smart plugs?|zigbee|smart sensors?|wifi sockets?)\\b/i,category:"electronics",subcategory:"smart-home"},
-   {re:/\\b(dash cams?|security cameras?|cctv cameras?|drones?)\\b/i,category:"electronics",subcategory:"cameras"},
-   {re:/\\b(gaming chairs?|office chairs?)\\b/i,category:"home-kitchen",subcategory:"furniture"},
-   {re:/\\b(cookware sets?|frying pans?|saucepans?|cooking pots?)\\b/i,category:"home-kitchen",subcategory:"cookware"},
-   {re:/\\b(beads?|jewellery findings?)\\b/i,category:"arts-crafts-sewing",subcategory:"beading"},
-   {re:/\\b(iphone|galaxy phone|redmi phone|smartphone)\\b/i,category:"cell-phones",subcategory:"smartphones"},
-   {re:/\\b(laptops?|notebooks? computers?|desktop pcs?)\\b/i,category:"electronics",subcategory:"computers"},
-   {re:/\\b(earbuds?|headphones?|soundbars?)\\b/i,category:"electronics",subcategory:"audio"}
+   {re:/\b(tyres?|tires?|wheel rims?|alloy wheels?)\b/i,category:"automotive",subcategory:"tires"},
+   {re:/\b(vacuum cleaner|hoover|robot vacuum)\b/i,category:"appliances",subcategory:"vacuums"},
+   {re:/\b(smart plugs?|zigbee|smart sensors?|wifi sockets?)\b/i,category:"electronics",subcategory:"smart-home"},
+   {re:/\b(dash cams?|security cameras?|cctv cameras?|drones?)\b/i,category:"electronics",subcategory:"cameras"},
+   {re:/\b(gaming chairs?|office chairs?)\b/i,category:"home-kitchen",subcategory:"furniture"},
+   {re:/\b(cookware sets?|frying pans?|saucepans?|cooking pots?)\b/i,category:"home-kitchen",subcategory:"cookware"},
+   {re:/\b(beads?|jewellery findings?)\b/i,category:"arts-crafts-sewing",subcategory:"beading"},
+   {re:/\b(iphone|galaxy phone|redmi phone|smartphone)\b/i,category:"cell-phones",subcategory:"smartphones"},
+   {re:/\b(laptops?|notebooks? computers?|desktop pcs?)\b/i,category:"electronics",subcategory:"computers"},
+   {re:/\b(earbuds?|headphones?|soundbars?)\b/i,category:"electronics",subcategory:"audio"}
   ];
   const cue=cues.find(c=>c.re.test(title));
   const proposedCat=cue?.category||l.category;
