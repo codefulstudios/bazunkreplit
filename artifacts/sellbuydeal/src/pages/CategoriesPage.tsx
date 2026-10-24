@@ -116,7 +116,7 @@ function subcategoryArtwork(category: string, subcategory: string, index: number
 }
 
 const CATEGORY_ORDER = [
-  "electronics", "home-kitchen", "clothing-shoes-jewelry",
+  "electronics", "computing", "home-kitchen", "clothing-shoes-jewelry",
   "health-household", "toys-games", "automotive",
   "baby-products", "sports-outdoors", "books",
   "cds-vinyl", "arts-crafts-sewing", "industrial-scientific",
