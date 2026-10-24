@@ -1337,13 +1337,13 @@ router.post("/admin/listings/category-review", async (req,res)=>{
  const ids=req.body?.ids;
  if(!Array.isArray(ids)||ids.length<1||ids.length>50||!ids.every((x:unknown)=>Number.isSafeInteger(x)&&Number(x)>0)){res.status(400).json({error:"Select 1–50 listings"});return;}
  try{
- const rows=await db.execute(sql`SELECT id,title,category,subcategory,specifications FROM listings WHERE id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)})`);
+ const rows=await db.execute(sql`SELECT l.id,l.title,l.category,l.subcategory,l.specifications, a.created_at AS historical_approved_at FROM listings l LEFT JOIN LATERAL (SELECT created_at FROM admin_audit_log WHERE action='listings.category-review' AND target_id=l.id::text AND after_data->>'category'=l.category AND after_data->>'subcategory'=COALESCE(l.subcategory,'') ORDER BY created_at DESC LIMIT 1) a ON TRUE WHERE l.id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)})`);
  const tax=await db.execute(sql`SELECT category,subcategory,slug,name,visible FROM third_level_categories`);
  const all=tax.rows as any[];
  const results=(rows.rows as any[]).map(l=>{
   const title=String(l.title||"").toLowerCase();
   const spec=typeof l.specifications==="string"?JSON.parse(l.specifications||"{}"):(l.specifications||{});
-  const approved=Boolean(spec.admin_category_review_approved_at);
+  const approved=Boolean(spec.admin_category_review_approved_at||l.historical_approved_at);
   const words=new Set(title.match(/[a-z0-9]+/g)||[]);
   // Conservative product-type cues: only override an existing parent when a clear product signal is present.
   const cues:{re:RegExp;category:string;subcategory:string}[]=[
@@ -1367,7 +1367,7 @@ router.post("/admin/listings/category-review", async (req,res)=>{
   const inSub=all.filter(x=>x.category===proposedCat&&x.subcategory===proposedSub);
   const ranked=inSub.map(x=>{const key=String(x.name).toLowerCase().match(/[a-z0-9]+/g)||[];const meaningful=key.filter(k=>k.length>3&&!["with","parts","other","accessories","products","main"].includes(k));const matched=meaningful.filter(k=>words.has(k)||[...words].some(w=>w.startsWith(k)||k.startsWith(w))).length;return {...x,score:meaningful.length?matched/meaningful.length:0,matched};}).filter(x=>x.matched>0).sort((a,b)=>b.score-a.score||b.matched-a.matched);
   const best=ranked[0];
-  return {id:l.id,title:l.title,category:l.category,subcategory:l.subcategory,currentThird:String(spec.admin_third_level_slug||""),approved,approvedAt:spec.admin_category_review_approved_at||null,suggestedCategory:proposedCat,suggestedSubcategory:proposedSub,suggestedThird:approved?String(spec.admin_third_level_slug||""):(best?.slug||""),thirdName:best?.name||"",thirdVisible:best?.visible??false,confidence:best?.score>=0.8?"high":best?.score>=0.5?"medium":"low",needsReview:!approved};
+  return {id:l.id,title:l.title,category:l.category,subcategory:l.subcategory,currentThird:String(spec.admin_third_level_slug||""),approved,approvedAt:spec.admin_category_review_approved_at||l.historical_approved_at||null,suggestedCategory:proposedCat,suggestedSubcategory:proposedSub,suggestedThird:approved?String(spec.admin_third_level_slug||""):(best?.slug||""),thirdName:best?.name||"",thirdVisible:best?.visible??false,confidence:best?.score>=0.8?"high":best?.score>=0.5?"medium":"low",needsReview:!approved};
  });
  res.json({results});
  }catch(err){logger.error({err},"Listing taxonomy review failed");res.status(503).json({error:"Category review unavailable"});}
