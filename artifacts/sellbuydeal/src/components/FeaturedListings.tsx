@@ -126,15 +126,25 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     if (!el) return;
     updateScrollButtons();
     el.addEventListener("scroll", updateScrollButtons, { passive: true });
+    const observer = new ResizeObserver(updateScrollButtons);
+    observer.observe(el);
+    Array.from(el.children).forEach(child => observer.observe(child));
+    const frame = requestAnimationFrame(updateScrollButtons);
     window.addEventListener("resize", updateScrollButtons);
     return () => {
       el.removeEventListener("scroll", updateScrollButtons);
+      observer.disconnect();
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateScrollButtons);
     };
   }, [displayListings]);
 
   function scrollBy(delta: number) {
-    scrollRef.current?.scrollBy({ left: delta, behavior: "smooth" });
+    const el=scrollRef.current;
+    if (!el) return;
+    const amount=Math.min(700,Math.max(220,el.clientWidth*0.8));
+    el.scrollTo({left:Math.max(0,Math.min(el.scrollWidth-el.clientWidth,el.scrollLeft+Math.sign(delta)*amount)),behavior:"smooth"});
+    window.setTimeout(updateScrollButtons,400);
   }
 
   if (delayedLoading) {
@@ -178,14 +188,16 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
             {/* Scroll arrows */}
             <button
               onClick={() => scrollBy(-700)}
-              disabled={!canScrollLeft}
-              className="hidden sm:flex w-9 h-9 rounded-full border border-gray-200 items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              aria-label="Scroll spotlight listings left"
+              aria-disabled={!canScrollLeft}
+              className="hidden sm:flex w-10 h-10 rounded-full border-2 border-slate-400 dark:border-slate-500 items-center justify-center !bg-slate-800 !text-white hover:!bg-blue-700 hover:!border-blue-300 cursor-pointer transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => scrollBy(700)}
-              disabled={!canScrollRight}
+              aria-label="Scroll spotlight listings right"
+              aria-disabled={!canScrollRight}
               className="hidden sm:flex w-9 h-9 rounded-full border border-gray-200 items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronRight className="w-4 h-4" />
