@@ -41,7 +41,7 @@ export function AdminCategoryManagerPage(){
   setSeeded(true);
   try{
    const response=await authFetch("/api/admin/taxonomy/third-level/seed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:library})});
-   if(!response.ok)throw Error((await response.json().catch(()=>({})).error||"Cannot create taxonomy library"));
+   if(!response.ok)throw Error(((await response.json().catch(()=>({}))).error||"Cannot create taxonomy library"));
    const data=await response.json();
    const reload=await authFetch("/api/admin/taxonomy/third-level");
    if(reload.ok){const json=await reload.json();setThird(json.categories??[]);}
