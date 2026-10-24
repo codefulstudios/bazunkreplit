@@ -651,7 +651,7 @@ const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
  cameras:["Digital Cameras","Security Cameras","Dash Cams","Drones","Action Cameras","Camera Accessories"],
  computers:["Laptops","Desktop PCs","Monitors","Computer Components","Computer Accessories"],
  "car-parts":["Interior Accessories","Exterior & Body Parts","Engine Parts","Brakes","Car Lighting"],
- "mens-clothing":["Jackets & Coats","Shirts","T-Shirts","Jeans & Trousers","Underwear","Activewear"],
+ "mens-clothing":["Jackets & Coats","Shirts","T-Shirts","Jumpers","Jeans & Trousers","Underwear","Activewear"],
  cookware:["Pots & Pans","Cookware Sets","Bakeware","Cooking Utensils"],
  furniture:["Office & Gaming Chairs","Sofas","Tables","Cabinets & Storage","Beds"],
  beading:["Gemstone Beads","Glass Beads","Jewellery Findings","Beading Kits"],
