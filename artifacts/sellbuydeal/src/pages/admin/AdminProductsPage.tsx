@@ -7,7 +7,7 @@ import {
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
-import { CATEGORIES, ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { CATEGORIES, ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelProposals, thirdLevelSlug } from "@/data/categories";
 
 const SITE_CATEGORIES = ACTIVE_CATEGORIES;
 
@@ -791,6 +791,23 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       setEntries(data.categories ?? []);
     }).catch(error => setMessage(String(error))).finally(() => setLoading(false));
   }, [authFetch]);
+  type Evidence={category:string;subcategory:string;count:number;titles:string[]};
+  const [evidence,setEvidence]=useState<Evidence[]>([]);
+  const [selectedProposals,setSelectedProposals]=useState<string[]>([]);
+  useEffect(()=>{authFetch("/api/admin/taxonomy/listing-evidence").then(r=>r.ok?r.json():{groups:[]}).then(data=>setEvidence(data.groups??[])).catch(()=>{});},[authFetch]);
+  const proposed=CATEGORIES.find(c=>c.slug===category)?.subcategories.flatMap(sub=>
+   thirdLevelProposals(category,sub.slug,sub.name).map((label,i)=>({
+    category,subcategory:sub.slug,slug:thirdLevelSlug(label),name:label,visible:true,sort_order:i,
+    count:evidence.find(x=>x.category===category&&x.subcategory===sub.slug)?.count??0
+   })))??[];
+  const unadded=proposed.filter(x=>!entries.some(e=>e.category===x.category&&e.subcategory===x.subcategory&&e.slug===x.slug));
+  const proposalKey=(x:{category:string;subcategory:string;slug:string})=>x.category+":"+x.subcategory+":"+x.slug;
+  function addSelectedProposals(){
+   const choices=unadded.filter(x=>selectedProposals.includes(proposalKey(x)));
+   setEntries(old=>[...old,...choices.map(({count,...item})=>item)]);
+   setSelectedProposals([]);
+   setMessage(choices.length+" third-level categories added to draft. Review them and click Save taxonomy to publish.");
+  }
   const options = CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
   function add() {
     const clean = name.trim(), slug = thirdLevelSlug(clean);
@@ -834,6 +851,26 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
               </div>
             </div>)}
         </div>
+      </div>
+    </section>
+    <section className="rounded-xl border-2 border-slate-500 bg-white p-4 text-slate-950 dark:bg-[#13243b] dark:text-white">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div><h3 className="font-black">Third-level category suggestion library</h3>
+          <p className="text-xs text-slate-700 dark:text-slate-200">Review suggestions for {CATEGORIES.find(c=>c.slug===category)?.name}. Counts show existing listings within each subcategory, not automatically classified matches.</p>
+        </div>
+        <button type="button" disabled={!selectedProposals.length} onClick={addSelectedProposals} className="rounded-lg !bg-blue-700 px-4 py-2 text-sm font-black !text-white disabled:opacity-50">Add {selectedProposals.length} to draft</button>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button type="button" onClick={()=>setSelectedProposals(unadded.map(proposalKey))} className="rounded-lg !bg-slate-700 px-3 py-2 text-xs font-black !text-white">Select all suggestions</button>
+        <button type="button" onClick={()=>setSelectedProposals([])} className="rounded-lg !bg-slate-700 px-3 py-2 text-xs font-black !text-white">Clear selection</button>
+      </div>
+      <div className="max-h-80 space-y-2 overflow-y-auto">
+        {unadded.map(x=><label key={proposalKey(x)} className="flex cursor-pointer flex-wrap items-center gap-3 rounded-lg border border-slate-400 bg-slate-100 p-3 dark:border-slate-600 dark:bg-slate-800">
+          <input type="checkbox" checked={selectedProposals.includes(proposalKey(x))} onChange={e=>setSelectedProposals(prev=>e.target.checked?[...prev,proposalKey(x)]:prev.filter(k=>k!==proposalKey(x)))} />
+          <strong className="flex-1 text-sm">{x.name}</strong>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{x.subcategory} · {x.count} existing listings</span>
+        </label>)}
+        {!unadded.length&&<p className="text-sm">No remaining suggestions for this main category.</p>}
       </div>
     </section>
     <p className="text-sm text-gray-600 dark:text-white">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
