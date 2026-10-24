@@ -146,6 +146,7 @@ import { AdminDesignSystemPage } from "@/pages/admin/AdminDesignSystemPage";
 import { AdminEmailsPage } from "@/pages/admin/AdminEmailsPage";
 import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
 import { AdminListingsPage } from "@/pages/admin/AdminListingsPage";
+import { AdminCategoryManagerPage } from "@/pages/admin/AdminCategoryManagerPage";
 import { AdminImportsPage } from "@/pages/admin/AdminImportsPage";
 import { AdminImporterControlPage } from "@/pages/admin/AdminImporterControlPage";
 import { AdminCashbackPage } from "@/pages/admin/AdminCashbackPage";
@@ -450,6 +451,7 @@ function Router() {
       <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
       <Route path="/admin/products"><Redirect to="/admin/listings" /></Route>
       <Route path="/admin/listings" component={AdminListingsPage} />
+      <Route path="/admin/listings/categories" component={AdminCategoryManagerPage} />
       <Route path="/admin/imports" component={AdminImporterOverviewPage} />
       <Route path="/admin/importers/amazon">{() => <AdminImportsPage source="amazon" />}</Route>
       <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
