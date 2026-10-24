@@ -78,6 +78,34 @@ router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
   } catch (err) { logger.error({ err }, "Taxonomy save failed"); res.status(500).json({ error: "Taxonomy save failed" }); }
 });
 
+// First- and second-level presentation overrides. Slugs are immutable so listing references survive renames.
+router.get("/taxonomy/category-overrides", async (_req,res)=>{
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
+  const rows=await db.execute(sql`SELECT category_slug,subcategory_slug,name,sort_order,visible FROM category_display_overrides ORDER BY sort_order,name`);
+  res.json({overrides:rows.rows});
+ }catch(err){logger.error({err},"Category overrides failed");res.status(503).json({error:"Category overrides unavailable"});}
+});
+router.put("/admin/taxonomy/category-overrides",requireAdmin,async(req,res)=>{
+ const rows=req.body?.overrides;
+ if(!Array.isArray(rows)||rows.length>700){res.status(400).json({error:"Invalid category data"});return;}
+ const cleaned: {category_slug:string;subcategory_slug:string;name:string;sort_order:number;visible:boolean}[]=[];
+ const seen=new Set<string>();
+ for(const v of rows){
+  const category_slug=String(v.category_slug??""),subcategory_slug=String(v.subcategory_slug??""),name=String(v.name??"").trim();
+  const key=category_slug+":"+subcategory_slug;
+  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category_slug)||(subcategory_slug&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subcategory_slug))||!name||name.length>100||seen.has(key)){res.status(400).json({error:"Invalid or duplicate category names/slugs"});return;}
+  seen.add(key);
+  cleaned.push({category_slug,subcategory_slug,name,sort_order:Math.max(0,Math.min(9999,Math.trunc(Number(v.sort_order)||0))),visible:v.visible!==false});
+ }
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
+  await db.transaction(async tx=>{
+   for(const v of cleaned)await tx.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible) VALUES(${v.category_slug},${v.subcategory_slug},${v.name},${v.sort_order},${v.visible}) ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
+  });
+  res.json({saved:cleaned.length});
+ }catch(err){logger.error({err},"Category overrides save failed");res.status(503).json({error:"Could not save categories"});}
+});
 // ── Categories ────────────────────────────────────────────────────────────────
 
 router.get("/admin/categories", async (_req, res) => {
