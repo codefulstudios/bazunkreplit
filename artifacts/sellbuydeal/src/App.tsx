@@ -451,7 +451,8 @@ function Router() {
       <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
       <Route path="/admin/products"><Redirect to="/admin/listings" /></Route>
       <Route path="/admin/listings" component={AdminListingsPage} />
-      <Route path="/admin/listings/categories" component={AdminCategoryManagerPage} />
+      <Route path="/admin/listings/categories"><Redirect to="/admin/categories" /></Route>
+      <Route path="/admin/categories" component={AdminCategoryManagerPage} />
       <Route path="/admin/imports" component={AdminImporterOverviewPage} />
       <Route path="/admin/importers/amazon">{() => <AdminImportsPage source="amazon" />}</Route>
       <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
