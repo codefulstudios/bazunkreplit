@@ -824,8 +824,36 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       setMessage("Taxonomy saved.");
     } catch (error) { setMessage(String(error)); } finally { setSaving(false); }
   }
-  return <div className="space-y-4">
-    <section className="rounded-xl border-2 border-slate-500 bg-white p-4 text-slate-950 dark:bg-[#13243b] dark:text-white">
+  return <div id="bz-category-editor" className="space-y-4">
+    <style>{`
+      .bazunk-admin-wordpress #bz-category-editor section,
+      .bazunk-admin-wordpress #bz-category-editor section > div,
+      .bazunk-admin-wordpress #bz-category-editor section div.rounded-lg,
+      .bazunk-admin-wordpress #bz-category-editor section label.rounded-lg {
+        background-color:#172941 !important; background-image:none !important;
+        color:#ffffff !important; border-color:#5e7797 !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor section :is(p,strong,h3,span,code,label) {
+        color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;
+        opacity:1 !important;text-shadow:none !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor button {
+        background-color:#1d4ed8 !important;background-image:none !important;
+        color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;
+        border:2px solid #a6cbff !important;opacity:1 !important;
+        box-shadow:none !important;text-shadow:none !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor button:hover {background-color:#1e40af !important;}
+      .bazunk-admin-wordpress #bz-category-editor button[aria-pressed="true"] {background-color:#0f766e !important;border-color:#99f6e4 !important;}
+      .bazunk-admin-wordpress #bz-category-editor :is(input:not([type="checkbox"]),textarea,select) {
+        background-color:#ffffff !important;background-image:none !important;
+        color:#0f172a !important;-webkit-text-fill-color:#0f172a !important;
+        border:2px solid #94a3b8 !important;opacity:1 !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor :is(input,select,button):focus-visible {outline:3px solid #facc15 !important;outline-offset:2px;}
+      .bazunk-admin-wordpress #bz-category-editor input[type="checkbox"] {accent-color:#f97316 !important;}
+    `}</style>
+    <section className="rounded-xl border-2 border-slate-500 bg-[#172941] p-4 text-white">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-lg font-black">Main categories & subcategories</h3>
         <p className="text-xs text-slate-700 dark:text-slate-200">Rename display labels, change their order or visibility without modifying permanent slugs or existing listings.</p></div>
