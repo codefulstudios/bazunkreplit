@@ -47,9 +47,9 @@ export function AdminCategoryManagerPage(){
  const move=(x:Item,delta:number)=>{const peers=items.filter(v=>v.category_slug===x.category_slug&&Boolean(v.subcategory_slug)===Boolean(x.subcategory_slug)).sort((a,b)=>a.sort_order-b.sort_order);const i=peers.findIndex(v=>v.subcategory_slug===x.subcategory_slug);if(i+delta<0||i+delta>=peers.length)return;[peers[i],peers[i+delta]]=[peers[i+delta],peers[i]];setItems(prev=>prev.map(v=>{const order=peers.findIndex(p=>p.category_slug===v.category_slug&&p.subcategory_slug===v.subcategory_slug);return order<0?v:{...v,sort_order:order}}));setDirty(true)};
  const save=async()=>{setSaving(true);setMessage("");try{
   const a=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:items})});
-  if(!a.ok)throw Error((await a.json().catch(()=>({})).error||"Could not save categories"));
+  if(!a.ok)throw Error(((await a.json().catch(()=>({}))).error||"Could not save categories"));
   const b=await authFetch("/api/admin/taxonomy/third-level",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:third})});
-  if(!b.ok)throw Error((await b.json().catch(()=>({})).error||"Could not save taxonomy"));
+  if(!b.ok)throw Error(((await b.json().catch(()=>({}))).error||"Could not save taxonomy"));
   setDirty(false);setMessage("Saved categories and taxonomy. Existing listing slugs are unchanged.");
  }catch(e){setMessage(e instanceof Error?e.message:String(e))}finally{setSaving(false)}};
  const addThird=(name:string,sub:string)=>{const slug=thirdLevelSlug(name);if(!slug||third.some(x=>x.category===selected&&x.subcategory===sub&&x.slug===slug))return;setThird(v=>[...v,{category:selected,subcategory:sub,slug,name,sort_order:third.filter(t=>t.category===selected&&t.subcategory===sub).length,visible:true}]);setDirty(true);setMessage("Category added to draft. Save Changes to publish.")};
@@ -60,7 +60,7 @@ export function AdminCategoryManagerPage(){
  return <AdminLayout><div className="bz-taxonomy">
   <div className="bz-taxonomy-head"><div><h1>Categories &amp; Taxonomy</h1><p>Manage your catalog structure, visibility, sorting and taxonomy rules.</p></div><div className="bz-taxonomy-actions"><button onClick={()=>window.open("/browse","_blank")}><Eye size={16}/> Preview navigation</button><button className="primary" onClick={save} disabled={saving||!dirty}><Save size={16}/>{saving?"Saving…":dirty?"Save Changes *":"All changes saved"}</button></div></div>
   {message&&<div role="status" className="bz-taxonomy-message">{message}</div>}
-  <div className="bz-taxonomy-stats">{[["Main Categories",top.length,FolderTree],["Subcategories",items.filter(x=>x.subcategory_slug).length,Layers3],["3rd-Level Categories",totalThird,Layers3],["Hidden Items",hidden,EyeOff]].map(([name,num,Icon])=><div className="bz-taxonomy-stat" key={String(name)}><Icon size={26}/><div><span>{String(name)}</span><strong>{num as number}</strong></div></div>)}</div>
+  <div className="bz-taxonomy-stats">{([["Main Categories",top.length,FolderTree],["Subcategories",items.filter(x=>x.subcategory_slug).length,Layers3],["3rd-Level Categories",totalThird,Layers3],["Hidden Items",hidden,EyeOff]] as [string,number,typeof FolderTree][]).map(([name,num,Icon])=><div className="bz-taxonomy-stat" key={String(name)}><Icon size={26}/><div><span>{String(name)}</span><strong>{num as number}</strong></div></div>)}</div>
   <nav className="bz-taxonomy-nav" aria-label="Taxonomy sections">{nav.map(([id,label])=><button key={id} className={view===id?"active":""} onClick={()=>setView(id)}>{label}</button>)}</nav>
   <div className="bz-taxonomy-columns">
    <section className="bz-taxonomy-panel bz-taxonomy-tree"><div className="bz-taxonomy-panel-head"><div><h2>Category Tree</h2><p>Browse your existing category structure.</p></div><FolderTree size={21}/></div>
