@@ -50,7 +50,8 @@ async function ensureCompleteThirdLevelLibrary(){
   const batches=[] as (typeof COMPLETE_THIRD_LEVEL_LIBRARY[number])[][];
   for(let i=0;i<COMPLETE_THIRD_LEVEL_LIBRARY.length;i+=120)batches.push(COMPLETE_THIRD_LEVEL_LIBRARY.slice(i,i+120) as any);
   for(const batch of batches)await db.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order)
-   VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order})`),sql`,`)}
+   SELECT candidate.* FROM (VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order})`),sql`,`)}) AS candidate(category,subcategory,slug,name,visible,sort_order)
+   WHERE NOT EXISTS (SELECT 1 FROM deleted_third_level_categories deleted WHERE deleted.category=candidate.category AND deleted.subcategory=candidate.subcategory AND deleted.slug=candidate.slug)
    ON CONFLICT(category,subcategory,slug) DO NOTHING`);
  })().catch(e=>{seedPromise=undefined;throw e});
  return seedPromise;
@@ -90,6 +91,7 @@ router.post("/admin/taxonomy/third-level/seed",requireAdmin,async(req,res)=>{
   seen.add(key);entries.push({category,subcategory,slug,name,sortOrder:Math.max(0,Math.min(9999,Number(v.sort_order)||0))});
  }
  try{
+  await ensureDeletedThirdLevelTable();
   let created=0;
   await db.transaction(async tx=>{for(const v of entries){
    const inserted=await tx.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order) VALUES(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sortOrder}) ON CONFLICT(category,subcategory,slug) DO NOTHING RETURNING slug`);
@@ -97,6 +99,18 @@ router.post("/admin/taxonomy/third-level/seed",requireAdmin,async(req,res)=>{
   }});
   res.json({created,total:entries.length});
  }catch(err){logger.error({err},"Third-level seed failed");res.status(503).json({error:"Unable to populate taxonomy"});}
+});
+router.delete("/admin/taxonomy/third-level",requireAdmin,async(req,res)=>{
+ const {category,subcategory,slug}=req.body??{};
+ if(![category,subcategory,slug].every(v=>typeof v==="string"&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v))){res.status(400).json({error:"Invalid category identifier"});return;}
+ try{
+  await ensureDeletedThirdLevelTable();
+  await db.transaction(async tx=>{
+   await tx.execute(sql`INSERT INTO deleted_third_level_categories(category,subcategory,slug) VALUES(${category},${subcategory},${slug}) ON CONFLICT DO NOTHING`);
+   await tx.execute(sql`DELETE FROM third_level_categories WHERE category=${category} AND subcategory=${subcategory} AND slug=${slug}`);
+  });
+  res.json({deleted:true});
+ }catch(err){logger.error({err},"Delete third-level category failed");res.status(503).json({error:"Could not delete category"});}
 });
 router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
   try {
