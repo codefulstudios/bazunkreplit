@@ -1332,6 +1332,42 @@ router.patch("/admin/listings/categories", async (req, res) => {
   } catch (err) { logger.error({err}, "Failed to recategorize listings"); res.status(500).json({error:"Could not update listing categories."}); }
 });
 
+// Review-first category diagnostics. No classification is applied until an admin confirms it.
+router.post("/admin/listings/category-review", async (req,res)=>{
+ const ids=req.body?.ids;
+ if(!Array.isArray(ids)||ids.length<1||ids.length>50||!ids.every((x:unknown)=>Number.isSafeInteger(x)&&Number(x)>0)){res.status(400).json({error:"Select 1–50 listings"});return;}
+ try{
+ const rows=await db.execute(sql`SELECT id,title,category,subcategory,specifications FROM listings WHERE id IN (${sql.join(ids.map((id:number)=>sql`${id}`),sql`,`)})`);
+ const tax=await db.execute(sql`SELECT category,subcategory,slug,name,visible FROM third_level_categories`);
+ const all=tax.rows as any[];
+ const results=(rows.rows as any[]).map(l=>{
+  const title=String(l.title||"").toLowerCase();
+  const words=new Set(title.match(/[a-z0-9]+/g)||[]);
+  const inSub=all.filter(x=>x.category===l.category&&x.subcategory===l.subcategory);
+  const ranked=inSub.map(x=>{const key=String(x.name).toLowerCase().match(/[a-z0-9]+/g)||[];const meaningful=key.filter(k=>k.length>3&&!["with","parts","other","accessories","products","main"].includes(k));const matched=meaningful.filter(k=>words.has(k)||[...words].some(w=>w.startsWith(k)||k.startsWith(w))).length;return {...x,score:meaningful.length?matched/meaningful.length:0,matched};}).filter(x=>x.matched>0).sort((a,b)=>b.score-a.score||b.matched-a.matched);
+  const best=ranked[0];
+  return {id:l.id,title:l.title,category:l.category,subcategory:l.subcategory,currentThird:(()=>{try{return JSON.parse(l.specifications||"{}").admin_third_level_slug||""}catch{return ""}})(),suggestedCategory:l.category,suggestedSubcategory:l.subcategory,suggestedThird:best?.slug||"",thirdName:best?.name||"",thirdVisible:best?.visible??false,confidence:best?.score>=0.8?"high":best?.score>=0.5?"medium":"low",needsReview:true};
+ });
+ res.json({results});
+ }catch(err){logger.error({err},"Listing taxonomy review failed");res.status(503).json({error:"Category review unavailable"});}
+});
+router.patch("/admin/listings/:id/category-review",async(req,res)=>{
+ const id=Number(req.params.id),{category,subcategory,thirdSlug,enableThird}=req.body||{};
+ if(!Number.isSafeInteger(id)||id<1||typeof category!=="string"||typeof subcategory!=="string"||!ADMIN_LISTING_CATEGORIES[category]?.includes(subcategory)||typeof thirdSlug!=="string"||typeof enableThird!=="boolean"){res.status(400).json({error:"Invalid category update"});return;}
+ try{
+  await db.transaction(async tx=>{
+   if(thirdSlug){
+    const found=await tx.execute(sql`SELECT slug FROM third_level_categories WHERE category=${category} AND subcategory=${subcategory} AND slug=${thirdSlug}`);
+    if(!found.rows.length)throw Error("Selected third-level category does not exist");
+    if(enableThird)await tx.execute(sql`UPDATE third_level_categories SET visible=TRUE WHERE category=${category} AND subcategory=${subcategory} AND slug=${thirdSlug}`);
+   }
+   const result=await tx.execute(sql`UPDATE listings SET category=${category},subcategory=${subcategory},specifications=jsonb_set(COALESCE(NULLIF(specifications::text,'')::jsonb,'{}'::jsonb),'{admin_third_level_slug}',to_jsonb(${thirdSlug}::text),true),updated_at=NOW() WHERE id=${id} RETURNING id`);
+   if(!result.rows.length)throw Error("Listing not found");
+  });
+  await recordAdminAudit({req,category:"listings",action:"listings.category-review",targetType:"listing",targetId:String(id),summary:"Admin approved reviewed category assignment",after:{category,subcategory,thirdSlug,enableThird}});
+  res.json({updated:true});
+ }catch(err){logger.error({err},"Category review approval failed");res.status(400).json({error:err instanceof Error?err.message:"Unable to apply category"});}
+});
 // Shared actions for the unified Listings administration page.
 router.patch("/admin/listings/:id/visibility",async(req,res)=>{
  const id=Number(req.params.id);
