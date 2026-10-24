@@ -277,7 +277,7 @@ export function CategoriesPage() {
                 </div> : <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-700 dark:bg-[#10213c] dark:text-slate-200">No third-level categories are currently enabled. You can still browse all {selectedSub.name} listings.</p>}
               </div>}
             </div> : <p className="rounded-xl bg-slate-50 p-5 text-sm text-slate-700 dark:bg-[#10213c] dark:text-slate-200">No matching enabled subcategories.</p>}
-          </section>
+          </section>}
           {featuredCategory && <section aria-label="Shop subcategories">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-extrabold text-slate-950 dark:text-white">Shop subcategories</h2><span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{curated.length} available</span></div>
             {visibleSubs.length ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">{visibleSubs.map((sub,i)=>{
