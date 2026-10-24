@@ -1,0 +1,62 @@
+.bazunk-admin-wordpress .bz-taxonomy{padding:24px;max-width:1700px;margin:auto;color:#f8fafc;font:inherit}
+.bazunk-admin-wordpress .bz-taxonomy *{box-sizing:border-box}
+.bazunk-admin-wordpress .bz-taxonomy-head,.bazunk-admin-wordpress .bz-taxonomy-panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bazunk-admin-wordpress .bz-taxonomy-head{margin-bottom:20px;flex-wrap:wrap}
+.bazunk-admin-wordpress .bz-taxonomy h1{font-size:29px;font-weight:850;color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy h2{font-size:18px;font-weight:800;color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy h3{font-size:16px;font-weight:800;color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy p,.bazunk-admin-wordpress .bz-taxonomy small{color:#cbd5e1!important;font-size:12px}
+.bazunk-admin-wordpress .bz-taxonomy-actions,.bazunk-admin-wordpress .bz-taxonomy-inline{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.bazunk-admin-wordpress .bz-taxonomy button{background:#203653!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #547397!important;padding:9px 13px;border-radius:8px;font-size:12px;font-weight:750;display:inline-flex;gap:5px;align-items:center;justify-content:center;opacity:1!important;cursor:pointer}
+.bazunk-admin-wordpress .bz-taxonomy button:hover:not(:disabled){background:#315b90!important}
+.bazunk-admin-wordpress .bz-taxonomy button.primary,.bazunk-admin-wordpress .bz-taxonomy-nav button.active{background:#1261eb!important;color:#fff!important;border-color:#7eb4ff!important}
+.bazunk-admin-wordpress .bz-taxonomy button:disabled{opacity:.55!important;cursor:not-allowed}
+.bazunk-admin-wordpress .bz-taxonomy input:not([type=checkbox]),.bazunk-admin-wordpress .bz-taxonomy select{background:#101d33!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #6480a5!important;border-radius:7px;padding:10px;width:100%;min-width:0;font-size:13px}
+.bazunk-admin-wordpress .bz-taxonomy input[readonly]{background:#243852!important;color:#e2e8f0!important;-webkit-text-fill-color:#e2e8f0!important}
+.bazunk-admin-wordpress .bz-taxonomy input::placeholder{color:#b3c1d3!important}
+.bazunk-admin-wordpress .bz-taxonomy input[type=checkbox]{accent-color:#1775ff;width:17px;height:17px}
+.bazunk-admin-wordpress .bz-taxonomy label{color:#fff!important;font-size:12px;font-weight:700;display:block;min-width:0}
+.bazunk-admin-wordpress .bz-taxonomy label small{display:block}
+.bazunk-admin-wordpress .bz-taxonomy-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.bazunk-admin-wordpress .bz-taxonomy-stat,.bazunk-admin-wordpress .bz-taxonomy-panel{background:#132640!important;color:#fff!important;border:1px solid #3e587c!important;border-radius:12px;padding:17px}
+.bazunk-admin-wordpress .bz-taxonomy-stat{display:flex;gap:14px;align-items:center}
+.bazunk-admin-wordpress .bz-taxonomy-stat svg{color:#fb923c}
+.bazunk-admin-wordpress .bz-taxonomy-stat span{display:block;color:#dbeafe!important;font-size:12px}
+.bazunk-admin-wordpress .bz-taxonomy-stat strong{display:block;font-size:25px;color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy-nav{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.bazunk-admin-wordpress .bz-taxonomy-columns{display:grid;grid-template-columns:minmax(260px,34%) minmax(0,1fr);gap:14px}
+.bazunk-admin-wordpress .bz-taxonomy-right{display:grid;gap:14px;align-content:start;min-width:0}
+.bazunk-admin-wordpress .bz-taxonomy-panel-head{margin-bottom:13px}
+.bazunk-admin-wordpress .bz-taxonomy-panel-head p{margin-top:4px}
+.bazunk-admin-wordpress .bz-taxonomy-search{display:flex!important;align-items:center;gap:8px;background:#192f4c;border:1px solid #476482;border-radius:8px;padding-left:10px;margin-bottom:10px}
+.bazunk-admin-wordpress .bz-taxonomy-search input{border:0!important;background:transparent!important}
+.bazunk-admin-wordpress .bz-taxonomy-tree{max-height:calc(100vh - 190px);overflow-y:auto}
+.bazunk-admin-wordpress .bz-taxonomy-tree-row{display:flex;align-items:center;border-bottom:1px solid #304761;gap:3px;border-radius:6px}
+.bazunk-admin-wordpress .bz-taxonomy-tree-row.selected{background:#0757cd!important}
+.bazunk-admin-wordpress .bz-taxonomy-tree-row button{background:transparent!important;border:0!important;padding:8px 4px;text-align:left;min-width:0}
+.bazunk-admin-wordpress .bz-taxonomy-tree-row button:nth-child(2){flex:1;justify-content:start}
+.bazunk-admin-wordpress .bz-taxonomy-tree-row span,.bazunk-admin-wordpress .bz-taxonomy-pill{font-size:11px;border-radius:20px;padding:4px 8px;background:#2d4767;color:#fff!important;white-space:nowrap}
+.bazunk-admin-wordpress .bz-taxonomy-tree-sub{display:flex!important;width:calc(100% - 24px);margin-left:24px;justify-content:space-between!important;background:#172d49!important;border:0!important;border-bottom:1px solid #304761!important;border-radius:0!important}
+.bazunk-admin-wordpress .bz-taxonomy-tree-sub small{color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.bazunk-admin-wordpress .bz-taxonomy-form label input,.bazunk-admin-wordpress .bz-taxonomy-form label select{margin-top:6px}
+.bazunk-admin-wordpress .bz-taxonomy-subhead{border-top:1px solid #49617e;padding-top:16px}
+.bazunk-admin-wordpress .bz-taxonomy-list{display:grid;gap:7px}
+.bazunk-admin-wordpress .bz-taxonomy-subrow{display:grid;grid-template-columns:32px minmax(120px,1.2fr) minmax(110px,1fr) 80px 65px auto;gap:8px;align-items:center;background:#1b304d;border:1px solid #435b78;border-radius:8px;padding:9px}
+.bazunk-admin-wordpress .bz-taxonomy-subrow label span{display:block;margin-bottom:3px;color:#e2e8f0!important;font-size:11px}
+.bazunk-admin-wordpress .bz-taxonomy-reorder{display:grid;gap:2px}
+.bazunk-admin-wordpress .bz-taxonomy-reorder button{padding:4px!important}
+.bazunk-admin-wordpress .bz-taxonomy-checkbox{display:flex!important;align-items:center;gap:5px}
+.bazunk-admin-wordpress .bz-taxonomy-inline{margin:12px 0}
+.bazunk-admin-wordpress .bz-taxonomy-inline select{max-width:230px}
+.bazunk-admin-wordpress .bz-taxonomy-inline input{flex:1}
+.bazunk-admin-wordpress .bz-taxonomy-third{display:grid;grid-template-columns:minmax(0,1fr) 90px 70px;gap:10px;margin:7px 0;align-items:center}
+.bazunk-admin-wordpress .bz-taxonomy-third label{display:flex!important;align-items:center;gap:6px}
+.bazunk-admin-wordpress .bz-taxonomy-suggestions{display:grid;gap:7px;max-height:370px;overflow:auto}
+.bazunk-admin-wordpress .bz-taxonomy-suggestions>div,.bazunk-admin-wordpress .bz-taxonomy-hidden{display:flex;align-items:center;gap:10px;border:1px solid #3d5878;border-radius:7px;background:#1d3452;padding:9px}
+.bazunk-admin-wordpress .bz-taxonomy-suggestions>div>div{flex:1;min-width:0}
+.bazunk-admin-wordpress .bz-taxonomy-suggestions strong{display:block;color:#fff!important}
+.bazunk-admin-wordpress .bz-taxonomy-suggestions small{display:block}
+.bazunk-admin-wordpress .bz-taxonomy-message{border:1px solid #a3b5cb;background:#274260;color:#fff;padding:10px;border-radius:8px}
+@media(max-width:1100px){.bazunk-admin-wordpress .bz-taxonomy-subrow{grid-template-columns:30px 1fr 1fr;}.bazunk-admin-wordpress .bz-taxonomy-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.bazunk-admin-wordpress .bz-taxonomy{padding:12px}.bazunk-admin-wordpress .bz-taxonomy-columns,.bazunk-admin-wordpress .bz-taxonomy-form{grid-template-columns:1fr}.bazunk-admin-wordpress .bz-taxonomy-tree{max-height:330px}.bazunk-admin-wordpress .bz-taxonomy-subrow{grid-template-columns:30px 1fr 1fr}.bazunk-admin-wordpress .bz-taxonomy-suggestions>div{flex-wrap:wrap}}
