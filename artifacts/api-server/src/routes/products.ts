@@ -54,6 +54,9 @@ async function ensureCompleteThirdLevelLibrary(){
  })().catch(e=>{seedPromise=undefined;throw e});
  return seedPromise;
 }
+// Seed on server startup as well as on reads; existing records are untouched.
+void ensureCompleteThirdLevelLibrary().catch(err=>logger.error({err},"Initial taxonomy population unavailable"));
+
 // Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
 router.get("/taxonomy/third-level", async (_req, res) => {
   try {
