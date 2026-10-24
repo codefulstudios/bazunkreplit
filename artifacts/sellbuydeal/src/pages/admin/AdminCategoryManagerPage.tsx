@@ -6,42 +6,43 @@ export function AdminCategoryManagerPage() {
   return <AdminLayout>
     <div id="bazunk-category-manager" className="mx-auto w-full max-w-6xl space-y-5 pb-12">
       <style>{`
-        #bazunk-category-manager section {
-          background: #182942 !important; color: #fff !important; border-color: #526887 !important;
+        /* Isolated category manager palette. Explicitly defeat global admin button and input themes. */
+        .bazunk-admin-wordpress #bazunk-category-manager,
+        .bazunk-admin-wordpress #bazunk-category-manager section {
+          color:#f8fafc !important; background-color:#14253e !important;
         }
-        #bazunk-category-manager section section,
-        #bazunk-category-manager section div.rounded-lg,
-        #bazunk-category-manager section label.rounded-lg {
-          background: #243a58 !important; color: #fff !important; border-color: #627999 !important;
+        .bazunk-admin-wordpress #bazunk-category-manager section {
+          border:1px solid #617896 !important; border-radius:12px !important;
         }
-        #bazunk-category-manager section p,
-        #bazunk-category-manager section strong,
-        #bazunk-category-manager section code,
-        #bazunk-category-manager section label,
-        #bazunk-category-manager section h3,
-        #bazunk-category-manager section span:not(button span) {
-          color: #fff !important; -webkit-text-fill-color: #fff !important;
+        .bazunk-admin-wordpress #bazunk-category-manager section div.rounded-lg,
+        .bazunk-admin-wordpress #bazunk-category-manager section label.rounded-lg,
+        .bazunk-admin-wordpress #bazunk-category-manager section .rounded-xl.bg-white {
+          background:#243954 !important; border-color:#60799c !important; color:#fff !important;
         }
-        #bazunk-category-manager button {
-          background: #334d70 !important; color: #fff !important;
-          -webkit-text-fill-color: #fff !important;
-          border: 1px solid #91a5be !important; opacity:1 !important;
+        .bazunk-admin-wordpress #bazunk-category-manager section :is(h1,h2,h3,p,strong,label,code,span) {
+          color:#fff !important; -webkit-text-fill-color:#fff !important;
+          text-shadow:none !important; opacity:1 !important;
         }
-        #bazunk-category-manager button:hover:not(:disabled) { background: #43648d !important; }
-        #bazunk-category-manager button[aria-pressed="true"],
-        #bazunk-category-manager button[data-category-selected="true"],
-        #bazunk-category-manager button.category-save {
-          background: #1856cf !important; color:#fff !important; border-color:#93c5fd !important;
+        .bazunk-admin-wordpress #bazunk-category-manager section button,
+        .bazunk-admin-wordpress #bazunk-category-manager section button:not(:disabled) {
+          background:#254e7c !important; background-color:#254e7c !important;
+          color:#fff !important; -webkit-text-fill-color:#fff !important;
+          border:2px solid #91b6e1 !important; opacity:1 !important;
+          box-shadow:none !important; text-shadow:none !important; font-weight:800 !important;
         }
-        #bazunk-category-manager input:not([type="checkbox"]),
-        #bazunk-category-manager select {
-          background: #fff !important; color:#102039 !important;
-          -webkit-text-fill-color:#102039 !important; border:2px solid #8193ab !important;
+        .bazunk-admin-wordpress #bazunk-category-manager section button:hover:not(:disabled) {background:#1765ba !important;}
+        .bazunk-admin-wordpress #bazunk-category-manager section button[aria-pressed="true"],
+        .bazunk-admin-wordpress #bazunk-category-manager section button.category-save {
+          background:#1654c5 !important; border-color:#fff !important;
         }
-        #bazunk-category-manager input[type="checkbox"] {accent-color:#fb923c;}
-        #bazunk-category-manager button:focus-visible,
-        #bazunk-category-manager input:focus-visible,
-        #bazunk-category-manager select:focus-visible {outline:3px solid #fbbf24 !important; outline-offset:2px;}
+        .bazunk-admin-wordpress #bazunk-category-manager section :is(input:not([type="checkbox"]),textarea,select) {
+          background:#fff !important; background-color:#fff !important;
+          color:#111827 !important; -webkit-text-fill-color:#111827 !important;
+          border:2px solid #64748b !important; opacity:1 !important;
+        }
+        .bazunk-admin-wordpress #bazunk-category-manager section :is(input:not([type="checkbox"]),textarea)::placeholder {color:#475569 !important;-webkit-text-fill-color:#475569 !important;}
+        .bazunk-admin-wordpress #bazunk-category-manager section input[type="checkbox"] {accent-color:#fb923c;opacity:1 !important;}
+        .bazunk-admin-wordpress #bazunk-category-manager :is(button,input,select):focus-visible {outline:3px solid #fde047 !important;outline-offset:2px;}
       `}</style>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h1 className="text-2xl font-black text-white">Category Manager</h1>
