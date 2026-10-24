@@ -128,11 +128,27 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
+    name: "Computing",
+    slug: "computing",
+    icon: "Laptop",
+    subcategories: [
+      { name: "Laptops", slug: "laptops" },
+      { name: "Desktop Computers", slug: "desktops" },
+      { name: "Computer Components", slug: "components" },
+      { name: "Monitors & Displays", slug: "monitors" },
+      { name: "Storage & Memory", slug: "storage-memory" },
+      { name: "Computer Peripherals", slug: "peripherals" },
+      { name: "Networking & Wi-Fi", slug: "networking" },
+      { name: "Printers & Scanners", slug: "printers-scanners" },
+      { name: "Computer Accessories", slug: "computer-accessories" },
+      { name: "Servers & Workstations", slug: "servers-workstations" },
+    ],
+  },
+  {
     name: "Electronics",
     slug: "electronics",
     icon: "Monitor",
     subcategories: [
-      { name: "Computers & Laptops", slug: "computers" },
       { name: "TVs & Home Theater", slug: "tvs" },
       { name: "Audio & Headphones", slug: "audio" },
       { name: "Cameras & Photography", slug: "cameras" },
@@ -420,6 +436,10 @@ export async function loadCategoryPresentation():Promise<void>{
 
 /** Suggested third-level taxonomy. Suggestions are editorial only until listing and search APIs support a third slug. */
 export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; suggestions: string[]}> = {
+  "computing": {
+    "subcategory": "laptops",
+    "suggestions": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"]
+  },
   "appliances": {
     "subcategory": "refrigerators",
     "suggestions": [
