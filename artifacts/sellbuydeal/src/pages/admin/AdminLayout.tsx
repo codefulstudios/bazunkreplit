@@ -10,7 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 let savedAdminNavScrollTop = 0;
 let savedSidebarCollapsed = false;
 import { useLocation } from "wouter";
-import { Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays, Store, BarChart3, Palette } from "lucide-react";
+import { FolderTree, Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays, Store, BarChart3, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { AdminAlertsPopover } from "@/components/admin/AdminAlertsPopover";
@@ -28,7 +28,7 @@ const NAV = [
   { label: "Seller Compliance", href: "/admin/seller-compliance", icon: ShieldCheck },
   { label: "TrustProof", href: "/admin/trust-proof", icon: ShieldCheck },
   { label: "Listings", href: "/admin/listings", icon: Package },
-  { label: "Categories", href: "/admin/listings/categories", icon: Package },
+  { label: "Categories", href: "/admin/categories", icon: FolderTree },
   { label: "Importer Control", href: "/admin/importer-control", icon: Package },
   { label: "Snap & Sell AI", href: "/admin/snap-sell", icon: Camera },
   { label: "DealPilot", href: "/admin/deal-pilot", icon: Search },
@@ -66,7 +66,8 @@ const NAV = [
 ];
 
 const NAV_GROUPS = [
- {id:"listings",label:"Listings",href:"/admin/listings",icon:Package,pages:["Listings","Categories","Classifieds","Auctions","Flash Sales","Snap & Sell AI","DealPilot","Find It","Demo Creator"]},
+ {id:"listings",label:"Listings",href:"/admin/listings",icon:Package,pages:["Listings","Classifieds","Auctions","Flash Sales","Snap & Sell AI","DealPilot","Find It","Demo Creator"]},
+ {id:"categories",label:"Categories & Taxonomy",href:"/admin/categories",icon:FolderTree,pages:["Categories"]},
  {id:"orders",label:"Orders",href:"/admin/orders",icon:ShoppingCart,pages:["Orders","Disputes","Returns"]},
  {id:"customers",label:"Customers",href:"/admin/users",icon:Users,pages:["Users"]},
  {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
