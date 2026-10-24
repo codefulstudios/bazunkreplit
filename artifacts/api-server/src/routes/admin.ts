@@ -1382,7 +1382,7 @@ router.patch("/admin/listings/:id/category-review",async(req,res)=>{
     if(!found.rows.length)throw Error("Selected third-level category does not exist");
     if(enableThird)await tx.execute(sql`UPDATE third_level_categories SET visible=TRUE WHERE category=${category} AND subcategory=${subcategory} AND slug=${thirdSlug}`);
    }
-   const result=await tx.execute(sql`UPDATE listings SET category=${category},subcategory=${subcategory},specifications=jsonb_set(COALESCE(NULLIF(specifications::text,'')::jsonb,'{}'::jsonb),'{admin_third_level_slug}',to_jsonb(${thirdSlug}::text),true),'{admin_category_review_approved_at}',to_jsonb(NOW()::text),true),updated_at=NOW() WHERE id=${id} RETURNING id`);
+   const result=await tx.execute(sql`UPDATE listings SET category=${category},subcategory=${subcategory},specifications=jsonb_set(jsonb_set(COALESCE(NULLIF(specifications::text,'')::jsonb,'{}'::jsonb),'{admin_third_level_slug}',to_jsonb(${thirdSlug}::text),true),'{admin_category_review_approved_at}',to_jsonb(NOW()::text),true),updated_at=NOW() WHERE id=${id} RETURNING id`);
    if(!result.rows.length)throw Error("Listing not found");
   });
   await recordAdminAudit({req,category:"listings",action:"listings.category-review",targetType:"listing",targetId:String(id),summary:"Admin approved reviewed category assignment",after:{category,subcategory,thirdSlug,enableThird}});
