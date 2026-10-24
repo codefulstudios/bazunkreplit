@@ -5,7 +5,7 @@ import { Search, RefreshCw, ExternalLink, ShoppingCart, Loader2, Package, Pencil
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { AdminListingEditor, AdminListingCatalogueTools } from "./AdminProductsPage";
-import { ACTIVE_CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES, thirdLevelProposals, thirdLevelSlug } from "@/data/categories";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
 import { AdminManagementHeader, AdminStatusTabs } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
@@ -119,7 +119,26 @@ export function AdminListingsPage() {
       const t=await b.json();
       const entries=Array.isArray(t.categories)?t.categories:Array.isArray(t)?t:[];
       if(!entries.length)throw Error("No third-level taxonomy entries returned. Category review requires taxonomy data.");
-      setTaxonomy(entries);
+      // Audit every saved third-level row against its parent. Invalid and legacy
+      // associations stay in the database for administrator review, but must not
+      // be offered as suggestions under a different product department.
+      const canonical = (category:string, subcategory:string) => {
+        const parent=ACTIVE_CATEGORIES.find(c=>c.slug===category);
+        const child=parent?.subcategories.find(x=>x.slug===subcategory);
+        if(!child)return null;
+        return new Set(thirdLevelProposals(category,subcategory,child.name).map(thirdLevelSlug));
+      };
+      const mismatched=entries.filter((row:{category:string;subcategory:string;slug:string})=>{
+        const expected=canonical(row.category,row.subcategory);
+        return !expected || !expected.has(row.slug);
+      });
+      if(mismatched.length)console.warn("Taxonomy audit: stored third-level entries need review",mismatched);
+      const validEntries=entries.filter((row:{category:string;subcategory:string;slug:string})=>{
+        const expected=canonical(row.category,row.subcategory);
+        return !!expected && expected.has(row.slug);
+      });
+      setTaxonomy(validEntries);
+      if(mismatched.length)setReviewError(`${mismatched.length} third-level taxonomy entries do not match their current category structure and were excluded from suggestions. Review these in Categories & Taxonomy before assigning.`);
       const suggestion=(title:string, options:typeof entries)=>{
         const normalized=(v:string)=>v.toLowerCase().replace(/[^a-z0-9]+/g," ");
         const words=new Set(normalized(title).split(" ").filter(Boolean));
@@ -131,7 +150,7 @@ export function AdminListingsPage() {
         return ranked[0]?.o?.slug||"";
       };
       setReviews((d.results||[]).map((x:Review)=>{
-        const choices=entries.filter((v:{category:string;subcategory:string})=>v.category===x.suggestedCategory&&v.subcategory===x.suggestedSubcategory);
+        const choices=validEntries.filter((v:{category:string;subcategory:string})=>v.category===x.suggestedCategory&&v.subcategory===x.suggestedSubcategory);
         const suggestedThird=choices.some((v:{slug:string})=>v.slug===x.suggestedThird)?x.suggestedThird:suggestion(x.title,choices);
         return {...x,suggestedThird};
       }));
