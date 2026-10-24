@@ -45,6 +45,7 @@ router.use("/admin/categories", requireAdmin);
 // Populate complete third-level taxonomy idempotently. Existing names and visibility are never changed.
 let seedPromise:Promise<void>|undefined;
 async function ensureCompleteThirdLevelLibrary(){
+ await ensureDeletedThirdLevelTable();
  if(!seedPromise)seedPromise=(async()=>{
   const batches=[] as (typeof COMPLETE_THIRD_LEVEL_LIBRARY[number])[][];
   for(let i=0;i<COMPLETE_THIRD_LEVEL_LIBRARY.length;i+=120)batches.push(COMPLETE_THIRD_LEVEL_LIBRARY.slice(i,i+120) as any);
@@ -57,6 +58,7 @@ async function ensureCompleteThirdLevelLibrary(){
 // Seed on server startup as well as on reads; existing records are untouched.
 void ensureCompleteThirdLevelLibrary().catch(err=>logger.error({err},"Initial taxonomy population unavailable"));
 
+async function ensureDeletedThirdLevelTable(){await db.execute(sql`CREATE TABLE IF NOT EXISTS deleted_third_level_categories(category TEXT NOT NULL,subcategory TEXT NOT NULL,slug TEXT NOT NULL,deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(category,subcategory,slug))`);}
 // Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
 router.get("/taxonomy/third-level", async (_req, res) => {
   try {
