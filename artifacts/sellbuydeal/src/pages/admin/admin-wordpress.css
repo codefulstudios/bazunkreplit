@@ -127,3 +127,33 @@
 .dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
  background:#213e6b!important;color:#f8fafc!important
 }
+
+/* Ensure every KPI tile and its labels remain legible in admin dark mode, even when global button themes override colours. */
+.bazunk-admin-wordpress:is(.dark, [data-theme="dark"]),
+.dark .bazunk-admin-wordpress {
+  --wp-ink: #ffffff;
+  --wp-muted: #dbeafe;
+}
+.dark .bazunk-admin-wordpress .wp-metric,
+.bazunk-admin-wordpress.dark .wp-metric,
+[data-theme="dark"] .bazunk-admin-wordpress .wp-metric {
+  background: #182b47 !important;
+  color: #ffffff !important;
+  border-color: #4a6386 !important;
+  opacity: 1 !important;
+}
+.dark .bazunk-admin-wordpress .wp-metric-label,
+.dark .bazunk-admin-wordpress .wp-metric-detail,
+.dark .bazunk-admin-wordpress .wp-metric-value,
+.bazunk-admin-wordpress.dark .wp-metric-label,
+.bazunk-admin-wordpress.dark .wp-metric-detail,
+.bazunk-admin-wordpress.dark .wp-metric-value,
+[data-theme="dark"] .bazunk-admin-wordpress .wp-metric-label,
+[data-theme="dark"] .bazunk-admin-wordpress .wp-metric-detail,
+[data-theme="dark"] .bazunk-admin-wordpress .wp-metric-value {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+}
+.dark .bazunk-admin-wordpress .wp-metric-action:hover,
+.bazunk-admin-wordpress.dark .wp-metric-action:hover {background:#253c60 !important;}
