@@ -773,7 +773,7 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
     setDisplayBusy(true);setDisplayError("");
     try{
       const response=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:display})});
-      if(!response.ok)throw Error((await response.json().catch(()=>({})).error??"Could not save categories"));
+      if(!response.ok)throw Error(((await response.json().catch(()=>({}))).error??"Could not save categories"));
       setDisplayError("Saved category names, order and visibility. Category slugs and existing listings were retained.");
     }catch(e){setDisplayError(String(e));}finally{setDisplayBusy(false);}
   }
