@@ -95,22 +95,61 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadSettings = () => {
-      fetch(`${API_BASE}/api/settings/public`, { cache: "no-store" })
-        .then(r => { if (!r.ok) throw new Error(`Settings HTTP ${r.status}`); return r.json(); })
-        .then((data: Record<string, string>) => {
-          setSettings({ ...DEFAULTS, ...data });
-          setRawSettings(data);
-          setSettingsLoaded(true);
-        })
-        .catch(() => { setSettingsLoaded(true); });
+    let disposed = false;
+    let requestId = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let controller: AbortController | undefined;
+    let failures = 0;
+
+    const loadSettings = async () => {
+      if (disposed) return;
+      const currentRequest = ++requestId;
+      if (retryTimer) clearTimeout(retryTimer);
+      controller?.abort();
+      controller = new AbortController();
+      const activeController = controller;
+      const timeout = setTimeout(() => activeController.abort(), 4500);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/settings/public`, {
+          cache: "no-store",
+          signal: activeController.signal,
+        });
+        if (!response.ok) throw new Error(`Settings HTTP ${response.status}`);
+        const data = await response.json() as Record<string, string>;
+        if (disposed || currentRequest !== requestId) return;
+        failures = 0;
+        setSettings({ ...DEFAULTS, ...data });
+        setRawSettings(data);
+      } catch {
+        if (disposed || currentRequest !== requestId) return;
+        // Retain last-known-good settings (or built-in defaults), never blank the homepage.
+        failures += 1;
+        const delay = Math.min(60000, 1500 * 2 ** Math.min(failures - 1, 5));
+        retryTimer = setTimeout(loadSettings, delay);
+      } finally {
+        clearTimeout(timeout);
+        if (!disposed && currentRequest === requestId) setSettingsLoaded(true);
+      }
     };
-    loadSettings();
-    const refreshOnFocus = () => { if (document.visibilityState === "visible") loadSettings(); };
-    window.addEventListener("bazunk-settings-updated", loadSettings);
-    window.addEventListener("focus", loadSettings);
+
+    void loadSettings();
+    const refreshOnFocus = () => {
+      if (document.visibilityState === "visible") void loadSettings();
+    };
+    const onUpdate = () => { void loadSettings(); };
+    window.addEventListener("bazunk-settings-updated", onUpdate);
+    window.addEventListener("focus", refreshOnFocus);
     document.addEventListener("visibilitychange", refreshOnFocus);
-    return () => {window.removeEventListener("bazunk-settings-updated", loadSettings);window.removeEventListener("focus", loadSettings);document.removeEventListener("visibilitychange", refreshOnFocus);};
+    return () => {
+      disposed = true;
+      ++requestId;
+      controller?.abort();
+      if (retryTimer) clearTimeout(retryTimer);
+      window.removeEventListener("bazunk-settings-updated", onUpdate);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
   }, []);
 
   // A draft preview can update this iframe only. Never apply cross-origin
