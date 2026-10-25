@@ -303,6 +303,26 @@ function SignUpPage() {
   );
 }
 
+// Each homepage section fails independently; a secondary API/widget error must not
+// unmount the header, search, categories, or other shopping content.
+class HomeSectionBoundary extends React.Component<
+  { children: React.ReactNode; optional?: boolean },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) { console.error("Homepage section unavailable:", error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    if (this.props.optional) return null;
+    return <div role="status" className="mx-auto max-w-6xl px-5 py-6 text-sm text-slate-700 dark:text-slate-200">
+      <span>This section is temporarily unavailable.</span>{" "}
+      <button type="button" onClick={() => this.setState({ failed: false })}
+        className="font-semibold underline underline-offset-2">Try again</button>
+    </div>;
+  }
+}
+
 // ─── Homepage: validated published Design Center sections ────────────────────
 
 function Home() {
@@ -327,15 +347,17 @@ function Home() {
       <Navbar />
       <main className="flex-1">
         {/* Preserve the essential shopping journey above optional marketing blocks. */}
-        <Hero />
-        <CategorySection />
-        <FeaturedListings mode="recent" />
-        <HomepageVisualElements />
+        <HomeSectionBoundary><Hero /></HomeSectionBoundary>
+        <HomeSectionBoundary><CategorySection /></HomeSectionBoundary>
+        <HomeSectionBoundary><FeaturedListings mode="recent" /></HomeSectionBoundary>
+        <HomeSectionBoundary optional><HomepageVisualElements /></HomeSectionBoundary>
         {optionalSections.filter(section=>section.enabled).map(section=>
-          <div key={section.id} data-theme-section={section.id}>
+          <HomeSectionBoundary optional key={section.id}>
+          <div data-theme-section={section.id}>
             {section.id!=="features"&&section.id!=="announcement"&&section.id!=="rewards"&&<div className="bg-white px-5 py-5 text-slate-950 dark:bg-[#17243a] dark:text-white"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">{sectionContent[section.id].title}</h2>{sectionContent[section.id].description&&<p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-100">{sectionContent[section.id].description}</p>}</div>{sectionContent[section.id].button&&sectionContent[section.id].url.startsWith("/")&&!sectionContent[section.id].url.startsWith("//")&&<a href={sectionContent[section.id].url} className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white">{sectionContent[section.id].button}</a>}</div></div>}
             {renderOptional(section.id)}
           </div>
+          </HomeSectionBoundary>
         )}
       </main>
       <Footer />
