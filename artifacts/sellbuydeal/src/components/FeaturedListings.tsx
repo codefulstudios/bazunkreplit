@@ -166,24 +166,9 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-sm font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-widest mb-1"
-            >
-              {mode === "promoted" ? t("promotedListings") : "Latest arrivals"}
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl md:text-3xl font-bold !text-slate-950 dark:!text-white"
-            >
-              {mode === "promoted" ? "Spotlight listings" : "Recently listed"}
-            </motion.h2>
-          </div>
+          <h2 className="text-lg md:text-xl font-bold text-slate-950 dark:text-white">
+            {mode === "promoted" ? "Featured & promoted listings" : "Latest arrivals"}
+          </h2>
 
           <div className="flex items-center gap-2">
             {/* Scroll arrows */}
