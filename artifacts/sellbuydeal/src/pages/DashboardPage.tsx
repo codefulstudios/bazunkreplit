@@ -6418,7 +6418,7 @@ export function DashboardPage() {
                 </div>
 
                 {photoError && <p role="alert" className="mb-3 text-sm text-red-700">{photoError}</p>}
-                {profileSaveError && <p role="alert" className="mb-3 text-sm font-semibold text-red-300">{profileSaveError}</p>}}
+                {profileSaveError && <p role="alert" className="mb-3 text-sm font-semibold text-red-300">{profileSaveError}</p>}
                 {/* Fields */}
                 <div className="space-y-4">
                   {/* Full Name */}
