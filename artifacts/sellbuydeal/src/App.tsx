@@ -1,5 +1,5 @@
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
-import { AdminDemoCreatorPage } from "@/pages/admin/AdminDemoCreatorPage";
+const AdminDemoCreatorPage = React.lazy(() => import("@/pages/admin/AdminDemoCreatorPage").then(module => ({ default: module.AdminDemoCreatorPage })));
 import React, { useEffect, useRef, useState } from "react";
 import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk, useAuth } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
@@ -96,7 +96,7 @@ import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
 import { BrowsePage } from "@/pages/BrowsePage";
 import { ListingPage } from "@/pages/ListingPage";
 import { TrustProofPage } from "@/pages/TrustProofPage";
-import { AdminTrustProofPage } from "@/pages/admin/AdminTrustProofPage";
+const AdminTrustProofPage = React.lazy(() => import("@/pages/admin/AdminTrustProofPage").then(module => ({ default: module.AdminTrustProofPage })));
 import { CheckoutPage } from "@/pages/CheckoutPage";
 import { MobileNotificationsPage } from "@/pages/MobileNotificationsPage";
 import { MobileShopNav } from "@/components/MobileShopNav";
@@ -122,59 +122,65 @@ import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import IntroSplash from "@/components/IntroSplash";
 import { UserCurrencySync } from "@/components/UserCurrencySync";
-import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
-import { AdminDesignCenterPage } from "@/pages/admin/AdminDesignCenterPage";
-import { AdminWordPressDashboard } from "@/pages/admin/AdminWordPressDashboard";
-import { AdminContentPage, AdminAnalyticsPage } from "@/pages/admin/AdminManagementHubs";
-import { AdminMarketingOverviewPage, AdminSettingsOverviewPage } from "@/pages/admin/AdminOperationsHubs";
-import { AdminImporterOverviewPage, AdminImporterSettingsPage, AdminImporterBulkUpdatePage, AdminCraigslistPage, AdminOlxPage } from "@/pages/admin/AdminImporterPages";
-import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
-import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
-import { AdminSellerCompliancePage } from "@/pages/admin/AdminSellerCompliancePage";
+const AdminLoginPage = React.lazy(() => import("@/pages/admin/AdminLoginPage").then(module => ({ default: module.AdminLoginPage })));
+const AdminDesignCenterPage = React.lazy(() => import("@/pages/admin/AdminDesignCenterPage").then(module => ({ default: module.AdminDesignCenterPage })));
+const AdminWordPressDashboard = React.lazy(() => import("@/pages/admin/AdminWordPressDashboard").then(module => ({ default: module.AdminWordPressDashboard })));
+const AdminContentPage = React.lazy(() => import("@/pages/admin/AdminManagementHubs").then(module => ({ default: module.AdminContentPage })));
+const AdminAnalyticsPage = React.lazy(() => import("@/pages/admin/AdminManagementHubs").then(module => ({ default: module.AdminAnalyticsPage })));
+const AdminMarketingOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminMarketingOverviewPage })));
+const AdminSettingsOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminSettingsOverviewPage })));
+const AdminImporterOverviewPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterOverviewPage })));
+const AdminImporterSettingsPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterSettingsPage })));
+const AdminImporterBulkUpdatePage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterBulkUpdatePage })));
+const AdminCraigslistPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCraigslistPage })));
+const AdminOlxPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminOlxPage })));
+const AdminCreditsEconomyPage = React.lazy(() => import("@/pages/admin/AdminCreditsEconomyPage").then(module => ({ default: module.AdminCreditsEconomyPage })));
+const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage").then(module => ({ default: module.AdminUsersPage })));
+const AdminSellerCompliancePage = React.lazy(() => import("@/pages/admin/AdminSellerCompliancePage").then(module => ({ default: module.AdminSellerCompliancePage })));
 import { SellerCompliancePage } from "@/pages/SellerCompliancePage";
-import { AdminAuditLogPage } from "@/pages/admin/AdminAuditLogPage";
-import { AdminSystemStatusPage } from "@/pages/admin/AdminSystemStatusPage";
-import { AdminSnapSellPage } from "@/pages/admin/AdminSnapSellPage";
-import { AdminDealPilotPage } from "@/pages/admin/AdminDealPilotPage";
-import { AdminFindItPage } from "@/pages/admin/AdminFindItPage";
-import { AdminFeatureFlagsPage } from "@/pages/admin/AdminFeatureFlagsPage";
+const AdminAuditLogPage = React.lazy(() => import("@/pages/admin/AdminAuditLogPage").then(module => ({ default: module.AdminAuditLogPage })));
+const AdminSystemStatusPage = React.lazy(() => import("@/pages/admin/AdminSystemStatusPage").then(module => ({ default: module.AdminSystemStatusPage })));
+const AdminSnapSellPage = React.lazy(() => import("@/pages/admin/AdminSnapSellPage").then(module => ({ default: module.AdminSnapSellPage })));
+const AdminDealPilotPage = React.lazy(() => import("@/pages/admin/AdminDealPilotPage").then(module => ({ default: module.AdminDealPilotPage })));
+const AdminFindItPage = React.lazy(() => import("@/pages/admin/AdminFindItPage").then(module => ({ default: module.AdminFindItPage })));
+const AdminFeatureFlagsPage = React.lazy(() => import("@/pages/admin/AdminFeatureFlagsPage").then(module => ({ default: module.AdminFeatureFlagsPage })));
 import { FeatureGate, FeatureVisible } from "@/components/FeatureGate";
-import { AdminPaymentsPage } from "@/pages/admin/AdminPaymentsPage";
-import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
-import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
-import { AdminDesignSystemPage } from "@/pages/admin/AdminDesignSystemPage";
-import { AdminEmailsPage } from "@/pages/admin/AdminEmailsPage";
-import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
-import { AdminListingsPage } from "@/pages/admin/AdminListingsPage";
-import { AdminCategoryManagerPage } from "@/pages/admin/AdminCategoryManagerPage";
-import { AdminImportsPage } from "@/pages/admin/AdminImportsPage";
-import { AdminImporterControlPage } from "@/pages/admin/AdminImporterControlPage";
-import { AdminCashbackPage } from "@/pages/admin/AdminCashbackPage";
-import { AdminClassifiedsPage } from "@/pages/admin/AdminClassifiedsPage";
-import { AdminDisputesPage } from "@/pages/admin/AdminDisputesPage";
-import { AdminReturnsPage } from "@/pages/admin/AdminReturnsPage";
-import { AdminAuctionsPage } from "@/pages/admin/AdminAuctionsPage";
+const AdminPaymentsPage = React.lazy(() => import("@/pages/admin/AdminPaymentsPage").then(module => ({ default: module.AdminPaymentsPage })));
+const AdminOrdersPage = React.lazy(() => import("@/pages/admin/AdminOrdersPage").then(module => ({ default: module.AdminOrdersPage })));
+const AdminSettingsPage = React.lazy(() => import("@/pages/admin/AdminSettingsPage").then(module => ({ default: module.AdminSettingsPage })));
+const AdminDesignSystemPage = React.lazy(() => import("@/pages/admin/AdminDesignSystemPage").then(module => ({ default: module.AdminDesignSystemPage })));
+const AdminEmailsPage = React.lazy(() => import("@/pages/admin/AdminEmailsPage").then(module => ({ default: module.AdminEmailsPage })));
+const AdminProductsPage = React.lazy(() => import("@/pages/admin/AdminProductsPage").then(module => ({ default: module.AdminProductsPage })));
+const AdminListingsPage = React.lazy(() => import("@/pages/admin/AdminListingsPage").then(module => ({ default: module.AdminListingsPage })));
+const AdminCategoryManagerPage = React.lazy(() => import("@/pages/admin/AdminCategoryManagerPage").then(module => ({ default: module.AdminCategoryManagerPage })));
+const AdminImportsPage = React.lazy(() => import("@/pages/admin/AdminImportsPage").then(module => ({ default: module.AdminImportsPage })));
+const AdminImporterControlPage = React.lazy(() => import("@/pages/admin/AdminImporterControlPage").then(module => ({ default: module.AdminImporterControlPage })));
+const AdminCashbackPage = React.lazy(() => import("@/pages/admin/AdminCashbackPage").then(module => ({ default: module.AdminCashbackPage })));
+const AdminClassifiedsPage = React.lazy(() => import("@/pages/admin/AdminClassifiedsPage").then(module => ({ default: module.AdminClassifiedsPage })));
+const AdminDisputesPage = React.lazy(() => import("@/pages/admin/AdminDisputesPage").then(module => ({ default: module.AdminDisputesPage })));
+const AdminReturnsPage = React.lazy(() => import("@/pages/admin/AdminReturnsPage").then(module => ({ default: module.AdminReturnsPage })));
+const AdminAuctionsPage = React.lazy(() => import("@/pages/admin/AdminAuctionsPage").then(module => ({ default: module.AdminAuctionsPage })));
 import { AuctionsPage } from "@/pages/AuctionsPage";
 import { AuctionDetailPage } from "@/pages/AuctionDetailPage";
 import { CreateAuctionPage } from "@/pages/CreateAuctionPage";
 import { FlashSalesPage } from "@/pages/FlashSalesPage";
 import { FlashSaleDetailPage } from "@/pages/FlashSaleDetailPage";
 import { CreateFlashSalePage } from "@/pages/CreateFlashSalePage";
-import { AdminFlashSalesPage } from "@/pages/admin/AdminFlashSalesPage";
-import { AdminSupportPage } from "@/pages/admin/AdminSupportPage";
-import { AdminChatwootSettingsPage } from "@/pages/admin/AdminChatwootSettingsPage";
+const AdminFlashSalesPage = React.lazy(() => import("@/pages/admin/AdminFlashSalesPage").then(module => ({ default: module.AdminFlashSalesPage })));
+const AdminSupportPage = React.lazy(() => import("@/pages/admin/AdminSupportPage").then(module => ({ default: module.AdminSupportPage })));
+const AdminChatwootSettingsPage = React.lazy(() => import("@/pages/admin/AdminChatwootSettingsPage").then(module => ({ default: module.AdminChatwootSettingsPage })));
 import { SetupWizardPage } from "@/pages/SetupWizardPage";
 import VideoPage from "@/pages/VideoPage";
 import { RewardsPage } from "@/pages/RewardsPage";
-import { AdminRewardsPage } from "@/pages/admin/AdminRewardsPage";
-import { AdminPromotionsPage } from "@/pages/admin/AdminPromotionsPage";
-import { AdminReviewsPage } from "@/pages/admin/AdminReviewsPage";
-import { AdminVerificationPage } from "@/pages/admin/AdminVerificationPage";
+const AdminRewardsPage = React.lazy(() => import("@/pages/admin/AdminRewardsPage").then(module => ({ default: module.AdminRewardsPage })));
+const AdminPromotionsPage = React.lazy(() => import("@/pages/admin/AdminPromotionsPage").then(module => ({ default: module.AdminPromotionsPage })));
+const AdminReviewsPage = React.lazy(() => import("@/pages/admin/AdminReviewsPage").then(module => ({ default: module.AdminReviewsPage })));
+const AdminVerificationPage = React.lazy(() => import("@/pages/admin/AdminVerificationPage").then(module => ({ default: module.AdminVerificationPage })));
 import BuyerProtectionPage from "@/pages/BuyerProtectionPage";
 import CashbackPage from "@/pages/CashbackPage";
 import { ReferralsPage } from "@/pages/ReferralsPage";
 import WelcomeNewBuyers from "@/pages/WelcomeNewBuyers";
-import { AdminReferralsPage } from "@/pages/admin/AdminReferralsPage";
+const AdminReferralsPage = React.lazy(() => import("@/pages/admin/AdminReferralsPage").then(module => ({ default: module.AdminReferralsPage })));
 
 
 // ─── Clerk setup ─────────────────────────────────────────────────────────────
@@ -411,6 +417,7 @@ const queryClient = new QueryClient();
 
 function Router() {
   return (
+    <React.Suspense fallback={<div role="status" className="mx-auto max-w-5xl p-8 text-slate-700 dark:text-slate-200">Loading page…</div>}>
     <Switch>
       <Route path="/" component={Home} />
       {/* Auth — REQUIRED: use /*? wildcard verbatim for OAuth callbacks */}
@@ -525,6 +532,7 @@ function Router() {
       <Route path="/welcome-new-buyers" component={WelcomeNewBuyers} />
       <Route component={NotFound} />
     </Switch>
+    </React.Suspense>
   );
 }
 
