@@ -332,6 +332,12 @@ class HomeSectionBoundary extends React.Component<
 // ─── Homepage: validated published Design Center sections ────────────────────
 
 function Home() {
+  const [showSecondary, setShowSecondary] = useState(false);
+  useEffect(() => {
+    // Give search, navigation, categories and recent listings first paint priority.
+    const timer = window.setTimeout(() => setShowSecondary(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, []);
   const settings=useRawSettings();
   const optionalSections=parseHomeSections(settings.home_sections_layout);
   const sectionContent=parseSectionContent(settings.home_sections_content);
@@ -349,15 +355,14 @@ function Home() {
   };
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <IntroSplash />
       <Navbar />
       <main className="flex-1">
         {/* Preserve the essential shopping journey above optional marketing blocks. */}
         <HomeSectionBoundary><Hero /></HomeSectionBoundary>
         <HomeSectionBoundary><CategorySection /></HomeSectionBoundary>
         <HomeSectionBoundary><FeaturedListings mode="recent" /></HomeSectionBoundary>
-        <HomeSectionBoundary optional><HomepageVisualElements /></HomeSectionBoundary>
-        {optionalSections.filter(section=>section.enabled).map(section=>
+        {showSecondary && <HomeSectionBoundary optional><HomepageVisualElements /></HomeSectionBoundary>}
+        {showSecondary && optionalSections.filter(section=>section.enabled).map(section=>
           <HomeSectionBoundary optional key={section.id}>
           <div data-theme-section={section.id}>
             {section.id!=="features"&&section.id!=="announcement"&&section.id!=="rewards"&&<div className="bg-white px-5 py-5 text-slate-950 dark:bg-[#17243a] dark:text-white"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-black">{sectionContent[section.id].title}</h2>{sectionContent[section.id].description&&<p className="mt-1 text-sm font-medium text-slate-700 dark:text-slate-100">{sectionContent[section.id].description}</p>}</div>{sectionContent[section.id].button&&sectionContent[section.id].url.startsWith("/")&&!sectionContent[section.id].url.startsWith("//")&&<a href={sectionContent[section.id].url} className="rounded-xl bg-orange-600 px-4 py-2 text-sm font-bold text-white">{sectionContent[section.id].button}</a>}</div></div>}
