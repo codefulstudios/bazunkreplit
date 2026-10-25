@@ -869,7 +869,7 @@ export function BrowsePage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search listings..."
-                className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] bg-gray-50"
+                className="w-full min-h-11 border border-gray-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 bg-white dark:border-slate-500 dark:bg-[#172b49] dark:text-white dark:placeholder-slate-300"
                 data-testid="input-browse-search"
               />
               {query && (
@@ -880,6 +880,8 @@ export function BrowsePage() {
             </div>
             <button
               onClick={() => setShowMobileFilters(true)}
+              aria-label="Open listing filters"
+              aria-expanded={showMobileFilters}
               className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#4A5CE8] transition-colors"
               data-testid="button-mobile-filters"
             >
