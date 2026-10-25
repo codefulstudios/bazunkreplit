@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { signOut } = useClerk();
   const [balance, setBalance] = useState(0);
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
 
   const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
   const clerkId = clerkUser?.id ?? null;
@@ -70,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!clerkId || !email) {
       setBalance(0);
+      setProfileName(null);
+      setProfileUsername(null);
       return;
     }
     const name = clerkUser?.fullName ?? undefined;
@@ -80,13 +83,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (b !== null) { setBalance(b.balance); setProfileUsername(b.username ?? null); }
+      try { const stored = JSON.parse(localStorage.getItem(`sbd_profile_v1_${email}`) || "{}"); setProfileName(typeof stored.name === "string" && stored.name.trim() ? stored.name.trim() : null); } catch { setProfileName(null); }
     });
   }, [clerkId, email]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onProfile = (event: Event) => {
-      const username = (event as CustomEvent<{ username?: string }>).detail?.username;
+      const username = (event as CustomEvent<{ username?: string; name?: string }>).detail?.username;
       if (username) setProfileUsername(username);
+      const name = (event as CustomEvent<{ name?: string }>).detail?.name;
+      if (name?.trim()) setProfileName(name.trim());
     };
     window.addEventListener("bazunk-profile-updated", onProfile);
     return () => window.removeEventListener("bazunk-profile-updated", onProfile);
@@ -101,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const user: User | null = useMemo(() => {
     if (!isLoaded || !clerkUser) return null;
     const name =
-      clerkUser.fullName ??
+      profileName ?? clerkUser.fullName ??
       clerkUser.username ??
       email.split("@")[0] ??
       "User";
@@ -111,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       username: profileUsername ?? clerkUser.username ?? email.split("@")[0] ?? "user",
       balance,
     };
-  }, [isLoaded, clerkUser, email, balance, profileUsername]);
+  }, [isLoaded, clerkUser, email, balance, profileUsername, profileName]);
 
   // login/register kept for API compatibility — Clerk handles these flows via /sign-in and /sign-up
   async function login(_email: string, _password: string): Promise<boolean> {
