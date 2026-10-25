@@ -137,7 +137,7 @@ export function Hero() {
               <Link data-theme-edit="hero_cta_primary" href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
                 <ShoppingCart className="h-5 w-5" /> {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_primary||"Shop all listings":"Shop all listings"} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link data-theme-edit="hero_cta_secondary" href="/categories" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
+              <Link data-theme-edit="hero_cta_secondary" href={/\b(sell|list|selling)\b/i.test(featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Explore categories":"Explore categories") ? (user ? "/sell/direct" : "/sign-in") : "/categories" } className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
                 {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Explore categories":"Explore categories"}
               </Link>
             </div>
