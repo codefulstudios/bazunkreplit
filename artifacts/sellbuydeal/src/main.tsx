@@ -30,5 +30,13 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 if (window.location.hostname === "bazunk-web.onrender.com") {
   window.location.replace(`https://bazunk.com${window.location.pathname}${window.location.search}${window.location.hash}`);
 } else {
-  void loadCategoryPresentation().finally(()=>createRoot(document.getElementById("root")!).render(<App />));
+  // Do not hold the entire storefront behind a potentially sleeping free-tier API.
+  // Keep a short window for category presentation settings, then render using
+  // the bundled taxonomy if the API is slow or unavailable.
+  const categoryController = new AbortController();
+  const categoryTimeout = window.setTimeout(() => categoryController.abort(), 1000);
+  void loadCategoryPresentation(categoryController.signal).finally(() => {
+    window.clearTimeout(categoryTimeout);
+    createRoot(document.getElementById("root")!).render(<App />);
+  });
 }
