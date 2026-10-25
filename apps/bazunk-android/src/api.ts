@@ -1,5 +1,5 @@
 export type Listing = { id: number; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
-const base = (process.env.EXPO_PUBLIC_API_URL || 'https://bazunk.com/api').replace(/\/$/, '');
+const base = (process.env.EXPO_PUBLIC_API_URL || 'https://bazunk-api.onrender.com/api').replace(/\/$/, '');
 export async function getJson(path: string, signal?: AbortSignal): Promise<unknown> {
   const controller = new AbortController();
   const abort = () => controller.abort();
@@ -9,7 +9,10 @@ export async function getJson(path: string, signal?: AbortSignal): Promise<unkno
   try {
     const response = await fetch(`${base}${path}`, { signal: controller.signal });
     if (!response.ok) throw new Error(`Could not load data (${response.status}). Please retry.`);
-    return await response.json();
+    const text = await response.text();
+    if (!text.trim()) throw new Error('The server returned an empty response. Please try again shortly.');
+    try { return JSON.parse(text); }
+    catch { throw new Error('The server returned an unreadable response. Please try again shortly.'); }
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
 export function parseListing(value: unknown): Listing {
