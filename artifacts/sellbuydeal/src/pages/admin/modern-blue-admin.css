@@ -258,7 +258,7 @@
 .dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#253d5c!important;color:#a9c8ff!important}
 .bazunk-admin .admin-dashboard .admin-dashboard-panels>div,
 .dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div{background:var(--matte-card)!important;box-shadow:none!important;border-color:var(--matte-border)!important}
-.bazunk-admin .admin-dashboard .admin-dashboard-panels :is(.bg-blue-50,.dark\\:bg-blue-500\\/10){
+.bazunk-admin .admin-dashboard .admin-dashboard-panels :is(.bg-blue-50,[class~="dark:bg-blue-500/10"]){
  background:var(--matte-soft)!important;
 }
 .bazunk-admin .admin-dashboard .admin-dashboard-panels button:not(:hover){box-shadow:none!important}
