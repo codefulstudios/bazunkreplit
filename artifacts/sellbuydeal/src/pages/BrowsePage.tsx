@@ -260,6 +260,8 @@ export function BrowsePage() {
   const urlList=(name:string)=>params.get(name)?.split(",").filter(Boolean)??[];
 
   const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
+  useEffect(() => { const timer = window.setTimeout(() => setDebouncedQuery(query), 350); return () => window.clearTimeout(timer); }, [query]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(urlList("categories").length ? urlList("categories") : urlCategory ? [urlCategory] : []);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlList("subcategories").length ? urlList("subcategories") : urlSub ? [urlSub] : []);
   const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlList("thirdLevels").length ? urlList("thirdLevels") : urlSubsub ? [urlSubsub] : []);
@@ -327,7 +329,7 @@ export function BrowsePage() {
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
-  if (query.trim()) browseScope.set("q", query.trim());
+  if (debouncedQuery.trim()) browseScope.set("q", debouncedQuery.trim());
   if (selectedCategories.length) browseScope.set("categories", selectedCategories.join(","));
   if (selectedSubcategories.length) browseScope.set("subcategories", selectedSubcategories.join(","));
   if (selectedThirdLevels.length) browseScope.set("thirdLevels", selectedThirdLevels.join(","));
@@ -1029,7 +1031,7 @@ export function BrowsePage() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] cursor-pointer"
+                  className="min-h-11 appearance-none border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 cursor-pointer dark:border-slate-500 dark:bg-[#172b49] dark:text-white"
                   data-testid="select-sort"
                 >
                   {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
