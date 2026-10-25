@@ -407,9 +407,9 @@ export const ACTIVE_CATEGORIES = CATEGORIES.filter(c => !["digital-products", "e
 }));
 
 /** Load display-only category settings before the storefront mounts. Permanent slugs never change. */
-export async function loadCategoryPresentation():Promise<void>{
+export async function loadCategoryPresentation(signal?: AbortSignal):Promise<void>{
  try{
-  const response=await fetch("/api/taxonomy/category-overrides");
+  const response=await fetch("/api/taxonomy/category-overrides", { signal });
   if(!response.ok)return;
   const data=await response.json();
   if(!Array.isArray(data.overrides))return;
