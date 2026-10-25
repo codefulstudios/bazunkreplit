@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Zap, Handshake, ArrowRight, Shield, Tag, Radio, BadgePoundSterling } from "lucide-react";
 import { Link } from "wouter";
 import { useRawSettings } from "@/context/SiteSettingsContext";
-import {parseSectionContent} from "@/design-system/homepageSections";
 import { isFeatureEnabled } from "@/components/FeatureGate";
 
 const FEATURE_BLOCKS = [
@@ -61,34 +60,11 @@ const TRUST_ITEMS = [
 
 export function FeaturedFeatures() {
   const flags = useRawSettings();
-  const config=parseSectionContent(flags.home_sections_content).features;
-  const sectionTitle=config.title||flags.features_title||"Why Bazunk?";
-  const sectionSubtitle=config.description||flags.features_subtitle||"Everything in one place";
   const blocks = FEATURE_BLOCKS.filter(x => isFeatureEnabled(flags, x.feature));
   const trustItems = TRUST_ITEMS.filter(x => isFeatureEnabled(flags, x.feature));
   return (
     <section className="bg-slate-50 dark:bg-slate-950 py-14 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-6xl mx-auto px-4">
-
-        {/* Section header */}
-        <div className="text-center mb-10">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-[#F26B21] text-sm font-semibold uppercase tracking-widest mb-2"
-          >
-            {sectionTitle}
-          </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
-          >
-            {sectionSubtitle}
-          </motion.h2>
-        </div>
 
         {/* 3 feature blocks */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
