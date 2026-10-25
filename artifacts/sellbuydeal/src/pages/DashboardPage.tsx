@@ -10,7 +10,7 @@ import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
-import { useAuth as useClerkAuth } from "@clerk/react";
+import { useAuth as useClerkAuth, useUser as useClerkUser } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -5649,6 +5649,18 @@ function VerificationSection({ userEmail }: { userEmail: string }) {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const { user: clerkProfileUser } = useClerkUser();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoSaving, setPhotoSaving] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const uploadProfilePhoto = async (file?: File) => {
+    if (!file || !clerkProfileUser) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) { setPhotoError("Choose an image smaller than 5 MB."); return; }
+    setPhotoError(""); setPhotoSaving(true);
+    try { await clerkProfileUser.setProfileImage({ file }); await clerkProfileUser.reload(); }
+    catch { setPhotoError("Could not update your profile photo. Please try again."); }
+    finally { setPhotoSaving(false); if (photoInputRef.current) photoInputRef.current.value = ""; }
+  };
   const rawSettings = useRawSettings();
   const liveEnabled = isFeatureEnabled(rawSettings, "live");
   const dashboardFeatureForItem: Record<string,string> = {
@@ -6343,7 +6355,6 @@ export function DashboardPage() {
                       <button
                         onClick={async () => {
                           const updated = { ...profileForm };
-                          setSavedProfile(updated);
                           // Always use the actual Clerk email (not the form email) for DB cascade
                           const clerkEmail = user?.email || "";
                           const displayName = updated.name.trim() || savedProfile.name;
@@ -6351,14 +6362,17 @@ export function DashboardPage() {
                             try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username: updated.username })); } catch {}
                             if (displayName || updated.username) {
                               try {
-                                await fetch("/api/listings/seller-name", {
+                                const response = await fetch("/api/listings/seller-name", {
                                   method: "PATCH",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ email: clerkEmail, name: displayName || undefined, username: updated.username || undefined }),
                                 });
+                                if (!response.ok) { window.alert("Profile could not be saved to the marketplace. Please try again."); return; }
                               } catch {}
                             }
                           }
+                          setSavedProfile({ ...updated, name: displayName });
+                          window.dispatchEvent(new CustomEvent("bazunk-profile-updated", { detail: { name: displayName, username: updated.username } }));
                           setProfileEdit(false);
                           setProfileSaved(true);
                           setTimeout(() => setProfileSaved(false), 3000);
@@ -6375,12 +6389,13 @@ export function DashboardPage() {
                 {/* Avatar row */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
-                      {(profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
+                      {clerkProfileUser?.imageUrl ? <img src={clerkProfileUser.imageUrl} alt="Your profile photo" className="h-full w-full object-cover" /> : (profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
                     </div>
+                    <input ref={photoInputRef} type="file" accept="image/*" className="hidden" aria-label="Choose profile photo" onChange={e => void uploadProfilePhoto(e.target.files?.[0])} />
                     {profileEdit && (
-                      <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] transition-colors">
-                        <Pencil className="w-3 h-3" />
+                      <button type="button" disabled={photoSaving} onClick={() => photoInputRef.current?.click()} aria-label="Change profile photo" title="Change profile photo" className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] disabled:opacity-50 transition-colors">
+                        <Camera className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -6390,6 +6405,7 @@ export function DashboardPage() {
                   </div>
                 </div>
 
+                {photoError && <p role="alert" className="mb-3 text-sm text-red-700">{photoError}</p>}
                 {/* Fields */}
                 <div className="space-y-4">
                   {/* Full Name */}
@@ -6438,11 +6454,6 @@ export function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Member since — always read-only */}
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Member Since</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-400 font-medium">January 2024</div>
-                  </div>
                 </div>
 
               </div>
