@@ -138,7 +138,7 @@ export function CategoriesPage() {
   const [openSlug, setOpenSlug] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeSub, setActiveSub] = useState<string | null>(null);
-  const [expandedSub, setExpandedSub] = useState<string | null>(null);
+  const [expandedSubs, setExpandedSubs] = useState<string[]>([]);
   const [counts, setCounts] = useState<CategoryCount[]>([]);
   const [countsLoading,setCountsLoading] = useState(true);
   const [hidden, setHidden] = useState<string[]>([]);
@@ -204,35 +204,36 @@ export function CategoriesPage() {
   const visibleSubs = curated.filter(sub => !search.trim() || sub.name.toLowerCase().includes(search.toLowerCase()) || suggestedThirdLevel(featuredCategory!.slug,sub.slug).some(name=>name.toLowerCase().includes(search.toLowerCase())));
   const selectedSub = visibleSubs.find(sub=>sub.slug===activeSub) ?? visibleSubs[0];
   const selectedThird = selectedSub && featuredCategory ? suggestedThirdLevel(featuredCategory.slug,selectedSub.slug) : [];
-  const currentExpandedSub = expandedSub;
+  const currentExpandedSubs = expandedSubs;
   const products = categoryListings;
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
     <Navbar />
     <main className="bz-category-redesign flex-1 mx-auto w-full max-w-[1536px] px-4 py-5 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"><Link href="/">Home</Link><span>›</span><span>Categories</span></nav>
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[310px_minmax(0,1fr)] items-start">
-        <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto overscroll-contain" aria-label="Category navigation">
-          <button type="button" onClick={()=>{setOpenSlug(null);setActiveSub(null);setExpandedSub(null);}} className={`mb-2 w-full rounded-xl px-3 py-3 text-left text-sm font-extrabold ${!selected?"bg-gradient-to-r from-pink-500 to-orange-400 text-white":"text-slate-900 dark:text-white"}`}>All Categories</button>
+        <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto overscroll-contain [scrollbar-gutter:stable]" aria-label="Category navigation">
+          <button type="button" onClick={()=>{setOpenSlug(null);setActiveSub(null);}} className={`mb-2 w-full rounded-xl px-3 py-3 text-left text-sm font-extrabold ${!selected?"bg-gradient-to-r from-pink-500 to-orange-400 text-white":"text-slate-900 dark:text-white"}`}>All Categories</button>
           <nav className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-1" aria-label="Browse category departments">
             {filtered.map(cat=>{
               const available=statusFor(cat.slug)==="active";
               const active=selected?.slug===cat.slug;
               const subcategories=cat.subcategories.filter(sub=>statusFor(cat.slug,sub.slug)==="active");
               return <div key={cat.slug} className="min-w-0">
-                <button type="button" disabled={!available} onClick={()=>{setOpenSlug(cat.slug);setActiveSub(null);setExpandedSub(null);}}
+                <button type="button" disabled={!available} onClick={()=>{setOpenSlug(previous=>previous===cat.slug?null:cat.slug);setActiveSub(null);}}
                   aria-expanded={active} aria-controls={"category-subs-"+cat.slug}
                   className={`flex w-full min-h-11 items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm font-semibold transition-colors ${active?"bg-blue-600 text-white":available?"text-slate-900 hover:bg-blue-50 dark:text-slate-100 dark:hover:bg-[#1f3b68]":"text-slate-700 dark:text-slate-200 cursor-not-allowed"}`}>
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${themeFor(cat.slug)} text-white`}><CategoryIcon name={cat.icon} className="h-4 w-4"/></span>
                   <span className="min-w-0 flex-1 leading-snug font-bold">{cat.name}</span>
                   {active?<ChevronDown className="h-4 w-4 shrink-0"/>:<ChevronRight className="h-4 w-4 shrink-0"/>}
                 </button>
-                {active && <div id={"category-subs-"+cat.slug} className="my-1 ml-3 space-y-1 border-l-2 border-orange-500/70 pl-2 py-1" aria-label={cat.name+" subcategories"}>
+                <AnimatePresence initial={false}>{active && <motion.div id={"category-subs-"+cat.slug} initial={{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={{height:0,opacity:0}} transition={{duration:0.22,ease:[0.2,0.8,0.2,1]}} className="overflow-hidden motion-reduce:transition-none" aria-label={cat.name+" subcategories"}><div className="my-1 ml-3 space-y-1 border-l-2 border-orange-500/70 pl-2 py-1">
                   <Link href={"/browse?category="+encodeURIComponent(cat.slug)} className="block rounded-lg px-2 py-2 text-xs font-bold text-orange-700 hover:underline dark:text-orange-300">View all {cat.name} →</Link>
                   {subcategories.map(sub=>{
-                    const subIsOpen=currentExpandedSub===sub.slug;
+                    const subKey=cat.slug+"/"+sub.slug;
+                    const subIsOpen=currentExpandedSubs.includes(subKey);
                     const third=suggestedThirdLevel(cat.slug,sub.slug);
                     return <div key={sub.slug} className="min-w-0">
-                      <button type="button" aria-expanded={subIsOpen} aria-controls={"third-level-"+cat.slug+"-"+sub.slug} onClick={()=>{setActiveSub(sub.slug);setExpandedSub(subIsOpen?null:sub.slug);}} className={`group flex w-full min-h-11 items-center gap-2 rounded-xl border px-2.5 py-2.5 text-left text-xs font-bold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${subIsOpen?"border-orange-400 bg-orange-50 text-slate-950 shadow-sm dark:border-orange-500/70 dark:bg-[#294363] dark:text-white":"border-transparent text-slate-900 hover:border-slate-300 hover:bg-slate-100 dark:text-slate-100 dark:hover:border-[#526a8a] dark:hover:bg-[#1d3658]"}`}>
+                      <button type="button" aria-expanded={subIsOpen} aria-controls={"third-level-"+cat.slug+"-"+sub.slug} onClick={()=>{setActiveSub(sub.slug);setExpandedSubs(previous=>subIsOpen?previous.filter(key=>key!==subKey):[...previous,subKey]);}} className={`group flex w-full min-h-11 items-center gap-2 rounded-xl border px-2.5 py-2.5 text-left text-xs font-bold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500 ${subIsOpen?"border-orange-400 bg-orange-50 text-slate-950 shadow-sm dark:border-orange-500/70 dark:bg-[#294363] dark:text-white":"border-transparent text-slate-900 hover:border-slate-300 hover:bg-slate-100 dark:text-slate-100 dark:hover:border-[#526a8a] dark:hover:bg-[#1d3658]"}`}>
                         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${subIsOpen?"bg-orange-500":"bg-slate-400 dark:bg-slate-500"}`} />
                         <span className="min-w-0 flex-1 leading-snug">{sub.name}</span>
                         <span className="text-[10px] font-semibold tabular-nums text-slate-600 dark:text-slate-300">{countsLoading?"":subCount(cat.slug,sub.slug)}</span>
@@ -248,7 +249,7 @@ export function CategoriesPage() {
                       </AnimatePresence>
                     </div>;
                   })}
-                </div>}
+                </div></motion.div>}</AnimatePresence>
               </div>;
             })}
           </nav>
