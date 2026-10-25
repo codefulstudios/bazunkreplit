@@ -10,7 +10,7 @@ import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
-import { useAuth as useClerkAuth, useUser as useClerkUser } from "@clerk/react";
+import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -5650,6 +5650,10 @@ function VerificationSection({ userEmail }: { userEmail: string }) {
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const { user: clerkProfileUser } = useClerkUser();
+  const { openUserProfile } = useClerk();
+  const { getToken: getProfileToken } = useClerkAuth();
+  const [profileSaveError, setProfileSaveError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [photoSaving, setPhotoSaving] = useState(false);
   const [photoError, setPhotoError] = useState("");
@@ -6354,33 +6358,41 @@ export function DashboardPage() {
                       </button>
                       <button
                         onClick={async () => {
+                          if (profileSaving) return;
+                          setProfileSaveError("");
                           const updated = { ...profileForm };
-                          // Always use the actual Clerk email (not the form email) for DB cascade
                           const clerkEmail = user?.email || "";
-                          const displayName = updated.name.trim() || savedProfile.name;
-                          if (clerkEmail) {
-                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username: updated.username })); } catch {}
-                            if (displayName || updated.username) {
-                              try {
-                                const response = await fetch("/api/listings/seller-name", {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ email: clerkEmail, name: displayName || undefined, username: updated.username || undefined }),
-                                });
-                                if (!response.ok) { window.alert("Profile could not be saved to the marketplace. Please try again."); return; }
-                              } catch {}
-                            }
-                          }
-                          setSavedProfile({ ...updated, name: displayName });
-                          window.dispatchEvent(new CustomEvent("bazunk-profile-updated", { detail: { name: displayName, username: updated.username } }));
-                          setProfileEdit(false);
-                          setProfileSaved(true);
-                          setTimeout(() => setProfileSaved(false), 3000);
+                          const displayName = updated.name.trim();
+                          const username = updated.username.trim().replace(/^@/, "");
+                          if (!clerkEmail || !displayName) { setProfileSaveError("Enter your name before saving."); return; }
+                          if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) { setProfileSaveError("Username must be 3–30 characters: letters, numbers, dots, underscores or hyphens."); return; }
+                          setProfileSaving(true);
+                          try {
+                            const token = await getProfileToken();
+                            if (!token) throw new Error("Your session has expired. Sign in again to update your profile.");
+                            const response = await fetch("/api/listings/seller-name", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ name: displayName, username }),
+                            });
+                            const data = await response.json().catch(() => ({}));
+                            if (!response.ok) throw new Error(data.error || "Could not save your profile. Please try again.");
+                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username })); } catch {}
+                            setSavedProfile({ name: displayName, email: clerkEmail, username });
+                            setProfileForm({ name: displayName, email: clerkEmail, username });
+                            window.dispatchEvent(new CustomEvent("bazunk-profile-updated", { detail: { name: displayName, username } }));
+                            setProfileEdit(false);
+                            setProfileSaved(true);
+                            setTimeout(() => setProfileSaved(false), 3000);
+                          } catch (error) {
+                            setProfileSaveError(error instanceof Error ? error.message : "Could not save your profile.");
+                          } finally { setProfileSaving(false); }
                         }}
                         className="px-4 py-2 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                        disabled={profileSaving}
                         data-testid="button-save-profile"
                       >
-                        <Check className="w-3.5 h-3.5" /> Save Changes
+                        <Check className="w-3.5 h-3.5" /> {profileSaving ? "Saving…" : "Save Changes"}
                       </button>
                     </div>
                   )}
@@ -6406,6 +6418,7 @@ export function DashboardPage() {
                 </div>
 
                 {photoError && <p role="alert" className="mb-3 text-sm text-red-700">{photoError}</p>}
+                {profileSaveError && <p role="alert" className="mb-3 text-sm font-semibold text-red-300">{profileSaveError}</p>}}
                 {/* Fields */}
                 <div className="space-y-4">
                   {/* Full Name */}
@@ -6428,10 +6441,9 @@ export function DashboardPage() {
                   {/* Email — always read-only; managed by your sign-in provider */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email Address</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{savedProfile.email}</div>
-                    {profileEdit && (
-                      <p className="text-xs text-gray-400 mt-1">Email is managed by your sign-in account and cannot be changed here.</p>
-                    )}
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{user?.email || clerkProfileUser?.primaryEmailAddress?.emailAddress || savedProfile.email}</div>
+                    <p className="text-xs text-slate-300 mt-2">To change your email address, open your sign-in account settings and select Email addresses.</p>
+                    <button type="button" onClick={() => openUserProfile()} className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-blue-400 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700/30"><ExternalLink className="h-3.5 w-3.5" /> Manage sign-in email</button>
                   </div>
 
                   {/* Username */}
