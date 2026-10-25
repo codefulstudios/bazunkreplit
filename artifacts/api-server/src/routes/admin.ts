@@ -2194,10 +2194,20 @@ async function ebayDetailStock(itemId:string,site:"uk"|"us",apiKey:string):Promi
   const reservation=await reserveEbayApiRequest("product-stock-"+site);
   let status=0;
   try{
-    const response=await fetch("https://real-time-ebay-data.p.rapidapi.com/product_get.php?url="+encodeURIComponent(itemUrl),{headers:{"X-RapidAPI-Key":apiKey,"X-RapidAPI-Host":"real-time-ebay-data.p.rapidapi.com"},signal:AbortSignal.timeout(12000)});
-    status=response.status;
-    if(!response.ok)return null;
-    return ebayDetailQuantity(await response.json());
+    const endpoint="https://real-time-ebay-data.p.rapidapi.com/product_get.php?url="+encodeURIComponent(itemUrl);
+    // One bounded retry for transient supplier failures only; never retry quota/auth errors.
+    for(let attempt=0;attempt<2;attempt++){
+      try{
+        const response=await fetch(endpoint,{headers:{"X-RapidAPI-Key":apiKey,"X-RapidAPI-Host":"real-time-ebay-data.p.rapidapi.com"},signal:AbortSignal.timeout(8000)});
+        status=response.status;
+        if(response.ok)return ebayDetailQuantity(await response.json());
+        if(![502,503,504].includes(response.status)||attempt===1)return null;
+      }catch(error){
+        if(attempt===1){logger.warn({err:error,itemId},"eBay stock lookup timed out after retry");return null;}
+      }
+      await new Promise(resolve=>setTimeout(resolve,400+Math.floor(Math.random()*300)));
+    }
+    return null;
   }finally{await finishEbayApiRequest(reservation,status);}
 }
 
