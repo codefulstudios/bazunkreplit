@@ -98,7 +98,7 @@
 /* Accessibility fixes for the production admin shell and sign-in. */
 .bazunk-admin aside .admin-nav-link:not([aria-current="page"]) {color:#243954 !important;}
 .bazunk-admin aside .admin-nav-link {color:#243954 !important;}
-.bazunk-admin aside .admin-nav-link.bg-\\[\\#F26B21\\] {color:#fff !important;}
+.bazunk-admin aside .admin-nav-link.bg-\[\#F26B21\] {color:#fff !important;}
 .bazunk-admin aside .admin-nav-link:hover:not([aria-current="page"]) {color:#1459df !important;}
 .bazunk-admin aside .admin-sign-out {color:#243954 !important;}
 .bazunk-admin aside input {color:#162b48 !important;opacity:1;}.bazunk-admin aside input::placeholder {color:#526780 !important;opacity:1;}
@@ -277,7 +277,7 @@
 .dark .bazunk-admin main .admin-users-table button.bg-sky-50 {background:#194c69!important;color:#d5f1ff!important;}
 .dark .bazunk-admin main .admin-users-table button.bg-gray-100 {background:#334866!important;color:#fff!important;}
 .dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf2ff;}
-.dark .bazunk-admin main .admin-users-table td .text-\\[\\#4A5CE8\\] {color:#adbaff!important;}
+.dark .bazunk-admin main .admin-users-table td .text-\[\#4A5CE8\] {color:#adbaff!important;}
 
 
 /* Admin typography contract: labels, table metadata, KPI figures and help copy. */
@@ -329,8 +329,8 @@
 .bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#334155!important;opacity:1!important;}
 .dark .bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#f3f7ff!important;}
 .bazunk-admin aside button[aria-controls^="admin-nav-"] :is(span,svg) {color:inherit!important;opacity:1!important;}
-.dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
-.dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\]:hover {background:#47668f!important;}
+.dark .bazunk-admin main .admin-compliance-page button.dark\:!bg-\[\#334d73\] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
+.dark .bazunk-admin main .admin-compliance-page button.dark\:!bg-\[\#334d73\]:hover {background:#47668f!important;}
 
 
 /* Keep semantic error/status labels legible on dark admin panels, including
