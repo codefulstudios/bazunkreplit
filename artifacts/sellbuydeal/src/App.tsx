@@ -78,7 +78,7 @@ import { CategorySection } from "@/components/CategorySection";
 import { HomepageVisualElements } from "@/components/HomepageVisualElements";
 import { HomepagePromoCards } from "@/components/HomepagePromoCards";
 import { useRawSettings } from "@/context/SiteSettingsContext";
-import { parseHomeSections, parseSectionContent, type HomeSectionId } from "@/design-system/homepageSections";
+import { parseHomeSections, type HomeSectionId } from "@/design-system/homepageSections";
 import { FeaturedListings } from "@/components/FeaturedListings";
 import { FeaturedFeatures } from "@/components/FeaturedFeatures";
 import { Footer } from "@/components/Footer";
@@ -342,7 +342,6 @@ function Home() {
   }, []);
   const settings=useRawSettings();
   const optionalSections=parseHomeSections(settings.home_sections_layout);
-  const sectionContent=parseSectionContent(settings.home_sections_content);
   const renderOptional=(id:HomeSectionId)=>{
     switch(id){
       case "promoted":return <FeaturedListings mode="promoted"/>;
