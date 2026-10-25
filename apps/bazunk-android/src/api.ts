@@ -1,5 +1,18 @@
 export type Listing = { id: number; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
-const base = (process.env.EXPO_PUBLIC_API_URL || 'https://bazunk-api.onrender.com/api').replace(/\/$/, '');
+const renderApiBase = 'https://bazunk-api.onrender.com/api';
+// The marketing site is a separately hosted frontend. Pointing the native app
+// at bazunk.com/api can return an empty HTML/SPA response instead of JSON.
+export function resolveApiBase(configured?: string): string {
+  const candidate = (configured || '').trim().replace(/\/+$/, '');
+  if (!candidate) return renderApiBase;
+  try {
+    const url = new URL(candidate);
+    if ((url.hostname === 'bazunk.com' || url.hostname === 'www.bazunk.com') && url.pathname === '/api') return renderApiBase;
+    if (url.protocol !== 'https:') return renderApiBase;
+  } catch { return renderApiBase; }
+  return candidate;
+}
+const base = resolveApiBase(process.env.EXPO_PUBLIC_API_URL);
 export async function getJson(path: string, signal?: AbortSignal): Promise<unknown> {
   const controller = new AbortController();
   const abort = () => controller.abort();
