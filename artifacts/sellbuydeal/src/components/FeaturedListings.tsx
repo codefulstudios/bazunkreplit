@@ -81,35 +81,36 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setLoadError(false);
     setSpotlightListings([]);
     setRecentListings([]);
-    const fetchAll = async () => {
-      try {
-        const [spotlightRes, recentRes] = await Promise.all([
-          fetch(`${API_BASE}/api/listings/spotlight?region=${marketRegion}`),
-          fetch(`${API_BASE}/api/listings?limit=16&region=${marketRegion}`),
-        ]);
-        if (!cancelled && spotlightRes.ok) {
-          const data = await spotlightRes.json();
-          setSpotlightListings(Array.isArray(data) ? data : []);
+    const endpoint = mode === "promoted"
+      ? `${API_BASE}/api/listings/spotlight?region=${marketRegion}`
+      : `${API_BASE}/api/listings?limit=16&region=${marketRegion}`;
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch(endpoint, { signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error(`Homepage listings HTTP ${response.status}`);
+        const listings = await response.json();
+        if (controller.signal.aborted) return;
+        if (!Array.isArray(listings)) throw new Error("Invalid homepage listings");
+        if (mode === "promoted") setSpotlightListings(listings);
+        else setRecentListings(listings);
+      })
+      .catch(error => {
+        if (!controller.signal.aborted || controller.signal.reason?.name === "TimeoutError") {
+          setLoadError(true);
+          console.warn("Homepage listings unavailable:", error);
         }
-        if (!cancelled && recentRes.ok) {
-          const data = await recentRes.json();
-          setRecentListings(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        if (!cancelled) setLoadError(true);
-        console.error("Homepage listings failed to load", error);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchAll();
-    return () => { cancelled = true; };
-  }, [marketRegion]);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        if (!controller.signal.aborted || controller.signal.reason?.name === "TimeoutError") setLoading(false);
+      });
+    return () => { clearTimeout(timeout); controller.abort("unmounted"); };
+  }, [marketRegion, mode]);
 
   const hasSpotlight = spotlightListings.length > 0;
   const displayListings = mode === "promoted" ? spotlightListings : recentListings;
