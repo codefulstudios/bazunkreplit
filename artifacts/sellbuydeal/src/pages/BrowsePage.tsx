@@ -1,7 +1,7 @@
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSearch, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -226,6 +226,22 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
   );
 }
 
+const browseCache = new Map<string, { items: ApiListing[]; time: number }>();
+const BROWSE_CACHE_TTL = 45_000;
+const BROWSE_CACHE_MAX = 30;
+function getCachedBrowse(key: string) {
+  const cached = browseCache.get(key);
+  if (!cached || Date.now() - cached.time > BROWSE_CACHE_TTL) {
+    if (cached) browseCache.delete(key);
+    return null;
+  }
+  return cached.items;
+}
+function cacheBrowse(key: string, items: ApiListing[]) {
+  if (browseCache.size >= BROWSE_CACHE_MAX) browseCache.delete(browseCache.keys().next().value!);
+  browseCache.set(key, { items, time: Date.now() });
+}
+
 export function BrowsePage() {
   const [marketRegion, setMarketRegion] = useMarketplaceRegion();
   const { getToken } = useClerkAuth();
@@ -263,6 +279,8 @@ export function BrowsePage() {
   const [apiListings, setApiListings] = useState<(typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] })[]>([]);
   const [hasMoreListings, setHasMoreListings] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const moreController = useRef<AbortController | null>(null);
+  const scopeRef = useRef("");
   const [loadingListings, setLoadingListings] = useState(true);
   const delayedLoading = useMarketplaceLoadingDelay(loadingListings, "browse");
   const [listingError, setListingError] = useState<string | null>(null);
@@ -348,44 +366,80 @@ export function BrowsePage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    moreController.current?.abort();
+    scopeRef.current = browseScopeQuery;
+    setLoadingMore(false);
+    setMoreError(null);
+    setListingError(null);
+    const key = `listings:24:0:${browseScopeQuery}`;
+    const cached = loadAttempt === 0 ? getCachedBrowse(key) : null;
+    if (cached) {
+      setApiListings(cached.map(mapApiListing));
+      setHasMoreListings(cached.length === LISTING_BATCH);
+      setLoadingListings(false);
+      return () => controller.abort();
+    }
     setLoadingListings(true);
     setApiListings([]);
     setHasMoreListings(true);
-    setListingError(null);
-    setMoreError(null);
+    const timeout = setTimeout(() => controller.abort(), 12000);
     fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`Listings API returned HTTP ${r.status}`);
         const data: ApiListing[] = await r.json();
         if (!Array.isArray(data)) throw new Error("Invalid listings response");
         if (controller.signal.aborted) return;
+        cacheBrowse(key, data);
         setApiListings(data.map(mapApiListing));
         setHasMoreListings(data.length === LISTING_BATCH);
       })
       .catch((error) => {
         if (!controller.signal.aborted) setListingError(error instanceof Error ? error.message : "We couldn’t load listings. Please try again.");
+        else if (controller.signal.reason !== undefined && controller.signal.reason !== "scope-change") {
+          // Timeout: offer a retry rather than leave the loading skeleton forever.
+          setListingError("Listings are taking too long to respond. Please try again.");
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoadingListings(false);
+        clearTimeout(timeout);
+        if (scopeRef.current === browseScopeQuery) setLoadingListings(false);
       });
-    return () => controller.abort();
+    return () => { clearTimeout(timeout); controller.abort("scope-change"); };
   }, [loadAttempt, browseScopeQuery]);
+
+  useEffect(() => () => moreController.current?.abort(), []);
 
   async function loadMoreListings() {
     if (loadingMore || loadingListings || !hasMoreListings) return;
+    moreController.current?.abort();
+    const controller = new AbortController();
+    moreController.current = controller;
+    const scope = browseScopeQuery;
+    const offset = apiListings.length;
+    const key = `listings:24:${offset}:${scope}`;
     setLoadingMore(true);
     setMoreError(null);
+    const timeout = setTimeout(() => controller.abort(), 12000);
     try {
-      const r = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${apiListings.length}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`);
-      if (!r.ok) throw new Error("Could not load more listings");
-      const data: ApiListing[] = await r.json();
-      if (!Array.isArray(data)) throw new Error("Invalid listings response");
-      setApiListings((current) => [...current, ...data.map(mapApiListing)]);
+      let data = getCachedBrowse(key);
+      if (!data) {
+        const response = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${offset}${scope ? `&${scope}` : ""}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Could not load more listings");
+        data = await response.json() as ApiListing[];
+        if (!Array.isArray(data)) throw new Error("Invalid listings response");
+        if (!controller.signal.aborted) cacheBrowse(key, data);
+      }
+      if (controller.signal.aborted || scopeRef.current !== scope) return;
+      setApiListings(current => [...current, ...data.map(mapApiListing)]);
       setHasMoreListings(data.length === LISTING_BATCH);
     } catch {
-      setMoreError("We couldn’t load more listings. Your current results are still available. Please try again.");
+      if (!controller.signal.aborted && scopeRef.current === scope)
+        setMoreError("We couldn’t load more listings. Your current results are still available. Please try again.");
+      else if (controller.signal.reason?.name === "TimeoutError" && scopeRef.current === scope)
+        setMoreError("The request timed out. Please try loading more again.");
     } finally {
-      setLoadingMore(false);
+      clearTimeout(timeout);
+      if (moreController.current === controller && scopeRef.current === scope) setLoadingMore(false);
     }
   }
 
@@ -1005,7 +1059,7 @@ export function BrowsePage() {
 
           {/* Results */}
           {delayedLoading ? (
-            <MarketplaceLoader area="browse" label="Finding your next great deal…" />
+            <div role="status" aria-label="Loading listings" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">{Array.from({ length: 8 }, (_, i) => <div key={i} className="animate-pulse rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"><div className="aspect-square rounded-lg bg-slate-200 dark:bg-slate-700" /><div className="mt-3 h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-2 h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-700" /></div>)}</div>
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Listings couldn’t load</h3>
