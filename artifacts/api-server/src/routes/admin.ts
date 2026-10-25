@@ -1818,6 +1818,8 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
   const sellerEmail  = (req.body.sellerEmail as string) || "bazunkdeals@gmail.com";
 
   if (!products.length) { res.status(400).json({ error: "products array required" }); return; }
+  // Bound synchronous imports to protect the production database.
+  if (products.length > 20) { res.status(413).json({ error: "Import up to 20 eBay listings per batch, then submit the next batch." }); return; }
 
   // Look up the chosen seller's name from the DB
   const sellerRow = await db.execute(
