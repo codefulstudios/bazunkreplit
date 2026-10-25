@@ -107,11 +107,7 @@ export function Hero() {
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
   function handleSellClick() {
-    if (!user) {
-      setLocation("/sell");
-    } else {
-      setSellOpen(true);
-    }
+    setLocation(user ? "/sell/direct" : "/sign-in");
   }
 
   return (
@@ -147,7 +143,7 @@ export function Hero() {
             </div>
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm !text-white">
               <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
-              <Link href="/sell" className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
+              <Link href={user ? "/sell/direct" : "/sign-in"} className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
             </div>
             <Link href="/welcome-new-buyers" className="mt-7 flex items-center justify-between gap-3 rounded-xl border border-orange-200/25 bg-white/10 px-4 py-3 text-sm text-white transition-colors hover:bg-white/15">
               <span><span className="font-bold text-orange-300">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
