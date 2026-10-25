@@ -1,0 +1,66 @@
+name: Build Bazunk Android test APK (GitHub native)
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - android/recovered-test-build
+    paths:
+      - .github/workflows/bazunk-android-local-apk.yml
+permissions:
+  contents: read
+concurrency:
+  group: bazunk-android-local-apk
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: apps/bazunk-android
+    env:
+      EXPO_PUBLIC_API_URL: https://bazunk-api.onrender.com/api
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_REVENUECAT_ANDROID_KEY: ${{ vars.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/bazunk-android/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate TypeScript
+        run: npm run typecheck
+      - name: Validate lint
+        run: npm run lint
+      - name: Validate public importers
+        run: node --test tests/import-validation.test.mjs
+      - name: Generate native Android project with Expo
+        run: npx expo prebuild --platform android --non-interactive --no-install
+      - name: Build standalone release APK
+        run: |
+          chmod +x android/gradlew
+          cd android
+          ./gradlew :app:assembleRelease --no-daemon --stacktrace
+      - name: Check APK signature and size
+        run: |
+          APK="$(find android/app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          if [ -z "$APK" ]; then echo "No release APK produced"; exit 1; fi
+          echo "APK file: $APK"
+          ls -lh "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          if [ -z "$APKSIGNER" ]; then echo "Android apksigner missing"; exit 1; fi
+          "$APKSIGNER" verify --verbose "$APK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bazunk-android-test-apk
+          path: apps/bazunk-android/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 7
