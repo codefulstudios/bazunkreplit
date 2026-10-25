@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Bazunk",
-    "slug": "bazunk-android",
+    "slug": "bazunk",
+    "owner": "bazunk-llc",
     "version": "0.1.0",
     "orientation": "portrait",
     "platforms": [
@@ -27,6 +28,11 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "daa6ab0d-e54f-4e5a-ad72-900cbf8aecb7"
+      }
+    }
   }
 }
