@@ -3,7 +3,7 @@ import { ExternalLink, Megaphone } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useCookieConsent } from "@/components/CookieConsent";
 
-type SlotKey = "home_bottom" | "browse_top" | "browse_bottom" | "auctions_mid" | "flash_sales_mid" | "categories_top" | "classifieds_mid" | "support_mid" | "live_left" | "live_bottom";
+type SlotKey = "home_bottom" | "browse_top" | "browse_bottom" | "auctions_mid" | "flash_sales_mid" | "categories_top" | "classifieds_mid" | "support_mid" | "live_left" | "live_bottom" | "rewards_right";
 
 interface AdSlotProps {
   slotKey: SlotKey;
@@ -72,7 +72,7 @@ export function AdSlot({ slotKey, className = "" }: AdSlotProps) {
   // All native promotional placements share the Browse-top creative.
   // The Live sidebar uses the same visual language in a narrower space.
   if (!textTitle && !textBody) return null;
-  const isSidebar = slotKey === "live_left";
+  const isSidebar = slotKey === "live_left" || slotKey === "rewards_right";
   const safeUrl = textUrl.trim();
   const validUrl = safeUrl.startsWith("/") && !safeUrl.startsWith("//")
     ? safeUrl
