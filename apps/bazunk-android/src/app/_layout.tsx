@@ -1,6 +1,8 @@
+import {AppMenu,useAppMenu} from '../components/AppMenu';
+import {Startup} from '../components/Startup';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, router } from "expo-router";
-import { Pressable, Text } from "react-native";
+import { Image, Pressable, Text } from "react-native";
 import { ClerkProvider } from "@clerk/expo";
 import { AppCart } from "../cart";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -9,29 +11,35 @@ import { tokenCache } from "@clerk/expo/token-cache";
 SplashScreen.setOptions({ duration: 350, fade: true });
 
 function Navigation() {
+  const openMenu=useAppMenu();
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#1559d6" },
-        headerTintColor: "#fff",
+        headerStyle: { backgroundColor: "#FFFFFF" },
+        contentStyle: {backgroundColor: "#F4F7FC"},
+        headerShadowVisible: false,
+        headerRight:()=> <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={openMenu} style={{padding:12}}><Text style={{fontSize:22,color:"#102A56"}}>☰</Text></Pressable>,
+        headerTintColor: "#102A56",
       }}
     >
       <Stack.Screen
         name="index"
         options={{
           title: "Bazunk",
+          headerTitle:()=> <Image source={require("../../assets/logo.png")} style={{width:132,height:36}} resizeMode="contain"/>,
           headerLeft: () => (
-            <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={() => router.push("/more")} style={{ padding: 10 }}>
-              <Text style={{ color: "#fff", fontWeight: "700" }}>☰ Menu</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={openMenu} style={{ padding: 10 }}>
+              <Text style={{ color: "#102A56", fontWeight: "700" }}>☰</Text>
             </Pressable>
           ),
           headerRight: () => (
             <Pressable accessibilityRole="button" accessibilityLabel="Open cart" onPress={() => router.push("/cart")} style={{ padding: 10 }}>
-              <Text style={{ color: "#fff", fontWeight: "700" }}>Cart</Text>
+              <Text style={{ color: "#102A56", fontWeight: "700" }}>Cart</Text>
             </Pressable>
           ),
         }}
       />
+      <Stack.Screen name="browse" options={{title:"Browse listings"}} />
       <Stack.Screen name="auctions" options={{ title: "Auctions" }} />
       <Stack.Screen name="auction" options={{ title: "Auction details" }} />
       <Stack.Screen
@@ -100,7 +108,7 @@ function Navigation() {
 }
 export default function Layout() {
   const key = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  return key ? (
+  return <Startup><AppMenu>{key ? (
     <ClerkProvider publishableKey={key} tokenCache={tokenCache}>
       <AppCart>
         <Navigation />
@@ -110,5 +118,5 @@ export default function Layout() {
     <AppCart>
       <Navigation />
     </AppCart>
-  );
+  )}</AppMenu></Startup>;
 }
