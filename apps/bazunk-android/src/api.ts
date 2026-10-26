@@ -1,4 +1,4 @@
-export type Listing = { id: number; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
+export type Listing = { id: number; publicId?: string; publicUrlToken?: string; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
 const renderApiBase = 'https://bazunk-api.onrender.com/api';
 // The marketing site is a separately hosted frontend. Pointing the native app
 // at bazunk.com/api can return an empty HTML/SPA response instead of JSON.
@@ -49,13 +49,13 @@ export async function loadAccount(token: string, signal?: AbortSignal): Promise<
   if (signal?.aborted) controller.abort();
   const timer = setTimeout(abort, 15000);
   try {
-    const response = await fetch(`${base}/mobile/account`, {
-      method: 'POST', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
+    const response = await fetch(`${base}/listings/profile/me`, {
+      method: 'GET', headers: { Authorization: `Bearer ${token}` }, signal: controller.signal,
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : `Account request failed (${response.status}).`);
-    if (!data || typeof data.email !== 'string' || typeof data.name !== 'string' || (data.username !== null && typeof data.username !== 'string')) throw new Error('Unexpected account response.');
-    return data;
+    if (!data || typeof data.email !== 'string' || (data.name != null && typeof data.name !== 'string') || (data.username !== null && typeof data.username !== 'string')) throw new Error('Unexpected account response.');
+    return {...data, name: data.name || '', username: data.username ?? null};
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
 
@@ -79,4 +79,28 @@ export function parseOwnListings(value: unknown): OwnListing[] {
     if (typeof (row as OwnListing).status !== 'string') throw new Error('Unexpected inventory response.');
     return row as OwnListing;
   });
+}
+
+// Resolve numeric IDs from saved links using the public browse API. The detail
+// API accepts public identifiers; database IDs must stay numeric for cart items.
+export async function loadListing(id: string, signal?: AbortSignal): Promise<Listing> {
+  if (!id) throw new Error('This listing link is missing its identifier.');
+  let reference = id;
+  if (/^\d+$/.test(id)) {
+    const rows = parseListings(await getJson(`/listings?ids=${encodeURIComponent(id)}`, signal));
+    const row = rows.find(item => String(item.id) === id);
+    if (!row) throw new Error('This listing is no longer available.');
+    reference = row.publicUrlToken || row.publicId || '';
+    if (!reference) throw new Error('This listing does not have a public link yet.');
+  }
+  return parseListing(await getJson(`/listings/${encodeURIComponent(reference)}`, signal));
+}
+export async function quoteCart(ids: number[], signal?: AbortSignal): Promise<unknown> {
+  const response = await fetch(`${base}/stripe/quote-cart`, {
+    method: 'POST', headers: {'Content-Type': 'application/json'}, signal,
+    body: JSON.stringify({items: ids.map(id => ({id, quantity: 1}))}),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : `Could not calculate fees (${response.status}).`);
+  return data;
 }

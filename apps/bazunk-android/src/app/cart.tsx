@@ -4,11 +4,11 @@ import {ActivityIndicator,AppState,ScrollView,Text,View} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import {useCart} from '../cart';
 import {useMemberData,useMemberRequest} from '../hooks';
-import {SellerAccess} from '../components/SellerAccess';
+import {GuestCart} from '../components/GuestCart';
 import {Button,ui} from '../components/UI';
 import {parseQuote,checkoutUrl,parseAppConfig,type Quote} from '../commerce';
-export default function CartScreen(){return <SellerAccess><Cart/></SellerAccess>}
-function Cart(){const config=useMemberData('/mobile/app-config',parseAppConfig);const cart=useCart();const request=useMemberRequest();const [quote,setQuote]=useState<Quote|null>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [busy,setBusy]=useState(false);const [retry,setRetry]=useState(0);const [notice,setNotice]=useState('');const lock=useRef(false);const idsKey=cart.ids.join(',');
+export default function CartScreen(){return <GuestCart/>}
+export function MobileCheckout(){const config=useMemberData('/mobile/app-config',parseAppConfig);const cart=useCart();const request=useMemberRequest();const [quote,setQuote]=useState<Quote|null>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [busy,setBusy]=useState(false);const [retry,setRetry]=useState(0);const [notice,setNotice]=useState('');const lock=useRef(false);const idsKey=cart.ids.join(',');
 useEffect(()=>{const c=new AbortController();void(async()=>{setQuote(null);setError('');if(!cart.ready||!idsKey){setLoading(false);return}setLoading(true);try{const data=parseQuote(await request('/stripe/quote-cart',{method:'POST',body:{items:idsKey.split(',').map(id=>({id:Number(id),quantity:1}))},signal:c.signal}));if(!c.signal.aborted)setQuote(data)}catch(e){if(!c.signal.aborted)setError(e instanceof Error?e.message:'Could not calculate fees.')}finally{if(!c.signal.aborted)setLoading(false)}})();return()=>c.abort()},[idsKey,cart.ready,request,retry]);
 const check=useCallback(async()=>{if(lock.current||!cart.pending)return;lock.current=true;setBusy(true);setError('');try{const data=await request(`/mobile/checkout/${encodeURIComponent(cart.pending)}`) as {status?:string};if(data.status==='paid'){await cart.clearPaid();setQuote(null);setNotice('Payment confirmed. Your orders are available in Orders.')}else if(data.status==='expired'){await cart.setPending(null);setNotice('That checkout expired. Refresh your cart to start again.')}else if(data.status==='unpaid')setNotice('Payment is not confirmed yet. Resume checkout or check again.');else throw Error('Unexpected payment status.')}catch(e){setError(e instanceof Error?e.message:'Could not confirm payment.')}finally{lock.current=false;setBusy(false)}},[cart,request]);
 const checkRef=useRef(check);useEffect(()=>{checkRef.current=check},[check]);

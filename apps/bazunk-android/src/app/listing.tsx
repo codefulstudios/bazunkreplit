@@ -9,9 +9,8 @@ import {
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Button } from "../components/UI";
-import { StockStatus } from "../components/StockStatus";
 import { ListingActions } from "../components/ListingActions";
-import { getJson, parseListing, price, type Listing } from "../api";
+import { loadListing, price, type Listing } from "../api";
 export default function Details() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<Listing | null>(null);
@@ -24,9 +23,9 @@ export default function Details() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setItem(null);
     setError("");
-    getJson(`/listings/${encodeURIComponent(id || "")}`, controller.signal)
+    loadListing(id || "", controller.signal)
       .then((data) => {
-        if (!controller.signal.aborted) setItem(parseListing(data));
+        if (!controller.signal.aborted) setItem(data);
       })
       .catch((e) => {
         if (!controller.signal.aborted)
@@ -74,7 +73,7 @@ export default function Details() {
       <Text style={{ lineHeight: 23 }}>
         {item.description || "No description provided."}
       </Text>
-      <StockStatus id={item.id} />
+
       <ListingActions item={item} />
     </ScrollView>
   );

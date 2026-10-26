@@ -1,5 +1,5 @@
 import { Stack, router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text } from "react-native";
 import { ClerkProvider } from "@clerk/expo";
 import { AppCart } from "../cart";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -15,23 +15,15 @@ function Navigation() {
         name="index"
         options={{
           title: "Bazunk",
+          headerLeft: () => (
+            <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={() => router.push("/more")} style={{ padding: 10 }}>
+              <Text style={{ color: "#fff", fontWeight: "700" }}>☰ Menu</Text>
+            </Pressable>
+          ),
           headerRight: () => (
-            <View style={{ flexDirection: "row" }}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push("/cart")}
-                style={{ padding: 10 }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>Cart</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push("/more")}
-                style={{ padding: 10 }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700" }}>Menu</Text>
-              </Pressable>
-            </View>
+            <Pressable accessibilityRole="button" accessibilityLabel="Open cart" onPress={() => router.push("/cart")} style={{ padding: 10 }}>
+              <Text style={{ color: "#fff", fontWeight: "700" }}>Cart</Text>
+            </Pressable>
           ),
         }}
       />
