@@ -24,9 +24,13 @@ const GAME_ICONS: Record<string, string> = {
   "parcel-dash": "📦",
 };
 
+type Overview={summary?:{plays:number;players:number;credits:number};games:{game_id:string;plays:number;credits:number}[];sessions:{id:string;game_id:string;user_label:string;status:string;issued_at:string;expires_at:string;prize_credits:number}[];expiredInRecent:number};
 export function AdminRewardsPage() {
   const { authFetch } = useAdmin();
   const [games, setGames] = useState<Game[]>([]);
+  const [overview,setOverview]=useState<Overview|null>(null);
+  const [monitorError,setMonitorError]=useState("");
+  const [sessionFilter,setSessionFilter]=useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -50,6 +54,7 @@ export function AdminRewardsPage() {
       .finally(() => setLoading(false));
   }, [authFetch]);
 
+  useEffect(()=>{authFetch("/api/admin/rewards/overview").then(async r=>{if(!r.ok)throw new Error("Monitoring unavailable");return r.json()}).then(setOverview).catch(e=>setMonitorError(e.message));},[authFetch]);
   function update(id: string, field: string, value: unknown) {
     setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
@@ -192,6 +197,27 @@ export function AdminRewardsPage() {
           </div>
         )}
 
+        <section className="mt-8 space-y-4" aria-label="Rewards operations monitoring">
+          <h2 className="text-xl font-black">Arcade analytics & session monitoring</h2>
+          {monitorError && <p role="alert" className="text-red-700 bg-red-50 p-3 rounded-xl">{monitorError}</p>}
+          {overview && <>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              {([["Plays today",overview.summary?.plays??0],["Players today",overview.summary?.players??0],["Credits awarded today",overview.summary?.credits??0],["Recent expired sessions",overview.expiredInRecent]] as [string,number][]).map(([name,value])=><div key={name} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4"><p className="text-xs text-slate-600 dark:text-slate-300">{name}</p><strong className="text-2xl text-slate-900 dark:text-white">{value}</strong></div>)}
+            </div>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
+                <h3 className="font-black mb-3">Game activity · last 7 days</h3>
+                {overview.games.length===0?<p className="text-sm">No game activity yet.</p>:overview.games.map(g=><div key={g.game_id} className="flex justify-between py-2 border-b border-slate-200 dark:border-slate-600 text-sm"><span>{g.game_id}</span><span>{g.plays} plays · {g.credits} credits</span></div>)}
+              </div>
+              <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
+                <div className="flex flex-wrap justify-between gap-3 mb-3"><h3 className="font-black">Recent reward sessions</h3><select aria-label="Filter session status" className="border rounded-lg px-2 py-1 bg-white text-slate-900" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}>{["all","started","completed","claimed","expired"].map(v=><option key={v} value={v}>{v}</option>)}</select></div>
+                <div className="max-h-80 overflow-auto space-y-2">
+                  {overview.sessions.filter(v=>sessionFilter==="all"||v.status===sessionFilter||(sessionFilter==="expired"&&v.status==="started"&&new Date(v.expires_at)<new Date())).map(v=><div key={v.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 text-xs flex justify-between gap-2"><span><strong>{v.game_id}</strong> · {v.user_label}<span className="block text-slate-500 dark:text-slate-300">{new Date(v.issued_at).toLocaleString()}</span></span><span className="font-bold">{v.status==="started"&&new Date(v.expires_at)<new Date()?"expired":v.status}</span></div>)}
+                </div>
+              </div>
+            </div>
+          </>}
+        </section>
         <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-4">
           <p className="text-xs text-blue-700 font-semibold mb-1">💡 Credit notes</p>
           <ul className="text-xs text-blue-600 space-y-1">
