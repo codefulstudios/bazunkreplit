@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar, RotateCcw, HelpCircle, Gift, Type,
@@ -312,17 +313,23 @@ function GameModal({
   onResult: (res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) => void;
 }) {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [result, setResult] = useState<{ won: boolean; creditsEarned: number; message: string; playsRemaining: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const submitting = useRef(false);
   const Icon = ICON_MAP[game.id] ?? ICON_MAP[game.icon] ?? Gift;
 
   const play = useCallback(async (answer?: unknown) => {
+    if (submitting.current) return;
+    submitting.current = true;
     setError(null);
     try {
+      const token = await getToken();
+      if (!token) { setError("Please sign in again to collect rewards."); return; }
       const res = await fetch("/api/rewards/play", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, gameId: game.id, answer }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ gameId: game.id, answer }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong"); return; }
@@ -330,8 +337,8 @@ function GameModal({
       onResult(data);
     } catch {
       setError("Network error — please try again");
-    }
-  }, [user?.email, game.id, onResult]);
+    } finally { submitting.current = false; }
+  }, [getToken, game.id, onResult]);
 
   return (
     <motion.div
@@ -368,7 +375,7 @@ function GameModal({
                 key="result"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative flex flex-col items-center gap-3 py-2 text-center"
+                className="relative flex flex-col items-center gap-4 py-6 text-center rounded-2xl bg-gradient-to-b from-orange-50 via-white to-blue-50 text-slate-900"
               >
                 {result.won && <motion.div aria-hidden="true" initial={{opacity:0,scale:.6}} animate={{opacity:[0,1,0],scale:[.6,1.5,1.8]}} transition={{duration:1.5}} className="absolute inset-0 pointer-events-none flex justify-center items-start text-4xl">✨ 🎉 ✨</motion.div>}\n                {result.won ? (
                   <>
@@ -409,23 +416,6 @@ function GameModal({
                   <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-center gap-2">
                     <XCircle className="w-4 h-4 flex-shrink-0" />
                     {error}
-                  </div>
-                )}
-                {game.id === "daily-checkin" && (
-                  <div className="flex flex-col items-center gap-6 py-4">
-                    <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-                      <Calendar className="w-10 h-10 text-emerald-500" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-gray-900 mb-1">Today's check-in</p>
-                      <p className="text-sm text-gray-500">Tap below to collect your daily credits.</p>
-                    </div>
-                    <button
-                      onClick={() => play()}
-                      className="px-10 py-3 rounded-xl bg-emerald-500 text-white font-black text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
-                    >
-                      <Zap className="w-4 h-4" /> Collect {game.creditsMax} Credits
-                    </button>
                   </div>
                 )}
                 {game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
@@ -484,7 +474,7 @@ export function RewardsPage() {
     fetchGames();
   }
 
-  const enabledGames = games.filter(g => g.enabled);
+  const enabledGames = games.filter(g => g.enabled && g.id !== "daily-checkin");
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade">
