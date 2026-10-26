@@ -8,6 +8,7 @@ import {
   CalendarCheck, Brain, Ticket, PackageOpen, Dices,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { MemoryMatchGame, TreasureTapGame, ParcelDashGame } from "@/components/RewardsArcadeGames";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 
@@ -41,6 +42,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "scratch-card": Ticket,
   "mystery-box": PackageOpen,
   "lucky-number": Dices,
+  "memory-match": Brain,
+  "treasure-tap": Gift,
+  "parcel-dash": PackageOpen,
 };
 
 const ICON_BG: Record<string, string> = {
@@ -50,6 +54,7 @@ const ICON_BG: Record<string, string> = {
   "scratch-card":   "bg-orange-50",
   "mystery-box":    "bg-pink-50",
   "lucky-number":   "bg-amber-50",
+  "memory-match": "bg-blue-50", "treasure-tap": "bg-orange-50", "parcel-dash": "bg-sky-50",
 };
 
 const ICON_COLOR: Record<string, string> = {
@@ -59,6 +64,7 @@ const ICON_COLOR: Record<string, string> = {
   "scratch-card":   "text-orange-500",
   "mystery-box":    "text-pink-500",
   "lucky-number":   "text-amber-500",
+  "memory-match": "text-blue-600", "treasure-tap": "text-orange-600", "parcel-dash": "text-sky-600",
 };
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
@@ -417,6 +423,9 @@ function GameModal({
                 {game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
                 {game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
                 {game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
+                {game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
+                {game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
+                {game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -468,17 +477,17 @@ export function RewardsPage() {
   const enabledGames = games.filter(g => g.enabled);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade">
       <Navbar />
 
       {/* Hero */}
-      <div className="relative bg-[#1A1D2E] overflow-hidden">
+      <div className="relative bg-gradient-to-r from-[#043caa] via-[#0565ef] to-[#ff7528] overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-16 -left-16 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#4A5CE8]/10 blur-3xl" />
           <div className="absolute bottom-0 left-1/2 w-48 h-48 rounded-full bg-[#F26B21]/10 blur-3xl" />
         </div>
-        <div className="relative container mx-auto max-w-5xl px-4 py-14">
+        <div className="relative container mx-auto max-w-7xl px-4 py-14">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -488,10 +497,10 @@ export function RewardsPage() {
                 <span className="text-[#F26B21] font-black text-sm uppercase tracking-widest">Daily Rewards</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
-                Play games. Earn credits.
+                Rewards Arcade 🎮
               </h1>
               <p className="text-white/50 text-sm max-w-md leading-relaxed">
-                Five daily mini-games — each one earns real credits you can spend on promotions and perks. New plays reset every midnight.
+                Play games, earn credits and unlock rewards. Enjoy arcade classics and new skill games every day.
               </p>
             </div>
 
@@ -557,11 +566,11 @@ export function RewardsPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.07 }}
-                        className={`bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
+                        className={`arcade-game-card bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
                       >
                         <div className="flex items-start justify-between mb-3">
-                          <div className={`w-11 h-11 rounded-xl ${ICON_BG[game.id]} flex items-center justify-center`}>
-                            <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} />
+                          <div className={`w-14 h-14 rounded-2xl ${ICON_BG[game.id]} flex items-center justify-center`}><span className="text-2xl" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || "🎁"}</span><span className="sr-only">
+                            <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} /></span>
                           </div>
                           {done ? (
                             <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full flex items-center gap-1">
