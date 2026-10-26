@@ -2297,3 +2297,38 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .bz-rewards-clean .bz-rewards-ad-placement [class*="max-w-"]{max-width:100%!important}
 .bz-rewards-clean .bz-rewards-ad-placement [class*="bg-gradient-to-r"]{border-radius:18px}
 .dark .bz-rewards-clean .bz-rewards-ad-placement{color:#f3f7ff}
+
+/* Borderless storefront presentation — separation through spacing and surfaces instead. */
+.bz-rewards-clean .bz-enhanced-game-card,
+.dark .bz-rewards-clean .bz-enhanced-game-card {
+  border:0!important;
+  outline:0;
+  box-shadow:none!important;
+  border-radius:22px!important;
+}
+.bz-rewards-clean .bz-enhanced-game-card:hover,
+.dark .bz-rewards-clean .bz-enhanced-game-card:hover {
+  border:0!important;
+  box-shadow:0 9px 24px #102f5320!important;
+}
+.bz-rewards-clean .bz-enhanced-game-card:focus-within{box-shadow:0 0 0 2px #f26b21!important}
+.bz-rewards-clean .bz-enhanced-game-card{background:#f5f8fd!important}
+.dark .bz-rewards-clean .bz-enhanced-game-card{background:#1a304e!important}
+.bz-rewards-clean .bz-enhanced-game-card :is(button,a):focus-visible{outline:3px solid #f26b21;outline-offset:3px}
+/* Homepage: remove section outlines and extra inner card borders, retain interactive focus. */
+.bz-mockup-home > main > section,
+.bz-mockup-home main > section,
+.bz-mockup-home main > div > section {
+  border-top:0!important;
+  border-bottom:0!important;
+}
+.bz-mockup-home .bz-home-category-section{border:0!important}
+.bz-mockup-home .bz-category-feature,
+.bz-mockup-home .bz-design-promo-card,
+.bz-mockup-home .bz-category-card {
+  border-width:0!important;
+}
+.bz-mockup-home .bz-design-promo-card{box-shadow:0 6px 20px #15395718!important}
+.dark .bz-mockup-home .bz-design-promo-card{box-shadow:0 8px 22px #0003!important}
+.bz-mockup-home .bz-mockup-hero{border:0!important}
+.bz-mockup-home :is(a,button):focus-visible{outline:3px solid #f26b21!important;outline-offset:3px}
