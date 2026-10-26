@@ -210,6 +210,19 @@ router.post("/rewards/play", async (req, res) => {
       message = won ? `You scratched ${creditsEarned} credits!` : "Better luck next card!";
       break;
     }
+    // Arcade skill games use a server-controlled flat reward; client scores are
+    // only visual and must never determine the amount of redeemable credit.
+    case "memory-match":
+    case "treasure-tap":
+    case "parcel-dash": {
+      if (!answer || typeof answer !== "object" || (answer as Record<string, unknown>).completed !== true) {
+        res.status(400).json({ error: "Complete the game before claiming a reward." });
+        return;
+      }
+      creditsEarned = creditsMin;
+      message = `Challenge complete! You earned ${creditsEarned} credits.`;
+      break;
+    }
     case "mystery-box": {
       const box = Math.max(1, Math.min(3, Number(answer) || 1));
       const prizes = [creditsMin, Math.max(creditsMin, Math.round((creditsMin + creditsMax) / 2)), creditsMax];
