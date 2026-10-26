@@ -1,5 +1,6 @@
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
 import { Router } from "express";
+import { clerkClient, getAuth } from "@clerk/express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -92,7 +93,7 @@ async function getTodayPlays(gameId: string, email: string): Promise<number> {
 
 router.get("/rewards/games", async (req, res) => {
   const { email } = req.query as Record<string, string>;
-  const games = await db.execute(sql`SELECT * FROM reward_games ORDER BY created_at ASC`);
+  const games = await db.execute(sql`SELECT * FROM reward_games WHERE id <> 'daily-checkin' ORDER BY created_at ASC`);
 
   const result = await Promise.all(games.rows.map(async (g: Record<string, unknown>) => {
     const todayPlays = email ? await getTodayPlays(g.id as string, email) : 0;
@@ -159,9 +160,14 @@ router.get("/rewards/my-stats", async (req, res) => {
 });
 
 router.post("/rewards/play", async (req, res) => {
-  const { email, gameId, answer } = req.body as { email?: string; gameId?: string; answer?: unknown };
-  if (!email || !gameId) { res.status(400).json({ error: "email and gameId required" }); return; }
-
+  const auth = getAuth(req);
+  if (!auth.isAuthenticated || !auth.userId) { res.status(401).json({ error: "Sign in required" }); return; }
+  const verifiedUser = await clerkClient.users.getUser(auth.userId);
+  const email = verifiedUser.primaryEmailAddress?.emailAddress?.trim().toLowerCase();
+  if (!email) { res.status(403).json({ error: "Verified account email required" }); return; }
+  const { gameId, answer } = req.body as { gameId?: string; answer?: unknown };
+  if (!gameId || typeof gameId !== "string") { res.status(400).json({ error: "Game required" }); return; }
+  if (gameId === "daily-checkin") { res.status(410).json({ error: "Daily Check-In was removed" }); return; }
   const games = await db.execute(sql`SELECT * FROM reward_games WHERE id = ${gameId}`);
   if (games.rows.length === 0) { res.status(404).json({ error: "Game not found" }); return; }
   const game = games.rows[0] as Record<string, unknown>;
@@ -245,23 +251,25 @@ router.post("/rewards/play", async (req, res) => {
       message = `You earned ${creditsEarned} credits!`;
   }
 
+  // Apply earning caps before recording the result to keep statistics accurate.
+  const weekEarned = await getWeekEarned(email);
+  const remaining = Math.max(0, WEEKLY_CAP_CREDITS - weekEarned);
+  if (remaining === 0) {
+    res.status(429).json({ error: "Weekly reward limit reached. Resets Monday.", limitReached: true, weeklyCapReached: true });
+    return;
+  }
+  creditsEarned = Math.min(creditsEarned, remaining);
   const playId = `RP-${randomUUID().slice(0, 8).toUpperCase()}`;
   await db.execute(sql`
     INSERT INTO reward_plays (id, game_id, user_email, credits_earned, played_at)
     VALUES (${playId}, ${gameId}, ${email}, ${creditsEarned}, NOW())
   `);
-
   if (creditsEarned > 0) {
-    const weekEarned = await getWeekEarned(email);
-    const weekRemaining = Math.max(0, WEEKLY_CAP_CREDITS - weekEarned);
-    if (weekRemaining === 0) {
-      res.status(429).json({ error: "Weekly credit cap (150) reached. Resets next Monday!", limitReached: true, weeklyCapReached: true });
-      return;
-    }
-    creditsEarned = Math.min(creditsEarned, weekRemaining);
     await storage.addCredits(email, creditsEarned / 100);
     await recordCreditEconomy({ email, kind: "earned", credits: creditsEarned / 100, reason: `Rewards Arcade: ${game.name || gameId}`, referenceType: "reward_play", referenceId: playId, metadata: { gameId } });
   }
+  won = creditsEarned > 0;
+  if (won) message = `Congratulations! You earned ${creditsEarned} credits.`;
 
   logger.info({ email, gameId, creditsEarned, won }, "Reward game played");
   const newBalance = await storage.getCredits(email);
