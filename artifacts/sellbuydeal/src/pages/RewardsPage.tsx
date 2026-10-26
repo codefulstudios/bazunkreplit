@@ -10,6 +10,7 @@ import {
   CalendarCheck, Brain, Ticket, PackageOpen, Dices, Volume2, VolumeX, Flame,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CompactPageHero } from "@/components/CompactPageHero";
 import { MemoryMatchGame, TreasureTapGame, ParcelDashGame } from "@/components/RewardsArcadeGames";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
@@ -484,39 +485,12 @@ export function RewardsPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade">
       <Navbar />
 
-      {/* Hero */}
-      <div className="relative bg-gradient-to-r from-[#043caa] via-[#0565ef] to-[#ff7528] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-16 -left-16 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#4A5CE8]/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 w-48 h-48 rounded-full bg-[#F26B21]/10 blur-3xl" />
-        </div>
-        <div className="relative container mx-auto max-w-7xl px-4 py-14">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#F26B21] flex items-center justify-center shadow-lg shadow-[#F26B21]/30">
-                  <Gift className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-[#F26B21] font-black text-sm uppercase tracking-widest">Daily Rewards</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
-                Rewards Arcade 🎮
-              </h1>
-              <p className="text-white text-base max-w-lg leading-relaxed">
-                Play games, earn credits and unlock rewards. Enjoy arcade classics and new skill games every day.
-              </p>
-            </div>
+      <CompactPageHero kind="rewards" eyebrow="Rewards Arcade" title="Rewards Arcade" description="Play mini-games, earn credits and unlock marketplace rewards." art="🏆" aside={user?<><strong>{stats.totalCredits} credits</strong><small>+{stats.todayCredits} earned today</small></>:undefined}>
+        <a href="#arcade-games" className="bz-hero-chip">🎮 Explore games</a>
+        <Link href="/credits" className="bz-hero-chip">🎁 My credits</Link>
+      </CompactPageHero>
 
-            <div className="bz-arcade-hero-art" aria-label="Decorative arcade rewards artwork">
-              <span className="bz-arcade-hero-star">⭐</span><span className="bz-arcade-hero-wheel">🎡</span><span className="bz-arcade-hero-gift">🎁</span><span className="bz-arcade-hero-coin">🪙</span>
-              {user && <div className="bz-arcade-hero-balance"><Coins className="w-7 h-7 text-amber-400"/><strong>{stats.totalCredits}</strong><span>Total game credits earned</span><small>+{stats.todayCredits} today</small></div>}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <main className="flex-1 container mx-auto max-w-7xl px-4 py-8">
+      <main id="arcade-games" className="flex-1 container mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} className="rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">{soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>} Sound {soundEnabled?"on":"off"}</button>
           {streak&&<div className="rounded-xl border border-orange-200 bg-orange-50 text-orange-950 px-4 py-2 text-sm font-bold flex items-center gap-2"><Flame size={17}/> {streak.streak}-day playing streak {streak.playedToday?"· Played today":"· Play to continue"}</div>}
