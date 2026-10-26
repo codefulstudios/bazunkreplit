@@ -275,17 +275,15 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
 function MysteryBoxGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
   const [chosen,setChosen]=useState<number|null>(null);
   const [busy,setBusy]=useState(false);
-  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,1100));await onPlay(n);}finally{setBusy(false);}}
-  return <div className="py-4 text-center">
-    <motion.div animate={{y:[0,-5,0]}} transition={{repeat:Infinity,duration:2.5}}><Gift className="w-12 h-12 mx-auto text-pink-500 mb-3"/></motion.div>
-    <p className="font-black text-gray-900 text-lg mb-2">Choose your mystery box!</p>
-    <p className="text-sm text-gray-600 mb-6">Three boxes, one surprise. Pick your favourite.</p>
-    <div className="grid grid-cols-3 gap-3">{[1,2,3].map(n=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)} whileHover={!busy?{scale:1.09,y:-6}:undefined} whileTap={!busy?{scale:.94}:undefined}
-      animate={chosen===n&&busy?{rotate:[0,-8,8,-6,6,0],scale:[1,1.15,1]}:{y:[0,-3,0]}} transition={chosen===n&&busy?{duration:.8}:{duration:2+n*.3,repeat:Infinity}}
-      className="relative rounded-2xl border-2 border-pink-200 bg-gradient-to-b from-fuchsia-50 to-pink-100 py-7 sm:py-9 shadow-md disabled:cursor-wait focus-visible:ring-4 focus-visible:ring-pink-400">
-      <span className="block text-4xl sm:text-5xl drop-shadow-md" aria-hidden="true">{chosen===n&&busy?"✨":"🎁"}</span><span className="block text-sm mt-3 font-black text-pink-800">BOX {n}</span>
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,1000));await onPlay(n);}finally{setBusy(false);}}
+  return <div className="bz-mystery-game text-center">
+    <motion.div className="bz-mystery-crown" animate={{y:[0,-7,0]}} transition={{repeat:Infinity,duration:2.4}} aria-hidden="true">✨🎁✨</motion.div>
+    <h3>Choose your mystery box!</h3><p className="bz-mystery-subtitle">Three magical boxes. Pick your favourite and reveal your reward.</p>
+    <div className="bz-mystery-grid">{[1,2,3].map((n)=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)} whileHover={!busy?{y:-7,scale:1.025}:undefined} whileTap={{scale:.96}} className={`bz-mystery-tile bz-mystery-tile-${n}`} aria-label={`Open mystery box ${n}`}>
+      <motion.span className="bz-mystery-art" aria-hidden="true" animate={chosen===n&&busy?{scale:[1,1.3,1],rotate:[0,-10,10,0]}:{y:[0,-5,0]}} transition={{duration:chosen===n&&busy?.8:2,repeat:chosen===n&&busy?0:Infinity}}>{chosen===n&&busy?"✨":"🎁"}</motion.span>
+      <strong>BOX {n}</strong><small>{chosen===n&&busy?"Opening…":"Tap to reveal"}</small>
     </motion.button>)}</div>
-    <p className="mt-5 text-sm font-semibold text-gray-600">{busy?"Opening your mystery box…":"Tap a box to reveal your reward"}</p>
+    <p className="bz-mystery-hint">{busy?"Revealing your surprise…":"✨ Every box contains a surprise — choose one!"}</p>
   </div>;
 }
 
@@ -380,7 +378,7 @@ function GameModal({
           <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
-        <div className="p-6 arcade-modal-content">
+        <div className="p-4 sm:p-6 arcade-modal-content">
           <AnimatePresence mode="wait">
             {result ? (
               <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
@@ -403,7 +401,7 @@ function GameModal({
                     <p className="text-sm text-slate-700">{error}</p>
                     <div className="flex gap-2 flex-wrap justify-center">
                       {!/limit|cap|expired|disabled/i.test(error)&&sessionPromise.current&&<button type="button" onClick={() => void play(lastAnswer.current)} className="arcade-result-primary">Try again</button>}
-                      <button type="button" onClick={onClose} className="arcade-result-secondary">Back to games</button>
+                      <button type="button" onClick={onClose} className="bz-arcade-back-button">Back to games</button>
                     </div>
                   </div>
                 )}
@@ -505,21 +503,15 @@ export function RewardsPage() {
               <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
                 Rewards Arcade 🎮
               </h1>
-              <p className="text-white/50 text-sm max-w-md leading-relaxed">
+              <p className="text-white text-base max-w-lg leading-relaxed">
                 Play games, earn credits and unlock rewards. Enjoy arcade classics and new skill games every day.
               </p>
             </div>
 
-            {user && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 min-w-[200px] text-center border border-white/10 shrink-0">
-                <Coins className="w-8 h-8 text-[#F26B21] mx-auto mb-2" />
-                <p className="text-3xl font-black text-white">{stats.totalCredits}</p>
-                <p className="text-white/50 text-xs mb-2">total credits earned via games</p>
-                <div className="pt-2 border-t border-white/10">
-                  <p className="text-sm font-bold text-amber-400">+{stats.todayCredits} today</p>
-                </div>
-              </div>
-            )}
+            <div className="bz-arcade-hero-art" aria-label="Decorative arcade rewards artwork">
+              <span className="bz-arcade-hero-star">⭐</span><span className="bz-arcade-hero-wheel">🎡</span><span className="bz-arcade-hero-gift">🎁</span><span className="bz-arcade-hero-coin">🪙</span>
+              {user && <div className="bz-arcade-hero-balance"><Coins className="w-7 h-7 text-amber-400"/><strong>{stats.totalCredits}</strong><span>Total game credits earned</span><small>+{stats.todayCredits} today</small></div>}
+            </div>
           </div>
         </div>
       </div>
@@ -576,10 +568,10 @@ export function RewardsPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.07 }}
-                        className={`arcade-game-card bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
+                        className={`arcade-game-card bz-enhanced-game-card bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
                       >
                         <div className="flex items-start justify-between mb-3">
-                          <div className={`w-14 h-14 rounded-2xl ${ICON_BG[game.id]} flex items-center justify-center`}><span className="text-2xl" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || "🎁"}</span><span className="sr-only">
+                          <div className={`w-[76px] h-[76px] rounded-2xl ${ICON_BG[game.id]} flex items-center justify-center`}><span className="text-4xl" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || "🎁"}</span><span className="sr-only">
                             <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} /></span>
                           </div>
                           {done ? (
