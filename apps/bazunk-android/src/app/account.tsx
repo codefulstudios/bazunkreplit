@@ -1,10 +1,12 @@
 import { Button } from "../components/UI";
+import { openWebsite } from "../components/AppMenu";
 import { router } from "expo-router";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { AuthView, UserButton } from "@clerk/expo/native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  AppState,
   Modal,
   Pressable,
   ScrollView,
@@ -74,6 +76,10 @@ function ConnectedAccount() {
     })();
     return () => controller.abort();
   }, [isSignedIn, userId, getToken, retry]);
+  useEffect(() => {
+    const subscription=AppState.addEventListener('change',state=>{if(state==='active')setRetry(n=>n+1)});
+    return ()=>subscription.remove();
+  }, []);
   async function logout() {
     setBusy(true);
     setError("");
@@ -131,9 +137,9 @@ function ConnectedAccount() {
             <Pressable
               style={styles.button}
               accessibilityRole="button"
-              onPress={() => router.push("/my-listings")}
+              onPress={() => void openWebsite("/my-listings")}
             >
-              <Text style={styles.buttonText}>My listings</Text>
+              <Text style={styles.buttonText}>My listings · Website</Text>
             </Pressable>
             <Pressable
               style={styles.button}

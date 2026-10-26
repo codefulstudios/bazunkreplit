@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  View,
+  Share,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Button } from "../components/UI";
 import { ListingActions } from "../components/ListingActions";
 import { loadListing, price, type Listing } from "../api";
+import { listingContent } from '../listing-content';
+import { openWebsite } from '../components/AppMenu';
 export default function Details() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<Listing | null>(null);
@@ -46,15 +50,12 @@ export default function Details() {
     return (
       <ActivityIndicator style={{ flex: 1 }} size="large" color="#1559d6" />
     );
+  const content=listingContent(item);
+  const websitePath=`/listing/${encodeURIComponent(item.publicUrlToken||item.publicId||String(item.id))}`;
   return (
     <ScrollView contentContainerStyle={s.page}>
-      {item.image && (
-        <Image
-          source={{ uri: item.image }}
-          style={s.image}
-          resizeMode="contain"
-        />
-      )}
+      <ScrollView horizontal pagingEnabled accessibilityLabel="Listing image gallery" showsHorizontalScrollIndicator>{content.images.map((uri,index)=><View key={uri} style={{width:300}}><Image source={{uri}} style={s.image} resizeMode="contain" accessibilityLabel={`${item.title}, image ${index+1} of ${content.images.length}`}/><Text style={{textAlign:'center'}}>{index+1} / {content.images.length}</Text></View>)}</ScrollView>
+      {!content.images.length&&<Text>No photos provided.</Text>}
       <Text style={s.title}>{item.title}</Text>
       <Text style={s.price}>{price(item)}</Text>
       <Text>
@@ -63,18 +64,25 @@ export default function Details() {
       </Text>
       <Text style={s.heading}>Seller</Text>
       <Text>{item.sellerUsername || item.sellerName || "Bazunk seller"}</Text>
-      <Button
-        label="Seller reputation and reviews"
-        onPress={() =>
-          router.push({ pathname: "/seller-reviews", params: { id: item.id } })
-        }
-      />
+      {item.sellerVerified&&<Text>Verified seller</Text>}
+      <Button label="Seller details and contact · Website" onPress={()=>void openWebsite(websitePath)}/>
       <Text style={s.heading}>Description</Text>
       <Text style={{ lineHeight: 23 }}>
-        {item.description || "No description provided."}
+        {content.description || "No description provided."}
       </Text>
 
+      {!!content.details.length&&<><Text style={s.heading}>Item details</Text>{content.details.map((row,index)=><Text key={index}>{row.name}: {row.value}</Text>)}</>}
+      <Text style={s.heading}>Delivery</Text>
+      <Text>{item.shippingPrice==null?'Delivery cost not provided. Confirm before buying.':Number(item.shippingPrice)===0?'Delivery included':`Postage: ${price({...item,price:item.shippingPrice})}`}</Text>
+      {!!item.handlingCharge&&<Text>Handling: {price({...item,price:item.handlingCharge})}</Text>}
+      {item.shipOrigin&&<Text>Ships from: {item.shipOrigin}</Text>}
+      {item.shipZone&&<Text>Delivery area: {item.shipZone}</Text>}
+      {item.carrier&&<Text>Carrier: {item.carrier}</Text>}
+      {content.hasVariations&&<><Text style={s.heading}>Options available</Text><Text>This item has variations. Review the options on the website before buying; the app cart does not yet save a selected variation.</Text></>}
       <ListingActions item={item} />
+      <Button label="View listing and options · Website" onPress={()=>void openWebsite(websitePath)}/>
+      <Button label="Share listing" onPress={()=>void Share.share({message:`${item.title} https://www.bazunk.com${websitePath}`}).catch(()=>setError('Could not open sharing. Please retry.'))}/>
+
     </ScrollView>
   );
 }

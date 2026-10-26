@@ -1,4 +1,4 @@
-export type Listing = { id: number; publicId?: string; publicUrlToken?: string; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
+export type Listing = { specifications?: unknown; variants?: unknown; shippingPrice?: number|string|null; shipOrigin?:string; shipZone?:string; carrier?:string; handlingCharge?:number|string|null; quantity?:number; status?:string; sellerVerified?:boolean; id: number; publicId?: string; publicUrlToken?: string; title: string; price: string | number; currency?: string; category: string; image?: string; description?: string; condition?: string; sellerEmail?: string; sellerName?: string; sellerUsername?: string; promotions?: string[] };
 const renderApiBase = 'https://bazunk-api.onrender.com/api';
 // The marketing site is a separately hosted frontend. Pointing the native app
 // at bazunk.com/api can return an empty HTML/SPA response instead of JSON.
@@ -54,7 +54,7 @@ export async function loadAccount(token: string, signal?: AbortSignal): Promise<
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : `Account request failed (${response.status}).`);
-    if (!data || typeof data.email !== 'string' || (data.name != null && typeof data.name !== 'string') || (data.username !== null && typeof data.username !== 'string')) throw new Error('Unexpected account response.');
+    if (!data || typeof data.email !== 'string' || (data.name != null && typeof data.name !== 'string') || (data.username != null && typeof data.username !== 'string')) throw new Error('Unexpected account response.');
     return {...data, name: data.name || '', username: data.username ?? null};
   } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); }
 }
@@ -86,14 +86,18 @@ export function parseOwnListings(value: unknown): OwnListing[] {
 export async function loadListing(id: string, signal?: AbortSignal): Promise<Listing> {
   if (!id) throw new Error('This listing link is missing its identifier.');
   let reference = id;
+  let summary:Listing|undefined;
   if (/^\d+$/.test(id)) {
     const rows = parseListings(await getJson(`/listings?ids=${encodeURIComponent(id)}`, signal));
     const row = rows.find(item => String(item.id) === id);
     if (!row) throw new Error('This listing is no longer available.');
+    summary=row;
     reference = row.publicUrlToken || row.publicId || '';
     if (!reference) throw new Error('This listing does not have a public link yet.');
   }
-  return parseListing(await getJson(`/listings/${encodeURIComponent(reference)}`, signal));
+  const detail=parseListing(await getJson(`/listings/${encodeURIComponent(reference)}`, signal));
+  if(!summary){try{summary=parseListings(await getJson(`/listings?ids=${detail.id}`,signal)).find(row=>row.id===detail.id)}catch{if(signal?.aborted)throw Error('Request cancelled.')}}
+  return {...summary,...detail};
 }
 export async function quoteCart(ids: number[], signal?: AbortSignal): Promise<unknown> {
   const response = await fetch(`${base}/stripe/quote-cart`, {

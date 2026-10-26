@@ -2,12 +2,13 @@ import {useAuth,useUser} from '@clerk/expo';
 import {router} from 'expo-router';
 import {useRef,useState} from 'react';
 import {Text,View} from 'react-native';
+import {listingContent} from '../listing-content';
 import type {Listing} from '../api';
 import {useCart} from '../cart';
 import {useMemberData,useMemberRequest} from '../hooks';
 import {Button,ui} from './UI';
 function parseWatched(x:unknown):number[]{const data=x as {listingIds?:unknown};if(!data||!Array.isArray(data.listingIds)||data.listingIds.some(id=>!Number.isInteger(id)))throw Error('Could not load saved status.');return data.listingIds}
-export function ListingActions({item}:{item:Listing}){const cart=useCart();const [error,setError]=useState('');return <View style={{gap:12}}><Button label={cart.ids.includes(item.id)?'View cart':'Add to cart'} disabled={!cart.ready||!!cart.pending||!!cart.storageError} onPress={()=>{try{cart.add(item.id);router.push('/cart')}catch(e){setError(e instanceof Error?e.message:'Could not add item.')}}}/>{!!error&&<Text style={ui.error}>{error}</Text>}<Button label="Your account" onPress={()=>router.push('/account')}/></View>}
+export function ListingActions({item}:{item:Listing}){const cart=useCart();const [error,setError]=useState('');return <View style={{gap:12}}><Button label={listingContent(item).hasVariations?'Review options on website':item.quantity===0?'Out of stock':item.status&&item.status!=='active'?'Unavailable':cart.ids.includes(item.id)?'View cart':'Add to cart'} disabled={listingContent(item).hasVariations||item.quantity===0||(!!item.status&&item.status!=='active')||!cart.ready||!!cart.pending||!!cart.storageError} onPress={()=>{try{cart.add(item.id);router.push('/cart')}catch(e){setError(e instanceof Error?e.message:'Could not add item.')}}}/>{!!error&&<Text style={ui.error}>{error}</Text>}<Button label="Your account" onPress={()=>router.push('/account')}/></View>}
 
 export function SessionActions({item}:{item:Listing}){const {isLoaded,isSignedIn,userId}=useAuth();return isLoaded&&isSignedIn?<MemberActions key={`${userId}:${item.id}`} item={item}/>:<Button label="Sign in to buy or message" onPress={()=>router.push('/account')}/>}
 function MemberActions({item}:{item:Listing}){const {user}=useUser();const request=useMemberRequest();const cart=useCart();const {data,error:watchError,reload}=useMemberData('/mobile/community/watchers/mine',parseWatched);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const lock=useRef(false);const owned=Boolean(item.sellerEmail&&item.sellerEmail.toLowerCase()===user?.primaryEmailAddress?.emailAddress.toLowerCase());

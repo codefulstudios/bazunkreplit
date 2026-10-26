@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { buildTaxonomy, cataloguePath, type CategoryNode } from '../taxonomy';
 import { getJson, parseListings, price, type Listing } from '../api';
 
 export default function Browse() {
@@ -9,8 +10,11 @@ export default function Browse() {
 }
 function BrowseResults({params}:{params:{category?:string;q?:string}}){
   const [items, setItems] = useState<Listing[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<CategoryNode[]>([]);
   const [category, setCategory] = useState(params.category||'');
+  const [sub,setSub]=useState('');
+  const [third,setThird]=useState('');
+  const [categoryError,setCategoryError]=useState('');
   const [query, setQuery] = useState(params.q||'');
   const [submitted,setSubmitted]=useState(params.q||'');
   const [loading, setLoading] = useState(true);
@@ -27,28 +31,30 @@ function BrowseResults({params}:{params:{category?:string;q?:string}}){
     busy.current = true; setLoading(true); setError('');
     if (reset) { offset.current = 0; setItems([]); }
     try {
-      const rows = parseListings(await getJson(`/listings?limit=24&offset=${reset ? 0 : offset.current}&category=${encodeURIComponent(category)}&q=${encodeURIComponent(submitted)}`));
+      const rows = parseListings(await getJson(cataloguePath(category,sub,third,submitted,reset?0:offset.current)));
       if (version !== request.current) return;
       setItems(prev => reset ? rows : [...prev, ...rows.filter(row => !prev.some(p => p.id === row.id))]);
       offset.current += rows.length; setMore(rows.length === 24);
     } catch (e) { if (version === request.current) setError(e instanceof Error ? e.message : 'Unable to connect. Please retry.'); }
     finally { if (version === request.current) { setLoading(false); busy.current = false; } }
-  }, [category,submitted]);
+  }, [category,sub,third,submitted]);
   // Fetching a changed category intentionally resets the network loading state.
   // The ref is a request counter, not a DOM ref; incrementing at cleanup invalidates stale responses.
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { void load(true); return () => { request.current++; busy.current = false; }; }, [load, retry]);
   useEffect(() => {
     const controller = new AbortController();
-    getJson('/listings/category-counts', controller.signal).then(data => { if (Array.isArray(data)) setCategories([...new Set(data.map(row => String(row.category)))].sort()); }).catch(() => {});
+    Promise.all(['/taxonomy/category-overrides','/taxonomy/third-level','/settings/category-visibility'].map(path=>getJson(path,controller.signal))).then(([o,t,v])=>{if(!controller.signal.aborted){setCategories(buildTaxonomy(o,t,v));setCategoryError('')}}).catch(()=>{if(!controller.signal.aborted)setCategoryError('Categories could not load. Pull down to retry; catalogue search is still available.')});
     getJson('/settings/public', controller.signal).then(data => { const value = (data as Record<string, string>)?.announcement_text; if (typeof value === 'string' && value) setBanner(value); }).catch(() => {});
     return () => controller.abort();
-  }, []);
+  }, [retry]);
   const visible = items;
   return <View style={s.page}>
     <View style={s.header}><Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" /><Text style={s.banner}>{banner}</Text></View>
     <TextInput style={s.search} value={query} onChangeText={setQuery} placeholder="Search all listings…" accessibilityLabel="Search all listings" returnKeyType="search" onSubmitEditing={()=>setSubmitted(query.trim())} />
-    <ScrollView horizontal style={{ flexGrow: 0 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 12 }} showsHorizontalScrollIndicator={false}>{['', ...categories].map(c => <Pressable key={c} onPress={() => setCategory(c)} style={[s.chip, c === category && s.selected]} accessibilityRole="button" accessibilityState={{ selected: c === category }}><Text style={{ color: c === category ? '#fff' : '#1559d6' }}>{c ? c.replace(/-/g, ' ') : 'All categories'}</Text></Pressable>)}</ScrollView>
+    <Pressable accessibilityRole="button" style={s.chip} onPress={()=>setSubmitted(query.trim())}><Text>Search catalogue</Text></Pressable>
+    {!!categoryError&&<Text accessibilityRole="alert">{categoryError}</Text>}
+    {([{label:'Category',nodes:categories,value:category,choose:(value:string)=>{setCategory(value);setSub('');setThird('')}},...(category?[{label:'Subcategory',nodes:categories.find(c=>c.slug===category)?.children||[],value:sub,choose:(value:string)=>{setSub(value);setThird('')}}]:[]),...(sub?[{label:'Sub-subcategory',nodes:categories.find(c=>c.slug===category)?.children.find(c=>c.slug===sub)?.children||[],value:third,choose:setThird}]:[])]).map(level=><View key={level.label}><Text style={{paddingHorizontal:16,fontWeight:'700'}}>{level.label}</Text><ScrollView horizontal style={{flexGrow:0}} contentContainerStyle={{padding:12,gap:8}} showsHorizontalScrollIndicator={false}>{[{slug:'',name:'All',children:[]},...level.nodes].map(c=><Pressable key={c.slug} accessibilityRole="button" accessibilityState={{selected:c.slug===level.value}} style={[s.chip,c.slug===level.value&&s.selected]} onPress={()=>level.choose(c.slug)}><Text style={{color:c.slug===level.value?'#fff':'#1559d6'}}>{c.name}</Text></Pressable>)}</ScrollView></View>)}
     <FlatList data={visible} numColumns={2} keyExtractor={item => String(item.id)} contentContainerStyle={{ padding: 12, gap: 12, paddingBottom: 30 }} columnWrapperStyle={{ gap: 12 }} refreshing={loading && items.length === 0} onRefresh={() => setRetry(v => v + 1)} renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.title}`} onPress={() => router.push({ pathname: '/listing', params: { id: item.publicUrlToken || item.publicId || String(item.id) } })} style={s.card}>{item.image ? <Image source={{ uri: item.image }} style={s.photo} resizeMode="contain" /> : <View style={s.photo}><Text>No image</Text></View>}<Text numberOfLines={2} style={s.title}>{item.title}</Text><Text style={s.price}>{price(item)}</Text><Text style={s.condition}>{item.condition || 'View details'}</Text>{!!item.promotions?.length && <Text style={s.promoted}>Promoted</Text>}</Pressable>} ListEmptyComponent={!loading && !error ? <Text style={s.empty}>{query ? 'No listings match your search. Try another term.' : 'No listings available in this category.'}</Text> : null} ListFooterComponent={<View style={{ gap: 12 }}>{loading && <ActivityIndicator size="large" color="#1559d6" />}{!!error && <><Text accessibilityRole="alert" style={s.empty}>{error}</Text><Pressable style={s.button} onPress={() => items.length ? void load(false) : setRetry(v => v + 1)}><Text style={s.white}>Retry</Text></Pressable></>}{!loading && !error && more && <Pressable style={s.button} onPress={() => void load(false)}><Text style={s.white}>Load more listings</Text></Pressable>}</View>} />
   </View>;
 }
