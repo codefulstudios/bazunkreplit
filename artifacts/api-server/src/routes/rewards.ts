@@ -246,20 +246,21 @@ try{
 
 router.get("/admin/rewards/overview", requireAdmin, async (_req,res)=>{
  try {
-  const [summary,games,sessions]=await Promise.all([
+  const [summary,games,sessions,suspicious]=await Promise.all([
    db.execute(sql`SELECT COUNT(*)::int AS plays,COUNT(DISTINCT user_email)::int AS players,COALESCE(SUM(credits_earned),0)::int AS credits FROM reward_plays WHERE played_at>=CURRENT_DATE`),
    db.execute(sql`SELECT p.game_id,COUNT(*)::int AS plays,COALESCE(SUM(p.credits_earned),0)::int AS credits FROM reward_plays p WHERE p.played_at>=CURRENT_DATE-INTERVAL '7 days' GROUP BY p.game_id ORDER BY plays DESC`),
-   db.execute(sql`SELECT id,game_id,LEFT(user_email,2)||'***' AS user_label,status,issued_at,completed_at,claimed_at,expires_at,prize_credits FROM reward_game_sessions ORDER BY issued_at DESC LIMIT 75`)
+   db.execute(sql`SELECT id,game_id,LEFT(user_email,2)||'***' AS user_label,status,issued_at,completed_at,claimed_at,expires_at,prize_credits FROM reward_game_sessions ORDER BY issued_at DESC LIMIT 75`),
+   db.execute(sql`SELECT COUNT(*)::int AS flagged_accounts FROM (SELECT user_email FROM reward_game_sessions WHERE issued_at>=NOW()-INTERVAL '24 hours' GROUP BY user_email HAVING COUNT(*)>30) suspect`)
   ]);
   const flags=sessions.rows.filter((r:any)=>r.status==='started'&&new Date(r.expires_at)<new Date()).length;
   res.setHeader("Cache-Control","no-store");
-  res.json({summary:summary.rows[0],games:games.rows,sessions:sessions.rows,expiredInRecent:flags});
+  res.json({summary:summary.rows[0],games:games.rows,sessions:sessions.rows,expiredInRecent:flags,flaggedAccounts:Number((suspicious.rows[0] as any)?.flagged_accounts??0)});
  }catch(err){logger.error({err},"Reward admin overview");res.status(500).json({error:"Reward monitoring unavailable"});}
 });
 router.get("/rewards/streak",async(req,res)=>{
  try {
   const email=await identity(req);if(!email)return void res.status(401).json({error:"Sign in required"});
-  const rows=await db.execute(sql`SELECT DISTINCT (played_at AT TIME ZONE 'UTC')::date AS day FROM reward_plays WHERE user_email=${email} AND played_at>=NOW()-INTERVAL '45 days' ORDER BY day DESC`);
+  const rows=await db.execute(sql`SELECT DISTINCT to_char((played_at AT TIME ZONE 'UTC')::date,'YYYY-MM-DD') AS day FROM reward_plays WHERE user_email=${email} AND played_at>=NOW()-INTERVAL '45 days' ORDER BY day DESC`);
   const days=new Set(rows.rows.map((r:any)=>String(r.day).slice(0,10)));
   let cursor=new Date();cursor.setUTCHours(0,0,0,0);
   if(!days.has(cursor.toISOString().slice(0,10)))cursor.setUTCDate(cursor.getUTCDate()-1);
