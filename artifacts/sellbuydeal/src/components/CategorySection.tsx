@@ -2,16 +2,16 @@ import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility
 import { Link } from "wouter";
 import {useSiteSettings} from "@/context/SiteSettingsContext";
 import { motion } from "framer-motion";
-import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
+import { ArrowRight, Headphones, Shirt, Gamepad2, House, Trophy, BookOpen, Palette, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
 
 const categories = [
-  {name:"Electronics",slug:"electronics",icon:Smartphone,image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80"},
+  {name:"Electronics",slug:"electronics",icon:Headphones,image:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80"},
   {name:"Fashion",slug:"clothing-shoes-jewelry",icon:Shirt,image:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80"},
   {name:"Gaming",slug:"video-games",icon:Gamepad2,image:"https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80"},
-  {name:"Home & Garden",slug:"home-kitchen",icon:Armchair,image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80"},
-  {name:"Sports",slug:"sports-outdoors",icon:Dumbbell,image:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80"},
+  {name:"Home & Garden",slug:"home-kitchen",icon:House,image:"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80"},
+  {name:"Sports",slug:"sports-outdoors",icon:Trophy,image:"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80"},
   {name:"Books",slug:"books",icon:BookOpen,image:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=400&q=80"},
-  {name:"Arts & Crafts",slug:"arts-crafts-sewing",icon:Gem,image:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80"},
+  {name:"Arts & Crafts",slug:"arts-crafts-sewing",icon:Palette,image:"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80"},
   {name:"Automotive",slug:"automotive",icon:CarFront,image:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=400&q=80"},
   {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,image:"https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=80"},
   {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,image:"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80"},
@@ -26,14 +26,14 @@ const bento = [
 export function CategorySection() {
  const s=useSiteSettings();
  const {isActive:categoryIsActive}=usePublicCategoryVisibility();
- return <section className="bz-home-category-section bg-white dark:bg-slate-950 py-10 md:py-12 border-y border-slate-200 dark:border-slate-800">
+ return <section className="bz-home-category-section bz-vibrant-categories bg-white dark:bg-slate-950 py-10 md:py-12 border-y border-slate-200 dark:border-slate-800">
   <div className="max-w-6xl mx-auto px-4">
    <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{s.categories_title||"Shop by Category"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-200 hover:underline">View all categories <ArrowRight className="w-4 h-4"/></Link></div>
    <div className="bz-home-category-grid grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-5">
     {categories.filter(cat=>categoryIsActive(cat.slug)).map(({name,slug,icon:Icon},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
-      <Link href={`/browse?category=${slug}`} className={`bz-category-card bz-pastel-category bz-pastel-${i%6} group flex h-full min-h-[166px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500`}>
+      <Link href={`/browse?category=${slug}`} className={`bz-category-card bz-pastel-category bz-vibrant-tile bz-vibrant-${categories.findIndex(category=>category.slug===slug)%9} group flex h-full min-h-[166px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500`}>
        <span className="bz-pastel-icon flex h-[76px] w-[76px] items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-110"><Icon aria-hidden="true" className="h-10 w-10" strokeWidth={2.1}/></span>
-       <span className="bz-category-label flex min-h-10 items-center justify-center text-center text-sm font-bold leading-snug">{name}</span>
+       <span className="bz-vibrant-tile-footer"><span className="bz-category-label">{name}</span><span className="bz-vibrant-arrow" aria-hidden="true"><ArrowRight className="h-5 w-5"/></span></span>
       </Link>
      </motion.div>)}
    </div>
