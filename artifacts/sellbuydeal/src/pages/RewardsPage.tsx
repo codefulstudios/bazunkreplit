@@ -196,19 +196,25 @@ function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<voi
     dragging.current=false;setRevealing(true);
     try { await onPlay();setRevealed(true); } finally {setRevealing(false);}
   }
-  return <div className="flex flex-col items-center gap-4 py-2">
-    <p className="text-center text-base font-semibold text-gray-700">Scratch away the silver coating to reveal your surprise!</p>
-    <div className="relative w-full max-w-[320px] aspect-[320/190] rounded-2xl overflow-hidden border-[5px] border-amber-400 shadow-[0_12px_30px_rgba(245,158,11,.3)] select-none" style={{background:"linear-gradient(135deg,#6d28d9,#c026d3 55%,#f97316)"}}>
-      <div className="absolute inset-0 flex flex-col justify-center items-center text-white gap-2">
-        <motion.div animate={{rotate:[-8,8,-8],scale:[1,1.15,1]}} transition={{duration:1.6,repeat:Infinity}}><Gift className="w-14 h-14 text-yellow-200"/></motion.div>
-        <span className="font-black text-2xl">BAZUNK BONUS!</span><span className="text-sm font-bold">Keep scratching!</span>
+  return <div className="arcade-scratch-experience flex flex-col items-center gap-4 py-5">
+    <h3 className="arcade-stage-heading">🎟️ SCRATCH <span>& WIN</span> ✨</h3>
+    <p className="font-semibold text-white text-center">Rub away the silver foil to reveal your surprise!</p>
+    <div className="arcade-scratch-frame">
+      <div className="arcade-scratch-marquee" aria-hidden="true">✦ ✨ ✦ ✨ ✦ ✨ ✦ ✨</div>
+      <div className="relative w-full aspect-[320/190] rounded-2xl overflow-hidden border-[5px] border-amber-300 shadow-[0_12px_30px_rgba(245,158,11,.3)] select-none" style={{background:"radial-gradient(circle at 50% 45%,#f9d959,#fa9c1e 45%,#842dda 100%)"}}>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-white gap-2">
+          <motion.div animate={{rotate:[-8,8,-8],scale:[1,1.15,1]}} transition={{duration:1.6,repeat:Infinity}}><Gift className="w-14 h-14 text-yellow-100"/></motion.div>
+          <span className="font-black text-2xl drop-shadow-lg">🎁 MYSTERY PRIZE!</span>
+          <span className="text-sm font-bold">The server reveals your actual reward</span>
+        </div>
+        {!revealed&&<canvas ref={canvasRef} width={320} height={190} aria-label="Scratch ticket coating. Drag or swipe to reveal." onPointerDown={e=>{dragging.current=true;last.current=null;e.currentTarget.setPointerCapture(e.pointerId);scratchAt(e);}} onPointerMove={scratchAt} onPointerUp={()=>{dragging.current=false;last.current=null;}} onPointerCancel={()=>{dragging.current=false;last.current=null;}} className="absolute inset-0 w-full h-full cursor-crosshair touch-none"/>}
       </div>
-      {!revealed&&<canvas ref={canvasRef} width={320} height={190} aria-label="Scratch ticket coating. Drag or swipe to reveal." onPointerDown={e=>{dragging.current=true;last.current=null;e.currentTarget.setPointerCapture(e.pointerId);scratchAt(e);}} onPointerMove={scratchAt} onPointerUp={()=>{dragging.current=false;last.current=null;}} onPointerCancel={()=>{dragging.current=false;last.current=null;}} className="absolute inset-0 w-full h-full cursor-crosshair touch-none"/>}
+      <div className="arcade-scratch-marquee" aria-hidden="true">✦ ✨ ✦ ✨ ✦ ✨ ✦ ✨</div>
     </div>
-    <div className="w-full max-w-[320px] h-2 rounded-full bg-gray-200 overflow-hidden"><div className="h-full bg-gradient-to-r from-purple-500 to-orange-500 transition-all" style={{width:`${progress}%`}}/></div>
-    <p className="text-sm font-bold text-gray-700">{revealing?"Checking your prize…":revealed?"Ticket revealed!":`${progress}% scratched · Reveal at 48%`}</p>
-    <button type="button" disabled={revealing||revealed} onClick={finish} className="rounded-xl bg-violet-600 text-white px-6 py-3 font-bold disabled:opacity-50">Reveal without scratching</button>
-    <p className="text-sm text-gray-600">70% chance to win 5–30 credits</p>
+    <div className="w-full max-w-[420px] h-3 rounded-full bg-blue-950 overflow-hidden"><div className="h-full bg-gradient-to-r from-amber-300 to-orange-400 transition-all" style={{width:`${progress}%`}}/></div>
+    <p className="text-sm font-bold text-white">{revealing?"Checking your prize…":revealed?"Ticket revealed!":`${progress}% scratched · Reveal at 48%`}</p>
+    <button type="button" disabled={revealing||revealed} onClick={finish} className="arcade-orange-button disabled:opacity-50">🎁 Reveal my reward</button>
+    <p className="text-xs text-blue-100">One play is recorded when the server processes your reveal.</p>
   </div>;
 }
 
