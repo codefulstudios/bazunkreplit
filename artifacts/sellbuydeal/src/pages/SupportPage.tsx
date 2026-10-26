@@ -8,6 +8,7 @@ import {
   Radio, Layers, Tag,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CompactPageHero } from "@/components/CompactPageHero";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { useRawSettings } from "@/context/SiteSettingsContext";
@@ -200,22 +201,14 @@ export function SupportPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1A1D2E] to-[#2d3159] py-16 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="w-14 h-14 rounded-2xl bg-[#4A5CE8]/20 flex items-center justify-center mx-auto mb-4">
-            <HelpCircle className="w-7 h-7 text-[#4A5CE8]" />
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Support Centre</h1>
-          <p className="text-white/60 text-base max-w-md mx-auto">
-            Find answers to common questions about buying, selling, marketplace features, and your account.
-          </p>
-        </motion.div>
-      </section>
+      <CompactPageHero kind="support" eyebrow="Support Centre" title="Support Centre" description="Find answers to common questions about buying, selling and your account." art="💬">
+        <a className="bz-hero-chip" href="#support-topics">Explore help topics</a>
+        <button type="button" className="bz-hero-chip" onClick={()=>openChatwootSupport()}>Contact support</button>
+      </CompactPageHero>
 
       <AdSlot slotKey="support_mid" />
 
-      <div className="container mx-auto px-4 py-12 max-w-4xl flex-1">
+      <div id="support-topics" className="container mx-auto px-4 py-8 max-w-5xl flex-1">
 
         {/* Category tabs */}
         <div className="flex flex-wrap gap-2 mb-8 justify-center">
