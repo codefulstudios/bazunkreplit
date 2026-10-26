@@ -1823,3 +1823,13 @@ body:has(.bazunk-boxed-storefront) {
 @media(max-width:900px){.bz-mockup-hero .bz-mockup-scene{min-height:290px}.bz-mockup-hero .bz-mockup-hero-art{max-width:550px;margin-inline:auto}}
 @media(max-width:600px){.bz-mockup-home .bz-mockup-hero{width:calc(100% - 20px);border-radius:24px;margin-top:10px}.bz-mockup-hero .bz-mockup-scene{min-height:265px}.bz-scene-person{left:25%}.bz-scene-card{width:104px}.bz-scene-card span{font-size:34px}.bz-scene-callout{right:0;top:126px}}
 @media(prefers-reduced-motion:reduce){.bz-mockup-home *{scroll-behavior:auto}}
+
+/* Keep category navigation in the dedicated below-hero section, as in the mockup. */
+.bz-mockup-home .bz-mockup-hero .bz-design-home-categories{display:none!important}
+.bz-mockup-home .bz-mockup-hero .bz-hero-kicker{font-size:.72rem;letter-spacing:.12em}
+.bz-mockup-home .bz-mockup-hero a[data-theme-edit="hero_cta_secondary"]{background:var(--mock-paper)!important;border:1px solid #a8c9ef!important;color:#1764bf!important}
+.dark .bz-mockup-home .bz-mockup-hero a[data-theme-edit="hero_cta_secondary"]{color:#a7d3ff!important}
+.bz-mockup-home .bz-mockup-hero a[href="/buyer-protection"],.bz-mockup-home .bz-mockup-hero a[href="/welcome-new-buyers"]{color:var(--mock-ink)!important}
+.bz-mockup-home .bz-mockup-hero a[href="/welcome-new-buyers"]{background:var(--mock-paper);border-color:var(--mock-line)}
+.bz-mockup-home .bz-mockup-hero a[href="/welcome-new-buyers"] span span{color:#c75213!important}
+.bz-mockup-home .bz-mockup-hero .mt-5 a{color:var(--mock-ink)!important}
