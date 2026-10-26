@@ -114,6 +114,7 @@ const AD_SLOTS = [
   { key: "classifieds_mid",label: "Classifieds — Mid Banner",    desc: "Leaderboard (728×90) between the hero and search filters" },
   { key: "support_mid",    label: "Support — Mid Banner",        desc: "Leaderboard (728×90) between the hero and FAQ tabs" },
   { key: "live_left",      label: "Live Page — Left Vertical",    desc: "Vertical advert beside the Live Now content on desktop; moves below the content on smaller screens" },
+  { key: "rewards_right", label: "Rewards — Right Sidebar", desc: "Dedicated advert below the Rewards Arcade sidebar information and leaderboard" },
   { key: "live_bottom",    label: "Live Page — Bottom Banner",    desc: "Leaderboard (728×90) below the Live Now content" },
 ] as const;
 
