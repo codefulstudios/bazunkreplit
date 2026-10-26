@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, Search, Grid3X3, Tag } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
+import { CompactPageHero } from "@/components/CompactPageHero";
 import { Footer } from "@/components/Footer";
 import { AdSlot } from "@/components/AdSlot";
 import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
@@ -208,7 +209,8 @@ export function CategoriesPage() {
   const products = categoryListings;
   return <div className="min-h-screen flex flex-col bg-[#f5f8fd] text-slate-950 dark:bg-[#071426] dark:text-white">
     <Navbar />
-    <main className="bz-category-redesign flex-1 mx-auto w-full max-w-[1536px] px-4 py-5 sm:px-6">
+    <CompactPageHero kind="categories" eyebrow="Categories" title="Shop by Category" description="Explore categories and discover products from across the marketplace." art="🛍️"><Link className="bz-hero-chip" href="/browse">Browse everything</Link><a className="bz-hero-chip" href="#category-browser">Explore categories</a></CompactPageHero>
+    <main id="category-browser" className="bz-category-redesign flex-1 mx-auto w-full max-w-[1536px] px-4 py-5 sm:px-6">
       <nav aria-label="Breadcrumb" className="mb-4 flex gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200"><Link href="/">Home</Link><span>›</span><span>Categories</span></nav>
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[310px_minmax(0,1fr)] items-start">
         <aside className="bz-category-sidebar rounded-2xl border border-slate-200 bg-white p-3 dark:border-[#304461] dark:bg-[#10213c] lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto overscroll-contain [scrollbar-gutter:stable]" aria-label="Category navigation">
