@@ -2342,3 +2342,17 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .bz-home-category-section .bz-category-feature:hover .bz-category-feature-overlay{background:linear-gradient(90deg,rgba(5,15,34,.97) 0%,rgba(7,19,39,.9) 43%,rgba(8,22,42,.68) 75%,rgba(8,22,42,.5) 100%)!important}
 .dark .bz-home-category-section .bz-category-feature-overlay{background:linear-gradient(90deg,rgba(3,10,25,.96),rgba(5,14,32,.87) 45%,rgba(7,17,36,.56))!important}
 .bz-home-category-section .bz-category-feature:focus-visible{outline:3px solid #ffae63!important;outline-offset:3px}
+
+/* Consistent rounded homepage design, matching category tiles without boxing sections. */
+.bz-mockup-home { --bz-home-radius:26px; --bz-home-radius-small:19px; }
+.bz-mockup-home .bz-mockup-hero {border-radius:34px!important;overflow:hidden}
+.bz-mockup-home .bz-home-category-section .bz-vibrant-tile {border-radius:26px!important}
+.bz-mockup-home .bz-home-category-section .bz-category-feature {border-radius:26px!important;overflow:hidden}
+.bz-mockup-home :is(.bz-design-promo-card,.bz-category-feature,.bz-design-home-categories,.bz-category-card) {border-radius:var(--bz-home-radius)!important}
+.bz-mockup-home main :is(article,[class*="listing-card"],[class*="product-card"],[class*="featured-card"]) {border-radius:var(--bz-home-radius)!important;overflow:hidden}
+.bz-mockup-home main :is(article,[class*="listing-card"],[class*="product-card"],[class*="featured-card"]) img {border-radius:var(--bz-home-radius-small)}
+.bz-mockup-home main :is(a,button)[class*="rounded-xl"] {border-radius:999px}
+.bz-mockup-home main :is([class*="rounded-2xl"],[class*="rounded-3xl"]):not(button):not(.bz-pastel-icon):not(.bz-vibrant-arrow) {border-radius:var(--bz-home-radius)}
+.bz-mockup-home main section:not(.bz-mockup-hero) {border-top:0!important;border-bottom:0!important}
+.bz-mockup-home :is(a,button):focus-visible {outline:3px solid #f26b21!important;outline-offset:3px}
+@media(max-width:600px){.bz-mockup-home{--bz-home-radius:21px;--bz-home-radius-small:15px}.bz-mockup-home .bz-mockup-hero{border-radius:25px!important}}
