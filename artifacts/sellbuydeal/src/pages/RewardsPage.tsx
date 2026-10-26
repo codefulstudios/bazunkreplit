@@ -356,7 +356,7 @@ function GameModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] grid place-items-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -364,11 +364,11 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="relative bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
+        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="bz-reward-game-dialog relative flex flex-col bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`px-6 py-5 flex items-center gap-3 border-b border-gray-100`}>
+        <div className={`bz-reward-dialog-header shrink-0 px-5 py-3 flex items-center gap-3 border-b border-gray-200 bg-white`}>
           <div className={`w-10 h-10 rounded-xl ${ICON_BG[game.id]} flex items-center justify-center flex-shrink-0`}>
             <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} />
           </div>
@@ -376,7 +376,7 @@ function GameModal({
             <h2 className="font-black text-gray-900">{game.name}</h2>
             <p className="text-xs text-gray-400">{game.playsRemaining} play{game.playsRemaining !== 1 ? "s" : ""} remaining today</p>
           </div>
-          <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+          <button type="button" onClick={onClose} aria-label="Close game" title="Close game" className="ml-auto shrink-0 grid h-11 w-11 place-items-center rounded-full border-2 border-slate-300 bg-slate-100 text-slate-900 text-2xl font-bold hover:bg-orange-100 hover:border-orange-400 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500">×</button>
         </div>
 
         <div className="p-4 sm:p-6 arcade-modal-content">
