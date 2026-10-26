@@ -396,10 +396,14 @@ function GameModal({
             ) : (
               <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {error && (
-                  <div role="alert" className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex flex-wrap items-center gap-2">
-                    <XCircle className="w-4 h-4 flex-shrink-0" />
-                    <span className="flex-1">{error}</span>
-                    {sessionPromise.current && <button type="button" onClick={() => void play(lastAnswer.current)} className="rounded-lg bg-red-700 text-white px-3 py-2 font-bold">Retry claim</button>}
+                  <div role="alert" className="arcade-error-panel mb-4">
+                    <div className="text-4xl" aria-hidden="true">{/limit|cap|tomorrow/i.test(error)?"🕒":/expired/i.test(error)?"⏳":"🎮"}</div>
+                    <h3 className="font-black text-lg text-slate-900">{/limit|cap|tomorrow/i.test(error)?"Today's rewards are finished":/expired/i.test(error)?"Your game session expired":"Something interrupted your reward"}</h3>
+                    <p className="text-sm text-slate-700">{error}</p>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                      {!/limit|cap|expired|disabled/i.test(error)&&sessionPromise.current&&<button type="button" onClick={() => void play(lastAnswer.current)} className="arcade-result-primary">Try again</button>}
+                      <button type="button" onClick={onClose} className="arcade-result-secondary">Back to games</button>
+                    </div>
                   </div>
                 )}
                 {game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
