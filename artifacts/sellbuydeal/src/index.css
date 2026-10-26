@@ -1768,3 +1768,58 @@ body:has(.bazunk-boxed-storefront) {
     box-shadow: none;
   }
 }
+
+
+/* Homepage visual refresh — inspired by approved Bazunk marketplace mockup.
+   Theme tokens keep both colour modes legible while preserving live product data. */
+.bz-mockup-home {
+  --mock-ink:#102957; --mock-muted:#4e6180; --mock-paper:#fff;
+  --mock-surface:#f3f7fc; --mock-line:#dee8f4;
+  color:var(--mock-ink); font-family:"Plus Jakarta Sans","Nunito Sans",Inter,ui-sans-serif,system-ui,sans-serif;
+  background:linear-gradient(180deg,#f8fbff 0%,#fff 54%);
+}
+.dark .bz-mockup-home {
+  --mock-ink:#f3f7ff;--mock-muted:#becde5;--mock-paper:#172943;
+  --mock-surface:#203653;--mock-line:#38516f;
+  background:linear-gradient(180deg,#101e35 0%,#0c172a 70%);
+}
+.bz-mockup-home h1,.bz-mockup-home h2,.bz-mockup-home h3 {
+  font-family:"Plus Jakarta Sans","Nunito Sans",Inter,ui-sans-serif,system-ui,sans-serif;
+  letter-spacing:-.035em;
+}
+.bz-mockup-home main {width:100%;min-width:0;}
+.bz-mockup-home .bz-mockup-hero {
+  margin:16px auto 10px;width:calc(100% - 32px);border-radius:32px;
+  color:var(--mock-ink)!important;background:radial-gradient(ellipse at 78% 16%,#d7ecff 0%,transparent 48%),linear-gradient(120deg,#f9fcff,#eaf5ff 72%,#fff0e6)!important;
+  border:1px solid #e3eefb;box-shadow:0 12px 34px #2864a317;
+}
+.dark .bz-mockup-home .bz-mockup-hero {background:radial-gradient(ellipse at 78% 16%,#294467 0%,transparent 52%),linear-gradient(120deg,#182941,#142842 75%,#433028)!important;border-color:#36506c}
+.bz-mockup-hero h1{color:var(--mock-ink)!important;font-size:clamp(2.35rem,4vw,3.8rem);line-height:1.09;font-weight:850}
+.bz-mockup-hero .bz-hero-kicker{color:#cf5917!important}
+.dark .bz-mockup-hero .bz-hero-kicker{color:#ffaf73!important}
+.bz-mockup-hero .bz-hero-summary{color:var(--mock-muted)!important}
+.bz-mockup-hero a:not(.bz-design-home-categories a){border-radius:999px}
+.bz-mockup-hero .bz-mockup-hero-art{position:relative;min-width:0}
+.bz-mockup-hero .bz-mockup-scene{position:relative;min-height:320px;isolation:isolate;margin:0 0 14px}
+.bz-scene-orb{position:absolute;z-index:-1;border-radius:50%;filter:blur(2px)}
+.bz-orb-one{width:235px;height:235px;background:#b3dcff8c;top:38px;left:22%}
+.bz-orb-two{width:150px;height:150px;background:#ffceaa99;top:70px;right:8%}
+.bz-scene-person{position:absolute;font-size:clamp(100px,13vw,177px);top:74px;left:30%;filter:drop-shadow(0 12px 10px #143d6740)}
+.bz-scene-parcel{position:absolute;font-size:85px;bottom:0;left:29%;filter:drop-shadow(0 10px 9px #143d6740)}
+.bz-scene-card{position:absolute;z-index:2;display:grid;justify-items:center;gap:2px;width:124px;padding:10px 9px;border:1px solid var(--mock-line);border-radius:19px;background:var(--mock-paper);box-shadow:0 10px 20px #17385a20;color:var(--mock-ink);text-align:center;transform:rotate(-6deg)}
+.bz-scene-card span{font-size:43px}.bz-scene-card strong{font-size:12px}.bz-scene-card small{font-size:10px;color:var(--mock-muted)}
+.bz-scene-headphones{top:8px;left:2%}.bz-scene-camera{top:5px;right:13%;transform:rotate(7deg)}.bz-scene-shoes{right:0;bottom:30px;transform:rotate(6deg)}
+.bz-scene-callout{position:absolute;right:4%;top:145px;background:#fb7429;color:white;padding:12px 15px;border-radius:18px;transform:rotate(7deg);font-weight:850;font-size:13px;box-shadow:0 10px 22px #d8602540}
+.bz-mockup-home section:not(.bz-mockup-hero) {border-color:var(--mock-line)}
+.bz-mockup-home section:not(.bz-mockup-hero) h2{font-weight:850;color:var(--mock-ink)}
+.bz-mockup-home .bz-design-category-tile,.bz-mockup-home .bz-category-feature,
+.bz-mockup-home .bz-design-promo-card,.bz-mockup-home .bz-category-label,
+.bz-mockup-home [class*="rounded-xl"]{border-radius:20px}
+.bz-mockup-home .bz-design-category-tile,.bz-mockup-home .bz-design-promo-card {box-shadow:0 8px 25px #0b3a6c14}
+.bz-mockup-home section[class*="bg-white"]{background:transparent!important}
+.bz-mockup-home a:focus-visible{outline:3px solid #fa8038;outline-offset:3px}
+.bz-mockup-home .bz-design-promo-card{transition:transform .2s ease,box-shadow .2s ease}
+.bz-mockup-home .bz-design-promo-card:hover{transform:translateY(-3px);box-shadow:0 15px 30px #143d6633}
+@media(max-width:900px){.bz-mockup-hero .bz-mockup-scene{min-height:290px}.bz-mockup-hero .bz-mockup-hero-art{max-width:550px;margin-inline:auto}}
+@media(max-width:600px){.bz-mockup-home .bz-mockup-hero{width:calc(100% - 20px);border-radius:24px;margin-top:10px}.bz-mockup-hero .bz-mockup-scene{min-height:265px}.bz-scene-person{left:25%}.bz-scene-card{width:104px}.bz-scene-card span{font-size:34px}.bz-scene-callout{right:0;top:126px}}
+@media(prefers-reduced-motion:reduce){.bz-mockup-home *{scroll-behavior:auto}}
