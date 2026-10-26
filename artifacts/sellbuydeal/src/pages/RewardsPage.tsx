@@ -365,7 +365,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="relative bg-white dark:bg-[#172b46] rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
+        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="relative bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
