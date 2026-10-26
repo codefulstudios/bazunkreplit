@@ -516,7 +516,7 @@ export function RewardsPage() {
         </div>
       </div>
 
-      <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
+      <main className="flex-1 container mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-wrap items-center gap-3 mb-5">
           <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} className="rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">{soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>} Sound {soundEnabled?"on":"off"}</button>
           {streak&&<div className="rounded-xl border border-orange-200 bg-orange-50 text-orange-950 px-4 py-2 text-sm font-bold flex items-center gap-2"><Flame size={17}/> {streak.streak}-day playing streak {streak.playedToday?"· Played today":"· Play to continue"}</div>}
@@ -585,8 +585,8 @@ export function RewardsPage() {
                           )}
                         </div>
 
-                        <h3 className="font-black text-gray-900 text-sm mb-1">{game.name}</h3>
-                        <p className="text-xs text-gray-400 leading-snug flex-1 mb-4">{game.description}</p>
+                        <h3 className="font-black text-gray-900 dark:text-white text-lg mb-1">{game.name}</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-200 leading-relaxed flex-1 mb-4">{game.description}</p>
 
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-xs font-bold text-gray-600">
