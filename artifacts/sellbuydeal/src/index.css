@@ -2332,3 +2332,13 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .dark .bz-mockup-home .bz-design-promo-card{box-shadow:0 8px 22px #0003!important}
 .bz-mockup-home .bz-mockup-hero{border:0!important}
 .bz-mockup-home :is(a,button):focus-visible{outline:3px solid #f26b21!important;outline-offset:3px}
+
+/* Image promotion cards: readable text regardless of source photo brightness. */
+.bz-home-category-section .bz-category-feature{border:0!important;background:#10233f!important;box-shadow:0 10px 24px #0a1e3c2e!important}
+.bz-home-category-section .bz-category-feature-overlay{background:linear-gradient(90deg,rgba(5,15,34,.94) 0%,rgba(7,19,39,.86) 43%,rgba(8,22,42,.58) 75%,rgba(8,22,42,.43) 100%)!important;transition:background .2s}
+.bz-home-category-section .bz-category-feature-title{color:#fff!important;font-size:1.23rem!important;font-weight:850!important;line-height:1.2;text-shadow:0 2px 8px #000a}
+.bz-home-category-section .bz-category-feature-subtitle{color:#fff!important;opacity:1!important;font-size:.92rem;font-weight:650;line-height:1.45;text-shadow:0 2px 8px #000b}
+.bz-home-category-section .bz-category-feature-cta{display:inline-flex;align-items:center;gap:6px;width:max-content;color:#fff!important;font-size:.95rem;font-weight:850;text-shadow:0 2px 8px #000b}
+.bz-home-category-section .bz-category-feature:hover .bz-category-feature-overlay{background:linear-gradient(90deg,rgba(5,15,34,.97) 0%,rgba(7,19,39,.9) 43%,rgba(8,22,42,.68) 75%,rgba(8,22,42,.5) 100%)!important}
+.dark .bz-home-category-section .bz-category-feature-overlay{background:linear-gradient(90deg,rgba(3,10,25,.96),rgba(5,14,32,.87) 45%,rgba(7,17,36,.56))!important}
+.bz-home-category-section .bz-category-feature:focus-visible{outline:3px solid #ffae63!important;outline-offset:3px}
