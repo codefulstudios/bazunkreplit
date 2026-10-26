@@ -11,7 +11,11 @@
     "scheme": "bazunk",
     "android": {
       "package": "com.bazunk.marketplace",
-      "versionCode": 1
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1829"
+      }
     },
     "userInterfaceStyle": "light",
     "plugins": [
@@ -27,12 +31,22 @@
           "microphonePermission": false
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/adaptive-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "daa6ab0d-e54f-4e5a-ad72-900cbf8aecb7"
       }
-    }
+    },
+    "icon": "./assets/app-icon.png"
   }
 }

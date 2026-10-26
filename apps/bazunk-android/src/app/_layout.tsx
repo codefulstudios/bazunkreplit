@@ -1,8 +1,13 @@
+import * as SplashScreen from 'expo-splash-screen';
 import { Stack, router } from "expo-router";
 import { Pressable, Text } from "react-native";
 import { ClerkProvider } from "@clerk/expo";
 import { AppCart } from "../cart";
 import { tokenCache } from "@clerk/expo/token-cache";
+// Let Expo Router hide the native splash when the first screen is ready.
+// Do not hold startup behind authentication or marketplace network requests.
+SplashScreen.setOptions({ duration: 350, fade: true });
+
 function Navigation() {
   return (
     <Stack
