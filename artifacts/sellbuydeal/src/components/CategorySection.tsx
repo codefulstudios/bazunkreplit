@@ -38,11 +38,11 @@ export function CategorySection() {
      </motion.div>)}
    </div>
    <div className="grid md:grid-cols-3 gap-4 mt-8">
-    {bento.filter(item=>categoryIsActive(item.href.split("category=")[1])).map(({title,subtitle,image,href})=><Link key={title} href={href} className="bz-category-feature group relative min-h-[160px] overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900 p-5 flex flex-col justify-between">
-      <img src={image} loading="lazy" alt="" className="absolute inset-0 h-full w-full object-cover opacity-45 group-hover:scale-105 transition-transform duration-300"/>
-      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 to-slate-950/20"/>
-      <div className="relative z-10 max-w-[88%]"><h3 className="font-bold text-lg !text-white">{title}</h3><p className="mt-2 text-sm !text-white leading-relaxed">{subtitle}</p></div>
-      <span className="relative z-10 font-semibold text-sm !text-white">Shop now <ArrowRight className="inline w-4 h-4"/></span>
+    {bento.filter(item=>categoryIsActive(item.href.split("category=")[1])).map(({title,subtitle,image,href})=><Link key={title} href={href} className="bz-category-feature group relative flex min-h-[185px] flex-col justify-between overflow-hidden rounded-[24px] bg-[#10233f] p-6">
+      <img src={image} loading="lazy" alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"/>
+      <div className="bz-category-feature-overlay absolute inset-0" aria-hidden="true"/>
+      <div className="relative z-10 max-w-[90%]"><h3 className="bz-category-feature-title">{title}</h3><p className="bz-category-feature-subtitle">{subtitle}</p></div>
+      <span className="bz-category-feature-cta relative z-10">Shop now <ArrowRight aria-hidden="true" className="h-4 w-4"/></span>
      </Link>)}
    </div>
   </div>
