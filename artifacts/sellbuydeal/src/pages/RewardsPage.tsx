@@ -129,30 +129,28 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
   if (!question) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-400" /></div>;
 
   return (
-    <div className="space-y-4">
-      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="rounded-2xl bg-blue-50 border border-blue-200 p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><p className="font-bold text-gray-900 text-lg">{question.question}</p></motion.div>
+    <div className="bz-quiz-game space-y-4">
+      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="bz-quiz-question rounded-2xl border p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><p className="font-bold text-lg text-[#142b50]">{question.question}</p></motion.div>
       <div className="space-y-2">
         {question.options.map((opt, i) => (
           <motion.button
             key={i}
             initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}} transition={{delay:i*.09}} whileHover={{scale:1.015}} whileTap={{scale:.98}}
             onClick={() => setSelected(i)}
-            className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-              selected === i ? "border-blue-500 bg-blue-50 text-blue-900" : "border-gray-200 hover:border-gray-300 text-gray-700"
-            }`}
+            aria-pressed={selected === i} disabled={submitting} className={`bz-quiz-option w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${selected === i ? "is-selected" : ""}`}
           >
-            <span className="font-bold text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
+            <span className="bz-quiz-letter font-bold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
           </motion.button>
         ))}
       </div>
       <button
         onClick={submit}
         disabled={selected === null || submitting}
-        className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+        className="bz-quiz-submit w-full py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
       >
         {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</> : "Submit Answer"}
       </button>
-      <p className="text-xs text-gray-400 text-center">+{game.creditsMax} credits for a correct answer</p>
+      <p className="bz-quiz-help text-xs text-center">+{game.creditsMax} credits for a correct answer</p>
     </div>
   );
 }
