@@ -81,23 +81,27 @@ function SpinWheelGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown
     try { await onPlay(); } finally { setSpinning(false); }
   }
   return (
-    <div className="flex flex-col items-center gap-5 py-2">
-      <p className="text-center text-sm font-medium text-gray-600">Give the wheel a spin to reveal your reward!</p>
-      <div className="relative w-[min(72vw,288px)] aspect-square rounded-full p-2 bg-gradient-to-br from-amber-300 via-orange-400 to-yellow-500 shadow-[0_12px_35px_rgba(245,158,11,.25)]">
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg" aria-hidden="true"><div className="w-0 h-0 border-l-[13px] border-r-[13px] border-t-[27px] border-l-transparent border-r-transparent border-t-orange-600" /></div>
-        <motion.div className="w-full h-full rounded-full border-[5px] border-white shadow-inner relative overflow-hidden" animate={{ rotate: angle }} transition={{ duration: 3.4, ease: [0.12, 0.75, 0.12, 1] }}
-          style={{ background: `conic-gradient(from -22.5deg, ${colors.map((color,i)=>`${color} ${i*45}deg ${(i+1)*45}deg`).join(", ")})` }}>
-          {segments.map((val,i) => <div key={i} className="absolute inset-0" style={{ transform: `rotate(${i*45}deg)` }}>
-            <span className="absolute top-[13%] left-1/2 -translate-x-1/2 text-white text-base sm:text-lg font-black drop-shadow-md" style={{ textShadow:"0 1px 3px #2229" }}>{val}</span>
-          </div>)}
-          <div className="absolute inset-[39%] rounded-full bg-white border-4 border-amber-300 flex items-center justify-center shadow-lg"><Star className="w-6 h-6 text-orange-500 fill-orange-400" /></div>
-        </motion.div>
+    <div className="arcade-wheel-experience flex flex-col items-center gap-5 py-4">
+      <div className="arcade-stage-heading"><span>✨</span> LUCKY SPIN <span>✨</span></div>
+      <p className="text-center text-sm font-semibold text-blue-100">Spin the illuminated wheel and reveal your daily surprise!</p>
+      <div className="arcade-wheel-stage">
+        <div className="arcade-wheel-pointer" aria-hidden="true">🔻</div>
+        <div className="arcade-wheel-lights">
+          <motion.div className="arcade-wheel-disc" animate={{rotate:angle}} transition={{duration:3.4,ease:[0.12,0.75,0.12,1]}}
+            style={{background:`conic-gradient(from -22.5deg, ${colors.map((c,i)=>`${c} ${i*45}deg ${(i+1)*45}deg`).join(", ")})`}}>
+            {segments.map((val,i)=><div key={i} className="arcade-wheel-segment" style={{transform:`rotate(${i*45}deg)`}}>
+              <span>🪙</span><strong>{val}</strong><small>credits</small>
+            </div>)}
+          </motion.div>
+          <div className="arcade-wheel-hub">B</div>
+        </div>
+        <div className="arcade-wheel-base">⭐ SPIN · EARN · WIN ⭐</div>
       </div>
-      <button onClick={spin} disabled={spinning} className="min-w-44 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-black text-base shadow-lg hover:scale-105 active:scale-95 transition-transform disabled:opacity-60 disabled:cursor-wait flex items-center justify-center gap-2">
-        {spinning ? <><Loader2 className="w-5 h-5 animate-spin" /> Spinning…</> : <><RotateCcw className="w-5 h-5" /> SPIN NOW</>}
+      <button onClick={spin} disabled={spinning} className="arcade-orange-button">
+        {spinning ? "✨ Spinning…" : "🎡 SPIN NOW"}
       </button>
-      <p className="text-sm font-semibold text-gray-600">Prizes: {game.creditsMin}–{game.creditsMax} credits</p>
-      <p className="text-xs text-gray-500 text-center">Your actual prize is determined securely when the spin completes.</p>
+      <div className="arcade-reward-chips">{[5,10,25,50,100].map(n=><div key={n}><span>🪙</span><strong>{n}</strong><small>credits</small></div>)}</div>
+      <p className="text-xs text-blue-100 text-center">Prize values shown are illustrative. Your actual reward is determined by the server when the spin completes.</p>
     </div>
   );
 }
