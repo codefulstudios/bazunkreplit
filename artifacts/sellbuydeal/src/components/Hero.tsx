@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Store, Zap, Gavel, Handshake, Newspaper, Tag, Layers,
   ArrowRight, X,
-  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2, ShoppingBag, Camera, Headphones, ShieldCheck, Sparkles,
+  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2, ShoppingBag, Camera, Headphones, ShieldCheck, Sparkles, Gift,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -90,6 +90,7 @@ export function Hero() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [sellOpen, setSellOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
   const featureSettings = useRawSettings();
   const {isActive:categoryIsActive} = usePublicCategoryVisibility();
   const {resolvedTheme}=useTheme();
@@ -145,10 +146,10 @@ export function Hero() {
               <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
               <Link href={user ? "/sell/direct" : "/sign-in"} className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
             </div>
-            <Link href="/welcome-new-buyers" className="mt-7 flex items-center justify-between gap-3 rounded-xl border border-orange-200/25 bg-white/10 px-4 py-3 text-sm text-white transition-colors hover:bg-white/15">
-              <span><span className="font-bold text-orange-300">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
-              <ArrowRight className="h-4 w-4 shrink-0" />
-            </Link>
+            <button type="button" onClick={() => setIntroOpen(true)} className="bz-intro-trigger mt-7 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-colors">
+              <span><span className="font-extrabold">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
+              <ArrowRight className="h-5 w-5 shrink-0" />
+            </button>
           </motion.div>
 
           {/* ── Right panel — top categories ──────────── */}
@@ -224,6 +225,27 @@ export function Hero() {
 
       </div>
 
+      {introOpen && createPortal(
+        <div className="bz-intro-overlay" onClick={() => setIntroOpen(false)} role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="bz-intro-title" className="bz-intro-modal" onClick={event => event.stopPropagation()}>
+            <button type="button" onClick={() => setIntroOpen(false)} className="bz-intro-close" aria-label="Close introductory offer">×</button>
+            <div className="bz-intro-symbol" aria-hidden="true"><Gift /></div>
+            <p className="bz-intro-eyebrow">WELCOME TO BAZUNK</p>
+            <h2 id="bz-intro-title">A little extra for your first purchases</h2>
+            <p className="bz-intro-lead">Discover the new-buyer benefits available on qualifying purchases.</p>
+            <div className="bz-intro-perks">
+              <div><Gift aria-hidden="true" /><strong>{currency.symbol}5 new-buyer credit</strong><span>Applied to your first or second qualifying purchase.</span></div>
+              <div><ShieldCheck aria-hidden="true" /><strong>Buyer Protection fee covered</strong><span>Bazunk covers the protection fee on your first qualifying purchase.</span></div>
+            </div>
+            <p className="bz-intro-terms">Eligibility, qualifying-purchase requirements and Buyer Protection terms apply. Eligible items that don't arrive or aren't as described may qualify for a refund under the protection policy.</p>
+            <div className="bz-intro-actions">
+              <Link href="/sign-up" onClick={() => setIntroOpen(false)} className="bz-intro-primary">Create your free account <ArrowRight size={17}/></Link>
+              <Link href="/welcome-new-buyers" onClick={() => setIntroOpen(false)} className="bz-intro-secondary">Full offer details</Link>
+            </div>
+          </section>
+        </div>,
+        document.body
+      )}
       {/* ── Sell flyout portal (escapes overflow-hidden) ── */}
       {createPortal(
         <AnimatePresence>
