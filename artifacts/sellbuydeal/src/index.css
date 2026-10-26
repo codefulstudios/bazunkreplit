@@ -1738,20 +1738,33 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 @media(prefers-reduced-motion:reduce){.arcade-memory-tile.revealed,.arcade-memory-tile.matched,.arcade-runner-character,.arcade-runner-scene:after{animation:none}}
 
 
-/* Boxed public storefront: keeps marketplace content readable on wide displays.
-   Admin is deliberately excluded by the route-level wrapper in App.tsx. */
+/* Bazunk boxed storefront: visible side gutters on desktop, edge-to-edge on mobile.
+   Admin routes never receive .bazunk-boxed-storefront. */
+:root {
+  --bazunk-storefront-width: 1200px;
+}
+body:has(.bazunk-boxed-storefront) {
+  background: #e8edf5;
+}
+.dark body:has(.bazunk-boxed-storefront) {
+  background: #080f1d;
+}
 .bazunk-boxed-storefront {
-  width: 100%;
-  max-width: 1360px;
+  width: min(100% - 48px, var(--bazunk-storefront-width));
+  max-width: var(--bazunk-storefront-width);
   min-height: 100vh;
   margin-inline: auto;
   background: hsl(var(--background));
-  box-shadow: 0 0 40px rgb(21 36 59 / 7%);
+  box-shadow: 0 8px 38px rgb(20 35 58 / 16%);
   overflow-x: clip;
+  isolation: isolate;
 }
 .dark .bazunk-boxed-storefront {
-  box-shadow: 0 0 40px rgb(0 0 0 / 25%);
+  box-shadow: 0 8px 38px rgb(0 0 0 / 45%);
 }
-@media (max-width: 1360px) {
-  .bazunk-boxed-storefront { box-shadow: none; }
+@media (max-width: 767px) {
+  .bazunk-boxed-storefront {
+    width: 100%;
+    box-shadow: none;
+  }
 }
