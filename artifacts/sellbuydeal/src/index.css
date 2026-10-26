@@ -2356,3 +2356,18 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .bz-mockup-home main section:not(.bz-mockup-hero) {border-top:0!important;border-bottom:0!important}
 .bz-mockup-home :is(a,button):focus-visible {outline:3px solid #f26b21!important;outline-offset:3px}
 @media(max-width:600px){.bz-mockup-home{--bz-home-radius:21px;--bz-home-radius-small:15px}.bz-mockup-home .bz-mockup-hero{border-radius:25px!important}}
+
+/* Rewards sound toggle: clearly readable regardless of global button overrides. */
+.bazunk-rewards-arcade .bz-arcade-sound-toggle{
+  background:#e9f3ff!important;color:#153a6a!important;
+  border:2px solid #77a9db!important;
+  opacity:1!important;min-height:42px;
+}
+.bazunk-rewards-arcade .bz-arcade-sound-toggle svg{color:inherit!important}
+.bazunk-rewards-arcade .bz-arcade-sound-toggle:hover{background:#d5eaff!important;color:#102e56!important}
+.dark .bazunk-rewards-arcade .bz-arcade-sound-toggle{
+  background:#234366!important;color:#f8fbff!important;
+  border-color:#87b7e8!important;
+}
+.dark .bazunk-rewards-arcade .bz-arcade-sound-toggle:hover{background:#31557b!important}
+.bazunk-rewards-arcade .bz-arcade-sound-toggle:focus-visible{outline:3px solid #ff9e4c!important;outline-offset:3px}
