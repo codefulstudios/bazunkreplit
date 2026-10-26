@@ -84,7 +84,7 @@ import { FeaturedFeatures } from "@/components/FeaturedFeatures";
 import { Footer } from "@/components/Footer";
 import { RewardsTeaser } from "@/components/RewardsTeaser";
 import { AdSlot } from "@/components/AdSlot";
-const CategoriesPage = React.lazy(() => import("@/pages/CategoriesPage").then(module => ({ default: module.CategoriesPage })));
+import { CategoriesPage } from "@/pages/CategoriesPage";
 const SellPage = React.lazy(() => import("@/pages/SellPage").then(module => ({ default: module.SellPage })));
 const DirectSalePage = React.lazy(() => import("@/pages/DirectSalePage").then(module => ({ default: module.DirectSalePage })));
 const SnapSellPage = React.lazy(() => import("@/pages/SnapSellPage").then(module => ({ default: module.SnapSellPage })));
@@ -94,7 +94,7 @@ const DashboardPage = React.lazy(() => import("@/pages/DashboardPage").then(modu
 const MyStorePage = React.lazy(() => import("@/pages/DashboardPage").then(module => ({ default: module.MyStorePage })));
 const ImportersPage = React.lazy(() => import("@/pages/ImportersPage").then(module => ({ default: module.ImportersPage })));
 const ImporterWorkspacePage = React.lazy(() => import("@/pages/ImporterWorkspacePage").then(module => ({ default: module.ImporterWorkspacePage })));
-const BrowsePage = React.lazy(() => import("@/pages/BrowsePage").then(module => ({ default: module.BrowsePage })));
+import { BrowsePage } from "@/pages/BrowsePage";
 const ListingPage = React.lazy(() => import("@/pages/ListingPage").then(module => ({ default: module.ListingPage })));
 const TrustProofPage = React.lazy(() => import("@/pages/TrustProofPage").then(module => ({ default: module.TrustProofPage })));
 const AdminTrustProofPage = React.lazy(() => import("@/pages/admin/AdminTrustProofPage").then(module => ({ default: module.AdminTrustProofPage })));
