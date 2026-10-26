@@ -2279,3 +2279,21 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .dark .bz-vibrant-categories a[href="/categories"]{background:#132d58;border-color:#477ed4;color:#eaf4ff!important}
 @media(max-width:640px){.bz-vibrant-categories .bz-vibrant-tile{min-height:175px!important;padding:16px 10px!important}.bz-vibrant-categories .bz-vibrant-tile .bz-pastel-icon{width:77px!important;height:77px!important}.bz-vibrant-categories .bz-vibrant-tile .bz-pastel-icon svg{width:47px!important;height:47px!important}.bz-vibrant-categories .bz-vibrant-tile .bz-category-label{font-size:13px!important}}
 @media(prefers-reduced-motion:reduce){.bz-vibrant-categories .bz-vibrant-tile:hover{transform:none}.bz-vibrant-categories .bz-vibrant-tile .bz-pastel-icon{transition:none}}
+
+/* Rewards readability refresh: same typography as the public storefront, less nested boxing. */
+.bz-rewards-clean{font-family:"Plus Jakarta Sans","Nunito Sans",Inter,ui-sans-serif,system-ui,sans-serif}
+.bz-rewards-clean h1,.bz-rewards-clean h2,.bz-rewards-clean h3{font-family:inherit;letter-spacing:-.025em}
+.bz-rewards-clean .bz-enhanced-game-card{border:1px solid #d3e0ef!important;border-radius:20px!important;background:#fff!important;box-shadow:0 5px 16px #1a35600d!important;opacity:1!important;padding:20px!important}
+.dark .bz-rewards-clean .bz-enhanced-game-card{background:#192b44!important;border-color:#375576!important;box-shadow:none!important}
+.bz-rewards-clean .bz-enhanced-game-card h3{color:#122e56!important;font-size:1.1rem;line-height:1.3}
+.dark .bz-rewards-clean .bz-enhanced-game-card h3{color:#f3f7ff!important}
+.bz-rewards-clean .bz-enhanced-game-card p{color:#405672!important;line-height:1.6}
+.dark .bz-rewards-clean .bz-enhanced-game-card p{color:#d0e1f4!important}
+.bz-rewards-clean .bz-enhanced-game-card .text-gray-600,.bz-rewards-clean .bz-enhanced-game-card .text-gray-400{color:#4a607c!important}
+.dark .bz-rewards-clean .bz-enhanced-game-card .text-gray-600,.dark .bz-rewards-clean .bz-enhanced-game-card .text-gray-400{color:#cad9ef!important}
+.bz-rewards-clean .bz-enhanced-game-card:hover{box-shadow:0 12px 25px #18385a21!important;border-color:#7aa8de!important}
+.bz-rewards-clean .bz-rewards-ad-placement{margin-top:20px;min-width:0}
+.bz-rewards-clean .bz-rewards-ad-placement>div{padding:0!important}
+.bz-rewards-clean .bz-rewards-ad-placement [class*="max-w-"]{max-width:100%!important}
+.bz-rewards-clean .bz-rewards-ad-placement [class*="bg-gradient-to-r"]{border-radius:18px}
+.dark .bz-rewards-clean .bz-rewards-ad-placement{color:#f3f7ff}
