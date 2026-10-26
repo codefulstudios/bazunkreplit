@@ -318,6 +318,7 @@ function GameModal({
   const [error, setError] = useState<string | null>(null);
   const submitting = useRef(false);
   const sessionPromise = useRef<Promise<string> | null>(null);
+  const lastAnswer = useRef<unknown>(undefined);
   useEffect(() => {
     sessionPromise.current = (async () => {
       const token=await getToken(); if(!token) throw new Error("Sign in required");
@@ -331,6 +332,7 @@ function GameModal({
   const play = useCallback(async (answer?: unknown) => {
     if (submitting.current) return;
     submitting.current = true;
+    lastAnswer.current = answer;
     setError(null);
     try {
       const sessionId=await sessionPromise.current;
@@ -422,9 +424,10 @@ function GameModal({
             ) : (
               <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {error && (
-                  <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-center gap-2">
+                  <div role="alert" className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex flex-wrap items-center gap-2">
                     <XCircle className="w-4 h-4 flex-shrink-0" />
-                    {error}
+                    <span className="flex-1">{error}</span>
+                    {sessionPromise.current && <button type="button" onClick={() => void play(lastAnswer.current)} className="rounded-lg bg-red-700 text-white px-3 py-2 font-bold">Retry claim</button>}
                   </div>
                 )}
                 {game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
