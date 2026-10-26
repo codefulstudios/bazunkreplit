@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "wouter";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -356,7 +357,7 @@ function GameModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -364,7 +365,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
+        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="relative bg-white dark:bg-[#172b46] rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -695,15 +696,18 @@ export function RewardsPage() {
 
       <Footer />
 
-      <AnimatePresence>
-        {activeGame && (
-          <GameModal
-            game={activeGame}
-            onClose={() => setActiveGame(null)}
-            onResult={handleResult}
-          />
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {activeGame && (
+            <GameModal
+              game={activeGame}
+              onClose={() => setActiveGame(null)}
+              onResult={handleResult}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
