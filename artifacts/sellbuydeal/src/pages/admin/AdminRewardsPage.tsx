@@ -19,6 +19,9 @@ const GAME_ICONS: Record<string, string> = {
   "daily-quiz":     "❓",
   "scratch-card":   "🎁",
   "word-scramble":  "🔤",
+  "memory-match": "🧩",
+  "treasure-tap": "🧰",
+  "parcel-dash": "📦",
 };
 
 export function AdminRewardsPage() {
@@ -75,17 +78,18 @@ export function AdminRewardsPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-4xl">
+      <div className="p-4 sm:p-6 max-w-7xl admin-arcade-manager">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-[#F26B21]/10 flex items-center justify-center">
             <Gift className="w-5 h-5 text-[#F26B21]" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900">Rewards Games</h1>
-            <p className="text-sm text-gray-500">Toggle games on/off and control credit rewards per game.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900">Rewards <span className="text-orange-600">Arcade Manager</span> 🎮</h1>
+            <p className="text-sm text-gray-500">Manage game availability, earning rules and daily limits for Bazunk Rewards Arcade.</p>
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><div className="rounded-2xl p-4 bg-blue-50 border border-blue-200 text-blue-900"><div className="text-sm font-semibold">🎮 Installed Games</div><div className="text-3xl font-black">{games.length}</div></div><div className="rounded-2xl p-4 bg-green-50 border border-green-200 text-green-900"><div className="text-sm font-semibold">🟢 Enabled</div><div className="text-3xl font-black">{games.filter(g => (edits[g.id]?.enabled ?? g.enabled)).length}</div></div><div className="rounded-2xl p-4 bg-orange-50 border border-orange-200 text-orange-900"><div className="text-sm font-semibold">🎁 Daily play capacity / user</div><div className="text-3xl font-black">{games.filter(g => edits[g.id]?.enabled ?? g.enabled).reduce((n,g)=>n+(edits[g.id]?.daily_plays_per_user ?? g.daily_plays_per_user),0)}</div></div></div>
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-7 h-7 animate-spin text-gray-300" />
@@ -96,7 +100,7 @@ export function AdminRewardsPage() {
             <br /><span className="text-xs text-red-500">Try logging out and back in to the admin panel.</span>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {games.map(game => {
               const edit = edits[game.id] ?? {};
               const isEnabled = edit.enabled ?? game.enabled;
@@ -107,7 +111,7 @@ export function AdminRewardsPage() {
                 <div key={game.id} className={`bg-white rounded-2xl border p-5 transition-all ${isEnabled ? "border-gray-200" : "border-gray-100 opacity-70"}`}>
                   <div className="flex items-start gap-4">
                     {/* Icon + name */}
-                    <div className="text-2xl w-10 text-center pt-0.5 flex-shrink-0">{GAME_ICONS[game.id] ?? "🎮"}</div>
+                    <div className="text-3xl w-14 h-14 bg-gradient-to-br from-amber-50 via-orange-100 to-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">{GAME_ICONS[game.id] ?? "🎮"}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1 flex-wrap">
                         <h3 className="font-black text-gray-900">{game.name}</h3>
@@ -191,7 +195,7 @@ export function AdminRewardsPage() {
         <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-4">
           <p className="text-xs text-blue-700 font-semibold mb-1">💡 Credit notes</p>
           <ul className="text-xs text-blue-600 space-y-1">
-            <li>• For flat games (Check-In, Quiz, Word Scramble) only <strong>Max Credits</strong> is used.</li>
+            <li>• For fixed-payout games (Check-In, Quiz and the new arcade games), the configured fixed value is used; currently this is the minimum for the three new games. For other games, <strong>Max Credits</strong> is used.</li>
             <li>• For random games (Spin, Scratch Card) a value between Min and Max is awarded.</li>
             <li>• Credits awarded here add directly to the user's main credit balance.</li>
             <li>• 100 credits = £1.00 in account balance.</li>
