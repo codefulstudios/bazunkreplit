@@ -274,14 +274,21 @@
     @apply border-border;
   }
 
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
+  html {
+    font-family: var(--app-font-sans);
   }
 
-  /* Apply the same typeface to native controls in both the storefront and admin. */
-  button, input, select, textarea {
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: var(--app-font-sans);
+    font-synthesis: none;
+  }
+
+  /* Keep marketplace, seller and admin components on one typography system. */
+  :is(button, input, select, textarea, option, label) {
     font-family: inherit;
   }
+
 }
 
 /**
