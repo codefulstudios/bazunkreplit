@@ -543,7 +543,7 @@ export function RewardsPage() {
                         className={`arcade-game-card bz-enhanced-game-card bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
                       >
                         <div className="flex items-start justify-between mb-3">
-                          <div className={`w-[76px] h-[76px] rounded-2xl ${ICON_BG[game.id]} flex items-center justify-center`}><span className="text-4xl" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || "🎁"}</span><span className="sr-only">
+                          <div className={`bz-reward-game-icon bz-reward-icon-${game.id} ${ICON_BG[game.id]} flex items-center justify-center`}><span className="bz-reward-icon-emoji" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || ({"daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲","daily-checkin":"🎉"} as Record<string,string>)[game.id] || "🎮"}</span><span className="sr-only">
                             <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} /></span>
                           </div>
                           {done ? (
