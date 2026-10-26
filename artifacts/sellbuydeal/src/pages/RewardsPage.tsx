@@ -346,7 +346,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[calc(100dvh-2rem)] overflow-x-hidden overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -361,7 +361,7 @@ function GameModal({
           <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 arcade-modal-content">
           <AnimatePresence mode="wait">
             {result ? (
               <motion.div
