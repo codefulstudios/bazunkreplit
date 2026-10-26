@@ -171,7 +171,7 @@ try{
  const value=await db.transaction(async tx=>{
   await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
   const gs=await tx.execute(sql`SELECT * FROM reward_games WHERE id=${gameId} AND enabled=TRUE`);const g=gs.rows[0] as Record<string,any>|undefined;if(!g)return {error:"Game disabled"};
-  const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_game_sessions WHERE user_email=${email} AND game_id=${gameId} AND issued_at>=date_trunc('day',now()) AND status<>'expired'`);
+  const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_game_sessions WHERE user_email=${email} AND game_id=${gameId} AND issued_at>=date_trunc('day',now()) AND (status IN ('completed','claimed') OR (status='started' AND expires_at>now()))`);
   if(Number((n.rows[0] as any).n)>=Number(g.daily_plays_per_user))return {error:"Daily limit reached"};
   const w=await tx.execute(sql`SELECT COALESCE(SUM(credits_earned),0)::int n FROM reward_plays WHERE user_email=${email} AND played_at>=${startWeek()}::timestamptz`);
   if(Number((w.rows[0] as any).n)>=WEEKLY_CAP_CREDITS)return {error:"Weekly cap reached"};
@@ -195,13 +195,14 @@ try{
   if(ss.status==="completed"||ss.status==="claimed")return {status:200,ok:true};
   if(ss.status!=="started"||new Date(ss.expires_at)<new Date())return {status:410,error:"Session expired"};
   const a=req.body?.answer,t=String(ss.game_id),elapsed=Number(ss.elapsed),info=(a&&typeof a==="object")?a as Record<string,any>:{};
-  if(t==="memory-match"&&(!info.completed||elapsed<8||elapsed>180||Number(info.score)>100))return {status:422,error:"Invalid completion"};
+  if(t==="memory-match"&&(!info.completed||elapsed<8||elapsed>180||!Number.isFinite(Number(info.score))||Number(info.score)<0||Number(info.score)>100))return {status:422,error:"Invalid completion"};
   if(t==="treasure-tap"&&(!info.completed||elapsed<25||elapsed>120||Number(info.duration)!==30))return {status:422,error:"Invalid completion"};
-  if(t==="parcel-dash"&&(!info.completed||elapsed<5||elapsed>240||Number(info.distance)>1200))return {status:422,error:"Invalid completion"};
-  if(t==="daily-quiz"&&a!==ss.server_result.answer)return {status:422,error:"Wrong answer"};
+  if(t==="parcel-dash"&&(!info.completed||elapsed<5||elapsed>240||!Number.isFinite(Number(info.distance))||Number(info.distance)<0||Number(info.distance)>1200))return {status:422,error:"Invalid completion"};
+  // Incorrect quiz responses are completed attempts worth zero credits.
+  const wrongQuiz=t==="daily-quiz"&&a!==ss.server_result.answer;
   if(t==="lucky-number"&&(!Number.isInteger(Number(a))||Number(a)<1||Number(a)>6))return {status:422,error:"Invalid number"};
   if((t==="spin-wheel"||t==="scratch-card")&&elapsed<1)return {status:422,error:"Reveal not finished"};
-  let prize=Number(ss.prize_credits);if(t==="lucky-number"&&Number(a)!==ss.server_result.draw)prize=Math.min(5,prize);
+  let prize=wrongQuiz?0:Number(ss.prize_credits);if(t==="lucky-number"&&Number(a)!==ss.server_result.draw)prize=Math.min(5,prize);
   await tx.execute(sql`UPDATE reward_game_sessions SET status='completed',completed_at=now(),telemetry=${JSON.stringify(info)}::jsonb,prize_credits=${prize} WHERE id=${id}::uuid`);
   return {status:200,ok:true};
  });
