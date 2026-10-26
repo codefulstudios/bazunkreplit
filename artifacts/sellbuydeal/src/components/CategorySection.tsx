@@ -26,14 +26,14 @@ const bento = [
 export function CategorySection() {
  const s=useSiteSettings();
  const {isActive:categoryIsActive}=usePublicCategoryVisibility();
- return <section className="bg-white dark:bg-slate-950 py-12 border-y border-slate-200 dark:border-slate-800">
+ return <section className="bz-home-category-section bg-white dark:bg-slate-950 py-10 md:py-12 border-y border-slate-200 dark:border-slate-800">
   <div className="max-w-6xl mx-auto px-4">
-   <div className="flex justify-between items-center gap-3 mb-4"><h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{s.categories_title||"Shop by Category"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-300 hover:underline">All categories <ArrowRight className="w-4 h-4"/></Link></div>
-   <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-    {categories.filter(cat=>categoryIsActive(cat.slug)).map(({name,slug,icon:Icon,image},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
-      <Link href={`/browse?category=${slug}`} className="bz-category-card group block h-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-400 hover:shadow-md focus-visible:ring-2 focus-visible:ring-orange-500 transition-all">
-       <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden"><img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onError={e=>{e.currentTarget.style.display="none";}}/><Icon aria-hidden="true" className="absolute bottom-2 right-2 h-6 w-6 rounded-md bg-white/95 p-1 text-slate-700 shadow-sm"/></div>
-       <div className="bz-category-label min-h-[58px] flex items-center justify-center px-2 py-3"><span className="text-center text-sm font-semibold leading-snug">{name}</span></div>
+   <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{s.categories_title||"Shop by Category"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-200 hover:underline">View all categories <ArrowRight className="w-4 h-4"/></Link></div>
+   <div className="bz-home-category-grid grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-5">
+    {categories.filter(cat=>categoryIsActive(cat.slug)).map(({name,slug,icon:Icon},i)=><motion.div key={slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.025,.2)}}>
+      <Link href={`/browse?category=${slug}`} className={`bz-category-card bz-pastel-category bz-pastel-${i%6} group flex h-full min-h-[138px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500`}>
+       <span className="bz-pastel-icon flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:scale-110"><Icon aria-hidden="true" className="h-8 w-8" strokeWidth={1.9}/></span>
+       <span className="bz-category-label flex min-h-10 items-center justify-center text-center text-sm font-bold leading-snug">{name}</span>
       </Link>
      </motion.div>)}
    </div>
