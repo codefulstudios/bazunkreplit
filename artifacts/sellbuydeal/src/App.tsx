@@ -544,7 +544,9 @@ function Router() {
 // ─── Inner app (inside ClerkProvider + WouterRouter) ────────────────────────
 
 function InnerApp() {
-  const [, setLocation] = useLocation();
+  const [currentPath, setLocation] = useLocation();
+  // Keep the data-heavy administration workspace full width; box only the public website.
+  const isAdminWorkspace = currentPath === "/admin" || currentPath.startsWith("/admin/");
 
   return (
     <ClerkProvider
@@ -570,7 +572,9 @@ function InnerApp() {
                   <OfferProvider>
                     <ScrollToTop />
                     <BackToTop />
-                    <Router />
+                    <div className={isAdminWorkspace ? undefined : "bazunk-boxed-storefront"}>
+                      <Router />
+                    </div>
                     <MobileShopNav />
                     <CartDrawer />
                     <ChatwootWidget />
