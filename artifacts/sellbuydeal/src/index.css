@@ -1694,3 +1694,27 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 @keyframes arcade-slide{from{transform:translateX(45%)}to{transform:translateX(-80%)}}
 @media(max-width:540px){.arcade-memory-grid{gap:6px}.arcade-treasure-grid{gap:6px}.arcade-runner-scene{height:270px}.arcade-runner-shop{font-size:40px;top:115px}}
 @media(prefers-reduced-motion:reduce){.arcade-runner-coins,.arcade-runner-obstacles{animation:none}.bazunk-rewards-arcade .arcade-game-card{transition:none}}
+
+
+/* Rewards Arcade visual upgrade: prize stages, theatre lighting and foil. */
+.arcade-wheel-experience,.arcade-scratch-experience{margin:-24px;padding:28px 15px!important;border-radius:0 0 26px 26px;background:radial-gradient(circle at 50% 35%,#237cec 0%,#1241a0 55%,#111a62 100%);overflow:hidden;position:relative;}
+.arcade-wheel-experience:before,.arcade-scratch-experience:before{content:"✦      ✨      ✦       ✨      ✦";position:absolute;top:12%;left:0;right:0;text-align:center;color:#ffd54b;font-size:19px;opacity:.7;pointer-events:none;animation:arcade-twinkle 2.5s ease-in-out infinite alternate;}
+.arcade-stage-heading{font-size:clamp(22px,5vw,37px);font-weight:950;letter-spacing:-.05em;color:#ffcf4d;text-shadow:0 3px 0 #a75012,0 7px 12px #08184f;}
+.arcade-stage-heading span{color:#fff;}
+.arcade-wheel-stage{width:min(100%,430px);position:relative;padding-top:25px;filter:drop-shadow(0 15px 12px #0006);}
+.arcade-wheel-pointer{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:5;font-size:39px;filter:drop-shadow(0 2px 2px #411d09);}
+.arcade-wheel-lights{width:min(88vw,385px);aspect-ratio:1;position:relative;margin:auto;padding:17px;border-radius:50%;border:7px solid #fff0a1;background:repeating-conic-gradient(from 0deg,#fffeaf 0 5deg,#d77700 5deg 9deg,#ffd33e 9deg 15deg);box-shadow:0 0 0 4px #9e4b03,0 0 25px #ffd36b,0 0 52px #ffc22769,inset 0 0 12px #b85e00;}
+.arcade-wheel-disc{width:100%;height:100%;border-radius:50%;border:5px solid #ffeebe;position:relative;box-shadow:inset 0 0 20px #0006;overflow:hidden;}
+.arcade-wheel-segment{position:absolute;inset:0;text-align:center;padding-top:7%;display:flex;flex-direction:column;align-items:center;gap:1px;color:#fff;text-shadow:0 2px 3px #151134c0;pointer-events:none;}
+.arcade-wheel-segment span{font-size:clamp(13px,3vw,24px)}
+.arcade-wheel-segment strong{font-size:clamp(12px,3vw,22px);line-height:1.1;}
+.arcade-wheel-segment small{font-size:10px;font-weight:800;}
+.arcade-wheel-hub{position:absolute;inset:38%;background:radial-gradient(circle at 30% 20%,#4ad4ff,#025ed6 60%,#033c9a);color:#fff;border:7px solid #faca43;border-radius:50%;display:grid;place-items:center;z-index:4;font-size:36px;font-weight:950;box-shadow:0 6px 15px #0008;text-shadow:0 3px 4px #0005;}
+.arcade-wheel-base{text-align:center;letter-spacing:.13em;font-size:12px;color:#ffe5a0;font-weight:900;padding:16px;background:linear-gradient(#163b94,#0a215c);border:3px solid #c98a34;border-radius:40% 40% 20px 20px;margin:-4px auto 0;max-width:380px;}
+.arcade-reward-chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;width:100%;}
+.arcade-reward-chips>div{display:grid;place-items:center;min-width:57px;border:1px solid #ffffffa0;padding:7px 9px;border-radius:12px;background:linear-gradient(145deg,#ffffff,#dcefff);color:#143673;}
+.arcade-reward-chips strong{font-size:18px;line-height:1.2}.arcade-reward-chips small{font-size:10px}
+.arcade-scratch-frame{width:min(100%,460px);padding:9px;border:7px solid #ffcc47;border-radius:25px;background:linear-gradient(140deg,#ce6b0d,#ffdd6d,#b8520c);box-shadow:0 10px 35px #090d4880,0 0 20px #fed755;}
+.arcade-scratch-marquee{text-align:center;color:#fff6ac;font-size:22px;letter-spacing:8px;white-space:nowrap;overflow:hidden;text-shadow:0 0 10px #fff3a4;animation:arcade-twinkle 1.8s ease-in-out infinite alternate;}
+@keyframes arcade-twinkle{from{opacity:.5;filter:brightness(.8)}to{opacity:1;filter:brightness(1.3)}}
+@media(prefers-reduced-motion:reduce){.arcade-scratch-marquee,.arcade-wheel-experience:before,.arcade-scratch-experience:before{animation:none}}
