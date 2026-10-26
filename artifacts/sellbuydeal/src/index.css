@@ -2139,3 +2139,24 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .bz-reward-game-dialog .arcade-result-actions{margin-top:3px!important}
 @media(min-height:600px){.bz-reward-game-dialog .arcade-result{max-height:calc(100dvh - 135px)}}
 @media(max-height:680px){.bz-reward-dialog-header{min-height:60px;padding-block:7px!important}.bz-reward-dialog-body{padding:9px!important}.bz-reward-game-dialog .arcade-result{padding:9px 12px!important;gap:4px!important}.bz-reward-game-dialog .arcade-result-art{font-size:44px!important}.bz-reward-game-dialog .arcade-result-actions :is(a,button){padding:9px 14px!important}}
+
+/* Rewards quiz readable in both themes, independent of global button overrides. */
+.bz-quiz-game .bz-quiz-question{background:#eaf3ff!important;border-color:#a8c7f3!important;color:#142b50!important}
+.bz-quiz-game .bz-quiz-option{display:block;background:#ffffff!important;border-color:#9baec7!important;color:#172b4b!important;opacity:1!important}
+.bz-quiz-game .bz-quiz-option .bz-quiz-letter{color:#385d93!important}
+.bz-quiz-game .bz-quiz-option:hover:not(:disabled){background:#ecf5ff!important;border-color:#2466c2!important}
+.bz-quiz-game .bz-quiz-option.is-selected{background:#d9eaff!important;border-color:#175cd3!important;color:#092858!important;box-shadow:0 0 0 2px #175cd326}
+.bz-quiz-game .bz-quiz-option:focus-visible{outline:3px solid #f26b21!important;outline-offset:2px}
+.bz-quiz-game .bz-quiz-submit{background:#175cd3!important;color:#ffffff!important;border:2px solid #175cd3!important;opacity:1!important}
+.bz-quiz-game .bz-quiz-submit:hover:not(:disabled){background:#124aa9!important}
+.bz-quiz-game .bz-quiz-submit:disabled{background:#e4eaf2!important;color:#34445e!important;border-color:#b8c5d8!important;cursor:not-allowed}
+.bz-quiz-game .bz-quiz-help{color:#415675!important}
+.dark .bz-quiz-game .bz-quiz-question{background:#223a60!important;border-color:#5174a3!important;color:#f6f9ff!important}
+.dark .bz-quiz-game .bz-quiz-question p{color:#f6f9ff!important}
+.dark .bz-quiz-game .bz-quiz-option{background:#20324d!important;color:#f3f7ff!important;border-color:#6a829e!important}
+.dark .bz-quiz-game .bz-quiz-option .bz-quiz-letter{color:#c1d8fa!important}
+.dark .bz-quiz-game .bz-quiz-option:hover:not(:disabled){background:#2d4c75!important;border-color:#a3ccff!important}
+.dark .bz-quiz-game .bz-quiz-option.is-selected{background:#284f80!important;border-color:#a4ccff!important;color:#ffffff!important}
+.dark .bz-quiz-game .bz-quiz-submit{background:#175cd3!important;color:#ffffff!important;border-color:#6da7ff!important}
+.dark .bz-quiz-game .bz-quiz-submit:disabled{background:#34445d!important;color:#eff4fd!important;border-color:#627b9d!important}
+.dark .bz-quiz-game .bz-quiz-help{color:#d4e2f5!important}
