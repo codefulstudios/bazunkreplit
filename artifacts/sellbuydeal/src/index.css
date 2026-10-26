@@ -1663,3 +1663,34 @@ html.bazunk-chatwoot-disabled chatwoot-widget { display: none !important; }
 .dark main .bz-contrast-hero :is(a,button):not(.bz-contrast-action) {
  color:#152344;
 }
+
+
+/* Rewards Arcade — cohesive responsive illustrated mini-game surfaces. */
+.bazunk-rewards-arcade .arcade-game-card {box-shadow:0 8px 28px rgba(7,40,111,.08);border-color:#d8e5fb;transition:transform .2s,box-shadow .2s;}
+.bazunk-rewards-arcade .arcade-game-card:hover {transform:translateY(-3px);box-shadow:0 15px 34px rgba(7,40,111,.14);}
+.arcade-game {text-align:center;color:#10224f;max-width:620px;margin:auto;}
+.arcade-scorebar {display:flex;justify-content:space-around;gap:8px;flex-wrap:wrap;padding:14px;margin-bottom:18px;background:#edf4ff;border:1px solid #d5e5ff;border-radius:18px;font-weight:800;}
+.arcade-intro {padding:20px 0;}
+.arcade-orange-button {margin:20px auto 0;display:block;width:min(100%,360px);border:0;border-radius:18px;padding:15px 22px;background:linear-gradient(120deg,#ffa51b,#f55413);color:white;font-size:17px;font-weight:850;box-shadow:0 8px 24px #f8732650;transition:transform .15s,filter .15s;}
+.arcade-orange-button:hover{transform:translateY(-2px);filter:brightness(1.07);}
+.arcade-orange-button:focus-visible,.arcade-memory-tile:focus-visible,.arcade-treasure-hole:focus-visible {outline:3px solid #1f65e9;outline-offset:3px;}
+.arcade-memory-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.arcade-memory-tile {aspect-ratio:1;border-radius:15px;border:3px solid #9dd1ff;background:linear-gradient(145deg,#0668eb,#45b1fc);color:white;font-size:clamp(26px,6vw,47px);font-weight:900;box-shadow:0 5px 0 #0a50a4;transition:background .2s,transform .2s;cursor:pointer;}
+.arcade-memory-tile.revealed{background:linear-gradient(145deg,#fff5dc,#ffd8f4);color:#1b376d;border-color:#f8c14b;}
+.arcade-memory-tile.matched {background:#d6fae8;border-color:#34b87a;}
+.arcade-status{padding:12px;margin-top:12px;border-radius:14px;background:#e7f9f0;color:#156849;font-weight:800;}
+.arcade-treasure-scene {position:relative;border:7px solid #f4ae30;border-radius:26px;background:linear-gradient(#3da7f8 0%,#aff0f9 42%,#f9d181 43%,#f2a64f 100%);padding:16px 8px 25px;box-shadow:inset 0 0 25px #fff8,0 12px 22px #ac6c1d33;}
+.arcade-treasure-scene h3{font-size:clamp(20px,4vw,32px);color:#883a04;text-shadow:0 2px 0 #ffe69c;font-weight:950;}
+.arcade-treasure-scene p{font-size:13px;font-weight:750;color:#703f14;}
+.arcade-treasure-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px auto 0;max-width:450px;}
+.arcade-treasure-hole{aspect-ratio:1.25;border-radius:50%;background:radial-gradient(ellipse at center,#814012 30%,#cf863f 64%,#ffe3a3 70%);border:3px solid #eeae5e;display:grid;place-items:center;font-size:clamp(32px,6vw,58px);transition:transform .15s;}
+.arcade-runner-scene{height:320px;overflow:hidden;position:relative;border-radius:24px;border:6px solid #1b62c7;background:linear-gradient(#4ec1ff,#d6f5ff 66%,#ffdc9b 67%,#f5b77c);touch-action:manipulation;}
+.arcade-runner-cloud{font-size:35px;position:absolute;top:12px;left:20px;}
+.arcade-runner-shop{font-size:54px;white-space:nowrap;position:absolute;top:115px;left:0;width:100%;letter-spacing:12px;}
+.arcade-runner-character{position:absolute;bottom:53px;left:22%;z-index:2;font-size:76px;filter:drop-shadow(0 7px 4px #11377d50);}
+.arcade-runner-coins{font-size:28px;position:absolute;top:82px;right:0;white-space:nowrap;letter-spacing:24px;animation:arcade-slide 4s linear infinite;}
+.arcade-runner-obstacles{font-size:39px;position:absolute;bottom:44px;right:0;white-space:nowrap;letter-spacing:60px;animation:arcade-slide 3s linear infinite;}
+.arcade-runner-road{height:44px;position:absolute;bottom:0;background:repeating-linear-gradient(90deg,#324c83 0 50px,#567ab0 50px 100px);width:100%;}
+@keyframes arcade-slide{from{transform:translateX(45%)}to{transform:translateX(-80%)}}
+@media(max-width:540px){.arcade-memory-grid{gap:6px}.arcade-treasure-grid{gap:6px}.arcade-runner-scene{height:270px}.arcade-runner-shop{font-size:40px;top:115px}}
+@media(prefers-reduced-motion:reduce){.arcade-runner-coins,.arcade-runner-obstacles{animation:none}.bazunk-rewards-arcade .arcade-game-card{transition:none}}
