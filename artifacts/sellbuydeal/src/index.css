@@ -2160,3 +2160,34 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .dark .bz-quiz-game .bz-quiz-submit{background:#175cd3!important;color:#ffffff!important;border-color:#6da7ff!important}
 .dark .bz-quiz-game .bz-quiz-submit:disabled{background:#34445d!important;color:#eff4fd!important;border-color:#627b9d!important}
 .dark .bz-quiz-game .bz-quiz-help{color:#d4e2f5!important}
+
+/* Larger, playful Rewards Arcade icons with clear game identity. */
+.bazunk-rewards-arcade .bz-reward-game-icon{
+  position:relative;isolation:isolate;flex:none;
+  width:clamp(90px,9vw,112px);height:clamp(90px,9vw,112px);
+  border-radius:26px;border:2px solid #ffffff75;
+  background:linear-gradient(145deg,#e7eeff,#b0d8ff)!important;
+  box-shadow:0 10px 0 #142d5418,0 16px 28px #0b346340,inset 0 3px 10px #ffffffa0;
+  transform:rotate(-3deg);transition:transform .2s ease,box-shadow .2s ease;
+}
+.bazunk-rewards-arcade .bz-reward-icon-emoji{
+  font-size:clamp(53px,6vw,69px);line-height:1;
+  filter:drop-shadow(0 5px 3px #263d6833);
+  transform:rotate(3deg);transition:transform .2s ease;
+}
+.bazunk-rewards-arcade .bz-enhanced-game-card:hover .bz-reward-game-icon{
+  transform:rotate(0deg) translateY(-3px);
+  box-shadow:0 11px 0 #142d5418,0 20px 30px #0b346344,inset 0 3px 10px #ffffffa0;
+}
+.bazunk-rewards-arcade .bz-enhanced-game-card:hover .bz-reward-icon-emoji{transform:rotate(-6deg) scale(1.07)}
+.bazunk-rewards-arcade .bz-reward-icon-mystery-box{background:linear-gradient(145deg,#ffcee9,#e6b4ff)!important}
+.bazunk-rewards-arcade .bz-reward-icon-spin-wheel{background:linear-gradient(145deg,#eee0ff,#c8b9ff)!important}
+.bazunk-rewards-arcade .bz-reward-icon-scratch-card{background:linear-gradient(145deg,#ffe3ab,#ffc2a9)!important}
+.bazunk-rewards-arcade .bz-reward-icon-daily-quiz{background:linear-gradient(145deg,#bee9ff,#abc7ff)!important}
+.bazunk-rewards-arcade .bz-reward-icon-lucky-number{background:linear-gradient(145deg,#ffe9a3,#ffbf71)!important}
+.bazunk-rewards-arcade .bz-reward-icon-memory-match{background:linear-gradient(145deg,#d9d1ff,#aebeff)!important}
+.bazunk-rewards-arcade .bz-reward-icon-treasure-tap{background:linear-gradient(145deg,#d3f9dd,#a8e9ce)!important}
+.bazunk-rewards-arcade .bz-reward-icon-parcel-dash{background:linear-gradient(145deg,#c7edff,#82c9ef)!important}
+.dark .bazunk-rewards-arcade .bz-reward-game-icon{border-color:#ffffff52;box-shadow:0 8px 0 #02071760,0 18px 32px #0007,inset 0 2px 8px #ffffff52}
+@media(max-width:450px){.bazunk-rewards-arcade .bz-reward-game-icon{width:88px;height:88px}.bazunk-rewards-arcade .bz-reward-icon-emoji{font-size:54px}}
+@media(prefers-reduced-motion:reduce){.bazunk-rewards-arcade .bz-reward-game-icon,.bazunk-rewards-arcade .bz-reward-icon-emoji{transition:none!important}}
