@@ -104,6 +104,7 @@ const FEE_CATEGORIES: { name: string; slug: string; defaultRate: string }[] = [
 ];
 
 const AD_SLOTS = [
+  { key: "browse_top", label: "Browse Page — Top Banner", desc: "Featured promotional banner above the Browse listings" },
   { key: "home_bottom",   label: "Home Page — Bottom Banner",   desc: "Leaderboard (728×90) between the features section and footer" },
   { key: "browse_top",    label: "Browse Page — Top Strip",     desc: "Compact text strip below the search bar (text ads only)" },
   { key: "browse_bottom", label: "Browse Page — Bottom Banner", desc: "Leaderboard (728×90) below listings, above footer" },
@@ -454,7 +455,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
                 <Megaphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-bold">Ad placements</p>
-                  <p className="text-xs text-blue-500 mt-0.5">Toggle each slot on to make it visible. Choose <strong>Styled Banner</strong> to create a polished Bazunk promotional banner from the headline, body, link and button fields, or <strong>AdSense</strong> for Google advertising.</p>
+                  <p className="text-xs text-blue-500 mt-0.5">All native Styled Banners now use the same responsive design as the advert at the top of Browse. Choose a placement, enable it and edit its content. Google AdSense and Custom HTML are external creative formats and retain their own appearance.</p>
                 </div>
               </div>
 
@@ -534,14 +535,18 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="rounded-2xl bg-gradient-to-r from-[#4A4FF3] via-[#8B4FE8] to-[#EC3CB8] p-4 text-white shadow-sm">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[10px] font-black text-yellow-300 uppercase tracking-wider">AD · Live preview</p>
-                                  <p className="font-black text-lg mt-1">{s[`ad_${slot.key}_text_title`] || "Your headline"}</p>
-                                  <p className="text-sm text-white/85 mt-0.5">{s[`ad_${slot.key}_text_body`] || "Your supporting message appears here."}</p>
+                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4A4FF3] via-[#8B4FE8] to-[#EC3CB8] px-4 sm:px-6 py-5 text-white shadow-lg">
+                              <div className="pointer-events-none absolute -right-10 -bottom-16 h-44 w-44 rounded-full bg-white/10" />
+                              <div className="relative flex flex-col md:flex-row md:items-center gap-4">
+                                <div className="flex flex-1 min-w-0 items-center gap-3">
+                                  <span className="rounded-md bg-yellow-300 px-2 py-1 text-[10px] font-black text-slate-900">AD</span>
+                                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10"><Megaphone className="w-6 h-6 text-white" /></span>
+                                  <div className="min-w-0">
+                                    <p className="font-black text-lg leading-tight">{s[`ad_${slot.key}_text_title`] || "Your headline"}</p>
+                                    <p className="text-sm font-semibold text-white/90 mt-1">{s[`ad_${slot.key}_text_body`] || "Your supporting message appears here."}</p>
+                                  </div>
                                 </div>
-                                <span className="rounded-xl bg-[#101C38] px-5 py-3 text-sm font-black text-center">{s[`ad_${slot.key}_text_cta`] || "Learn More"} ›</span>
+                                <span className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-[#101C38] px-5 py-3 text-sm font-black text-white">{s[`ad_${slot.key}_text_cta`] || "Learn More"} ›</span>
                               </div>
                             </div>
                             <div>
