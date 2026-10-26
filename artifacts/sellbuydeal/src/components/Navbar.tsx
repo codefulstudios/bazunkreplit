@@ -297,7 +297,7 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-      <nav className="sticky top-0 z-50 w-full bg-white shadow-sm">
+      <nav data-bz-site-header className="relative z-50 w-full bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
           <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
           <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
