@@ -24,7 +24,7 @@ const GAME_ICONS: Record<string, string> = {
   "parcel-dash": "📦",
 };
 
-type Overview={summary?:{plays:number;players:number;credits:number};games:{game_id:string;plays:number;credits:number}[];sessions:{id:string;game_id:string;user_label:string;status:string;issued_at:string;expires_at:string;prize_credits:number}[];expiredInRecent:number};
+type Overview={summary?:{plays:number;players:number;credits:number};games:{game_id:string;plays:number;credits:number}[];sessions:{id:string;game_id:string;user_label:string;status:string;issued_at:string;expires_at:string;prize_credits:number}[];expiredInRecent:number;flaggedAccounts:number};
 export function AdminRewardsPage() {
   const { authFetch } = useAdmin();
   const [games, setGames] = useState<Game[]>([]);
@@ -201,8 +201,8 @@ export function AdminRewardsPage() {
           <h2 className="text-xl font-black">Arcade analytics & session monitoring</h2>
           {monitorError && <p role="alert" className="text-red-700 bg-red-50 p-3 rounded-xl">{monitorError}</p>}
           {overview && <>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              {([["Plays today",overview.summary?.plays??0],["Players today",overview.summary?.players??0],["Credits awarded today",overview.summary?.credits??0],["Recent expired sessions",overview.expiredInRecent]] as [string,number][]).map(([name,value])=><div key={name} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4"><p className="text-xs text-slate-600 dark:text-slate-300">{name}</p><strong className="text-2xl text-slate-900 dark:text-white">{value}</strong></div>)}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+              {([["Plays today",overview.summary?.plays??0],["Players today",overview.summary?.players??0],["Credits awarded today",overview.summary?.credits??0],["Recent expired sessions",overview.expiredInRecent],["High activity accounts · 24h",overview.flaggedAccounts]] as [string,number][]).map(([name,value])=><div key={name} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4"><p className="text-xs text-slate-600 dark:text-slate-300">{name}</p><strong className="text-2xl text-slate-900 dark:text-white">{value}</strong></div>)}
             </div>
             <div className="grid lg:grid-cols-2 gap-4">
               <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
