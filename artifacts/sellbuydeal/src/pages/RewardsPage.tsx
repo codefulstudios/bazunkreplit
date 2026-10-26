@@ -6,7 +6,7 @@ import {
   Calendar, RotateCcw, HelpCircle, Gift, Type,
   Coins, Trophy, Crown, ChevronRight, Loader2,
   CheckCircle2, XCircle, Zap, Star, Lock,
-  CalendarCheck, Brain, Ticket, PackageOpen, Dices,
+  CalendarCheck, Brain, Ticket, PackageOpen, Dices, Volume2, VolumeX, Flame,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { MemoryMatchGame, TreasureTapGame, ParcelDashGame } from "@/components/RewardsArcadeGames";
@@ -432,6 +432,10 @@ export function RewardsPage() {
   const [stats, setStats] = useState({ totalCredits: 0, todayCredits: 0 });
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(true);
+  const {getToken}=useClerkAuth();
+  const [soundEnabled,setSoundEnabled]=useState(false);
+  const [streak,setStreak]=useState<{streak:number;playedToday:boolean}|null>(null);
+  const [leaderboardScope,setLeaderboardScope]=useState<"all"|"top5">("top5");
 
   const fetchGames = useCallback(async () => {
     const url = user?.email ? `/api/rewards/games?email=${encodeURIComponent(user.email)}` : "/api/rewards/games";
@@ -456,7 +460,20 @@ export function RewardsPage() {
       .finally(() => setLbLoading(false));
   }, [fetchGames, fetchStats]);
 
+  useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
+  function playCelebrationTone(){
+    if(!soundEnabled)return;
+    try{
+      const AudioContextClass=window.AudioContext;
+      if(!AudioContextClass)return;
+      const context=new AudioContextClass(),notes=[523.25,659.25,783.99];
+      notes.forEach((frequency,i)=>{const oscillator=context.createOscillator(),gain=context.createGain();oscillator.type="sine";oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,context.currentTime+i*.12);gain.gain.exponentialRampToValueAtTime(.065,context.currentTime+i*.12+.025);gain.gain.exponentialRampToValueAtTime(.0001,context.currentTime+i*.12+.19);oscillator.connect(gain).connect(context.destination);oscillator.start(context.currentTime+i*.12);oscillator.stop(context.currentTime+i*.12+.2)});
+      window.setTimeout(()=>void context.close(),900);
+    }catch{/* Audio is optional and should never interfere with rewards. */}
+  }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
+    if(res.won&&res.creditsEarned>0)playCelebrationTone();
+    if(user)getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(data)setStreak(data)}).catch(()=>{});
     if (res.creditsEarned > 0) refreshBalance?.();
     fetchStats();
     fetchGames();
@@ -507,6 +524,10 @@ export function RewardsPage() {
       </div>
 
       <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} className="rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 px-4 py-2 text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">{soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>} Sound {soundEnabled?"on":"off"}</button>
+          {streak&&<div className="rounded-xl border border-orange-200 bg-orange-50 text-orange-950 px-4 py-2 text-sm font-bold flex items-center gap-2"><Flame size={17}/> {streak.streak}-day playing streak {streak.playedToday?"· Played today":"· Play to continue"}</div>}
+        </div>
         {user && <Link href="/rewards/referrals" className="mb-6 block rounded-2xl bg-gradient-to-r from-[#F26B21] to-[#4A5CE8] text-white p-5 shadow-sm"><div className="flex items-center justify-between gap-4"><div><p className="font-black text-lg">Invite a friend — you both earn credits</p><p className="text-white/80 text-sm">Earn again when your friend makes their first purchase and starts selling.</p></div><ChevronRight className="shrink-0" /></div></Link>}
         {!user && (
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white rounded-2xl border border-[#F26B21]/20 p-5">
@@ -631,6 +652,7 @@ export function RewardsPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-4 h-4 text-amber-500" />
                   <h3 className="font-black text-gray-900 text-sm">Leaderboard</h3>
+                  <button type="button" className="ml-auto text-xs text-blue-700 font-bold" onClick={()=>setLeaderboardScope(v=>v==="top5"?"all":"top5")}>{leaderboardScope==="top5"?"Show top 10":"Show top 5"}</button>
                 </div>
                 {lbLoading ? (
                   <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-amber-400" /></div>
@@ -638,7 +660,7 @@ export function RewardsPage() {
                   <p className="text-sm text-gray-400 text-center py-4">No players yet — be the first!</p>
                 ) : (
                   <div className="space-y-2">
-                    {leaderboard.map((entry, i) => {
+                    {leaderboard.slice(0,leaderboardScope==="top5"?5:10).map((entry, i) => {
                       const isMe = entry.user_email === user?.email;
                       const medals = ["🥇", "🥈", "🥉"];
                       const handle = entry.user_email.split("@")[0].slice(0, 12);
