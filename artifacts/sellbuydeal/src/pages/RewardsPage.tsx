@@ -317,6 +317,15 @@ function GameModal({
   const [result, setResult] = useState<{ won: boolean; creditsEarned: number; message: string; playsRemaining: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const submitting = useRef(false);
+  const sessionPromise = useRef<Promise<string> | null>(null);
+  useEffect(() => {
+    sessionPromise.current = (async () => {
+      const token=await getToken(); if(!token) throw new Error("Sign in required");
+      const res=await fetch("/api/rewards/session/start",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({gameId:game.id})});
+      const data=await res.json();if(!res.ok)throw new Error(data.error||"Cannot start game");return String(data.sessionId);
+    })();
+    sessionPromise.current.catch(e=>setError(e instanceof Error?e.message:"Could not start game"));
+  },[getToken,game.id]);
   const Icon = ICON_MAP[game.id] ?? ICON_MAP[game.icon] ?? Gift;
 
   const play = useCallback(async (answer?: unknown) => {
@@ -324,22 +333,22 @@ function GameModal({
     submitting.current = true;
     setError(null);
     try {
-      const token = await getToken();
-      if (!token) { setError("Please sign in again to collect rewards."); return; }
-      const res = await fetch("/api/rewards/play", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ gameId: game.id, answer }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Something went wrong"); return; }
-      setResult(data);
+      const sessionId=await sessionPromise.current;
+      if(!sessionId)throw new Error("No active game session");
+      const token=await getToken();if(!token)throw new Error("Please sign in again");
+      const headers={"Content-Type":"application/json",Authorization:`Bearer ${token}`};
+      const completed=await fetch("/api/rewards/session/complete",{method:"POST",headers,body:JSON.stringify({sessionId,answer})});
+      const completedData=await completed.json();
+      if(!completed.ok)throw new Error(completedData.error||"Unable to verify completion");
+      const claimed=await fetch("/api/rewards/session/claim",{method:"POST",headers,body:JSON.stringify({sessionId})});
+      const data=await claimed.json();
+      if(!claimed.ok)throw new Error(data.error||"Unable to claim reward");
+      setResult({...data,playsRemaining:Math.max(0,game.playsRemaining-1)});
       onResult(data);
-    } catch {
-      setError("Network error — please try again");
+    } catch(e) {
+      setError(e instanceof Error?e.message:"Network error — please try again");
     } finally { submitting.current = false; }
-  }, [getToken, game.id, onResult]);
-
+  }, [getToken,game.playsRemaining,onResult]);
   return (
     <motion.div
       initial={{ opacity: 0 }}
