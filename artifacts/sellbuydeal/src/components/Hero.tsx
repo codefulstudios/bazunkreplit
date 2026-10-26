@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Store, Zap, Gavel, Handshake, Newspaper, Tag, Layers,
   ArrowRight, X,
-  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2,
+  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2, ShoppingBag, Camera, Headphones, ShieldCheck, Sparkles,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -130,10 +130,10 @@ export function Hero() {
           >
             <div className="mb-4">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300 bz-hero-kicker">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
-              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Great finds. Better deals. All in one place.":<>Buy. Sell. Find amazing deals <span className="text-orange-400">on Bazunk.</span></>}</h1>
+              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Buy. Sell. Find Amazing Deals on Bazunk.":<>Buy. Sell.<br />Find Amazing Deals <span className="bz-hero-brand">on Bazunk.</span></>}</h1>
               <p data-theme-edit="hero_subtitle" className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_subtitle||"Explore unique finds from independent sellers.":"Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer."}</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="bz-hero-actions flex flex-col gap-3 sm:flex-row">
               <Link data-theme-edit="hero_cta_primary" href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
                 <ShoppingCart className="h-5 w-5" /> {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_primary||"Browse deals":"Browse deals"} <ArrowRight className="h-4 w-4" />
               </Link>
@@ -141,7 +141,7 @@ export function Hero() {
                 {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Sell on Bazunk":"Sell on Bazunk"}
               </Link>
             </div>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm !text-white">
+            <div className="bz-hero-benefits mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
               <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
               <Link href={user ? "/sell/direct" : "/sign-in"} className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
             </div>
@@ -158,16 +158,34 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="bz-mockup-hero-art flex flex-col gap-4 self-start"
           >
-            <div className="bz-mockup-scene" aria-label="Discover products, shopping and deals on Bazunk">
-              <div className="bz-scene-orb bz-orb-one" /><div className="bz-scene-orb bz-orb-two" />
-              <div className="bz-scene-card bz-scene-headphones"><span>🎧</span><strong>Headphones</strong><small>Great finds</small></div>
-              <div className="bz-scene-card bz-scene-camera"><span>📷</span><strong>Electronics</strong><small>New arrivals</small></div>
-              <div className="bz-scene-person" aria-hidden="true">🛍️</div>
-              <div className="bz-scene-parcel" aria-hidden="true">📦</div>
-              <div className="bz-scene-card bz-scene-shoes"><span>👟</span><strong>Fashion</strong><small>Shop now</small></div>
-              <div className="bz-scene-callout">Great deals<br />every day ✨</div>
+            <div className="bz-mockup-scene bz-hero-artwork" aria-label="Shopping bags and curated marketplace finds">
+              <div className="bz-art-glow bz-art-glow-blue" aria-hidden="true" />
+              <div className="bz-art-glow bz-art-glow-peach" aria-hidden="true" />
+              {safeHeroGraphic ? (
+                <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Discover Bazunk marketplace"} className="bz-art-main-image" loading="eager" />
+              ) : (
+                <div className="bz-art-centre" aria-hidden="true">
+                  <div className="bz-art-bag bz-art-bag-blue"><ShoppingBag strokeWidth={1.5} /></div>
+                  <div className="bz-art-bag bz-art-bag-orange"><ShoppingBag strokeWidth={1.5} /></div>
+                  <div className="bz-art-package"><Package2 strokeWidth={1.45} /><span>bazunk</span></div>
+                  <div className="bz-art-spark"><Sparkles /></div>
+                </div>
+              )}
+              <div className="bz-art-product bz-art-product-left">
+                <div className="bz-art-product-icon"><Headphones strokeWidth={1.7} /></div>
+                <strong>Headphones</strong><span>Explore electronics</span>
+              </div>
+              <div className="bz-art-product bz-art-product-top">
+                <div className="bz-art-product-icon"><Camera strokeWidth={1.7} /></div>
+                <strong>Camera gear</strong><span>Discover more</span>
+              </div>
+              <div className="bz-art-product bz-art-product-right">
+                <div className="bz-art-product-icon"><Shirt strokeWidth={1.7} /></div>
+                <strong>Fashion finds</strong><span>Shop new arrivals</span>
+              </div>
+              <div className="bz-art-sticker"><Tag size={17} /> Great deals every day</div>
+              <div className="bz-art-trust"><ShieldCheck size={17} /> Shop with confidence</div>
             </div>
-            {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
             <div data-design-home-categories={categoryAppearance?"true":"false"} data-design-icons={categoryIconAppearance?"true":"false"} style={{...sectionStyle(categoryAppearance),...iconStyle(categoryIconAppearance)}} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
             {HERO_CATS.filter(cat=>!cat.href.includes("category=")||categoryIsActive(cat.href.split("category=")[1])).map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
