@@ -10,6 +10,7 @@ import {
   CalendarCheck, Brain, Ticket, PackageOpen, Dices, Volume2, VolumeX, Flame,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { AdSlot } from "@/components/AdSlot";
 import { CompactPageHero } from "@/components/CompactPageHero";
 import { MemoryMatchGame, TreasureTapGame, ParcelDashGame } from "@/components/RewardsArcadeGames";
 import { Footer } from "@/components/Footer";
@@ -480,7 +481,7 @@ export function RewardsPage() {
   const enabledGames = games.filter(g => g.enabled && g.id !== "daily-checkin");
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade">
+    <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade bz-rewards-clean">
       <Navbar />
 
       <CompactPageHero kind="rewards" eyebrow="Rewards Arcade" title="Rewards Arcade" description="Play mini-games, earn credits and unlock marketplace rewards." art="🏆" aside={user?<><strong>{stats.totalCredits} credits</strong><small>+{stats.todayCredits} earned today</small></>:undefined}>
@@ -653,6 +654,8 @@ export function RewardsPage() {
                   <li className="flex gap-2"><span className="text-[#F26B21] font-bold shrink-0">4.</span> Play limits reset every midnight UTC.</li>
                 </ol>
               </div>
+              <div className="bz-rewards-ad-placement"><AdSlot slotKey="rewards_right" /></div>
+
             </div>
           </div>
         )}
