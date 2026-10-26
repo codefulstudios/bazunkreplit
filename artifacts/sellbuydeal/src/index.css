@@ -2123,3 +2123,19 @@ html:not(.dark) .bz-hero-chip{background:#fff;color:#16447e!important;border-col
 html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!important;border-color:#175cd3;}
 @media(max-width:700px){.bz-compact-hero-inner{grid-template-columns:1fr;gap:8px;padding:21px 17px;min-height:unset;}.bz-compact-hero-visual{position:absolute;right:7px;top:12px;opacity:.25;min-height:100px;pointer-events:none;}.bz-compact-hero-art{font-size:82px}.bz-compact-hero-info{display:none}.bz-compact-hero-copy{position:relative;z-index:1}.bz-compact-hero-copy>p{max-width:85%}}
 @media(prefers-reduced-motion:reduce){.bz-compact-hero-art{transform:none}}
+
+/* Rewards arcade: fixed, centred game modal with no unnecessary scrollbar.
+   On exceptionally short screens, scroll only the game content as an accessibility fallback. */
+.bz-reward-game-dialog{width:min(760px,calc(100vw - 24px));max-height:calc(100dvh - 24px);background:#fff;box-shadow:0 28px 80px #020b2299;overscroll-behavior:contain}
+.bz-reward-dialog-header{min-height:70px;z-index:5}
+.bz-reward-dialog-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.bz-reward-game-dialog .arcade-result{min-height:0!important;gap:clamp(3px,1vh,9px)!important;padding:clamp(12px,2vh,22px) 14px!important;justify-content:center}
+.bz-reward-game-dialog .arcade-result-art{font-size:clamp(42px,8vh,76px)!important;line-height:1!important}
+.bz-reward-game-dialog .arcade-result-art>span{font-size:25px!important}
+.bz-reward-game-dialog .arcade-result-title{font-size:clamp(25px,4.7vh,40px)!important;line-height:1.07!important}
+.bz-reward-game-dialog .arcade-result-amount{font-size:clamp(32px,6vh,52px)!important}
+.bz-reward-game-dialog .arcade-result-description{margin:0!important;line-height:1.35!important}
+.bz-reward-game-dialog .arcade-result-remaining{padding:5px 11px!important}
+.bz-reward-game-dialog .arcade-result-actions{margin-top:3px!important}
+@media(min-height:600px){.bz-reward-game-dialog .arcade-result{max-height:calc(100dvh - 135px)}}
+@media(max-height:680px){.bz-reward-dialog-header{min-height:60px;padding-block:7px!important}.bz-reward-dialog-body{padding:9px!important}.bz-reward-game-dialog .arcade-result{padding:9px 12px!important;gap:4px!important}.bz-reward-game-dialog .arcade-result-art{font-size:44px!important}.bz-reward-game-dialog .arcade-result-actions :is(a,button){padding:9px 14px!important}}
