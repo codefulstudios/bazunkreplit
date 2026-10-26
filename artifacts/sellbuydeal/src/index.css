@@ -1833,3 +1833,26 @@ body:has(.bazunk-boxed-storefront) {
 .bz-mockup-home .bz-mockup-hero a[href="/welcome-new-buyers"]{background:var(--mock-paper);border-color:var(--mock-line)}
 .bz-mockup-home .bz-mockup-hero a[href="/welcome-new-buyers"] span span{color:#c75213!important}
 .bz-mockup-home .bz-mockup-hero .mt-5 a{color:var(--mock-ink)!important}
+
+
+/* Bazunk Rewards Arcade: celebratory, accessible game-result experience. */
+.arcade-result{position:relative;isolation:isolate;overflow:hidden;border-radius:28px;padding:35px 18px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:410px;border:2px solid #c3ddff;}
+.arcade-result-win{background:radial-gradient(circle at 50% 10%,#fffbd7 0%,#ffeab0 28%,#f9c6f4 68%,#b9e0ff 100%);}
+.arcade-result-try{background:linear-gradient(150deg,#dfefff,#f6eafe 52%,#fff3d8);border-color:#abc8f6;}
+.arcade-result-art{position:relative;z-index:1;font-size:clamp(65px,12vw,104px);filter:drop-shadow(0 10px 10px #3e2f8266);line-height:1.2;}
+.arcade-result-art>span{position:absolute;right:-24px;bottom:-3px;font-size:36px;}
+.arcade-result-title{position:relative;z-index:1;color:#10275e!important;font-size:clamp(30px,6vw,48px);font-weight:950;letter-spacing:-.045em;text-shadow:0 2px #fff9;}
+.arcade-result-amount{position:relative;z-index:1;font-size:clamp(40px,9vw,66px);line-height:1.1;font-weight:950;color:#a83806;text-shadow:0 2px 0 #fff;}
+.arcade-result-amount small{display:block;font-size:18px;color:#123b7a;letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+.arcade-result-no-win{position:relative;z-index:1;font-size:24px;font-weight:900;color:#193c83;}
+.arcade-result-description{position:relative;z-index:1;color:#253b68;font-size:15px;font-weight:650;max-width:360px;}
+.arcade-result-remaining{position:relative;z-index:1;color:#234674;font-size:13px;font-weight:800;border:1px solid #d7e2f5;border-radius:999px;background:#ffffffd9;padding:8px 16px;}
+.arcade-result-actions{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;margin-top:7px;}
+.arcade-result-primary,.arcade-result-secondary{font-weight:850;font-size:14px;padding:13px 21px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;}
+.arcade-result-primary{background:linear-gradient(120deg,#fc8a16,#dc4708);color:#fff!important;box-shadow:0 8px 16px #d75d2955;}
+.arcade-result-secondary{background:#fff;color:#133f88!important;border:2px solid #8ab1eb;}
+.arcade-result :is(button,a):focus-visible{outline:3px solid #145dcc;outline-offset:3px;}
+.arcade-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.arcade-confetti>span{position:absolute;top:-18px;width:9px;height:18px;border-radius:2px;animation:arcade-confetti-fall 3.4s linear infinite;transform:rotate(24deg);}
+@keyframes arcade-confetti-fall{0%{transform:translateY(-25px) rotate(0deg);opacity:0}10%{opacity:1}100%{transform:translateY(520px) rotate(670deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.arcade-confetti>span{animation:none;opacity:.65;top:8%;}.arcade-result-art{animation:none}}
