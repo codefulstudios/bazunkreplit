@@ -382,44 +382,16 @@ function GameModal({
         <div className="p-6 arcade-modal-content">
           <AnimatePresence mode="wait">
             {result ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="relative flex flex-col items-center gap-4 py-6 text-center rounded-2xl bg-gradient-to-b from-orange-50 via-white to-blue-50 text-slate-900"
-              >
-                {result.won && <motion.div aria-hidden="true" initial={{opacity:0,scale:.6}} animate={{opacity:[0,1,0],scale:[.6,1.5,1.8]}} transition={{duration:1.5}} className="absolute inset-0 pointer-events-none flex justify-center items-start text-4xl">✨ 🎉 ✨</motion.div>}\n                {result.won ? (
-                  <>
-                    <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
-                      <CheckCircle2 className="w-9 h-9 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-black text-emerald-500 mb-1">+{result.creditsEarned} credits</p>
-                      <p className="text-sm text-gray-600">{result.message}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-                      <XCircle className="w-9 h-9 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-gray-900 mb-1">No credits this time</p>
-                      <p className="text-sm text-gray-600">{result.message}</p>
-                    </div>
-                  </>
-                )}
-                <p className="text-xs text-gray-400">
-                  {result.playsRemaining > 0
-                    ? `${result.playsRemaining} play${result.playsRemaining !== 1 ? "s" : ""} remaining today`
-                    : "Come back tomorrow for more!"}
-                </p>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-[#1A1D2E] text-white font-bold text-sm hover:opacity-90 transition-opacity"
-                >
-                  Done
-                </button>
+              <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
+                {result.won && <div className="arcade-confetti" aria-hidden="true">{Array.from({length:22},(_,i)=><span key={i} style={{left:`${(i*37)%100}%`,animationDelay:`${(i%8)*-.24}s`,backgroundColor:["#ffbd24","#fa6118","#3e9af7","#b04eea","#28cb9b"][i%5]}} />)}</div>}
+                <motion.div className="arcade-result-art" aria-hidden="true" animate={result.won?{y:[0,-8,0],rotate:[-5,5,-5]}:{y:[0,-4,0]}} transition={{duration:2,repeat:Infinity}}>
+                  {({"spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦","daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲"} as Record<string,string>)[game.id]??"🎁"}
+                  <span>{result.won?"🏆":"⭐"}</span>
+                </motion.div>
+                <h2 className="arcade-result-title">{result.won?"YOU WON! 🎉":"Nice try! ✨"}</h2>
+                {result.won?<><p className="arcade-result-amount">+{result.creditsEarned} <small>credits</small></p><p className="arcade-result-description">Your reward has been added to your Bazunk balance.</p></>:<><p className="arcade-result-no-win">No credits this round</p><p className="arcade-result-description">Every game is another chance to play and have fun.</p></>}
+                <p className="arcade-result-remaining">{result.playsRemaining>0?`${result.playsRemaining} play${result.playsRemaining===1?"":"s"} remaining today`:"All plays used today — come back tomorrow!"}</p>
+                <div className="arcade-result-actions"><button type="button" onClick={onClose} className="arcade-result-primary">Explore more games</button><Link href="/credits" onClick={onClose} className="arcade-result-secondary">View credits</Link></div>
               </motion.div>
             ) : (
               <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -565,7 +537,7 @@ export function RewardsPage() {
               ) : enabledGames.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
                   <Gift className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-                  <p>No games are available right now — check back soon!</p>
+                  <p>The arcade is taking a break. More games will be available soon!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
