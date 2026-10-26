@@ -111,7 +111,7 @@ export function Hero() {
   }
 
   return (
-    <section data-design-home-hero={heroAppearance?"true":"false"} style={sectionStyle(heroAppearance)} className="bz-design-home-hero relative w-full overflow-hidden bg-[#1A1D2E]">
+    <section data-design-home-hero={heroAppearance?"true":"false"} style={sectionStyle(heroAppearance)} className="bz-design-home-hero bz-mockup-hero relative w-full overflow-hidden bg-[#1A1D2E]">
       {/* Diagonal accent */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
         <div className="absolute -right-48 top-0 h-full w-[700px] bg-[#4A5CE8]/10"
@@ -130,14 +130,14 @@ export function Hero() {
           >
             <div className="mb-4">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300 bz-hero-kicker">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
-              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Great finds. Better deals. All in one place.":<>Great finds. Better deals. <span className="text-orange-400">All in one place.</span></>}</h1>
+              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Great finds. Better deals. All in one place.":<>Buy. Sell. Find amazing deals <span className="text-orange-400">on Bazunk.</span></>}</h1>
               <p data-theme-edit="hero_subtitle" className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_subtitle||"Explore unique finds from independent sellers.":"Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer."}</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link data-theme-edit="hero_cta_primary" href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
-                <ShoppingCart className="h-5 w-5" /> {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_primary||"Shop all listings":"Shop all listings"} <ArrowRight className="h-4 w-4" />
+                <ShoppingCart className="h-5 w-5" /> {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_primary||"Browse deals":"Browse deals"} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link data-theme-edit="hero_cta_secondary" href={/\b(sell|list|selling)\b/i.test(featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Explore categories":"Explore categories") ? (user ? "/sell/direct" : "/sign-in") : "/categories" } className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
+              <Link data-theme-edit="hero_cta_secondary" href={/\b(sell|list|selling)\b/i.test(featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Sell on Bazunk":"Sell on Bazunk") ? (user ? "/sell/direct" : "/sign-in") : "/categories" } className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
                 {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Explore categories":"Explore categories"}
               </Link>
             </div>
@@ -156,8 +156,17 @@ export function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col gap-4 self-start"
+            className="bz-mockup-hero-art flex flex-col gap-4 self-start"
           >
+            <div className="bz-mockup-scene" aria-label="Discover products, shopping and deals on Bazunk">
+              <div className="bz-scene-orb bz-orb-one" /><div className="bz-scene-orb bz-orb-two" />
+              <div className="bz-scene-card bz-scene-headphones"><span>🎧</span><strong>Headphones</strong><small>Great finds</small></div>
+              <div className="bz-scene-card bz-scene-camera"><span>📷</span><strong>Electronics</strong><small>New arrivals</small></div>
+              <div className="bz-scene-person" aria-hidden="true">🛍️</div>
+              <div className="bz-scene-parcel" aria-hidden="true">📦</div>
+              <div className="bz-scene-card bz-scene-shoes"><span>👟</span><strong>Fashion</strong><small>Shop now</small></div>
+              <div className="bz-scene-callout">Great deals<br />every day ✨</div>
+            </div>
             {safeHeroGraphic && <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Bazunk marketplace graphic"} loading="lazy" className="max-h-52 w-full rounded-xl object-contain" />}
             <div data-design-home-categories={categoryAppearance?"true":"false"} data-design-icons={categoryIconAppearance?"true":"false"} style={{...sectionStyle(categoryAppearance),...iconStyle(categoryIconAppearance)}} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
             {HERO_CATS.filter(cat=>!cat.href.includes("category=")||categoryIsActive(cat.href.split("category=")[1])).map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
