@@ -491,6 +491,28 @@ async function runAppMigrations() {
   `, "reward_plays");
 
   await run(sql`
+    CREATE TABLE IF NOT EXISTS reward_game_sessions (
+      id UUID PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      game_id TEXT NOT NULL REFERENCES reward_games(id),
+      status TEXT NOT NULL DEFAULT 'started',
+      server_result JSONB NOT NULL DEFAULT '{}'::jsonb,
+      telemetry JSONB NOT NULL DEFAULT '{}'::jsonb,
+      prize_credits INTEGER NOT NULL DEFAULT 0,
+      issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      completed_at TIMESTAMPTZ,
+      claimed_at TIMESTAMPTZ,
+      idempotency_key TEXT,
+      CONSTRAINT reward_session_status_valid CHECK (status IN ('started','completed','claimed','expired'))
+    )
+  `, "reward_game_sessions");
+  await run(sql`CREATE INDEX IF NOT EXISTS reward_session_user_game_idx ON reward_game_sessions(user_email,game_id,issued_at DESC)`, "reward_session_index");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS reward_session_idempotency_idx ON reward_game_sessions(user_email,idempotency_key) WHERE idempotency_key IS NOT NULL`, "reward_session_idempotency");
+  await run(sql`ALTER TABLE reward_plays ADD COLUMN IF NOT EXISTS session_id UUID REFERENCES reward_game_sessions(id)`, "reward_plays.session_id");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS reward_plays_session_once_idx ON reward_plays(session_id) WHERE session_id IS NOT NULL`, "reward_plays.session_unique");
+
+  await run(sql`
     INSERT INTO reward_games (id, name, description, icon, enabled, credits_min, credits_max, daily_plays_per_user)
     VALUES
       ('daily-checkin',  'Daily Check-In',   'Show up every day and earn free credits instantly.',                              '📅', TRUE, 10, 10,  1),
