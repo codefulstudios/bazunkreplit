@@ -159,132 +159,89 @@ router.get("/rewards/my-stats", async (req, res) => {
   });
 });
 
-router.post("/rewards/play", async (req, res) => {
-  const auth = getAuth(req);
-  if (!auth.isAuthenticated || !auth.userId) { res.status(401).json({ error: "Sign in required" }); return; }
-  const verifiedUser = await clerkClient.users.getUser(auth.userId);
-  const email = verifiedUser.primaryEmailAddress?.emailAddress?.trim().toLowerCase();
-  if (!email) { res.status(403).json({ error: "Verified account email required" }); return; }
-  const { gameId, answer } = req.body as { gameId?: string; answer?: unknown };
-  if (!gameId || typeof gameId !== "string") { res.status(400).json({ error: "Game required" }); return; }
-  if (gameId === "daily-checkin") { res.status(410).json({ error: "Daily Check-In was removed" }); return; }
-  const games = await db.execute(sql`SELECT * FROM reward_games WHERE id = ${gameId}`);
-  if (games.rows.length === 0) { res.status(404).json({ error: "Game not found" }); return; }
-  const game = games.rows[0] as Record<string, unknown>;
 
-  if (!game.enabled) { res.status(403).json({ error: "This game is currently disabled" }); return; }
-
-  const playsToday = await getTodayPlays(gameId, email);
-  const dailyLimit = game.daily_plays_per_user as number;
-  if (playsToday >= dailyLimit) {
-    res.status(429).json({ error: "Daily limit reached for this game. Come back tomorrow!", limitReached: true });
-    return;
-  }
-
-  const creditsMin = game.credits_min as number;
-  const creditsMax = game.credits_max as number;
-  let creditsEarned = 0;
-  let won = true;
-  let message = "";
-
-  switch (gameId) {
-    case "daily-checkin": {
-      creditsEarned = creditsMax;
-      message = `Check-in complete! You earned ${creditsEarned} credits.`;
-      break;
-    }
-    case "spin-wheel": {
-      const segments = [creditsMin];
-      let cur = creditsMin;
-      while (cur + 5 <= creditsMax) { cur += 5; segments.push(cur); }
-      creditsEarned = segments[Math.floor(Math.random() * segments.length)];
-      message = `You landed on ${creditsEarned} credits!`;
-      break;
-    }
-    case "daily-quiz": {
-      const q = getTodayQuiz();
-      won = answer === q.answer;
-      creditsEarned = won ? creditsMax : 0;
-      message = won
-        ? `Correct! You earned ${creditsEarned} credits.`
-        : `Wrong answer. The correct answer was "${q.options[q.answer]}".`;
-      break;
-    }
-    case "scratch-card": {
-      won = Math.random() < 0.7;
-      creditsEarned = won ? creditsMin + Math.floor(Math.random() * (creditsMax - creditsMin + 1)) : 0;
-      message = won ? `You scratched ${creditsEarned} credits!` : "Better luck next card!";
-      break;
-    }
-    // Arcade skill games use a server-controlled flat reward; client scores are
-    // only visual and must never determine the amount of redeemable credit.
-    case "memory-match":
-    case "treasure-tap":
-    case "parcel-dash": {
-      if (!answer || typeof answer !== "object" || (answer as Record<string, unknown>).completed !== true) {
-        res.status(400).json({ error: "Complete the game before claiming a reward." });
-        return;
-      }
-      creditsEarned = creditsMin;
-      message = `Challenge complete! You earned ${creditsEarned} credits.`;
-      break;
-    }
-    case "mystery-box": {
-      const box = Math.max(1, Math.min(3, Number(answer) || 1));
-      const prizes = [creditsMin, Math.max(creditsMin, Math.round((creditsMin + creditsMax) / 2)), creditsMax];
-      const shuffled = prizes.sort(() => Math.random() - 0.5);
-      creditsEarned = shuffled[box - 1];
-      won = creditsEarned > 0;
-      message = `Box ${box} contained ${creditsEarned} credits!`;
-      break;
-    }
-    case "lucky-number": {
-      const pick = Math.max(1, Math.min(6, Number(answer) || 1));
-      const drawn = 1 + Math.floor(Math.random() * 6);
-      won = pick === drawn;
-      creditsEarned = won ? creditsMax : creditsMin;
-      message = won ? `Jackpot — ${drawn}! You matched and won ${creditsEarned} credits.` : `The lucky number was ${drawn}. You still get ${creditsEarned} credits.`;
-      break;
-    }
-    default:
-      creditsEarned = creditsMin;
-      message = `You earned ${creditsEarned} credits!`;
-  }
-
-  // Apply earning caps before recording the result to keep statistics accurate.
-  const weekEarned = await getWeekEarned(email);
-  const remaining = Math.max(0, WEEKLY_CAP_CREDITS - weekEarned);
-  if (remaining === 0) {
-    res.status(429).json({ error: "Weekly reward limit reached. Resets Monday.", limitReached: true, weeklyCapReached: true });
-    return;
-  }
-  creditsEarned = Math.min(creditsEarned, remaining);
-  const playId = `RP-${randomUUID().slice(0, 8).toUpperCase()}`;
-  await db.execute(sql`
-    INSERT INTO reward_plays (id, game_id, user_email, credits_earned, played_at)
-    VALUES (${playId}, ${gameId}, ${email}, ${creditsEarned}, NOW())
-  `);
-  if (creditsEarned > 0) {
-    await storage.addCredits(email, creditsEarned / 100);
-    await recordCreditEconomy({ email, kind: "earned", credits: creditsEarned / 100, reason: `Rewards Arcade: ${game.name || gameId}`, referenceType: "reward_play", referenceId: playId, metadata: { gameId } });
-  }
-  won = creditsEarned > 0;
-  if (won) message = `Congratulations! You earned ${creditsEarned} credits.`;
-
-  logger.info({ email, gameId, creditsEarned, won }, "Reward game played");
-  const newBalance = await storage.getCredits(email);
-
-  res.json({
-    ok: true,
-    won,
-    creditsEarned,
-    message,
-    newBalance,
-    newBalanceCredits: Math.round(newBalance * 100),
-    playsRemaining: Math.max(0, dailyLimit - playsToday - 1),
-  });
+router.post("/rewards/play",(_req,res)=>{res.status(410).json({error:"Reload to use secure reward sessions"});});
+async function identity(req:import("express").Request){const a=getAuth(req);if(!a.isAuthenticated||!a.userId)return null;const u=await clerkClient.users.getUser(a.userId);return u.primaryEmailAddress?.emailAddress?.trim().toLowerCase()||null;}
+const startWeek=()=>{const d=new Date();d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);return d.toISOString();};
+router.post("/rewards/session/start",async(req,res)=>{
+try{
+ const email=await identity(req),gameId=String(req.body?.gameId||"");
+ if(!email)return void res.status(401).json({error:"Sign in required"});
+ if(!["spin-wheel","scratch-card","daily-quiz","mystery-box","lucky-number","memory-match","treasure-tap","parcel-dash"].includes(gameId))return void res.status(400).json({error:"Invalid game"});
+ const value=await db.transaction(async tx=>{
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
+  const gs=await tx.execute(sql`SELECT * FROM reward_games WHERE id=${gameId} AND enabled=TRUE`);const g=gs.rows[0] as Record<string,any>|undefined;if(!g)return {error:"Game disabled"};
+  const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_game_sessions WHERE user_email=${email} AND game_id=${gameId} AND issued_at>=date_trunc('day',now()) AND status<>'expired'`);
+  if(Number((n.rows[0] as any).n)>=Number(g.daily_plays_per_user))return {error:"Daily limit reached"};
+  const w=await tx.execute(sql`SELECT COALESCE(SUM(credits_earned),0)::int n FROM reward_plays WHERE user_email=${email} AND played_at>=${startWeek()}::timestamptz`);
+  if(Number((w.rows[0] as any).n)>=WEEKLY_CA${_CREDITS})return {error:"Weekly cap reached"};
+  const min=Math.max(0,Number(g.credits_min)),max=Math.max(min,Number(g.credits_max)),id=randomUUID();
+  let prize=min;if(gameId==="spin-wheel")prize=min+5*Math.floor(Math.random()*(Math.floor((max-min)/5)+1));if(gameId==="scratch-card")prize=Math.random()<.7?min+Math.floor(Math.random()*(max-min+1)):0;if(gameId==="daily-quiz"||gameId==="lucky-number")prize=max;
+  const secret=JSON.stringify({answer:gameId==="daily-quiz"?getTodayQuiz().answer:null,draw:gameId==="lucky-number"?1+Math.floor(Math.random()*6):null});
+  await tx.execute(sql`INSERT INTO reward_game_sessions(id,user_email,game_id,server_result,prize_credits,expires_at) VALUES(${id}::uuid,${email},${gameId},${secret}::jsonb,${prize},now()+INTERVAL '5 minutes')`);
+  return {sessionId:id};
+ });
+ if("error" in value)return void res.status(429).json(value);
+ res.json(value);
+}catch(e){logger.error({e},"Session start");res.status(500).json({error:"Session unavailable"});}
 });
-
+router.post("/rewards/session/complete",async(req,res)=>{
+try{
+ const email=await identity(req),id=String(req.body?.sessionId||"");if(!email)return void res.status(401).json({error:"Sign in required"});
+ if(!/^[\da-f-]{36}$/i.test(id))return void res.status(400).json({error:"Invalid session"});
+ const value=await db.transaction(async tx=>{
+  const rr=await tx.execute(sql`SELECT *,EXTRACT(E${OCH} FROM now()-issued_at) elapsed FROM reward_game_sessions WHERE id=${id}::uuid FOR U${DATE}`);const ss=rr.rows[0] as Record<string,any>|undefined;
+  if(!ss||ss.user_email!==email)return {status:404,error:"Session not found"};
+  if(ss.status==="completed"||ss.status==="claimed")return {status:200,ok:true};
+  if(ss.status!=="started"||new Date(ss.expires_at)<new Date())return {status:410,error:"Session expired"};
+  const a=req.body?.answer,t=String(ss.game_id),elapsed=Number(ss.elapsed),info=(a&&typeof a==="object")?a as Record<string,any>:{};
+  if(t==="memory-match"&&(!info.completed||elapsed<8||elapsed>180||Number(info.score)>100))return {status:422,error:"Invalid completion"};
+  if(t==="treasure-tap"&&(!info.completed||elapsed<25||elapsed>120||Number(info.duration)!==30))return {status:422,error:"Invalid completion"};
+  if(t==="parcel-dash"&&(!info.completed||elapsed<5||elapsed>240||Number(info.distance)>1200))return {status:422,error:"Invalid completion"};
+  if(t==="daily-quiz"&&a!==ss.server_result.answer)return {status:422,error:"Wrong answer"};
+  if(t==="lucky-number"&&(!Number.isInteger(Number(a))||Number(a)<1||Number(a)>6))return {status:422,error:"Invalid number"};
+  if((t==="spin-wheel"||t==="scratch-card")&&elapsed<1)return {status:422,error:"Reveal not finished"};
+  let prize=Number(ss.prize_credits);if(t==="lucky-number"&&Number(a)!==ss.server_result.draw)prize=Math.min(5,prize);
+  await tx.execute(sql`U${DATE} reward_game_sessions SET status='completed',completed_at=now(),telemetry=${JSON}.stringify(info)::jsonb,prize_credits=${prize} WHERE id=${id}::uuid`);
+  return {status:200,ok:true};
+ });
+ res.status(value.status).json(value);
+}catch(e){logger.error({e},"Session complete");res.status(500).json({error:"Completion unavailable"});}
+});
+router.post("/rewards/session/claim",async(req,res)=>{
+try{
+ const email=await identity(req),id=String(req.body?.sessionId||"");if(!email)return void res.status(401).json({error:"Sign in required"});
+ if(!/^[\da-f-]{36}$/i.test(id))return void res.status(400).json({error:"Invalid session"});
+ await ensureCreditEconomyTable();
+ const value=await db.transaction(async tx=>{
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
+  const rr=await tx.execute(sql`SELECT * FROM reward_game_sessions WHERE id=${id}::uuid FOR U${DATE}`);const ss=rr.rows[0] as Record<string,any>|undefined;
+  if(!ss||ss.user_email!==email)return {status:404,error:"Session not found"};
+  const prior=await tx.execute(sql`SELECT credits_earned FROM reward_plays WHERE session_id=${id}::uuid`);
+  if(ss.status==="claimed"&&prior.rows.length)return {status:200,ok:true,creditsEarned:Number((prior.rows[0] as any).credits_earned)};
+  if(ss.status!=="completed")return {status:409,error:"Game incomplete"};
+  if(new Date(ss.expires_at)<new Date())return {status:410,error:"Session expired"};
+  const gameId=String(ss.game_id);const gs=await tx.execute(sql`SELECT * FROM reward_games WHERE id=${gameId} AND enabled=TRUE`);const game=gs.rows[0] as Record<string,any>|undefined;
+  if(!game)return {status:403,error:"Game disabled"};
+  const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_plays WHERE user_email=${email} AND game_id=${gameId} AND played_at>=date_trunc('day',now())`);
+  if(Number((n.rows[0] as any).n)>=Number(game.daily_plays_per_user))return {status:429,error:"Daily limit reached"};
+  const w=await tx.execute(sql`SELECT COALESCE(SUM(credits_earned),0)::int n FROM reward_plays WHERE user_email=${email} AND played_at>=${startWeek()}::timestamptz`);
+  const amount=Math.min(Number(ss.prize_credits),Math.max(0,WEEKLY_CA${_CREDITS}-Number((w.rows[0] as any).n)));
+  const playId="RP-"+randomUUID().slice(0,8).toUpperCase();
+  await tx.execute(sql`INSERT INTO reward_plays(id,game_id,user_email,credits_earned,played_at,session_id) VALUES(${playId},${gameId},${email},${amount},now(),${id}::uuid)`);
+  if(amount>0){
+   const upd=await tx.execute(sql`U${DATE} users SET credits=credits+${amount/100} WHERE lower(email)=${email} RETURNING email`);if(!upd.rows.length)throw new Error("Account not found");
+   const lid=randomUUID(),reason="Rewards Arcade: "+String(game.name),metadata=JSON.stringify({gameId,sessionId:id});
+   await tx.execute(sql`INSERT INTO credit_economy_ledger(id,email,kind,credits,reason,reference_type,reference_id,metadata) VALUES(${lid},${email},'earned',${amount/100},${reason},'reward_play',${playId},${metadata}::jsonb)`);
+  }
+  await tx.execute(sql`U${DATE} reward_game_sessions SET status='claimed',claimed_at=now(),idempotency_key=${id} WHERE id=${id}::uuid`);
+  return {status:200,ok:true,creditsEarned:amount};
+ });
+ if(!value.ok)return void res.status(value.status).json(value);
+ const balance=await storage.getCredits(email);
+ res.json({...value,won:value.creditsEarned>0,message:value.creditsEarned>0?"You earned "+value.creditsEarned+" credits!":"No credits this time.",newBalance:balance,newBalanceCredits:Math.round(balance*100)});
+}catch(e){logger.error({e},"Session claim");res.status(500).json({error:"Claim unavailable"});}
+});
 // ── Admin routes ──────────────────────────────────────────────────────────────
 
 router.get("/admin/rewards/games", requireAdmin, async (_req, res) => {
