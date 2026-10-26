@@ -174,7 +174,7 @@ try{
   const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_game_sessions WHERE user_email=${email} AND game_id=${gameId} AND issued_at>=date_trunc('day',now()) AND status<>'expired'`);
   if(Number((n.rows[0] as any).n)>=Number(g.daily_plays_per_user))return {error:"Daily limit reached"};
   const w=await tx.execute(sql`SELECT COALESCE(SUM(credits_earned),0)::int n FROM reward_plays WHERE user_email=${email} AND played_at>=${startWeek()}::timestamptz`);
-  if(Number((w.rows[0] as any).n)>=WEEKLY_CA${_CREDITS})return {error:"Weekly cap reached"};
+  if(Number((w.rows[0] as any).n)>=WEEKLY_CAP_CREDITS)return {error:"Weekly cap reached"};
   const min=Math.max(0,Number(g.credits_min)),max=Math.max(min,Number(g.credits_max)),id=randomUUID();
   let prize=min;if(gameId==="spin-wheel")prize=min+5*Math.floor(Math.random()*(Math.floor((max-min)/5)+1));if(gameId==="scratch-card")prize=Math.random()<.7?min+Math.floor(Math.random()*(max-min+1)):0;if(gameId==="daily-quiz"||gameId==="lucky-number")prize=max;
   const secret=JSON.stringify({answer:gameId==="daily-quiz"?getTodayQuiz().answer:null,draw:gameId==="lucky-number"?1+Math.floor(Math.random()*6):null});
@@ -190,7 +190,7 @@ try{
  const email=await identity(req),id=String(req.body?.sessionId||"");if(!email)return void res.status(401).json({error:"Sign in required"});
  if(!/^[\da-f-]{36}$/i.test(id))return void res.status(400).json({error:"Invalid session"});
  const value=await db.transaction(async tx=>{
-  const rr=await tx.execute(sql`SELECT *,EXTRACT(E${OCH} FROM now()-issued_at) elapsed FROM reward_game_sessions WHERE id=${id}::uuid FOR U${DATE}`);const ss=rr.rows[0] as Record<string,any>|undefined;
+  const rr=await tx.execute(sql`SELECT *,EXTRACT(EPOCH FROM now()-issued_at) elapsed FROM reward_game_sessions WHERE id=${id}::uuid FOR UPDATE`);const ss=rr.rows[0] as Record<string,any>|undefined;
   if(!ss||ss.user_email!==email)return {status:404,error:"Session not found"};
   if(ss.status==="completed"||ss.status==="claimed")return {status:200,ok:true};
   if(ss.status!=="started"||new Date(ss.expires_at)<new Date())return {status:410,error:"Session expired"};
@@ -202,7 +202,7 @@ try{
   if(t==="lucky-number"&&(!Number.isInteger(Number(a))||Number(a)<1||Number(a)>6))return {status:422,error:"Invalid number"};
   if((t==="spin-wheel"||t==="scratch-card")&&elapsed<1)return {status:422,error:"Reveal not finished"};
   let prize=Number(ss.prize_credits);if(t==="lucky-number"&&Number(a)!==ss.server_result.draw)prize=Math.min(5,prize);
-  await tx.execute(sql`U${DATE} reward_game_sessions SET status='completed',completed_at=now(),telemetry=${JSON}.stringify(info)::jsonb,prize_credits=${prize} WHERE id=${id}::uuid`);
+  await tx.execute(sql`UPDATE reward_game_sessions SET status='completed',completed_at=now(),telemetry=${JSON.stringify(info)}::jsonb,prize_credits=${prize} WHERE id=${id}::uuid`);
   return {status:200,ok:true};
  });
  res.status(value.status).json(value);
@@ -215,7 +215,7 @@ try{
  await ensureCreditEconomyTable();
  const value=await db.transaction(async tx=>{
   await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
-  const rr=await tx.execute(sql`SELECT * FROM reward_game_sessions WHERE id=${id}::uuid FOR U${DATE}`);const ss=rr.rows[0] as Record<string,any>|undefined;
+  const rr=await tx.execute(sql`SELECT * FROM reward_game_sessions WHERE id=${id}::uuid FOR UPDATE`);const ss=rr.rows[0] as Record<string,any>|undefined;
   if(!ss||ss.user_email!==email)return {status:404,error:"Session not found"};
   const prior=await tx.execute(sql`SELECT credits_earned FROM reward_plays WHERE session_id=${id}::uuid`);
   if(ss.status==="claimed"&&prior.rows.length)return {status:200,ok:true,creditsEarned:Number((prior.rows[0] as any).credits_earned)};
@@ -226,15 +226,15 @@ try{
   const n=await tx.execute(sql`SELECT COUNT(*)::int n FROM reward_plays WHERE user_email=${email} AND game_id=${gameId} AND played_at>=date_trunc('day',now())`);
   if(Number((n.rows[0] as any).n)>=Number(game.daily_plays_per_user))return {status:429,error:"Daily limit reached"};
   const w=await tx.execute(sql`SELECT COALESCE(SUM(credits_earned),0)::int n FROM reward_plays WHERE user_email=${email} AND played_at>=${startWeek()}::timestamptz`);
-  const amount=Math.min(Number(ss.prize_credits),Math.max(0,WEEKLY_CA${_CREDITS}-Number((w.rows[0] as any).n)));
+  const amount=Math.min(Number(ss.prize_credits),Math.max(0,WEEKLY_CAP_CREDITS-Number((w.rows[0] as any).n)));
   const playId="RP-"+randomUUID().slice(0,8).toUpperCase();
   await tx.execute(sql`INSERT INTO reward_plays(id,game_id,user_email,credits_earned,played_at,session_id) VALUES(${playId},${gameId},${email},${amount},now(),${id}::uuid)`);
   if(amount>0){
-   const upd=await tx.execute(sql`U${DATE} users SET credits=credits+${amount/100} WHERE lower(email)=${email} RETURNING email`);if(!upd.rows.length)throw new Error("Account not found");
+   const upd=await tx.execute(sql`UPDATE users SET credits=credits+${amount/100} WHERE lower(email)=${email} RETURNING email`);if(!upd.rows.length)throw new Error("Account not found");
    const lid=randomUUID(),reason="Rewards Arcade: "+String(game.name),metadata=JSON.stringify({gameId,sessionId:id});
    await tx.execute(sql`INSERT INTO credit_economy_ledger(id,email,kind,credits,reason,reference_type,reference_id,metadata) VALUES(${lid},${email},'earned',${amount/100},${reason},'reward_play',${playId},${metadata}::jsonb)`);
   }
-  await tx.execute(sql`U${DATE} reward_game_sessions SET status='claimed',claimed_at=now(),idempotency_key=${id} WHERE id=${id}::uuid`);
+  await tx.execute(sql`UPDATE reward_game_sessions SET status='claimed',claimed_at=now(),idempotency_key=${id} WHERE id=${id}::uuid`);
   return {status:200,ok:true,creditsEarned:amount};
  });
  if(!value.ok)return void res.status(value.status).json(value);
