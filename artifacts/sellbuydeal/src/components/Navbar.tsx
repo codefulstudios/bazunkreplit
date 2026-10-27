@@ -34,6 +34,24 @@ const SELL_OPTIONS: Array<{
   color: string; bg: string; badge?: string;
 }> = [
   {
+    id: "selling-guide",
+    label: "Selling Overview",
+    desc: "Explore every way to sell on Bazunk",
+    icon: Tag,
+    href: "/sell",
+    color: "text-[#4A5CE8]",
+    bg: "bg-blue-50",
+  },
+  {
+    id: "import-listings",
+    label: "Import Listings",
+    desc: "Bring products from other marketplaces",
+    icon: ArrowDownToLine,
+    href: "/importers",
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+  {
     id: "quick",
     label: "Quick Sale",
     desc: "List the basics now, add details later",
@@ -90,7 +108,6 @@ const MORE_NAV = [
   { href: "/classifieds",       label: "Classifieds",      icon: Newspaper,       color: "text-purple-600",  bg: "bg-purple-50" },
   { href: "/buyer-protection",  label: "Buyer Protection", icon: ShieldCheck,     color: "text-emerald-600", bg: "bg-emerald-50" },
   { href: "/support",           label: "Support",          icon: HelpCircle,      color: "text-sky-600",     bg: "bg-sky-50" },
-  { href: "/importers",         label: "Importers",        icon: ArrowDownToLine, color: "text-[#4A5CE8]",   bg: "bg-blue-50" },
   { href: "/videos",            label: "Bazunk Promo Videos", icon: Film,          color: "text-blue-600",    bg: "bg-blue-50" },
   { href: "https://data.bazunk.com", label: "Bazunk Data Platform", icon: Database, color: "text-indigo-600", bg: "bg-indigo-50", external: true },
 ];
