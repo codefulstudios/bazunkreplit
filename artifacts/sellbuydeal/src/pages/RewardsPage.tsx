@@ -315,6 +315,7 @@ function GameModal({
   const { getToken } = useClerkAuth();
   const [result, setResult] = useState<{ won: boolean; creditsEarned: number; message: string; playsRemaining: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
   const submitting = useRef(false);
   const sessionPromise = useRef<Promise<string> | null>(null);
   const lastAnswer = useRef<unknown>(undefined);
@@ -324,7 +325,7 @@ function GameModal({
       const res=await fetch("/api/rewards/session/start",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({gameId:game.id})});
       const data=await res.json();if(!res.ok)throw new Error(data.error||"Cannot start game");return String(data.sessionId);
     })();
-    sessionPromise.current.catch(e=>setError(e instanceof Error?e.message:"Could not start game"));
+    sessionPromise.current.then(()=>setSessionReady(true)).catch(e=>{setSessionReady(false);setError(e instanceof Error?e.message:"Could not start game");});
   },[getToken,game.id]);
   const Icon = ICON_MAP[game.id] ?? ICON_MAP[game.icon] ?? Gift;
 
@@ -405,14 +406,15 @@ function GameModal({
                     </div>
                   </div>
                 )}
-                {!error && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
-                {!error && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
-                {!error && game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
-                {!error && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
-                {!error && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
-                {!error && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
-                {!error && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
-                {!error && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
+                {!error && !sessionReady && <div role="status" className="flex items-center justify-center gap-2 py-8 text-slate-800"><Loader2 className="h-5 w-5 animate-spin"/> Preparing your game…</div>}
+                {!error && sessionReady && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
+                {!error && sessionReady && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
+                {!error && sessionReady && game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
+                {!error && sessionReady && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
+                {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
+                {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
+                {!error && sessionReady && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
+                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
               </motion.div>
             )}
           </AnimatePresence>
