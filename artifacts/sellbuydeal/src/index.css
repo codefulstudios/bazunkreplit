@@ -2487,3 +2487,129 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
   .bz-sell-option-emoji{font-size:clamp(66px,15vw,100px)!important;min-height:105px}
 }
 @media(prefers-reduced-motion:reduce){.bz-sell-option-emoji{transition:none!important}}
+
+/* Importer Hub readability pass — scoped so other marketplace screens are unaffected. */
+.bazunk-importers-page {
+  --import-ink:#102a56;
+  --import-muted:#405574;
+  --import-card:#ffffff;
+  --import-edge:#cbd9ec;
+  font-family:"Plus Jakarta Sans","Nunito Sans",Inter,ui-sans-serif,system-ui,sans-serif;
+  color:var(--import-ink)!important;
+}
+.dark .bazunk-importers-page{
+  --import-ink:#f5f8ff;
+  --import-muted:#d0deef;
+  --import-card:#172b46;
+  --import-edge:#496789;
+  color:var(--import-ink)!important;
+}
+.bazunk-importers-page h1,
+.bazunk-importers-page h2,
+.bazunk-importers-page h3{
+  color:var(--import-ink)!important;
+  letter-spacing:-.025em;
+}
+.bazunk-importers-page > div > section:first-of-type h1 {
+  color:#132d58!important;
+  text-shadow:none!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type h1{
+  color:#ffffff!important;
+}
+.bazunk-importers-page > div > section:first-of-type h1 span{
+  background:none!important;
+  -webkit-background-clip:initial!important;
+  background-clip:initial!important;
+  -webkit-text-fill-color:#a63e13!important;
+  color:#a63e13!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type h1 span{
+  -webkit-text-fill-color:#ffb37f!important;
+  color:#ffb37f!important;
+}
+.bazunk-importers-page > div > section:first-of-type p{
+  color:#314b6e!important;
+  opacity:1!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type p{
+  color:#e0eaff!important;
+}
+.bazunk-importers-page > div > section:first-of-type p.text-xs{
+  color:#5a2fac!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type p.text-xs{
+  color:#a5e5ff!important;
+}
+.bazunk-importers-page > div > section:first-of-type button{
+  opacity:1!important;
+  font-weight:800;
+}
+.bazunk-importers-page > div > section:first-of-type button:first-child{
+  background:#175cd3!important;color:#fff!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type button:first-child{
+  background:#2378ec!important;color:#fff!important;
+}
+.bazunk-importers-page > div > section:first-of-type button:not(:first-child){
+  background:#fff!important;color:#173c72!important;border:1px solid #93b6df!important;
+}
+.dark .bazunk-importers-page > div > section:first-of-type button:not(:first-child){
+  background:#263e60!important;color:#f8fbff!important;border:1px solid #729acb!important;
+}
+.bazunk-importers-page > div > .grid > div{
+  background:var(--import-card)!important;
+  border:1px solid var(--import-edge)!important;
+  box-shadow:0 5px 16px #07172a18;
+}
+.bazunk-importers-page > div > .grid > div p{
+  color:var(--import-ink)!important;
+}
+.bazunk-importers-page > div > .grid > div p.text-sm{
+  color:var(--import-muted)!important;
+}
+.bazunk-importers-page > div > .grid > div span.text-\[11px\]{
+  color:var(--import-muted)!important;
+}
+.bazunk-importers-page > div > section:not(:first-of-type){
+  background:var(--import-card)!important;
+  border-color:var(--import-edge)!important;
+}
+.bazunk-importers-page > div > section:not(:first-of-type) > div > div > p,
+.bazunk-importers-page > div > section:not(:first-of-type) .grid p{
+  color:var(--import-muted)!important;
+}
+.bazunk-importers-page > div > section:not(:first-of-type) .grid > div{
+  background:#f1f6ff!important;border-color:#ccdaef!important;
+}
+.dark .bazunk-importers-page > div > section:not(:first-of-type) .grid > div{
+  background:#203959!important;border-color:#4c6a8e!important;
+}
+.bazunk-importers-page > div > section:not(:first-of-type) .grid > div p:first-of-type{
+  color:var(--import-ink)!important;
+}
+.bazunk-importers-page > div > section:not(:first-of-type) button{
+  color:#154d9f!important;
+  border-color:#6e9fd6!important;
+  background:#e4f0ff!important;
+  opacity:1!important;
+}
+.dark .bazunk-importers-page > div > section:not(:first-of-type) button{
+  color:#f8fbff!important;
+  border-color:#7199c4!important;
+  background:#25466c!important;
+}
+.bazunk-importers-page > div > .mt-5.flex button,
+.bazunk-importers-page > div > .mt-5.flex a{
+  color:#1755a8!important;
+  opacity:1!important;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+.dark .bazunk-importers-page > div > .mt-5.flex button,
+.dark .bazunk-importers-page > div > .mt-5.flex a{
+  color:#a5d8ff!important;
+}
+.bazunk-importers-page :is(a,button):focus-visible{
+  outline:3px solid #f26b21!important;outline-offset:3px;
+}
