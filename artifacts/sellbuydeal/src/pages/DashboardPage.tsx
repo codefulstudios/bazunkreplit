@@ -64,6 +64,7 @@ type SidebarCategory = {
 const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
   cashback: "/cashback",
   "open-importers": "/importers",
+  importers: "/importers",
   "my-store": "/my-store",
   "store-settings": "/my-store#popular-items",
 };
@@ -1221,7 +1222,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           <div className="overview-new-actions">
             <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
             <Link href="/sell/snap" className="overview-new-action action-pink"><Camera className="w-6 h-6"/><span><b>Snap & Sell</b><small>Photo / barcode assistant</small></span><ChevronRight className="w-4 h-4"/></Link>
-            <button onClick={()=>onNavigate("importers")} className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></button>
+            <Link href="/importers" className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></Link>
             <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
             <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
           </div>
