@@ -24,6 +24,7 @@ import {
   Info,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CompactPageHero } from "@/components/CompactPageHero";
 import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 
@@ -222,26 +223,11 @@ export function SellPage() {
     <div className="min-h-screen bg-[#03152d] text-white flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-blue-400/30 bg-gradient-to-r from-[#063bd4] via-[#174aff] to-[#b318db]">
-          <div className="absolute -top-20 right-16 h-72 w-72 rounded-full bg-pink-400/40 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-40 w-64 rounded-full bg-cyan-400/30 blur-3xl" />
-          <div className="relative mx-auto max-w-7xl px-5 py-9 md:py-14 grid gap-5 md:grid-cols-[1fr_1fr] items-center">
-            <div>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.02] drop-shadow-lg">Start Selling<br/><span className="text-[#ff9b28] drop-shadow-[0_2px_12px_rgba(255,130,0,0.45)]">Today!</span></h1>
-              <p className="mt-4 max-w-lg text-lg md:text-xl font-semibold text-white">Turn your items into cash. It's free, simple and takes just minutes!</p>
-              <div className="mt-6 flex flex-wrap gap-3 text-xs md:text-sm font-bold">
-                {["✓ No seller fees for private sellers","✓ Reach buyers worldwide","✓ Safe & secure marketplace"].map(t=><span key={t} className="rounded-full bg-[#001b64]/55 border border-white/20 px-3 py-2 text-white">{t}</span>)}
-              </div>
-            </div>
-            <div className="relative flex justify-center items-center min-h-48 md:min-h-64">
-              <div className="absolute inset-4 rounded-[3rem] bg-gradient-to-br from-yellow-300/35 via-pink-400/25 to-cyan-400/30 blur-2xl" />
-              <div className="relative text-center rotate-[-5deg]">
-                <div className="text-7xl md:text-8xl drop-shadow-2xl">📦 🎮 👟</div>
-                <div className="mt-3 inline-block rotate-6 rounded-2xl border-4 border-yellow-300 bg-fuchsia-600 px-7 py-3 text-2xl md:text-3xl font-black shadow-xl">SELL ANYTHING! ✨</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <CompactPageHero kind="sell" eyebrow="Selling" title="Start Selling Today!" description="Turn your items into cash. It's free, simple and takes just minutes." art="📦">
+          <span className="bz-hero-chip">✓ No seller fees for private sellers</span>
+          <span className="bz-hero-chip">✓ Reach buyers worldwide</span>
+          <span className="bz-hero-chip">✓ Safe & secure marketplace</span>
+        </CompactPageHero>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
           <section>
