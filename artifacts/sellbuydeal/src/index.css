@@ -2468,3 +2468,22 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
  .bz-reward-dialog-memory-match .arcade-memory-grid{width:min(100%,calc((100dvh - 155px) * .80),430px)}
  .bz-reward-dialog-spin-wheel .arcade-wheel-stage{width:min(100%,240px)!important}
 }
+
+/* Selling option cards: oversized artwork visible from normal desktop zoom. */
+.bz-sell-option-art{min-height:200px;overflow:hidden;isolation:isolate}
+.bz-sell-option-emoji{
+  font-size:clamp(64px,8vw,115px)!important;
+  line-height:1.35;
+  white-space:nowrap;
+  min-height:125px;
+  filter:drop-shadow(0 12px 12px rgba(0,0,0,.35));
+}
+.bz-sell-option-art::before{
+  content:"";position:absolute;width:170px;height:170px;border-radius:50%;
+  background:radial-gradient(circle,#ffffff25,transparent 72%);pointer-events:none;
+}
+@media(max-width:640px){
+  .bz-sell-option-art{min-height:165px}
+  .bz-sell-option-emoji{font-size:clamp(66px,15vw,100px)!important;min-height:105px}
+}
+@media(prefers-reduced-motion:reduce){.bz-sell-option-emoji{transition:none!important}}
