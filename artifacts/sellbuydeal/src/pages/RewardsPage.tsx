@@ -363,7 +363,7 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className="bz-reward-game-dialog relative flex flex-col bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-hidden"
+        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className={`bz-reward-game-dialog bz-reward-dialog-${game.id} relative flex flex-col bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-hidden`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -378,7 +378,7 @@ function GameModal({
           <button type="button" onClick={onClose} aria-label="Close game" title="Close game" className="ml-auto shrink-0 grid h-11 w-11 place-items-center rounded-full border-2 border-slate-300 bg-slate-100 text-slate-900 text-2xl font-bold hover:bg-orange-100 hover:border-orange-400 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500">×</button>
         </div>
 
-        <div className="p-4 sm:p-6 arcade-modal-content">
+        <div className="bz-reward-dialog-body p-3 sm:p-4 arcade-modal-content">
           <AnimatePresence mode="wait">
             {result ? (
               <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
@@ -405,14 +405,14 @@ function GameModal({
                     </div>
                   </div>
                 )}
-                {game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
-                {game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
-                {game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
-                {game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
-                {game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
-                {game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
-                {game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
-                {game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
+                {!error && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
+                {!error && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
+                {!error && game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
+                {!error && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
+                {!error && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
+                {!error && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
+                {!error && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
+                {!error && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
               </motion.div>
             )}
           </AnimatePresence>
