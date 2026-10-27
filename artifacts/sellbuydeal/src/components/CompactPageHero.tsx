@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import type { ReactNode } from "react";
 
-type Props={eyebrow:string;title:string;description:string;kind:"support"|"categories"|"rewards"|"article";art:string;children?:ReactNode;aside?:ReactNode};
+type Props={eyebrow:string;title:string;description:string;kind:"support"|"categories"|"rewards"|"article"|"sell";art:string;children?:ReactNode;aside?:ReactNode};
 export function CompactPageHero({eyebrow,title,description,kind,art,children,aside}:Props){
  return <section className={`bz-compact-hero bz-compact-hero-${kind}`}>
   <div className="bz-compact-hero-inner">
