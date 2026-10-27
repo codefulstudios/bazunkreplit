@@ -237,8 +237,8 @@ export function SellPage() {
               {visibleOptions.map(option => {
                 const artwork=art[option.id];
                 return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border-2 border-white/25 bg-[#0d2550] hover:border-yellow-300 hover:-translate-y-1 transition-all shadow-xl" data-testid={`card-sell-option-${option.id}`}>
-                  <div className={`h-36 sm:h-44 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
-                    <span className="text-6xl sm:text-7xl drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
+                  <div className={`bz-sell-option-art h-40 sm:h-52 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
+                    <span className="bz-sell-option-emoji inline-flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
                     {option.badge && <span className="absolute right-3 top-3 rounded-lg bg-green-400 px-3 py-1 text-[#002e24] font-black rotate-6">{option.badge}</span>}
                   </div>
                   <div className="p-5 bg-gradient-to-br from-[#102c57] to-[#08172f]">
