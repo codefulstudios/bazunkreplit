@@ -1,8 +1,10 @@
+import {BrandLogo} from '../components/BrandLogo';
+import {MarketplaceSettings,MarketplaceGate} from '../components/MarketplaceSettings';
 import {AppMenu,useAppMenu} from '../components/AppMenu';
 import {Startup} from '../components/Startup';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, router } from "expo-router";
-import { Image, Pressable, Text } from "react-native";
+import { Pressable, Text } from "react-native";
 import { ClerkProvider } from "@clerk/expo";
 import { AppCart } from "../cart";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -26,7 +28,7 @@ function Navigation() {
         name="index"
         options={{
           title: "Bazunk",
-          headerTitle:()=> <Image source={require("../../assets/logo.png")} style={{width:132,height:36}} resizeMode="contain"/>,
+          headerTitle:()=> <BrandLogo style={{width:132,height:36}}/>,
           headerLeft: () => (
             <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={openMenu} style={{ padding: 10 }}>
               <Text style={{ color: "#102A56", fontWeight: "700" }}>☰</Text>
@@ -108,15 +110,15 @@ function Navigation() {
 }
 export default function Layout() {
   const key = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  return <Startup><AppMenu>{key ? (
+  return <Startup><MarketplaceSettings><AppMenu>{key ? (
     <ClerkProvider publishableKey={key} tokenCache={tokenCache}>
       <AppCart>
-        <Navigation />
+        <MarketplaceGate><Navigation /></MarketplaceGate>
       </AppCart>
     </ClerkProvider>
   ) : (
     <AppCart>
-      <Navigation />
+      <MarketplaceGate><Navigation /></MarketplaceGate>
     </AppCart>
-  )}</AppMenu></Startup>;
+  )}</AppMenu></MarketplaceSettings></Startup>;
 }
