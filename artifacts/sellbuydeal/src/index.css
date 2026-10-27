@@ -2371,3 +2371,34 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 }
 .dark .bazunk-rewards-arcade .bz-arcade-sound-toggle:hover{background:#31557b!important}
 .bazunk-rewards-arcade .bz-arcade-sound-toggle:focus-visible{outline:3px solid #ff9e4c!important;outline-offset:3px}
+
+/* Unified customer-facing page headings: Categories, Selling, Rewards, Support, articles. */
+.bazunk-boxed-storefront .bz-compact-hero{
+  margin:12px 14px 0;
+  width:calc(100% - 28px);
+  border:0!important;
+  border-radius:28px!important;
+  overflow:hidden;
+  box-shadow:0 9px 24px #0b265326;
+}
+.bazunk-boxed-storefront .bz-compact-hero-inner{
+  min-height:190px;
+  padding:28px clamp(19px,3.5vw,45px);
+}
+.bazunk-boxed-storefront .bz-compact-hero h1{
+  font-size:clamp(27px,3.1vw,39px)!important;
+  line-height:1.12!important;
+}
+.bazunk-boxed-storefront .bz-compact-hero-copy>p{
+  font-size:clamp(14px,1.3vw,16px)!important;
+  line-height:1.55!important;
+}
+.bz-compact-hero-sell{--bz-hero-bg1:#193c86;--bz-hero-bg2:#342563;}
+html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e6;}
+.bz-compact-hero-sell .bz-compact-hero-art{transform:rotate(-8deg);font-size:clamp(78px,9vw,122px);}
+.bz-compact-hero-sell .bz-compact-hero-actions .bz-hero-chip{font-size:12px;font-weight:750;}
+@media(max-width:700px){
+  .bazunk-boxed-storefront .bz-compact-hero{margin:8px 10px 0;width:calc(100% - 20px);border-radius:22px!important;}
+  .bazunk-boxed-storefront .bz-compact-hero-inner{min-height:unset;padding:22px 18px;}
+  .bz-compact-hero-sell .bz-compact-hero-actions{gap:7px;}
+}
