@@ -1,7 +1,8 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import {useAuth} from '@clerk/expo';
 import {router,useLocalSearchParams} from 'expo-router';
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {ActivityIndicator,ScrollView,Text,View} from 'react-native';
+
 import {ApiError} from '../api';
 import {SellerAccess} from '../components/SellerAccess';
 import {Button,ui} from '../components/UI';

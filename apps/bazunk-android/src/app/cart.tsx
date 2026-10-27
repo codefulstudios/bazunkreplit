@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {router} from 'expo-router';
-import {ActivityIndicator,AppState,ScrollView,Text,View} from 'react-native';
+import {AppState} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import {useCart} from '../cart';
 import {useMemberData,useMemberRequest} from '../hooks';

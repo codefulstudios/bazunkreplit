@@ -1,19 +1,12 @@
+import {useTheme} from '../theme';
+import {ActivityIndicator, Pressable, ScrollView, Text, View} from '../components/ThemedNative';
 import { Button } from "../components/UI";
 import { openWebsite } from "../components/AppMenu";
 import { router } from "expo-router";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { AuthView, UserButton } from "@clerk/expo/native";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  AppState,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import {AppState, Modal, StyleSheet} from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { loadAccount, type Account } from "../api";
 
@@ -32,6 +25,7 @@ export default function AccountScreen() {
   );
 }
 function ConnectedAccount() {
+  const {palette:p}=useTheme();
   const { isLoaded, isSignedIn, getToken } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -192,7 +186,7 @@ function ConnectedAccount() {
         animationType="slide"
         onRequestClose={() => setOpen(false)}
       >
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1,backgroundColor:p.background }}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Close sign in"

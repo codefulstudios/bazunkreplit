@@ -1,7 +1,8 @@
+import {Text, View} from './ThemedNative';
 import {useAuth,useUser} from '@clerk/expo';
 import {router} from 'expo-router';
 import {useRef,useState} from 'react';
-import {Text,View} from 'react-native';
+
 import {listingContent} from '../listing-content';
 import type {Listing} from '../api';
 import {useCart} from '../cart';

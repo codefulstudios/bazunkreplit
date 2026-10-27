@@ -1,13 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, TextInput, View} from '../components/ThemedNative';
 import { useLocalSearchParams } from "expo-router";
 import { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import {KeyboardAvoidingView} from 'react-native';
 import { useMemberData, useMemberRequest } from "../hooks";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";

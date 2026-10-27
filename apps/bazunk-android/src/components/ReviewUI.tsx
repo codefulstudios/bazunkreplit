@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from "react-native";
+import {Pressable, Text, View} from './ThemedNative';
+
 import { ui } from "./UI";
 import type { Review, Reputation } from "../reviews";
 export function RatingPicker({

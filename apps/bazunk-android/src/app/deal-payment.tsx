@@ -1,5 +1,6 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import { useRef, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, Text, View } from "react-native";
+import {Alert} from 'react-native';
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { SellerAccess } from "../components/SellerAccess";

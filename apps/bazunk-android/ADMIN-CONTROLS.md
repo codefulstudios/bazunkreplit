@@ -11,11 +11,12 @@ Implemented against the website public settings contract on 27 October 2026:
 - No admin credentials or draft editor data added to the app.
 
 Not full visual/editor parity:
-- Native advertisement placements are not implemented.
-- Web-only CSS, visual-element layouts, custom fonts, animation/GIF selection and complete Theme Studio palettes are not ported.
+- Native text advertising placements are now implemented; see THEME-ADVERTISING.md.
+- Native palettes, section appearance and visual elements are now connected. Browser-only details use the documented native equivalents; see THEME-ADVERTISING.md.
 - Native launcher icon/OS splash still require an APK update.
 - Fees, delivery, stock, permissions and payments must remain server-calculated/enforced. This change does not complete checkout or member features.
 
 Validation status:
 Regression tests added for feature routes, maintenance, homepage configuration and safe links.
-The coding environment disconnected during implementation. Typecheck, lint, tests and Android export have NOT been run for this change. Do not mark this release verified or build a user APK until those checks pass and controls are exercised on a device.
+The environment was restored on 27 October. Typecheck, lint, all 24 tests and Android export now pass. Physical-device validation remains outstanding.
+

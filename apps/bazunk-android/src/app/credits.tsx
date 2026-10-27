@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import { useState } from "react";
 import { useAuth } from "@clerk/expo";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+
 import Purchases, { type PurchasesPackage } from "react-native-purchases";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";

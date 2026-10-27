@@ -1,12 +1,6 @@
+import {ActivityIndicator, Pressable, ScrollView, Text, TextInput, View} from '../components/ThemedNative';
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { getJson } from "../api";
 import { Button, ui } from "../components/UI";

@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import { router } from "expo-router";
 import { useState } from "react";
-import { ActivityIndicator, Image, ScrollView, Text, View } from "react-native";
+import {Image} from 'react-native';
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";
 import { useMemberData } from "../hooks";

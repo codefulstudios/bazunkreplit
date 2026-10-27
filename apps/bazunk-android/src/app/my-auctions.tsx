@@ -1,5 +1,6 @@
+import {ActivityIndicator, ScrollView, Text} from '../components/ThemedNative';
 import {useState} from 'react';
-import {ActivityIndicator,ScrollView,Text} from 'react-native';
+
 import {parseAuctions} from '../auctions';
 import {useMemberData} from '../hooks';
 import {AuctionCard} from '../components/AuctionCard';

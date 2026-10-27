@@ -1,16 +1,8 @@
+import {ActivityIndicator, FlatList, Pressable, Text, View} from '../components/ThemedNative';
 import { useAuth } from "@clerk/expo";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import {Alert, Image, StyleSheet} from 'react-native';
 import { memberJson, parseOwnListings, price, type OwnListing } from "../api";
 import { useMemberRequest } from "../hooks";
 import { Button } from "../components/UI";

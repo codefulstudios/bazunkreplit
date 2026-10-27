@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import {useAuth} from '@clerk/expo';
 import {router,useLocalSearchParams} from 'expo-router';
-import {ActivityIndicator,Image,ScrollView,Text,View} from 'react-native';
+import {Image} from 'react-native';
 import {usePublicData} from '../publicData';
 import {useMemberData} from '../hooks';
 import {parseAd,parseAccess} from '../specials';

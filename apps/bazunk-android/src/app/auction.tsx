@@ -1,15 +1,8 @@
+import {ActivityIndicator, ScrollView, Text, TextInput, View} from '../components/ThemedNative';
 import { useAuth } from "@clerk/expo";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import {Alert, Image} from 'react-native';
 import { bidAmount, minimumBid, parseAuction, type Auction } from "../auctions";
 import { usePublicData } from "../publicData";
 import { useMemberRequest } from "../hooks";

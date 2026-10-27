@@ -1,5 +1,6 @@
+import {parseDesignPalette,designSettingKey} from '../design-palette';
 import {createContext,useCallback,useContext,useEffect,useState,type ReactNode} from 'react';
-import {ActivityIndicator,AppState,Pressable,Text,View} from 'react-native';
+import {useColorScheme,ActivityIndicator,AppState,Pressable,Text,View} from 'react-native';
 import {router,usePathname} from 'expo-router';
 import {getJson} from '../api';
 import {parsePublicSettings,routeFeature,type PublicSettings} from '../admin-policy';
@@ -31,15 +32,16 @@ export function MarketplaceSettings({children}:{children:ReactNode}){
  return <Context.Provider value={{snapshot:snapshot?{settings:snapshot.settings,categories}:null,error:error||categoryError,refresh}}>{children}</Context.Provider>;
 }
 export function MarketplaceGate({children}:{children:ReactNode}){
- const {snapshot,error,refresh}=useMarketplaceSettings();const pathname=usePathname();
+ const {snapshot,error,refresh}=useMarketplaceSettings();const pathname=usePathname();const mode=useColorScheme()==='dark'?'dark':'light';const area=snapshot?.settings.design_mobile_inherit_web==='true'?'storefront':'mobile';const p=parseDesignPalette(snapshot?.settings[designSettingKey(area,mode)],area,mode);
  const feature=routeFeature(pathname);
  const maintenance=snapshot?.settings.maintenance_mode==='true';
  const disabled=!!feature&&snapshot?.settings['feature_'+feature]==='false';
  const blocked=!snapshot||maintenance||disabled;
- return <View style={{flex:1}}><View style={{flex:1}} pointerEvents={blocked?'none':'auto'} accessibilityElementsHidden={blocked} importantForAccessibility={blocked?'no-hide-descendants':'auto'}>{children}</View>{blocked?<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,justifyContent:'center',padding:28,gap:20,backgroundColor:'#fff'}}>
-  {!snapshot&&!error?<ActivityIndicator accessibilityLabel="Loading marketplace settings"/>:<Text accessibilityRole="header" style={{fontSize:24,fontWeight:'700',color:'#102A56'}}>{maintenance?'Bazunk is undergoing maintenance':disabled?'This feature is temporarily unavailable':'Unable to connect to Bazunk'}</Text>}
-  <Text style={{color:'#344563'}}>{error|| (maintenance?'Please check back shortly.':disabled?'This feature has been turned off by the marketplace.':'Loading marketplace controls…')}</Text>
-  <Pressable accessibilityRole="button" onPress={refresh} style={{padding:16}}><Text style={{color:'#175CD3'}}>Retry</Text></Pressable>
-  {disabled&&<Pressable accessibilityRole="button" onPress={()=>router.replace('/')} style={{padding:16}}><Text style={{color:'#175CD3'}}>Back to home</Text></Pressable>}
+ return <View style={{flex:1}}><View style={{flex:1}} pointerEvents={blocked?'none':'auto'} accessibilityElementsHidden={blocked} importantForAccessibility={blocked?'no-hide-descendants':'auto'}>{children}</View>{blocked?<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,justifyContent:'center',padding:28,gap:20,backgroundColor:p.background}}>
+  {!snapshot&&!error?<ActivityIndicator accessibilityLabel="Loading marketplace settings"/>:<Text accessibilityRole="header" style={{fontSize:24,fontWeight:'700',color:p.text}}>{maintenance?'Bazunk is undergoing maintenance':disabled?'This feature is temporarily unavailable':'Unable to connect to Bazunk'}</Text>}
+  <Text style={{color:p.secondaryText}}>{error|| (maintenance?'Please check back shortly.':disabled?'This feature has been turned off by the marketplace.':'Loading marketplace controls…')}</Text>
+  <Pressable accessibilityRole="button" onPress={refresh} style={{padding:16}}><Text style={{color:p.text}}>Retry</Text></Pressable>
+  {disabled&&<Pressable accessibilityRole="button" onPress={()=>router.replace('/')} style={{padding:16}}><Text style={{color:p.text}}>Back to home</Text></Pressable>}
  </View>:!!error&&<Pressable accessibilityRole="button" onPress={refresh} style={{padding:12,backgroundColor:'#FFF0DF'}}><Text style={{color:'#79390B'}}>{error} Showing the last saved controls. Tap to retry.</Text></Pressable>}</View>;
 }
+

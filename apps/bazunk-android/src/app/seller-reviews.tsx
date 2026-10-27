@@ -1,5 +1,6 @@
+import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import { useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+
 import { router, useLocalSearchParams } from "expo-router";
 import { usePublicData } from "../publicData";
 import { parseSellerReviews } from "../reviews";

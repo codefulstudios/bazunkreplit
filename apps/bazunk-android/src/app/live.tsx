@@ -1,12 +1,7 @@
+import {NativeAd} from '../components/NativeAd';
+import {ActivityIndicator, ScrollView, Text, TextInput, View} from '../components/ThemedNative';
 import { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import {Alert} from 'react-native';
 import { router } from "expo-router";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";
@@ -72,7 +67,7 @@ export default function Live() {
           )}
         </>
       )}
-    </ScrollView>
+    <NativeAd slot="live_left"/><NativeAd slot="live_bottom"/></ScrollView>
   );
 }
 function Host() {

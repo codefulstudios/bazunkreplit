@@ -1,10 +1,14 @@
+import {ThemeIcon} from '../components/ThemeIdentity';
+import {useTheme} from '../theme';
+import {StatusBar} from 'expo-status-bar';
+import {Pressable, Text} from '../components/ThemedNative';
 import {BrandLogo} from '../components/BrandLogo';
 import {MarketplaceSettings,MarketplaceGate} from '../components/MarketplaceSettings';
 import {AppMenu,useAppMenu} from '../components/AppMenu';
 import {Startup} from '../components/Startup';
 import * as SplashScreen from 'expo-splash-screen';
 import { Stack, router } from "expo-router";
-import { Pressable, Text } from "react-native";
+
 import { ClerkProvider } from "@clerk/expo";
 import { AppCart } from "../cart";
 import { tokenCache } from "@clerk/expo/token-cache";
@@ -13,15 +17,15 @@ import { tokenCache } from "@clerk/expo/token-cache";
 SplashScreen.setOptions({ duration: 350, fade: true });
 
 function Navigation() {
-  const openMenu=useAppMenu();
+  const openMenu=useAppMenu();const {palette:p,mode}=useTheme();
   return (
-    <Stack
+    <><StatusBar style={mode==='dark'?'light':'dark'}/><Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#FFFFFF" },
-        contentStyle: {backgroundColor: "#F4F7FC"},
+        headerStyle: { backgroundColor: p.surface },
+        contentStyle: {backgroundColor: p.background},
         headerShadowVisible: false,
         headerRight:()=> <Pressable accessibilityRole="button" accessibilityLabel="Open menu" onPress={openMenu} style={{padding:12}}><Text style={{fontSize:22,color:"#102A56"}}>☰</Text></Pressable>,
-        headerTintColor: "#102A56",
+        headerTintColor: p.text,
       }}
     >
       <Stack.Screen
@@ -36,11 +40,12 @@ function Navigation() {
           ),
           headerRight: () => (
             <Pressable accessibilityRole="button" accessibilityLabel="Open cart" onPress={() => router.push("/cart")} style={{ padding: 10 }}>
-              <Text style={{ color: "#102A56", fontWeight: "700" }}>Cart</Text>
+              <ThemeIcon placement="header_cart" fallback="cart"/>
             </Pressable>
           ),
         }}
       />
+      <Stack.Screen name="support" options={{title:"Help & support"}}/>
       <Stack.Screen name="browse" options={{title:"Browse listings"}} />
       <Stack.Screen name="auctions" options={{ title: "Auctions" }} />
       <Stack.Screen name="auction" options={{ title: "Auction details" }} />
@@ -105,7 +110,7 @@ function Navigation() {
       <Stack.Screen name="sell" options={{ title: "Sell an item" }} />
       <Stack.Screen name="my-listings" options={{ title: "My listings" }} />
       <Stack.Screen name="account" options={{ title: "Your Bazunk account" }} />
-    </Stack>
+    </Stack></>
   );
 }
 export default function Layout() {
@@ -122,3 +127,4 @@ export default function Layout() {
     </AppCart>
   )}</AppMenu></MarketplaceSettings></Startup>;
 }
+

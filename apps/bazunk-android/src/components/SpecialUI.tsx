@@ -1,6 +1,7 @@
+import {Pressable, ScrollView, Text, View} from './ThemedNative';
 import {router} from 'expo-router';
 import {useEffect,useState} from 'react';
-import {Image,Pressable,ScrollView,Text,View} from 'react-native';
+import {Image} from 'react-native';
 import type {Ad,Sale} from '../specials';
 import {Button,ui} from './UI';
 export function Choices({options,value,onChange,disabled=false}:{options:{id:string;label:string}[];value:string;onChange:(s:string)=>void;disabled?:boolean}){return <ScrollView horizontal><View style={{flexDirection:'row',gap:8}}>{options.map(o=><Pressable key={o.id} accessibilityRole="button" accessibilityState={{selected:value===o.id,disabled}} disabled={disabled} onPress={()=>onChange(o.id)} style={{padding:13,borderRadius:12,backgroundColor:value===o.id?'#1559d6':'#e0e8fa'}}><Text style={{color:value===o.id?'#fff':'#172442',fontWeight:'700'}}>{o.label}</Text></Pressable>)}</View></ScrollView>}

@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text, View} from './ThemedNative';
 import {useEffect,useState} from 'react';
 import {router} from 'expo-router';
-import {ActivityIndicator,ScrollView,Text,View} from 'react-native';
+
 import {quoteCart} from '../api';
 import {useCart} from '../cart';
 import {parseQuote,type Quote} from '../commerce';

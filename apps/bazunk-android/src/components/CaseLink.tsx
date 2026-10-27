@@ -1,6 +1,7 @@
+import {Text, View} from './ThemedNative';
 import * as Linking from "expo-linking";
 import { useState } from "react";
-import { Text, View } from "react-native";
+
 import { caseLink } from "../cases";
 import { Button, ui } from "./UI";
 export function CaseLink({ url, label }: { url: string; label: string }) {

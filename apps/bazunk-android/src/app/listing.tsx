@@ -1,14 +1,6 @@
+import {ActivityIndicator, View, Pressable, ScrollView, Text} from '../components/ThemedNative';
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  View,
-  Share,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-} from "react-native";
+import {Share, Image, StyleSheet} from 'react-native';
 import { useLocalSearchParams } from "expo-router";
 import { Button } from "../components/UI";
 import { ListingActions } from "../components/ListingActions";

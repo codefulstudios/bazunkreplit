@@ -1,6 +1,7 @@
+import {ActivityIndicator, Pressable, Text, View} from './ThemedNative';
 import { useAuth } from "@clerk/expo";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+
 import type { ReactNode } from "react";
 export function SellerAccess({ children }: { children: ReactNode }) {
   return process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ? (

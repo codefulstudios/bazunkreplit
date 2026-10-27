@@ -1,5 +1,6 @@
+import {ActivityIndicator, Pressable, ScrollView, Text, View} from '../components/ThemedNative';
 import {router} from 'expo-router';
-import {ActivityIndicator,Pressable,ScrollView,Text,View} from 'react-native';
+
 import {useMemberData} from '../hooks';
 import {SellerAccess} from '../components/SellerAccess';
 import {Button,ui} from '../components/UI';

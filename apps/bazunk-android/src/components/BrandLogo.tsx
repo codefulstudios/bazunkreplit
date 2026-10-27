@@ -7,3 +7,4 @@ export function BrandLogo({style}:{style:ImageStyle}){
  const [failed,setFailed]=useState<string|undefined>();
  return <Image source={uri&&uri!==failed?{uri}:require('../../assets/logo.png')} style={style} resizeMode="contain" accessibilityLabel={snapshot?.settings.site_name||'Bazunk'} onError={()=>setFailed(uri)}/>;
 }
+

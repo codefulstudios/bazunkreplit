@@ -29,3 +29,4 @@ test('settings and links reject malformed or unsafe values',()=>{
  assert.equal(policy.safeWebsitePath('/rewards?tab=games'),'/rewards?tab=games');
  assert.equal(policy.publicMedia('http://insecure.test/logo'),undefined);
 });
+

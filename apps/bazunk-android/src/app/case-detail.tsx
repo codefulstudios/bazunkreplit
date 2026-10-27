@@ -1,12 +1,6 @@
+import {ActivityIndicator, ScrollView, Text, TextInput, View} from '../components/ThemedNative';
 import { useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import {Alert} from 'react-native';
 import { useLocalSearchParams } from "expo-router";
 import { SellerAccess } from "../components/SellerAccess";
 import { CaseLink } from "../components/CaseLink";

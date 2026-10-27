@@ -1,4 +1,5 @@
-import { ActivityIndicator, Text, View } from "react-native";
+import {ActivityIndicator, Text, View} from './ThemedNative';
+
 import { usePublicData } from "../publicData";
 import { parseInventory } from "../inventory";
 import { Button, ui } from "./UI";

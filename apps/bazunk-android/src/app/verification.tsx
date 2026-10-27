@@ -1,4 +1,5 @@
-import { ActivityIndicator, ScrollView, Text } from "react-native";
+import {ActivityIndicator, ScrollView, Text} from '../components/ThemedNative';
+
 import * as WebBrowser from "expo-web-browser";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";

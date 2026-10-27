@@ -1,6 +1,7 @@
+import {ActivityIndicator, ScrollView, Text} from '../components/ThemedNative';
 import {useLocalSearchParams} from 'expo-router';
 import {useState} from 'react';
-import {ActivityIndicator,ScrollView,Text} from 'react-native';
+
 import {SellerAccess} from '../components/SellerAccess';
 import {Button,ui} from '../components/UI';
 import {AdCard,SaleCard} from '../components/SpecialUI';

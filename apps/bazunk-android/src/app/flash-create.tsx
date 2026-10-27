@@ -1,6 +1,7 @@
+import {ScrollView, Text, TextInput} from '../components/ThemedNative';
 import {router} from 'expo-router';
 import {useRef,useState} from 'react';
-import {Alert,Image,ScrollView,Text,TextInput} from 'react-native';
+import {Alert, Image} from 'react-native';
 import {SellerAccess} from '../components/SellerAccess';
 import {Button,ui} from '../components/UI';
 import {Choices,simpleChoices} from '../components/SpecialUI';

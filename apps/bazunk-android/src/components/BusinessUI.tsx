@@ -1,5 +1,6 @@
+import {ActivityIndicator, Text, View} from './ThemedNative';
 import { useRef, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+
 import { Button, ui } from "./UI";
 import { useMemberData } from "../hooks";
 import { parseOwnListings } from "../api";
