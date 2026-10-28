@@ -42,7 +42,7 @@ export default function Conversation() {
 function Chat({ id, title }: { id: string; title: string }) {
   const valid = /^\d+$/.test(id || "");
   const { data, error, loading, reload } = useMemberData(
-    `/mobile/community/messages/conversations/${valid ? id : "invalid"}`,
+    `/messages/conversations/${valid ? id : "invalid"}`,
     parse,
   );
   const request = useMemberRequest();
@@ -59,7 +59,7 @@ function Chat({ id, title }: { id: string; title: string }) {
     try {
       const message = parseMessage(
         await request(
-          `/mobile/community/messages/conversations/${id}/messages`,
+          `/messages/conversations/${id}/messages`,
           { method: "POST", body: { text: text.trim() } },
         ),
       );

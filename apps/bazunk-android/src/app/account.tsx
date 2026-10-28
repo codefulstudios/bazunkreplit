@@ -1,7 +1,6 @@
 import {useTheme} from '../theme';
 import {ActivityIndicator, Pressable, ScrollView, Text, View} from '../components/ThemedNative';
 import { Button } from "../components/UI";
-import { openWebsite } from "../components/AppMenu";
 import { router } from "expo-router";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { AuthView, UserButton } from "@clerk/expo/native";
@@ -131,9 +130,9 @@ function ConnectedAccount() {
             <Pressable
               style={styles.button}
               accessibilityRole="button"
-              onPress={() => void openWebsite("/my-listings")}
+              onPress={() => router.push("/my-listings")}
             >
-              <Text style={styles.buttonText}>My listings · Website</Text>
+              <Text style={styles.buttonText}>My listings</Text>
             </Pressable>
             <Pressable
               style={styles.button}

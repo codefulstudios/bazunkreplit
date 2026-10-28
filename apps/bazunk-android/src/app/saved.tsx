@@ -1,9 +1,10 @@
+import {savedListings} from '../member-contracts';
 import {ActivityIndicator, ScrollView, Text, View} from '../components/ThemedNative';
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {Image} from 'react-native';
-import { parseListings, price } from "../api";
-import { useMemberData, useMemberRequest } from "../hooks";
+import { price } from "../api";
+import { useMemberLoader, useMemberRequest } from "../hooks";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";
 export default function Saved() {
@@ -15,10 +16,8 @@ export default function Saved() {
 }
 function SavedItems() {
   const [page, setPage] = useState(0);
-  const { data, error, loading, reload } = useMemberData(
-    `/mobile/saved?offset=${page * 25}`,
-    parseListings,
-  );
+  const {data:all,error,loading,reload}=useMemberLoader(savedListings);
+  const data=all?.slice(page*25,(page+1)*25);
   const request = useMemberRequest();
   const [busy, setBusy] = useState(false);
   const [actionError, setError] = useState("");
@@ -29,7 +28,7 @@ function SavedItems() {
     setBusy(true);
     setError("");
     try {
-      const result = (await request(`/mobile/community/listings/${id}/watch`, {
+      const result = (await request(`/listings/${id}/watch`, {
         method: "DELETE",
       })) as { watched?: unknown };
       if (result?.watched !== false)
@@ -98,7 +97,7 @@ function SavedItems() {
           onPress={() => setPage((p) => p - 1)}
         />
       )}{" "}
-      {data?.length === 25 && (
+      {!!all && all.length > (page+1)*25 && (
         <Button
           label="Next page"
           disabled={loading || busy}

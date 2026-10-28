@@ -12,8 +12,8 @@ import {featureEnabled,palette as c} from '../storefront';
 type Item={label:string;icon:string;route?:Href;web?:string;flag?:string};
 const groups:{title:string;items:Item[]}[]=[
  {title:'Explore',items:[{label:'Home',icon:'⌂',route:'/'},{label:'Browse & categories',icon:'▦',route:'/browse'},{label:'Auctions',icon:'🔨',web:'/auctions',flag:'auctions'},{label:'Flash sales',icon:'⚡',web:'/flash-sales',flag:'flash_sales'},{label:'Classifieds',icon:'📋',web:'/classifieds',flag:'classifieds'}]},
- {title:'Your Bazunk',items:[{label:'Your account',icon:'👤',route:'/account'},{label:'Cart',icon:'🛒',route:'/cart'},{label:'Messages',icon:'✉',web:'/messages',flag:'messaging'},{label:'Purchases & saved items',icon:'♡',web:'/dashboard'}]},
- {title:'Sell & manage',items:[{label:'Sell an item',icon:'＋',web:'/sell',flag:'quick_sell'},{label:'Seller dashboard',icon:'▤',web:'/dashboard'},{label:'Import inventory',icon:'📦',web:'/importers',flag:'importers'},{label:'Promote listings',icon:'📣',web:'/promotions',flag:'promotions'}]},
+ {title:'Your Bazunk',items:[{label:'Your account',icon:'👤',route:'/account'},{label:'Cart',icon:'🛒',route:'/cart'},{label:'Messages',icon:'✉',route:'/messages',flag:'messaging'},{label:'Purchases & sales',icon:'▤',route:'/orders'},{label:'Saved items',icon:'♡',route:'/saved',flag:'watchers'},{label:'My offers',icon:'↔',route:'/offers',flag:'offers'}]},
+ {title:'Sell & manage',items:[{label:'Sell an item',icon:'＋',route:'/sell',flag:'quick_sell'},{label:'My listings',icon:'▤',route:'/my-listings'},{label:'Import inventory',icon:'📦',web:'/importers',flag:'importers'},{label:'Promote listings',icon:'📣',web:'/promotions',flag:'promotions'}]},
  {title:'Discover more',items:[{label:'Rewards arcade',icon:'🎮',web:'/rewards',flag:'games'},{label:'Live selling',icon:'▶',web:'/live',flag:'live'},{label:'Help & support',icon:'?',route:'/support'},{label:'Terms & privacy',icon:'✓',route:'/legal'}]},
 ];
 export async function openWebsite(path:string){try{await WebBrowser.openBrowserAsync(`https://www.bazunk.com${safeWebsitePath(path)}`)}catch{Alert.alert('Could not open Bazunk','Please try again.')}}

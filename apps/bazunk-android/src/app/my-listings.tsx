@@ -1,5 +1,6 @@
+import {ownListingPath} from '../member-contracts';
 import {ActivityIndicator, FlatList, Pressable, Text, View} from '../components/ThemedNative';
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {Alert, Image, StyleSheet} from 'react-native';
@@ -15,7 +16,7 @@ export default function MyListings() {
   );
 }
 function Inventory() {
-  const { getToken } = useAuth();
+  const { getToken } = useAuth();const {user}=useUser();
   const request = useMemberRequest();
   const [actionBusy, setActionBusy] = useState(false);
   const [items, setItems] = useState<OwnListing[]>([]);
@@ -45,7 +46,7 @@ function Inventory() {
         if (!token) throw new Error("Please sign in again.");
         const rows = parseOwnListings(
           await memberJson(
-            `/mobile/listings/mine?offset=${reset ? 0 : offset.current}`,
+            "/listings/mine",
             token,
             { signal: request.signal },
           ),
@@ -60,7 +61,7 @@ function Inventory() {
               ],
         );
         offset.current += rows.length;
-        setMore(rows.length === 25);
+        setMore(false);
       } catch (e) {
         if (version === generation.current && !request.signal.aborted)
           setError(e instanceof Error ? e.message : "Could not load listings.");
@@ -88,7 +89,8 @@ function Inventory() {
     setActionBusy(true);
     setError("");
     try {
-      await request(`/mobile/listings/${id}`, { method: "DELETE" });
+      const email=user?.primaryEmailAddress?.emailAddress;if(!email)throw Error('Please sign in again.');
+      await request(ownListingPath(id,email), { method: 'PATCH',body:{status:'inactive'} });
       await load(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not archive listing.");
@@ -108,7 +110,7 @@ function Inventory() {
         <View style={{ gap: 14, marginBottom: 20 }}>
           <Text style={styles.title}>My listings</Text>
           <Text style={styles.copy}>
-            Your inventory from the same Bazunk marketplace, including drafts.
+            Your inventory from the same Bazunk marketplace, including drafts (up to the latest 100 listings).
             Pull down to refresh.
           </Text>
           <Pressable
@@ -167,17 +169,7 @@ function Inventory() {
                 <Text style={styles.link}>View listing</Text>
               </Pressable>
             ) : null}
-            <Button
-              label="Manage stock"
-              disabled={actionBusy}
-              onPress={() =>
-                router.push({
-                  pathname: "/stock",
-                  params: { id: String(item.id) },
-                })
-              }
-            />
-            {["active", "draft"].includes(item.status) && (
+            {["active", "draft", "inactive"].includes(item.status) && (
               <>
                 <Button
                   label="Edit / publish"

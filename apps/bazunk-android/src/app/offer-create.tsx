@@ -4,9 +4,9 @@ import {Alert} from 'react-native';
 import { router, useLocalSearchParams } from "expo-router";
 import { SellerAccess } from "../components/SellerAccess";
 import { Button, ui } from "../components/UI";
-import { getJson, parseListing, price, type Listing } from "../api";
+import { loadListing, price, type Listing } from "../api";
 import { useMemberRequest } from "../hooks";
-import { parseOffer } from "../offers";
+import {offerBody,offerReceipt} from "../member-contracts";
 export default function CreateOffer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   return (
@@ -26,12 +26,12 @@ function Form() {
     [busy, setBusy] = useState(false),
     [sent, setSent] = useState(false);
   const lock = useRef(false);
-  const reference = useRef<{ signature: string; key: string } | null>(null);
+
   useEffect(() => {
     const c = new AbortController();
-    void getJson(`/listings/${encodeURIComponent(id || "")}`, c.signal)
+    void loadListing(id||"", c.signal)
       .then((x) => {
-        if (!c.signal.aborted) setItem(parseListing(x));
+        if (!c.signal.aborted) setItem(x);
       })
       .catch((e) => {
         if (!c.signal.aborted)
@@ -45,23 +45,8 @@ function Form() {
     setBusy(true);
     setError("");
     try {
-      const payload = {
-        listingId: item?.id,
-        offerPrice: amount,
-        message: message.trim(),
-      };
-      const signature = JSON.stringify(payload);
-      if (reference.current?.signature !== signature)
-        reference.current = {
-          signature,
-          key: `offer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`,
-        };
-      parseOffer(
-        await request("/offers", {
-          method: "POST",
-          body: { ...payload, requestKey: reference.current.key },
-        }),
-      );
+      if(!item)throw Error('Listing not loaded.');
+      offerReceipt(await request('/offers',{method:'POST',body:offerBody(item.id,amount,message)}));
       setSent(true);
     } catch (e) {
       setError(
@@ -102,7 +87,7 @@ function Form() {
         {item.title} · {price(item)}
       </Text>
       <Text style={ui.copy}>
-        Pending offers expire in 48 hours. Accepted prices are unpaid; use deal checkout after acceptance. The normal cart uses the listing price.
+        Accepted offers are unpaid and do not reserve stock. App payment for agreed offers is not connected.
       </Text>
       {sent ? (
         <Text style={[ui.copy, { color: "#148453", fontWeight: "700" }]}>
@@ -130,7 +115,7 @@ function Form() {
             value={message}
             onChangeText={setMessage}
             multiline
-            maxLength={1000}
+            maxLength={200}
             editable={!busy}
           />
           <Button
