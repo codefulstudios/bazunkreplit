@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health.js";
 import demoCreatorRouter from "./demoCreator.js";
+import mobileCheckoutRouter from "./mobileCheckout.js";
 import stripeRouter from "./stripe.js";
 import adminRouter from "./admin.js";
 import cashbackRouter from "./cashback.js";
@@ -91,6 +92,7 @@ router.get("/public/homepage-intro", async (_req, res) => {
 
 router.use(healthRouter);
 router.use(stripeRouter);
+router.use(mobileCheckoutRouter);
 // Before legacy admin routes so real ledger endpoints supersede promotional-only settings.
 router.use(cashbackRouter);
 router.use(adminRouter);
@@ -134,3 +136,4 @@ router.use(checkoutRecoveryRouter);
 router.use(demoCreatorRouter);
 
 export default router;
+
