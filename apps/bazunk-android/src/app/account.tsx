@@ -1,7 +1,7 @@
 import {useTheme} from '../theme';
 import {ActivityIndicator, Pressable, ScrollView, Text, View} from '../components/ThemedNative';
 import { Button } from "../components/UI";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
 import { AuthView, UserButton } from "@clerk/expo/native";
 import { useEffect, useState } from "react";
@@ -24,6 +24,7 @@ export default function AccountScreen() {
   );
 }
 function ConnectedAccount() {
+  const {returnTo}=useLocalSearchParams<{returnTo?:string}>();
   const {palette:p}=useTheme();
   const { isLoaded, isSignedIn, getToken } = useAuth({
     treatPendingAsSignedOut: false,
@@ -37,6 +38,11 @@ function ConnectedAccount() {
   const [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
   const userId = user?.id;
+  useEffect(() => {
+    // Close the native auth presentation after session activation, including OAuth.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isLoaded && isSignedIn) setOpen(false);
+  }, [isLoaded, isSignedIn]);
   // A session change starts a fresh authenticated request and clears the previous profile.
   useEffect(() => {
     const controller = new AbortController();
@@ -99,6 +105,7 @@ function ConnectedAccount() {
           <>
             <View style={styles.card}>
               <UserButton />
+              {returnTo==='cart' && <Button label="Continue to your cart" onPress={()=>router.replace('/cart')}/>}
               <Text style={styles.subtitle}>
                 {account?.name || user?.fullName || "Bazunk member"}
               </Text>
@@ -114,7 +121,7 @@ function ConnectedAccount() {
             )}
             {account && (
               <Text style={styles.copy}>
-                Connected to your existing Bazunk account. Your profile is
+                Connected to your Bazunk account. Your profile is
                 shared with the website.
               </Text>
             )}
@@ -181,7 +188,7 @@ function ConnectedAccount() {
         )}
       </ScrollView>
       <Modal
-        visible={open}
+        visible={open && !isSignedIn}
         animationType="slide"
         onRequestClose={() => setOpen(false)}
       >
@@ -194,7 +201,7 @@ function ConnectedAccount() {
           >
             <Text style={styles.link}>Close</Text>
           </Pressable>
-          <AuthView onDismiss={() => setOpen(false)} />
+          <AuthView mode="signInOrUp" onDismiss={() => setOpen(false)} />
         </SafeAreaView>
       </Modal>
     </>

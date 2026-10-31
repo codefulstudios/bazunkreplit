@@ -99,10 +99,10 @@ export async function loadListing(id: string, signal?: AbortSignal): Promise<Lis
   if(!summary){try{summary=parseListings(await getJson(`/listings?ids=${detail.id}`,signal)).find(row=>row.id===detail.id)}catch{if(signal?.aborted)throw Error('Request cancelled.')}}
   return {...summary,...detail};
 }
-export async function quoteCart(ids: number[], signal?: AbortSignal): Promise<unknown> {
+export async function quoteCart(ids: (number | {id:number;quantity:number})[], signal?: AbortSignal): Promise<unknown> {
   const response = await fetch(`${base}/stripe/quote-cart`, {
     method: 'POST', headers: {'Content-Type': 'application/json'}, signal,
-    body: JSON.stringify({items: ids.map(id => ({id, quantity: 1}))}),
+    body: JSON.stringify({items: ids.map(id => typeof id === 'number' ? ({id, quantity: 1}) : id)}),
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(typeof data?.error === 'string' ? data.error : `Could not calculate fees (${response.status}).`);

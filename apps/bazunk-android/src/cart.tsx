@@ -1,19 +1,33 @@
-import { useAuth } from '@clerk/expo';
+import {useAuth} from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-type CartState={ids:number[];pending:string|null};
-type CartContextValue=CartState&{ready:boolean;storageError:string;add:(id:number)=>void;remove:(id:number)=>void;setPending:(id:string|null)=>Promise<void>;clearPaid:()=>Promise<void>};
-const Context=createContext<CartContextValue|null>(null);
+import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from 'react';
+import {changeQuantity,emptyCart,mergeCarts,parseCart,type CartState} from './cart-state';
+type Value=CartState&{ids:number[];ready:boolean;storageError:string;add:(id:number)=>void;remove:(id:number)=>void;setQuantity:(id:number,n:number)=>void;setPending:(id:string|null)=>Promise<void>;clearPaid:()=>Promise<void>};
+const Context=createContext<Value|null>(null);
+type Saved={version:2;carts:Record<string,CartState>};
+const storageKey='bazunk.carts.v2';
+// One serialized document makes guest-to-account transfer atomic across restarts.
+let writes:Promise<unknown>=Promise.resolve();
 export function AppCart({children}:{children:ReactNode}){return process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY?<AccountCart>{children}</AccountCart>:<CartProvider owner="guest">{children}</CartProvider>}
-function AccountCart({children}:{children:ReactNode}){const {userId}=useAuth();return <CartProvider key={userId||'guest'} owner={userId||'guest'}>{children}</CartProvider>}
-function CartProvider({owner,children}:{owner:string;children:ReactNode}){
- const key=`bazunk.cart.${owner.replace(/[^a-zA-Z0-9_.-]/g,'_')}`;
- const writes=useRef<Promise<unknown>>(Promise.resolve());
- const persist=useCallback((value:CartState)=>{const next=writes.current.catch(()=>{}).then(()=>SecureStore.setItemAsync(key,JSON.stringify(value)));writes.current=next;return next;},[key]);
- const [state,setState]=useState<CartState>({ids:[],pending:null});const [ready,setReady]=useState(false);const [storageError,setStorageError]=useState('');
- useEffect(()=>{let live=true;void SecureStore.getItemAsync(key).then(raw=>{if(!live)return;if(raw){const s=JSON.parse(raw);if(!Array.isArray(s.ids)||s.ids.length>30||s.ids.some((id:unknown)=>!Number.isInteger(id)||Number(id)<=0)||(s.pending!==null&&typeof s.pending!=='string'))throw Error('Invalid cart');setState({ids:[...new Set<number>(s.ids)],pending:s.pending})}}).catch(()=>{if(live)setStorageError('Could not restore the saved cart. Check Orders before starting a new payment.')}).finally(()=>{if(live)setReady(true)});return()=>{live=false}},[key]);
- useEffect(()=>{if(ready)void persist(state).catch(()=>setStorageError('Could not save the cart on this device. Keep the app open until payment is confirmed.'))},[persist,ready,state]);
- function add(id:number){if(!ready||state.pending)throw Error('Wait for the current checkout to finish.');if(state.ids.length>=30&&!state.ids.includes(id))throw Error('The cart supports up to 30 different items.');setState(s=>{if(s.ids.includes(id))return s;if(s.ids.length>=30)return s;return {...s,ids:[...s.ids,id]}})}
- return <Context.Provider value={{...state,ready,storageError,add,remove:id=>setState(s=>s.pending?s:{...s,ids:s.ids.filter(i=>i!==id)}),setPending:async id=>{const next={...state,pending:id};setState(next);await persist(next)},clearPaid:async()=>{const next={ids:[],pending:null};setState(next);await persist(next)}}}>{children}</Context.Provider>;
+function AccountCart({children}:{children:ReactNode}){const {isLoaded,userId}=useAuth();return <CartProvider owner={isLoaded?(userId||'guest'):null}>{children}</CartProvider>}
+function CartProvider({owner,children}:{owner:string|null;children:ReactNode}){
+ const [view,setView]=useState<{owner:string|null;cart:CartState}>({owner:null,cart:emptyCart()});const [storageError,setStorageError]=useState('');
+ const doc=useRef<Saved>({version:2,carts:{}});const current=useRef<CartState>(emptyCart());const active=useRef<string|null>(null);
+ const ready=owner!==null&&view.owner===owner;
+ useEffect(()=>{let live=true;active.current=null;if(!owner)return;
+ const job=writes.catch(()=>{}).then(async()=>{
+  const raw=await SecureStore.getItemAsync(storageKey);const saved:Saved=raw?JSON.parse(raw):{version:2,carts:{}};
+  if(saved.version!==2||!saved.carts||typeof saved.carts!=='object')throw Error('Invalid cart storage');
+  for(const key of [owner,'guest'])if(!Object.hasOwn(saved.carts,key)){const legacy=await SecureStore.getItemAsync(`bazunk.cart.${key.replace(/[^a-zA-Z0-9_.-]/g,'_')}`);saved.carts[key]=legacy?parseCart(JSON.parse(legacy)):emptyCart();}
+  let cart=parseCart(saved.carts[owner]);let warning='';
+  if(owner!=='guest'&&saved.carts.guest.items.length){try{cart=mergeCarts(cart,parseCart(saved.carts.guest));saved.carts.guest=emptyCart()}catch(e){warning=(e as Error).message+' Guest items are retained; sign out to access them.';}}
+  saved.carts[owner]=cart;await SecureStore.setItemAsync(storageKey,JSON.stringify(saved));
+  if(live){doc.current=saved;current.current=cart;active.current=owner;setView({owner,cart});setStorageError(warning)}
+ });writes=job;void job.catch(()=>{if(live)setStorageError('Could not restore your cart. Restart the app to retry; saved items have not been overwritten.')});return()=>{live=false};
+ },[owner]);
+ function save(next:CartState){if(!ready||active.current!==owner||!owner)throw Error('Wait for your cart to load.');const account=owner;current.current=next;doc.current={...doc.current,carts:{...doc.current.carts,[account]:next}};const snapshot=JSON.stringify(doc.current);setView({owner:account,cart:next});const task=writes.catch(()=>{}).then(()=>SecureStore.setItemAsync(storageKey,snapshot));writes=task;void task.catch(()=>{if(active.current===account)setStorageError('Could not save your cart. Restart the app before attempting payment.')});return task;}
+ function quantity(id:number,n:number){void save(changeQuantity(current.current,id,n)).catch(()=>{});}
+ const cart=ready?view.cart:emptyCart();
+ return <Context.Provider value={{...cart,ids:cart.items.map(i=>i.id),ready,storageError,add:id=>quantity(id,(current.current.items.find(i=>i.id===id)?.quantity??0)+1),remove:id=>quantity(id,0),setQuantity:quantity,setPending:id=>save({...current.current,pending:id}),clearPaid:()=>save(emptyCart())}}>{children}</Context.Provider>;
 }
 export function useCart(){const value=useContext(Context);if(!value)throw Error('Cart provider is missing');return value;}
