@@ -48,6 +48,7 @@ router.post('/mobile/checkout',async(req,res)=>{try{
   await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${owner+':'+attempt},0))`);
   const existing=(await tx.execute(sql`SELECT * FROM mobile_checkout_attempts WHERE owner_id=${owner} AND attempt=${attempt}`)).rows[0] as any;
   if(existing)return existing;
+  if(req.body.recoverOnly)throw new QuoteError('No payment was started. Cancel this attempt and refresh your cart.',409);
   if(req.body.delivery!=='standard')throw new QuoteError('Select standard delivery.');
   const quote=await quoteCart(req.body.items);
   if(!Number.isFinite(req.body.expectedTotal)||Math.round(req.body.expectedTotal*100)!==quote.totalMinor)throw new QuoteError('Prices or fees changed. Cancel this unpaid checkout and refresh the total.',409);
