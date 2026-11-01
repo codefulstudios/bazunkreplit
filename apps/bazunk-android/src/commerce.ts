@@ -3,3 +3,13 @@ export function parseQuote(value:unknown):Quote{const q=value as Quote;if(!q||q.
 export function checkoutUrl(raw:unknown):string{if(typeof raw!=='string')throw Error('Invalid payment link.');const url=new URL(raw);if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com'||url.username||url.password)throw Error('Invalid payment link.');return raw}
 
 export function parseAppConfig(value:unknown):{checkoutEnabled:boolean}{const config=value as {checkoutEnabled?:unknown};if(!config||typeof config.checkoutEnabled!=='boolean')throw Error('Could not load checkout settings.');return {checkoutEnabled:config.checkoutEnabled};}
+
+export type CheckoutStatus={status?:string;url?:unknown;orders?:number};
+// Recovery must not depend on today's catalogue or quote: the server owns the
+// frozen attempt, and an item may become unavailable while payment is open.
+export async function recoverCheckout(request:(path:string,body?:unknown)=>Promise<CheckoutStatus>,attempt:string):Promise<CheckoutStatus>{
+ if(!/^app_[A-Za-z0-9_-]{8,100}$/.test(attempt))throw Error('This older checkout needs support to verify its payment before the cart can be changed.');
+ const current=await request(`/mobile/checkout/${encodeURIComponent(attempt)}`);
+ if(current.status==='paid'||current.status==='processing'||current.status==='expired'||current.url)return current;
+ return request('/mobile/checkout',{attempt,recoverOnly:true});
+}

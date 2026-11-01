@@ -19,3 +19,9 @@ export function parseMemberOrders(value:unknown){if(!Array.isArray(value))throw 
 export function orderMoney(value:number|null,currency:string|null){if(value===null)return 'Not provided';return currency&&/^[A-Z]{3}$/.test(currency)?new Intl.NumberFormat('en-GB',{style:'currency',currency}).format(value):value.toFixed(2)+' (currency not supplied)'}
 export function listingIdentity(email:string,region:'uk'|'us'){if(!email.trim()||!['uk','us'].includes(region))throw Error('Choose an account and marketplace.');return {sellerEmail:email.trim().toLowerCase(),marketplaceRegion:region,currency:region==='uk'?'GBP':'USD'}}
 export function editedListingMedia(original:Record<string,unknown>,photos:string[]){const media=photoPayload(photos);return {image:media.image,specifications:JSON.stringify({...original,photos,...(Array.isArray(original.admin_gallery_images)?{admin_gallery_images:photos}:{})})}}
+
+export function listingDeliveryFields(quantity:string,delivery:string,carrier:string){
+ if(!/^\d+$/.test(quantity)||Number(quantity)<1||Number(quantity)>10000)throw Error('Quantity must be 1–10000.');
+ if(delivery&&(!/^\d+(\.\d{1,2})?$/.test(delivery)||Number(delivery)>100000))throw Error('Enter a delivery charge between 0 and 100000.');
+ return {quantity:Number(quantity),shippingPrice:delivery?Number(delivery):null,carrier:carrier.trim().slice(0,80)};
+}
