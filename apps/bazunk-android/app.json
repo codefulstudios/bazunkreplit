@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Bazunk",
+    "slug": "bazunk",
+    "owner": "bazunk-llc",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android"
+    ],
+    "scheme": "bazunk",
+    "android": {
+      "package": "com.bazunk.marketplace",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D1829"
+      }
+    },
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "@clerk/expo",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow Bazunk to take listing photos",
+          "photosPermission": "Allow Bazunk to select listing photos",
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/adaptive-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "daa6ab0d-e54f-4e5a-ad72-900cbf8aecb7"
+      }
+    },
+    "icon": "./assets/app-icon.png"
+  }
+}

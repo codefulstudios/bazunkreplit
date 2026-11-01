@@ -1,0 +1,15 @@
+export type Quote={currency:'GBP';subtotal:number;bundleDiscount?:number;buyerProtectionFee:number;delivery:number;total:number;items:{id:number;title:string;price:number}[]};
+export function parseQuote(value:unknown):Quote{const q=value as Quote;if(!q||q.currency!=='GBP'||![q.subtotal,q.buyerProtectionFee,q.delivery,q.total].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)||(q.bundleDiscount!==undefined&&(typeof q.bundleDiscount!=='number'||!Number.isFinite(q.bundleDiscount)||q.bundleDiscount<0))||!Array.isArray(q.items)||q.items.length===0||q.items.some(i=>!Number.isInteger(i.id)||typeof i.title!=='string'||typeof i.price!=='number'||!Number.isFinite(i.price)||i.price<=0)||Math.abs(q.total-q.subtotal-q.buyerProtectionFee-q.delivery+(q.bundleDiscount??0))>0.015)throw Error('Unexpected fee breakdown. Please refresh.');return q}
+export function checkoutUrl(raw:unknown):string{if(typeof raw!=='string')throw Error('Invalid payment link.');const url=new URL(raw);if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com'||url.username||url.password)throw Error('Invalid payment link.');return raw}
+
+export function parseAppConfig(value:unknown):{checkoutEnabled:boolean}{const config=value as {checkoutEnabled?:unknown};if(!config||typeof config.checkoutEnabled!=='boolean')throw Error('Could not load checkout settings.');return {checkoutEnabled:config.checkoutEnabled};}
+
+export type CheckoutStatus={status?:string;url?:unknown;orders?:number};
+// Recovery must not depend on today's catalogue or quote: the server owns the
+// frozen attempt, and an item may become unavailable while payment is open.
+export async function recoverCheckout(request:(path:string,body?:unknown)=>Promise<CheckoutStatus>,attempt:string):Promise<CheckoutStatus>{
+ if(!/^app_[A-Za-z0-9_-]{8,100}$/.test(attempt))throw Error('This older checkout needs support to verify its payment before the cart can be changed.');
+ const current=await request(`/mobile/checkout/${encodeURIComponent(attempt)}`);
+ if(current.status==='paid'||current.status==='processing'||current.status==='expired'||current.url)return current;
+ return request('/mobile/checkout',{attempt,recoverOnly:true});
+}

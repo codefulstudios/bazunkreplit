@@ -1,0 +1,78 @@
+[
+  {
+    "archive": "bazunk-android-native-browsing-source.zip",
+    "sha256": "46490b3a041fbf9a1ae221bf5179e53dd4ba37434e0c0cc3337ab57670c67f42"
+  },
+  {
+    "archive": "bazunk-android-accounts-changed-files.zip",
+    "sha256": "d99f9f9d21f223a4e6fa13df739ac3f044ccabe4e9b681ac5c73a78d3855e196"
+  },
+  {
+    "archive": "bazunk-android-selling-changed-files.zip",
+    "sha256": "45a3d95730a295b3bf0103c33f9a423441f3fe342398f05e59e2dba86ba8d808"
+  },
+  {
+    "archive": "bazunk-android-core-flows-changed-files.zip",
+    "sha256": "079427bd6d125e156cad413383ffdf0d5a79d71fe0a0497fcb68103329087e27"
+  },
+  {
+    "archive": "bazunk-android-auctions-changed-files.zip",
+    "sha256": "33e0c815ffea031c2d301c045e74cd915e5ad29322da65b2f8325edc00d11536"
+  },
+  {
+    "archive": "bazunk-android-rewards-arcade-changed-files.zip",
+    "sha256": "1d25c9c7a1845567998089b578040dc2a449ffacd09c4e533519faea1b4c1c05"
+  },
+  {
+    "archive": "bazunk-android-classifieds-flash-sales-changed-files.zip",
+    "sha256": "a9316f8d61061f5be4badc64361c481e78c27e6049b715fc81f3349851568d11"
+  },
+  {
+    "archive": "bazunk-android-offers-deals-changed-files.zip",
+    "sha256": "b4a30bb8fb0899fbda185308b75677632bd6823239d8b166856e8a75dd43112d"
+  },
+  {
+    "archive": "bazunk-android-deal-checkout-changed-files.zip",
+    "sha256": "e13343f53496f85a5016f1756eecd50a5d2423d24c426d1ada710cd150c07d21"
+  },
+  {
+    "archive": "bazunk-android-stock-reservations-changed-files.zip",
+    "sha256": "a0b9edf2a601e044ff2750cebf6fa13097ad0f5a2a9384ee3562ab866ddbec5d"
+  },
+  {
+    "archive": "bazunk-android-reviews-changed-files.zip",
+    "sha256": "bf8f2f79f8f29c362891bc1cd97991af508964e770328db0644bd0dff2b9f196"
+  },
+  {
+    "archive": "bazunk-android-delivery-management-changed-files.zip",
+    "sha256": "d2efdecb88d5a0992289976dca01bf21015aa771a67d57ece04420c4cadf6e54"
+  },
+  {
+    "archive": "bazunk-android-returns-disputes-changed-files.zip",
+    "sha256": "aa85abaf17353d910415c8b553bb0a553a78912f4a493a51f1e4beb606a3a82b"
+  },
+  {
+    "archive": "bazunk-android-regional-policies-changed-files.zip",
+    "sha256": "8ac5355fe52d702a764bf535353ae74d9c96bbf9a8634c12161cd26692ca7b36"
+  },
+  {
+    "archive": "bazunk-android-commerce-seller-tools-changed-files.zip",
+    "sha256": "b47575f1c7aa558501b6a4559eccb90f5362c0990e0b1b992a39c2e690aee9aa"
+  },
+  {
+    "archive": "bazunk-android-usability-changed-files.zip",
+    "sha256": "582a9a24af3c917eadde41afe2c66befd05c0c7edab874b9eb93be3c1a612ffc"
+  },
+  {
+    "archive": "bazunk-android-importer-fixes.zip",
+    "sha256": "7e097807742ccb91dea3160a273082acb1b4274fc8742954742a1a2153623b44"
+  },
+  {
+    "archive": "bazunk-android-messaging-saved-fixes.zip",
+    "sha256": "9a8c779187e49273a7fe5ea340fe90a116788b97e547559fc192e5e8993edfc5"
+  },
+  {
+    "archive": "bazunk-android-importer-reliability.zip",
+    "sha256": "1ac3a4c7a67199c033688caba547c27429e646aa962f2183b1ffa3a54e4fdd9e"
+  }
+]
