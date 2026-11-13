@@ -21,7 +21,6 @@ const GAME_ICONS: Record<string, string> = {
   "word-scramble":  "🔤",
   "memory-match": "🧩",
   "treasure-tap": "🧰",
-  "parcel-dash": "📦",
 };
 
 type Overview={summary?:{plays:number;players:number;credits:number};games:{game_id:string;plays:number;credits:number}[];sessions:{id:string;game_id:string;user_label:string;status:string;issued_at:string;expires_at:string;prize_credits:number}[];expiredInRecent:number;flaggedAccounts:number};
@@ -48,9 +47,10 @@ export function AdminRewardsPage() {
       })
       .then((rows: Game[]) => {
         if (!rows) return;
-        setGames(rows);
+        const availableRows = rows.filter(g => g.id !== "parcel-dash");
+        setGames(availableRows);
         const initial: Record<string, Partial<Game>> = {};
-        rows.forEach(g => { initial[g.id] = { enabled: g.enabled, credits_min: g.credits_min, credits_max: g.credits_max, daily_plays_per_user: g.daily_plays_per_user }; });
+        availableRows.forEach(g => { initial[g.id] = { enabled: g.enabled, credits_min: g.credits_min, credits_max: g.credits_max, daily_plays_per_user: g.daily_plays_per_user }; });
         setEdits(initial);
       })
       .catch((e: Error) => setError(e.message))
@@ -219,12 +219,12 @@ export function AdminRewardsPage() {
             <div className="grid lg:grid-cols-2 gap-4">
               <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
                 <h3 className="font-black mb-3">Game activity · last 7 days</h3>
-                {overview.games.length===0?<p className="text-sm">No game activity yet.</p>:overview.games.map(g=><div key={g.game_id} className="flex justify-between py-2 border-b border-slate-200 dark:border-slate-600 text-sm"><span>{g.game_id}</span><span>{g.plays} plays · {g.credits} credits</span></div>)}
+                {overview.games.length===0?<p className="text-sm">No game activity yet.</p>:overview.games.filter(g=>g.game_id!=="parcel-dash").map(g=><div key={g.game_id} className="flex justify-between py-2 border-b border-slate-200 dark:border-slate-600 text-sm"><span>{g.game_id}</span><span>{g.plays} plays · {g.credits} credits</span></div>)}
               </div>
               <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
                 <div className="flex flex-wrap justify-between gap-3 mb-3"><h3 className="font-black">Recent reward sessions</h3><select aria-label="Filter session status" className="border rounded-lg px-2 py-1 bg-white text-slate-900" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}>{["all","started","completed","claimed","expired"].map(v=><option key={v} value={v}>{v}</option>)}</select></div>
                 <div className="max-h-80 overflow-auto space-y-2">
-                  {overview.sessions.filter(v=>sessionFilter==="all"||v.status===sessionFilter||(sessionFilter==="expired"&&v.status==="started"&&new Date(v.expires_at)<new Date())).map(v=><div key={v.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 text-xs flex justify-between gap-2"><span><strong>{v.game_id}</strong> · {v.user_label}<span className="block text-slate-500 dark:text-slate-300">{new Date(v.issued_at).toLocaleString()}</span></span><span className="font-bold">{v.status==="started"&&new Date(v.expires_at)<new Date()?"expired":v.status}</span></div>)}
+                  {overview.sessions.filter(v=>v.game_id!=="parcel-dash").filter(v=>sessionFilter==="all"||v.status===sessionFilter||(sessionFilter==="expired"&&v.status==="started"&&new Date(v.expires_at)<new Date())).map(v=><div key={v.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 text-xs flex justify-between gap-2"><span><strong>{v.game_id}</strong> · {v.user_label}<span className="block text-slate-500 dark:text-slate-300">{new Date(v.issued_at).toLocaleString()}</span></span><span className="font-bold">{v.status==="started"&&new Date(v.expires_at)<new Date()?"expired":v.status}</span></div>)}
                 </div>
               </div>
             </div>
