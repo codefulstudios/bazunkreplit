@@ -72,7 +72,7 @@ const ICON_COLOR: Record<string, string> = {
 };
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
-function SpinWheelGame({ game, onPlay, playSound }: { game: Game; onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void }) {
+function SpinWheelGame({ game, onPlay, playSound }: { game: Game; onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void }) {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
   const segments = Array.from({ length: 8 }, (_, i) => Math.round(game.creditsMin + (game.creditsMax - game.creditsMin) * i / 7));
@@ -158,7 +158,7 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 }
 
 // ── Scratch Card ──────────────────────────────────────────────────────────────
-function ScratchCardGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void }) {
+function ScratchCardGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragging = useRef(false);
   const last = useRef<{x:number;y:number}|null>(null);
@@ -313,7 +313,7 @@ function GameModal({
   game: Game;
   onClose: () => void;
   onResult: (res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) => void;
-  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void;
+  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void;
 }) {
   const { user } = useAuth();
   const { getToken } = useClerkAuth();
@@ -418,7 +418,7 @@ function GameModal({
                 {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
                 {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
                 {!error && sessionReady && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
-                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} />}
+                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} playSound={playGameSound} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -466,7 +466,7 @@ export function RewardsPage() {
       .finally(() => setLbLoading(false));
   }, [fetchGames, fetchStats]);
 
-  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});try{const saved=localStorage.getItem("bazunk_rewards_sound");setSoundEnabled(saved===null?true:saved==="on")}catch{setSoundEnabled(true)}},[]);
+  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});setSoundEnabled(true);try{localStorage.setItem("bazunk_rewards_sound","on")}catch{}},[]);
   useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
   useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
   function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"){
@@ -477,11 +477,13 @@ export function RewardsPage() {
       else if(kind==="tick")tone(780,0,.035,.012,"square");
       else if(kind==="scratch")tone(180+Math.random()*100,0,.045,.009,"sawtooth");
       else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.045));
+      else if(kind==="lose"){tone(392,0,.18,.045,"triangle");tone(330,.17,.2,.045,"triangle");tone(262,.36,.34,.05,"triangle")}
+      else if(kind==="parcel-music"){tone(659,0,.12,.018,"square");tone(784,.14,.12,.018,"square");tone(988,.28,.12,.018,"square");tone(784,.42,.12,.018,"square");tone(659,.56,.18,.018,"square")}
       window.setTimeout(()=>void ctx.close(),800);
     }catch{/* Sound is optional and never blocks game play. */}
   }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
-    if(res.won&&res.creditsEarned>0)playGameSound("win");
+    playGameSound(res.won&&res.creditsEarned>0?"win":"lose");
     if(user)getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(data)setStreak(data)}).catch(()=>{});
     if (res.creditsEarned > 0) refreshBalance?.();
     fetchStats();
