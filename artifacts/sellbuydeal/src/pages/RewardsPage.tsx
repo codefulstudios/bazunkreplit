@@ -383,7 +383,7 @@ function GameModal({
           <button type="button" onClick={onClose} aria-label="Close game" title="Close game" className="ml-auto shrink-0 grid h-11 w-11 place-items-center rounded-full border-2 border-slate-300 bg-slate-100 text-slate-900 text-2xl font-bold hover:bg-orange-100 hover:border-orange-400 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500">×</button>
         </div>
 
-        <div className="bz-reward-dialog-body p-3 sm:p-4 arcade-modal-content">
+        <div className="bz-reward-dialog-body p-3 sm:p-4 arcade-modal-content" onPointerDown={()=>playSound("tick")}>
           <AnimatePresence mode="wait">
             {result ? (
               <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
@@ -438,7 +438,7 @@ export function RewardsPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(true);
   const {getToken}=useClerkAuth();
-  const [soundEnabled,setSoundEnabled]=useState(false);
+  const [soundEnabled,setSoundEnabled]=useState(true);
   const [soundPolicy,setSoundPolicy]=useState({enabled:true,spinWheel:true,scratchCard:true});
   const [streak,setStreak]=useState<{streak:number;playedToday:boolean}|null>(null);
   const [leaderboardScope,setLeaderboardScope]=useState<"all"|"top5">("top5");
@@ -466,11 +466,11 @@ export function RewardsPage() {
       .finally(() => setLbLoading(false));
   }, [fetchGames, fetchStats]);
 
-  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});try{setSoundEnabled(localStorage.getItem("bazunk_rewards_sound")==="on")}catch{}},[]);
+  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});try{const saved=localStorage.getItem("bazunk_rewards_sound");setSoundEnabled(saved===null?true:saved==="on")}catch{setSoundEnabled(true)}},[]);
   useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
   useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
   function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"){
-    if(!soundEnabled||!soundPolicy.enabled||((kind==="spin"||kind==="tick")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
+    if(!soundEnabled||!soundPolicy.enabled||((kind==="spin")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
     try{const C=window.AudioContext;if(!C)return;const ctx=new C(),now=ctx.currentTime;
       const tone=(freq:number,start:number,duration:number,volume:number,type:OscillatorType="sine")=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now+start);g.gain.setValueAtTime(.0001,now+start);g.gain.exponentialRampToValueAtTime(volume,now+start+.008);g.gain.exponentialRampToValueAtTime(.0001,now+start+duration);o.connect(g).connect(ctx.destination);o.start(now+start);o.stop(now+start+duration+.01)};
       if(kind==="spin"){tone(260,0,.18,.035,"triangle");tone(390,.12,.24,.035,"triangle")}
