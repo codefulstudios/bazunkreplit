@@ -35,6 +35,14 @@ interface LeaderboardEntry {
 }
 
 let rewardsAudioContext: AudioContext | null = null;
+function unlockRewardsAudio() {
+  try {
+    const AudioCtx=window.AudioContext||(window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+    if(!AudioCtx)return;
+    rewardsAudioContext=rewardsAudioContext||(new AudioCtx());
+    if(rewardsAudioContext.state==="suspended")void rewardsAudioContext.resume();
+  } catch {/* Audio remains optional. */}
+}
 
 const ICON_MAP: Record<string, React.ElementType> = {
   calendar: CalendarCheck,
@@ -601,7 +609,7 @@ export function RewardsPage() {
                           </Link>
                         ) : (
                         <button
-                          onClick={() => !done && setActiveGame(game)}
+                          onClick={() => { if(!done){unlockRewardsAudio();setActiveGame(game);} }}
                           disabled={done}
                           className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                             done
