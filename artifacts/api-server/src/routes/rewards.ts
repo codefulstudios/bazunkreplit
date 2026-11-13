@@ -21,7 +21,6 @@ const QUIZ_QUESTIONS = [
   { q: "Which UK city is known as the 'Second City'?",   options: ["Manchester", "Birmingham", "Leeds", "Liverpool"], answer: 1 },
   { q: "What protects buyers if an item doesn't arrive?",options: ["Seller rating", "Buyer Protection", "Cashback", "Credits"], answer: 1 },
   { q: "What is an auction reserve price?",              options: ["The highest bid", "The starting price", "The minimum price the seller will accept", "The buyer's max bid"], answer: 2 },
-],
   { q: "Largest ocean?", options: ["Atlantic","Indian","Pacific","Arctic"], answer: 2 },
   { q: "Tallest land animal?", options: ["Elephant","Giraffe","Camel","Ostrich"], answer: 1 },
   { q: "Capital of Japan?", options: ["Kyoto","Osaka","Tokyo","Hiroshima"], answer: 2 },
