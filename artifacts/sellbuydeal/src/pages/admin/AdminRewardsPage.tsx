@@ -36,6 +36,9 @@ export function AdminRewardsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, Partial<Game>>>({});
+  const [sound,setSound]=useState({enabled:true,spinWheel:true,scratchCard:true});
+  const [soundSaving,setSoundSaving]=useState(false);
+  const [soundMessage,setSoundMessage]=useState("");
 
   useEffect(() => {
     authFetch(`/api/admin/rewards/games?_t=${Date.now()}`)
@@ -54,6 +57,7 @@ export function AdminRewardsPage() {
       .finally(() => setLoading(false));
   }, [authFetch]);
 
+  useEffect(()=>{authFetch("/api/admin/rewards/sound-settings").then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Could not load sound settings");setSound({enabled:d.enabled!==false,spinWheel:d.spinWheel!==false,scratchCard:d.scratchCard!==false});}).catch(e=>setSoundMessage(e.message||"Could not load sound settings"));},[authFetch]);
   useEffect(()=>{authFetch("/api/admin/rewards/overview").then(async r=>{if(!r.ok)throw new Error("Monitoring unavailable");return r.json()}).then(setOverview).catch(e=>setMonitorError(e.message));},[authFetch]);
   function update(id: string, field: string, value: unknown) {
     setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -93,6 +97,14 @@ export function AdminRewardsPage() {
             <p className="text-sm text-gray-500">Manage game availability, earning rules and daily limits for Bazunk Rewards Arcade.</p>
           </div>
         </div>
+
+        <section className="rounded-2xl border border-violet-200 bg-violet-50 p-5 mb-6 text-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-black">🔊 Arcade sound effects</h2><p className="text-sm text-slate-600">Control the sound effects available to visitors. Visitors can still mute sound individually.</p></div><button type="button" onClick={()=>void saveSound()} disabled={soundSaving} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{soundSaving?"Saving…":"Save sound settings"}</button></div>
+          <div className="mt-4 grid sm:grid-cols-3 gap-3">
+            {([{key:"enabled",label:"Enable all arcade sounds"},{key:"spinWheel",label:"Spin wheel sounds"},{key:"scratchCard",label:"Scratch card sounds"}] as const).map(item=><label key={item.key} className="flex items-center gap-3 rounded-xl bg-white border border-violet-100 p-3 font-semibold text-sm"><input type="checkbox" checked={sound[item.key]} onChange={e=>setSound(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 accent-violet-600"/>{item.label}</label>)}
+          </div>
+          {soundMessage&&<p role="status" className="mt-3 text-sm font-semibold">{soundMessage}</p>}
+        </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><div className="rounded-2xl p-4 bg-blue-50 border border-blue-200 text-blue-900"><div className="text-sm font-semibold">🎮 Installed Games</div><div className="text-3xl font-black">{games.length}</div></div><div className="rounded-2xl p-4 bg-green-50 border border-green-200 text-green-900"><div className="text-sm font-semibold">🟢 Enabled</div><div className="text-3xl font-black">{games.filter(g => (edits[g.id]?.enabled ?? g.enabled)).length}</div></div><div className="rounded-2xl p-4 bg-orange-50 border border-orange-200 text-orange-900"><div className="text-sm font-semibold">🎁 Daily play capacity / user</div><div className="text-3xl font-black">{games.filter(g => edits[g.id]?.enabled ?? g.enabled).reduce((n,g)=>n+(edits[g.id]?.daily_plays_per_user ?? g.daily_plays_per_user),0)}</div></div></div>
         {loading ? (
