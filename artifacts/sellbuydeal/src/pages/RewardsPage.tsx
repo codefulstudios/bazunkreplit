@@ -72,16 +72,17 @@ const ICON_COLOR: Record<string, string> = {
 };
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
-function SpinWheelGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => Promise<void> }) {
+function SpinWheelGame({ game, onPlay, playSound }: { game: Game; onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void }) {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
   const segments = Array.from({ length: 8 }, (_, i) => Math.round(game.creditsMin + (game.creditsMax - game.creditsMin) * i / 7));
   const colors = ["#5546e8","#fa742e","#0cae89","#f5a623","#8749df","#f04458","#00a9c8","#df3d94"];
   async function spin() {
     if (spinning) return;
-    setSpinning(true);
+    setSpinning(true); playSound("spin");
+    const tick=setInterval(()=>playSound("tick"),150);
     setAngle(a => a + 1800 + Math.random() * 360);
-    await new Promise(r => setTimeout(r, 3400));
+    await new Promise(r => setTimeout(r, 3400)); clearInterval(tick);
     try { await onPlay(); } finally { setSpinning(false); }
   }
   return (
@@ -157,13 +158,14 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 }
 
 // ── Scratch Card ──────────────────────────────────────────────────────────────
-function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
+function ScratchCardGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragging = useRef(false);
   const last = useRef<{x:number;y:number}|null>(null);
   const [progress,setProgress] = useState(0);
   const [revealing,setRevealing] = useState(false);
   const [revealed,setRevealed] = useState(false);
+  const lastScratchSound=useRef(0);
   useEffect(() => {
     const canvas=canvasRef.current;
     if(!canvas) return;
@@ -184,6 +186,7 @@ function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<voi
     if(!canvas||!ctx)return;
     const rect=canvas.getBoundingClientRect();
     const point={x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height};
+    if(Date.now()-lastScratchSound.current>85){lastScratchSound.current=Date.now();playSound("scratch");}
     ctx.globalCompositeOperation="destination-out";ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=38;
     ctx.beginPath();if(last.current){ctx.moveTo(last.current.x,last.current.y);ctx.lineTo(point.x,point.y);}else{ctx.moveTo(point.x,point.y);ctx.lineTo(point.x+.1,point.y+.1);}ctx.stroke();
     last.current=point;
@@ -195,7 +198,7 @@ function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<voi
   }
   async function finish(){
     if(revealing||revealed)return;
-    dragging.current=false;setRevealing(true);
+    dragging.current=false;setRevealing(true);playSound("reveal");
     try { await onPlay();setRevealed(true); } finally {setRevealing(false);}
   }
   return <div className="arcade-scratch-experience flex flex-col items-center gap-4 py-5">
@@ -305,11 +308,12 @@ function LuckyNumberGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<voi
 
 // ── Game Modal ────────────────────────────────────────────────────────────────
 function GameModal({
-  game, onClose, onResult,
+  game, onClose, onResult, playSound,
 }: {
   game: Game;
   onClose: () => void;
   onResult: (res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) => void;
+  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win")=>void;
 }) {
   const { user } = useAuth();
   const { getToken } = useClerkAuth();
@@ -407,9 +411,9 @@ function GameModal({
                   </div>
                 )}
                 {!error && !sessionReady && <div role="status" className="flex items-center justify-center gap-2 py-8 text-slate-800"><Loader2 className="h-5 w-5 animate-spin"/> Preparing your game…</div>}
-                {!error && sessionReady && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
+                {!error && sessionReady && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} playSound={playSound} />}
                 {!error && sessionReady && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
-                {!error && sessionReady && game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
+                {!error && sessionReady && game.id === "scratch-card" && <ScratchCardGame onPlay={play} playSound={playSound} />}
                 {!error && sessionReady && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
                 {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
                 {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
@@ -435,6 +439,7 @@ export function RewardsPage() {
   const [lbLoading, setLbLoading] = useState(true);
   const {getToken}=useClerkAuth();
   const [soundEnabled,setSoundEnabled]=useState(false);
+  const [soundPolicy,setSoundPolicy]=useState({enabled:true,spinWheel:true,scratchCard:true});
   const [streak,setStreak]=useState<{streak:number;playedToday:boolean}|null>(null);
   const [leaderboardScope,setLeaderboardScope]=useState<"all"|"top5">("top5");
 
@@ -461,19 +466,22 @@ export function RewardsPage() {
       .finally(() => setLbLoading(false));
   }, [fetchGames, fetchStats]);
 
+  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});try{setSoundEnabled(localStorage.getItem("bazunk_rewards_sound")==="on")}catch{}},[]);
+  useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
   useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
-  function playCelebrationTone(){
-    if(!soundEnabled)return;
-    try{
-      const AudioContextClass=window.AudioContext;
-      if(!AudioContextClass)return;
-      const context=new AudioContextClass(),notes=[523.25,659.25,783.99];
-      notes.forEach((frequency,i)=>{const oscillator=context.createOscillator(),gain=context.createGain();oscillator.type="sine";oscillator.frequency.value=frequency;gain.gain.setValueAtTime(.0001,context.currentTime+i*.12);gain.gain.exponentialRampToValueAtTime(.065,context.currentTime+i*.12+.025);gain.gain.exponentialRampToValueAtTime(.0001,context.currentTime+i*.12+.19);oscillator.connect(gain).connect(context.destination);oscillator.start(context.currentTime+i*.12);oscillator.stop(context.currentTime+i*.12+.2)});
-      window.setTimeout(()=>void context.close(),900);
-    }catch{/* Audio is optional and should never interfere with rewards. */}
+  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"){
+    if(!soundEnabled||!soundPolicy.enabled||((kind==="spin"||kind==="tick")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
+    try{const C=window.AudioContext;if(!C)return;const ctx=new C(),now=ctx.currentTime;
+      const tone=(freq:number,start:number,duration:number,volume:number,type:OscillatorType="sine")=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now+start);g.gain.setValueAtTime(.0001,now+start);g.gain.exponentialRampToValueAtTime(volume,now+start+.008);g.gain.exponentialRampToValueAtTime(.0001,now+start+duration);o.connect(g).connect(ctx.destination);o.start(now+start);o.stop(now+start+duration+.01)};
+      if(kind==="spin"){tone(260,0,.18,.035,"triangle");tone(390,.12,.24,.035,"triangle")}
+      else if(kind==="tick")tone(780,0,.035,.012,"square");
+      else if(kind==="scratch")tone(180+Math.random()*100,0,.045,.009,"sawtooth");
+      else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.045));
+      window.setTimeout(()=>void ctx.close(),800);
+    }catch{/* Sound is optional and never blocks game play. */}
   }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
-    if(res.won&&res.creditsEarned>0)playCelebrationTone();
+    if(res.won&&res.creditsEarned>0)playGameSound("win");
     if(user)getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(data)setStreak(data)}).catch(()=>{});
     if (res.creditsEarned > 0) refreshBalance?.();
     fetchStats();
@@ -493,7 +501,7 @@ export function RewardsPage() {
 
       <main id="arcade-games" className="flex-1 container mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-wrap items-center gap-3 mb-5">
-          <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} className="bz-arcade-sound-toggle rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2">{soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>} Sound {soundEnabled?"on":"off"}</button>
+          <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} disabled={!soundPolicy.enabled} className="bz-arcade-sound-toggle rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2">{soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>} Sound {soundEnabled?"on":"off"}</button>
           {streak&&<div className="rounded-xl border border-orange-200 bg-orange-50 text-orange-950 px-4 py-2 text-sm font-bold flex items-center gap-2"><Flame size={17}/> {streak.streak}-day playing streak {streak.playedToday?"· Played today":"· Play to continue"}</div>}
         </div>
         {user && <Link href="/rewards/referrals" className="mb-6 block rounded-2xl bg-gradient-to-r from-[#F26B21] to-[#4A5CE8] text-white p-5 shadow-sm"><div className="flex items-center justify-between gap-4"><div><p className="font-black text-lg">Invite a friend — you both earn credits</p><p className="text-white/80 text-sm">Earn again when your friend makes their first purchase and starts selling.</p></div><ChevronRight className="shrink-0" /></div></Link>}
