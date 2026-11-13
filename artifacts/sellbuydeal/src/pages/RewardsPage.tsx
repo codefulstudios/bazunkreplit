@@ -680,6 +680,7 @@ export function RewardsPage() {
               game={activeGame}
               onClose={() => setActiveGame(null)}
               onResult={handleResult}
+              playSound={playGameSound}
             />
           )}
         </AnimatePresence>,
