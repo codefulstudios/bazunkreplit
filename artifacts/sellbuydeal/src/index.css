@@ -2634,3 +2634,32 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .bz-reward-dialog-body .arcade-result {padding:8px!important;max-height:100%;overflow:hidden}
 .bz-reward-dialog-body .arcade-result-art {font-size:2.2rem!important}
 @media(max-height:650px){.bz-reward-game-dialog{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px)}.bz-reward-dialog-body .arcade-wheel-stage{transform:scale(.62);margin:-54px auto!important}.bz-reward-dialog-header{padding:6px 12px!important}.bz-reward-dialog-body{padding:6px!important}}
+
+
+/* Importer hub: enforce high-contrast controls in both themes. */
+.bazunk-importers-page :is(button,a):focus-visible{outline:3px solid #f26b21!important;outline-offset:3px!important;box-shadow:0 0 0 2px #fff!important}
+.bazunk-importers-page > div > a:first-child{background:#f26b21!important;color:#172033!important;border:2px solid #c94c0b!important}
+.bazunk-importers-page > div > a:first-child :is(svg,span){color:#172033!important}
+.bazunk-importers-page > div > section:first-of-type :is(button,a){min-height:44px;opacity:1!important;text-decoration:none!important}
+.bazunk-importers-page > div > section:first-of-type button:first-child{background:#1457bd!important;color:#fff!important;border:2px solid #10489d!important}
+.dark .bazunk-importers-page > div > section:first-of-type button:first-child{background:#1768d5!important;color:#fff!important;border-color:#8dbdff!important}
+.bazunk-importers-page > div > section:first-of-type button:not(:first-child){background:#fff!important;color:#173c72!important;border:2px solid #668fbe!important}
+.dark .bazunk-importers-page > div > section:first-of-type button:not(:first-child){background:#1b3556!important;color:#fff!important;border:2px solid #8bb5e7!important}
+.bazunk-importers-page > div > .grid > div .p-3 > div button,
+.bazunk-importers-page > div > .grid > div .p-3 > div a{background:#1558bd!important;color:#fff!important;border:2px solid #10489d!important;min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center}
+.dark .bazunk-importers-page > div > .grid > div .p-3 > div button,
+.dark .bazunk-importers-page > div > .grid > div .p-3 > div a{background:#1768d5!important;color:#fff!important;border:2px solid #8dbdff!important}
+.bazunk-importers-page > div > section:not(:first-of-type) button{background:#e5f0ff!important;color:#123e78!important;border:2px solid #6b96c9!important}
+.dark .bazunk-importers-page > div > section:not(:first-of-type) button{background:#24466d!important;color:#fff!important;border:2px solid #8bb5e7!important}
+.bazunk-importers-page > div > .mt-5.flex :is(button,a){background:transparent!important;color:#124f9e!important;font-weight:800!important}
+.dark .bazunk-importers-page > div > .mt-5.flex :is(button,a){color:#b9e2ff!important}
+.bazunk-importers-page .bz-importer-dialog :is(button,a){opacity:1!important;font-weight:800!important;text-decoration:none}
+.bazunk-importers-page .bz-importer-dialog button[aria-label="Close"]{background:#7c2d12!important;color:#fff!important;border:2px solid #f5a36c!important}
+.bazunk-importers-page .bz-importer-dialog .grid button{background:#fff!important;color:#71320f!important;border:2px solid #b45309!important;min-height:42px}
+.bazunk-importers-page .bz-importer-dialog .grid button[class*="!bg-orange-500"]{background:#c2410c!important;color:#fff!important;border-color:#9a3412!important}
+.dark .bazunk-importers-page .bz-importer-dialog .grid button{background:#29211a!important;color:#ffddb8!important;border-color:#c27a39!important}
+.dark .bazunk-importers-page .bz-importer-dialog .grid button[class*="!bg-orange-500"]{background:#c2410c!important;color:#fff!important;border-color:#fdba74!important}
+.bazunk-importers-page .bz-importer-dialog a.rounded-lg{background:#174ea6!important;color:#fff!important;border:2px solid #0f397a!important}
+.bazunk-importers-page :is(button,a):disabled{opacity:.55!important;cursor:not-allowed}
+.bazunk-importers-page :is(button,a):hover{filter:brightness(.96)}
+.dark .bazunk-importers-page :is(button,a):hover{filter:brightness(1.12)}
