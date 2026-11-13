@@ -2187,7 +2187,6 @@ html:not(.dark) .bz-hero-chip:first-child{background:#175cd3;color:#fff!importan
 .bazunk-rewards-arcade .bz-reward-icon-lucky-number{background:linear-gradient(145deg,#ffe9a3,#ffbf71)!important}
 .bazunk-rewards-arcade .bz-reward-icon-memory-match{background:linear-gradient(145deg,#d9d1ff,#aebeff)!important}
 .bazunk-rewards-arcade .bz-reward-icon-treasure-tap{background:linear-gradient(145deg,#d3f9dd,#a8e9ce)!important}
-.bazunk-rewards-arcade .bz-reward-icon-parcel-dash{background:linear-gradient(145deg,#c7edff,#82c9ef)!important}
 .dark .bazunk-rewards-arcade .bz-reward-game-icon{border-color:#ffffff52;box-shadow:0 8px 0 #02071760,0 18px 32px #0007,inset 0 2px 8px #ffffff52}
 @media(max-width:450px){.bazunk-rewards-arcade .bz-reward-game-icon{width:88px;height:88px}.bazunk-rewards-arcade .bz-reward-icon-emoji{font-size:54px}}
 @media(prefers-reduced-motion:reduce){.bazunk-rewards-arcade .bz-reward-game-icon,.bazunk-rewards-arcade .bz-reward-icon-emoji{transition:none!important}}
