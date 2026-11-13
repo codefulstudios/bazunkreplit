@@ -26,6 +26,8 @@ export function AdminCategoryManagerPage(){
  const [suggestions,setSuggestions]=useState<string[]>([]);
  const [seeded,setSeeded]=useState(false);
  const [dirty,setDirty]=useState(false);
+ const [categoryDirty,setCategoryDirty]=useState(false);
+ const [thirdDirty,setThirdDirty]=useState(false);
  useEffect(()=>{let active=true;Promise.all([
   authFetch("/api/taxonomy/category-overrides").then(r=>r.ok?r.json():{overrides:[]}),
   authFetch("/api/admin/taxonomy/third-level").then(r=>r.ok?r.json():{categories:[]}),
@@ -48,10 +50,9 @@ export function AdminCategoryManagerPage(){
    setMessage(data.created?data.created+" new third-level categories created, all hidden. Existing settings preserved.":"Third-level library already populated. Existing visibility preserved.");
   }catch(e){setMessage("Unable to populate third-level taxonomy: "+String(e));setSeeded(false);}
  };
- useEffect(()=>{if(items.length>0&&!seeded){void seed();}},[items.length,seeded]);
  const setGroupVisibility=(subcategory:string,visible:boolean)=>{
   setThird(prev=>prev.map(x=>x.category===selected&&x.subcategory===subcategory?{...x,visible}:x));
-  setDirty(true);
+  setDirty(true);setThirdDirty(true);
  };
  const top=items.filter(x=>!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order);
  const subs=items.filter(x=>x.category_slug===selected&&!!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order);
@@ -61,16 +62,20 @@ export function AdminCategoryManagerPage(){
  const count=(c:string,s?:string)=>evidence.filter(x=>x.category===c&&(s===undefined||x.subcategory===s)).reduce((n,x)=>n+Number(x.count),0);
  const hidden=items.filter(x=>!x.visible).length+third.filter(x=>!x.visible).length;
  const totalThird=third.length;
- const change=(x:Item,patch:Partial<Item>)=>{setItems(prev=>prev.map(v=>v.category_slug===x.category_slug&&v.subcategory_slug===x.subcategory_slug?{...v,...patch}:v));setDirty(true)};
- const changeThird=(x:Third,patch:Partial<Third>)=>{setThird(prev=>prev.map(v=>v.category===x.category&&v.subcategory===x.subcategory&&v.slug===x.slug?{...v,...patch}:v));setDirty(true)};
- const move=(x:Item,delta:number)=>{const peers=items.filter(v=>v.category_slug===x.category_slug&&Boolean(v.subcategory_slug)===Boolean(x.subcategory_slug)).sort((a,b)=>a.sort_order-b.sort_order);const i=peers.findIndex(v=>v.subcategory_slug===x.subcategory_slug);if(i+delta<0||i+delta>=peers.length)return;[peers[i],peers[i+delta]]=[peers[i+delta],peers[i]];setItems(prev=>prev.map(v=>{const order=peers.findIndex(p=>p.category_slug===v.category_slug&&p.subcategory_slug===v.subcategory_slug);return order<0?v:{...v,sort_order:order}}));setDirty(true)};
- const save=async()=>{setSaving(true);setMessage("");try{
-  const a=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:items})});
-  if(!a.ok)throw Error(((await a.json().catch(()=>({}))).error||"Could not save categories"));
-  const b=await authFetch("/api/admin/taxonomy/third-level",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:third})});
-  if(!b.ok)throw Error(((await b.json().catch(()=>({}))).error||"Could not save taxonomy"));
-  setDirty(false);setMessage("Saved categories and taxonomy. Existing listing slugs are unchanged.");
- }catch(e){setMessage(e instanceof Error?e.message:String(e))}finally{setSaving(false)}};
+ const change=(x:Item,patch:Partial<Item>)=>{setItems(prev=>prev.map(v=>v.category_slug===x.category_slug&&v.subcategory_slug===x.subcategory_slug?{...v,...patch}:v));setDirty(true);setCategoryDirty(true)};
+ const changeThird=(x:Third,patch:Partial<Third>)=>{setThird(prev=>prev.map(v=>v.category===x.category&&v.subcategory===x.subcategory&&v.slug===x.slug?{...v,...patch}:v));setDirty(true);setThirdDirty(true)};
+ const move=(x:Item,delta:number)=>{const peers=items.filter(v=>v.category_slug===x.category_slug&&Boolean(v.subcategory_slug)===Boolean(x.subcategory_slug)).sort((a,b)=>a.sort_order-b.sort_order);const i=peers.findIndex(v=>v.subcategory_slug===x.subcategory_slug);if(i+delta<0||i+delta>=peers.length)return;[peers[i],peers[i+delta]]=[peers[i+delta],peers[i]];setItems(prev=>prev.map(v=>{const order=peers.findIndex(p=>p.category_slug===v.category_slug&&p.subcategory_slug===v.subcategory_slug);return order<0?v:{...v,sort_order:order}}));setDirty(true);setThirdDirty(true)};
+ const save=async()=>{if(saving)return;setSaving(true);setMessage("Saving changes…");try{
+  if(categoryDirty){
+   const a=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:items})});
+   if(!a.ok)throw Error(((await a.json().catch(()=>({}))).error||"Could not save categories"));
+  }
+  if(thirdDirty){
+   const b=await authFetch("/api/admin/taxonomy/third-level",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:third})});
+   if(!b.ok)throw Error(((await b.json().catch(()=>({}))).error||"Could not save taxonomy"));
+  }
+  setDirty(false);setCategoryDirty(false);setThirdDirty(false);setMessage("✓ Saved successfully. Existing listing slugs are unchanged.");
+ }catch(e){setMessage("Save failed: "+(e instanceof Error?e.message:String(e)))}finally{setSaving(false)}};
  const addThird=(name:string,sub:string)=>{const slug=thirdLevelSlug(name);if(!slug||third.some(x=>x.category===selected&&x.subcategory===sub&&x.slug===slug))return;setThird(v=>[...v,{category:selected,subcategory:sub,slug,name,sort_order:third.filter(t=>t.category===selected&&t.subcategory===sub).length,visible:true}]);setDirty(true);setMessage("Category added to draft. Save Changes to publish.")};
  const deleteThird=async(x:Third)=>{
   if(!window.confirm(`Permanently delete "${x.name}" from ${x.subcategory}? This cannot be undone. Existing listings will not be deleted.`))return;
