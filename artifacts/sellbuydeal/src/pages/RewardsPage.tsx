@@ -285,10 +285,10 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
   );
 }
 
-function MysteryBoxGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
+function MysteryBoxGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void }) {
   const [chosen,setChosen]=useState<number|null>(null);
   const [busy,setBusy]=useState(false);
-  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,1000));await onPlay(n);}finally{setBusy(false);}}
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);playSound("mystery-open");try{await new Promise(r=>setTimeout(r,1000));await onPlay(n);}finally{setBusy(false);}}
   return <div className="bz-mystery-game text-center">
     <motion.div className="bz-mystery-crown" animate={{y:[0,-7,0]}} transition={{repeat:Infinity,duration:2.4}} aria-hidden="true">✨🎁✨</motion.div>
     <h3>Choose your mystery box!</h3><p className="bz-mystery-subtitle">Three magical boxes. Pick your favourite and reveal your reward.</p>
@@ -300,10 +300,10 @@ function MysteryBoxGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void
   </div>;
 }
 
-function LuckyNumberGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
+function LuckyNumberGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void }) {
   const [chosen,setChosen]=useState<number|null>(null);
   const [busy,setBusy]=useState(false);
-  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);try{await new Promise(r=>setTimeout(r,850));await onPlay(n);}finally{setBusy(false);}}
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);playSound("number-roll");try{await new Promise(r=>setTimeout(r,850));await onPlay(n);}finally{setBusy(false);}}
   return <div className="py-4 text-center">
     <motion.div animate={{rotate:[-10,10,-10],y:[0,-5,0]}} transition={{repeat:Infinity,duration:2.2}}><Dices className="w-12 h-12 text-amber-500 mx-auto mb-3"/></motion.div>
     <p className="font-black text-gray-900 text-lg mb-2">Pick your lucky number</p>
@@ -323,7 +323,7 @@ function GameModal({
   game: Game;
   onClose: () => void;
   onResult: (res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) => void;
-  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void;
+  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void;
 }) {
   const { user } = useAuth();
   const { getToken } = useClerkAuth();
@@ -424,11 +424,11 @@ function GameModal({
                 {!error && sessionReady && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} playSound={playSound} />}
                 {!error && sessionReady && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
                 {!error && sessionReady && game.id === "scratch-card" && <ScratchCardGame onPlay={play} playSound={playSound} />}
-                {!error && sessionReady && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
-                {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
+                {!error && sessionReady && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} playSound={playSound} />}
+                {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} playSound={playSound} />}
                 {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
                 {!error && sessionReady && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
-                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} playSound={playGameSound} />}
+                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} playSound={playSound} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -479,7 +479,7 @@ export function RewardsPage() {
   useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});setSoundEnabled(true);try{localStorage.setItem("bazunk_rewards_sound","on")}catch{}},[]);
   useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
   useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
-  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"){
+  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll"){
     if(!soundEnabled||!soundPolicy.enabled||((kind==="spin")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
     try{
       const AudioCtx=window.AudioContext||(window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
@@ -500,7 +500,7 @@ export function RewardsPage() {
       else if(kind==="scratch")tone(180+Math.random()*100,0,.06,.02,"sawtooth");
       else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.06));
       else if(kind==="lose"){tone(392,0,.18,.055,"triangle");tone(330,.17,.2,.055,"triangle");tone(262,.36,.34,.06,"triangle")}
-      else if(kind==="parcel-music"){tone(659,0,.12,.035,"square");tone(784,.14,.12,.035,"square");tone(988,.28,.12,.035,"square");tone(784,.42,.12,.035,"square");tone(659,.56,.18,.035,"square")}
+      else if(kind==="parcel-music"){tone(659,0,.12,.035,"square");tone(784,.14,.12,.035,"square");tone(988,.28,.12,.035,"square");tone(784,.42,.12,.035,"square");tone(659,.56,.18,.035,"square")}\n      else if(kind==="mystery-open"){tone(220,0,.12,.045,"triangle");tone(330,.12,.12,.05,"triangle");tone(440,.24,.15,.055,"triangle");tone(660,.4,.3,.065,"sine")}\n      else if(kind==="number-roll"){[660,740,830,988,1175,1397].forEach((n,i)=>tone(n,i*.095,.08,.04,"square"))}
     }catch{/* Sound is optional and never blocks game play. */}
   }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
