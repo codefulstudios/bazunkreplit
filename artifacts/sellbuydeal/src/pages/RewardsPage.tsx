@@ -34,6 +34,8 @@ interface LeaderboardEntry {
   total_credits: number;
 }
 
+let rewardsAudioContext: AudioContext | null = null;
+
 const ICON_MAP: Record<string, React.ElementType> = {
   calendar: CalendarCheck,
   loader: RotateCcw,
@@ -469,17 +471,28 @@ export function RewardsPage() {
   useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});setSoundEnabled(true);try{localStorage.setItem("bazunk_rewards_sound","on")}catch{}},[]);
   useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
   useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
-  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"){
+  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"){
     if(!soundEnabled||!soundPolicy.enabled||((kind==="spin")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
-    try{const C=window.AudioContext;if(!C)return;const ctx=new C(),now=ctx.currentTime;
-      const tone=(freq:number,start:number,duration:number,volume:number,type:OscillatorType="sine")=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now+start);g.gain.setValueAtTime(.0001,now+start);g.gain.exponentialRampToValueAtTime(volume,now+start+.008);g.gain.exponentialRampToValueAtTime(.0001,now+start+duration);o.connect(g).connect(ctx.destination);o.start(now+start);o.stop(now+start+duration+.01)};
-      if(kind==="spin"){tone(260,0,.18,.035,"triangle");tone(390,.12,.24,.035,"triangle")}
-      else if(kind==="tick")tone(780,0,.035,.012,"square");
-      else if(kind==="scratch")tone(180+Math.random()*100,0,.045,.009,"sawtooth");
-      else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.045));
-      else if(kind==="lose"){tone(392,0,.18,.045,"triangle");tone(330,.17,.2,.045,"triangle");tone(262,.36,.34,.05,"triangle")}
-      else if(kind==="parcel-music"){tone(659,0,.12,.018,"square");tone(784,.14,.12,.018,"square");tone(988,.28,.12,.018,"square");tone(784,.42,.12,.018,"square");tone(659,.56,.18,.018,"square")}
-      window.setTimeout(()=>void ctx.close(),800);
+    try{
+      const AudioCtx=window.AudioContext||(window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+      if(!AudioCtx)return;
+      const ctx=rewardsAudioContext||(rewardsAudioContext=new AudioCtx());
+      if(ctx.state==="suspended")void ctx.resume();
+      const now=ctx.currentTime;
+      const tone=(freq:number,start:number,duration:number,volume:number,type:OscillatorType="sine")=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type=type;o.frequency.setValueAtTime(freq,now+start);
+        g.gain.setValueAtTime(.0001,now+start);
+        g.gain.exponentialRampToValueAtTime(volume,now+start+.008);
+        g.gain.exponentialRampToValueAtTime(.0001,now+start+duration);
+        o.connect(g).connect(ctx.destination);o.start(now+start);o.stop(now+start+duration+.015);
+      };
+      if(kind==="spin"){tone(260,0,.18,.055,"triangle");tone(390,.12,.24,.055,"triangle")}
+      else if(kind==="tick")tone(780,0,.045,.025,"square");
+      else if(kind==="scratch")tone(180+Math.random()*100,0,.06,.02,"sawtooth");
+      else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.06));
+      else if(kind==="lose"){tone(392,0,.18,.055,"triangle");tone(330,.17,.2,.055,"triangle");tone(262,.36,.34,.06,"triangle")}
+      else if(kind==="parcel-music"){tone(659,0,.12,.035,"square");tone(784,.14,.12,.035,"square");tone(988,.28,.12,.035,"square");tone(784,.42,.12,.035,"square");tone(659,.56,.18,.035,"square")}
     }catch{/* Sound is optional and never blocks game play. */}
   }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
