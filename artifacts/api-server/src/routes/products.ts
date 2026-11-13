@@ -163,7 +163,14 @@ router.put("/admin/taxonomy/category-overrides",requireAdmin,async(req,res)=>{
  try{
   await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
   await db.transaction(async tx=>{
-   for(const v of cleaned)await tx.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible) VALUES(${v.category_slug},${v.subcategory_slug},${v.name},${v.sort_order},${v.visible}) ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
+   for(const v of cleaned){
+    await tx.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible) VALUES(${v.category_slug},${v.subcategory_slug},${v.name},${v.sort_order},${v.visible}) ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
+    const visibilityKey=`category_visible_${v.category_slug}${v.subcategory_slug?"__"+v.subcategory_slug:""}`;
+    const displayKey=`category_display_${v.category_slug}${v.subcategory_slug?"__"+v.subcategory_slug:""}`;
+    const state=v.visible?"active":"hidden";
+    await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES(${visibilityKey},${v.visible?"true":"false"},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+    await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES(${displayKey},${state},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+   }
   });
   res.json({saved:cleaned.length});
  }catch(err){logger.error({err},"Category overrides save failed");res.status(503).json({error:"Could not save categories"});}
