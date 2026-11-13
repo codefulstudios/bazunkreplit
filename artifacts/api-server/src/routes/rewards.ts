@@ -284,7 +284,7 @@ router.post("/rewards/session/start",async(req,res)=>{
 try{
  const email=await identity(req),gameId=String(req.body?.gameId||"");
  if(!email)return void res.status(401).json({error:"Sign in required"});
- if(!["spin-wheel","scratch-card","daily-quiz","mystery-box","lucky-number","memory-match","treasure-tap","parcel-dash"].includes(gameId))return void res.status(400).json({error:"Invalid game"});
+ if(!["spin-wheel","scratch-card","daily-quiz","mystery-box","lucky-number","memory-match","treasure-tap"].includes(gameId))return void res.status(400).json({error:"Invalid game"});
  const value=await db.transaction(async tx=>{
   await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
   const gs=await tx.execute(sql`SELECT * FROM reward_games WHERE id=${gameId} AND enabled=TRUE`);const g=gs.rows[0] as Record<string,any>|undefined;if(!g)return {error:"Game disabled"};
@@ -314,7 +314,6 @@ try{
   const a=req.body?.answer,t=String(ss.game_id),elapsed=Number(ss.elapsed),info=(a&&typeof a==="object")?a as Record<string,any>:{};
   if(t==="memory-match"&&(!info.completed||elapsed<8||elapsed>180||!Number.isFinite(Number(info.score))||Number(info.score)<0||Number(info.score)>100))return {status:422,error:"Invalid completion"};
   if(t==="treasure-tap"&&(!info.completed||elapsed<25||elapsed>120||Number(info.duration)!==30))return {status:422,error:"Invalid completion"};
-  if(t==="parcel-dash"&&(!info.completed||elapsed<5||elapsed>240||!Number.isFinite(Number(info.distance))||Number(info.distance)<0||Number(info.distance)>1200))return {status:422,error:"Invalid completion"};
   // Incorrect quiz responses are completed attempts worth zero credits.
   const wrongQuiz=t==="daily-quiz"&&a!==ss.server_result.answer;
   if(t==="lucky-number"&&(!Number.isInteger(Number(a))||Number(a)<1||Number(a)>6))return {status:422,error:"Invalid number"};
