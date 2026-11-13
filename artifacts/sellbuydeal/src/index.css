@@ -2613,3 +2613,25 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .bazunk-importers-page :is(a,button):focus-visible{
   outline:3px solid #f26b21!important;outline-offset:3px;
 }
+
+
+/* Compact arcade dialogs: keep every game usable without an inner scroll area. */
+.bz-reward-game-dialog {height:min(690px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);overflow:hidden}
+.bz-reward-dialog-body {flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(8px,1.5vh,16px)!important}
+.bz-reward-dialog-body > * {width:100%;max-height:100%}
+.bz-reward-dialog-body .arcade-wheel-experience {gap:clamp(5px,1vh,12px)!important;padding:0!important}
+.bz-reward-dialog-body .arcade-wheel-stage {transform:scale(.78);transform-origin:center; margin:-32px auto!important}
+.bz-reward-dialog-body .arcade-wheel-experience > p {font-size:12px!important;margin:0}
+.bz-reward-dialog-body .arcade-wheel-experience .arcade-stage-heading {font-size:16px!important}
+.bz-reward-dialog-body .arcade-wheel-experience .arcade-orange-button {padding:8px 20px!important}
+.bz-reward-dialog-body .arcade-game {width:100%;max-height:100%;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.bz-reward-dialog-body .arcade-memory-grid {width:min(100%,390px);gap:5px!important}
+.bz-reward-dialog-body .arcade-memory-tile {min-height:clamp(38px,7vh,58px)!important;font-size:clamp(18px,3vh,26px)!important}
+.bz-reward-dialog-body .arcade-treasure-scene,.bz-reward-dialog-body .arcade-runner-scene {max-height:42vh;overflow:hidden}
+.bz-reward-dialog-body .arcade-treasure-grid {gap:5px!important}
+.bz-reward-dialog-body .arcade-scorebar {padding:5px 8px!important;font-size:12px!important}
+.bz-reward-dialog-body .arcade-intro {padding:8px!important}
+.bz-reward-dialog-body .arcade-intro .text-6xl {font-size:2rem!important;margin-bottom:4px!important}
+.bz-reward-dialog-body .arcade-result {padding:8px!important;max-height:100%;overflow:hidden}
+.bz-reward-dialog-body .arcade-result-art {font-size:2.2rem!important}
+@media(max-height:650px){.bz-reward-game-dialog{height:calc(100dvh - 12px);max-height:calc(100dvh - 12px)}.bz-reward-dialog-body .arcade-wheel-stage{transform:scale(.62);margin:-54px auto!important}.bz-reward-dialog-header{padding:6px 12px!important}.bz-reward-dialog-body{padding:6px!important}}
