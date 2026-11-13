@@ -522,7 +522,7 @@ async function runAppMigrations() {
       ('mystery-box',    'Mystery Box',      'Pick a mystery box and reveal a surprise credit prize.',                          '🎁', TRUE,  5, 40,  1),
         ('lucky-number',   'Lucky Number',      'Choose a number from 1 to 6. Match the draw for a bigger prize.',                   '🎲', TRUE,  5, 50,  2),
       ('memory-match', 'Memory Match', 'Flip pairs to complete the memory challenge.', '🧩', TRUE, 5, 15, 3),
-      ('treasure-tap', 'Treasure Tap', 'Tap treasure chests and dodge bombs for thirty seconds.', '🧰', TRUE, 5, 15, 3),
+      ('treasure-tap', 'Treasure Tap', 'Tap treasure chests and dodge bombs for thirty seconds.', '🧰', TRUE, 5, 15, 3)
     ON CONFLICT (id) DO NOTHING
   `, "reward_games.seed");
   await run(sql`UPDATE reward_games SET enabled = FALSE WHERE id = 'parcel-dash'`, "reward_games.disable_parcel_dash");
