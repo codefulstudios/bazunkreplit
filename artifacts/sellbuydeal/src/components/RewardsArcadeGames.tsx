@@ -65,12 +65,13 @@ export function TreasureTapGame({ onPlay }: Props) {
   </div>;
 }
 
-export function ParcelDashGame({ onPlay }: Props) {
+export function ParcelDashGame({ onPlay, playSound }: Props & { playSound: (kind:"parcel-music"|"tick")=>void }) {
   const [playing,setPlaying]=useState(false),[distance,setDistance]=useState(0),[stars,setStars]=useState(0),[lives,setLives]=useState(3),[jump,setJump]=useState(false),[finished,setFinished]=useState(false);
   const jumpRef=useRef(false), scoreRef=useRef({distance:0,stars:0,lives:3}),busy=useRef(false);
-  const jumpNow=()=>{if(!playing||jumpRef.current)return;jumpRef.current=true;setJump(true);window.setTimeout(()=>{jumpRef.current=false;setJump(false)},650);};
+  const jumpNow=()=>{if(!playing||jumpRef.current)return;jumpRef.current=true;playSound("tick");setJump(true);window.setTimeout(()=>{jumpRef.current=false;setJump(false)},650);};
   useEffect(()=>{
     if(!playing)return;
+    const music=setInterval(()=>playSound("parcel-music"),760);
     const handler=(e:KeyboardEvent)=>{if(e.code==="Space"||e.key==="ArrowUp"){e.preventDefault();jumpNow();}};
     window.addEventListener("keydown",handler);
     const t=setInterval(()=>{
@@ -80,9 +81,9 @@ export function ParcelDashGame({ onPlay }: Props) {
       scoreRef.current={distance:d,stars:st,lives:life};setDistance(d);setStars(st);setLives(life);
       if((life===0||d>=1000)&&!busy.current){busy.current=true;setPlaying(false);setFinished(true);void onPlay({completed:true,score:d+st*10,distance:d,stars:st});}
     },300);
-    return ()=>{window.removeEventListener("keydown",handler);clearInterval(t)};
+    return ()=>{window.removeEventListener("keydown",handler);clearInterval(t);clearInterval(music)};
   },[playing,onPlay]);
-  function start(){scoreRef.current={distance:0,stars:0,lives:3};busy.current=false;setDistance(0);setStars(0);setLives(3);setFinished(false);setPlaying(true);}
+  function start(){playSound("parcel-music");scoreRef.current={distance:0,stars:0,lives:3};busy.current=false;setDistance(0);setStars(0);setLives(3);setFinished(false);setPlaying(true);}
   return <div className="arcade-game"><div className="arcade-scorebar"><span>🏃 {distance}m</span><span>⭐ {stars}</span><span>❤️ {lives}/3</span></div>
     <div className="arcade-runner-scene" onPointerDown={jumpNow} role="img" aria-label="Animated parcel runner crossing a market street">
       <div className="arcade-runner-cloud">☁️ ☁️ ☀️</div><div className="arcade-runner-shop">🏪 🏬 🏠 🛒 🏪</div>
