@@ -12,7 +12,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { AdSlot } from "@/components/AdSlot";
 import { CompactPageHero } from "@/components/CompactPageHero";
-import { MemoryMatchGame, TreasureTapGame, ParcelDashGame } from "@/components/RewardsArcadeGames";
+import { MemoryMatchGame, TreasureTapGame } from "@/components/RewardsArcadeGames";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 
@@ -58,7 +58,6 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "lucky-number": Dices,
   "memory-match": Brain,
   "treasure-tap": Gift,
-  "parcel-dash": PackageOpen,
 };
 
 const ICON_BG: Record<string, string> = {
@@ -68,7 +67,7 @@ const ICON_BG: Record<string, string> = {
   "scratch-card":   "bg-orange-50",
   "mystery-box":    "bg-pink-50",
   "lucky-number":   "bg-amber-50",
-  "memory-match": "bg-blue-50", "treasure-tap": "bg-orange-50", "parcel-dash": "bg-sky-50",
+  "memory-match": "bg-blue-50", "treasure-tap": "bg-orange-50",
 };
 
 const ICON_COLOR: Record<string, string> = {
@@ -78,7 +77,7 @@ const ICON_COLOR: Record<string, string> = {
   "scratch-card":   "text-orange-500",
   "mystery-box":    "text-pink-500",
   "lucky-number":   "text-amber-500",
-  "memory-match": "text-blue-600", "treasure-tap": "text-orange-600", "parcel-dash": "text-sky-600",
+  "memory-match": "text-blue-600", "treasure-tap": "text-orange-600",
 };
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
@@ -399,7 +398,7 @@ function GameModal({
               <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
                 {result.won && <div className="arcade-confetti" aria-hidden="true">{Array.from({length:22},(_,i)=><span key={i} style={{left:`${(i*37)%100}%`,animationDelay:`${(i%8)*-.24}s`,backgroundColor:["#ffbd24","#fa6118","#3e9af7","#b04eea","#28cb9b"][i%5]}} />)}</div>}
                 <motion.div className="arcade-result-art" aria-hidden="true" animate={result.won?{y:[0,-8,0],rotate:[-5,5,-5]}:{y:[0,-4,0]}} transition={{duration:2,repeat:Infinity}}>
-                  {({"spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦","daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲"} as Record<string,string>)[game.id]??"🎁"}
+                  {({"spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲"} as Record<string,string>)[game.id]??"🎁"}
                   <span>{result.won?"🏆":"⭐"}</span>
                 </motion.div>
                 <h2 className="arcade-result-title">{result.won?"YOU WON! 🎉":"Nice try! ✨"}</h2>
@@ -428,7 +427,6 @@ function GameModal({
                 {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} playSound={playSound} />}
                 {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
                 {!error && sessionReady && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
-                {!error && sessionReady && game.id === "parcel-dash" && <ParcelDashGame onPlay={play} playSound={playSound} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -513,7 +511,7 @@ export function RewardsPage() {
     fetchGames();
   }
 
-  const enabledGames = games.filter(g => g.enabled && g.id !== "daily-checkin");
+  const enabledGames = games.filter(g => g.enabled && g.id !== "daily-checkin" && g.id !== "parcel-dash");
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade bz-rewards-clean">
