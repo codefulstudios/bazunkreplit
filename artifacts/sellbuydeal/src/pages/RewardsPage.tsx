@@ -501,7 +501,8 @@ export function RewardsPage() {
       else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.06));
       else if(kind==="lose"){tone(392,0,.18,.055,"triangle");tone(330,.17,.2,.055,"triangle");tone(262,.36,.34,.06,"triangle")}
       else if(kind==="parcel-music"){tone(659,0,.12,.035,"square");tone(784,.14,.12,.035,"square");tone(988,.28,.12,.035,"square");tone(784,.42,.12,.035,"square");tone(659,.56,.18,.035,"square")}
-      else if(kind==="mystery-open"){tone(220,0,.12,.045,"triangle");tone(330,.12,.12,.05,"triangle");tone(440,.24,.15,.055,"triangle");tone(660,.4,.3,.065,"sine")}\n      else if(kind==="number-roll"){[660,740,830,988,1175,1397].forEach((n,i)=>tone(n,i*.095,.08,.04,"square"))}
+      else if(kind==="mystery-open"){tone(220,0,.12,.045,"triangle");tone(330,.12,.12,.05,"triangle");tone(440,.24,.15,.055,"triangle");tone(660,.4,.3,.065,"sine")}
+      else if(kind==="number-roll"){[660,740,830,988,1175,1397].forEach((n,i)=>tone(n,i*.095,.08,.04,"square"))}
     }catch{/* Sound is optional and never blocks game play. */}
   }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
