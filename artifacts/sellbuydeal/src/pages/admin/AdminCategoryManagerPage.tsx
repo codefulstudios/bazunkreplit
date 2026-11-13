@@ -50,7 +50,7 @@ export function AdminCategoryManagerPage(){
  const totalThird=third.length;
  const change=(x:Item,patch:Partial<Item>)=>{setItems(prev=>prev.map(v=>v.category_slug===x.category_slug&&v.subcategory_slug===x.subcategory_slug?{...v,...patch}:v));setDirty(true);setCategoryDirty(true)};
  const changeThird=(x:Third,patch:Partial<Third>)=>{setThird(prev=>prev.map(v=>v.category===x.category&&v.subcategory===x.subcategory&&v.slug===x.slug?{...v,...patch}:v));setDirty(true);setThirdDirty(true)};
- const move=(x:Item,delta:number)=>{const peers=items.filter(v=>v.category_slug===x.category_slug&&Boolean(v.subcategory_slug)===Boolean(x.subcategory_slug)).sort((a,b)=>a.sort_order-b.sort_order);const i=peers.findIndex(v=>v.subcategory_slug===x.subcategory_slug);if(i+delta<0||i+delta>=peers.length)return;[peers[i],peers[i+delta]]=[peers[i+delta],peers[i]];setItems(prev=>prev.map(v=>{const order=peers.findIndex(p=>p.category_slug===v.category_slug&&p.subcategory_slug===v.subcategory_slug);return order<0?v:{...v,sort_order:order}}));setDirty(true);setThirdDirty(true)};
+ const move=(x:Item,delta:number)=>{const peers=items.filter(v=>v.category_slug===x.category_slug&&Boolean(v.subcategory_slug)===Boolean(x.subcategory_slug)).sort((a,b)=>a.sort_order-b.sort_order);const i=peers.findIndex(v=>v.subcategory_slug===x.subcategory_slug);if(i+delta<0||i+delta>=peers.length)return;[peers[i],peers[i+delta]]=[peers[i+delta],peers[i]];setItems(prev=>prev.map(v=>{const order=peers.findIndex(p=>p.category_slug===v.category_slug&&p.subcategory_slug===v.subcategory_slug);return order<0?v:{...v,sort_order:order}}));setDirty(true);setCategoryDirty(true)};
  const save=async()=>{if(saving)return;setSaving(true);setMessage("Saving changes…");try{
   if(categoryDirty){
    const a=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:items})});
@@ -62,7 +62,7 @@ export function AdminCategoryManagerPage(){
   }
   setDirty(false);setCategoryDirty(false);setThirdDirty(false);setMessage("✓ Saved successfully. Existing listing slugs are unchanged.");
  }catch(e){setMessage("Save failed: "+(e instanceof Error?e.message:String(e)))}finally{setSaving(false)}};
- const addThird=(name:string,sub:string)=>{const slug=thirdLevelSlug(name);if(!slug||third.some(x=>x.category===selected&&x.subcategory===sub&&x.slug===slug))return;setThird(v=>[...v,{category:selected,subcategory:sub,slug,name,sort_order:third.filter(t=>t.category===selected&&t.subcategory===sub).length,visible:true}]);setDirty(true);setMessage("Category added to draft. Save Changes to publish.")};
+ const addThird=(name:string,sub:string)=>{const slug=thirdLevelSlug(name);if(!slug||third.some(x=>x.category===selected&&x.subcategory===sub&&x.slug===slug))return;setThird(v=>[...v,{category:selected,subcategory:sub,slug,name,sort_order:third.filter(t=>t.category===selected&&t.subcategory===sub).length,visible:true}]);setDirty(true);setThirdDirty(true);setMessage("Category added to draft. Save Changes to publish.")};
  const deleteThird=async(x:Third)=>{
   if(!window.confirm(`Permanently delete "${x.name}" from ${x.subcategory}? This cannot be undone. Existing listings will not be deleted.`))return;
   setMessage("");
