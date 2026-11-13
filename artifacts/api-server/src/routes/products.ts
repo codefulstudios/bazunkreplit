@@ -122,11 +122,13 @@ router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
       if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subcategory) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !name) { res.status(400).json({ error: "Invalid category, subcategory or slug" }); return; }
       cleaned.push({ category, subcategory, name, slug, visible: item.visible !== false, sortOrder: Math.max(0, Math.min(9999, Number(item.sort_order) || 0)) });
     }
-    await db.transaction(async tx => {
-      for (const item of cleaned) {
-        await tx.execute(sql`INSERT INTO third_level_categories (category,subcategory,slug,name,visible,sort_order) VALUES (${item.category},${item.subcategory},${item.slug},${item.name},${item.visible},${item.sortOrder}) ON CONFLICT (category,subcategory,slug) DO UPDATE SET name=EXCLUDED.name,visible=EXCLUDED.visible,sort_order=EXCLUDED.sort_order`);
-      }
-    });
+    if (cleaned.length) {
+      const payload = JSON.stringify(cleaned);
+      await db.execute(sql`INSERT INTO third_level_categories (category,subcategory,slug,name,visible,sort_order)
+        SELECT x.category,x.subcategory,x.slug,x.name,x.visible,x.sort_order
+        FROM jsonb_to_recordset(${payload}::jsonb) AS x(category text,subcategory text,slug text,name text,visible boolean,sort_order integer)
+        ON CONFLICT (category,subcategory,slug) DO UPDATE SET name=EXCLUDED.name,visible=EXCLUDED.visible,sort_order=EXCLUDED.sort_order`);
+    }
     res.json({ saved: cleaned.length });
   } catch (err) { logger.error({ err }, "Taxonomy save failed"); res.status(500).json({ error: "Taxonomy save failed" }); }
 });
@@ -162,16 +164,18 @@ router.put("/admin/taxonomy/category-overrides",requireAdmin,async(req,res)=>{
  }
  try{
   await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
-  await db.transaction(async tx=>{
-   for(const v of cleaned){
-    await tx.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible) VALUES(${v.category_slug},${v.subcategory_slug},${v.name},${v.sort_order},${v.visible}) ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
-    const visibilityKey=`category_visible_${v.category_slug}${v.subcategory_slug?"__"+v.subcategory_slug:""}`;
-    const displayKey=`category_display_${v.category_slug}${v.subcategory_slug?"__"+v.subcategory_slug:""}`;
-    const state=v.visible?"active":"hidden";
-    await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES(${visibilityKey},${v.visible?"true":"false"},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
-    await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES(${displayKey},${state},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
-   }
-  });
+  if(cleaned.length){
+   const overridesPayload=JSON.stringify(cleaned);
+   await db.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible)
+    SELECT x.category_slug,x.subcategory_slug,x.name,x.sort_order,x.visible
+    FROM jsonb_to_recordset(${overridesPayload}::jsonb) AS x(category_slug text,subcategory_slug text,name text,sort_order integer,visible boolean)
+    ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
+   const settingRows=cleaned.flatMap(v=>{const suffix=v.subcategory_slug?"__"+v.subcategory_slug:"";const state=v.visible?"active":"hidden";return [{key:"category_visible_"+v.category_slug+suffix,value:v.visible?"true":"false"},{key:"category_display_"+v.category_slug+suffix,value:state}]});
+   const settingsPayload=JSON.stringify(settingRows);
+   await db.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+    SELECT x.key,x.value,NOW() FROM jsonb_to_recordset(${settingsPayload}::jsonb) AS x(key text,value text)
+    ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+  }
   res.json({saved:cleaned.length});
  }catch(err){logger.error({err},"Category overrides save failed");res.status(503).json({error:"Could not save categories"});}
 });
