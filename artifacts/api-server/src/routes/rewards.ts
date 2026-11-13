@@ -89,6 +89,28 @@ async function getTodayPlays(gameId: string, email: string): Promise<number> {
   return (r.rows[0] as Record<string, unknown>)?.cnt as number ?? 0;
 }
 
+// Arcade sound is globally controlled by admins; each visitor can mute locally.
+const DEFAULT_ARCADE_SOUND = { enabled: true, spinWheel: true, scratchCard: true };
+async function readArcadeSound(){
+ const r=await db.execute(sql`SELECT value FROM site_settings WHERE key='rewards_arcade_sound'`);
+ try{return {...DEFAULT_ARCADE_SOUND,...JSON.parse(String((r.rows[0] as any)?.value||"{}"))}}catch{return DEFAULT_ARCADE_SOUND}
+}
+router.get("/rewards/sound-settings",async(_req,res)=>{
+ try{res.setHeader("Cache-Control","no-store");res.json(await readArcadeSound())}catch{res.json(DEFAULT_ARCADE_SOUND)}
+});
+router.get("/admin/rewards/sound-settings",requireAdmin,async(_req,res)=>{
+ try{res.setHeader("Cache-Control","no-store");res.json(await readArcadeSound())}catch{res.status(503).json({error:"Sound settings unavailable"})}
+});
+router.put("/admin/rewards/sound-settings",requireAdmin,async(req,res)=>{
+ const {enabled,spinWheel,scratchCard}=req.body||{};
+ if([enabled,spinWheel,scratchCard].some(v=>typeof v!=="boolean"))return void res.status(400).json({error:"All sound switches must be true or false"});
+ const next={enabled,spinWheel,scratchCard};
+ try{
+  await db.execute(sql`INSERT INTO site_settings(key,value,updated_at) VALUES('rewards_arcade_sound',${JSON.stringify(next)},NOW()) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+  res.setHeader("Cache-Control","no-store");res.json({ok:true,...next});
+ }catch{res.status(503).json({error:"Could not save arcade sound settings"})}
+});
+
 // ── Public routes ─────────────────────────────────────────────────────────────
 
 router.get("/rewards/games", async (req, res) => {
