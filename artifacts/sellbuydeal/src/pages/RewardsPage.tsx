@@ -123,12 +123,12 @@ function SpinWheelGame({ game, onPlay, playSound }: { game: Game; onPlay: (answe
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
 function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => Promise<void> }) {
-  const [question, setQuestion] = useState<{ question: string; options: string[] } | null>(null);
+  const [question, setQuestion] = useState<{ question: string; options: string[]; questionNumber?: number; totalQuestions?: number; rotatesAt?: string } | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/rewards/quiz-today").then(r => r.ok ? r.json() : null).then(setQuestion).catch(() => {});
+    fetch("/api/rewards/quiz-today", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(setQuestion).catch(() => {});
   }, []);
 
   async function submit() {
@@ -142,7 +142,7 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
 
   return (
     <div className="bz-quiz-game space-y-4">
-      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="bz-quiz-question rounded-2xl border p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><p className="font-bold text-lg text-[#142b50]">{question.question}</p></motion.div>
+      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="bz-quiz-question rounded-2xl border p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><div className="flex items-center justify-between gap-3 mb-2"><span className="text-xs font-bold uppercase tracking-wide text-blue-600">Daily question {question.questionNumber ?? ""} of {question.totalQuestions ?? 100}</span><span className="text-[10px] text-slate-500">New question daily</span></div><p className="font-bold text-lg text-[#142b50]">{question.question}</p></motion.div>
       <div className="space-y-2">
         {question.options.map((opt, i) => (
           <motion.button
