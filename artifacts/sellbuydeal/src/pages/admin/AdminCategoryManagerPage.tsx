@@ -24,7 +24,6 @@ export function AdminCategoryManagerPage(){
  const [draftNew,setDraftNew]=useState("");
  const [thirdParent,setThirdParent]=useState(CATEGORIES[0]?.subcategories[0]?.slug??"");
  const [suggestions,setSuggestions]=useState<string[]>([]);
- const [seeded,setSeeded]=useState(false);
  const [dirty,setDirty]=useState(false);
  const [categoryDirty,setCategoryDirty]=useState(false);
  const [thirdDirty,setThirdDirty]=useState(false);
@@ -37,19 +36,6 @@ export function AdminCategoryManagerPage(){
   setItems(CATEGORIES.flatMap((c,i)=>[map.get(c.slug+":")??{category_slug:c.slug,subcategory_slug:"",name:c.name,visible:true,sort_order:i},...c.subcategories.map((sub,j)=>map.get(c.slug+":"+sub.slug)??{category_slug:c.slug,subcategory_slug:sub.slug,name:sub.name,visible:true,sort_order:j})]));
   setThird(three.categories??[]);setEvidence(ev.groups??[]);
  }).catch(e=>setMessage(String(e)));return()=>{active=false}},[authFetch]);
- const library=useMemo(()=>CATEGORIES.flatMap(c=>c.subcategories.flatMap(sub=>thirdLevelProposals(c.slug,sub.slug,sub.name).map((name,index)=>({category:c.slug,subcategory:sub.slug,slug:thirdLevelSlug(name),name,sort_order:index})))),[]);
- const seed=async()=>{
-  if(seeded)return;
-  setSeeded(true);
-  try{
-   const response=await authFetch("/api/admin/taxonomy/third-level/seed",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({categories:library})});
-   if(!response.ok)throw Error(((await response.json().catch(()=>({}))).error||"Cannot create taxonomy library"));
-   const data=await response.json();
-   const reload=await authFetch("/api/admin/taxonomy/third-level");
-   if(reload.ok){const json=await reload.json();setThird(json.categories??[]);}
-   setMessage(data.created?data.created+" new third-level categories created, all hidden. Existing settings preserved.":"Third-level library already populated. Existing visibility preserved.");
-  }catch(e){setMessage("Unable to populate third-level taxonomy: "+String(e));setSeeded(false);}
- };
  const setGroupVisibility=(subcategory:string,visible:boolean)=>{
   setThird(prev=>prev.map(x=>x.category===selected&&x.subcategory===subcategory?{...x,visible}:x));
   setDirty(true);setThirdDirty(true);
