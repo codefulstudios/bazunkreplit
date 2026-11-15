@@ -886,6 +886,19 @@ async function runAppMigrations() {
   logger.info("App migrations complete");
 }
 
+// CapRover test deployments must be explicitly opted in and must never connect
+// to the Render production database. The separate Neon project uses bazunk_test.
+const isCapRoverTest = process.env.BAZUNK_CAPROVER_TEST === "true";
+if (isCapRoverTest) {
+  const configuredUrl = process.env.DATABASE_URL;
+  if (!configuredUrl) throw new Error("CapRover test requires DATABASE_URL");
+  const parsed = new URL(configuredUrl);
+  if (!parsed.hostname.endsWith(".neon.tech") || parsed.pathname !== "/bazunk_test") {
+    throw new Error("CapRover test requires isolated Neon bazunk_test database");
+  }
+  logger.warn("CapRover test mode: scheduled and background jobs are disabled");
+}
+
 // Start listening immediately so the port is bound and health checks pass
 // right away. Migrations and Stripe init run in the background.
 app.listen(port, (err?: Error) => {
@@ -912,6 +925,7 @@ runAppMigrations()
   .then(() => ensureEbayUsageLedger())
   .then(() => loadRapidApiKeyFromDb())
   .then(() => {
+    if (isCapRoverTest) return;
     startListingScheduler();
     startDealPilotMonitor();
     startTrustProofRetention();
