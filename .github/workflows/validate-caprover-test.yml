@@ -6,6 +6,7 @@ on:
     branches: [caprover-test]
     paths:
       - 'deploy/caprover/**'
+      - 'captain-definition'
       - '.github/workflows/validate-caprover-test.yml'
       - 'artifacts/**'
       - 'lib/**'
