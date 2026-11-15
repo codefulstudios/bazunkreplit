@@ -1,4 +1,4 @@
 {
   "schemaVersion": 2,
-  "dockerfilePath": "./deploy/caprover/Dockerfile.web"
+  "dockerfilePath": "./deploy/caprover/Dockerfile.api"
 }
