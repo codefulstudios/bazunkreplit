@@ -8,7 +8,11 @@ import "./design-system/protected.css";
 // does not exist after deployment. Keep all legacy and future relative API
 // calls on the real marketplace API without requiring every component to
 // duplicate the production hostname.
-const API_BASE = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\/$/, "");
+const runtimeConfig = (window as Window & { __BAZUNK_CONFIG__?: { apiBaseUrl?: string } }).__BAZUNK_CONFIG__;
+const API_BASE = (runtimeConfig?.apiBaseUrl || "").replace(/\/$/, "");
+if (API_BASE !== "https://bazunk-api-test.apps.bazunk.com") {
+  throw new Error("Test storefront API URL is not configured safely");
+}
 const nativeFetch = window.fetch.bind(window);
 window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   if (typeof input === "string" && input.startsWith("/api/")) {
