@@ -61,6 +61,7 @@ const allowedOrigins = [...new Set([
   "https://bazunk.com",
   "https://www.bazunk.com",
   "https://bazunk-web.onrender.com",
+  ...(process.env.BAZUNK_CAPROVER_TEST === "true" ? ["https://bazunk-web-test.apps.bazunk.com"] : []),
 ].map((o) => o.trim().replace(/\/$/, "")).filter(Boolean))];
 app.use(
   cors({
