@@ -71,17 +71,18 @@ export function CheckoutPage() {
   const [quoteLoading,setQuoteLoading]=useState(true);
   const [quoteRevision,setQuoteRevision]=useState(0);
   const cartKey=JSON.stringify(items.map(item=>({id:item.product.id,quantity:item.quantity})));
+  const quoteKey=cartKey+"|"+deliveryAddress.country;
   const [quotedKey,setQuotedKey]=useState("");
   useEffect(()=>{
     const controller=new AbortController();setQuoteLoading(true);setQuoteError("");setQuote(null);
     if(!items.length) { setQuoteLoading(false); return; }
-    fetch("/api/stripe/quote-cart",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
+    fetch("/api/stripe/quote-cart",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey),country:deliveryAddress.country}),signal:controller.signal})
       .then(async r=>{const data=await r.json();if(!r.ok)throw new Error(data.error||"Could not calculate fees.");return data;})
-      .then(data=>{setQuote(data);setQuotedKey(cartKey);})
+      .then(data=>{setQuote(data);setQuotedKey(quoteKey);})
       .catch(err=>{if(err.name!=="AbortError")setQuoteError(err.message);})
       .finally(()=>{if(!controller.signal.aborted)setQuoteLoading(false);});
     return ()=>controller.abort();
-  },[cartKey,quoteRevision]);
+  },[cartKey,deliveryAddress.country,quoteKey,quoteRevision]);
   const subtotal=quote?.subtotal??0;
   const delivery=quote?.delivery??0;
   const bundleDiscount=quote?.bundleDiscount??0;
@@ -131,7 +132,7 @@ export function CheckoutPage() {
       return;
     }
     if(!deliveryAddress.name.trim() || !deliveryAddress.line1.trim() || !deliveryAddress.city.trim() || !deliveryAddress.postalCode.trim() || !/^[A-Z]{2}$/.test(deliveryAddress.country)) {setCheckoutError("Enter your full delivery address before payment.");return;}
-    if(!quote || quoteLoading || quotedKey!==cartKey) {setCheckoutError("Wait for your fee breakdown before paying.");return;}
+    if(!quote || quoteLoading || quotedKey!==quoteKey) {setCheckoutError("Wait for your fee breakdown before paying.");return;}
     setCheckoutError(null);
     setCheckoutLoading(true);
     setStep("redirecting");
