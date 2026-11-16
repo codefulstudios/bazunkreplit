@@ -31,6 +31,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { ProductVideoUploader } from "@/components/ProductVideoUploader";
 import { Footer } from "@/components/Footer";
 import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 
@@ -163,6 +164,7 @@ export function QuickSellPage() {
   const [newSpecKey, setNewSpecKey] = useState("");
   const [newSpecValue, setNewSpecValue] = useState("");
   const [premiumVideo, setPremiumVideo] = useState(false);
+  const [uploadedVideoKey, setUploadedVideoKey] = useState<string | null>(null);
   const [productVideoCredits, setProductVideoCredits] = useState(149);
   const [published, setPublished] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -172,7 +174,6 @@ export function QuickSellPage() {
   const [, setLocation] = useLocation();
 
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user?.email) return;
@@ -216,6 +217,7 @@ export function QuickSellPage() {
     if (!category) errors.push("Category is required");
     if (!description.trim()) errors.push("Description is required");
 
+    if (premiumVideo && !uploadedVideoKey) errors.push("Please upload your product video first.");
     if (errors.length > 0) {
       setValidationErrors(errors);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -249,6 +251,7 @@ export function QuickSellPage() {
           tags: tags.trim() || undefined,
           specifications: specifications.length > 0 ? specifications : undefined,
           premiumVideo,
+          videoObjectKey: uploadedVideoKey,
         }),
       });
       if (!res.ok) {
@@ -1109,33 +1112,9 @@ export function QuickSellPage() {
               </div>
             </div>
 
-            {/* Upload area */}
-            <div
-              className="rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-dashed border-purple-200 p-10 flex flex-col items-center text-center cursor-pointer hover:border-purple-400 transition-colors mb-4"
-              onClick={() => premiumVideo && videoInputRef.current?.click()}
-              data-testid="dropzone-video"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#EC4899] flex items-center justify-center mb-4 shadow-md">
-                <Video className="w-7 h-7 text-white" />
-              </div>
-              <p className="font-bold text-gray-800 text-lg mb-1">Add Product Video</p>
-              <p className="text-sm text-gray-500 mb-1">Show your item in action</p>
-              <p className="text-xs text-gray-400 mb-5">MP4, MOV, AVI • Max 100MB • Premium feature</p>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); if (premiumVideo) videoInputRef.current?.click(); }}
-                className={`px-8 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity flex items-center gap-2 ${
-                  premiumVideo
-                    ? "bg-gradient-to-r from-[#7C3AED] to-[#EC4899] hover:opacity-90"
-                    : "bg-gray-300 cursor-not-allowed"
-                }`}
-                data-testid="button-select-video"
-              >
-                <Upload className="w-4 h-4" />
-                Select Video File
-              </button>
-              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" />
-            </div>
+            {/* Actual file picker and progress, replacing the inert legacy input. */}
+            <ProductVideoUploader getToken={getToken}
+              onUploaded={result => { setUploadedVideoKey(result?.objectKey ?? null); setPremiumVideo(Boolean(result)); }} />
 
             {/* Benefits */}
             <div className="grid grid-cols-3 gap-3">
