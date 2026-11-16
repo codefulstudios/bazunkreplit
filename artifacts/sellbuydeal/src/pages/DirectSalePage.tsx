@@ -263,7 +263,8 @@ export function DirectSalePage() {
         const res = await fetch("/api/listings/mine", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         if (!res.ok) return;
         const entries = await res.json();
-        const draft = Array.isArray(entries) ? entries.find((x: any) => x.status === "draft" && x.specifications && (() => { try { return JSON.parse(x.specifications).marketplace_region === marketplaceRegion; } catch { return false; } })()) : null;
+        const requestedDraftId = new URLSearchParams(window.location.search).get("draftId");
+        const draft = Array.isArray(entries) ? entries.find((x: any) => x.status === "draft" && (!requestedDraftId || String(x.id) === requestedDraftId) && x.specifications && (() => { try { return JSON.parse(x.specifications).marketplace_region === marketplaceRegion; } catch { return false; } })()) : null;
         if (!draft || cancelled) return;
         const metadata = JSON.parse(draft.specifications);
         const form = metadata.draftForm ?? {};
