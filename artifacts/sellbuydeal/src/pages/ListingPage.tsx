@@ -69,7 +69,7 @@ function normaliseCondition(raw: unknown): string {
 }
 
 type SpecRow = { key: string; value: string };
-type ApiListingExtra = { _publicUrlToken?: string | null; _gallery?: string[]; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
+type ApiListingExtra = { _publicUrlToken?: string | null; _gallery?: string[]; _videoUrl?: string | null; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
 
 const TAG_COLORS = [
   "bg-[#4A5CE8]/10 text-[#4A5CE8]",
@@ -114,6 +114,7 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
     _tags: tagsRaw,
     _specifications: parsedSpecs,
     _gallery: gallery,
+    _videoUrl: typeof l.productVideoUrl === "string" ? l.productVideoUrl : null,
     shipOrigin: (l.shipOrigin as string) ?? undefined,
     shipOriginOther: (l.shipOriginOther as string) ?? undefined,
     shipZone: (l.shipZone as string) ?? undefined,
@@ -429,7 +430,7 @@ export function ListingPage() {
           {/* Left: Image gallery + details */}
           <div className="space-y-4 min-w-0">
 
-            <ListingProductGallery images={images} title={product.title} active={activeImg} onSelect={setActiveImg}
+            <ListingProductGallery images={images} videoUrl={(product as typeof product & ApiListingExtra)._videoUrl} title={product.title} active={activeImg} onSelect={setActiveImg}
               watched={isWatched(product.id)}
               onWatch={() => product && (isWatched(product.id) ? removeFromWatchlist(product.id) : addToWatchlist(product))}
               badges={<><div className="flex flex-col gap-1.5">
