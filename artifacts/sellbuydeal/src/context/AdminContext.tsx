@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const ADMIN_TOKEN_KEY = "sbd_admin_token";
-const API_BASE = "https://bazunk-api.onrender.com";
-const apiUrl = (path: string) => path.startsWith("/api/") ? `${API_BASE}${path}` : path;
+// Use the same-origin /api proxy on CapRover, never the production Render API.
+const apiUrl = (path: string) => path;
 
 interface AdminContextValue {
   token: string | null;
