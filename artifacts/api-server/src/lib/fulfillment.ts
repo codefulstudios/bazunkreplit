@@ -45,7 +45,7 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
   const deliveryRows=deliveryTable ? (await db.execute(sql`SELECT address FROM checkout_delivery_addresses WHERE stripe_session_id=${sessionId}`)).rows : [];
   const deliveryAddress=deliveryRows[0]?.address as Record<string,string>|undefined;
   if(session.metadata?.type==="cart" && !deliveryAddress) throw new Error("Checkout delivery address missing; manual reconciliation required before fulfillment");
-  const formattedDeliveryAddress=deliveryAddress ? [deliveryAddress.name,deliveryAddress.line1,deliveryAddress.line2,deliveryAddress.city,deliveryAddress.region,deliveryAddress.postalCode,deliveryAddress.country].filter(Boolean).join("\\n") : null;
+  const formattedDeliveryAddress=deliveryAddress ? [deliveryAddress.name,deliveryAddress.line1,deliveryAddress.line2,deliveryAddress.city,deliveryAddress.region,deliveryAddress.postalCode,deliveryAddress.country].filter(Boolean).join("\n") : null;
 
   const claimId = `cart-${sessionId}`;
   const claimed = await db
