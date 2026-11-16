@@ -49,7 +49,7 @@ async function checkStoredVideo(key: string): Promise<{ok:boolean;size:number;st
   // after a successful PUT. Request one byte and cancel the body immediately.
   const response = await fetch(signedUrl("GET", key).url, {headers: {Range:"bytes=0-0"}});
   const contentRange = response.headers.get("content-range");
-  const rangeSize = contentRange?.match(/\\/(\\d+)$/)?.[1];
+  const rangeSize = contentRange?.match(/\/(\d+)$/)?.[1];
   const size = rangeSize ? Number(rangeSize) : Number(response.headers.get("content-length") || 0);
   await response.body?.cancel();
   return {ok:response.ok && size>0 && size<=MAX_SIZE, size, status:response.status};
