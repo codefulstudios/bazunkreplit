@@ -60,6 +60,8 @@ export function CheckoutPage() {
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [deliveryAddress,setDeliveryAddress] = useState({name:"",line1:"",line2:"",city:"",region:"",postalCode:"",country:"GB",phone:""});
+  const updateAddress=(field:keyof typeof deliveryAddress,value:string)=>setDeliveryAddress(prev=>({...prev,[field]:value}));
   const [discountCode,setDiscountCode] = useState("");
   const [discountMessage,setDiscountMessage] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
@@ -128,6 +130,7 @@ export function CheckoutPage() {
       setCheckoutError("Please enter a valid email address to continue.");
       return;
     }
+    if(!deliveryAddress.name.trim() || !deliveryAddress.line1.trim() || !deliveryAddress.city.trim() || !deliveryAddress.postalCode.trim() || !deliveryAddress.country) {setCheckoutError("Enter your full delivery address before payment.");return;}
     if(!quote || quoteLoading || quotedKey!==cartKey) {setCheckoutError("Wait for your fee breakdown before paying.");return;}
     setCheckoutError(null);
     setCheckoutLoading(true);
@@ -156,6 +159,7 @@ export function CheckoutPage() {
           })),
           expectedTotal:total,
           deliveryGbp: delivery,
+          deliveryAddress,
         }),
       });
       const data = await res.json() as { url?: string; freeOrder?: boolean; error?: string };
@@ -340,6 +344,15 @@ export function CheckoutPage() {
                     />
                   </div>
                 )}
+
+                <section className="mt-5 rounded-2xl border border-slate-300 bg-white p-4 text-slate-900" aria-label="Delivery address">
+                  <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Truck className="h-5 w-5"/> Delivery address</h2>
+                  <p className="mb-4 text-xs text-slate-600">Required before payment. We share delivery details with the seller after a successful order.</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {([{key:"name",label:"Full name",required:true},{key:"line1",label:"Address line 1",required:true},{key:"line2",label:"Address line 2",required:false},{key:"city",label:"Town / city",required:true},{key:"region",label:"County / state",required:false},{key:"postalCode",label:"Postcode / ZIP",required:true},{key:"phone",label:"Phone (optional)",required:false}] as const).map(field=><label key={field.key} className="text-xs font-semibold">{field.label}<input className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900" value={deliveryAddress[field.key]} required={field.required} autoComplete={field.key==="name"?"name":field.key==="line1"?"address-line1":field.key==="line2"?"address-line2":field.key==="city"?"address-level2":field.key==="region"?"address-level1":field.key==="postalCode"?"postal-code":"tel"} onChange={e=>updateAddress(field.key,e.target.value)}/></label>)}
+                    <label className="text-xs font-semibold">Country<select value={deliveryAddress.country} onChange={e=>updateAddress("country",e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900"><option value="GB">United Kingdom</option><option value="US">United States</option><option value="IE">Ireland</option><option value="FR">France</option><option value="DE">Germany</option><option value="ES">Spain</option><option value="IT">Italy</option><option value="NL">Netherlands</option><option value="BE">Belgium</option><option value="CA">Canada</option><option value="AU">Australia</option><option value="NZ">New Zealand</option><option value="OTHER">Other country — contact seller</option></select></label>
+                  </div>
+                </section>
 
                 {/* At phone sizes the entire fee breakdown sits beside the payment decision,
                     rather than hidden below the Pay button in the desktop sidebar. */}
