@@ -9,6 +9,34 @@ export type CheckoutQuote = ReturnType<typeof calculateFees> & { bundleDiscountM
 export async function ensureFeeSchema() {
   await db.execute(sql`CREATE TABLE IF NOT EXISTS checkout_fee_snapshots (id TEXT PRIMARY KEY, payload JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
 }
+function applyListingPostage(quote:CheckoutQuote, rows:Array<Record<string,unknown>>):CheckoutQuote {
+  const fees=new Map<number,number>();
+  for(const row of rows){
+    const id=Number(row.id);
+    if(row.shipping_price==null) throw new QuoteError("Seller postage is not configured for an item. Contact the seller before paying.",409);
+    const shipping=minor(row.shipping_price);
+    const handling=minor(row.handling_charge??0);
+    if(shipping+handling>10000000) throw new QuoteError("Seller postage needs review.",409);
+    fees.set(id,shipping+handling);
+  }
+  const grouped=new Map<number,number[]>();
+  quote.units.forEach((unit,index)=>grouped.set(unit.id,[...(grouped.get(unit.id)??[]),index]));
+  const sellerShipping=new Map<string,number>();
+  let total=0;
+  for(const [id,indices] of grouped){
+    const charge=fees.get(id);
+    if(charge==null)throw new QuoteError("Postage unavailable.",409);
+    const shares=allocate(charge,indices.map(i=>quote.units[i].priceMinor));
+    indices.forEach((index,j)=>{quote.units[index].deliveryMinor=shares[j];quote.units[index].buyerTotalMinor=quote.units[index].priceMinor+quote.units[index].protectionMinor+shares[j];});
+    total+=charge;
+    const email=quote.units[indices[0]].sellerEmail.toLowerCase();
+    sellerShipping.set(email,(sellerShipping.get(email)??0)+charge);
+  }
+  quote.deliveryMinor=total;
+  quote.totalMinor=quote.subtotalMinor+quote.buyerProtectionMinor+total;
+  if(quote.bundleBreakdown)quote.bundleBreakdown.forEach(b=>{b.shippingMinor=sellerShipping.get(b.sellerEmail.toLowerCase())??0;});
+  return quote;
+}
 export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   if (!Array.isArray(input) || !input.length || input.length > 100) throw new QuoteError("Cart must contain 1–100 listings.");
   const counts = new Map<number,number>();
@@ -20,7 +48,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     counts.set(id,qty);
   }
   const ids=[...counts.keys()];
-  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.seller_email,COALESCE(u.seller_type,'private') seller_type
+  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.seller_email,l.shipping_price,l.handling_charge,COALESCE(u.seller_type,'private') seller_type
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
     WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
     AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
@@ -53,7 +81,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   const enabled = await featureEnabled("combined_shipping");
   const discountsEnabled = await featureEnabled("multi_item_discount");
   const policyExists = (await db.execute(sql`SELECT to_regclass('public.seller_bundle_policies') AS table_name`)).rows[0]?.table_name;
-  if (!enabled || !policyExists) return calculateFees(items,percentage(fees.buyer_protection_percent,6),fixed,subtotal>=5000?0:399);
+  if (!enabled || !policyExists) return applyListingPostage(calculateFees(items,percentage(fees.buyer_protection_percent,6),fixed,0),rows);
   const policyRows = (await db.execute(sql`SELECT seller_email,enabled,combined_shipping_minor,multi_item_discount_percent,min_items FROM seller_bundle_policies WHERE enabled=TRUE`)).rows as any[];
   const policies = new Map(policyRows.map(p=>[String(p.seller_email).toLowerCase(),p]));
   const perSeller = new Map<string,FeeItem[]>();
@@ -101,7 +129,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   quote.totalMinor+=deliveryMinor;
   quote.bundleDiscountMinor=discountMinor;
   quote.bundleBreakdown=breakdown;
-  return quote;
+  return applyListingPostage(quote,rows);
 }
 export async function saveFeeSnapshot(quote:CheckoutQuote) {
   await ensureFeeSchema(); const id=randomUUID();
