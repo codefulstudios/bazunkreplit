@@ -13,7 +13,7 @@ import { sendSystemMessage } from "../lib/systemMessages.js";
 
 import { awardReferralMilestone } from "../lib/referrals.js";
 import { getPromoConfig } from "../lib/promoConfig.js";
-import { verifyVideo } from "./productVideos.js";
+import { verifyVideo, playbackVideoUrl } from "./productVideos.js";
 
 const router = Router();
 
@@ -344,7 +344,15 @@ router.get("/listings/:id", async (req, res) => {
     }
 
     const tokenResult=await db.execute(sql`SELECT public_url_token FROM listings WHERE id=${row.id}`);
-    res.json({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified });
+    let productVideoUrl: string | null = null;
+    if (row.status === "active" && process.env.BAZUNK_CAPROVER_TEST === "true") {
+      try {
+        const metadata = typeof row.specifications === "string" ? JSON.parse(row.specifications) : row.specifications;
+        const key = metadata?.videoObjectKey ?? metadata?.draftForm?.videoObjectKey;
+        if (typeof key === "string") productVideoUrl = playbackVideoUrl(key);
+      } catch (err) { console.warn("Product video playback URL unavailable", err); }
+    }
+    res.json({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified, productVideoUrl });
   } catch (err) {
     console.error("Error fetching listing:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
