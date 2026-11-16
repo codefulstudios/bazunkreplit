@@ -328,6 +328,8 @@ router.post("/stripe/checkout-cart", async (req, res) => {
       await storage.setStripeCustomerId(email, replacement.id);
       session = await stripe.checkout.sessions.create({ ...sessionParams, customer: replacement.id });
     }
+    await db.execute(sql`CREATE TABLE IF NOT EXISTS checkout_delivery_addresses (stripe_session_id TEXT PRIMARY KEY, address JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+    await db.execute(sql`INSERT INTO checkout_delivery_addresses(stripe_session_id,address) VALUES (${session.id},${JSON.stringify(addr)}::jsonb) ON CONFLICT(stripe_session_id) DO UPDATE SET address=EXCLUDED.address`);
     res.json({url:session.url});
   } catch(err) {
     logger.error({err},"Failed to create cart checkout session");
