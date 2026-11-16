@@ -308,6 +308,10 @@ router.get("/listings/:id", async (req, res) => {
       sellerEmail: listingsTable.sellerEmail, sellerName: listingsTable.sellerName, sellerUsername: listingsTable.sellerUsername,
       tags: listingsTable.tags, extraCategories: listingsTable.extraCategories, specifications: listingsTable.specifications,
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
+      shipOrigin: listingsTable.shipOrigin, shipOriginOther: listingsTable.shipOriginOther,
+      shipZone: listingsTable.shipZone, carrier: listingsTable.carrier,
+      shippingPrice: listingsTable.shippingPrice, handlingCharge: listingsTable.handlingCharge,
+      quantity: listingsTable.quantity, sku: listingsTable.sku,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
     }).from(listingsTable).where(sql`public_url_token = ${rawId} OR public_id = ${rawId}`).limit(1);
     if (!row && /^\\d+$/.test(rawId)) {
@@ -319,6 +323,10 @@ router.get("/listings/:id", async (req, res) => {
       sellerEmail: listingsTable.sellerEmail, sellerName: listingsTable.sellerName, sellerUsername: listingsTable.sellerUsername,
       tags: listingsTable.tags, extraCategories: listingsTable.extraCategories, specifications: listingsTable.specifications,
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
+      shipOrigin: listingsTable.shipOrigin, shipOriginOther: listingsTable.shipOriginOther,
+      shipZone: listingsTable.shipZone, carrier: listingsTable.carrier,
+      shippingPrice: listingsTable.shippingPrice, handlingCharge: listingsTable.handlingCharge,
+      quantity: listingsTable.quantity, sku: listingsTable.sku,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
     }).from(listingsTable).where(eq(listingsTable.id, Number(rawId))).limit(1);
     }
