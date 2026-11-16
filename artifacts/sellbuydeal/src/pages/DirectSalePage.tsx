@@ -32,6 +32,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { ProductVideoUploader } from "@/components/ProductVideoUploader";
 import { SNAP_SELL_DRAFT_KEY } from "@/pages/SnapSellPage";
 import { Footer } from "@/components/Footer";
 import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
@@ -168,6 +169,7 @@ export function DirectSalePage() {
   const [newSpecKey, setNewSpecKey] = useState("");
   const [newSpecValue, setNewSpecValue] = useState("");
   const [premiumVideo, setPremiumVideo] = useState(false);
+  const [uploadedVideoKey, setUploadedVideoKey] = useState<string | null>(null);
   const [productVideoCredits, setProductVideoCredits] = useState(149);
   const [published, setPublished] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -286,17 +288,18 @@ export function DirectSalePage() {
         setSpecifications(form.specifications ?? metadata.details ?? []);
         setExtraCategories(form.extraCategories ?? []);
         setPremiumVideo(form.premiumVideo ?? false);
+        setUploadedVideoKey(form.videoObjectKey ?? null);
       } catch (error) { console.error("Draft restore failed:", error); }
     })();
     return () => { cancelled = true; };
   }, [user?.email, marketplaceRegion, getToken]);
 
   function draftPayload() {
-    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
+    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo, videoObjectKey: uploadedVideoKey };
     return { title: title.trim() || "Untitled draft", price: price || "0", currency: extractCurrencyCode(currency),
       marketplaceRegion, category: category || "General", description, condition, image: photos[0] ?? null, photos,
       sellerEmail: user?.email, sellerName: user?.username ?? user?.name ?? null,
-      specifications, draftForm: form, tags, status: "draft" };
+      specifications, draftForm: form, videoObjectKey: uploadedVideoKey, tags, status: "draft" };
   }
 
   const [uploadingPhotos,setUploadingPhotos] = useState(false);
@@ -349,6 +352,7 @@ export function DirectSalePage() {
     if (!category) errors.push("Category is required");
     if (!description.trim()) errors.push("Description is required");
 
+    if (premiumVideo && !uploadedVideoKey) errors.push("Upload a product video before selecting the paid video promotion.");
     if (errors.length > 0) {
       // Mobile must display a useful correction screen rather than a hidden review error.
       if (window.matchMedia("(max-width: 1023px)").matches) setStep(1);
@@ -387,6 +391,7 @@ export function DirectSalePage() {
           tags: tags.trim() || undefined,
           specifications: specifications.length > 0 ? specifications : undefined,
           premiumVideo,
+          videoObjectKey: uploadedVideoKey,
           shipOrigin,
           shipOriginOther: shipOrigin === "Other" ? countryOther.trim() : undefined,
           shipZone,
@@ -1328,33 +1333,9 @@ export function DirectSalePage() {
               </div>
             </div>
 
-            {/* Upload area */}
-            <div
-              className="rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-dashed border-purple-200 p-10 flex flex-col items-center text-center cursor-pointer hover:border-purple-400 transition-colors mb-4"
-              onClick={() => premiumVideo && videoInputRef.current?.click()}
-              data-testid="dropzone-video"
-            >
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#EC4899] flex items-center justify-center mb-4 shadow-md">
-                <Video className="w-7 h-7 text-white" />
-              </div>
-              <p className="font-bold text-slate-100 text-lg mb-1">Add Product Video</p>
-              <p className="text-sm text-slate-300 mb-1">Show your item in action</p>
-              <p className="text-xs text-slate-400 mb-5">MP4, MOV, AVI • Max 100MB • Premium feature</p>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); if (premiumVideo) videoInputRef.current?.click(); }}
-                className={`px-8 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity flex items-center gap-2 ${
-                  premiumVideo
-                    ? "bg-gradient-to-r from-[#7C3AED] to-[#EC4899] hover:opacity-90"
-                    : "bg-gray-300 cursor-not-allowed"
-                }`}
-                data-testid="button-select-video"
-              >
-                <Upload className="w-4 h-4" />
-                Select Video File
-              </button>
-              <input ref={videoInputRef} type="file" accept="video/*" className="hidden" />
-            </div>
+            {/* Secure video upload with live progress */}
+            <ProductVideoUploader getToken={getToken} initialKey={uploadedVideoKey ?? undefined}
+              onUploaded={result => { setUploadedVideoKey(result?.objectKey ?? null); if (result) setPremiumVideo(true); }} />
 
             {/* Benefits */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
