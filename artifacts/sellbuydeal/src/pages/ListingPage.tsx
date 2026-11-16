@@ -606,7 +606,7 @@ export function ListingPage() {
               const x = product as typeof product & ApiListingExtra;
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
-              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, eu: "UK & EU", "eu-only": "European Union only", europe: "All Europe", "north-america": "North America", worldwide: "Worldwide", international: "International" };
+              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, eu: "UK & EU", "eu-only": "European Union only", europe: "All Europe", asia: "Asia Pacific", "north-america": "North America", worldwide: "Worldwide", international: "International" };
               const destination = zoneLabels[x.shipZone || ""] || (x.shipZone ? x.shipZone.replaceAll("-", " ") : "Ask seller");
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
@@ -706,7 +706,7 @@ export function ListingPage() {
                     <span className="font-semibold text-slate-600">Postage</span>
                     <span className="font-bold">{(product as typeof product & ApiListingExtra).shippingPrice == null ? "Confirm at checkout" : (product as typeof product & ApiListingExtra).shippingPrice === 0 ? "Free" : formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</span>
                   </div>
-                  <p className="mt-1 text-xs text-slate-600">Ships from {(product as typeof product & ApiListingExtra).shipOriginOther || (product as typeof product & ApiListingExtra).shipOrigin || product.location}. Delivery timing depends on seller and destination.</p>
+                  <p className="mt-1 text-xs text-slate-600">Ships from {(product as typeof product & ApiListingExtra).shipOriginOther || (product as typeof product & ApiListingExtra).shipOrigin || product.location} · Ships to {(() => { const x = product as typeof product & ApiListingExtra; const zones: Record<string,string> = { domestic: x.shipOrigin === "UK" ? "UK only" : x.shipOrigin === "US" ? "US only" : x.shipOrigin === "Other" ? "seller’s country only" : x.shipOrigin || "domestic only", eu: "UK & EU", "eu-only": "EU only", europe: "All Europe", "north-america": "North America", asia: "Asia Pacific", worldwide: "Worldwide", international: "International" }; return zones[x.shipZone || ""] || "Ask seller"; })()}. Delivery timing depends on destination.</p>
                   <p className="mt-1 text-xs text-slate-600">Final totals are confirmed before payment.</p>
                 </div>
               </div>
