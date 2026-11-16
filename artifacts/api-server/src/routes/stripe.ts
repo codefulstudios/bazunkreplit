@@ -16,6 +16,27 @@ import { fulfillCartSession } from "../lib/fulfillment.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
 const router = Router();
+async function validateCartDestination(items:unknown,country:string) {
+  if(!/^[A-Z]{2}$/.test(country)) throw new QuoteError("Select a valid delivery country.");
+  const body={items};
+    const requested=Array.isArray(body.items)?body.items:[];
+    const listingIds=[...new Set(requested.map((i:any)=>Number(i?.id)).filter((id:number)=>Number.isSafeInteger(id)&&id>0))];
+    if(!listingIds.length || listingIds.length!==new Set(requested.map((i:any)=>Number(i?.id))).size) throw new QuoteError("Invalid basket.");
+    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(listingIds.map(id=>sql`${id}`),sql`, `)})`)).rows as any[];
+    if(shippingRows.length!==listingIds.length) throw new QuoteError("Some items are no longer available.",409);
+    const EU=new Set(["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"]);
+    const EUROPE=new Set([...EU,"GB","NO","CH","IS","LI","AL","AD","BA","ME","MK","RS","MD","UA"]);
+    const originCode=(v:string)=>({UK:"GB",US:"US",EU:"EU",China:"CN"} as Record<string,string>)[v]??v;
+    for(const row of shippingRows){
+      const zone=String(row.ship_zone??"");
+      const origin=originCode(String(row.ship_origin??""));
+      const c=country;
+      const allowed=zone==="worldwide" || zone==="international" || (zone==="domestic" && origin===c) || (zone==="eu" && (c==="GB"||EU.has(c))) || (zone==="eu-only" && EU.has(c)) || (zone==="europe" && EUROPE.has(c)) || (zone==="north-america" && ["US","CA","MX"].includes(c)) || (zone==="asia" && ["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(c));
+      if(!allowed) throw new QuoteError(zone ? "A seller in your basket does not ship to the selected country." : "A seller has not specified delivery destinations. Contact the seller before payment.",409);
+    }
+
+}
+
 
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
 // 100 credits = £1
@@ -241,6 +262,7 @@ router.post("/stripe/seller-fee-estimate",async(req,res)=>{
 
 router.post("/stripe/quote-cart", async (req,res) => {
   try {
+    if(req.body?.country) await validateCartDestination(req.body.items,String(req.body.country));
     const quote=await quoteCart(req.body.items);
     res.setHeader("Cache-Control","no-store");
     res.json({currency:quote.currency,subtotal:(quote.subtotalMinor+(quote.bundleDiscountMinor??0))/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,bundleDiscount: (quote.bundleDiscountMinor??0)/100,bundleBreakdown:quote.bundleBreakdown??[],total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
@@ -273,21 +295,7 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     const addr=rawAddress && Object.fromEntries(["name","line1","line2","city","region","postalCode","country","phone"].map(k=>[k,String(rawAddress[k]??"").trim()])) as Record<string,string>;
     if(!addr || !addr.name || !addr.line1 || !addr.city || !addr.postalCode || !/^[A-Z]{2}$/.test(addr.country) || Object.values(addr).some(v=>v.length>200))
       throw new QuoteError("A valid delivery name, street, city, postcode and country are required before payment.");
-    const requested=Array.isArray(body.items)?body.items:[];
-    const listingIds=[...new Set(requested.map((i:any)=>Number(i?.id)).filter((id:number)=>Number.isSafeInteger(id)&&id>0))];
-    if(!listingIds.length || listingIds.length!==new Set(requested.map((i:any)=>Number(i?.id))).size) throw new QuoteError("Invalid basket.");
-    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(listingIds.map(id=>sql`${id}`),sql`, `)})`)).rows as any[];
-    if(shippingRows.length!==listingIds.length) throw new QuoteError("Some items are no longer available.",409);
-    const EU=new Set(["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"]);
-    const EUROPE=new Set([...EU,"GB","NO","CH","IS","LI","AL","AD","BA","ME","MK","RS","MD","UA"]);
-    const originCode=(v:string)=>({UK:"GB",US:"US",EU:"EU",China:"CN"} as Record<string,string>)[v]??v;
-    for(const row of shippingRows){
-      const zone=String(row.ship_zone??"");
-      const origin=originCode(String(row.ship_origin??""));
-      const c=addr.country;
-      const allowed=zone==="worldwide" || zone==="international" || (zone==="domestic" && origin===c) || (zone==="eu" && (c==="GB"||EU.has(c))) || (zone==="eu-only" && EU.has(c)) || (zone==="europe" && EUROPE.has(c)) || (zone==="north-america" && ["US","CA","MX"].includes(c)) || (zone==="asia" && ["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(c));
-      if(!allowed) throw new QuoteError(zone ? "A seller in your basket does not ship to the selected country." : "A seller has not specified delivery destinations. Contact the seller before payment.",409);
-    }
+    await validateCartDestination(body.items,addr.country);
     // Credits and demo promo codes were never discounted by Stripe. Do not charge
     // a full cash price while also subtracting credits from the buyer's balance.
     if(Number(body.creditsApplied??0)>0 || body.promoCode) throw new QuoteError("Marketplace credits and promotion codes are not supported for this checkout.");
