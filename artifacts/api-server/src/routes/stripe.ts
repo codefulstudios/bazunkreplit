@@ -332,7 +332,7 @@ router.post("/stripe/checkout-cart", async (req, res) => {
       const err = error as { code?: string; param?: string; message?: string };
       if (err.code !== "resource_missing" || err.param !== "customer") throw error;
       logger.warn({ email, oldCustomerId: stripeCustomerId }, "Saved Stripe customer not available in current Stripe environment; creating replacement");
-      const replacement = await stripe.customers.create({ email, name });
+      const replacement = await stripe.customers.create({ email, name, shipping:{name:addr.name,phone:addr.phone||undefined,address:{line1:addr.line1,line2:addr.line2||undefined,city:addr.city,state:addr.region||undefined,postal_code:addr.postalCode,country:addr.country}} });
       await storage.setStripeCustomerId(email, replacement.id);
       session = await stripe.checkout.sessions.create({ ...sessionParams, customer: replacement.id });
     }
