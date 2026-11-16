@@ -44,11 +44,19 @@ export function ownsKey(userId: string, key: unknown): key is string {
   return typeof key === "string" && key.startsWith(`test-videos/${userId}/`) &&
     /^test-videos\/[a-zA-Z0-9_-]+\/[0-9a-f-]{36}\.(mp4|mov|avi|webm)$/.test(key);
 }
+async function checkStoredVideo(key: string): Promise<{ok:boolean;size:number;status:number}> {
+  // Neon object storage supports signed GET; a signed HEAD may be rejected even
+  // after a successful PUT. Request one byte and cancel the body immediately.
+  const response = await fetch(signedUrl("GET", key).url, {headers: {Range:"bytes=0-0"}});
+  const contentRange = response.headers.get("content-range");
+  const rangeSize = contentRange?.match(/\\/(\\d+)$/)?.[1];
+  const size = rangeSize ? Number(rangeSize) : Number(response.headers.get("content-length") || 0);
+  await response.body?.cancel();
+  return {ok:response.ok && size>0 && size<=MAX_SIZE, size, status:response.status};
+}
 export async function verifyVideo(userId: string, key: unknown): Promise<boolean> {
   if (!ownsKey(userId, key)) return false;
-  const response = await fetch(signedUrl("HEAD", key).url);
-  const size = Number(response.headers.get("content-length") || 0);
-  return response.ok && size > 0 && size <= MAX_SIZE;
+  return (await checkStoredVideo(key)).ok;
 }
 router.post("/product-videos/presign", (req,res) => {
   try {
@@ -69,10 +77,11 @@ router.post("/product-videos/confirm",async(req,res)=>{
     const userId=owner(req);if(!userId){res.status(401).json({error:"Sign in required."});return;}
     const key=(req.body as {objectKey?:unknown}).objectKey;
     if(!ownsKey(userId,key)){res.status(403).json({error:"Invalid video reference."});return;}
-    const response=await fetch(signedUrl("HEAD",key).url);
-    if(!response.ok){res.status(400).json({error:"Video upload has not completed."});return;}
-    const size=Number(response.headers.get("content-length")||0);
-    if(!size||size>MAX_SIZE){res.status(400).json({error:"Uploaded video has an invalid size."});return;}
+    const verification=await checkStoredVideo(key);
+    if(!verification.ok){
+      console.warn("Video storage verification rejected", {status:verification.status,size:verification.size});
+      res.status(400).json({error:`Video storage verification failed (HTTP ${verification.status}). Please retry.`});return;
+    }
     res.json({objectKey:key,url:signedUrl("GET",key).url});
   }catch(err){console.error("Video confirmation failed",err);res.status(503).json({error:"Unable to verify video storage."});}
 });
