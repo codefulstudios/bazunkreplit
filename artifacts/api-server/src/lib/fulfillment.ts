@@ -41,6 +41,12 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
   if (!buyerEmail) throw new Error(`Session ${sessionId} has no buyer email`);
   if (expectedEmail && buyerEmail !== expectedEmail) return { status: "email_mismatch", orders: 0 };
 
+  const deliveryTable=(await db.execute(sql`SELECT to_regclass('public.checkout_delivery_addresses') AS table_name`)).rows[0]?.table_name;
+  const deliveryRows=deliveryTable ? (await db.execute(sql`SELECT address FROM checkout_delivery_addresses WHERE stripe_session_id=${sessionId}`)).rows : [];
+  const deliveryAddress=deliveryRows[0]?.address as Record<string,string>|undefined;
+  if(session.metadata?.type==="cart" && !deliveryAddress) throw new Error("Checkout delivery address missing; manual reconciliation required before fulfillment");
+  const formattedDeliveryAddress=deliveryAddress ? [deliveryAddress.name,deliveryAddress.line1,deliveryAddress.line2,deliveryAddress.city,deliveryAddress.region,deliveryAddress.postalCode,deliveryAddress.country].filter(Boolean).join("\\n") : null;
+
   const claimId = `cart-${sessionId}`;
   const claimed = await db
     .insert(creditTransactionsTable)
@@ -107,9 +113,9 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
         const buyerTotal = frozen ? frozen.buyerTotalMinor/100 : unitPrice+protectionShare;
         await db.execute(sql`
           INSERT INTO orders (id, buyer_email, seller_email, item_title, item_image, price, status,
-                              stripe_session_id, line_no, buyer_protection_fee, seller_fee, seller_type, seller_fee_rate, seller_net, delivery_fee, buyer_total, fee_policy, created_at, updated_at)
+                              stripe_session_id, line_no, buyer_protection_fee, seller_fee, seller_type, seller_fee_rate, seller_net, delivery_fee, buyer_total, fee_policy, address, created_at, updated_at)
           VALUES (${orderId}, ${buyerEmail}, ${seller}, ${row.title as string}, ${(row.image as string | null) ?? null},
-                  ${unitPrice}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, NOW(), NOW())
+                  ${unitPrice}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, ${formattedDeliveryAddress}, NOW(), NOW())
           ON CONFLICT (stripe_session_id, line_no) DO NOTHING
         `);
       }
