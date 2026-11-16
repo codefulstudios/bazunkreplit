@@ -269,6 +269,25 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     const email=String(body.email??"").trim().toLowerCase();
     const name=typeof body.name==="string" ? body.name : undefined;
     if(!/^\S+@\S+\.\S+$/.test(email)) throw new QuoteError("A valid email is required.");
+    const rawAddress=body.deliveryAddress as Record<string,unknown> | undefined;
+    const addr=rawAddress && Object.fromEntries(["name","line1","line2","city","region","postalCode","country","phone"].map(k=>[k,String(rawAddress[k]??"").trim()])) as Record<string,string>;
+    if(!addr || !addr.name || !addr.line1 || !addr.city || !addr.postalCode || !/^[A-Z]{2}$/.test(addr.country) || Object.values(addr).some(v=>v.length>200))
+      throw new QuoteError("A valid delivery name, street, city, postcode and country are required before payment.");
+    const requested=Array.isArray(body.items)?body.items:[];
+    const listingIds=[...new Set(requested.map((i:any)=>Number(i?.id)).filter((id:number)=>Number.isSafeInteger(id)&&id>0))];
+    if(!listingIds.length || listingIds.length!==new Set(requested.map((i:any)=>Number(i?.id))).size) throw new QuoteError("Invalid basket.");
+    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(listingIds.map(id=>sql`${id}`),sql`, `)})`)).rows as any[];
+    if(shippingRows.length!==listingIds.length) throw new QuoteError("Some items are no longer available.",409);
+    const EU=new Set(["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE"]);
+    const EUROPE=new Set([...EU,"GB","NO","CH","IS","LI","AL","AD","BA","ME","MK","RS","MD","UA"]);
+    const originCode=(v:string)=>({UK:"GB",US:"US",EU:"EU",China:"CN"} as Record<string,string>)[v]??v;
+    for(const row of shippingRows){
+      const zone=String(row.ship_zone??"");
+      const origin=originCode(String(row.ship_origin??""));
+      const c=addr.country;
+      const allowed=zone==="worldwide" || zone==="international" || (zone==="domestic" && origin===c) || (zone==="eu" && (c==="GB"||EU.has(c))) || (zone==="eu-only" && EU.has(c)) || (zone==="europe" && EUROPE.has(c)) || (zone==="north-america" && ["US","CA","MX"].includes(c)) || (zone==="asia" && ["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(c));
+      if(!allowed) throw new QuoteError(zone ? "A seller in your basket does not ship to the selected country." : "A seller has not specified delivery destinations. Contact the seller before payment.",409);
+    }
     // Credits and demo promo codes were never discounted by Stripe. Do not charge
     // a full cash price while also subtracting credits from the buyer's balance.
     if(Number(body.creditsApplied??0)>0 || body.promoCode) throw new QuoteError("Marketplace credits and promotion codes are not supported for this checkout.");
@@ -292,6 +311,7 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     const stripe=await getUncachableStripeClient();
     let user=await storage.getUser(email);let stripeCustomerId=user?.stripeCustomerId;
     if(!stripeCustomerId) {const customer=await stripe.customers.create({email,name});await storage.setStripeCustomerId(email,customer.id);stripeCustomerId=customer.id;}
+    await stripe.customers.update(stripeCustomerId,{shipping:{name:addr.name,phone:addr.phone||undefined,address:{line1:addr.line1,line2:addr.line2||undefined,city:addr.city,state:addr.region||undefined,postal_code:addr.postalCode,country:addr.country}}});
     const origin=resolveOrigin(req);
     const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
     let session;
