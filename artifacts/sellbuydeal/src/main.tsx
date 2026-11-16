@@ -13,19 +13,30 @@ const API_BASE = (runtimeConfig?.apiBaseUrl || "").replace(/\/$/, "");
 if (API_BASE !== "https://bazunk-api-test.apps.bazunk.com") {
   throw new Error("Test storefront API URL is not configured safely");
 }
+// Test-only isolation: redirect both relative and hard-coded production API fetches.
+// Never allow the test storefront to read or mutate live Render API data.
 const nativeFetch = window.fetch.bind(window);
+const TEST_API = new URL(API_BASE);
+const LIVE_API_HOSTS = new Set([
+  "bazunk-api.onrender.com",
+  "bazunk-platform-core-api.onrender.com",
+]);
+function testApiUrl(input: string | URL): string | null {
+  const raw = String(input);
+  const parsed = new URL(raw, window.location.origin);
+  if (!parsed.pathname.startsWith("/api/")) return null;
+  if (parsed.origin === window.location.origin || LIVE_API_HOSTS.has(parsed.hostname)) {
+    return new URL(parsed.pathname + parsed.search + parsed.hash, TEST_API).toString();
+  }
+  return null;
+}
 window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-  if (typeof input === "string" && input.startsWith("/api/")) {
-    return nativeFetch(`${API_BASE}${input}`, init);
-  }
   if (input instanceof Request) {
-    const url = new URL(input.url, window.location.origin);
-    if (url.origin === window.location.origin && url.pathname.startsWith("/api/")) {
-      const target = `${API_BASE}${url.pathname}${url.search}${url.hash}`;
-      return nativeFetch(new Request(target, input), init);
-    }
+    const rewritten = testApiUrl(input.url);
+    return nativeFetch(rewritten ? new Request(rewritten, input) : input, init);
   }
-  return nativeFetch(input, init);
+  const rewritten = testApiUrl(input);
+  return nativeFetch(rewritten ?? input, init);
 }) as typeof window.fetch;
 
 // Clerk production keys are restricted to bazunk.com. Render's default
