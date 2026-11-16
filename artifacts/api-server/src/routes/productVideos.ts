@@ -40,9 +40,15 @@ function owner(req: Parameters<typeof getAuth>[0]) {
   const auth = getAuth(req);
   return auth.isAuthenticated ? auth.userId : null;
 }
-function ownsKey(userId: string, key: unknown): key is string {
+export function ownsKey(userId: string, key: unknown): key is string {
   return typeof key === "string" && key.startsWith(`test-videos/${userId}/`) &&
     /^test-videos\/[a-zA-Z0-9_-]+\/[0-9a-f-]{36}\.(mp4|mov|avi|webm)$/.test(key);
+}
+export async function verifyVideo(userId: string, key: unknown): Promise<boolean> {
+  if (!ownsKey(userId, key)) return false;
+  const response = await fetch(signedUrl("HEAD", key).url);
+  const size = Number(response.headers.get("content-length") || 0);
+  return response.ok && size > 0 && size <= MAX_SIZE;
 }
 router.post("/product-videos/presign", (req,res) => {
   try {
