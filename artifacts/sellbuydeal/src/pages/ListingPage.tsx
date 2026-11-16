@@ -144,7 +144,7 @@ export function ListingPage() {
     }
   }, [id, staticProduct]);
 
-  const product = staticProduct ?? apiProduct;
+  const product = apiProduct ?? staticProduct;
   // Keep numeric and importer URLs working, but show the canonical public token after loading.
   useEffect(() => {
     const token=apiProduct?._publicUrlToken;
@@ -606,8 +606,8 @@ export function ListingPage() {
               const x = product as typeof product & ApiListingExtra;
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
-              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, europe: "Europe", worldwide: "Worldwide", international: "International" };
-              const destination = zoneLabels[x.shipZone || ""] || "Ask seller";
+              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, eu: "UK & EU", "eu-only": "European Union only", europe: "All Europe", "north-america": "North America", worldwide: "Worldwide", international: "International" };
+              const destination = zoneLabels[x.shipZone || ""] || (x.shipZone ? x.shipZone.replaceAll("-", " ") : "Ask seller");
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
               return (
@@ -620,7 +620,7 @@ export function ListingPage() {
                     <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
                     <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
                     {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null ? "Ask seller" : x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
                 </ListingDeliverySection>
@@ -633,7 +633,7 @@ export function ListingPage() {
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4"><BadgeCheck className="w-5 h-5 text-orange-500 mb-2" /><p className="text-xs text-gray-500">{t("condition")}</p><p className="font-black text-gray-900 capitalize">{product.condition}</p></div>
-                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{isDemoListing ? 0 : (x.quantity ?? 1)}</p></div>
+                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{isDemoListing ? 0 : (x.quantity ?? "Ask seller")}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 p-4"><Box className="w-5 h-5 text-blue-500 mb-2" /><p className="text-xs text-gray-500">SKU</p><p className="font-bold text-gray-900 truncate">{x.sku || "Not specified"}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-4"><Plane className="w-5 h-5 text-emerald-500 mb-2" /><p className="text-xs text-gray-500">{t("listingCurrency")}</p><p className="font-black text-gray-900">{x.listingCurrency || "GBP"}</p></div>
                 </div>
