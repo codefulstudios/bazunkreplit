@@ -11,7 +11,6 @@ type Props = {
 
 /** Uploads straight to object storage with measurable network progress, not simulated percentages. */
 export function ProductVideoUploader({ getToken, onUploaded, disabled, initialKey }: Props) {
-  const input = useRef<HTMLInputElement>(null);
   const xhr = useRef<XMLHttpRequest | null>(null);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<"idle" | "preparing" | "uploading" | "done" | "error">(
@@ -92,13 +91,10 @@ export function ProductVideoUploader({ getToken, onUploaded, disabled, initialKe
     xhr.current?.abort();
     setPhase("idle"); setProgress(0); setName(""); setError("");
     setPreview(""); onUploaded(null);
-    if (input.current) input.current.value = "";
   }
   const busy = phase === "uploading" || phase === "preparing";
   return (
     <div className="rounded-2xl border border-violet-300/40 bg-gradient-to-br from-[#201b40] via-[#2e2355] to-[#161d40] p-5 text-white shadow-xl" data-testid="product-video-uploader">
-      <input ref={input} type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm" className="hidden"
-        onChange={e => { const file = e.target.files?.[0]; if (file) void upload(file); }} />
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-violet-500/20 p-3"><Film className="h-6 w-6 text-violet-200" /></div>
         <div className="min-w-0 flex-1"><p className="font-bold">Product video</p><p className="truncate text-xs text-violet-200">{name || "MP4, MOV, AVI or WebM · Up to 100 MB"}</p></div>
@@ -115,10 +111,10 @@ export function ProductVideoUploader({ getToken, onUploaded, disabled, initialKe
       {phase === "done" && <p className="mt-3 text-sm font-semibold text-emerald-300">Video uploaded successfully ✓</p>}
       {error && <p role="alert" className="mt-3 rounded-lg bg-rose-500/15 p-3 text-sm text-rose-200">{error}</p>}
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled={disabled || busy} onClick={() => input.current?.click()}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-bold disabled:opacity-40">
+        <label aria-disabled={disabled || busy} className={`flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-5 py-2.5 text-sm font-bold ${disabled || busy ? "pointer-events-none opacity-40" : "cursor-pointer"}`}>
+          <input type="file" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm" className="sr-only" disabled={disabled || busy} onChange={e => { const file=e.target.files?.[0]; e.target.value=""; if(file) void upload(file); }} />
           <CloudUpload className="h-4 w-4" />{phase === "done" ? "Replace video" : "Select video"}
-        </button>
+        </label>
         {(phase === "done" || phase === "error") && <button type="button" onClick={reset} className="flex items-center gap-1 rounded-xl border border-white/25 px-3 py-2 text-sm">
           {phase === "error" ? <RotateCcw className="h-4 w-4" /> : <X className="h-4 w-4" />}{phase === "error" ? "Try again" : "Remove"}
         </button>}
