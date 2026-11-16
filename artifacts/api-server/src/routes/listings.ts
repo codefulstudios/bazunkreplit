@@ -13,6 +13,7 @@ import { sendSystemMessage } from "../lib/systemMessages.js";
 
 import { awardReferralMilestone } from "../lib/referrals.js";
 import { getPromoConfig } from "../lib/promoConfig.js";
+import { verifyVideo } from "./productVideos.js";
 
 const router = Router();
 
@@ -392,13 +393,16 @@ router.post("/listings", async (req, res) => {
     const region = body.marketplaceRegion ?? body.marketplace_region;
     if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Select UK or USA marketplace region" }); return; }
     const gallery = Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string" && p.length > 0).slice(0, 10) : [];
-    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: gallery, draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: gallery, videoObjectKey: typeof body.videoObjectKey === "string" ? body.videoObjectKey : undefined, draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
     const extraCategories = Array.isArray(body.extra_categories) && body.extra_categories.length
       ? JSON.stringify(body.extra_categories)
       : null;
     const currency = typeof body.currency === "string" && body.currency ? body.currency.toUpperCase() : "GBP";
     const status = body.status === "draft" ? "draft" : "active";
     const premiumVideo = body.premiumVideo === true;
+    if (premiumVideo && status === "active" && !(await verifyVideo(getAuth(req).userId ?? "", body.videoObjectKey))) {
+      res.status(400).json({ error: "Upload a verified product video before publishing." }); return;
+    }
     const shipOrigin = typeof body.shipOrigin === "string" ? body.shipOrigin.slice(0, 80) : null;
     const shipOriginOther = typeof body.shipOriginOther === "string" ? body.shipOriginOther.slice(0, 120) : null;
     const shipZone = typeof body.shipZone === "string" ? body.shipZone.slice(0, 80) : null;
@@ -550,7 +554,10 @@ router.patch("/listings/:id", async (req, res) => {
     if (body.marketplaceRegion !== undefined || body.marketplace_region !== undefined || body.draftForm !== undefined) {
       const region = body.marketplaceRegion ?? body.marketplace_region;
       if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Invalid region" }); return; }
-      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string").slice(0, 10) : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string").slice(0, 10) : [], videoObjectKey: typeof body.videoObjectKey === "string" ? body.videoObjectKey : undefined, draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+    }
+    if (body.premiumVideo === true && body.status === "active" && !(await verifyVideo(getAuth(req).userId ?? "", body.videoObjectKey))) {
+      res.status(400).json({ error: "Upload a verified product video before publishing." }); return;
     }
     if (updates.status && !["draft", "active", "inactive", "suspended", "sold"].includes(updates.status)) { res.status(400).json({ error: "Invalid listing status" }); return; }
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "no fields to update" }); return; }
