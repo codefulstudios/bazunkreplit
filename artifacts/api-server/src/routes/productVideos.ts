@@ -36,6 +36,10 @@ function signedUrl(method: "PUT" | "GET" | "HEAD", key: string, contentType?: st
   const signature = createHmac("sha256",signing).update(stringToSign).digest("hex");
   return { url: `${endpoint.origin}${path}?${canonicalQuery}&X-Amz-Signature=${signature}`, headers: contentType ? {"Content-Type":contentType} : {} };
 }
+export function playbackVideoUrl(key: string): string | null {
+  if (!/^test-videos\/[a-zA-Z0-9_-]+\/[0-9a-f-]{36}\.(mp4|mov|avi|webm)$/.test(key)) return null;
+  return signedUrl("GET", key).url;
+}
 function owner(req: Parameters<typeof getAuth>[0]) {
   const auth = getAuth(req);
   return auth.isAuthenticated ? auth.userId : null;
