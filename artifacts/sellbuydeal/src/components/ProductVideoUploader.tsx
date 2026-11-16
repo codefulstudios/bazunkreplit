@@ -21,6 +21,9 @@ export function ProductVideoUploader({ getToken, onUploaded, disabled, initialKe
   const [error, setError] = useState("");
   const [preview, setPreview] = useState("");
   useEffect(() => () => { xhr.current?.abort(); }, []);
+  useEffect(() => {
+    if (initialKey && phase === "idle") { setPhase("done"); setName("Saved product video"); setProgress(100); }
+  }, [initialKey]);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
   async function upload(file: File) {
