@@ -16,7 +16,7 @@ function normalize(p:any):Product {
   return {externalId:id,title:String(p.title??p.product_title??p.ae_item_base_info_dto?.subject??""),description:String(p.description??p.ae_item_base_info_dto?.detail??""),images:images.map(url=>({url})),price:{amount:Number.isFinite(price)?price:0,currency:"USD"},sourceUrl:absolute(p.itemUrl??p.product_detail_url) || (id?"https://www.aliexpress.com/item/"+id+".html":""),rating:Number(p.score??0)||0};
 }
 async function call(method:string, extra:Record<string,string>):Promise<any> {
-  if (!dropshipConfigured()) throw new Error("AliExpress Dropshipping API credentials missing: configure ALIEXPRESS_DS_APP_KEY, ALIEXPRESS_DS_APP_SECRET and ALIEXPRESS_DS_ACCESS_TOKEN on Render");
+  if (!dropshipConfigured()) throw new Error("AliExpress Dropshipping API credentials missing: configure ALIEXPRESS_DS_APP_KEY, ALIEXPRESS_DS_APP_SECRET and ALIEXPRESS_DS_ACCESS_TOKEN on the API server");
   const params:Record<string,string>={app_key:process.env.ALIEXPRESS_DS_APP_KEY!,session:process.env.ALIEXPRESS_DS_ACCESS_TOKEN!,method,sign_method:"sha256",timestamp:String(Date.now()),format:"json",v:"2.0",...extra};
   const payload=Object.keys(params).sort().map(k=>k+params[k]).join("");
   params.sign=createHmac("sha256",process.env.ALIEXPRESS_DS_APP_SECRET!).update(payload).digest("hex").toUpperCase();
