@@ -2931,3 +2931,15 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .dark .bazunk-listing-redesign{--listing-page:#091527;--listing-card:#12243c;--listing-soft:#192e49;--listing-line:#38516f}
 .dark .bazunk-listing-redesign .listing-purchase-section [data-testid="button-make-offer"],
 .dark .bazunk-listing-redesign .listing-purchase-section [data-testid="button-add-watchlist"]{background:#162b47!important;color:#fff!important}
+
+
+/* Desktop gallery follows the reference: vertical photo rail beside a generous hero. */
+@media(min-width:1100px){
+.bazunk-listing-redesign .bz-product-gallery{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;background:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+.bazunk-listing-redesign .bz-product-gallery-stage{grid-column:2;grid-row:1;aspect-ratio:1.13!important;border-radius:19px;border:1px solid var(--listing-line);background:#fff!important;box-shadow:0 8px 25px #10264a13}
+.bazunk-listing-redesign .bz-product-gallery-stage > img{padding:clamp(12px,2vw,30px)!important}
+.bazunk-listing-redesign .bz-product-gallery-thumbnails{grid-column:1;grid-row:1;flex-direction:column;overflow-y:auto;overflow-x:hidden;align-self:start;max-height:580px;padding:0!important;border:0!important;gap:10px!important}
+.bazunk-listing-redesign .bz-product-gallery-thumbnails > button{width:80px;height:80px;border-radius:14px}
+.dark .bazunk-listing-redesign .bz-product-gallery-stage{background:#162a44!important}
+}
+@media(max-width:1099px){.bazunk-listing-redesign .bz-product-gallery{overflow:hidden;border-radius:18px}}
