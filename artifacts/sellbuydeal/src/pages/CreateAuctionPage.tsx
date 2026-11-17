@@ -668,11 +668,18 @@ export function CreateAuctionPage() {
           </section>
           </div>
           </div>
-          <aside className="auction-create-ad w-full min-w-0" aria-label="Auction listing advertisement">
-            <div className="w-full max-w-[728px] mx-auto">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">Advertisement · 728 × 90</p>
-              <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="90" className="w-full min-h-[90px] rounded-md border border-dashed border-slate-300 bg-white overflow-hidden">
-                <AdSlot slotKey="create_auction" />
+          <aside className="auction-create-ad" aria-label="Auction listing vertical advertisement">
+            <div className="auction-create-ad-inner">
+              <span className="auction-create-ad-label">Advertisement</span>
+              <div data-ad-placement="create-auction-vertical" data-ad-width="176" data-ad-height="740" className="auction-create-ad-panel">
+                <div className="auction-create-ad-placeholder" aria-hidden="true">
+                  <div className="auction-create-ad-brand">Bazu<span>nk</span></div>
+                  <div className="auction-create-ad-heading">Live<br/><strong>Auctions</strong></div>
+                  <div className="auction-create-ad-art"><Gavel size={88} strokeWidth={1.6}/><span className="auction-create-ad-spark">✦</span></div>
+                  <div className="auction-create-ad-benefits"><span>✓ Real-time bidding</span><span>✓ Exciting discoveries</span><span>✓ More exposure</span></div>
+                  <span className="auction-create-ad-cta">Go Live on Bazunk ›</span>
+                </div>
+                <div className="auction-create-ad-creative"><AdSlot slotKey="create_auction" /></div>
               </div>
             </div>
           </aside>
