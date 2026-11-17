@@ -156,3 +156,17 @@
 .bazunk-dashboard-store :is(.from-violet-600,.from-purple-600){color:#fff!important}
 .bazunk-dashboard-store :is(.from-violet-600,.from-purple-600) :is(h1,h2,h3,p,span){color:#fff!important}
 @media(max-width:640px){.bazunk-dashboard-store{padding:0}.bazunk-dashboard-store>div:first-child{padding:14px}}
+
+/* My Store: prevent theme inheritance from turning text invisible. */
+.bazunk-dashboard-store .bazunk-store-toolkit{background:#102746!important;color:#fff!important;border-color:#42648b!important}
+.bazunk-dashboard-store .bazunk-store-toolkit :is(a.group,button.group){background:#17385b!important;color:#fff!important;border-color:#42648b!important}
+.bazunk-dashboard-store .bazunk-store-toolkit :is(a.group,button.group) :is(p,span){color:#f8fbff!important;-webkit-text-fill-color:#f8fbff!important}
+.bazunk-dashboard-store .bazunk-store-toolkit :is(a.group,button.group) p.text-xs{color:#d1dff1!important;-webkit-text-fill-color:#d1dff1!important}
+.bazunk-dashboard-store .bazunk-store-toolkit :is(a.group,button.group):hover{background:#234c73!important;border-color:#ffad57!important}
+.bazunk-dashboard-store .bazunk-store-toolkit input{background:#0a1c34!important;color:#fff!important}
+.bazunk-dashboard-store .bazunk-store-toolkit input::placeholder{color:#d1dff1!important}
+.bazunk-dashboard-store .bazunk-store-preview{background:#102746!important;color:#fff!important}
+.bazunk-dashboard-store .bazunk-store-preview>div:last-child{background:#102746!important;color:#fff!important}
+.bazunk-dashboard-store .bazunk-store-preview>div:last-child :is(p,span,div){color:#e9f2ff!important;-webkit-text-fill-color:#e9f2ff!important}
+.bazunk-dashboard-store .bazunk-store-preview>div:first-child :is(h3,p,span){color:#fff!important;-webkit-text-fill-color:#fff!important}
+.bazunk-dashboard-store .bazunk-store-preview svg{color:#ffac57!important}
