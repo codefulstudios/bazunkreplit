@@ -208,7 +208,7 @@ export function SupportPage() {
   const categories = CATEGORIES.filter((c:any) => !c.feature || isFeatureEnabled(settings,c.feature));
   const [category,setCategory] = useState("Buying");
   const [search,setSearch] = useState("");
-  const [expanded,setExpanded] = useState<string[]>([]);
+  const [expanded,setExpanded] = useState<string[]>(CATEGORIES.flatMap(c=>[...c.faqs,...(EXTRA_FAQS[c.label]||[])].map(f=>c.label+":"+f.q)));
   const [searched,setSearched] = useState(false);
   const faqVisible = (faq:{q:string;a:string}) => {
     const t=(faq.q+" "+faq.a).toLowerCase();
