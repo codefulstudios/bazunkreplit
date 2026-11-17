@@ -811,7 +811,7 @@ export function ListingPage() {
                 <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views} views</span>
                 <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
-              </div>
+              </div>}
             </ListingPurchaseSection>
 
             {/* Seller card */}
