@@ -36,7 +36,7 @@ export function MobileNotificationsPage(){
   finally{setBusy(false);}
  };
  const unseen=data.filter(n=>n.unread);
- return <div className="min-h-screen bg-slate-50 pb-24 text-slate-900 dark:bg-[#0b1930] dark:text-white">
+ return <div className="bazunk-account-page min-h-screen bg-slate-50 pb-24 text-slate-900 dark:bg-[#0b1930] dark:text-white">
   <Navbar/>
   <main className="mx-auto max-w-3xl space-y-4 px-4 py-6">
    <div className="flex flex-wrap items-center justify-between gap-3">
