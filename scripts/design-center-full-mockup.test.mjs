@@ -73,6 +73,6 @@ test("Every optional homepage block has published text controls",()=>{
  assert.match(page,/home_sections_content/);
  assert.match(page,/Section title/);
  assert.match(page,/Card title/);
- assert.match(app,/parseSectionContent/);
+ assert.match(page,/parseSectionContent/);
  assert.match(api,/validSectionContent/);
 });
