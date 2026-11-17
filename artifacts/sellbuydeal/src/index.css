@@ -2973,3 +2973,61 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 }
 @media(min-width:1100px) and (max-width:1299px){.bazunk-listing-redesign .bz-mockup-product-summary{padding:20px;background:var(--listing-card);border:1px solid var(--listing-line);border-radius:18px}}
 @media(max-width:1099px){.bazunk-listing-redesign .bz-mockup-product-summary{padding:18px;background:var(--listing-card);border:1px solid var(--listing-line);border-radius:18px}}
+
+
+/* Mockup fidelity pass: genuinely edge-to-edge desktop layout and two-level navigation. */
+.bz-mockup-header .bz-mockup-mainbar{max-width:none!important;width:100%!important}
+.bazunk-listing-redesign .bazunk-listing-content{max-width:none!important;width:100%!important;margin-inline:0!important;padding-left:clamp(15px,1.7vw,32px)!important;padding-right:clamp(15px,1.7vw,32px)!important}
+@media(min-width:1280px){
+.bz-mockup-header .bz-mockup-mainbar{display:grid!important;grid-template-columns:clamp(205px,16vw,265px) minmax(420px,auto) minmax(270px,1fr);grid-template-rows:58px 62px;align-items:center;gap:0 14px!important;height:120px!important;padding-inline:clamp(18px,2vw,38px)!important}
+.bz-mockup-header .bz-header-brand{grid-column:1;grid-row:1;align-self:center}
+.bz-mockup-header .bz-header-actions{grid-column:2/4;grid-row:1;justify-self:end;align-self:center;width:auto;max-width:100%;gap:12px}
+.bz-mockup-header .bz-mockup-categories{grid-column:1;grid-row:2;justify-self:start;width:min(100%,178px);margin-right:0!important}
+.bz-mockup-header .bz-header-primary-nav{grid-column:2;grid-row:2;justify-self:start;gap:3px;min-width:0}
+.bz-mockup-header .bz-header-search-slot{grid-column:3;grid-row:2;display:block;min-width:0;width:100%;justify-self:stretch}
+.bz-mockup-header .bz-header-search-slot > div{display:block!important;width:100%;max-width:none!important}
+.bz-mockup-header .bz-header-primary-nav > a,.bz-mockup-header .bz-header-primary-nav > div > button{font-size:clamp(.73rem,.85vw,.94rem)!important;padding:8px 6px!important;white-space:nowrap}
+.bz-mockup-header .bz-header-primary-nav .bz-nav-link-icon{width:20px;height:20px}
+.bz-mockup-header .bz-header-search-slot input[data-testid="input-search"]{height:48px!important;width:100%!important;border-radius:17px!important;padding-right:54px!important}
+.bz-mockup-header .bz-header-search-slot form{position:relative}
+.bz-mockup-header .bz-header-search-slot form:after{content:"";pointer-events:none;position:absolute;right:4px;top:4px;bottom:4px;width:44px;border-radius:12px;background:linear-gradient(110deg,#ff8800,#ff5900)}
+.bz-mockup-header .bz-header-search-slot form > svg{z-index:1}
+.bz-mockup-header .bz-header-search-slot form:before{content:"⌕";pointer-events:none;position:absolute;z-index:2;right:17px;top:3px;font-size:29px;font-weight:700;color:#fff}
+.bz-mockup-header .bz-header-search-slot input::-webkit-search-cancel-button{display:none}
+.bz-mockup-benefits{grid-template-columns:repeat(5,minmax(0,1fr));padding:11px clamp(12px,2vw,35px)}
+.bz-mockup-benefits > span{padding:0 clamp(5px,.8vw,15px)}
+}
+@media(min-width:1280px) and (max-width:1450px){
+.bz-mockup-header .bz-mockup-mainbar{grid-template-columns:205px minmax(405px,auto) minmax(230px,1fr);gap:0 8px!important}
+.bz-mockup-header .bz-header-primary-nav > a,.bz-mockup-header .bz-header-primary-nav > div > button{font-size:.74rem!important;padding-inline:4px!important}
+.bz-mockup-header .bz-header-primary-nav .bz-nav-link-icon{width:17px;height:17px}
+.bz-mockup-benefits small{font-size:.64rem}
+.bz-mockup-benefits strong{font-size:.75rem}
+}
+@media(min-width:1024px) and (max-width:1279px){
+.bz-mockup-header .bz-header-search-slot{flex:1;min-width:200px}
+.bz-mockup-header .bz-header-search-slot > div{display:block!important;width:100%}
+.bz-mockup-header .bz-header-actions{flex:0 0 auto}
+}
+@media(max-width:1023px){.bz-mockup-header .bz-header-search-slot{display:none}}
+/* Float the category panel below the top header, without its old full-screen drawer chrome. */
+@media(min-width:768px){
+.bz-category-drawer-root{inset:120px 0 0 0!important}
+.bz-category-drawer-backdrop{background:rgba(9,25,49,.12)!important}
+.bz-category-drawer{top:8px!important;bottom:auto!important;left:10px!important;right:auto!important;height:min(720px,calc(100dvh - 145px))!important;width:290px!important;border:1px solid #d5dff2;border-radius:22px!important;box-shadow:0 14px 34px #0924483d!important}
+.bz-category-drawer-header{background:linear-gradient(110deg,#fff,#f7f7ff)!important;min-height:58px!important;padding:13px 17px!important;border-bottom:0!important}
+.bz-category-drawer-heading{font-size:1.15rem;font-weight:900;letter-spacing:-.025em;color:#12203b}
+.bz-category-drawer-header button{color:#16233e!important}
+.bz-category-drawer-search{margin:4px 14px 12px!important;border:1.5px solid #a8b9da!important;border-radius:13px!important;padding:11px!important}
+.bz-category-drawer-row{padding:9px 15px!important;min-height:45px!important}
+.bz-category-drawer-row:first-of-type{background:#fff0df}
+.bz-category-drawer-bottom{border-top:1px solid #dce4f2}
+.bz-category-all-bottom{margin-top:8px!important}
+}
+@media(min-width:1280px){
+.bazunk-listing-redesign .bazunk-listing-content > .grid{grid-template-columns:minmax(0,2.2fr) minmax(315px,.88fr)!important}
+.bazunk-listing-redesign .bz-mockup-listing-left{display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);align-items:start;column-gap:clamp(15px,1.5vw,28px);row-gap:16px}
+.bazunk-listing-redesign .bz-mockup-listing-left > .bz-product-gallery{grid-column:1;grid-row:1}
+.bazunk-listing-redesign .bz-mockup-listing-left > .bz-mockup-product-summary{grid-column:2;grid-row:1}
+.bazunk-listing-redesign .bz-mockup-listing-left > :not(.bz-product-gallery):not(.bz-mockup-product-summary){grid-column:1/-1}
+}
