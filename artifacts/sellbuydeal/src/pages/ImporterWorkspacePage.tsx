@@ -46,7 +46,7 @@ export function ImporterWorkspacePage(){
  if(paid)return <Redirect to="/importers"/>;
  if(!cfg)return <div className="max-w-4xl mx-auto px-4 py-16"><Link href="/importers">← Importer Hub</Link><h1>Importer not found</h1></div>;
  if(!user)return <div className="max-w-4xl mx-auto px-4 py-16 text-center"><h1 className="text-3xl font-black">Sign in to use {cfg.name}</h1></div>;
- return <div className="min-h-screen bg-slate-50 dark:bg-slate-950"><div className="max-w-7xl mx-auto px-4 py-10">
+ return <div className="bazunk-account-page min-h-screen bg-slate-50 dark:bg-slate-950"><div className="max-w-7xl mx-auto px-4 py-10">
   <Link href="/importers" className="inline-flex items-center gap-2 mb-5 px-5 py-2.5 rounded-xl border border-white/20 bg-[#171a2b] !text-white shadow-md font-bold text-sm hover:bg-[#303653] hover:border-orange-400 transition-colors"><ArrowLeft className="w-4 h-4"/>Importer Hub</Link>
   <div className={`rounded-[2rem] bg-gradient-to-r ${cfg.gradient} text-white p-7 md:p-9 mb-7 shadow-lg`}><p className="uppercase text-xs font-black tracking-widest text-white/75">{cfg.subtitle}</p><h1 className="text-4xl font-black mt-1">{cfg.name} Importer</h1><p className="mt-2 text-sm font-bold text-white">Connection type: {cfg.method}</p><p className="mt-3 text-white/80 max-w-2xl">A dedicated workspace for previewing, pricing and importing {cfg.name} inventory into Bazunk.</p></div>
   {paid ? <section className="rounded-3xl border border-indigo-500/30 bg-slate-900 p-7 text-white shadow-lg">
