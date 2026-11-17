@@ -2708,3 +2708,82 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 
 /* Keep offer-stat text legible against dark orange/green/purple gradient cards in light and dark modes. */
 .bz-offers-metric-text{color:#ffffff!important;}
+
+
+/* Bazunk product listing: cohesive premium retail system in both colour modes.
+   Scoped to listing pages so checkout, admin and other storefront views stay untouched. */
+.bazunk-listing-redesign {
+ --listing-page:#f2f5fa;--listing-card:#fff;--listing-soft:#f6f8fc;
+ --listing-text:#17243b;--listing-muted:#52627a;--listing-line:#dbe3ee;
+ --listing-accent:#eb6509;--listing-accent-soft:#fff1e6;
+ --listing-shadow:0 10px 30px rgba(25,45,78,.07);
+ background:var(--listing-page);color:var(--listing-text);
+}
+.dark .bazunk-listing-redesign {
+ --listing-page:#091527;--listing-card:#12243c;--listing-soft:#192e49;
+ --listing-text:#f4f7fc;--listing-muted:#c5d3e7;--listing-line:#38516f;
+ --listing-accent:#ff871b;--listing-accent-soft:#3a2b27;
+ --listing-shadow:0 14px 36px rgba(0,0,0,.18);
+}
+.bazunk-listing-redesign .bazunk-listing-content {color:var(--listing-text)}
+.bazunk-listing-redesign .bazunk-listing-content > nav,
+.bazunk-listing-redesign .bazunk-listing-content > button {color:var(--listing-muted)}
+.bazunk-listing-redesign .listing-details-section,
+.bazunk-listing-redesign .listing-delivery-section,
+.bazunk-listing-redesign .listing-purchase-section,
+.bazunk-listing-redesign .listing-seller-section > *,
+.bazunk-listing-redesign .listing-related-section > * {
+ background:var(--listing-card)!important;color:var(--listing-text)!important;
+ border:1px solid var(--listing-line)!important;border-radius:18px!important;
+ box-shadow:var(--listing-shadow);
+}
+.bazunk-listing-redesign .listing-purchase-section {padding:clamp(18px,2.2vw,28px)!important;border-top:4px solid var(--listing-accent)!important}
+.bazunk-listing-redesign .listing-purchase-section h1 {color:var(--listing-text)!important;letter-spacing:-.035em}
+.bazunk-listing-redesign .bazunk-listing-price span {color:var(--listing-text)!important;font-size:clamp(2.1rem,3vw,2.8rem);letter-spacing:-.045em}
+.bazunk-listing-redesign .bazunk-listing-essentials {background:var(--listing-soft)!important;border-color:var(--listing-line)!important;color:var(--listing-text)!important}
+.bazunk-listing-redesign .bazunk-listing-essentials :is(span,p) {color:var(--listing-text)!important}
+.bazunk-listing-redesign .bazunk-listing-essentials p {color:var(--listing-muted)!important}
+.bazunk-listing-redesign .listing-purchase-section [data-testid="button-buy-now"] {
+ background:linear-gradient(100deg,#f97316,#e65b00)!important;color:#fff!important;
+ border:0!important;min-height:52px;font-size:1rem!important;box-shadow:0 7px 16px rgba(226,90,0,.2)
+}
+.bazunk-listing-redesign .listing-purchase-section [data-testid="button-make-offer"] {
+ background:var(--listing-accent-soft)!important;border-color:var(--listing-accent)!important;color:var(--listing-text)!important;
+}
+.bazunk-listing-redesign .listing-purchase-section [data-testid="button-message-seller"],
+.bazunk-listing-redesign .listing-purchase-section [data-testid="button-add-watchlist"] {
+ background:var(--listing-soft)!important;border:1px solid var(--listing-line)!important;color:var(--listing-text)!important;
+}
+.bazunk-listing-redesign .listing-purchase-section > p:last-of-type {background:var(--listing-soft)!important;color:var(--listing-muted)!important;border-color:var(--listing-line)!important}
+.bazunk-listing-redesign .bazunk-listing-tabs {background:var(--listing-card);border-color:var(--listing-line)!important;box-shadow:var(--listing-shadow);border-radius:16px!important}
+.bazunk-listing-redesign .bazunk-listing-tabs [role="tablist"] {background:var(--listing-soft)!important;border-color:var(--listing-line)!important}
+.bazunk-listing-redesign .bazunk-listing-tabs [role="tab"][aria-selected="true"] {background:var(--listing-accent)!important;color:#fff!important}
+.bazunk-listing-redesign .bazunk-listing-tabs [role="tab"][aria-selected="false"] {color:var(--listing-text)!important}
+.bazunk-listing-redesign .listing-details-section > div:first-child {background:var(--listing-soft)!important;border-bottom:1px solid var(--listing-line)}
+.bazunk-listing-redesign .listing-details-section > div:first-child h2 {color:var(--listing-text)!important}
+.bazunk-listing-redesign .listing-details-section > div:first-child svg {color:var(--listing-accent)!important}
+.bazunk-listing-redesign .listing-details-section :is(h3,p,td,th,span) {color:var(--listing-text)}
+.bazunk-listing-redesign .listing-details-section p.text-gray-600 {color:var(--listing-muted)!important}
+.bazunk-listing-redesign .listing-details-section .border-gray-100 {border-color:var(--listing-line)!important}
+.bazunk-listing-redesign .listing-delivery-section {border-top:4px solid #0891b2!important}
+.bazunk-listing-redesign .listing-delivery-section > div:first-child {background:var(--listing-soft)!important;color:var(--listing-text)!important}
+.bazunk-listing-redesign .listing-delivery-section > div:first-child :is(h2,p,svg) {color:var(--listing-text)!important}
+.bazunk-listing-redesign .listing-delivery-section .grid > div {background:var(--listing-soft)!important;border-color:var(--listing-line)!important}
+.bazunk-listing-redesign .listing-delivery-section .grid > div :is(p,span) {color:var(--listing-text)!important}
+.bazunk-listing-redesign .bazunk-listing-similar > div:first-child h2 {color:var(--listing-text)!important;font-size:1.45rem}
+.bazunk-listing-redesign .bazunk-listing-similar [data-testid^="card-similar-"] {background:var(--listing-card)!important;border:1px solid var(--listing-line)!important;box-shadow:var(--listing-shadow)}
+.bazunk-listing-redesign .bazunk-listing-similar [data-testid^="card-similar-"] .bg-gray-50 {background:var(--listing-soft)!important}
+.bazunk-listing-redesign .bazunk-listing-similar [data-testid^="card-similar-"] p {color:var(--listing-text)!important}
+.bazunk-listing-redesign .bazunk-listing-similar [data-testid^="card-similar-"] span.text-sm {color:var(--listing-accent)!important}
+.bazunk-listing-redesign .bazunk-listing-main > .bg-white,
+.bazunk-listing-redesign .bazunk-listing-aside > .bg-white {background:var(--listing-card)!important;color:var(--listing-text)!important;border-color:var(--listing-line)!important}
+.bazunk-listing-redesign .bazunk-listing-aside .listing-seller-section,
+.bazunk-listing-redesign .bazunk-listing-aside .listing-related-section {overflow:hidden;border-radius:18px}
+.bazunk-listing-redesign .bazunk-listing-aside .listing-seller-section :is(h2,h3,p),
+.bazunk-listing-redesign .bazunk-listing-aside .listing-related-section :is(h2,h3,p) {color:var(--listing-text)}
+@media(min-width:1024px){.bazunk-listing-redesign .bazunk-listing-aside {position:static!important}}
+@media(max-width:640px){
+ .bazunk-listing-redesign .listing-purchase-section {padding:18px!important}
+ .bazunk-listing-redesign .bazunk-listing-content {padding-inline:12px}
+ .bazunk-listing-redesign .bazunk-listing-tabs [role="tab"] {font-size:.8rem}
+}
