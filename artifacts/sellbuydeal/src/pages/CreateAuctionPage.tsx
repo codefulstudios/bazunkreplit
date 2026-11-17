@@ -253,7 +253,7 @@ export function CreateAuctionPage() {
     <div className="min-h-screen bg-[#f1f5f9] flex flex-col">
       <Navbar />
 
-      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 py-4">
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-4">
         <Link
           href="/auctions"
           className="flex items-center gap-1.5 text-sm text-slate-700 hover:text-[#4A5CE8] mb-3 w-fit transition-colors"
