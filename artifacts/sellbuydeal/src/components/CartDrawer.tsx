@@ -50,7 +50,8 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="bz-cart-overlay"\n            style={{ position: "fixed", inset: 0, width: "100vw", height: "100dvh", backgroundColor: "rgba(3, 12, 29, 0.68)", zIndex: 2147483000 }}
+            className="bz-cart-overlay"
+            style={{ position: "fixed", inset: 0, width: "100vw", height: "100dvh", backgroundColor: "rgba(3, 12, 29, 0.68)", zIndex: 2147483000 }}
             onClick={closeCart}
           />
 
@@ -61,7 +62,11 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="bz-cart-drawer flex flex-col shadow-2xl overflow-hidden"\n            role="dialog"\n            aria-modal="true"\n            aria-label="Shopping cart"\n            style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: "auto", width: "min(400px, 100vw)", maxWidth: "100vw", height: "100dvh", backgroundColor: "#ffffff", color: "#14243d", zIndex: 2147483001, opacity: 1, isolation: "isolate" }}
+            className="bz-cart-drawer flex flex-col shadow-2xl overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Shopping cart"
+            style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: "auto", width: "min(400px, 100vw)", maxWidth: "100vw", height: "100dvh", backgroundColor: "#ffffff", color: "#14243d", zIndex: 2147483001, opacity: 1, isolation: "isolate" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
