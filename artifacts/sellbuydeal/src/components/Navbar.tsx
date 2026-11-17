@@ -318,7 +318,7 @@ export function Navbar() {
         )}
       </AnimatePresence>
       <nav data-bz-site-header className="bz-mockup-header relative z-50 w-full bg-white shadow-sm">
-        <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
+        <div className="bz-mockup-topbar border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex items-center gap-2" aria-label="Marketplace region">
           <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
           <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
             <motion.div layout initial={false} transition={{ type: "spring", stiffness: 420, damping: 30 }}
@@ -331,6 +331,12 @@ export function Navbar() {
                 <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "UK" : "USA"}</span></span>
               </button>
             ))}
+          </div>
+          <div className="bz-mockup-top-links">
+            <Link href="/support">Help</Link>
+            <Link href="/buyer-protection"><ShieldCheck size={17}/> Buyer Protection</Link>
+            <Link href="/dashboard?section=watchlist"><Heart size={18} className="text-sky-400"/> Watchlist</Link>
+            <Link href="/sell" className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</Link>
           </div>
         </div>
         <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
