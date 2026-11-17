@@ -3149,3 +3149,8 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 
 /* Keep the marketplace benefits ribbon flush with the header: no blue corner cutouts. */
 .bz-mockup-header .bz-mockup-benefits{border-radius:0!important;overflow:visible!important}
+
+/* Top-bar More trigger: distinct blue from the orange Sell on Bazunk button. */
+.bz-mockup-top-links .bz-mockup-top-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 15px;border-radius:12px;background:linear-gradient(110deg,#087cc4,#0058a8);border:1px solid #50baf5;color:#fff;font-size:.83rem;font-weight:800;box-shadow:0 4px 12px #001d3852;white-space:nowrap;transition:filter .15s,transform .15s}
+.bz-mockup-top-links .bz-mockup-top-more:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.bz-mockup-top-links .bz-mockup-top-more:focus-visible{outline:3px solid #8dd9ff;outline-offset:2px}
