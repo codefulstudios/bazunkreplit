@@ -3740,3 +3740,8 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .auction-create-form button:not([type="submit"]):not([class*="bg-gradient"]){color:#0f172a}
 .auction-create-form button:not([type="submit"]):not([class*="bg-gradient"]) svg{color:inherit}
 .auction-create-form button[type="submit"]{color:#fff!important}
+
+/* Auction header is dark: override global typography/theme rules explicitly. */
+.auction-create-form .auction-create-header .auction-create-header-title,.auction-create-form .auction-create-header h1{color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important}
+.auction-create-form .auction-create-header .auction-create-header-subtitle,.auction-create-form .auction-create-header p{color:#fff1df!important;-webkit-text-fill-color:#fff1df!important;opacity:1!important}
+.auction-create-form .auction-create-header svg{color:#ffffff!important;stroke:#ffffff!important}
