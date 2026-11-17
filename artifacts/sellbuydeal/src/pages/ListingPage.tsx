@@ -519,6 +519,18 @@ export function ListingPage() {
                   })()}
                 </div></>} />
 
+
+            <section className="bz-mockup-product-summary" aria-label="Product overview">
+              <h1 className="bz-mockup-product-title">{product.title}</h1>
+              <div className="bz-mockup-product-seller"><span className="bz-mockup-condition">{product.condition}</span><span>Sold by {(product as typeof product & ApiListingExtra)._sellerName || (product as typeof product & ApiListingExtra)._sellerUsername || "Marketplace seller"}</span>{product.verified&&<CheckCircle2 size={18} className="text-emerald-500" aria-label="Identity verified"/>}</div>
+              <div className="bz-mockup-product-price">{formatPrice(product.price + (product.variants?.reduce((sum,v)=>sum+(v.options.find(o=>o.value===selectedVariants[v.type])?.priceDelta??0),0)??0))}</div>
+              <div className="bz-mockup-product-stock"><CheckCircle2 size={20}/> {isDemoListing?"Currently unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock ("+(product as typeof product & ApiListingExtra).quantity+" available)":"Out of stock"):"Check availability with seller"}</div>
+              <p className="bz-mockup-product-meta"><Tag size={18}/> <strong>Condition:</strong> {CONDITION_DESC[product.condition] || product.condition}</p>
+              <p className="bz-mockup-product-meta"><Grid3X3 size={18}/> <strong>Category:</strong> {category?.name || product.category}{subcategoryLabel?" › "+subcategoryLabel:""}</p>
+              <div className="bz-mockup-product-key"><h2>About this item</h2><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,300)}</p></div>
+              <div className="bz-mockup-product-promises"><span><Shield size={25}/>Buyer protection</span><span><Truck size={25}/>Seller delivery</span><span><CheckCircle2 size={25}/>Secure checkout</span></div>
+            </section>
+
             {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
             <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 bazunk-listing-tabs">
               <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
@@ -691,22 +703,7 @@ export function ListingPage() {
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
             <ListingPurchaseSection>
-              <h1 className="mb-3 text-2xl sm:text-3xl font-extrabold leading-tight text-slate-900 dark:text-white">{product.title}</h1>
-
-              {(() => {
-                const priceDelta = product.variants
-                  ? product.variants.reduce((sum, v) => {
-                      const sel = v.options.find((o) => o.value === selectedVariants[v.type]);
-                      return sum + (sel?.priceDelta ?? 0);
-                    }, 0)
-                  : 0;
-                const totalPrice = product.price + priceDelta;
-                return (
-                  <div className="flex flex-wrap items-baseline gap-2 mb-5 bazunk-listing-price">
-                    <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{formatPrice(totalPrice)}</span>
-                  </div>
-                );
-              })()}
+              <h2 className="bz-mockup-buy-heading">Buy this item</h2>
 
               {/* Buyer's essentials: price, condition, stock and delivery together. */}
               <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5 bazunk-listing-essentials">
