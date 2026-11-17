@@ -339,7 +339,8 @@ export function Navbar() {
             <Link href="/support">Help</Link>
             <Link href="/buyer-protection"><ShieldCheck size={17}/> Buyer Protection</Link>
             <Link href="/dashboard?section=watchlist"><Heart size={18} className="text-sky-400"/> Watchlist</Link>
-            <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(true)}} className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</button>
+            <button type="button" onClick={() => {setSellOpen(false);setMoreOpen(v=>!v)}} aria-haspopup="dialog" aria-expanded={moreOpen} data-testid="button-more-nav" className="bz-mockup-top-more"><Grid3X3 size={17}/> More <ChevronDown size={14} className={moreOpen?"rotate-180":""}/></button>
+             <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(true)}} className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</button>
           </div>
         </div>
         <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
@@ -395,21 +396,7 @@ export function Navbar() {
               );
             })}
 
-            {/* More dropdown */}
-            <div ref={moreRef} className="relative">
-              <button
-                onClick={() => { setSellOpen(false); setMoreOpen((v) => !v); }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap ${
-                  moreOpen ? "text-[#4A5CE8] bg-[#4A5CE8]/10" : "text-gray-600 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/5"
-                }`}
-                data-testid="button-more-nav"
-              >
-                <Grid3X3 className="bz-nav-link-icon text-sky-300"/> More
-                <ChevronDown className={`w-3 h-3 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
-              </button>
-
-            </div>
-
+            
           </div>
 
           {/* Search occupies its own full-width slot beside navigation. */}
