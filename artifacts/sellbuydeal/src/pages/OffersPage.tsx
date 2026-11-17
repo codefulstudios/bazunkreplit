@@ -208,7 +208,7 @@ export function OffersPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bazunk-account-page min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-sm">
@@ -245,7 +245,7 @@ export function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06172f] text-white flex flex-col">
+    <div className="bazunk-account-page min-h-screen bg-[#06172f] text-white flex flex-col">
       <Navbar />
       <main className="bz-offers-page flex-1">
         <div className="bz-offers-wrap">
