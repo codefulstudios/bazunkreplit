@@ -15,7 +15,7 @@ type Auction = {
   id: string; title: string; description: string | null; images: string[];
   category: string | null; condition: string; seller_name: string; seller_email: string;
   starting_bid: string; current_bid: string | null; bid_count: number;
-  bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; extend_enabled?: boolean; end_time: string;
+  bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; end_time: string;
   status: string; winner_name: string | null; winner_email: string | null;
   winner_bid: string | null; created_at: string; bids: Bid[];
 };
@@ -388,9 +388,6 @@ export function AuctionDetailPage() {
                     {auction.reserve_met ? "Reserve met" : auction.bid_count > 0 ? "Not met yet" : "Hidden"}
                   </span>
                 </div>
-              )}
-              {auction.extend_enabled && (
-                <div className="flex justify-between"><span>Auto-extend</span><span className="font-semibold text-gray-700">Late bids add time</span></div>
               )}
               <div className="flex justify-between"><span>Listed</span><span className="font-semibold text-gray-700">{new Date(auction.created_at).toLocaleDateString("en-GB")}</span></div>
               <div className="flex justify-between"><span>Ends</span><span className="font-semibold text-gray-700">{new Date(auction.end_time).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>
