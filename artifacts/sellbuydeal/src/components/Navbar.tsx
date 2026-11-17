@@ -203,6 +203,7 @@ export function Navbar() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
+      if ((e.target as Element)?.closest?.(".bz-mega-panel")) return;
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
       if (sellRef.current && !sellRef.current.contains(e.target as Node)) setSellOpen(false);
