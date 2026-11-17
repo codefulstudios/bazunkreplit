@@ -3372,3 +3372,11 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-browse-pagination button.active{background:#ff7900!important;color:#fff!important;border-color:#ff7900!important}
 .bz-browse-pagination button:disabled{opacity:.38;cursor:not-allowed}
 @media(max-width:480px){.bz-browse-pagination{gap:5px}.bz-browse-pagination button{min-width:36px;height:38px;padding:0 9px;font-size:12px}}
+
+/* Dedicated collection storefronts — retain the finished shared navigation. */
+.bz-browse-hero.bz-eco-hero{background:radial-gradient(ellipse at 65% 95%,#188e80 0%,transparent 45%),linear-gradient(115deg,#062e32,#0d5b56 63%,#072a36)!important}
+.bz-browse-hero.bz-eco-hero h1{color:#fff!important}
+.bz-browse-hero.bz-eco-hero .bz-browse-hero-points svg{color:#8cf0b8!important}
+.bz-browse-hero.bz-deals-hero{background:radial-gradient(ellipse at 65% 95%,#ab4810 0%,transparent 45%),linear-gradient(115deg,#081c38,#133d63 63%,#08213c)!important}
+.bz-browse-hero.bz-deals-hero h1{color:#fff!important}
+.bz-browse-hero.bz-deals-hero .bz-browse-hero-points svg{color:#ffad48!important}
