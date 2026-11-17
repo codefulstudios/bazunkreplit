@@ -3725,3 +3725,8 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-protection-disclaimer{padding:13px 4px 2px;color:#536b86!important;font-size:11px}.bz-protection-disclaimer a{color:#bb5100;text-decoration:underline}
 @media(max-width:760px){.bz-protection-shield{display:none}.bz-protection-benefits{grid-template-columns:repeat(2,1fr);gap:12px}.bz-protection-benefits>div{border:0;justify-content:flex-start}.bz-protection-steps{grid-template-columns:repeat(2,1fr)}.bz-protection-support{grid-template-columns:1fr}.bz-protection-support-art{display:none}.bz-protection-support ul{border-left:0;border-top:1px solid #efaa73;padding:12px 0 0}}
 @media(max-width:540px){.bz-protection-panel{border-width:3px;border-radius:17px}.bz-protection-scroll{padding:6px;max-height:calc(94vh - 6px)}.bz-protection-hero{padding:24px 16px}.bz-protection-sellers,.bz-protection-coverage{grid-template-columns:1fr}.bz-protection-steps{gap:8px}.bz-protection-step{padding:11px}.bz-protection-seller p{max-width:100%;padding-right:25px}.bz-protection-seller>span{opacity:.3}.bz-protection-close{top:13px;right:13px;width:35px;height:35px}.bz-protection-hero h2{padding-right:25px}}
+
+/* Keep Buyer Protection and More topbar controls the same size as Help and Watchlist. */
+.bz-mockup-top-links > button:not(.bz-mockup-top-sell){display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0;border:0;background:transparent;font-size:.83rem;font-weight:750;line-height:inherit;color:#f3f7ff;white-space:nowrap;cursor:pointer}
+.bz-mockup-top-links > button:not(.bz-mockup-top-sell):hover{color:#ffb56a}
+@media(max-width:1000px){.bz-mockup-top-links > button:not(.bz-mockup-top-sell){font-size:.75rem}}
