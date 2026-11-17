@@ -384,7 +384,7 @@ export function DirectSalePage() {
           sellerEmail: user?.email ?? "guest",
           sellerName: user?.username ?? user?.name ?? null,
           sellerUsername: user?.username ?? null,
-          tags: tags.trim() || undefined,
+          tags: [tags.trim(), ...(ecoFriendly ? ["eco-friendly"] : [])].filter(Boolean).join(", ") || undefined,
           specifications: specifications.length > 0 ? specifications : undefined,
           premiumVideo,
           shipOrigin,
