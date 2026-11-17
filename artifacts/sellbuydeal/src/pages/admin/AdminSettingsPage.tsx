@@ -119,7 +119,7 @@ const FEE_CATEGORIES: { name: string; slug: string; defaultRate: string }[] = [
 ];
 
 const AD_SLOTS = [
-  { key: "create_auction", label: "List an Auction — 728 × 90 Banner", desc: "Leaderboard advert below the auction listing form; manage its content and visibility here" },
+  { key: "create_auction", label: "List an Auction — Vertical Sidebar Advert", desc: "Vertical 176 × 740 advert beside the auction listing form. The Bazunk Live Auctions placeholder appears until you enable an advert." },
   { key: "browse_top", label: "Browse Page — Top Banner", desc: "Featured promotional banner above the Browse listings" },
   { key: "home_bottom",   label: "Home Page — Bottom Banner",   desc: "Leaderboard (728×90) between the features section and footer" },
   { key: "browse_top",    label: "Browse Page — Top Strip",     desc: "Compact text strip below the search bar (text ads only)" },
