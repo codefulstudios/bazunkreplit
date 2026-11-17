@@ -4,6 +4,7 @@ import { ListingProductGallery } from "@/components/listing/ListingProductGaller
 import { SellerCard } from "@/components/listing/ListingSellerCard";
 import { TrustProofBuyerPanel } from "@/components/listing/TrustProofBuyerPanel";
 import { useFeature } from "@/components/FeatureGate";
+import { useRawSettings } from "@/context/SiteSettingsContext";
 import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
 import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
@@ -158,6 +159,8 @@ export function ListingPage() {
   const [apiProduct, setApiProduct] = useState<(typeof ALL_PRODUCTS[0] & ApiListingExtra) | null>(null);
   const [loading, setLoading] = useState(!staticProduct);
   const trustProofEnabled=useFeature("trust_proof");
+  const listingSettings=useRawSettings();
+  const showSection=(key:string,defaultOn=true)=>listingSettings[`listing_section_${key}`] === undefined ? defaultOn : listingSettings[`listing_section_${key}`] !== "false";
   const [informationTab,setInformationTab]=useState<"details"|"trust">("details");
 
   useEffect(() => {
@@ -520,7 +523,7 @@ export function ListingPage() {
             <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600">
               <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
                 <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
-                {trustProofEnabled&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
+                {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
               </div>
               {trustProofEnabled&&apiProduct?.id&&informationTab==="trust"&&<div role="tabpanel" id="listing-trust-panel" aria-labelledby="listing-trust-tab" className="p-3"><TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)}/></div>}
             </div>
@@ -531,7 +534,7 @@ export function ListingPage() {
               const specs = extra._specifications ?? [];
               const tags = extra._tags ?? [];
               return (
-                <div role="tabpanel" id="listing-details-panel" aria-labelledby="listing-details-tab" hidden={informationTab==="trust"&&trustProofEnabled&&Boolean(apiProduct?.id)}><ListingDetailsSection>
+                <div role="tabpanel" id="listing-details-panel" aria-labelledby="listing-details-tab" hidden={informationTab==="trust"&&trustProofEnabled&&showSection("trust")&&Boolean(apiProduct?.id)}><ListingDetailsSection>
                   {/* Gradient header */}
                   <div className="bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-6 py-4 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -618,7 +621,7 @@ export function ListingPage() {
                       <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{product.views.toLocaleString()} views</span>
                       <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2.5 dark:border-[#3b5172] dark:bg-[#10223d]">
+                    {showSection("sharing")&&<div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2.5 dark:border-[#3b5172] dark:bg-[#10223d]">
                       <div className="relative">
                         <button type="button" onClick={()=>{setShareOpen(!shareOpen);setReportOpen(false);}} aria-expanded={shareOpen} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-orange-500 px-3 font-bold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#2d4264]" data-testid="button-share"><Share2 className="h-4 w-4 text-orange-600 dark:text-orange-300"/>Share listing<ChevronRight className={`h-4 w-4 transition-transform ${shareOpen?"rotate-90":""}`}/></button>
                         {shareOpen&&<div className="absolute bottom-full left-0 z-50 mb-2 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-300 bg-white p-2 shadow-2xl dark:border-[#496286] dark:bg-[#132742]">{([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["X (Twitter)",()=>shareTo("x")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,fn])=><button type="button" key={label} onClick={()=>{fn();if(label==="Copy link")setShareOpen(false);}} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}</div>}
@@ -634,7 +637,7 @@ export function ListingPage() {
             })()}
 
             {/* Shipping availability — based on the seller's Direct Sale choices */}
-            {(() => {
+            {showSection("delivery_details")&&(() => {
               const x = product as typeof product & ApiListingExtra;
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
@@ -660,7 +663,7 @@ export function ListingPage() {
             })()}
 
             {/* Quick facts from the listing */}
-            {(() => {
+            {showSection("quick_facts",false)&&(() => {
               const x = product as typeof product & ApiListingExtra;
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -673,7 +676,7 @@ export function ListingPage() {
             })()}
 
             {/* Trust signals */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            {showSection("buyer_protection")&&<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="text-sm font-bold text-gray-900 mb-3">Buying safely</h3>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 {[
@@ -693,7 +696,7 @@ export function ListingPage() {
                 })}
               </div>
               <BuyerProtectionBadge />
-            </div>
+            </div>}
           </div>
 
           {/* Right: Price + actions + seller */}
