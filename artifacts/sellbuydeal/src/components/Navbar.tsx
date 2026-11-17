@@ -504,9 +504,6 @@ export function Navbar() {
             {/* Logged OUT actions */}
             {!user && (
               <>
-                <Link href="/sell" className="hidden 2xl:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
-                  <Tag className="w-3.5 h-3.5" /> Start Selling
-                </Link>
                 <Link href="/sign-in" className="hidden md:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
                   Sign In
                 </Link>
@@ -519,20 +516,6 @@ export function Navbar() {
             {/* Logged IN actions */}
             {user && (
               <>
-                {/* Sell dropdown */}
-                <div ref={sellRef} className="relative hidden md:block flex-shrink-0">
-                  <button
-                    onClick={() => { setMoreOpen(false); setSellOpen(!sellOpen); }}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors shadow-sm"
-                    data-testid="button-sell-dropdown"
-                  >
-                    <Tag className="w-3.5 h-3.5" />
-                    Sell
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sellOpen ? "rotate-180" : ""}`} />
-                  </button>
-
-                </div>
-
                 {/* Messages */}
                 <button
                   onClick={() => setMessageCenterOpen(true)}
