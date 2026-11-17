@@ -93,7 +93,7 @@ router.get("/listings", async (req, res) => {
       res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
       return;
     }
-    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin, collection } = req.query as Record<string, string>;
 
     if (ids) {
       const regionalVisibility = listingRegionFilter(req.query.region);
@@ -112,6 +112,9 @@ router.get("/listings", async (req, res) => {
 
     // Apply browsing criteria before LIMIT/OFFSET, across the complete database.
     const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
+    // Apply collection criteria in SQL before pagination.
+    if (collection === "eco") clauses.push(sql`COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%'`);
+    if (collection === "deals") clauses.push(sql`EXISTS (SELECT 1 FROM ${listingPromotionsTable} lp WHERE lp.listing_id = ${listingsTable.id} AND lp.expires_at > NOW())`);
     if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
     if (q?.trim()) {
       const term = q.trim().slice(0, 150).toLowerCase();
@@ -159,6 +162,7 @@ router.get("/listings", async (req, res) => {
         sellerName: listingsTable.sellerName,
         sellerUsername: listingsTable.sellerUsername,
         extraCategories: listingsTable.extraCategories,
+        ecoFriendly: sql<boolean>`COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%'`,
         currency: listingsTable.currency,
         marketplaceRegion: sql<string | null>`CASE WHEN COALESCE(${listingsTable.specifications}, '') ~ '^\\s*\\{' THEN ${listingsTable.specifications}::jsonb->>'marketplace_region' ELSE NULL END`,
         priceGbp: listingsTable.priceGbp,
