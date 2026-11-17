@@ -238,13 +238,6 @@ const PROMOTIONS: Promotion[] = [
     credits: 99, duration: 1, icon: Lock, iconBg: "bg-slate-100", iconColor: "text-slate-600", mode: "auction",
     perks: ["Reserve stays hidden from bidders", "No sale if it isn't met", "Added when you create an auction"],
   },
-  {
-    id: "auction-extension",
-    title: "Auction Extensions",
-    description: "Bids in the final minutes extend the auction so nobody gets sniped",
-    credits: 99, duration: 1, icon: Timer, iconBg: "bg-orange-50", iconColor: "text-orange-500", mode: "auction",
-    perks: ["Last-minute bids add 2 minutes", "Encourages higher final prices", "Added when you create an auction"],
-  },
 
   // ── Coming soon ──
   {
@@ -516,7 +509,7 @@ export function PromotionsPage() {
                     <span className="text-xs text-gray-400 ml-1.5">≈ {formatPrice(promo.credits / 100)}</span>
                   </div>
                   <span className="text-xs text-gray-400 font-medium">
-                    {["follower-notify", "scheduled-listing", "reserve-auction", "auction-extension"].includes(promo.id) ? "one-off" : `${promo.duration} days`}
+                    {["follower-notify", "scheduled-listing", "reserve-auction"].includes(promo.id) ? "one-off" : `${promo.duration} days`}
                   </span>
                 </div>
 
