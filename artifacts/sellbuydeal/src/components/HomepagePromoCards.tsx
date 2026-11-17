@@ -36,10 +36,10 @@ export function HomepagePromoCards() {
           <p data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="description">{primary.description}</p>
           <span className="bz-premium-cta">Start shopping <ArrowRight size={18}/></span>
         </div>
-        {primary.image?<img src={primary.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-bag-art" aria-hidden="true"><ShoppingBag/><span>B</span></div>}
+        {primary.image?<img src={primary.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-bag-art" aria-hidden="true"><span className="bz-premium-bag-handles"/><ShoppingBag/><span>B</span></div>}
       </Link>
       {secondary.map((item,index)=><Link key={item.title} href={item.href} className={"bz-premium-promo bz-premium-promo-secondary bz-premium-promo-"+index+" group"}>
-        {item.image?<img src={item.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-promo-decor" aria-hidden="true"><item.icon/></div>}
+        {item.image?<img src={item.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-promo-decor" aria-hidden="true"><item.icon/></div><div className="bz-premium-promo-orb" aria-hidden="true"><item.icon/></div>}
         <div className="bz-premium-promo-content">
           <span className="bz-premium-promo-icon"><item.icon size={27}/></span>
           <h3 data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="title">{item.title}</h3>
