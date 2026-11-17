@@ -527,7 +527,7 @@ export function ListingPage() {
               <div className="bz-mockup-product-stock"><CheckCircle2 size={20}/> {isDemoListing?"Currently unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock ("+(product as typeof product & ApiListingExtra).quantity+" available)":"Out of stock"):"Check availability with seller"}</div>
               <p className="bz-mockup-product-meta"><Tag size={18}/> <strong>Condition:</strong> {CONDITION_DESC[product.condition] || product.condition}</p>
               <p className="bz-mockup-product-meta"><Grid3X3 size={18}/> <strong>Category:</strong> {category?.name || product.category}{subcategoryLabel?" › "+subcategoryLabel:""}</p>
-              <div className="bz-mockup-product-key"><h2>About this item</h2><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,300)}</p></div>
+              <div className="bz-mockup-product-key"><h2><Info size={17} aria-hidden="true"/> About this item</h2><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,300)}</p></div>
               <div className="bz-mockup-product-promises"><span><Shield size={25}/>Buyer protection</span><span><Truck size={25}/>Seller delivery</span><span><CheckCircle2 size={25}/>Secure checkout</span></div>
             </section>
 
@@ -703,7 +703,7 @@ export function ListingPage() {
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
             <ListingPurchaseSection>
-              <h2 className="bz-mockup-buy-heading">Buy this item</h2>
+              <h2 className="bz-mockup-buy-heading"><ShoppingCart size={18} aria-hidden="true"/> Buy this item</h2>
 
               {/* Buyer's essentials: price, condition, stock and delivery together. */}
               <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5 bazunk-listing-essentials">
