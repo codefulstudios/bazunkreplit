@@ -641,7 +641,7 @@ export function ListingPage() {
               const x = product as typeof product & ApiListingExtra;
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
-              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, europe: "Europe", worldwide: "Worldwide", international: "International" };
+              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, eu: "UK & EU", "eu-only": "European Union", europe: "Europe", "north-america": "North America", asia: "Asia Pacific", worldwide: "Worldwide" };
               const destination = zoneLabels[x.shipZone || ""] || "Seller has not specified destinations";
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
