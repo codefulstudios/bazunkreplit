@@ -20,7 +20,6 @@ import { useCurrency, CURRENCIES, MARKET_COUNTRIES, type CurrencyCode } from "@/
 import { useLanguage } from "@/context/LanguageContext";
 import { useMarketplaceRegion, MARKETPLACE_REGION_STORAGE_KEY } from "@/hooks/useMarketplaceRegion";
 import { MessageCenterOverlay } from "./MessageCenterOverlay";
-import { ThemeToggle } from "./ThemeToggle";
 import { useRawSettings } from "@/context/SiteSettingsContext";
 import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
@@ -343,7 +342,6 @@ export function Navbar() {
 
           {/* Theme + Logo */}
           <div className="bz-header-brand flex items-center gap-2 flex-shrink-0">
-            <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
               {useDefaultDarkLogo ? <span data-theme-edit="site_logo_url" className="relative block h-7 aspect-[1142/289] shrink-0 overflow-hidden sm:h-9 md:h-12 xl:h-14"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />}
             </Link>
@@ -821,10 +819,6 @@ export function Navbar() {
 
               {/* Nav links */}
               <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-2">
-                <ThemeToggle
-                  withLabel
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                />
                 {/* Rewards link (logged in) */}
                 {user && (
                   <button
@@ -858,7 +852,6 @@ export function Navbar() {
               </nav>
 
               <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
-                <ThemeToggle className="flex w-10 h-10 rounded-xl bg-gray-100 items-center justify-center" />
                 <div className="flex flex-col gap-1 text-xs text-gray-600"><label>{t("country")}<select value={country.code} onChange={e => changeCountry(e.target.value)} className="ml-2 bg-gray-100 rounded-lg p-2 text-base">{MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</select></label><label>{t("currency")}<select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)} className="ml-2 bg-gray-100 rounded-lg p-2 text-base">{Object.values(CURRENCIES).map(c => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}</select></label></div>
               </div>
               {/* Bottom auth actions */}
