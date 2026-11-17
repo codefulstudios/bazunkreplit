@@ -208,7 +208,7 @@ export function SupportPage() {
   const categories = CATEGORIES.filter((c:any) => !c.feature || isFeatureEnabled(settings,c.feature));
   const [category,setCategory] = useState("Buying");
   const [search,setSearch] = useState("");
-  const [expanded,setExpanded] = useState<string[]>(CATEGORIES.flatMap(c=>[...c.faqs,...(EXTRA_FAQS[c.label]||[])].map(f=>c.label+":"+f.q)));
+  const [expanded,setExpanded] = useState<string[]>([]);
   const [searched,setSearched] = useState(false);
   const faqVisible = (faq:{q:string;a:string}) => {
     const t=(faq.q+" "+faq.a).toLowerCase();
@@ -226,8 +226,7 @@ export function SupportPage() {
   const all = useMemo(()=>categories.flatMap(c=>[...c.faqs,...(EXTRA_FAQS[c.label]||[])].filter(faqVisible).map(f=>({...f,category:c.label}))),[categories.map(c=>c.label).join("|"),settings]);
   const active = categories.some(c=>c.label===category)?category:(categories[0]?.label||"Buying");
   const results = all.filter(f=>search.trim()?((f.q+" "+f.a+" "+f.category).toLowerCase().includes(search.trim().toLowerCase())):f.category===active);
-  const showAll = results.length>0&&results.every(f=>expanded.includes(f.category+":"+f.q));
-  const toggle=(id:string)=>setExpanded(prev=>prev.includes(id)?prev.filter(v=>v!==id):[...prev,id]);
+    const toggle=(id:string)=>setExpanded(prev=>prev.includes(id)?prev.filter(v=>v!==id):[...prev,id]);
   const choose=(cat:string,q?:string)=>{setCategory(cat);setSearch("");setSearched(false);setExpanded(q?[cat+":"+q]:[]);document.getElementById("support-faq")?.scrollIntoView({behavior:"smooth",block:"start"});};
   return <div className="bazunk-support-page min-h-screen bg-[#f1f5ff] text-[#102447] flex flex-col">
     <Navbar/>
@@ -245,9 +244,9 @@ export function SupportPage() {
         </div>
         <div aria-hidden="true" className="hidden lg:flex absolute right-12 top-5 items-center justify-center w-44 h-36 text-7xl drop-shadow-lg">🎧💬</div>
       </section>
-      <div id="support-topics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-2 mt-4 mb-5">
-        {categories.map(cat=>{const Icon=ICONS[cat.label]||HelpCircle;const selected=!search&&active===cat.label;return <button key={cat.label} type="button" onClick={()=>choose(cat.label)} className={`min-h-[100px] rounded-2xl border p-3 flex flex-col justify-center items-center gap-1.5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${selected?"border-[#ff7700] bg-[#fff3e9] ring-1 ring-[#ff7700]":"border-[#c8d6ee] bg-white hover:border-[#ff9900]"}`}>
-          <Icon size={28} strokeWidth={2.4} className={selected?"text-[#f36b13]":"text-[#365cce]"}/><span className="text-xs font-extrabold text-[#11264b]">{cat.label}</span><span className="text-[11px] text-[#5a6d8b]">{[...cat.faqs,...(EXTRA_FAQS[cat.label]||[])].filter(faqVisible).length} articles</span>
+      <div id="support-topics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-2 mt-3 mb-4">
+        {categories.map(cat=>{const Icon=ICONS[cat.label]||HelpCircle;const selected=!search&&active===cat.label;return <button key={cat.label} type="button" onClick={()=>choose(cat.label)} className={`min-h-[78px] rounded-xl border p-2 flex flex-col justify-center items-center gap-1.5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${selected?"border-[#ff7700] bg-[#fff3e9] ring-1 ring-[#ff7700]":"border-[#c8d6ee] bg-white hover:border-[#ff9900]"}`}>
+          <Icon size={24} strokeWidth={2.4} className={selected?"text-[#f36b13]":"text-[#365cce]"}/><span className="text-xs font-extrabold text-[#11264b]">{cat.label}</span><span className="text-[11px] text-[#5a6d8b]">{[...cat.faqs,...(EXTRA_FAQS[cat.label]||[])].filter(faqVisible).length} articles</span>
         </button>})}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_315px] gap-4 items-start">
@@ -260,12 +259,12 @@ export function SupportPage() {
             </div>
           </div>
           {search&&<p className="px-4 pt-3 text-xs text-[#506681]">{results.length} matching {results.length===1?"answer":"answers"} for “{search}” <button onClick={()=>{setSearch("");setSearched(false)}} className="ml-2 font-bold text-[#e45b0b] underline">Clear search</button></p>}
-          {results.length===0?<div className="p-10 text-center"><Search size={32} className="mx-auto text-[#8295b0]"/><p className="font-bold mt-3">No matching answers found</p><p className="text-sm mt-2 text-[#536987]">Try another keyword or contact our support team.</p></div>:<div className="p-3 sm:p-4 space-y-2">
-            {results.map((faq,i)=>{const id=faq.category+":"+faq.q;const open=expanded.includes(id);const Icon=ICONS[faq.category]||HelpCircle;return <div key={id} className={`border rounded-xl overflow-hidden ${open?"border-[#ff8c31] bg-[#fffaf5]":"border-[#cbd9ee] bg-[#f9fbff]"}`}>
-              <button type="button" aria-expanded={open} onClick={()=>toggle(id)} className="w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-[#f0f5ff]">
-                <Icon size={19} className="text-[#f36b13] shrink-0"/><span className="font-bold text-sm text-[#12264b] flex-1">{faq.q}</span><ChevronDown size={17} className={`text-[#284a71] shrink-0 transition-transform ${open?"rotate-180":""}`}/>
+          {results.length===0?<div className="p-10 text-center"><Search size={32} className="mx-auto text-[#8295b0]"/><p className="font-bold mt-3">No matching answers found</p><p className="text-sm mt-2 text-[#536987]">Try another keyword or contact our support team.</p></div>:<div className="p-2 sm:p-3 space-y-1.5">
+            {results.map((faq,i)=>{const id=faq.category+":"+faq.q;const open=expanded.includes(id);const Icon=ICONS[faq.category]||HelpCircle;return <div key={id} className={`border rounded-lg overflow-hidden ${open?"border-[#ff8c31] bg-[#fffaf5]":"border-[#cbd9ee] bg-[#f9fbff]"}`}>
+              <button type="button" aria-expanded={open} onClick={()=>toggle(id)} className="w-full flex items-center gap-2.5 text-left px-3 py-2.5 hover:bg-[#f0f5ff]">
+                <span className="h-8 w-8 rounded-lg bg-[#eaf0ff] flex items-center justify-center shrink-0"><Icon size={18} className="text-[#365cce]"/></span><span className="font-bold text-[13px] sm:text-sm text-[#12264b] flex-1">{faq.q}</span><ChevronDown size={17} className={`text-[#284a71] shrink-0 transition-transform ${open?"rotate-180":""}`}/>
               </button>
-              {open&&<div className="px-4 pb-4 pl-12 text-sm text-[#334763] leading-relaxed">{faq.a}{faq.q==="How do I buy an item on Bazunk?"&&<div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">{[{icon:Search,title:"Find an item",desc:"Search or browse"},{icon:ShoppingBag,title:"Choose an option",desc:"Buy, offer or bid"},{icon:CreditCard,title:"Pay securely",desc:"Review checkout"},{icon:Truck,title:"Track your order",desc:"Follow order updates"}].map((step,j)=>{const S=step.icon;return <div key={j} className="rounded-xl border border-[#f8c7a4] bg-white p-3 text-center"><S size={24} className="mx-auto text-[#ff7300]"/><div className="font-extrabold text-xs mt-2">{j+1}. {step.title}</div><div className="text-[11px] mt-1">{step.desc}</div></div>})}</div>}</div>}
+              {open&&<div className="px-3 pb-3 pt-1 sm:pl-[54px] text-[13px] text-[#334763] leading-relaxed border-t border-[#e1e8f4]">{faq.a}{faq.q==="How do I buy an item on Bazunk?"&&<div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">{[{icon:Search,title:"Find an item",desc:"Search or browse"},{icon:ShoppingBag,title:"Choose an option",desc:"Buy, offer or bid"},{icon:CreditCard,title:"Pay securely",desc:"Review checkout"},{icon:Truck,title:"Track your order",desc:"Follow order updates"}].map((step,j)=>{const S=step.icon;return <div key={j} className="rounded-xl border border-[#f8c7a4] bg-white p-3 text-center"><S size={24} className="mx-auto text-[#ff7300]"/><div className="font-extrabold text-xs mt-2">{j+1}. {step.title}</div><div className="text-[11px] mt-1">{step.desc}</div></div>})}</div>}</div>}
             </div>})}
           </div>}
         </section>
