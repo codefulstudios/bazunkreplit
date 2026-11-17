@@ -389,7 +389,7 @@ export function ListingPage() {
     <div className="bazunk-listing-redesign min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-6 max-w-[1500px] bazunk-listing-content">
+      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-6 max-w-[1920px] bazunk-listing-content">
 
         {/* Back link */}
         <button
@@ -1027,7 +1027,7 @@ export function ListingPage() {
         )}
       </AnimatePresence>
 
-      <div className="container mx-auto px-4"><ProductDiscovery currentId={Number(product?.id)} /></div>
+      <div className="container mx-auto max-w-[1920px] px-4"><ProductDiscovery currentId={Number(product?.id)} /></div>
       <Footer />
     </div>
   );
