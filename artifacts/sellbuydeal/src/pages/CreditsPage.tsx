@@ -138,7 +138,7 @@ export function CreditsPage() {
 
   if (sessionId && loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bazunk-account-page min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -152,7 +152,7 @@ export function CreditsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bazunk-account-page min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
       <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl">
