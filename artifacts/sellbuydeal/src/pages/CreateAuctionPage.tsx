@@ -60,14 +60,11 @@ export function CreateAuctionPage() {
 
   // Optional paid add-ons (prices set by the admin)
   const [promoCfg, setPromoCfg] = useState<Record<string, { cost: number; enabled: boolean }> | null>(null);
-  const [extendEnabled, setExtendEnabled] = useState(false);
   useEffect(() => {
     fetch("/api/promotions/config").then(r => (r.ok ? r.json() : null)).then(setPromoCfg).catch(() => {});
   }, []);
   const reserveCfg = promoCfg?.["reserve-auction"];
-  const extendCfg = promoCfg?.["auction-extension"];
   const reserveFeeCr = reserveCfg ? Math.round(reserveCfg.cost * 100) : 0;
-  const extendFeeCr = extendCfg ? Math.round(extendCfg.cost * 100) : 0;
 
   const [title, setTitle]               = useState("");
   const [description, setDescription]   = useState("");
@@ -188,7 +185,6 @@ export function CreateAuctionPage() {
           sellerUsername: user.username,
           startingBid: toGBP(startBid),
           reservePrice: reservePrice ? toGBP(parseFloat(reservePrice)) : null,
-          extendEnabled,
           bidIncrement: toGBP(increment),
           endTime,
           tags: tags.trim() || null,
@@ -541,18 +537,6 @@ export function CreateAuctionPage() {
               />
               <p className="text-[11px] text-slate-600 mt-1">If bidding doesn't reach your reserve, the item doesn't sell.</p>
             </div>
-            )}
-
-            {(!extendCfg || extendCfg.enabled) && (
-            <label className="mb-5 flex items-start gap-3 rounded-xl border border-slate-300 p-3 cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" checked={extendEnabled} onChange={e => setExtendEnabled(e.target.checked)} className="mt-1" />
-              <span>
-                <span className="block text-sm font-medium text-slate-900">
-                  Auction Extensions{extendFeeCr > 0 && <span className="text-slate-600 font-normal text-xs"> · {extendFeeCr} credits</span>}
-                </span>
-                <span className="block text-xs text-slate-600">A bid in the final 2 minutes extends the auction by 2 minutes, so last-second bids can't snipe it.</span>
-              </span>
-            </label>
             )}
 
             <div>
