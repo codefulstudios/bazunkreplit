@@ -3,7 +3,7 @@ import { ExternalLink, Megaphone } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { useCookieConsent } from "@/components/CookieConsent";
 
-type SlotKey = "home_bottom" | "browse_top" | "browse_bottom" | "auctions_mid" | "flash_sales_mid" | "categories_top" | "classifieds_mid" | "support_mid" | "live_left" | "live_bottom" | "rewards_right";
+type SlotKey = "create_auction" | "home_bottom" | "browse_top" | "browse_bottom" | "auctions_mid" | "flash_sales_mid" | "categories_top" | "classifieds_mid" | "support_mid" | "live_left" | "live_bottom" | "rewards_right";
 
 interface AdSlotProps {
   slotKey: SlotKey;
@@ -79,8 +79,8 @@ export function AdSlot({ slotKey, className = "" }: AdSlotProps) {
     : /^https?:\/\//i.test(safeUrl) ? safeUrl : "";
   const external = /^https?:\/\//i.test(validUrl);
   return (
-    <div className={`w-full px-4 py-4 ${className}`}>
-      <div className={`mx-auto w-full ${isSidebar ? "" : "max-w-6xl"}`}>
+    <div className={`w-full ${slotKey === "create_auction" ? "p-0" : "px-4 py-4"} ${className}`}>
+      <div className={`mx-auto w-full ${isSidebar ? "" : slotKey === "create_auction" ? "max-w-[728px]" : "max-w-6xl"}`}>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4A4FF3] via-[#8B4FE8] to-[#EC3CB8] px-4 sm:px-6 py-4 sm:py-5 shadow-lg shadow-purple-950/15">
           <div className="pointer-events-none absolute -right-10 -bottom-16 h-44 w-44 rounded-full bg-white/10" />
           <div className={`relative flex gap-4 ${isSidebar ? "flex-col" : "flex-col md:flex-row md:items-center"}`}>
