@@ -3590,3 +3590,54 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 @media(max-width:1050px){.bz-compact-footer-main{flex-wrap:wrap;justify-content:center;gap:17px}.bz-compact-footer-brand{padding-right:0;border-right:0}.bz-compact-footer-links{order:3;flex:0 0 100%;gap:16px}.bz-compact-footer-social{padding-left:0;border-left:0}.bz-compact-footer-bottom{margin-top:15px}}
 @media(max-width:600px){.bazunk-site-footer.bz-compact-footer{padding:10px 8px 15px}.bz-compact-footer-inner{border-radius:16px;padding:17px 12px 22px}.bz-compact-footer-brand img{height:33px}.bz-compact-footer-social a{width:32px;height:32px}.bz-compact-footer-links{gap:10px 15px}.bz-compact-footer-links a{font-size:12px;gap:5px}.bz-compact-footer-links svg{width:16px;height:16px}.bz-compact-footer-bottom{flex-wrap:wrap;gap:7px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.bz-compact-footer-wave span,.bz-compact-footer-wave:after{animation:none!important}.bz-compact-footer-links a,.bz-compact-footer-social a{transition:none!important}}
+
+/* Explicit foreground contrast on Auctions and Flash Sales.
+   Dark UI surfaces use white/orange; light product cards use navy/orange. */
+.bz-auction-page .bz-market-hero :is(h1,p,span),
+.bz-auction-page .bz-market-hero .text-slate-100{color:#fff!important}
+.bz-auction-page .bz-market-hero h1 span{color:#ff9a30!important}
+.bz-auction-page .bz-market-hero .bg-\[\#ffbd27\]{color:#082449!important}
+.bz-flash-page .bz-market-hero h1,.bz-flash-page .bz-market-hero p,.bz-flash-page .bz-market-hero h1 span.block{color:#10294b!important}
+.bz-flash-page .bz-market-hero h1 span:not(.block){color:#f36a00!important}
+.bz-flash-page .bz-market-hero .bg-\[\#5c32e9\],.bz-flash-page .bz-market-hero .bg-\[\#ff315f\]{color:#fff!important}
+.bz-auction-page main .bg-\[\#05284c\],.bz-auction-page main .bg-\[\#082b54\],
+.bz-auction-page main .bg-\[\#082e59\],.bz-auction-page main .bg-\[\#09214a\],
+.bz-auction-page main .bg-\[\#112f62\],.bz-auction-page main .bg-\[\#082b55\],
+.bz-flash-page main .bg-\[\#092b55\],.bz-flash-page main .bg-\[\#08254c\],
+.bz-flash-page main .bg-\[\#08264b\],.bz-flash-page main .bg-\[\#12294c\] {color:#fff!important}
+.bz-auction-page main .bg-\[\#05284c\] :is(button,span,p,h2,h3),
+.bz-auction-page main .bg-\[\#082b54\] :is(button,span,p,h2,h3),
+.bz-auction-page main .bg-\[\#082b55\] :is(span,p,h2,h3),
+.bz-flash-page main .bg-\[\#092b55\] :is(button,span,p,h2,h3),
+.bz-flash-page main .bg-\[\#08254c\] :is(button,span,p,h2,h3),
+.bz-flash-page main .bg-\[\#08264b\] :is(button,span,p,h2,h3){color:#fff!important}
+.bz-auction-page main .bg-gradient-to-r.from-\[\#082e59\] :is(h2,p,span),
+.bz-flash-page main .bg-gradient-to-br.from-\[\#092a59\] :is(h2,p,span),
+.bz-auction-page main .bg-gradient-to-br.from-\[\#0b3266\] :is(h2,p,span){color:#fff!important}
+.bz-auction-page main .bg-gradient-to-r.from-\[\#7b21e8\] :is(h3,p),
+.bz-auction-page main .bg-gradient-to-r.from-\[\#0373ec\] :is(h3,p),
+.bz-auction-page main .bg-gradient-to-r.from-\[\#ee149f\] :is(h3,p),
+.bz-flash-page main .bg-gradient-to-r.from-\[\#6526f9\] :is(h2,p){color:#fff!important}
+.bz-auction-page main .bz-market-item-card :is(h3,p,span,div),
+.bz-flash-page main .bz-market-item-card :is(h3,p,span,div){color:#153456}
+.bz-auction-page main .bz-market-item-card .text-gray-400,
+.bz-auction-page main .bz-market-item-card .text-slate-200,
+.bz-flash-page main .bz-market-item-card .text-slate-300{color:#4d6480!important}
+.bz-auction-page main .bz-market-item-card .text-\[\#ffe04b\],
+.bz-flash-page main .bz-market-item-card .text-\[\#ffe15b\]{color:#e85e00!important}
+.bz-auction-page main .bz-market-item-card button,
+.bz-flash-page main .bz-market-item-card button{color:#fff!important}
+.bz-auction-page main .bz-market-item-card .bg-red-500,
+.bz-auction-page main .bz-market-item-card .bg-emerald-500,
+.bz-auction-page main .bz-market-item-card .bg-black\/50,
+.bz-flash-page main .bz-market-item-card .bg-\[\#ff315b\],
+.bz-flash-page main .bz-market-item-card .bg-\[\#102348\]\/90{color:#fff!important}
+.bz-auction-page main .bz-market-item-card .bg-red-500 *,
+.bz-auction-page main .bz-market-item-card .bg-emerald-500 *,
+.bz-flash-page main .bz-market-item-card .bg-\[\#ff315b\] *{color:#fff!important}
+.bz-auction-page main .bz-market-stats :is(strong,span,small),
+.bz-flash-page main .bz-market-stats :is(strong,span,small){color:#fff!important}
+.bz-auction-page main .text-white:not(.bz-market-item-card *),
+.bz-flash-page main .text-white:not(.bz-market-item-card *){color:#fff}
+.bz-auction-page main .bz-market-item-card .bg-\[\#ff711d\],
+.bz-flash-page main .bz-market-item-card .bg-\[\#ff701e\]{color:#fff!important}
