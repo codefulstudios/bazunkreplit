@@ -58,7 +58,7 @@ test("mobile checkout shows trustworthy total before payment without changing St
  assert.match(checkout,/buyerProtectionFee/);
  assert.match(checkout,/delivery/);
  assert.match(checkout,/quotedKey!==cartKey/);
- assert.match(checkout,/sticky bottom-(?:2|\\[calc\\(env\\(safe-area-inset-bottom\\)\\+0\\.5rem\\)\\])/);
+ assert.ok(checkout.includes("sticky bottom-2") || checkout.includes("sticky bottom-[calc(env(safe-area-inset-bottom)+0.5rem)]"));
  assert.match(checkout,/fetch\("\/api\/stripe\/checkout-cart"/);
 });
 test("mobile browse offers one-tap sorts and avoids per-card motion layout",()=>{
