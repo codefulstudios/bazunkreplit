@@ -65,8 +65,6 @@ const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
   cashback: "/cashback",
   "open-importers": "/importers",
   importers: "/importers",
-  "my-store": "/my-store",
-  "store-settings": "/my-store#popular-items",
 };
 
 const SIDEBAR_CATEGORIES: SidebarCategory[] = [
@@ -6002,6 +6000,21 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
+            {(activeSection === "my-store" || activeSection === "store-settings") && (
+              <section className="bazunk-dashboard-store">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-[#102746] border border-[#34587e] p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500 text-white"><Store size={26} /></span>
+                    <div><h1 className="text-xl font-black !text-white">{activeSection === "store-settings" ? "Store Settings" : "My Store"}</h1><p className="text-sm !text-slate-200">Manage your storefront, branding and selling preferences.</p></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setActiveSection("my-store")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "my-store" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>My Store</button>
+                    <button type="button" onClick={() => setActiveSection("store-settings")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "store-settings" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>Settings</button>
+                  </div>
+                </div>
+                <MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} />
+              </section>
+            )}
             {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
