@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import {
   Camera,
   ShoppingCart,
+  Gavel,
   Layers,
   Newspaper,
   Store,
@@ -44,6 +45,17 @@ const SELL_OPTIONS = [
     cta: "Get started",
     ctaColor: "text-[#4A5CE8]",
     href: "/sell/direct",
+    badge: null,
+  },
+  {
+    id: "auction",
+    title: "Auctions",
+    description: "Let buyers compete with timed bidding and discover the best selling price.",
+    icon: Gavel,
+    gradient: "from-orange-500 to-amber-500",
+    cta: "Create auction",
+    ctaColor: "text-orange-600",
+    href: "/auctions/create",
     badge: null,
   },
   {
@@ -213,9 +225,11 @@ export function SellPage() {
   const mktRatePct = Math.round(mktRate * 100);
   const FEE_ROWS = buildFeeRows(mktRatePct);
 
-  const visibleOptions = SELL_OPTIONS.filter(option => ["direct-sale","create-bundle","open-store"].includes(option.id) && (!featureForHref(option.href) || isFeatureEnabled(rawSettings, featureForHref(option.href)!)));
+  const visibleOptions = SELL_OPTIONS.filter(option => ["direct-sale","auction","create-bundle","classified-ads","open-store"].includes(option.id) && (!featureForHref(option.href) || isFeatureEnabled(rawSettings, featureForHref(option.href)!)));
   const art: Record<string,{emoji:string;bg:string;caption:string}> = {
     "direct-sale": {emoji:"👟 📱 ✨",bg:"from-orange-500 via-amber-400 to-pink-500",caption:"Quick & easy · Most popular"},
+    "auction": {emoji:"🔨 ⏱️ 💰",bg:"from-amber-500 via-orange-500 to-rose-500",caption:"Timed bidding · More excitement"},
+    "classified-ads": {emoji:"📣 📰 📍",bg:"from-cyan-500 via-sky-500 to-indigo-600",caption:"Local listings · Services & more"},
     "create-bundle": {emoji:"📦 🎁 💝",bg:"from-purple-600 via-fuchsia-500 to-indigo-600",caption:"Save time · Bigger sales"},
     "open-store": {emoji:"🏪 📦 🌟",bg:"from-blue-600 via-cyan-500 to-blue-700",caption:"Build your brand · Grow your business"}
   };
@@ -233,7 +247,7 @@ export function SellPage() {
           <section>
             <h2 className="text-center text-3xl md:text-4xl font-black text-[#10213e]">Choose <span className="text-orange-600">How You Want to Sell</span></h2>
             <p className="text-center text-slate-700 mt-1 mb-5">Different ways to sell for every item and every style.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {visibleOptions.map(option => {
                 const artwork=art[option.id];
                 return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-orange-400 hover:-translate-y-1 transition-all shadow-md" data-testid={`card-sell-option-${option.id}`}>
