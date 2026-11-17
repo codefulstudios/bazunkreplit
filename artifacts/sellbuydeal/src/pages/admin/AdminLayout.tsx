@@ -63,6 +63,7 @@ const NAV = [
   { label: "Feature Toggles", href: "/admin/feature-toggles", icon: Flag },
   { label: "Email Templates", href: "/admin/emails", icon: Mail },
   { label: "Settings",   href: "/admin/settings",   icon: Settings        },
+  { label: "Advertising", href: "/admin/advertising", icon: Megaphone },
 ];
 
 const NAV_GROUPS = [
@@ -77,7 +78,7 @@ const NAV_GROUPS = [
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
  {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","Craigslist","OLX","General Settings","Apply Update to All","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
- {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
+ {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Advertising","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
 
 let savedAdminExpandedGroups: Record<string,boolean> = {};
