@@ -29,16 +29,16 @@ export function CategoryDrawer({open,onClose}:{open:boolean;onClose:()=>void}) {
       <button type="button" className="bz-category-drawer-backdrop" aria-label="Close category menu" tabIndex={open?0:-1} onClick={onClose}/>
       <aside className="bz-category-drawer" role="dialog" aria-modal={open} aria-label="Shop by category" inert={!open}>
         <header className="bz-category-drawer-header">
-          <Link href="/" onClick={onClose} className="text-2xl font-black tracking-tight text-white"><span className="text-orange-400">B</span>azunk</Link>
+          <h2 className="bz-category-drawer-heading">Shop by Category</h2>
           <button type="button" aria-label="Close menu" onClick={onClose}><X size={24}/></button>
         </header>
-        <div className="bz-category-drawer-breadcrumb">
+        {selected && <div className="bz-category-drawer-breadcrumb">
           {selected ? <button type="button" onClick={()=>setSelected(null)}><ArrowLeft size={17}/> Shop by category</button> : <span><Grid3X3 size={17}/> Shop by category</span>}
-        </div>
+        </div>}
         <div className="bz-category-drawer-scroll" key={selected?.slug||"root"}>
           {!selected ? <>
-            <div className="bz-category-drawer-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a category" aria-label="Find a category"/></div>
-            <Link className="bz-category-drawer-view-all" href="/categories" onClick={onClose}>Shop all categories <ChevronRight size={18}/></Link>
+            <div className="bz-category-drawer-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." aria-label="Find a category"/></div>
+            <Link className="bz-category-drawer-view-all bz-category-all-bottom" href="/categories" onClick={onClose}>Shop all categories <ChevronRight size={18}/></Link>
             {categories.map((cat,index)=>{const Icon=categoryIcons[index%categoryIcons.length];return <button key={cat.slug} type="button" className="bz-category-drawer-row" onClick={()=>setSelected(cat)}><span className="bz-category-row-title"><Icon size={23} strokeWidth={2.3} style={{color:iconColours[index%iconColours.length]}}/>{cat.name}</span><ChevronRight size={19}/></button>;})}
             {!categories.length&&<p className="p-5 text-sm">No matching categories</p>}
           </> : <>
