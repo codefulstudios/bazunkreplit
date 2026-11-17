@@ -92,3 +92,39 @@
 .bazunk-dashboard-subpage :is(td){color:#183456}
 .bazunk-dashboard-theme :is(button,a):focus-visible{outline:3px solid #ff9900!important;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.bz-dashboard-group-content,.bz-dashboard-chevron{transition:none!important}}
+
+/* Unified accessible dark panels for ALL dashboard internal tabs.
+   Keep icons vivid and ensure foreground always contrasts with navy cards. */
+.bazunk-dashboard-subpage{--bd-text:#f8fbff;--bd-muted:#c9d8ef;--bd-card:#102746;--bd-border:#34587e;--bd-input:#091d37;--bd-chip:#183657;--bd-shadow:0 8px 24px #05112624;background:linear-gradient(155deg,#0b1c35,#13294a)!important;color:#f8fbff!important;padding:16px}
+.bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"]{background:#102746!important;border:1px solid #34587e!important;color:#f8fbff!important;box-shadow:0 8px 24px #06152938}
+.bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50):not(input):not(textarea):not(select){background-color:#102746!important}
+.bazunk-dashboard-subpage :is(h1,h2,h3,h4,h5,h6){color:#fff!important;-webkit-text-fill-color:#fff!important}
+.bazunk-dashboard-subpage :is(.text-gray-900,.text-gray-800,.text-gray-700,.text-slate-950,.text-slate-900,.text-slate-800,.text-slate-700){color:#f8fbff!important}
+.bazunk-dashboard-subpage :is(.text-gray-600,.text-gray-500,.text-gray-400,.text-slate-600,.text-slate-500,.text-slate-400){color:#c9d8ef!important}
+.bazunk-dashboard-subpage :is(p,small,dt,dd,li,td){color:inherit}
+.bazunk-dashboard-subpage :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:#091d37!important;color:#fff!important;border:1px solid #6284aa!important;color-scheme:dark}
+.bazunk-dashboard-subpage :is(input,textarea)::placeholder{color:#b9cbe1!important;opacity:1}
+.bazunk-dashboard-subpage :is(button,[role="button"],[role="tab"]){border-radius:10px}
+.bazunk-dashboard-subpage :is(button,[role="button"],[role="tab"]) svg{flex-shrink:0}
+.bazunk-dashboard-subpage :is(button,[role="button"],[role="tab"]):focus-visible{outline:3px solid #ffae42!important;outline-offset:2px}
+.bazunk-dashboard-subpage :is(th,thead){background:#18385d!important;color:#fff!important}
+.bazunk-dashboard-subpage td{border-color:#34587e!important;color:#f8fbff!important}
+.bazunk-dashboard-subpage tr:hover td{background:#1b3a5c!important}
+.bazunk-dashboard-subpage :is(.bg-blue-50,.bg-indigo-50){background:#173c65!important}
+.bazunk-dashboard-subpage :is(.bg-green-50,.bg-emerald-50){background:#114a40!important}
+.bazunk-dashboard-subpage :is(.bg-orange-50,.bg-amber-50,.bg-yellow-50){background:#594019!important}
+.bazunk-dashboard-subpage :is(.bg-red-50,.bg-rose-50){background:#5c2638!important}
+.bazunk-dashboard-subpage :is(.bg-purple-50,.bg-violet-50){background:#402e69!important}
+.bazunk-dashboard-subpage :is(.text-blue-700,.text-indigo-700){color:#a6dcff!important}
+.bazunk-dashboard-subpage :is(.text-green-700,.text-emerald-700){color:#8cf5c5!important}
+.bazunk-dashboard-subpage :is(.text-orange-700,.text-amber-700){color:#ffcb7c!important}
+.bazunk-dashboard-subpage :is(.text-red-700,.text-rose-700){color:#ffb7c3!important}
+.bazunk-dashboard-subpage :is(.text-violet-700,.text-purple-700){color:#e3c6ff!important}
+.bazunk-dashboard-subpage :is(.text-white){color:#fff!important}
+.bazunk-dashboard-subpage :is(.text-orange-500,.text-orange-600){color:#ffae55!important}
+.bazunk-dashboard-subpage :is(.text-blue-500,.text-blue-600){color:#70caff!important}
+.bazunk-dashboard-subpage :is(.text-green-500,.text-green-600){color:#6ce5b0!important}
+.bazunk-dashboard-subpage :is(.text-violet-500,.text-purple-500){color:#c5a6ff!important}
+.bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50) svg{stroke-width:2.2}
+.bazunk-dashboard-subpage :is(a,button):hover{filter:brightness(1.09)}
+@media(max-width:640px){.bazunk-dashboard-subpage{padding:10px}}
