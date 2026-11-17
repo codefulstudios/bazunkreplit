@@ -2801,3 +2801,34 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .bazunk-site-footer .grid {align-items:start}
 .bazunk-site-footer img {max-width:190px;max-height:45px;object-fit:contain}
 @media(max-width:640px){.bazunk-site-footer > .container{padding-block:32px!important}.bazunk-site-footer .grid{gap:24px 18px}}
+
+
+/* OnBuy-style navigation pattern, designed and branded for Bazunk. */
+.bz-category-drawer-root{position:fixed;inset:0;z-index:9999;pointer-events:none;visibility:hidden}
+.bz-category-drawer-root.is-open{pointer-events:auto;visibility:visible}
+.bz-category-drawer-backdrop{position:absolute;inset:0;background:rgba(4,13,28,.68);opacity:0;transition:opacity .22s}
+.bz-category-drawer-root.is-open .bz-category-drawer-backdrop{opacity:1}
+.bz-category-drawer{position:absolute;inset:0 auto 0 0;width:min(410px,92vw);display:flex;flex-direction:column;background:#fff;color:#27354b;box-shadow:12px 0 38px rgba(0,0,0,.23);transform:translateX(-105%);transition:transform .25s ease;overflow:hidden}
+.bz-category-drawer-root.is-open .bz-category-drawer{transform:translateX(0)}
+.bz-category-drawer-header{background:#101f39;color:#fff;min-height:72px;display:flex;align-items:center;justify-content:space-between;padding:16px 22px}
+.bz-category-drawer-header button{padding:8px;color:#fff;border-radius:9px}
+.bz-category-drawer-header button:hover{background:#ffffff20}
+.bz-category-drawer-breadcrumb{background:#f0f3f8;color:#465775;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.055em;min-height:42px;display:flex;align-items:center;padding:0 18px}
+.bz-category-drawer-breadcrumb :is(button,span){display:flex;align-items:center;gap:10px}
+.bz-category-drawer-breadcrumb button{width:100%;min-height:42px;text-align:left}
+.bz-category-drawer-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.bz-category-drawer-search{display:flex;align-items:center;gap:10px;margin:16px;border:1px solid #cdd6e5;border-radius:10px;padding:10px 12px;color:#526783}
+.bz-category-drawer-search input{width:100%;min-width:0;background:transparent;outline:none;color:#15253c;font-size:.9rem}
+.bz-category-drawer-title{padding:22px 20px 10px;font-size:1.25rem;font-weight:800;color:#14253d}
+.bz-category-drawer-view-all,.bz-category-drawer-row{width:100%;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:48px;padding:12px 20px;text-align:left;font-size:.94rem;color:#28384e;border-bottom:1px solid #eef1f6}
+.bz-category-drawer-view-all{color:#1454a5;font-weight:800}
+.bz-category-drawer-row:hover,.bz-category-drawer-view-all:hover{background:#f0f5fc;color:#d35b08}
+.bz-category-drawer-bottom{border-top:1px solid #e1e6ef;padding:14px 20px;display:flex;gap:20px;font-size:.84rem;font-weight:700;color:#335d98}
+.dark .bz-category-drawer{background:#13233b;color:#eaf2ff}
+.dark .bz-category-drawer-breadcrumb{background:#20334e;color:#d9e6f8}
+.dark .bz-category-drawer-search{border-color:#48607f;color:#c9d9ee}
+.dark .bz-category-drawer-search input,.dark .bz-category-drawer-title{color:#fff}
+.dark .bz-category-drawer-row,.dark .bz-category-drawer-view-all{border-color:#344961;color:#edf4ff}
+.dark .bz-category-drawer-row:hover,.dark .bz-category-drawer-view-all:hover{background:#273c58;color:#ffa85d}
+.dark .bz-category-drawer-bottom{border-color:#344961;color:#d6e7ff}
+@media(prefers-reduced-motion:reduce){.bz-category-drawer,.bz-category-drawer-backdrop{transition:none}}
