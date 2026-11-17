@@ -252,7 +252,7 @@ export function CreateAuctionPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate className="auction-create-form grid grid-cols-1 gap-4 items-start">
+        <form onSubmit={submit} noValidate className="auction-create-form grid grid-cols-1 min-[1450px]:grid-cols-[minmax(0,1fr)_728px] gap-4 items-start">
 
           <div className="space-y-3 min-w-0">
           {/* Header card */}
@@ -646,7 +646,7 @@ export function CreateAuctionPage() {
             </div>
           </section>
           </div>
-          <aside className="w-full min-w-0" aria-label="Auction listing advertisement">
+          <aside className="w-full min-w-0 min-[1450px]:sticky min-[1450px]:top-5" aria-label="Auction listing advertisement">
             <div className="w-full max-w-[728px] mx-auto">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">Advertisement · 728 × 90</p>
               <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="90" className="w-full min-h-[90px] rounded-md border border-dashed border-slate-300 bg-white overflow-hidden">
