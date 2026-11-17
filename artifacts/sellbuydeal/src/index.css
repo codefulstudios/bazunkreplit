@@ -3879,3 +3879,25 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .classified-post-dialog button[class*="bg-gradient"]{color:#fff!important}
 .classified-post-dialog .text-gray-400{color:#64748b}
 @media(max-width:640px){.classified-post-overlay{padding:8px!important}.classified-post-dialog{max-height:calc(100dvh - 16px)!important;border-radius:14px!important}}
+
+/* Standalone account pages: same visual language as the updated Bazunk dashboard.
+   Scoped to explicit page roots to avoid altering public marketplace pages. */
+.bazunk-account-page{--account-ink:#10213e;--account-panel:#102746;--account-muted:#d1dff1;--account-border:#365a81;background:#f0f4fa!important;color:var(--account-ink)!important}
+.bazunk-account-page :is(h1,h2,h3){letter-spacing:-.02em;font-weight:800}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"]:not(input):not(textarea):not(select){background:#102746!important;border-color:#365a81!important;color:#f8fbff!important;box-shadow:0 8px 22px #10274620}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(h1,h2,h3,h4,h5,h6,p,span,small,li,dt,dd,strong,label){color:#f8fbff}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(.text-gray-500,.text-gray-600,.text-slate-500,.text-slate-600,.text-slate-700,.text-gray-700){color:#d1dff1!important}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(.text-orange-500,.text-orange-600,.text-orange-700){color:#ffb66c!important}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(.text-blue-600,.text-indigo-600,.text-blue-700,.text-indigo-700){color:#9dd9ff!important}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(.text-emerald-600,.text-green-600,.text-emerald-700){color:#87f5c4!important}
+.bazunk-account-page :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:#f8fbff!important;color:#10213e!important;border:1px solid #9eb4d0!important;border-radius:10px}
+.bazunk-account-page :is(input,textarea)::placeholder{color:#526680!important;opacity:1}
+.bazunk-account-page :is(button,a)[class*="bg-orange-"],.bazunk-account-page :is(button,a)[class*="bg-blue-600"],.bazunk-account-page :is(button,a)[class*="bg-indigo-600"]{color:#fff!important}
+.bazunk-account-page :is(button,a)[class*="bg-orange-"] :is(span,svg),.bazunk-account-page :is(button,a)[class*="bg-blue-600"] :is(span,svg){color:inherit!important}
+.bazunk-account-page :is(a,button,input,textarea,select):focus-visible{outline:3px solid #ffac37!important;outline-offset:2px}
+.bazunk-account-page :is(table,th,td){border-color:#45668a}
+.bazunk-account-page th{background:#17395f;color:#fff}
+.bazunk-account-page :is(svg){flex-shrink:0}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] svg{stroke-width:2.1}
+.bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] a:not([class*="bg-"]){color:#9dd9ff}
+@media(max-width:640px){.bazunk-account-page :is(.rounded-2xl,.rounded-3xl){border-radius:14px}}
