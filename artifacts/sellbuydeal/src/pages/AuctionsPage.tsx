@@ -88,7 +88,7 @@ export function AuctionsPage() {
   const isNew = (createdAt: string) => Date.now() - new Date(createdAt).getTime() < 86400000;
 
   return (
-    <div className="min-h-screen bg-[#04152f] text-white flex flex-col">
+    <div className="bz-auction-page min-h-screen text-white flex flex-col">
       <Navbar />
       <section className="relative isolate overflow-hidden border-b border-[#2864a1] bg-gradient-to-r from-[#082e61] via-[#154b91] to-[#263b79]">
         <div className="pointer-events-none absolute -top-28 right-[-5%] h-[280px] w-[380px] rounded-full bg-[#f52dbf]/45 blur-3xl" />
@@ -96,8 +96,8 @@ export function AuctionsPage() {
         <div className="relative mx-auto grid max-w-7xl gap-4 px-5 py-5 md:grid-cols-[1.3fr_.7fr] md:items-center md:py-6 lg:px-8">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4c58] to-[#f20c55] px-4 py-2 text-sm font-black text-white shadow-lg"><Gavel className="h-5 w-5"/> LIVE AUCTIONS</div>
-            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bid on Unique <span className="block text-[#ffe341]">Items</span></h1>
-            <p className="mt-3 max-w-xl text-sm font-medium text-slate-100 sm:text-base">Place bids on one-of-a-kind listings. The highest bid wins when the timer hits zero.</p>
+            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bazunk <span className="text-[#ff7900]">Auctions</span></h1>
+            <p className="mt-3 max-w-xl text-sm font-medium text-slate-100 sm:text-base">Bid on unique items, rare finds and great deals. The highest bid wins when the timer hits zero.</p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-white sm:text-sm">
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#ffbd27] p-2 text-[#052253]"><Trophy className="h-4 w-4"/></span> Great deals</span>
               <span className="flex items-center gap-2"><span className="rounded-lg bg-[#a22fff] p-2"><Gem className="h-4 w-4"/></span> Unique items</span>
@@ -108,13 +108,19 @@ export function AuctionsPage() {
           </div>
           <div className="relative hidden min-h-[150px] items-center justify-center sm:flex sm:min-h-[190px]">
             <div className="pointer-events-none absolute inset-4 rounded-full bg-[#ff56c7]/30 blur-3xl" />
-            <img src="/auction-mascot.svg" alt="Smiling Bazunk auction mascot in a blue hoodie holding a gold coin and auction gavel" className="relative z-10 h-[160px] w-full max-w-[280px] object-contain drop-shadow-[0_20px_25px_rgba(3,5,46,.45)] sm:h-[205px]" />
+            <div className="bz-auction-hero-gavel" aria-hidden="true"><Gavel size={135} strokeWidth={1.5}/><span>BID NOW!</span></div>
             <span className="absolute bottom-[1%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-2 border-[#ffe94a] bg-[#f20a9b] px-3 py-1 text-sm font-black text-white shadow-2xl sm:text-lg">BID NOW!</span>
           </div>
         </div>
       </section>
       <div className="mx-auto w-full max-w-7xl px-5 pt-4 lg:px-8"><AdSlot slotKey="auctions_mid" /></div>
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 lg:px-8">
+        <div className="bz-market-stats">
+          <div className="bz-market-stat orange"><Gavel/><strong>{auctions.length}</strong><span>Active Auctions<small>Live right now</small></span></div>
+          <div className="bz-market-stat green"><Users/><strong>{auctions.reduce((n,a)=>n+(Number(a.bid_count)||0),0).toLocaleString()}</strong><span>Total Bids<small>Across loaded auctions</small></span></div>
+          <div className="bz-market-stat blue"><Clock/><strong>{endingCount}</strong><span>Ending Soon<small>Within 24 hours</small></span></div>
+          <div className="bz-market-stat pink"><Gem/><strong>{auctions.filter(a=>isNew(a.created_at)).length}</strong><span>New Auctions<small>Added in the last 24 hours</small></span></div>
+        </div>
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <div className="flex max-w-full flex-wrap gap-1 rounded-2xl border border-[#15538d] bg-[#05284c] p-1">
             {CATEGORIES.map(cat => <button key={cat} onClick={() => { setCategory(cat); setEndingOnly(false); }} className={`rounded-xl px-3 py-2.5 text-xs font-extrabold transition-colors sm:text-sm ${category===cat?"bg-[#0878fa] text-white shadow-lg":"text-white hover:bg-[#15538d]"}`}>{cat}</button>)}
@@ -155,7 +161,7 @@ export function AuctionsPage() {
         ) : (
           <>
             <p className="text-sm font-bold text-white mb-4">{visibleAuctions.length} auction{visibleAuctions.length !== 1 ? "s" : ""} found</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+            <div className="bz-market-product-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
               {visibleAuctions.map((a) => {
                 const currentBid = a.current_bid ? parseFloat(a.current_bid) : null;
                 const displayBid = currentBid ?? parseFloat(a.starting_bid);
