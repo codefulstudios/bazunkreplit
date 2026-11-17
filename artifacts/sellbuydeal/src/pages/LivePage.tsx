@@ -42,12 +42,28 @@ export function LiveHubPage() {
   const upcoming = sessions.filter((s) => !s.isLive);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
-      <div className="bg-gray-950 border-b border-gray-800">
+    <div className="bz-live-page min-h-screen flex flex-col">
+      <div className="bz-live-header">
         <Navbar />
       </div>
 
-      <main className="max-w-6xl mx-auto w-full px-4 py-10 flex-1">
+      <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
+        <section className="bz-live-hero">
+          <div className="bz-live-hero-copy"><span className="bz-live-label"><Radio size={17}/> LIVE SHOPPING</span>
+            <h1>Bazunk <em>Live</em></h1><h2>Watch, shop and buy in real time!</h2>
+            <p>Live auctions, product demos, exclusive deals and special offers from real sellers.</p>
+            <div className="bz-live-hero-actions"><a href="#bz-live-list"><Radio size={17}/> Watch Live Now</a><Link href="/dashboard?section=go-live"><Zap size={17}/> Go Live</Link></div>
+          </div>
+          <div className="bz-live-hero-art" aria-hidden="true"><div className="bz-live-screen"><span>● LIVE</span><Radio size={85}/><strong>BAZUNK LIVE</strong></div><span className="bz-live-bag">B</span></div>
+        </section>
+        <div className="bz-market-stats">
+          <div className="bz-market-stat blue"><Radio/><strong>{live.length}</strong><span>Live Now<small>Shop with sellers in real time</small></span></div>
+          <div className="bz-market-stat orange"><Clock/><strong>{upcoming.length}</strong><span>Upcoming Streams<small>Don't miss the next event</small></span></div>
+          <div className="bz-market-stat green"><Users/><strong>{live.reduce((n,s)=>n+(Number(s.viewerCount)||0),0).toLocaleString()}</strong><span>Viewers Now<small>Across active streams</small></span></div>
+          <div className="bz-market-stat pink"><Tag/><strong>{live.reduce((n,s)=>n+s.productIds.length,0)}</strong><span>Live Items<small>Products featured in streams</small></span></div>
+        </div>
+        <div className="bz-live-tabs"><a href="#bz-live-list">Live Streams ({live.length})</a><a href="#bz-upcoming">Upcoming ({upcoming.length})</a><Link href="/dashboard?section=go-live">Start Streaming</Link></div>
+        <div id="bz-live-list" />
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <div className="relative">
@@ -68,14 +84,14 @@ export function LiveHubPage() {
 
         {/* Live streams */}
         {live.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="bz-live-empty flex flex-col items-center justify-center py-16 text-center">
             <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
               <Radio className="w-10 h-10 text-red-400" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">No streams live right now</h2>
             <p className="text-gray-500 text-sm max-w-sm">Check back soon — sellers go live every day. You can also watch past streams or browse listings.</p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/browse" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity">
+              <Link href="/browse" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#ff7900] text-white font-bold text-sm hover:opacity-90 transition-opacity">
                 Browse Listings <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/dashboard?section=go-live" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors">
@@ -89,7 +105,7 @@ export function LiveHubPage() {
               const meta = PLATFORM_META[session.platform as keyof typeof PLATFORM_META];
               return (
                 <Link key={session.id} href={`/live/${session.id}`}>
-                  <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 hover:shadow-xl hover:shadow-black/40 transition-all group cursor-pointer">
+                  <div className="bz-live-stream-card rounded-2xl overflow-hidden transition-all group cursor-pointer">
                     {/* Thumbnail placeholder */}
                     <div className={`h-40 ${meta.bg} flex items-center justify-center relative`}>
                       <span className="text-white text-4xl font-black opacity-20">{session.sellerInitials}</span>
@@ -127,6 +143,7 @@ export function LiveHubPage() {
           </div>
         )}
 
+        <div id="bz-upcoming" />
         {/* Upcoming */}
         {upcoming.length > 0 && (
           <>
@@ -135,7 +152,7 @@ export function LiveHubPage() {
               {upcoming.map((session) => {
                 const meta = PLATFORM_META[session.platform as keyof typeof PLATFORM_META];
                 return (
-                  <div key={session.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-3">
+                  <div key={session.id} className="bz-live-upcoming-card rounded-2xl p-4 flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center text-white font-black text-sm flex-shrink-0`}>
                       {session.sellerInitials}
                     </div>
