@@ -22,7 +22,7 @@ const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl
 const input="min-h-11 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-lg font-black text-slate-950 dark:border-slate-500 dark:bg-[#0e203e] dark:text-white";
 const gbp=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(n||0)/100);
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
-export default function CashbackPage({embedded=false}:{embedded?:boolean}){
+export default export function CashbackPage({embedded=false}:{embedded?:boolean}){
  const {isLoaded,isSignedIn,getToken}=useAuth();
  // Clerk can supply a new getToken callback across renders. Do not make data loading
  // depend on its identity: otherwise a setState -> effect -> fetch cycle can lock the page.
