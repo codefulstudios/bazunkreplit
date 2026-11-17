@@ -1,4 +1,5 @@
 import { HeaderMegaModals } from "./HeaderMegaModals";
+import { BuyerProtectionModal } from "./BuyerProtectionModal";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
@@ -178,6 +179,7 @@ export function Navbar() {
   };
   const [sellOpen, setSellOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [protectionOpen,setProtectionOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [categoryDrawerOpen,setCategoryDrawerOpen] = useState(false);
@@ -345,7 +347,7 @@ export function Navbar() {
           </div>
           <div className="bz-mockup-top-links">
             <Link href="/support">Help</Link>
-            <Link href="/buyer-protection"><ShieldCheck size={17}/> Buyer Protection</Link>
+            <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(false);setProtectionOpen(true)}} aria-haspopup="dialog" aria-expanded={protectionOpen}><ShieldCheck size={17}/> Buyer Protection</button>
             <Link href="/dashboard?section=watchlist"><Heart size={18} className="text-sky-400"/> Watchlist</Link>
             <button type="button" onClick={() => {setSellOpen(false);setMoreOpen(v=>!v)}} aria-haspopup="dialog" aria-expanded={moreOpen} data-testid="button-more-nav" className="bz-mockup-top-more"><Grid3X3 size={17}/> More <ChevronDown size={14} className={moreOpen?"rotate-180":""}/></button>
              <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(true)}} className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</button>
@@ -625,6 +627,7 @@ export function Navbar() {
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
       </nav>
 
+      <BuyerProtectionModal open={protectionOpen} onClose={() => setProtectionOpen(false)} />
       <HeaderMegaModals kind={sellOpen ? "sell" : moreOpen ? "more" : null} onClose={() => {setSellOpen(false);setMoreOpen(false)}} />
 
       {/* Mobile menu drawer */}
