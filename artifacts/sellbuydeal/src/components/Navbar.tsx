@@ -9,7 +9,7 @@ import {
   Heart, ShoppingCart, Tag, ChevronDown, LogOut,
   LayoutDashboard, Menu, Home, Grid3X3, List, Newspaper, MessageSquare,
   Gavel, Zap, Gift, Package, Radio, Handshake, Info,
-  Trophy, MoreHorizontal, Film, Flame, ArrowDownToLine, ShieldCheck, Database,
+  Trophy, MoreHorizontal, Film, Flame, ArrowDownToLine, ShieldCheck, Database, Truck, Leaf, Store, Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -269,8 +269,9 @@ export function Navbar() {
   const primaryLinks: Array<{ href: string; label: string; live?: boolean }> = [
     { href: "/", label: "Home" },
     { href: "/browse", label: "Shop" },
-    { href: "/categories", label: "Categories" },
     { href: "/auctions", label: "Auctions" },
+    { href: "/flash-sales", label: "Flash Sales" },
+    { href: "/live", label: "Live", live: true },
   ].filter(x => visibleHref(x.href));
 
   return (
@@ -316,7 +317,7 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
-      <nav data-bz-site-header className="relative z-50 w-full bg-white shadow-sm">
+      <nav data-bz-site-header className="bz-mockup-header relative z-50 w-full bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
           <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
           <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
@@ -332,7 +333,7 @@ export function Navbar() {
             ))}
           </div>
         </div>
-        <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4">
+        <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
 
           {/* Theme + Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -350,6 +351,9 @@ export function Navbar() {
               <HomeHeaderIcon className="w-4 h-4" />
             </Link>
           </div>
+
+          {/* Desktop category trigger stays visible beside the main navigation. */}
+          <button type="button" className="bz-mockup-categories hidden xl:flex" aria-haspopup="dialog" aria-expanded={categoryDrawerOpen} onClick={()=>setCategoryDrawerOpen(v=>!v)}><Menu className="h-5 w-5"/> Categories <ChevronDown className="h-4 w-4"/></button>
 
           {/* Desktop nav */}
           <div className="hidden xl:flex items-center gap-1 text-sm font-medium flex-shrink-0">
@@ -377,6 +381,7 @@ export function Navbar() {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                     </span>
                   )}
+                  {href === "/" ? <Home className="bz-nav-link-icon text-white"/> : href === "/browse" ? <ShoppingCart className="bz-nav-link-icon text-sky-300"/> : href === "/auctions" ? <Gavel className="bz-nav-link-icon text-orange-400"/> : href === "/flash-sales" ? <Zap className="bz-nav-link-icon text-yellow-300"/> : href === "/live" ? <Radio className="bz-nav-link-icon text-pink-400"/> : null}
                   {label}
                 </Link>
               );
@@ -708,6 +713,13 @@ export function Navbar() {
           <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t("search")} aria-label="Search listings" className="min-w-0 flex-1 rounded-xl bg-gray-100 px-3 py-2 text-base text-gray-800" />
           <button type="submit" aria-label="Search" className="w-11 shrink-0 rounded-xl bg-[#4A5CE8] text-white flex items-center justify-center"><Search className="w-5 h-5" /></button>
         </form>
+        <div className="bz-mockup-benefits" aria-label="Marketplace benefits">
+          <span><Truck className="text-violet-600"/> <strong>Delivery options</strong><small>Check at checkout</small></span>
+          <span><ShieldCheck className="text-cyan-600"/> <strong>Buyer protection</strong><small>Shop with confidence</small></span>
+          <span><CheckCircle2 className="text-orange-500"/> <strong>Verified sellers</strong><small>Look for verification</small></span>
+          <span><Leaf className="text-green-600"/> <strong>Eco marketplace</strong><small>Reuse and resell</small></span>
+          <span><Gift className="text-purple-600"/> <strong>Earn credits</strong><small>Explore rewards</small></span>
+        </div>
         {/* Brand colour accent */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
       </nav>
