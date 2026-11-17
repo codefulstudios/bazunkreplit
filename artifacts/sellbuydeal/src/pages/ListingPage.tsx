@@ -614,7 +614,7 @@ export function ListingPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </div>}
 
                     {/* Stats row */}
                     {showSection("stats",false)&&<div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
