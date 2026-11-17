@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
 import {
   X, Minus, Plus, Trash2, ShoppingBag, ArrowRight,
@@ -28,7 +29,7 @@ export function CartDrawer() {
   const delivery = subtotal >= 50 ? 0 : 3.99;
   const total = subtotal + delivery;
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
@@ -39,7 +40,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-[60]"
+            className="fixed inset-0 bg-black/60 z-[1000]"
             onClick={closeCart}
           />
 
@@ -50,7 +51,7 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white z-[60] flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white z-[1001] flex flex-col shadow-2xl overflow-hidden"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -252,6 +253,7 @@ export function CartDrawer() {
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
