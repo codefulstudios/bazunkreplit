@@ -90,12 +90,12 @@ export function AuctionsPage() {
   return (
     <div className="bz-auction-page min-h-screen text-white flex flex-col">
       <Navbar />
-      <section className="relative isolate overflow-hidden border-b border-[#2864a1] bg-gradient-to-r from-[#082e61] via-[#154b91] to-[#263b79]">
+      <section className="bz-market-hero relative isolate overflow-hidden">
         <div className="pointer-events-none absolute -top-28 right-[-5%] h-[280px] w-[380px] rounded-full bg-[#f52dbf]/45 blur-3xl" />
         <div className="pointer-events-none absolute bottom-[-160px] left-[24%] h-[210px] w-[320px] rounded-full bg-[#01b9f8]/45 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl gap-4 px-5 py-5 md:grid-cols-[1.3fr_.7fr] md:items-center md:py-6 lg:px-8">
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4c58] to-[#f20c55] px-4 py-2 text-sm font-black text-white shadow-lg"><Gavel className="h-5 w-5"/> LIVE AUCTIONS</div>
+            <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4c58] to-[#f20c55] px-4 py-2 text-sm font-black text-white shadow-lg"><Gavel className="h-5 w-5"/> AUCTIONS</div>
             <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bazunk <span className="text-[#ff7900]">Auctions</span></h1>
             <p className="mt-3 max-w-xl text-sm font-medium text-slate-100 sm:text-base">Bid on unique items, rare finds and great deals. The highest bid wins when the timer hits zero.</p>
             <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-white sm:text-sm">
@@ -106,9 +106,9 @@ export function AuctionsPage() {
             </div>
             {user && <Link href="/auctions/create" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#ff711d] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8c3b]" data-testid="button-create-auction"><Plus className="h-5 w-5"/> List an Auction</Link>}
           </div>
-          <div className="relative hidden min-h-[150px] items-center justify-center sm:flex sm:min-h-[190px]">
+          <div className="bz-market-hero-art relative hidden min-h-[150px] items-center justify-center sm:flex sm:min-h-[190px]">
             <div className="pointer-events-none absolute inset-4 rounded-full bg-[#ff56c7]/30 blur-3xl" />
-            <div className="bz-auction-hero-gavel" aria-hidden="true"><Gavel size={135} strokeWidth={1.5}/><span>BID NOW!</span></div>
+            <div className="bz-auction-hero-gavel" aria-hidden="true"><Gavel size={135} strokeWidth={1.5}/></div>
             <span className="absolute bottom-[1%] right-[2%] z-20 rotate-[-8deg] rounded-2xl border-2 border-[#ffe94a] bg-[#f20a9b] px-3 py-1 text-sm font-black text-white shadow-2xl sm:text-lg">BID NOW!</span>
           </div>
         </div>
@@ -169,7 +169,7 @@ export function AuctionsPage() {
                 const isNewListing = isNew(a.created_at);
                 const img = Array.isArray(a.images) && a.images.length > 0 ? a.images[0] : null;
                 return (
-                  <div key={a.id} className="bg-gradient-to-b from-[#0b3566] to-[#061b39] rounded-2xl border border-[#2469b2] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
+                  <div key={a.id} className="bz-market-item-card rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
                     {/* Image */}
                     <div className="relative aspect-[4/3] bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       {img ? (
