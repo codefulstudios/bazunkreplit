@@ -9,7 +9,6 @@ const moreTiles:Tile[] = [
  {title:"Rewards",subtitle:"Earn credits & perks",href:"/rewards",icon:Gift,tone:"gold"},
  {title:"My Store",subtitle:"Manage your listings",href:"/dashboard?section=listings",icon:Store,tone:"blue"},
  {title:"Live Shopping",subtitle:"Watch, shop & interact",href:"/live",icon:Radio,tone:"purple"},
- {title:"Collections",subtitle:"Curated finds & trends",href:"/collections",icon:Layers,tone:"green"},
  {title:"Bundle Deals",subtitle:"Save when you buy multiple items",href:"/bundle",icon:Tag,tone:"peach"},
  {title:"Import Listings",subtitle:"Bring products from other marketplaces",href:"/importers",icon:Package,tone:"cyan"},
  {title:"Support",subtitle:"FAQs, guides & contact",href:"/support",icon:LifeBuoy,tone:"blue"}
