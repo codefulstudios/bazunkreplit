@@ -18,8 +18,6 @@ import { sendSystemMessage } from "../lib/systemMessages.js";
 
 const router = Router();
 
-/** Bids placed in the last EXTEND_WINDOW_MS of an auction with Auction Extensions push the end out so that long remains. */
-const EXTEND_WINDOW_MS = 2 * 60 * 1000;
 
 /**
  * What the public may see of an auction. The reserve amount is a secret — only say whether
@@ -159,15 +157,12 @@ router.post("/auctions", async (req, res) => {
   if (!Number.isFinite(startAmount) || startAmount <= 0 || !Number.isFinite(incrementAmount) || incrementAmount <= 0 || (reserveAmount !== null && (!Number.isFinite(reserveAmount) || reserveAmount <= 0)) || !Number.isFinite(endDate.getTime()) || endDate.getTime() <= Date.now()) {
     res.status(400).json({ error: "Enter positive starting bid, increment and reserve values, and a future end time" }); return;
   }
-  const wantsExtension = body["extendEnabled"] === true || body["extendEnabled"] === "true";
   const wantsReserve = reserveAmount !== null;
 
   // Optional paid add-ons (prices and availability are set in Admin → Promotions)
   const reserveCfg = await getPromoConfig("reserve-auction");
-  const extendCfg = await getPromoConfig("auction-extension");
   if (wantsReserve && reserveCfg && !reserveCfg.enabled) { res.status(400).json({ error: "Reserve prices aren't available right now." }); return; }
-  if (wantsExtension && extendCfg && !extendCfg.enabled) { res.status(400).json({ error: "Auction Extensions aren't available right now." }); return; }
-  const fee = (wantsReserve ? (reserveCfg?.cost ?? 0) : 0) + (wantsExtension ? (extendCfg?.cost ?? 0) : 0);
+  const fee = wantsReserve ? (reserveCfg?.cost ?? 0) : 0;
   if (fee > 0) {
     const balance = await storage.getCredits(sellerEmail);
     if (balance < fee) {
@@ -187,14 +182,14 @@ router.post("/auctions", async (req, res) => {
       ${startAmount},
       ${reserveAmount},
       ${incrementAmount},
-      ${endTime}, ${wantsExtension}, 'active', ${marketplaceRegion}, NOW(), NOW()
+      ${endTime}, false, 'active', ${marketplaceRegion}, NOW(), NOW()
     )
   `);
   let newBalance: number | undefined;
   if (fee > 0) {
     newBalance = Number(await storage.addCredits(sellerEmail, -fee));
     await recordCreditEconomy({ email: sellerEmail, kind: "spent", credits: -fee, reason: "Auction listing fee", referenceType: "auction" });
-    const parts = [wantsReserve && "Reserve Price", wantsExtension && "Auction Extensions"].filter(Boolean).join(" + ");
+    const parts = "Reserve Price";
     void sendSystemMessage(sellerEmail, {
       category: "Promotions",
       subject: `${parts} added to your auction`,
@@ -236,15 +231,8 @@ router.post("/auctions/:id/bid", async (req, res) => {
       INSERT INTO bids (id, auction_id, bidder_email, bidder_name, amount, created_at)
       VALUES (${bidId}, ${id}, ${bidderEmail}, ${bidderName}, ${bidAmount}, NOW())
     `);
-    let extended = false;
-    let newEndTime: string | null = null;
-    if (auction["extend_enabled"] === true) {
-      const endMs = new Date(auction["end_time"] as string).getTime();
-      if (endMs - Date.now() <= EXTEND_WINDOW_MS) {
-        newEndTime = new Date(Date.now() + EXTEND_WINDOW_MS).toISOString();
-        extended = true;
-      }
-    }
+    const extended = false;
+    const newEndTime: string | null = null;
     await tx.execute(sql`
       UPDATE auctions SET current_bid = ${bidAmount}, bid_count = COALESCE(bid_count, 0) + 1,
         winner_email = ${bidderEmail}, winner_name = ${bidderName}, winner_bid = ${bidAmount},
