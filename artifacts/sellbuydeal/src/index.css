@@ -3031,3 +3031,17 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .bazunk-listing-redesign .bz-mockup-listing-left > .bz-mockup-product-summary{grid-column:2;grid-row:1}
 .bazunk-listing-redesign .bz-mockup-listing-left > :not(.bz-product-gallery):not(.bz-mockup-product-summary){grid-column:1/-1}
 }
+
+
+/* Mockup top utility bar: marketplace selector left, support and seller actions right. */
+.bz-mockup-header .bz-mockup-topbar{justify-content:space-between!important;min-height:46px!important;padding:5px clamp(16px,2.2vw,42px)!important;gap:16px!important;background:linear-gradient(100deg,#07152d,#102448)!important;border-bottom:1px solid #203858!important;color:#fff!important}
+.bz-mockup-header .bz-mockup-topbar > span{color:#e6edff!important;flex-shrink:0}
+.bz-mockup-header .bz-mockup-topbar > div:nth-child(2){margin-right:auto;background:#112444!important;border-color:#8297bd!important}
+.bz-mockup-header .bz-mockup-topbar > div:nth-child(2) button{color:#fff!important}
+.bz-mockup-top-links{display:flex;align-items:center;justify-content:flex-end;gap:clamp(12px,1.7vw,28px);margin-left:auto;white-space:nowrap}
+.bz-mockup-top-links > a{display:inline-flex;align-items:center;gap:7px;font-size:.83rem;font-weight:750;color:#f3f7ff;text-decoration:none}
+.bz-mockup-top-links > a:hover{color:#ffb56a}
+.bz-mockup-top-links .bz-mockup-top-sell{padding:9px 15px;background:linear-gradient(110deg,#ff8c11,#ff5b00);color:#fff;border-radius:12px;box-shadow:0 3px 9px #ff620033}
+.bz-mockup-top-links .bz-mockup-top-sell:hover{color:#fff;filter:brightness(1.1)}
+@media(max-width:1000px){.bz-mockup-top-links{gap:13px}.bz-mockup-top-links > a{font-size:.75rem}.bz-mockup-top-links .bz-mockup-top-sell{padding:7px 10px}}
+@media(max-width:700px){.bz-mockup-header .bz-mockup-topbar{flex-wrap:wrap;min-height:40px!important}.bz-mockup-top-links{display:none}.bz-mockup-header .bz-mockup-topbar > div:nth-child(2){margin-right:0}}
