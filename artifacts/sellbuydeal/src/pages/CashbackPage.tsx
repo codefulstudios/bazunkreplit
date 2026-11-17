@@ -22,7 +22,7 @@ const primary="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl
 const input="min-h-11 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-lg font-black text-slate-950 dark:border-slate-500 dark:bg-[#0e203e] dark:text-white";
 const gbp=(n:number)=>new Intl.NumberFormat("en-GB",{style:"currency",currency:"GBP"}).format(Number(n||0)/100);
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
-export default function CashbackPage(){
+export default function CashbackPage({embedded=false}:{embedded?:boolean}){
  const {isLoaded,isSignedIn,getToken}=useAuth();
  // Clerk can supply a new getToken callback across renders. Do not make data loading
  // depend on its identity: otherwise a setState -> effect -> fetch cycle can lock the page.
@@ -82,9 +82,9 @@ export default function CashbackPage(){
  const active=!!settings?.enabled&&!!settings?.earningEnabled&&!!settings?.featureEnabled;
  const tier=[...(settings?.tiers||[])].reverse().find(t=>spend>=t.spendGbp)||settings?.tiers?.[0];
  const estimated=tier?Math.round(spend*100*tier.rate/100):0;
- return <div className="min-h-screen bg-slate-50 text-slate-950 dark:bg-[#0c1529] dark:text-white">
-  <Navbar/>
-  <main className="mx-auto max-w-6xl space-y-5 px-3 py-5 pb-20 sm:px-6 sm:py-8" data-testid="cashback-page">
+ return <div className={embedded ? "bazunk-cashback-embedded text-white" : "min-h-screen bg-slate-50 text-slate-950 dark:bg-[#0c1529] dark:text-white"}>
+  {!embedded && <Navbar/>}
+  <main className={embedded ? "space-y-5 px-2 py-3 sm:px-4 sm:py-5" : "mx-auto max-w-6xl space-y-5 px-3 py-5 pb-20 sm:px-6 sm:py-8"} data-testid="cashback-page">
    <header className="rounded-3xl bg-gradient-to-br from-[#172445] via-[#29366e] to-[#a95a11] p-6 text-white sm:p-10">
     <div className="flex flex-wrap items-center justify-between gap-3">
      <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-sm font-black text-white"><Coins className="h-4 w-4"/>Bazunk Cashback</span>
@@ -163,6 +163,6 @@ export default function CashbackPage(){
     </article>)}</div>
    </section>
    <p className={sub+" rounded-xl border border-slate-300 p-4 text-center dark:border-slate-600"}><ShieldCheck className="mr-1 inline h-4 w-4 text-orange-600"/>Cashback is subject to eligibility checks, refunds, disputes, the holding period and the programme settings. Requesting a payout does not send funds automatically.</p>
-  </main><Footer/>
+  </main>{!embedded && <Footer/>}
  </div>;
 }
