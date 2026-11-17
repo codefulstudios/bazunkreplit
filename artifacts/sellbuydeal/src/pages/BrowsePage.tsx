@@ -862,7 +862,7 @@ export function BrowsePage() {
 
       {/* Search header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-5">
+        <div className="container mx-auto max-w-[1920px] px-4 py-5">
           <div className="flex items-center gap-3">
             <div className="relative flex-1 max-w-xl">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -986,7 +986,7 @@ export function BrowsePage() {
 
       <AdSlot slotKey="browse_top" />
 
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 flex gap-6 flex-1 pb-24 md:pb-6">
+      <div className="container mx-auto max-w-[1920px] px-3 sm:px-5 lg:px-7 py-4 sm:py-6 flex gap-6 flex-1 pb-24 md:pb-6">
 
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-56 flex-shrink-0">
