@@ -220,7 +220,7 @@ export function SellPage() {
     "open-store": {emoji:"🏪 📦 🌟",bg:"from-blue-600 via-cyan-500 to-blue-700",caption:"Build your brand · Grow your business"}
   };
   return (
-    <div className="min-h-screen bg-[#03152d] text-white flex flex-col">
+    <div className="sell-page min-h-screen bg-[#f2f5fb] text-[#10213e] flex flex-col">
       <Navbar />
       <main className="flex-1">
         <CompactPageHero kind="sell" eyebrow="Selling" title="Start Selling Today!" description="Turn your items into cash. It's free, simple and takes just minutes." art="📦">
@@ -231,20 +231,20 @@ export function SellPage() {
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
           <section>
-            <h2 className="text-center text-3xl md:text-4xl font-black">Choose <span className="text-yellow-300">How You Want to Sell</span></h2>
-            <p className="text-center text-white/85 mt-1 mb-5">Different ways to sell for every item and every style.</p>
+            <h2 className="text-center text-3xl md:text-4xl font-black text-[#10213e]">Choose <span className="text-orange-600">How You Want to Sell</span></h2>
+            <p className="text-center text-slate-700 mt-1 mb-5">Different ways to sell for every item and every style.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {visibleOptions.map(option => {
                 const artwork=art[option.id];
-                return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border-2 border-white/25 bg-[#0d2550] hover:border-yellow-300 hover:-translate-y-1 transition-all shadow-xl" data-testid={`card-sell-option-${option.id}`}>
+                return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-orange-400 hover:-translate-y-1 transition-all shadow-md" data-testid={`card-sell-option-${option.id}`}>
                   <div className={`bz-sell-option-art h-40 sm:h-52 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
                     <span className="bz-sell-option-emoji inline-flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
                     {option.badge && <span className="absolute right-3 top-3 rounded-lg bg-green-400 px-3 py-1 text-[#002e24] font-black rotate-6">{option.badge}</span>}
                   </div>
-                  <div className="p-5 bg-gradient-to-br from-[#102c57] to-[#08172f]">
-                    <div className="flex items-center justify-between"><h3 className="text-2xl font-black">{option.title}</h3><span className="rounded-full bg-orange-500 p-2 text-white"><ArrowRight className="w-5 h-5"/></span></div>
-                    <p className="text-sm text-white/90 mt-2 min-h-10">{option.description}</p>
-                    <div className="mt-3 text-xs font-bold text-yellow-300">✓ {artwork.caption}</div>
+                  <div className="p-5 bg-white text-[#10213e]">
+                    <div className="flex items-center justify-between"><h3 className="text-2xl font-black text-[#10213e]">{option.title}</h3><span className="rounded-full bg-orange-500 p-2 text-white"><ArrowRight className="w-5 h-5"/></span></div>
+                    <p className="text-sm text-slate-700 mt-2 min-h-10">{option.description}</p>
+                    <div className="mt-3 text-xs font-bold text-orange-700">✓ {artwork.caption}</div>
                   </div>
                 </Link>;
               })}
@@ -252,17 +252,17 @@ export function SellPage() {
           </section>
 
           <section className="grid lg:grid-cols-2 gap-3" aria-label="Seller fees and calculator">
-            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-[#10213e] shadow-sm">
               <span className="inline-block rounded-full bg-orange-500 px-3 py-1 text-xs font-black">⚡ Transparent Pricing</span>
               <h2 className="text-2xl md:text-3xl font-black mt-3">Seller Fees — No Hidden Costs</h2>
               <p className="mt-2 text-sm text-white/85">Private sellers list and sell free. Business sellers pay their configured fee when an item sells. No invoices, no surprises.</p>
-              <div className="mt-4 rounded-xl border border-blue-400/25 overflow-hidden">
-                {FEE_ROWS.map(row=>{const Icon=row.icon;return <div key={row.label} className="flex gap-3 items-center justify-between border-b border-white/10 bg-[#041c3b]/80 p-3 last:border-b-0"><span className="flex items-center gap-3"><span className="rounded-lg bg-blue-600 p-2"><Icon className="w-5 h-5 text-white"/></span><span><strong className="block text-sm text-white">{row.label}</strong><small className="text-white/75">{row.sub}</small></span></span><strong className="text-emerald-300 text-sm text-right">{row.value}</strong></div>})}
+              <div className="mt-4 rounded-xl border border-slate-200 overflow-hidden">
+                {FEE_ROWS.map(row=>{const Icon=row.icon;return <div key={row.label} className="flex gap-3 items-center justify-between border-b border-slate-200 bg-slate-50 p-3 last:border-b-0"><span className="flex items-center gap-3"><span className="rounded-lg bg-blue-600 p-2"><Icon className="w-5 h-5 text-white"/></span><span><strong className="block text-sm text-[#10213e]">{row.label}</strong><small className="text-slate-600">{row.sub}</small></span></span><strong className="text-emerald-700 text-sm text-right">{row.value}</strong></div>})}
               </div>
-              <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs font-bold text-white/90"><span>✓ No invoices</span><span>✓ No monthly fees</span><span>✓ No hidden charges</span></div>
-              <p className="mt-3 text-xs text-white/70">Business fees vary by category. Exact fees appear before checkout.</p>
+              <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs font-bold text-slate-700"><span>✓ No invoices</span><span>✓ No monthly fees</span><span>✓ No hidden charges</span></div>
+              <p className="mt-3 text-xs text-slate-600">Business fees vary by category. Exact fees appear before checkout.</p>
             </div>
-            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-4 sm:p-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 text-[#10213e] shadow-sm">
               <h2 className="text-xl font-black mb-3">🧮 Fee Calculator</h2>
               <div className="sell-bright-calculator"><FeeCalculator /></div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 p-4">
@@ -272,9 +272,9 @@ export function SellPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-blue-400/40 bg-gradient-to-r from-[#04264e] to-[#061b3c] p-5">
-            <h2 className="text-center text-2xl md:text-3xl font-black">Why Sellers <span className="text-yellow-300">Choose Bazunk</span></h2>
-            <p className="text-center text-white/85 text-sm mb-5">Everything you need to succeed as a seller.</p>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 text-[#10213e] shadow-sm">
+            <h2 className="text-center text-2xl md:text-3xl font-black">Why Sellers <span className="text-orange-600">Choose Bazunk</span></h2>
+            <p className="text-center text-slate-700 text-sm mb-5">Everything you need to succeed as a seller.</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{WHY_FEATURES.map((f,i)=>{const Icon=f.icon;return <div key={f.title} className="flex items-start gap-3"><span className={`shrink-0 rounded-xl p-3 ${["bg-fuchsia-600","bg-blue-600","bg-orange-500","bg-emerald-500"][i]}`}><Icon className="w-6 h-6 text-white"/></span><div><h3 className="font-black text-sm">{f.title}</h3><p className="text-xs text-white/85 mt-1">{f.desc}</p></div></div>})}</div>
           </section>
           <section className="relative overflow-hidden rounded-2xl border-2 border-purple-400 bg-gradient-to-r from-[#1256f2] via-[#4e20e8] to-[#f02dc1] p-5 md:p-7 flex flex-col md:flex-row justify-between gap-5 items-center">
