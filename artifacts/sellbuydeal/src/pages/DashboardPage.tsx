@@ -1281,7 +1281,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           </div>
         ) : (
           <div className="space-y-1">
-            {myListings.map((listing) => (
+            {myListings.slice(0,3).map((listing) => (
               <div key={listing.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-xl px-1 -mx-1 transition-colors group">
                 <Link href={`/listing/${listing.publicId ?? listing.id}`} className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 block">
                   {listing.image
@@ -5715,7 +5715,7 @@ export function DashboardPage() {
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => { const section = new URLSearchParams(window.location.search).get("section"); return SIDEBAR_CATEGORIES.find(c => c.items.some(i=>i.id===section))?.id ?? null; });
   const [flyoutY, setFlyoutY] = useState(0);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -5847,14 +5847,14 @@ export function DashboardPage() {
         {/* Sidebar — fixed drawer on mobile, static on desktop */}
         <aside className={`
           fixed lg:static inset-y-0 left-0 z-[70] lg:z-40
-          w-72 max-w-[100vw] lg:w-24 flex-shrink-0
+          w-72 max-w-[100vw] lg:w-[270px] flex-shrink-0
           flex flex-col
-          bg-gray-100 lg:bg-transparent
+          bg-gray-100 lg:bg-[#071b38] lg:rounded-[22px] lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-24px)]
           transition-transform duration-200
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}>
           {/* Scrollable inner container */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-visible">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-y-auto">
 
             {/* Mobile close row */}
             <div className="lg:hidden flex items-center justify-between pb-1 flex-shrink-0">
@@ -5865,7 +5865,7 @@ export function DashboardPage() {
             </div>
 
             {/* User card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
+            <div className="bz-dashboard-user bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
               <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
                 {initial}
               </div>
@@ -5873,7 +5873,7 @@ export function DashboardPage() {
             </div>
 
             {/* Nav menu — icon rail + flyout (desktop only hint) */}
-            <div className="hidden lg:flex items-center justify-end px-1 -mb-1">
+            <div className="hidden items-center justify-end px-1 -mb-1">
               <div className="group relative">
                 <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center cursor-default select-none">?</span>
                 <div className="absolute right-0 top-5 z-50 hidden group-hover:block w-52 bg-gray-900 text-white text-[11px] leading-snug rounded-xl px-3 py-2 shadow-lg pointer-events-none">
@@ -5964,118 +5964,32 @@ export function DashboardPage() {
               </button>
             </nav>
 
-            {/* ── Desktop nav: icon rail + flyout ── */}
-            <nav
-              className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-visible flex-shrink-0 relative"
-              ref={categoryMenuRef}
-            >
-              {/* Icon rail */}
-              <div className="flex flex-col py-2">
-                {visibleSidebarCategories.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = cat.items.length === 0
-                    ? activeSection === cat.id
-                    : cat.items.some(i => i.id === activeSection);
-                  const isOpen = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={(e) => {
-                        if (cat.items.length === 0) {
-                          setActiveSection(cat.id);
-                          setActiveCategory(null);
-                          setSidebarOpen(false);
-                        } else {
-                          const y = (e.currentTarget as HTMLElement).offsetTop;
-                          setFlyoutY(y);
-                          setActiveCategory(isOpen ? null : cat.id);
-                        }
-                      }}
-                      className="group relative flex flex-col items-center gap-1 px-2 py-2.5 w-full transition-all"
-                      title={cat.label}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      {(isActive || isOpen) && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#3B4FD8] rounded-r-full" />
-                      )}
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shadow-sm bg-gradient-to-br ${cat.gradient} ${
-                        isActive || isOpen ? "scale-110 shadow-md ring-2 ring-offset-1 ring-white" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
-                      }`}>
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <span className={`text-[9px] font-bold tracking-wide leading-tight ${
-                        isActive || isOpen ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
-                      }`}>{cat.label}</span>
-                    </button>
-                  );
-                })}
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="group flex flex-col items-center gap-1 px-2 py-2.5 w-full border-t border-gray-100 mt-1 transition-all"
-                  title="Sign Out"
-                  data-testid="button-logout"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-red-50 group-hover:bg-red-500 flex items-center justify-center transition-all">
-                    <LogOut className="w-5 h-5 text-red-400 group-hover:text-white transition-colors" />
-                  </div>
-                  <span className="text-[9px] font-bold text-gray-400 group-hover:text-red-400 tracking-wide transition-colors">Sign Out</span>
-                </button>
-              </div>
-
-              {/* Flyout panel */}
-              <AnimatePresence>
-                {activeCategory && (() => {
-                  const cat = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory);
-                  if (!cat || cat.items.length === 0) return null;
-                  return (
-                    <motion.div
-                      key={activeCategory}
-                      initial={{ opacity: 0, x: -8, scale: 0.97 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -8, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-full ml-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden"
-                      style={{ top: flyoutY }}
-                    >
-                      <div className={`px-4 py-3 bg-gradient-to-r ${cat.gradient} flex items-center gap-2`}>
-                        <cat.icon className="w-4 h-4 text-white/80" />
-                        <span className="text-sm font-bold text-white">{cat.label}</span>
-                      </div>
-                      <div className="py-1.5">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                setActiveSection(item.id);
-                                setActiveCategory(null);
-                                setSidebarOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left ${
-                                isItemActive
-                                  ? "bg-[#3B4FD8]/8 text-[#3B4FD8] font-semibold"
-                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                              }`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className="flex-1">{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
+            {/* Desktop accordion: one expanded group, keyboard accessible, no flyouts */}
+            <nav className="bz-dashboard-accordion hidden lg:flex flex-col gap-2" aria-label="Dashboard sections">
+              {visibleSidebarCategories.map(cat => {
+                const Icon=cat.icon;
+                const selected=cat.id===activeSection || cat.items.some(item=>item.id===activeSection);
+                const open=activeCategory===cat.id;
+                return <div key={cat.id} className={`bz-dashboard-group ${open?"is-open":""} ${selected?"is-selected":""}`}>
+                  <button type="button" className={`bz-dashboard-group-trigger ${cat.id==="overview"&&selected?"is-active":""}`}
+                    onClick={() => cat.items.length===0 ? (setActiveSection(cat.id),setActiveCategory(null)) : setActiveCategory(open?null:cat.id)}
+                    aria-expanded={cat.items.length?open:undefined} aria-controls={cat.items.length?`bz-dashboard-group-${cat.id}`:undefined}
+                    data-testid={`cat-${cat.id}`}>
+                    <Icon size={20}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronDown size={17} className={`bz-dashboard-chevron ${open?"rotate-180":""}`}/>}
+                  </button>
+                  {cat.items.length>0&&<div id={`bz-dashboard-group-${cat.id}`} className="bz-dashboard-group-content" inert={!open}>
+                    <div className="bz-dashboard-group-items">
+                      {cat.items.map(item=>{const ItemIcon=item.icon;return <button key={item.id} type="button"
+                        className={`bz-dashboard-subitem ${activeSection===item.id?"is-active":""}`}
+                        onClick={()=>{setActiveSection(item.id);setActiveCategory(cat.id)}} data-testid={`sidebar-${item.id}`}>
+                        <ItemIcon size={16}/><span>{item.label}</span>{activeSection===item.id&&<ChevronRight size={15}/>}
+                      </button>})}
+                    </div>
+                  </div>}
+                </div>;
+              })}
+              <button className="bz-dashboard-signout" type="button" onClick={handleLogout}><LogOut size={18}/> Sign Out</button>
             </nav>
-
           </div>
         </aside>
 
