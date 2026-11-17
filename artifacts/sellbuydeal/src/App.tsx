@@ -595,7 +595,7 @@ function InnerApp() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="bazunk-theme" disableTransitionOnChange={false}>
+    <ThemeProvider attribute="class" forcedTheme="light" defaultTheme="light" enableSystem={false} storageKey="bazunk-theme" disableTransitionOnChange={false}>
     <TooltipProvider>
       <CurrencyProvider>
         <LanguageProvider>
