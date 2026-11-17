@@ -170,3 +170,20 @@
 .bazunk-dashboard-store .bazunk-store-preview>div:last-child :is(p,span,div){color:#e9f2ff!important;-webkit-text-fill-color:#e9f2ff!important}
 .bazunk-dashboard-store .bazunk-store-preview>div:first-child :is(h3,p,span){color:#fff!important;-webkit-text-fill-color:#fff!important}
 .bazunk-dashboard-store .bazunk-store-preview svg{color:#ffac57!important}
+
+/* Cashback dashboard: readable navy panels and light foreground throughout. */
+.bazunk-cashback-embedded{color:#f8fbff!important}
+.bazunk-cashback-embedded header{color:#fff!important;background:linear-gradient(115deg,#142e55,#293b79 60%,#a95312)!important}
+.bazunk-cashback-embedded header :is(h1,h2,h3,p,span,a,button,svg){color:#fff!important;-webkit-text-fill-color:#fff!important}
+.bazunk-cashback-embedded :is(section,article)[class*="bg-white"]{background:#102746!important;color:#f8fbff!important;border-color:#42648b!important}
+.bazunk-cashback-embedded :is(section,article)[class*="bg-white"] :is(h1,h2,h3,h4,p,span,small,strong,li,label){color:#f8fbff!important;-webkit-text-fill-color:#f8fbff!important}
+.bazunk-cashback-embedded :is(.text-slate-950,.text-slate-900,.text-slate-800,.text-slate-700,.text-slate-600){color:#f8fbff!important}
+.bazunk-cashback-embedded :is(.bg-slate-100,.bg-slate-50){background:#1c3b60!important;color:#fff!important}
+.bazunk-cashback-embedded :is(.bg-slate-100,.bg-slate-50) :is(p,span,strong){color:#fff!important}
+.bazunk-cashback-embedded :is(.text-orange-700,.text-orange-600){color:#ffbd73!important}
+.bazunk-cashback-embedded :is(input:not([type="range"]),select,textarea){background:#0b203d!important;color:#fff!important;border-color:#7190b1!important}
+.bazunk-cashback-embedded :is(input,textarea)::placeholder{color:#c5d5e9!important}
+.bazunk-cashback-embedded :is(button,a)[class*="bg-white"]{background:#204365!important;color:#fff!important;border-color:#6283a6!important}
+.bazunk-cashback-embedded :is(button,a)[class*="bg-orange-"]{color:#fff!important}
+.bazunk-cashback-embedded :is(button,a):focus-visible{outline:3px solid #ffb453!important;outline-offset:2px}
+.bazunk-cashback-embedded :is(svg){flex-shrink:0}
