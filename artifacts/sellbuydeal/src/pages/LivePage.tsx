@@ -48,13 +48,13 @@ export function LiveHubPage() {
       </div>
 
       <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
-        <section className="bz-live-hero">
+        <section className="bz-live-hero bz-market-hero">
           <div className="bz-live-hero-copy"><span className="bz-live-label"><Radio size={17}/> LIVE SHOPPING</span>
             <h1>Bazunk <em>Live</em></h1><h2>Watch, shop and buy in real time!</h2>
             <p>Live auctions, product demos, exclusive deals and special offers from real sellers.</p>
             <div className="bz-live-hero-actions"><a href="#bz-live-list"><Radio size={17}/> Watch Live Now</a><Link href="/dashboard?section=go-live"><Zap size={17}/> Go Live</Link></div>
           </div>
-          <div className="bz-live-hero-art" aria-hidden="true"><div className="bz-live-screen"><span>● LIVE</span><Radio size={85}/><strong>BAZUNK LIVE</strong></div><span className="bz-live-bag">B</span></div>
+          <div className="bz-live-hero-art bz-market-hero-art" aria-hidden="true"><div className="bz-live-screen"><span>● LIVE</span><Radio size={85}/><strong>BAZUNK LIVE</strong></div><span className="bz-live-bag">B</span></div>
         </section>
         <div className="bz-market-stats">
           <div className="bz-market-stat blue"><Radio/><strong>{live.length}</strong><span>Live Now<small>Shop with sellers in real time</small></span></div>
@@ -105,7 +105,7 @@ export function LiveHubPage() {
               const meta = PLATFORM_META[session.platform as keyof typeof PLATFORM_META];
               return (
                 <Link key={session.id} href={`/live/${session.id}`}>
-                  <div className="bz-live-stream-card rounded-2xl overflow-hidden transition-all group cursor-pointer">
+                  <div className="bz-live-stream-card bz-market-item-card rounded-2xl overflow-hidden transition-all group cursor-pointer">
                     {/* Thumbnail placeholder */}
                     <div className={`h-40 ${meta.bg} flex items-center justify-center relative`}>
                       <span className="text-white text-4xl font-black opacity-20">{session.sellerInitials}</span>
@@ -152,7 +152,7 @@ export function LiveHubPage() {
               {upcoming.map((session) => {
                 const meta = PLATFORM_META[session.platform as keyof typeof PLATFORM_META];
                 return (
-                  <div key={session.id} className="bz-live-upcoming-card rounded-2xl p-4 flex items-center gap-3">
+                  <div key={session.id} className="bz-live-upcoming-card bz-market-item-card rounded-2xl p-4 flex items-center gap-3">
                     <div className={`w-12 h-12 rounded-xl ${meta.bg} flex items-center justify-center text-white font-black text-sm flex-shrink-0`}>
                       {session.sellerInitials}
                     </div>
