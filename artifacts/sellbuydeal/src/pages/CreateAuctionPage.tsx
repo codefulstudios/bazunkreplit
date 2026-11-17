@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/AdSlot";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -251,7 +252,7 @@ export function CreateAuctionPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate className="auction-create-form grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_60px] gap-4 items-start">
+        <form onSubmit={submit} noValidate className="auction-create-form grid grid-cols-1 gap-4 items-start">
 
           <div className="space-y-3 min-w-0">
           {/* Header card */}
@@ -645,14 +646,11 @@ export function CreateAuctionPage() {
             </div>
           </section>
           </div>
-          <aside className="min-w-0 md:sticky md:top-5" aria-label="Advertisement space">
-            <div className="w-[60px] mx-auto">
-              <div className="flex flex-col items-center gap-1 mb-2">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">Advertisement</span>
-                <span className="text-[11px] text-slate-500">60 × 728</span>
-              </div>
-              <div data-ad-placement="create-auction-leaderboard" data-ad-width="60" data-ad-height="728" className="w-[60px] h-[728px] rounded-md border border-dashed border-slate-400 bg-white flex items-center justify-center text-[10px] text-slate-700 text-center [writing-mode:vertical-rl]" role="complementary" aria-label="60 by 728 vertical advertisement placement">
-                Advertisement
+          <aside className="w-full min-w-0" aria-label="Auction listing advertisement">
+            <div className="w-full max-w-[728px] mx-auto">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">Advertisement · 728 × 90</p>
+              <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="90" className="w-full min-h-[90px] rounded-md border border-dashed border-slate-300 bg-white overflow-hidden">
+                <AdSlot slotKey="create_auction" />
               </div>
             </div>
           </aside>
