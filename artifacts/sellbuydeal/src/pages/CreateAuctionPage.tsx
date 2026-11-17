@@ -268,7 +268,7 @@ export function CreateAuctionPage() {
           <div className="auction-create-header rounded-2xl overflow-hidden border border-violet-200 bg-gradient-to-r from-[#eee9ff] via-[#f7f5ff] to-[#fff0df] px-5 sm:px-7 py-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div className="flex items-center gap-4">
-                <div className="auction-hero-gavel w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-9 h-9 !text-white" /></div>
+                <div className="auction-hero-gavel w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-12 h-12 !text-white" /></div>
                 <div><h1 className="auction-create-header-title text-3xl sm:text-4xl font-black tracking-tight text-[#101c38]">List an Auction</h1><p className="auction-create-header-subtitle text-[#334155] text-sm mt-1">Create your auction in minutes and reach more buyers on Bazunk.</p></div>
               </div>
               <div className="flex flex-wrap gap-4 sm:gap-6 text-[#101c38] text-xs font-bold">
@@ -398,7 +398,7 @@ export function CreateAuctionPage() {
               onChange={handlePhotoChange}
             />
 
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2">
+            <div className={`grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2 ${photos.length === 0 ? "hidden" : ""}`}>
               {photos.map((src, i) => (
                 <motion.div
                   key={i}
@@ -438,10 +438,10 @@ export function CreateAuctionPage() {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 flex flex-col items-center gap-2 text-slate-600 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                className="auction-photo-drop w-full border-2 border-dashed border-orange-300 bg-gradient-to-r from-orange-50 via-white to-violet-50 rounded-xl py-8 flex flex-col items-center gap-2 text-slate-800 hover:border-[#F26B21] transition-colors"
               >
-                <Upload className="w-6 h-6" />
-                <span className="text-sm font-medium">Click to upload photos</span>
+                <Upload className="w-11 h-11 text-orange-600" />
+                <span className="text-sm font-medium">Drag photos here or click to browse</span>
                 <span className="text-xs">JPG, PNG, WEBP — max 10 photos</span>
               </button>
             )}
