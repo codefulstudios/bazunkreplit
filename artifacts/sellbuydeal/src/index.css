@@ -3730,3 +3730,13 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-mockup-top-links > button:not(.bz-mockup-top-sell){display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0;border:0;background:transparent;font-size:.83rem;font-weight:750;line-height:inherit;color:#f3f7ff;white-space:nowrap;cursor:pointer}
 .bz-mockup-top-links > button:not(.bz-mockup-top-sell):hover{color:#ffb56a}
 @media(max-width:1000px){.bz-mockup-top-links > button:not(.bz-mockup-top-sell){font-size:.75rem}}
+
+/* Auction creation: keep form readable regardless of global dark-mode overrides. */
+.auction-create-form section:not(details section),.auction-create-form details{background:#fff;color:#0f172a;border-color:#cbd5e1}
+.auction-create-form section label,.auction-create-form section h2,.auction-create-form section p,.auction-create-form section summary{color:#0f172a}
+.auction-create-form input:not([type="file"]):not([type="checkbox"]),.auction-create-form textarea,.auction-create-form select{background:#fff!important;color:#0f172a!important;border-color:#94a3b8!important;color-scheme:light}
+.auction-create-form input::placeholder,.auction-create-form textarea::placeholder{color:#475569!important;opacity:1}
+.auction-create-form select:disabled{background:#e2e8f0!important;color:#475569!important}
+.auction-create-form button:not([type="submit"]):not([class*="bg-gradient"]){color:#0f172a}
+.auction-create-form button:not([type="submit"]):not([class*="bg-gradient"]) svg{color:inherit}
+.auction-create-form button[type="submit"]{color:#fff!important}
