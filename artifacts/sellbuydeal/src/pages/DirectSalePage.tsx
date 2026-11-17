@@ -455,18 +455,28 @@ export function DirectSalePage() {
           .direct-sale-form > section textarea:focus { border-color: #5aa3ff; outline-color: #5aa3ff; }
           .direct-sale-form > section [class*="text-gray-"] { color: #d5e4f6; }
         `}</style>
-        <form onSubmit={handlePublish} noValidate className="direct-sale-form grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0 pb-32 lg:pb-0">
+        <form onSubmit={handlePublish} noValidate className={`direct-sale-form ${quickMode?"bazunk-quick-sell":""} grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0 pb-32 lg:pb-0`}>
 
           {/* Header card */}
           <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-5 py-5 sm:px-7 sm:py-7 mb-0 shadow-lg">
-            <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sale" : "Direct Sale"}</h1>
+            <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sell — Create Listing" : "Direct Sale"}</h1>
             <a href="/sell/snap" className="mt-3 inline-flex items-center rounded-xl border border-white/50 bg-white/20 px-4 py-2 text-sm font-bold text-white hover:bg-white/30">📸 Snap & Sell — photo & barcode assistant</a>
-            <p className="text-white text-sm mt-1">{quickMode ? "List in under a minute. Add more details from your dashboard later." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
+            <p className="text-white text-sm mt-1">{quickMode ? "List your item in minutes. Fast, simple and free." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
           </div>
 
 
 
           <aside className="hidden lg:block min-w-0 lg:col-start-2 lg:row-start-4 lg:row-span-8 lg:sticky lg:top-24 space-y-4">
+            {quickMode&&<section className="bz-quick-ai rounded-2xl border border-purple-300/60 p-4 text-white shadow-xl">
+              <h2 className="flex items-center gap-2 text-lg font-black"><Zap size={25}/> Listing Assistant ✨</h2>
+              <p className="mt-1 text-sm text-white">Create a stronger listing with a clear title, photos and useful details.</p>
+              <a href="/sell/snap" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#36258c]"><Camera size={17}/> Open Snap & Sell assistant</a>
+            </section>}
+            {quickMode&&<section className="rounded-2xl border border-sky-400/30 bg-[#102541] p-4 text-white">
+              <h2 className="flex items-center gap-2 text-lg font-black"><CheckCircle2 size={21} className="text-amber-400"/> Listing Checklist</h2>
+              <div className="mt-3 space-y-2">{[[Boolean(title.trim()),"Add a clear title"],[Boolean(category),"Choose a category"],[Boolean(description.trim()),"Write a good description"],[photos.length>0,"Add at least 1 photo"],[Number(price)>0,"Set a price"]].map(([done,label],i)=><div key={i} className="flex items-center gap-2 text-sm"><CheckCircle2 size={18} className={done?"text-emerald-400":"text-slate-500"}/><span className="text-slate-100">{label}</span></div>)}</div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#344b71]"><div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-300 transition-all" style={{width:`${[Boolean(title.trim()),Boolean(category),Boolean(description.trim()),photos.length>0,Number(price)>0].filter(Boolean).length*20}%`}}/></div>
+            </section>}
             <section className="rounded-2xl border border-sky-400/25 bg-[#102541] p-4 text-white shadow-xl">
               <h2 className="font-black text-lg flex items-center gap-2"><Eye className="w-5 h-5 text-sky-300"/> Listing Preview</h2>
               <p className="text-xs text-sky-200 mt-1 mb-4">Updates as you enter your details</p>
@@ -504,7 +514,7 @@ export function DirectSalePage() {
           </section>}
                     {/* Basic Information */}
           <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
-            <h2 className="text-base font-bold text-white mb-5">Basic Information</h2>
+            <h2 className="text-base font-bold text-white mb-5">{quickMode?"① Item Details":"Basic Information"}</h2>
 
             {/* Title */}
             <div className="mb-4">
@@ -870,7 +880,7 @@ export function DirectSalePage() {
 
           {/* Item Condition */}
           <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
-            <h2 className="text-base font-bold text-white mb-4">Item Condition</h2>
+            <h2 className="text-base font-bold text-white mb-4">{quickMode?"③ Item Condition":"Item Condition"}</h2>
             <div className="space-y-2">
               {CONDITIONS.map((c) => {
                 const Icon = c.icon;
@@ -914,7 +924,7 @@ export function DirectSalePage() {
             <div className="flex items-center gap-2 mb-4">
               <Camera className="w-4 h-4 text-[#4A5CE8]" />
               <h2 className="text-base font-bold text-white">
-                Photos ({photos.length}/10)
+                {quickMode?"② Photos":"Photos"} ({photos.length}/10)
               </h2>
             </div>
 
