@@ -247,7 +247,7 @@ export function CreateAuctionPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-4">
+      <div className="w-full max-w-[1500px] mx-auto px-4 sm:px-6 py-4">
         <Link
           href="/auctions"
           className="flex items-center gap-1.5 text-sm text-slate-700 hover:text-[#4A5CE8] mb-3 w-fit transition-colors"
@@ -255,7 +255,7 @@ export function CreateAuctionPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_260px] gap-4 items-start">
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 min-[1250px]:grid-cols-[minmax(0,1fr)_minmax(0,728px)] gap-5 items-start">
 
           <div className="space-y-3 min-w-0">
           {/* Header card */}
@@ -659,10 +659,16 @@ export function CreateAuctionPage() {
             </div>
           </section>
           </div>
-          <aside className="lg:sticky lg:top-5 space-y-3">
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"><h2 className="bg-[#0b2343] text-white px-4 py-3 font-bold">Listing Preview</h2><div className="p-4 flex gap-3">{photos[0] ? <img src={photos[0]} alt="Auction preview" className="w-20 h-20 rounded-lg object-cover" /> : <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center"><Camera className="w-6 h-6 text-slate-400"/></div>}<div className="min-w-0"><p className="text-sm font-bold text-slate-900 line-clamp-3">{title || "Your auction title"}</p><p className="text-xs text-slate-500 mt-1">{category || "Category"}{subcategory ? ` › ${subcategory}` : ""}</p><p className="text-sm font-bold text-orange-600 mt-2">Starting at {currency.symbol}{startingBid || "0.00"}</p></div></div></div>
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"><h2 className="bg-[#0b2343] text-white px-4 py-3 font-bold">Auction checklist</h2><div className="p-4 space-y-3 text-sm">{[[!!title.trim(),"Clear item title"],[!!category && (!availableSubcategories.length || !!subcategory),"Category and subcategory"],[photos.length > 0,"At least one photo"],[Number(startingBid) > 0,"Starting bid"]].map(([done,label]) => <div key={String(label)} className="flex items-center gap-2"><CheckCircle2 className={`w-4 h-4 ${done ? "text-emerald-500" : "text-slate-300"}`} /><span className="text-slate-700">{label}</span></div>)}</div></div>
-            <button type="submit" disabled={submitting} className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 text-white font-bold shadow-md disabled:opacity-60">{submitting ? "Creating auction…" : "List Auction"}</button>
+          <aside className="min-w-0 min-[1250px]:sticky min-[1250px]:top-5" aria-label="Advertisement space">
+            <div className="w-full max-w-[728px] mx-auto">
+              <div className="flex items-center justify-between mb-1 px-1">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">Advertisement</span>
+                <span className="text-[11px] text-slate-500">728 × 60</span>
+              </div>
+              <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="60" className="w-full aspect-[728/60] max-h-[60px] rounded-md border border-dashed border-slate-300 bg-slate-100 flex items-center justify-center text-xs text-slate-500" role="complementary" aria-label="728 by 60 advertisement placement">
+                Banner advertisement space
+              </div>
+            </div>
           </aside>
         </form>
       </div>
