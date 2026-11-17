@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { openChatwootSupport } from "@/components/ChatwootWidget";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import {
   ChevronDown, HelpCircle, ShoppingBag, Package, CreditCard,
   Shield, MessageSquare, RotateCcw, ArrowRight, Gavel, Zap,
-  Radio, Layers, Tag,
+  Radio, Layers, Tag, Search, Headphones, Mail, BookOpen, List, ChevronsDownUp, ChevronsUpDown, Truck, Store, LockKeyhole, Sparkles, LifeBuoy, Coins, Gift, Megaphone, MapPin,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { CompactPageHero } from "@/components/CompactPageHero";
@@ -150,42 +150,69 @@ const CATEGORIES = [
   },
 ];
 
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border-b border-gray-100 last:border-0">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-4 text-left gap-4 hover:text-[#4A5CE8] transition-colors"
-      >
-        <span className="text-sm font-semibold text-gray-800">{q}</span>
-        <ChevronDown className={`w-4 h-4 flex-shrink-0 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <p className="pb-4 text-sm text-gray-500 leading-relaxed">{a}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
+const EXTRA_FAQS: Record<string, {q:string;a:string}[]> = {
+  Buying: [
+    {q:"How do I buy an item on Bazunk?",a:"Browse or search for an item, check the description and seller details, choose Buy Now (or make an offer where available), then review the total and payment options at checkout. Track any completed order from your dashboard."},
+    {q:"What should I check before buying?",a:"Review all photos, condition notes, delivery or collection terms, seller information and the final checkout total. Ask the seller a question through Bazunk messages if anything is unclear."},
+    {q:"What should I do if my parcel does not arrive?",a:"Check your order status and tracking details first. Contact the seller through your order and, if unresolved, use the dispute or support options available in your dashboard. Keep your order reference and correspondence."}
+  ],
+  Selling: [
+    {q:"How do I choose between direct sale, auction and classifieds?",a:"Use Direct Sale for a fixed price, Auctions for competitive timed bids, and Classifieds for contact-based local advertisements. Classified transactions arranged outside Bazunk checkout do not receive checkout-based Buyer Protection."},
+    {q:"How do I create a storefront?",a:"Open Dashboard → Store → My Store. Add your store name, description and branding, then save your settings. Manage eligible listings through the seller tools in your dashboard."},
+    {q:"How do I add good listing photos?",a:"Use bright, clear images of the actual item, show all sides and any defects, and avoid misleading stock photos. Check the upload limits shown on the listing form."}
+  ],
+  Auctions: [
+    {q:"What happens when an auction ends?",a:"The auction closes when its timer expires. Check the auction details and your notifications for the outcome, any reserve requirements and the next payment or fulfilment steps."},
+    {q:"Can I change an auction after bids are placed?",a:"Editing may be restricted once bidding starts. Review the available controls on your auction and contact support before making changes that could affect bidders."}
+  ],
+  "Returns & Refunds": [
+    {q:"How do I report an item that arrived damaged?",a:"Photograph the packaging and damage, retain the item and contact the seller through your order. If needed, open a return or dispute through your dashboard and provide the evidence requested."},
+    {q:"Does a change-of-mind return have the same rules as a faulty item?",a:"Not necessarily. Your rights and return options depend on the seller type, the item, applicable law and the reason for return. Review the listing terms and the returns policy before sending anything back."}
+  ],
+  "Account & Security": [
+    {q:"How do I spot a scam or suspicious message?",a:"Be wary of requests to pay outside Bazunk, share one-time security codes or follow unusual links. Keep messages on the platform, report suspicious activity and contact support if you think your account is at risk."},
+    {q:"How do I contact Bazunk about my personal data?",a:"Use the contact or support options and describe your privacy request. You can also review the Privacy Policy for information about your data rights and how requests are handled."}
+  ],
+  "Messages & Offers": [
+    {q:"Where can I see my conversations?",a:"Open your dashboard and go to Messages. Select a conversation to review its history and reply."},
+    {q:"What if a seller asks me to pay outside Bazunk?",a:"Do not send payment outside the supported checkout flow for a marketplace order. Report the request and contact support if you need help."}
+  ],
+  "Credits & Payments": [
+    {q:"Where can I see my credits and transactions?",a:"Open Dashboard → Credits to view your current balance and the available credit or promotional features. Check the applicable terms before buying or spending credits."},
+    {q:"Why is my payment not going through?",a:"Check your payment details and any bank authentication request, then retry if appropriate. If the problem persists, contact support with the order reference, but never send full card details."}
+  ],
+  "Bundles & Deals": [
+    {q:"How do I post a classified ad?",a:"Open Sell → Classified Ads and select the appropriate category. Add an accurate description, location and photos, then submit your advert. Arrange contact and collection safely."},
+    {q:"How do I stay safe when collecting a classified item?",a:"Agree on the details in advance, meet in a safe public place where practical, inspect the item before paying and avoid sending deposits to unknown people."}
+  ],
+  "Flash Sales": [{q:"How can I find active Flash Sales?",a:"Open Flash Sales from the main navigation. Check the displayed price, end time and item terms before purchasing."}],
+  "Live Shopping": [{q:"How do I find a live selling event?",a:"Open Live from the navigation to see available streams or events. Features and availability can vary by seller and marketplace settings."}]
+};
+const ICONS: Record<string, typeof ShoppingBag> = {
+  Buying: ShoppingBag, Selling: Tag, Auctions: Gavel, "Flash Sales": Zap,
+  "Live Shopping": Radio, "Bundles & Deals": Layers, "Returns & Refunds": RotateCcw,
+  "Credits & Payments": CreditCard, "Account & Security": Shield, "Messages & Offers": MessageSquare
+};
+const POPULAR = [
+  {label:"Track my order",category:"Buying",query:"Can I track my order?",icon:Truck},
+  {label:"Request a return or refund",category:"Returns & Refunds",query:"How do I open a return request?",icon:RotateCcw},
+  {label:"Payment methods",category:"Buying",query:"What payment methods are accepted?",icon:CreditCard},
+  {label:"Boost my listings",category:"Credits & Payments",query:"What can I spend Credits on?",icon:Sparkles},
+  {label:"Open a store",category:"Selling",query:"How do I create a storefront?",icon:Store},
+  {label:"Earn and use credits",category:"Credits & Payments",query:"What are Bazunk Credits?",icon:Coins}
+];
 export function SupportPage() {
-  const featureSettings = useRawSettings();
-  const chatwootEnabled = useFeature("chatwoot_support");
-  const visibleCategories = CATEGORIES.filter((c:any) => !c.feature || isFeatureEnabled(featureSettings, c.feature));
-  const [activeCategory, setActiveCategory] = useState(0);
+  const settings = useRawSettings();
+  const chatEnabled = useFeature("chatwoot_support");
+  const categories = CATEGORIES.filter((c:any) => !c.feature || isFeatureEnabled(settings,c.feature));
+  const [category,setCategory] = useState("Buying");
+  const [search,setSearch] = useState("");
+  const [expanded,setExpanded] = useState<string[]>([]);
+  const [searched,setSearched] = useState(false);
   const faqVisible = (faq:{q:string;a:string}) => {
     const t=(faq.q+" "+faq.a).toLowerCase();
-    const refs:[string,string[]][] = [
+    const refs:[string,string[]][]=[
       ["live",["live shopping","live stream","going live","go live"]],
       ["auctions",["auction","bid"]],
       ["flash_sales",["flash sale"]],
@@ -194,87 +221,76 @@ export function SupportPage() {
       ["buyer_protection",["buyer protection"]],
       ["credits",["bazunk credits","credits"]]
     ];
-    return refs.every(([feature,words]) => isFeatureEnabled(featureSettings,feature) || !words.some(w=>t.includes(w)));
+    return refs.every(([feature,words])=>isFeatureEnabled(settings,feature)||!words.some(w=>t.includes(w)));
   };
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-
-      <CompactPageHero kind="support" eyebrow="Support Centre" title="Support Centre" description="Find answers to common questions about buying, selling and your account." art="💬">
-        <a className="bz-hero-chip" href="#support-topics">Explore help topics</a>
-        <button type="button" className="bz-hero-chip" onClick={()=>openChatwootSupport()}>Contact support</button>
-      </CompactPageHero>
-
-      <AdSlot slotKey="support_mid" />
-
-      <div id="support-topics" className="container mx-auto px-4 py-8 max-w-5xl flex-1">
-
-        {/* Category tabs */}
-        <div className="flex flex-wrap gap-2 mb-8 justify-center">
-          {visibleCategories.map((cat, i) => {
-            const Icon = cat.icon;
-            return (
-              <button
-                key={cat.label}
-                onClick={() => setActiveCategory(i)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  activeCategory === i
-                    ? "bg-[#4A5CE8] text-white shadow-sm"
-                    : "bg-white border border-gray-200 text-gray-600 hover:border-[#4A5CE8] hover:text-[#4A5CE8]"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {cat.label}
-              </button>
-            );
-          })}
+  const all = useMemo(()=>categories.flatMap(c=>[...c.faqs,...(EXTRA_FAQS[c.label]||[])].filter(faqVisible).map(f=>({...f,category:c.label}))),[categories.map(c=>c.label).join("|"),settings]);
+  const active = categories.some(c=>c.label===category)?category:(categories[0]?.label||"Buying");
+  const results = all.filter(f=>search.trim()?((f.q+" "+f.a+" "+f.category).toLowerCase().includes(search.trim().toLowerCase())):f.category===active);
+  const showAll = results.length>0&&results.every(f=>expanded.includes(f.category+":"+f.q));
+  const toggle=(id:string)=>setExpanded(prev=>prev.includes(id)?prev.filter(v=>v!==id):[...prev,id]);
+  const choose=(cat:string,q?:string)=>{setCategory(cat);setSearch("");setSearched(false);setExpanded(q?[cat+":"+q]:[]);document.getElementById("support-faq")?.scrollIntoView({behavior:"smooth",block:"start"});};
+  return <div className="bazunk-support-page min-h-screen bg-[#f1f5ff] text-[#102447] flex flex-col">
+    <Navbar/>
+    <main className="w-full max-w-[1380px] mx-auto px-4 sm:px-6 py-5 flex-1">
+      <div className="text-xs font-semibold text-[#45607e] mb-3"><Link href="/">Home</Link><span className="mx-2">›</span>Support Centre</div>
+      <section className="relative overflow-hidden rounded-[24px] border border-[#d6dff7] bg-gradient-to-r from-[#e0ebff] via-[#f1edff] to-[#ffe3d7] p-6 sm:p-9 shadow-sm">
+        <div className="relative z-10 max-w-[800px]">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-[#0d2448]">Support <span className="text-[#f36b13]">Centre</span></h1>
+          <p className="mt-2 mb-5 text-sm sm:text-base text-[#344969]">Find answers, get help and manage support requests for buying, selling and your account.</p>
+          <form onSubmit={e=>{e.preventDefault();setSearched(true);document.getElementById("support-faq")?.scrollIntoView({behavior:"smooth"});}} className="flex items-center rounded-2xl bg-white border border-[#b8c9e5] p-1.5 shadow-md gap-2">
+            <Search size={21} className="ml-3 shrink-0 text-[#24486e]"/>
+            <input aria-label="Search help articles" value={search} onChange={e=>{setSearch(e.target.value);setSearched(false);setExpanded([])}} placeholder='Search help (e.g. "refunds", "list an item", "payments")' className="min-w-0 flex-1 py-2 px-1 text-sm bg-transparent text-[#102447] placeholder:text-[#61718b] outline-none"/>
+            <button type="submit" className="rounded-xl bg-gradient-to-r from-[#ff9900] to-[#ff6100] px-5 sm:px-7 py-2.5 text-sm font-bold text-white hover:brightness-105">Search</button>
+          </form>
         </div>
-
-        {/* FAQ panel */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeCategory}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-2"
-          >
-            {visibleCategories[activeCategory].faqs.filter(faqVisible).map((faq) => (
-              <FaqItem key={faq.q} q={faq.q} a={faq.a} />
-            ))}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Still need help */}
-        <div className="mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#4A5CE8]/10 flex items-center justify-center mx-auto mb-4">
-            <Tag className="w-6 h-6 text-[#4A5CE8]" />
-          </div>
-          <h3 className="text-lg font-bold text-gray-900 mb-2">Still need help?</h3>
-          <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-            Chat with our support team or open a ticket from your Dashboard. Replies depend on agent availability.
-          </p>
-          <div className="flex flex-wrap gap-3 justify-center">
-            {chatwootEnabled && <button type="button" onClick={openChatwootSupport} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F26B21] text-white font-semibold text-sm hover:opacity-90 transition-opacity"><MessageSquare className="w-4 h-4" /> Live Support Chat</button>}
-            <Link
-              href="/dashboard?section=support-tickets"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
-            >
-              <MessageSquare className="w-4 h-4" /> Open a Support Ticket
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:border-gray-300 transition-colors"
-            >
-              My Dashboard <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
+        <div aria-hidden="true" className="hidden lg:flex absolute right-12 top-5 items-center justify-center w-44 h-36 text-7xl drop-shadow-lg">🎧💬</div>
+      </section>
+      <div id="support-topics" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-2 mt-4 mb-5">
+        {categories.map(cat=>{const Icon=ICONS[cat.label]||HelpCircle;const selected=!search&&active===cat.label;return <button key={cat.label} type="button" onClick={()=>choose(cat.label)} className={`min-h-[100px] rounded-2xl border p-3 flex flex-col justify-center items-center gap-1.5 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${selected?"border-[#ff7700] bg-[#fff3e9] ring-1 ring-[#ff7700]":"border-[#c8d6ee] bg-white hover:border-[#ff9900]"}`}>
+          <Icon size={28} strokeWidth={2.4} className={selected?"text-[#f36b13]":"text-[#365cce]"}/><span className="text-xs font-extrabold text-[#11264b]">{cat.label}</span><span className="text-[11px] text-[#5a6d8b]">{[...cat.faqs,...(EXTRA_FAQS[cat.label]||[])].filter(faqVisible).length} articles</span>
+        </button>})}
       </div>
-
-      <Footer />
-    </div>
-  );
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_315px] gap-4 items-start">
+        <section id="support-faq" className="bg-white border border-[#cbd9ee] shadow-sm rounded-2xl overflow-hidden scroll-mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[#dbe5f5] bg-[#f7faff]">
+            <h2 className="flex items-center gap-2 text-lg sm:text-xl font-black text-[#102447]"><span className="w-9 h-9 bg-orange-500 text-white rounded-full flex items-center justify-center"><HelpCircle size={23}/></span>{search?"Search Results":"Frequently Asked Questions"}</h2>
+            <div className="flex gap-3 text-xs font-bold">
+              <button type="button" onClick={()=>setExpanded(results.map(f=>f.category+":"+f.q))} className="inline-flex items-center gap-1 text-[#27476d] hover:text-[#ea580c]"><ChevronsUpDown size={16}/> Expand All</button>
+              <button type="button" onClick={()=>setExpanded([])} className="inline-flex items-center gap-1 text-[#27476d] hover:text-[#ea580c]"><ChevronsDownUp size={16}/> Collapse All</button>
+            </div>
+          </div>
+          {search&&<p className="px-4 pt-3 text-xs text-[#506681]">{results.length} matching {results.length===1?"answer":"answers"} for “{search}” <button onClick={()=>{setSearch("");setSearched(false)}} className="ml-2 font-bold text-[#e45b0b] underline">Clear search</button></p>}
+          {results.length===0?<div className="p-10 text-center"><Search size={32} className="mx-auto text-[#8295b0]"/><p className="font-bold mt-3">No matching answers found</p><p className="text-sm mt-2 text-[#536987]">Try another keyword or contact our support team.</p></div>:<div className="p-3 sm:p-4 space-y-2">
+            {results.map((faq,i)=>{const id=faq.category+":"+faq.q;const open=expanded.includes(id);const Icon=ICONS[faq.category]||HelpCircle;return <div key={id} className={`border rounded-xl overflow-hidden ${open?"border-[#ff8c31] bg-[#fffaf5]":"border-[#cbd9ee] bg-[#f9fbff]"}`}>
+              <button type="button" aria-expanded={open} onClick={()=>toggle(id)} className="w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-[#f0f5ff]">
+                <Icon size={19} className="text-[#f36b13] shrink-0"/><span className="font-bold text-sm text-[#12264b] flex-1">{faq.q}</span><ChevronDown size={17} className={`text-[#284a71] shrink-0 transition-transform ${open?"rotate-180":""}`}/>
+              </button>
+              {open&&<div className="px-4 pb-4 pl-12 text-sm text-[#334763] leading-relaxed">{faq.a}{faq.q==="How do I buy an item on Bazunk?"&&<div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">{[{icon:Search,title:"Find an item",desc:"Search or browse"},{icon:ShoppingBag,title:"Choose an option",desc:"Buy, offer or bid"},{icon:CreditCard,title:"Pay securely",desc:"Review checkout"},{icon:Truck,title:"Track your order",desc:"Follow order updates"}].map((step,j)=>{const S=step.icon;return <div key={j} className="rounded-xl border border-[#f8c7a4] bg-white p-3 text-center"><S size={24} className="mx-auto text-[#ff7300]"/><div className="font-extrabold text-xs mt-2">{j+1}. {step.title}</div><div className="text-[11px] mt-1">{step.desc}</div></div>})}</div>}</div>}
+            </div>})}
+          </div>}
+        </section>
+        <aside className="space-y-4">
+          <div className="rounded-2xl bg-white border border-[#cbd9ee] shadow-sm p-4">
+            <div className="flex gap-3 items-start"><Headphones size={36} className="text-[#f97316] shrink-0"/><div><h3 className="font-black text-lg text-[#102447]">Need more help?</h3><p className="text-xs text-[#465c7a] mt-1">Get help with orders, listings, payments and more.</p></div></div>
+            <Link href="/dashboard?section=support-tickets" className="mt-4 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff9900] to-[#ff6200] text-white font-bold py-3 text-sm"><MessageSquare size={17}/> Open a Support Ticket <ArrowRight size={17}/></Link>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {chatEnabled?<button type="button" onClick={openChatwootSupport} className="rounded-xl border border-[#c5d5eb] bg-[#f5f8ff] text-[#183458] py-2.5 text-xs font-bold flex items-center justify-center gap-1"><MessageSquare size={16}/> Live Chat</button>:<Link href="/dashboard?section=support-tickets" className="rounded-xl border border-[#c5d5eb] bg-[#f5f8ff] text-[#183458] py-2.5 text-xs font-bold flex items-center justify-center gap-1"><MessageSquare size={16}/> Tickets</Link>}
+              <Link href="/contact" className="rounded-xl border border-[#c5d5eb] bg-[#f5f8ff] text-[#183458] py-2.5 text-xs font-bold flex items-center justify-center gap-1"><Mail size={16}/> Contact</Link>
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white border border-[#cbd9ee] shadow-sm p-4">
+            <h3 className="font-black text-[#102447] flex items-center gap-2 mb-3"><Zap size={20} className="text-[#ff7300]"/> Popular Help Topics</h3>
+            {POPULAR.filter(p=>categories.some(c=>c.label===p.category)&&all.some(f=>f.q===p.query&&f.category===p.category)).map(p=>{const Icon=p.icon;return <button key={p.label} type="button" onClick={()=>choose(p.category,p.query)} className="w-full flex gap-2 items-center border-t border-[#e1e8f4] py-2.5 text-left text-xs font-semibold text-[#223b5e] hover:text-[#e85c00]"><Icon size={17}/><span className="flex-1">{p.label}</span><ArrowRight size={15}/></button>})}
+          </div>
+          <div className="rounded-2xl p-5 text-white bg-gradient-to-br from-[#2f61e6] via-[#7145dc] to-[#fa7b67] shadow-sm">
+            <h3 className="text-xl font-black flex items-center gap-2"><Sparkles size={23}/> New to Bazunk?</h3>
+            <p className="text-sm mt-2 text-white">Start with the essentials for buyers and sellers.</p>
+            <button type="button" onClick={()=>choose("Buying","How do I buy an item on Bazunk?")} className="mt-4 w-full rounded-full bg-white text-[#233c77] font-extrabold py-2.5 text-sm">View Getting Started Guide →</button>
+          </div>
+        </aside>
+      </div>
+      <AdSlot slotKey="support_mid"/>
+    </main>
+    <Footer/>
+  </div>;
 }
