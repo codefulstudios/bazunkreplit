@@ -332,7 +332,7 @@ export function Navbar() {
             ))}
           </div>
         </div>
-        <div className="mx-auto w-full max-w-[1600px] px-4 h-16 md:h-20 flex items-center gap-3 lg:gap-4">
+        <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4">
 
           {/* Theme + Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
