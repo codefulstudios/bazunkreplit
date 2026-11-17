@@ -1,3 +1,4 @@
+import { HeaderMegaModals } from "./HeaderMegaModals";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { useState, useRef, useEffect } from "react";
@@ -337,7 +338,7 @@ export function Navbar() {
             <Link href="/support">Help</Link>
             <Link href="/buyer-protection"><ShieldCheck size={17}/> Buyer Protection</Link>
             <Link href="/dashboard?section=watchlist"><Heart size={18} className="text-sky-400"/> Watchlist</Link>
-            <Link href="/sell" className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</Link>
+            <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(true)}} className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</button>
           </div>
         </div>
         <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
@@ -396,7 +397,7 @@ export function Navbar() {
             {/* More dropdown */}
             <div ref={moreRef} className="relative">
               <button
-                onClick={() => setMoreOpen((v) => !v)}
+                onClick={() => { setSellOpen(false); setMoreOpen((v) => !v); }}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap ${
                   moreOpen ? "text-[#4A5CE8] bg-[#4A5CE8]/10" : "text-gray-600 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/5"
                 }`}
@@ -405,41 +406,7 @@ export function Navbar() {
                 <Grid3X3 className="bz-nav-link-icon text-sky-300"/> More
                 <ChevronDown className={`w-3 h-3 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
               </button>
-              <AnimatePresence>
-                {moreOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-[calc(100%+8px)] w-60 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 py-1.5"
-                  >
-                    {MORE_NAV.filter(x => x.external || visibleHref(x.href)).map(({ href, label, icon: Icon, color, bg, external }) => {
-                      const active = !external && location === href;
-                      const itemClass = `flex items-center gap-3 px-3 py-2 text-sm transition-colors ${active ? "text-[#4A5CE8] font-semibold bg-[#4A5CE8]/5" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"}`;
-                      const content = <><span className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}><Icon className={`w-4 h-4 ${color}`} /></span>{label}</>;
-                      if (external) return <a key={href} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setMoreOpen(false)} className={itemClass}>{content}</a>;
-                      return (
-                        <Link
-                          key={href}
-                          href={href}
-                          onClick={() => setMoreOpen(false)}
-                          className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-                            active
-                              ? "text-[#4A5CE8] font-semibold bg-[#4A5CE8]/5"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                          }`}
-                        >
-                          <span className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className={`w-4 h-4 ${color}`} />
-                          </span>
-                          {label}
-                        </Link>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+
             </div>
 
           </div>
@@ -567,7 +534,7 @@ export function Navbar() {
                 {/* Sell dropdown */}
                 <div ref={sellRef} className="relative hidden md:block flex-shrink-0">
                   <button
-                    onClick={() => setSellOpen(!sellOpen)}
+                    onClick={() => { setMoreOpen(false); setSellOpen(!sellOpen); }}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors shadow-sm"
                     data-testid="button-sell-dropdown"
                   >
@@ -575,65 +542,7 @@ export function Navbar() {
                     Sell
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sellOpen ? "rotate-180" : ""}`} />
                   </button>
-                  <AnimatePresence>
-                    {sellOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                      >
-                        <div className="px-4 pt-3 pb-2">
-                          <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">How do you want to sell?</p>
-                        </div>
-                        {SELL_OPTIONS.filter(x => visibleHref(x.href)).map((opt) => {
-                          const Icon = opt.icon;
-                          return (
-                            <Link
-                              key={opt.id}
-                              href={opt.href}
-                              onClick={() => setSellOpen(false)}
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                              data-testid={`sell-option-${opt.id}`}
-                            >
-                              <div className={`w-9 h-9 rounded-xl ${opt.bg} flex items-center justify-center flex-shrink-0`}>
-                                <Icon className={`w-4 h-4 ${opt.color}`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold text-gray-900 group-hover:text-[#F26B21] transition-colors">{opt.label}</span>
-                                  {opt.badge && (
-                                    <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
-                                      {opt.badge}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-gray-600 mt-0.5">{opt.desc}</p>
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#F26B21] transition-colors flex-shrink-0" />
-                            </Link>
-                          );
-                        })}
-                        <div className="border-t border-gray-100 mx-4" />
-                        <Link
-                          href="/sell"
-                          onClick={() => setSellOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-xs text-[#F26B21] font-semibold hover:underline"
-                        >
-                          <Info className="w-3.5 h-3.5" /> View seller fees & all options →
-                        </Link>
-                        <div className="border-t border-gray-100 mx-4" />
-                        <Link
-                          href="/dashboard"
-                          onClick={() => setSellOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 pb-3 text-xs text-[#4A5CE8] font-semibold hover:underline"
-                        >
-                          <LayoutDashboard className="w-3.5 h-3.5" /> Manage your listings →
-                        </Link>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+
                 </div>
 
                 {/* Messages */}
@@ -735,6 +644,8 @@ export function Navbar() {
         {/* Brand colour accent */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
       </nav>
+
+      <HeaderMegaModals kind={sellOpen ? "sell" : moreOpen ? "more" : null} onClose={() => {setSellOpen(false);setMoreOpen(false)}} />
 
       {/* Mobile menu drawer */}
       <AnimatePresence>
