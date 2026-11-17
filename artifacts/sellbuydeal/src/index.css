@@ -2832,3 +2832,40 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .dark .bz-category-drawer-row:hover,.dark .bz-category-drawer-view-all:hover{background:#273c58;color:#ffa85d}
 .dark .bz-category-drawer-bottom{border-color:#344961;color:#d6e7ff}
 @media(prefers-reduced-motion:reduce){.bz-category-drawer,.bz-category-drawer-backdrop{transition:none}}
+
+
+/* Listing delivery and buyer protection: distinct colour-coded information cards. */
+.bazunk-listing-redesign .bz-listing-shipping-grid .bz-shipping-tile {
+ display:flex;align-items:flex-start;gap:16px;min-height:118px;padding:20px;
+ border-radius:16px;border:1px solid transparent!important;box-shadow:0 7px 18px rgba(15,40,70,.055);
+}
+.bazunk-listing-redesign .bz-shipping-icon {width:58px;height:58px;min-width:58px;display:grid;place-items:center;border-radius:16px;background:rgba(255,255,255,.75)}
+.bazunk-listing-redesign .bz-shipping-icon svg {width:33px;height:33px;stroke-width:2.1}
+.bazunk-listing-redesign .bz-shipping-label {font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;opacity:.8;margin:0 0 7px}
+.bazunk-listing-redesign .bz-shipping-value {font-size:1rem;line-height:1.4;font-weight:750;overflow-wrap:anywhere}
+.bazunk-listing-redesign .bz-shipping-origin {background:#e0f5ff!important;border-color:#8cdcf6!important;color:#075b83!important}
+.bazunk-listing-redesign .bz-shipping-destination {background:#eae5ff!important;border-color:#c6b8ff!important;color:#49309b!important}
+.bazunk-listing-redesign .bz-shipping-carrier {background:#f2e6ff!important;border-color:#d7b5ff!important;color:#69329b!important}
+.bazunk-listing-redesign .bz-shipping-postage {background:#dcf9e9!important;border-color:#91e9b4!important;color:#176a42!important}
+.bazunk-listing-redesign .bz-listing-safety {background:linear-gradient(125deg,#f0f5ff,#ecfdf5)!important;border:1px solid #b7d6f6!important;box-shadow:var(--listing-shadow);color:#142842}
+.bazunk-listing-redesign .bz-safety-heading-icon {width:54px;height:54px;display:grid;place-items:center;background:#d9e7ff;color:#2859c9;border-radius:16px}
+.bazunk-listing-redesign .bz-safety-heading-icon svg {width:31px;height:31px}
+.bazunk-listing-redesign .bz-safety-subtitle {color:#536681}
+.bazunk-listing-redesign .bz-safety-tile {padding:22px 16px;text-align:center;border-radius:17px;border:1px solid transparent!important;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:184px}
+.bazunk-listing-redesign .bz-safety-checkout {background:#dfeaff!important;border-color:#a9c4fc!important;color:#1e4799!important}
+.bazunk-listing-redesign .bz-safety-shipping {background:#d7f8e9!important;border-color:#95e3bb!important;color:#146542!important}
+.bazunk-listing-redesign .bz-safety-icon {display:grid;place-items:center;width:74px;height:74px;border-radius:22px;background:#ffffffb8;box-shadow:0 4px 14px #152b4712}
+.bazunk-listing-redesign .bz-safety-icon svg {width:43px;height:43px;stroke-width:1.9}
+.bazunk-listing-redesign .bz-safety-tile p {color:inherit!important;opacity:.88}
+.dark .bazunk-listing-redesign .bz-shipping-origin {background:#103a53!important;border-color:#2d7898!important;color:#bcecff!important}
+.dark .bazunk-listing-redesign .bz-shipping-destination {background:#302758!important;border-color:#6551a1!important;color:#e0d5ff!important}
+.dark .bazunk-listing-redesign .bz-shipping-carrier {background:#422450!important;border-color:#805199!important;color:#f0d7ff!important}
+.dark .bazunk-listing-redesign .bz-shipping-postage {background:#153d34!important;border-color:#34866c!important;color:#c4ffe3!important}
+.dark .bazunk-listing-redesign .bz-shipping-icon {background:#ffffff16}
+.dark .bazunk-listing-redesign .bz-listing-safety {background:linear-gradient(125deg,#192e4d,#15392f)!important;border-color:#395e79!important;color:#f4f8ff}
+.dark .bazunk-listing-redesign .bz-safety-subtitle {color:#b9cee4}
+.dark .bazunk-listing-redesign .bz-safety-heading-icon {background:#284b7d;color:#c4dbff}
+.dark .bazunk-listing-redesign .bz-safety-checkout {background:#1b3864!important;border-color:#456baf!important;color:#e1ebff!important}
+.dark .bazunk-listing-redesign .bz-safety-shipping {background:#184637!important;border-color:#37896b!important;color:#d8ffed!important}
+.dark .bazunk-listing-redesign .bz-safety-icon {background:#ffffff1b}
+@media(max-width:440px){.bazunk-listing-redesign .bz-shipping-tile{min-height:100px!important}.bazunk-listing-redesign .bz-shipping-icon{width:50px;height:50px;min-width:50px}.bazunk-listing-redesign .bz-shipping-icon svg{width:29px;height:29px}}
