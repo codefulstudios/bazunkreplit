@@ -3358,3 +3358,17 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-search-popover-scroll .bz-search-see-all:hover{background:#e96100!important}
 .bz-search-popover-scroll>div:last-child{background:#fff!important}
 @media(max-width:1100px){.bz-search-popover{max-width:calc(100vw - 24px)}}
+
+/* Browse: truly sticky, independently scrolling filters and numbered pagination. */
+@media(min-width:768px){
+ .bz-browse-content{align-items:flex-start!important;overflow:visible!important}
+ .bz-browse-sidebar{position:sticky!important;top:12px!important;align-self:flex-start!important;height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;z-index:5;padding-bottom:8px}
+ .bz-browse-filter-card{position:static!important;max-height:none!important;overflow:visible!important}
+ .bz-browse-filter-body{max-height:none!important;overflow:visible!important}
+}
+.bz-browse-pagination{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin:32px 0 8px}
+.bz-browse-pagination button{display:flex;justify-content:center;align-items:center;min-width:41px;height:41px;padding:0 13px;background:#fff;color:#0b2a4b;border:1px solid #cad9e8;border-radius:11px;font-weight:850;font-size:14px;box-shadow:0 2px 6px #0a2c4714;transition:background .15s,color .15s,border-color .15s}
+.bz-browse-pagination button:hover:not(:disabled){background:#edf7ff;border-color:#ff7900}
+.bz-browse-pagination button.active{background:#ff7900!important;color:#fff!important;border-color:#ff7900!important}
+.bz-browse-pagination button:disabled{opacity:.38;cursor:not-allowed}
+@media(max-width:480px){.bz-browse-pagination{gap:5px}.bz-browse-pagination button{min-width:36px;height:38px;padding:0 9px;font-size:12px}}
