@@ -1,7 +1,8 @@
 import { HeaderMegaModals } from "./HeaderMegaModals";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useTheme } from "next-themes";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -184,6 +185,13 @@ export function Navbar() {
   useEffect(() => { const openInbox = () => setMessageCenterOpen(true); window.addEventListener("bazunk-open-inbox", openInbox); return () => window.removeEventListener("bazunk-open-inbox", openInbox); }, []);
   const [location, setLocation] = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
+  const [searchPopupRect,setSearchPopupRect] = useState({top:0,left:0,width:500});
+  useLayoutEffect(()=>{
+    if(!searchOpen)return;
+    const reposition=()=>{const r=searchRef.current?.getBoundingClientRect();if(r)setSearchPopupRect({top:r.bottom+10,left:Math.max(12,r.left),width:Math.min(r.width,window.innerWidth-24)});};
+    reposition();window.addEventListener("resize",reposition);window.addEventListener("scroll",reposition,true);
+    return()=>{window.removeEventListener("resize",reposition);window.removeEventListener("scroll",reposition,true);};
+  },[searchOpen]);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const sellRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -204,7 +212,7 @@ export function Navbar() {
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if ((e.target as Element)?.closest?.(".bz-mega-panel")) return;
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+      if (searchRef.current && !searchRef.current.contains(e.target as Node) && !(e.target as Element)?.closest?.(".bz-search-popover")) setSearchOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
       if (sellRef.current && !sellRef.current.contains(e.target as Node)) setSellOpen(false);
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
@@ -420,8 +428,8 @@ export function Navbar() {
                   </button>
                 )}
               </form>
-              {searchOpen && query.trim() && (
-                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              {searchOpen && query.trim() && createPortal(
+                <div role="region" aria-label="Search suggestions" className="bz-search-popover" style={{top:searchPopupRect.top,left:searchPopupRect.left,width:searchPopupRect.width}}><div className="bz-search-popover-head"><span className="bz-search-popover-icon"><Search size={18}/></span><div><strong>Search Bazunk</strong><small>Find products, deals and categories</small></div><button type="button" aria-label="Close suggestions" onClick={()=>setSearchOpen(false)}><X size={17}/></button></div><div className="bz-search-popover-scroll">
                   {!hasResults ? (
                     <div className="px-4 py-6 text-center text-sm text-gray-600">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
                   ) : (
@@ -472,7 +480,7 @@ export function Navbar() {
                           {matchedCategories.map((cat) => (
                             <Link key={cat.slug} href={`/browse?category=${encodeURIComponent(cat.slug)}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-category-${cat.slug}`}>
-                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center flex-shrink-0">
+                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0983cf] to-[#063d82] flex items-center justify-center flex-shrink-0">
                                 <span className="text-white text-xs font-bold">{cat.name.charAt(0)}</span>
                               </div>
                               <div className="flex-1 min-w-0">
@@ -485,13 +493,14 @@ export function Navbar() {
                         </div>
                       )}
                       <div className="border-t border-gray-100 px-4 py-2.5">
-                        <button onClick={handleSubmit as never} className="w-full text-center text-sm text-[#4A5CE8] font-medium hover:underline py-1">
+                        <button type="button" onClick={() => {setLocation(`/browse?q=${encodeURIComponent(query.trim())}`);setSearchOpen(false);}} className="bz-search-see-all">
                           See all results for "{query}"
                         </button>
                       </div>
                     </>
                   )}
-                </div>
+                  </div>
+                </div>, document.body
               )}
             </div>
 
