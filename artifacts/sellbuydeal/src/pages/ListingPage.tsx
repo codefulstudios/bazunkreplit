@@ -386,10 +386,10 @@ export function ListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bazunk-listing-redesign min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-5 max-w-7xl">
+      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-6 max-w-[1500px] bazunk-listing-content">
 
         {/* Back link */}
         <button
@@ -454,7 +454,7 @@ export function ListingPage() {
             {([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,action])=><button key={label} type="button" onClick={()=>{action();setShareOpen(false);}} className="block min-h-11 w-full rounded-lg px-3 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}
           </div>}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(315px,1fr)] gap-4 lg:gap-5 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,0.9fr)] gap-5 lg:gap-7 items-start">
 
           {/* Left: Image gallery + details */}
           <div className="space-y-4 min-w-0">
@@ -520,7 +520,7 @@ export function ListingPage() {
                 </div></>} />
 
             {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
-            <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600">
+            <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 bazunk-listing-tabs">
               <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
                 <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled||!showSection("trust")} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
                 {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
@@ -700,11 +700,11 @@ export function ListingPage() {
           </div>
 
           {/* Right: Price + actions + seller */}
-          <div className="space-y-4 min-w-0 self-start lg:sticky lg:top-24" data-testid="listing-purchase-panel">
+          <div className="space-y-5 min-w-0 self-start bazunk-listing-aside" data-testid="listing-purchase-panel">
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
             <ListingPurchaseSection>
-              <h2 className="mb-3 text-lg font-bold leading-snug text-slate-900 dark:text-white">{product.title}</h2>
+              <h1 className="mb-3 text-2xl sm:text-3xl font-extrabold leading-tight text-slate-900 dark:text-white">{product.title}</h1>
 
               {(() => {
                 const priceDelta = product.variants
@@ -715,14 +715,14 @@ export function ListingPage() {
                   : 0;
                 const totalPrice = product.price + priceDelta;
                 return (
-                  <div className="flex flex-wrap items-baseline gap-2 mb-5">
+                  <div className="flex flex-wrap items-baseline gap-2 mb-5 bazunk-listing-price">
                     <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{formatPrice(totalPrice)}</span>
                   </div>
                 );
               })()}
 
               {/* Buyer's essentials: price, condition, stock and delivery together. */}
-              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5">
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5 bazunk-listing-essentials">
                 <div className="flex justify-between gap-3">
                   <span className="font-semibold text-slate-600">Availability</span>
                   <span className="font-bold">{isDemoListing ? "Unavailable" : (product as typeof product & ApiListingExtra).quantity != null ? (product as typeof product & ApiListingExtra).quantity! > 0 ? `${(product as typeof product & ApiListingExtra).quantity} available` : "Out of stock" : "Check with seller"}</span>
