@@ -27,11 +27,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { SellerListingPicker, type SellerListing } from "@/components/SellerListingPicker";
+import { CATEGORIES as MARKET_CATEGORIES } from "@/data/categories";
 
-const CATEGORIES = [
-  "Electronics", "Fashion", "Gaming", "Books",
-  "Collectibles", "Home", "Sports", "Art", "Music", "Toys", "Digital", "Adult", "Other",
-];
+const CATEGORIES = MARKET_CATEGORIES.map(c => c.name);
 
 const CONDITIONS = [
   { id: "new",       label: "Brand New",  desc: "Sealed / never used",          icon: Tag       },
@@ -74,6 +72,11 @@ export function CreateAuctionPage() {
   const [title, setTitle]               = useState("");
   const [description, setDescription]   = useState("");
   const [category, setCategory]         = useState("");
+  const [subcategory, setSubcategory] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const selectedCategory = MARKET_CATEGORIES.find(c => c.name === category);
+  const availableSubcategories = selectedCategory?.subcategories ?? [];
   const [condition, setCondition]       = useState("good");
   const [tags, setTags]                 = useState("");
   const [startingBid, setStartingBid]   = useState("");
@@ -102,7 +105,7 @@ export function CreateAuctionPage() {
     setDescription(listing.description ?? "");
     if (listing.image) setPhotos([listing.image]);
     const matchCat = CATEGORIES.find((c) => c.toLowerCase() === (listing.category ?? "").toLowerCase()) ?? "";
-    if (matchCat) setCategory(matchCat);
+    if (matchCat) { setCategory(matchCat); setSubcategory(""); }
     const matchCond = CONDITIONS.find((c) => c.id === (listing.condition ?? "").toLowerCase().replace(" ", "-"));
     if (matchCond) setCondition(matchCond.id);
     if (listing.price) setStartingBid(String((listing.price * 0.5).toFixed(2)));
@@ -154,6 +157,7 @@ export function CreateAuctionPage() {
     const increment = parseFloat(bidIncrement);
     if (isNaN(increment) || increment <= 0) errors.push("Bid increment must be greater than 0");
     if (!category) errors.push("Category is required");
+    if (availableSubcategories.length && !subcategory) errors.push("Subcategory is required");
     if (errors.length > 0) {
       setValidationErrors(errors);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -177,6 +181,7 @@ export function CreateAuctionPage() {
           description: description.trim() || null,
           images: photos,
           category,
+          subcategory,
           condition,
           sellerEmail: user.email,
           sellerName: user.username ?? user.name,
@@ -242,33 +247,132 @@ export function CreateAuctionPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <Link
           href="/auctions"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4A5CE8] mb-6 w-fit transition-colors"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4A5CE8] mb-3 w-fit transition-colors"
         >
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate>
+        <form onSubmit={submit} noValidate className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-5 items-start">
 
+          <div className="space-y-4 min-w-0">
           {/* Header card */}
-          <div className="rounded-t-2xl bg-gradient-to-r from-[#F26B21] to-[#e05a10] px-7 py-7 mb-0">
+          <div className="rounded-2xl bg-gradient-to-r from-[#071b35] via-[#112d50] to-[#f26b21] px-6 py-5 shadow-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Gavel className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Start an Auction</h1>
+                <h1 className="text-2xl font-bold text-white">List an Auction</h1>
                 <p className="text-orange-100 text-sm mt-0.5">Add photos, set your price — go live instantly</p>
               </div>
             </div>
           </div>
 
           {/* Import from existing listing */}
+          <section className="bg-white rounded-2xl px-5 sm:px-6 py-5 border border-slate-200 shadow-sm">
+            <button type="button" onClick={() => setImportOpen(v => !v)} className="w-full flex items-center justify-between text-sm font-bold text-slate-800"><span>Import from an existing listing <span className="font-normal text-slate-400">(optional)</span></span><ChevronDown className={`w-4 h-4 transition-transform ${importOpen ? "rotate-180" : ""}`} /></button>
+            {importOpen && <div className="mt-3"><SellerListingPicker onSelect={handleListingSelect} selectedId={selectedListingId} /></div>}
+          </section>
+
+          {/* Item Details */}
           <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-4">Import from a Listing <span className="text-gray-400 font-normal text-sm">(optional)</span></h2>
-            <SellerListingPicker onSelect={handleListingSelect} selectedId={selectedListingId} />
+            <h2 className="text-base font-bold text-gray-900 mb-5">Item Details</h2>
+
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); setValidationErrors([]); }}
+                placeholder="e.g. Vintage Sony Walkman — excellent condition"
+                maxLength={120}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the item — any defects, accessories included, history…"
+                rows={4}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21] resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); setValidationErrors([]); }}
+                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                  >
+                    <option value="">Select category</option>
+                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Subcategory {availableSubcategories.length > 0 && <span className="text-red-500">*</span>}</label>
+                <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setValidationErrors([]); }} disabled={!availableSubcategories.length} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 bg-white disabled:bg-slate-100 focus:border-orange-500">
+                  <option value="">Select subcategory</option>
+                  {availableSubcategories.map(sub => <option key={sub.slug} value={sub.name}>{sub.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Tags</label>
+                <input
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="vintage, sony, walkman, 80s"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                />
+              </div>
+            </div>
+
+            {/* Condition cards */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Condition</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {CONDITIONS.map((c) => {
+                  const Icon = c.icon;
+                  const active = condition === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCondition(c.id)}
+                      className={`flex items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
+                        active
+                          ? "border-[#F26B21] bg-[#F26B21]/5"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`mt-0.5 flex-shrink-0 ${active ? "text-[#F26B21]" : "text-gray-400"}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold leading-tight ${active ? "text-[#F26B21]" : "text-gray-700"}`}>
+                          {c.label}
+                        </p>
+                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{c.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </section>
 
           {/* Photos */}
@@ -285,7 +389,7 @@ export function CreateAuctionPage() {
               onChange={handlePhotoChange}
             />
 
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2">
               {photos.map((src, i) => (
                 <motion.div
                   key={i}
@@ -325,7 +429,7 @@ export function CreateAuctionPage() {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                className="w-full border-2 border-dashed border-gray-200 rounded-xl py-4 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
               >
                 <Upload className="w-6 h-6" />
                 <span className="text-sm font-medium">Click to upload photos</span>
@@ -373,7 +477,7 @@ export function CreateAuctionPage() {
                   exit={{ opacity: 0 }}
                   type="button"
                   onClick={() => videoInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-7 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
                 >
                   <Video className="w-6 h-6" />
                   <span className="text-sm font-medium">Click to upload a video</span>
@@ -381,97 +485,6 @@ export function CreateAuctionPage() {
                 </motion.button>
               )}
             </AnimatePresence>
-          </section>
-
-          {/* Item Details */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-5">Item Details</h2>
-
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={title}
-                onChange={(e) => { setTitle(e.target.value); setValidationErrors([]); }}
-                placeholder="e.g. Vintage Sony Walkman — excellent condition"
-                maxLength={120}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the item — any defects, accessories included, history…"
-                rows={4}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21] resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={category}
-                    onChange={(e) => { setCategory(e.target.value); setValidationErrors([]); }}
-                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-                  >
-                    <option value="">Select category</option>
-                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Tags</label>
-                <input
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="vintage, sony, walkman, 80s"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-                />
-              </div>
-            </div>
-
-            {/* Condition cards */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Condition</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {CONDITIONS.map((c) => {
-                  const Icon = c.icon;
-                  const active = condition === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCondition(c.id)}
-                      className={`flex items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
-                        active
-                          ? "border-[#F26B21] bg-[#F26B21]/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className={`mt-0.5 flex-shrink-0 ${active ? "text-[#F26B21]" : "text-gray-400"}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className={`text-xs font-bold leading-tight ${active ? "text-[#F26B21]" : "text-gray-700"}`}>
-                          {c.label}
-                        </p>
-                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{c.desc}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </section>
 
           {/* Auction Settings */}
@@ -572,7 +585,7 @@ export function CreateAuctionPage() {
           </section>
 
           {/* Ready to list */}
-          <section className="bg-white px-7 py-7 rounded-b-2xl border-x border-b border-gray-100">
+          <section className="bg-white rounded-2xl px-5 sm:px-6 py-5 border border-slate-200 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 mb-1">Ready to List?</h2>
             <p className="text-sm text-gray-500 mb-4">Your auction goes live the moment you submit.</p>
 
@@ -645,7 +658,12 @@ export function CreateAuctionPage() {
               })}
             </div>
           </section>
-
+          </div>
+          <aside className="lg:sticky lg:top-5 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"><h2 className="bg-[#0b2343] text-white px-4 py-3 font-bold">Listing Preview</h2><div className="p-4 flex gap-3">{photos[0] ? <img src={photos[0]} alt="Auction preview" className="w-20 h-20 rounded-lg object-cover" /> : <div className="w-20 h-20 bg-slate-100 rounded-lg flex items-center justify-center"><Camera className="w-6 h-6 text-slate-400"/></div>}<div className="min-w-0"><p className="text-sm font-bold text-slate-900 line-clamp-3">{title || "Your auction title"}</p><p className="text-xs text-slate-500 mt-1">{category || "Category"}{subcategory ? ` › ${subcategory}` : ""}</p><p className="text-sm font-bold text-orange-600 mt-2">Starting at {currency.symbol}{startingBid || "0.00"}</p></div></div></div>
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"><h2 className="bg-[#0b2343] text-white px-4 py-3 font-bold">Auction checklist</h2><div className="p-4 space-y-3 text-sm">{[[!!title.trim(),"Clear item title"],[!!category && (!availableSubcategories.length || !!subcategory),"Category and subcategory"],[photos.length > 0,"At least one photo"],[Number(startingBid) > 0,"Starting bid"]].map(([done,label]) => <div key={String(label)} className="flex items-center gap-2"><CheckCircle2 className={`w-4 h-4 ${done ? "text-emerald-500" : "text-slate-300"}`} /><span className="text-slate-700">{label}</span></div>)}</div></div>
+            <button type="submit" disabled={submitting} className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 text-white font-bold shadow-md disabled:opacity-60">{submitting ? "Creating auction…" : "List Auction"}</button>
+          </aside>
         </form>
       </div>
 
