@@ -3202,3 +3202,18 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-mockup-home section:has(a[href="/rewards"].rounded-2xl) a.rounded-2xl:hover{background:#12335d!important}
 @media(max-width:1050px){.bz-premium-promo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.bz-premium-promo-featured{grid-column:1/-1}.bz-premium-promo{min-height:215px}}
 @media(max-width:640px){.bz-mockup-home .bz-premium-promos{padding:18px 12px}.bz-premium-promo-grid{grid-template-columns:1fr;gap:10px}.bz-premium-promo-featured{grid-column:auto;min-height:255px}.bz-premium-promo-secondary{min-height:165px}.bz-premium-promo h2{font-size:26px;max-width:65%}.bz-premium-promo h3{font-size:22px}.bz-premium-promo-secondary .bz-premium-promo-content{max-width:80%}.bz-premium-bag-art{right:6%;width:85px;height:94px}.bz-premium-bag-art svg{width:85px;height:110px}.bz-premium-bag-art span{font-size:52px}}
+
+/* Messages must be a solid, independently layered application dialog. */
+.bz-messages-dialog{background:#fff!important;color:#111827!important;opacity:1!important;isolation:isolate!important;filter:none!important;backdrop-filter:none!important}
+.bz-messages-dialog>div{background:#fff!important;min-width:0;min-height:0}
+.bz-messages-dialog .bg-white{background-color:#fff!important}
+.bz-messages-dialog .bg-gray-50{background-color:#f9fafb!important}
+.bz-messages-dialog .bg-gray-100{background-color:#f3f4f6!important}
+.bz-messages-dialog .text-gray-900{color:#111827!important}
+.bz-messages-dialog .text-gray-800{color:#1f2937!important}
+.bz-messages-dialog .text-gray-600{color:#4b5563!important}
+.bz-messages-dialog .text-gray-500{color:#6b7280!important}
+.bz-messages-dialog .text-gray-400{color:#9ca3af!important}
+.bz-messages-dialog .border-gray-100{border-color:#f3f4f6!important}
+.bz-messages-dialog .border-gray-200{border-color:#e5e7eb!important}
+@media(max-width:767px){.bz-messages-dialog{inset:10px!important;max-height:calc(100dvh - 20px)!important}.bz-messages-dialog .w-48{width:155px}}
