@@ -2,7 +2,7 @@ import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility
 import { Link } from "wouter";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { motion } from "framer-motion";
-import { ArrowRight, Tag } from "lucide-react";
+import { ArrowRight, Tag, LayoutGrid } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { ACTIVE_CATEGORIES } from "@/data/categories";
 
@@ -70,6 +70,10 @@ export function CategorySection() {
             </Link>
           </motion.div>;
         })}
+        <Link href="/categories" aria-label="Explore more categories" className="bz-category-card bz-pastel-category bz-vibrant-tile bz-vibrant-more group flex h-full min-h-[166px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
+          <span className="bz-pastel-icon flex h-[76px] w-[76px] items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-110"><LayoutGrid aria-hidden="true" className="h-10 w-10" strokeWidth={2.1}/></span>
+          <span className="bz-vibrant-tile-footer"><span className="bz-category-label">More Categories</span><span className="bz-vibrant-arrow" aria-hidden="true"><ArrowRight className="h-5 w-5"/></span></span>
+        </Link>
       </div>}
     </div>
   </section>;
