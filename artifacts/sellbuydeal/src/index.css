@@ -3768,3 +3768,19 @@ html,body,#root{font-family:var(--app-font-sans)!important}
  .auction-create-layout>section:nth-child(7){grid-column:2;grid-row:5 / span 2}
  .auction-create-layout>section:nth-child(8){grid-column:1/-1;grid-row:7}
 }
+
+/* Auction mockup: explicit shell structure, visible full-width hero, right ad and icon contrast. */
+.auction-create-shell{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.auction-create-layout{display:block!important;min-width:0}
+.auction-create-header{display:block!important;grid-column:auto!important;background:linear-gradient(105deg,#e7dcff 0%,#f5f2ff 44%,#fff0dc 100%)!important;border:1px solid #d7c7fa!important;margin-bottom:14px}
+.auction-create-header .auction-create-header-title{color:#101c38!important;-webkit-text-fill-color:#101c38!important}
+.auction-create-header .auction-create-header-subtitle{color:#334155!important;-webkit-text-fill-color:#334155!important}
+.auction-create-header .auction-hero-gavel svg{color:#fff!important;stroke:#fff!important}
+.auction-create-header>div>div:last-child svg{color:#ea580c!important;stroke:#ea580c!important}
+.auction-create-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.auction-create-fields>section,.auction-create-fields>details{min-width:0;background:#fff!important;border:1px solid #cbd5e1;border-radius:16px;box-shadow:0 4px 16px rgba(16,28,56,.07)}
+.auction-create-fields h2>svg,.auction-create-fields summary>svg{flex-shrink:0;stroke:currentColor}
+.auction-create-ad{display:block;min-width:0}
+.auction-create-ad [data-ad-placement]{width:100%;min-height:90px}
+@media(min-width:1050px){.auction-create-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.auction-create-fields>section:first-child{grid-column:1/-1}.auction-create-fields>section:nth-child(2){grid-column:1;grid-row:2/span 2}.auction-create-fields>section:nth-child(3){grid-column:1;grid-row:4}.auction-create-fields>details:nth-child(4){grid-column:1;grid-row:5}.auction-create-fields>section:nth-child(5){grid-column:2;grid-row:2/span 2}.auction-create-fields>section:nth-child(6){grid-column:2;grid-row:4/span 2}.auction-create-fields>section:nth-child(7){grid-column:1/-1;grid-row:6}}
+@media(min-width:1750px){.auction-create-shell{grid-template-columns:minmax(0,1fr) 728px}.auction-create-ad{position:sticky;top:20px}}
