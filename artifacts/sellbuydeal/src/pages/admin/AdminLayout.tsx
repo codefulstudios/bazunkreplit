@@ -19,6 +19,7 @@ import { useAdmin } from "@/context/AdminContext";
 const NAV = [
   { label: "Dashboard",    href: "/admin/dashboard",    icon: LayoutDashboard },
   { label: "Marketing", href: "/admin/marketing", icon: Megaphone },
+  { label: "Live Commerce", href: "/admin/live-commerce", icon: Megaphone },
   { label: "Importer Overview", href: "/admin/importer-overview", icon: ArrowDownToLine },
   { label: "Settings Overview", href: "/admin/settings-overview", icon: Settings },
   { label: "Design Center", href: "/admin/design-system", icon: Palette },
@@ -73,7 +74,7 @@ const NAV_GROUPS = [
  {id:"customers",label:"Customers",href:"/admin/users",icon:Users,pages:["Users"]},
  {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
  {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
- {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
+ {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Live Commerce","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
  {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","Craigslist","OLX","General Settings","Apply Update to All","Importer Control"]},
