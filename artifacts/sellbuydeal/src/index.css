@@ -3230,3 +3230,41 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-mockup-home .bz-home-rewards-panel .bz-home-reward-name{color:#fff!important;opacity:1!important;font-size:14px!important;line-height:1.35}
 .bz-mockup-home .bz-home-rewards-panel .bz-home-reward-credits{color:#ffcc77!important;opacity:1!important;font-size:12px!important}
 .bz-mockup-home .bz-home-rewards-panel a[href="/rewards"]:not(.bz-home-reward-game){color:#fff!important}
+
+/* Homepage mockup parity, scoped to homepage only; header deliberately untouched. */
+.bz-mockup-home .bz-premium-promos{padding:24px 16px 10px!important}
+.bz-mockup-home .bz-premium-promo-grid{grid-template-columns:2.25fr repeat(3,minmax(0,1fr));gap:12px}
+.bz-mockup-home .bz-premium-promo{min-height:235px;border-radius:21px;padding:21px;box-shadow:0 6px 16px #08204420}
+.bz-mockup-home .bz-premium-promo-featured{background:radial-gradient(circle at 88% 76%,#164a79 0%,transparent 44%),linear-gradient(130deg,#06172e,#082b53)}
+.bz-mockup-home .bz-premium-promo-secondary{background:radial-gradient(circle at 85% 18%,#155d82 0%,transparent 58%),linear-gradient(130deg,#061a32,#082744)}
+.bz-mockup-home .bz-premium-promo h2,.bz-mockup-home .bz-premium-promo h3,.bz-mockup-home .bz-premium-promo [data-theme-card-field="title"]{color:#fff!important;opacity:1!important;text-shadow:none!important;filter:none!important}
+.bz-mockup-home .bz-premium-promo h2{font-size:clamp(24px,2.15vw,32px)!important;line-height:1.12!important;max-width:270px;margin-top:20px}
+.bz-mockup-home .bz-premium-promo h3{font-size:clamp(17px,1.45vw,22px)!important;line-height:1.16!important}
+.bz-mockup-home .bz-premium-promo p{color:#e6f1ff!important;opacity:1!important;font-size:13px!important;line-height:1.5!important}
+.bz-mockup-home .bz-premium-feature-label{background:#ff7100!important;color:#fff!important}
+.bz-mockup-home .bz-premium-cta{background:#ff7900!important;color:#fff!important;padding:9px 15px!important;border-radius:12px!important;font-weight:800!important}
+.bz-mockup-home .bz-premium-bag-art{width:100px;height:108px;right:6%;bottom:22px;background:linear-gradient(130deg,#ffab40,#f06b0c);border-radius:12px 12px 16px 16px;transform:rotate(-9deg);box-shadow:12px 16px 18px #0005}
+.bz-mockup-home .bz-premium-bag-art svg{display:none}
+.bz-mockup-home .bz-premium-bag-art span:not(.bz-premium-bag-handles){font-size:68px;font-weight:1000}
+.bz-premium-bag-handles{position:absolute;top:-32px;left:29px;width:42px;height:48px;border:8px solid #ff9e23;border-bottom:0;border-radius:28px 28px 0 0;box-shadow:inset 2px 0 2px #fff5}
+.bz-premium-promo-orb{position:absolute;right:9%;top:16%;display:grid;place-items:center;width:60px;height:60px;border-radius:16px;background:linear-gradient(145deg,#ffb83d,#f26700);color:#fff;transform:rotate(13deg);box-shadow:0 12px 20px #0005;opacity:.98}
+.bz-premium-promo-orb svg{width:34px;height:34px;stroke-width:2.2}
+.bz-premium-promo-1 .bz-premium-promo-orb{background:linear-gradient(145deg,#ffac3c,#f07700);transform:rotate(-13deg)}
+.bz-premium-promo-2 .bz-premium-promo-orb{background:linear-gradient(145deg,#ffce64,#e87800);transform:rotate(12deg)}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-2{--v1:#38b7f9;--v2:#0747bb}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-5{--v1:#54aaff;--v2:#0649b5}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-8{--v1:#38e4ca;--v2:#007c95}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-more{--v1:#4fc4ff;--v2:#0850bc}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-tile{min-height:156px!important;padding:14px 12px!important;border-radius:18px!important}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-tile .bz-pastel-icon{width:77px!important;height:77px!important;border-radius:23px!important}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-tile .bz-pastel-icon svg{width:44px!important;height:44px!important}
+.bz-mockup-home .bz-vibrant-categories .bz-vibrant-tile .bz-category-label{font-size:13px!important}
+.bz-mockup-home .bz-home-rewards-panel{background:#071b35!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-game{background:#102b50!important;border:1px solid #365a84!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-name{display:block!important;color:#fff!important;opacity:1!important;visibility:visible!important;font-size:14px!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-credits{display:block!important;color:#d6e8fb!important;opacity:1!important;visibility:visible!important;font-size:12px!important;font-weight:500!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-rewards-description{color:#d6e8fb!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-icon{background:transparent!important;border:0!important;margin-bottom:6px!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-icon svg{width:27px;height:27px;color:#ffa21e!important}
+@media(max-width:1050px){.bz-mockup-home .bz-premium-promo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.bz-mockup-home .bz-premium-promo-featured{grid-column:1/-1}}
+@media(max-width:640px){.bz-mockup-home .bz-premium-promo-grid{grid-template-columns:1fr}.bz-mockup-home .bz-premium-promo-featured{grid-column:auto}.bz-premium-promo-orb{right:8%;top:15%}.bz-mockup-home .bz-premium-promo-secondary{min-height:170px}}
