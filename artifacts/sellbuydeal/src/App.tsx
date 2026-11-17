@@ -444,8 +444,8 @@ function Router() {
       <Route path="/deal-pilot">{() => <FeatureGate feature="deal_pilot" name="DealPilot"><DealPilotPage /></FeatureGate>}</Route>
       <Route path="/find-it">{() => <FeatureGate feature="find_it" name="Find It"><FindItPage /></FeatureGate>}</Route>
       <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/my-store/settings">{() => <MyStorePage settingsPage />}</Route>
-      <Route path="/my-store">{() => <MyStorePage />}</Route>
+      <Route path="/my-store/settings">{() => <Redirect to="/dashboard?section=store-settings" />}</Route>
+      <Route path="/my-store">{() => <Redirect to="/dashboard?section=my-store" />}</Route>
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
       <Route path="/browse" component={BrowsePage} />
