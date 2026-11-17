@@ -144,11 +144,11 @@ export function Navbar() {
   const changeCountry = (code: string) => { setCountry(code); };
   const featureSettings = useRawSettings();
   const { resolvedTheme } = useTheme();
-  const defaultLogo = resolvedTheme === "dark" ? "/bazunk-brand-dark.png" : "/bazunk-brand-orange.png";
+  const defaultLogo = "/bazunk-brand-dark.png";
   // The dark PNG is 1061×600 but its visible pixels occupy only the top ~257px.
   // Fit the artwork inside a light-logo aspect ratio frame instead of transforming
   // the image (which previously overlapped navigation and still looked too small).
-  const useDefaultDarkLogo = resolvedTheme === "dark" && !featureSettings.site_logo_url?.startsWith("/api/site-media/");
+  const useDefaultDarkLogo = !featureSettings.site_logo_url?.startsWith("/api/site-media/");
   const studioIcons=parseIconOverrides(featureSettings.icon_overrides);
   const HomeHeaderIcon=iconForPlacement(studioIcons,"header_home");
   const SearchHeaderIcon=iconForPlacement(studioIcons,"header_search");
@@ -271,6 +271,8 @@ export function Navbar() {
     { href: "/auctions", label: "Auctions" },
     { href: "/flash-sales", label: "Flash Sales" },
     { href: "/live", label: "Live", live: true },
+    { href: "/deals", label: "Deals" },
+    { href: "/eco", label: "Eco" },
   ].filter(x => visibleHref(x.href));
 
   return (
@@ -385,7 +387,7 @@ export function Navbar() {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                     </span>
                   )}
-                  {href === "/" ? <Home className="bz-nav-link-icon text-white"/> : href === "/browse" ? <ShoppingCart className="bz-nav-link-icon text-sky-300"/> : href === "/auctions" ? <Gavel className="bz-nav-link-icon text-orange-400"/> : href === "/flash-sales" ? <Zap className="bz-nav-link-icon text-yellow-300"/> : href === "/live" ? <Radio className="bz-nav-link-icon text-pink-400"/> : null}
+                  {href === "/" ? <Home className="bz-nav-link-icon text-white"/> : href === "/browse" ? <ShoppingCart className="bz-nav-link-icon text-sky-300"/> : href === "/auctions" ? <Gavel className="bz-nav-link-icon text-orange-400"/> : href === "/flash-sales" ? <Zap className="bz-nav-link-icon text-yellow-300"/> : href === "/live" ? <Radio className="bz-nav-link-icon text-pink-400"/> : href === "/deals" ? <Tag className="bz-nav-link-icon text-rose-400"/> : href === "/eco" ? <Leaf className="bz-nav-link-icon text-green-400"/> : null}
                   {label}
                 </Link>
               );
@@ -400,7 +402,7 @@ export function Navbar() {
                 }`}
                 data-testid="button-more-nav"
               >
-                More
+                <Grid3X3 className="bz-nav-link-icon text-sky-300"/> More
                 <ChevronDown className={`w-3 h-3 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
               </button>
               <AnimatePresence>
@@ -723,11 +725,12 @@ export function Navbar() {
           <button type="submit" aria-label="Search" className="w-11 shrink-0 rounded-xl bg-[#4A5CE8] text-white flex items-center justify-center"><Search className="w-5 h-5" /></button>
         </form>
         <div className="bz-mockup-benefits" aria-label="Marketplace benefits">
-          <span><Truck className="text-violet-600"/> <strong>Delivery options</strong><small>Check at checkout</small></span>
+          <span><Truck className="text-blue-600"/> <strong>Free delivery</strong><small>On selected items</small></span>
           <span><ShieldCheck className="text-cyan-600"/> <strong>Buyer protection</strong><small>Shop with confidence</small></span>
           <span><CheckCircle2 className="text-orange-500"/> <strong>Verified sellers</strong><small>Look for verification</small></span>
           <span><Leaf className="text-green-600"/> <strong>Eco marketplace</strong><small>Reuse and resell</small></span>
-          <span><Gift className="text-purple-600"/> <strong>Earn credits</strong><small>Explore rewards</small></span>
+          <span><Gift className="text-amber-500"/> <strong>Earn credits</strong><small>List, boost &amp; save</small></span>
+          <span><Gift className="text-pink-500"/> <strong>Daily deals</strong><small>New offers every day</small></span>
         </div>
         {/* Brand colour accent */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
