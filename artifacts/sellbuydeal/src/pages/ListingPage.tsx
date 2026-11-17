@@ -651,11 +651,11 @@ export function ListingPage() {
                     <h3 className="font-black flex items-center gap-2"><Globe2 className="w-5 h-5" /> {t("deliveryLocation")}</h3>
                     <p className="text-xs text-white/85 mt-1">Check where this item is coming from before you buy</p>
                   </div>
-                  <div className="p-5 grid sm:grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
-                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
-                    {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null ? "Calculated at checkout" : x.shippingPrice === 0 ? "Free (seller rate)" : formatPrice(x.shippingPrice)}</p></div>
+                  <div className="p-5 grid sm:grid-cols-2 gap-4 bz-listing-shipping-grid">
+                    <div className="bz-shipping-tile bz-shipping-origin"><div className="bz-shipping-icon"><MapPin aria-hidden="true" /></div><div><p className="bz-shipping-label">{t("shipsFrom")}</p><p className="bz-shipping-value">{origin}</p></div></div>
+                    <div className="bz-shipping-tile bz-shipping-destination"><div className="bz-shipping-icon"><Globe2 aria-hidden="true" /></div><div><p className="bz-shipping-label">{t("shipsTo")}</p><p className="bz-shipping-value">{destination}</p></div></div>
+                    {x.carrier && <div className="bz-shipping-tile bz-shipping-carrier"><div className="bz-shipping-icon"><Truck aria-hidden="true" /></div><div><p className="bz-shipping-label">Carrier</p><p className="bz-shipping-value capitalize">{x.carrier.replaceAll("-", " ")}</p></div></div>}
+                    <div className="bz-shipping-tile bz-shipping-postage"><div className="bz-shipping-icon"><Package aria-hidden="true" /></div><div><p className="bz-shipping-label">Postage</p><p className="bz-shipping-value">{x.shippingPrice == null ? "Calculated at checkout" : x.shippingPrice === 0 ? "Free (seller rate)" : formatPrice(x.shippingPrice)}</p></div></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
                 </ListingDeliverySection>
@@ -675,28 +675,15 @@ export function ListingPage() {
               );
             })()}
 
-            {/* Trust signals */}
-            {showSection("buyer_protection")&&<div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Buying safely</h3>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {[
-                  { icon: Shield, title: "Secure Checkout", desc: "Pay via Bazunk" },
-                  { icon: Truck,  title: "Seller Ships",    desc: "Arranged by seller"  },
-                ].map((t) => {
-                  const Icon = t.icon;
-                  return (
-                    <div key={t.title} className="flex flex-col items-center text-center gap-2 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-9 h-9 rounded-full bg-[#4A5CE8]/10 flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-[#4A5CE8]" />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-800">{t.title}</p>
-                      <p className="text-xs text-slate-600">{t.desc}</p>
-                    </div>
-                  );
-                })}
+            {/* Trust signals: colourful, high-contrast reassurance cards. */}
+            {showSection("buyer_protection")&&<section className="bz-listing-safety rounded-2xl p-5" aria-label="Buying safely">
+              <div className="flex items-center gap-3 mb-5"><span className="bz-safety-heading-icon"><Shield aria-hidden="true" /></span><div><h3 className="text-xl font-extrabold">Buying safely</h3><p className="text-sm bz-safety-subtitle">Shop confidently with Bazunk</p></div></div>
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                <div className="bz-safety-tile bz-safety-checkout"><span className="bz-safety-icon"><Shield aria-hidden="true"/></span><h4 className="font-extrabold text-base">Secure Checkout</h4><p className="text-sm">Pay securely through Bazunk</p></div>
+                <div className="bz-safety-tile bz-safety-shipping"><span className="bz-safety-icon"><Truck aria-hidden="true"/></span><h4 className="font-extrabold text-base">Seller Ships</h4><p className="text-sm">Delivery arranged by the seller</p></div>
               </div>
               <BuyerProtectionBadge />
-            </div>}
+            </section>}
           </div>
 
           {/* Right: Price + actions + seller */}
