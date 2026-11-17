@@ -19,10 +19,10 @@ export function Footer() {
   const YoutubeIcon=iconForPlacement(studioIcons,"footer_youtube");
 
   return (
-    <footer className="bg-[#07172c] text-white/80 border-t border-sky-400/20">
-      <div className="container mx-auto px-4 py-9 md:py-10">
-        <div className="grid grid-cols-2 md:grid-cols-[1.35fr_1fr_1fr_1.15fr_1fr] gap-x-8 gap-y-8">
-          <div className="col-span-2 md:col-span-1 md:pr-5">
+    <footer className="bazunk-site-footer bg-[#07172c] text-white/80 border-t border-sky-400/20">
+      <div className="container mx-auto max-w-7xl px-5 py-10 md:py-12">
+        <div className="grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.1fr] gap-x-8 gap-y-9">
+          <div className="col-span-2 lg:col-span-1 lg:pr-5">
             <Link href="/" className="inline-block mb-3">
               <img
                 src={s.site_logo_url?.startsWith("/api/site-media/")?API_BASE+s.site_logo_url : "/bazunk-brand-dark.png"}
@@ -87,8 +87,8 @@ export function Footer() {
               <li><Link href="/support" className={linkClass}>Contact Us</Link></li>
             </ul>
           </div>
-          <div className="col-span-2 md:col-span-1">
-            <h4 className="text-white font-black mb-3 text-sm uppercase tracking-wide">Follow Us</h4>
+          <div className="col-span-2 lg:col-span-4">
+            <h4 className="text-white font-black mb-3 text-sm uppercase tracking-wide">Connect with Bazunk</h4>
             <div className="flex flex-wrap gap-2">
               {[
                 {url:s.footer_facebook, Icon:FacebookIcon, label:"Facebook"},
