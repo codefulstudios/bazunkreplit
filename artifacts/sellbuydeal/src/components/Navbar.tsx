@@ -763,6 +763,8 @@ export function Navbar() {
                 </form>
               </div>
 
+              <button type="button" onClick={()=>{setMobileOpen(false);setCategoryDrawerOpen(true);}} className="mx-5 my-3 flex min-h-12 items-center justify-between rounded-xl bg-orange-50 px-4 font-bold text-slate-900 border border-orange-200" aria-haspopup="dialog"><span className="flex items-center gap-2"><Grid3X3 className="h-5 w-5 text-orange-600"/> Shop by category</span><ChevronRight className="h-5 w-5"/></button>
+
               {/* User info (logged in) */}
               {user && (
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
