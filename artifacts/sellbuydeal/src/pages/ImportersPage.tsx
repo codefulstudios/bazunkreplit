@@ -19,7 +19,7 @@ export function ImportersPage(){
  useEffect(()=>{if(!dialog)return;const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")setDialog(null)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[dialog]);
  const open=(kind:Dialog,id?:string)=>{if(id)setSelected(id);setDialog(kind)};
  const current=sources.find(s=>s.id===selected)||sources[0];
- return <div className="bazunk-account-page bazunk-importers-page min-h-screen" bg-white text-slate-950 dark:bg-[#070e20] dark:text-white transition-colors duration-300">
+ return <div className="bazunk-account-page bazunk-importers-page min-h-screen bg-white text-slate-950 dark:bg-[#070e20] dark:text-white transition-colors duration-300">
  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7">
   <Link href="/" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-400 to-orange-500 text-slate-950 px-5 py-3 text-sm font-black mb-4 shadow-sm"><ArrowLeft className="w-4 h-4"/> Back to Home</Link>
   <section className="relative isolate overflow-hidden rounded-3xl border border-indigo-100 dark:border-indigo-400/30 bg-gradient-to-br from-indigo-100 via-sky-50 to-fuchsia-100 dark:from-[#0b1b3e] dark:via-[#10143d] dark:to-[#201050] p-6 sm:p-9 lg:p-12 shadow-sm">
