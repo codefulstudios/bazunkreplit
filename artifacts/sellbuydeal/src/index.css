@@ -3845,3 +3845,25 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .auction-create-ad-creative img{max-width:100%;height:auto}
 @media(max-width:900px){.auction-create-shell{grid-template-columns:minmax(0,1fr)!important}.auction-create-ad{grid-column:1!important;grid-row:2!important;position:static!important;justify-self:center}.auction-create-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}}
 @media(max-width:620px){.auction-create-fields{grid-template-columns:minmax(0,1fr)!important}.auction-create-fields>section,.auction-create-fields>details{grid-column:1!important;grid-row:auto!important}.auction-create-ad{margin-top:10px}}
+
+/* Selling landing page: prevent inherited global dark text and backgrounds
+   from hiding card descriptions, fees and CTA copy. */
+.sell-page{background:#f2f5fb!important;color:#10213e!important}
+.sell-page main>div.max-w-7xl>section:not(:last-child){color:#10213e}
+.sell-page main>div.max-w-7xl>section:not(:last-child) h2,
+.sell-page main>div.max-w-7xl>section:not(:last-child) h3{color:#10213e}
+.sell-page main>div.max-w-7xl>section:not(:last-child) p{color:#475569}
+.sell-page main>div.max-w-7xl>section:not(:last-child) .bg-white{background:#fff!important}
+.sell-page main>div.max-w-7xl>section:not(:last-child) .bg-slate-50{background:#f8fafc!important}
+.sell-page main>div.max-w-7xl>section:not(:last-child) .text-orange-600{color:#ea580c!important}
+.sell-page main>div.max-w-7xl>section:not(:last-child) .text-orange-700{color:#c2410c!important}
+.sell-page .sell-bright-calculator{color:#fff!important}
+.sell-page .sell-bright-calculator h2,.sell-page .sell-bright-calculator h3,
+.sell-page .sell-bright-calculator p,.sell-page .sell-bright-calculator span,
+.sell-page .sell-bright-calculator strong,.sell-page .sell-bright-calculator label{color:inherit}
+.sell-page .sell-bright-calculator input{background:#102d57!important;color:#fff!important}
+.sell-page section:last-child h2,.sell-page section:last-child h2 span,
+.sell-page section:last-child p{color:#fff!important}
+.sell-page section:last-child h2 span{color:#fef08a!important}
+.sell-page .bz-sell-option-art{isolation:isolate}
+.sell-page .bz-sell-option-emoji{font-size:clamp(48px,5vw,84px);line-height:1.25;white-space:nowrap}
