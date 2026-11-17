@@ -2943,3 +2943,33 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 .dark .bazunk-listing-redesign .bz-product-gallery-stage{background:#162a44!important}
 }
 @media(max-width:1099px){.bazunk-listing-redesign .bz-product-gallery{overflow:hidden;border-radius:18px}}
+
+
+/* Product-page three-column composition from the approved mockup. */
+.bazunk-listing-redesign .bz-mockup-product-summary{background:transparent;color:var(--listing-text);min-width:0}
+.bazunk-listing-redesign .bz-mockup-product-title{font-size:clamp(1.55rem,2.1vw,2.65rem);font-weight:850;line-height:1.13;letter-spacing:-.035em;margin-bottom:13px;color:var(--listing-text)}
+.bazunk-listing-redesign .bz-mockup-product-seller{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.86rem;font-weight:650;color:var(--listing-muted)}
+.bazunk-listing-redesign .bz-mockup-condition{padding:4px 9px;border-radius:7px;background:#0ca954;color:#fff;text-transform:capitalize;font-weight:850}
+.bazunk-listing-redesign .bz-mockup-product-price{font-size:clamp(2rem,3vw,3.1rem);font-weight:900;letter-spacing:-.05em;margin:14px 0 7px;color:var(--listing-text)}
+.bazunk-listing-redesign .bz-mockup-product-stock{display:flex;align-items:center;gap:7px;color:#07864b;font-weight:850;margin-bottom:14px}
+.bazunk-listing-redesign .bz-mockup-product-meta{display:flex;align-items:flex-start;gap:8px;font-size:.85rem;line-height:1.45;margin-bottom:7px;color:var(--listing-text)}
+.bazunk-listing-redesign .bz-mockup-product-meta svg{flex-shrink:0;color:#ff7300}
+.bazunk-listing-redesign .bz-mockup-product-key{border-top:1px solid var(--listing-line);padding-top:16px;margin-top:18px}
+.bazunk-listing-redesign .bz-mockup-product-key h2{font-size:1.13rem;font-weight:850;margin-bottom:8px;color:var(--listing-text)}
+.bazunk-listing-redesign .bz-mockup-product-key p{font-size:.91rem;line-height:1.6;color:var(--listing-muted)}
+.bazunk-listing-redesign .bz-mockup-product-promises{display:flex;flex-wrap:wrap;gap:10px;border-top:1px solid var(--listing-line);padding-top:16px;margin-top:20px}
+.bazunk-listing-redesign .bz-mockup-product-promises span{display:flex;align-items:center;gap:6px;font-size:.71rem;font-weight:800;color:var(--listing-text)}
+.bazunk-listing-redesign .bz-mockup-product-promises svg{color:#ff8000;flex-shrink:0}
+.bazunk-listing-redesign .bz-mockup-buy-heading{font-size:1.25rem;font-weight:900;color:var(--listing-text);margin-bottom:16px}
+@media(min-width:1300px){
+.bazunk-listing-redesign .bazunk-listing-content > .grid{grid-template-columns:minmax(0,2.25fr) minmax(335px,.9fr)!important;gap:22px!important}
+.bazunk-listing-redesign .bz-mockup-listing-left{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:start;column-gap:22px;row-gap:18px}
+.bazunk-listing-redesign .bz-mockup-listing-left > .bz-product-gallery{grid-column:1;grid-row:1}
+.bazunk-listing-redesign .bz-mockup-listing-left > .bz-mockup-product-summary{grid-column:2;grid-row:1}
+.bazunk-listing-redesign .bz-mockup-listing-left > :not(.bz-product-gallery):not(.bz-mockup-product-summary){grid-column:1/-1}
+.bazunk-listing-redesign .bz-product-gallery-stage{aspect-ratio:.95!important}
+.bazunk-listing-redesign .bz-product-gallery-thumbnails{max-height:600px}
+.bazunk-listing-redesign .bazunk-listing-aside{position:static!important}
+}
+@media(min-width:1100px) and (max-width:1299px){.bazunk-listing-redesign .bz-mockup-product-summary{padding:20px;background:var(--listing-card);border:1px solid var(--listing-line);border-radius:18px}}
+@media(max-width:1099px){.bazunk-listing-redesign .bz-mockup-product-summary{padding:18px;background:var(--listing-card);border:1px solid var(--listing-line);border-radius:18px}}
