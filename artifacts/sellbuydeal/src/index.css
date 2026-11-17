@@ -3970,3 +3970,30 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bazunk-listing-redesign .bz-listing-safety{background:linear-gradient(110deg,#e9f2ff,#e3fff1)!important}
 @media(max-width:750px){.bazunk-listing-redesign .bz-visual-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bazunk-listing-redesign .bz-visual-facts{grid-template-columns:1fr 1fr}.bazunk-listing-redesign .bz-mockup-product-stock{margin-left:6px}}
 @media(max-width:390px){.bazunk-listing-redesign .bz-visual-facts{grid-template-columns:1fr}.bazunk-listing-redesign .bz-visual-feature-grid>div{padding:8px;gap:6px}}
+
+/* Quick Sell creation: visual layout from approved mockup, scoped to /sell/quick. */
+.bazunk-quick-sell{--quick-line:#315a83;column-gap:14px;row-gap:12px}
+.bazunk-quick-sell>div:first-child{background:linear-gradient(105deg,#243af1 0%,#8e10dc 55%,#f34d8a 88%,#ff8748 100%)!important;border:1px solid #a7a6ff;box-shadow:0 8px 18px #392caa33;padding:20px 24px}
+.bazunk-quick-sell>div:first-child h1{font-size:clamp(24px,3vw,32px);letter-spacing:-.035em}
+.bazunk-quick-sell>div:first-child a{font-size:12px;padding:6px 11px}
+.bazunk-quick-sell>section{border:1px solid #35618d!important;background:linear-gradient(130deg,#0d2747,#0b203c)!important;border-radius:14px!important;padding:17px 18px!important;box-shadow:0 5px 14px #12365d17}
+.bazunk-quick-sell>section h2{display:flex;align-items:center;gap:8px;font-size:17px!important;font-weight:850!important;margin-bottom:13px!important;letter-spacing:-.02em}
+.bazunk-quick-sell>section label{font-weight:750!important;color:#f4f8ff!important}
+.bazunk-quick-sell>section input:not([type=checkbox]):not([type=radio]):not([type=file]),.bazunk-quick-sell>section select,.bazunk-quick-sell>section textarea{background:#0c2341!important;border:1px solid #52759e!important;border-radius:9px!important;color:#fff!important}
+.bazunk-quick-sell>section :is(input,select,textarea):focus{outline:2px solid #9b82ff!important;outline-offset:1px}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"]{border:1px solid #42648d!important;background:#102b4e!important;color:#f7faff!important;min-width:0;transition:background .15s,border-color .15s}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"]:hover{background:#1a3a65!important}
+.bazunk-quick-sell>section button[data-testid="button-condition-brand-new"]:focus-visible{outline:3px solid #ffb547}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"] p{color:#e4eeff!important}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"][class*="border-[#4A5CE8]"]{background:linear-gradient(135deg,#ff8200,#f45416)!important;border-color:#ffbc68!important}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"][class*="border-[#4A5CE8]"] p{color:#fff!important}
+.bazunk-quick-sell>aside{top:18px!important;space-y:12px}
+.bazunk-quick-sell>aside>section{border-radius:14px!important;padding:15px!important;margin-bottom:11px}
+.bazunk-quick-sell .bz-quick-ai{background:linear-gradient(115deg,#1558f5,#8230e5 60%,#d22ac3)!important}
+.bazunk-quick-sell .bz-quick-ai a{background:#f6ecff!important;color:#332178!important}
+.bazunk-quick-sell>aside>section h2{font-size:16px}
+.bazunk-quick-sell>aside>section p,.bazunk-quick-sell>aside>section li{font-size:12px!important;line-height:1.45}
+.bazunk-quick-sell>aside>section:first-of-type .aspect-\[4\/3\]{aspect-ratio:16/9}
+.bazunk-quick-sell>section button[type=submit]{background:linear-gradient(90deg,#ff8b00,#ff6a00)!important;color:white!important;font-weight:850!important}
+@media(min-width:1024px){.bazunk-quick-sell{grid-template-columns:minmax(0,1.75fr) minmax(300px,.95fr)!important}}
+@media(max-width:1023px){.bazunk-quick-sell>section{padding:15px!important}}
