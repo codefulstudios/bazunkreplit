@@ -87,3 +87,14 @@
 .dark .bazunk-overview-v2 .overview-placeholder-panel{background:linear-gradient(140deg,#0d3457,#231a58);border-color:#2d7ed1}
 .dark .bazunk-overview-v2 .overview-placeholder-panel h3,.dark .bazunk-overview-v2 .overview-placeholder-panel p{color:white}
 @media(max-width:1000px){.bazunk-overview-v2 .overview-below-grid{grid-template-columns:1fr}}
+
+/* Dashboard overview: clean, condensed control-centre presentation */
+.bazunk-overview-v2{background:#f2f7ff!important;color:#102749!important}
+.bazunk-overview-v2 .overview-section-card,.bazunk-overview-v2 .overview-showcase-panel{background:#fff!important;border:1px solid #d8e4f1!important;box-shadow:0 4px 15px #14375c12!important;border-radius:18px!important}
+.bazunk-overview-v2 .overview-section-card h2,.bazunk-overview-v2 .overview-showcase-head h2{color:#102749!important}
+.bazunk-overview-v2 .overview-section-card .text-gray-400,.bazunk-overview-v2 .overview-section-card .text-gray-500{color:#526b87!important}
+.bazunk-overview-v2 .overview-section-card .text-\[\#4A5CE8\]{color:#e96300!important}
+.bazunk-overview-v2 .overview-section-card button:hover{color:#e96300}
+.bazunk-overview-v2 .overview-new-action{min-height:64px}
+.bazunk-overview-v2 .overview-new-promo{background:linear-gradient(110deg,#123f7b,#0b2d58)!important}
+.bazunk-overview-v2 .overview-hero-v2{border-radius:18px!important}
