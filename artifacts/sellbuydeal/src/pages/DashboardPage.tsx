@@ -1,3 +1,4 @@
+import { CashbackPage } from "@/pages/CashbackPage";
 import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
 import { SellerTrustInsights } from "@/components/SellerTrustInsights";
 import { SellerPricingInsightsPanel } from "@/components/SellerPricingInsightsPanel";
@@ -62,7 +63,6 @@ type SidebarCategory = {
 // Dashboard rail entries that are full pages, not inline dashboard sections.
 // Both desktop flyout and mobile accordion MUST use the same navigation.
 const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
-  cashback: "/cashback",
   "open-importers": "/importers",
   importers: "/importers",
 };
@@ -5683,11 +5683,11 @@ export function DashboardPage() {
     let s = params.get("section");
     if (s === "payment") s = "seller-payouts"; // legacy redirect
     const allIds = SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items.map(i => i.id) : [c.id]);
-    // Cashback and Importers are standalone routes. Never initialise an empty dashboard panel.
+    // Importers are a standalone route; cashback is rendered within this dashboard.
     return s && allIds.includes(s) && !DASHBOARD_PAGE_ROUTES[s] ? s : "overview";
   });
   useEffect(() => {
-    // Fix old bookmarked URLs such as /dashboard?section=cashback.
+    // Redirect legacy standalone importer dashboard links.
     const section=new URLSearchParams(window.location.search).get("section");
     const destination=section?DASHBOARD_PAGE_ROUTES[section]:undefined;
     if(destination) setLocation(destination);
@@ -6015,6 +6015,7 @@ export function DashboardPage() {
                 <MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} />
               </section>
             )}
+            {activeSection === "cashback" && <CashbackPage embedded />}
             {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
