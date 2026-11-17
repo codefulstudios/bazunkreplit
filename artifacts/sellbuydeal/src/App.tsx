@@ -149,6 +149,7 @@ const AdminFeatureFlagsPage = React.lazy(() => import("@/pages/admin/AdminFeatur
 import { FeatureGate, FeatureVisible } from "@/components/FeatureGate";
 const AdminPaymentsPage = React.lazy(() => import("@/pages/admin/AdminPaymentsPage").then(module => ({ default: module.AdminPaymentsPage })));
 const AdminOrdersPage = React.lazy(() => import("@/pages/admin/AdminOrdersPage").then(module => ({ default: module.AdminOrdersPage })));
+const AdminAdvertisingPage = React.lazy(() => import("@/pages/admin/AdminAdvertisingPage").then(module => ({ default: module.AdminAdvertisingPage })));
 const AdminSettingsPage = React.lazy(() => import("@/pages/admin/AdminSettingsPage").then(module => ({ default: module.AdminSettingsPage })));
 const AdminDesignSystemPage = React.lazy(() => import("@/pages/admin/AdminDesignSystemPage").then(module => ({ default: module.AdminDesignSystemPage })));
 const AdminEmailsPage = React.lazy(() => import("@/pages/admin/AdminEmailsPage").then(module => ({ default: module.AdminEmailsPage })));
@@ -509,6 +510,7 @@ function Router() {
       <Route path="/admin/design-advanced" component={AdminDesignSystemPage} />
       <Route path="/admin/theme-studio" component={AdminDesignCenterPage} />
       <Route path="/admin/settings"><AdminSettingsPage /></Route>
+      <Route path="/admin/advertising"><AdminAdvertisingPage /></Route>
       <Route path="/admin/emails" component={AdminEmailsPage} />
       <Route path="/auctions/create">{() => <FeatureGate feature="auctions" name="Auctions"><CreateAuctionPage /></FeatureGate>}</Route>
       <Route path="/auctions/:id">{() => <FeatureGate feature="auctions" name="Auctions"><AuctionDetailPage /></FeatureGate>}</Route>
