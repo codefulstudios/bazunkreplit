@@ -336,7 +336,7 @@ export function Navbar() {
         <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
 
           {/* Theme + Logo */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="bz-header-brand flex items-center gap-2 flex-shrink-0">
             <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
               {useDefaultDarkLogo ? <span data-theme-edit="site_logo_url" className="relative block h-7 aspect-[1142/289] shrink-0 overflow-hidden sm:h-9 md:h-12 xl:h-14"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />}
@@ -356,7 +356,7 @@ export function Navbar() {
           <button type="button" className="bz-mockup-categories hidden xl:flex" aria-haspopup="dialog" aria-expanded={categoryDrawerOpen} onClick={()=>setCategoryDrawerOpen(v=>!v)}><Menu className="h-5 w-5"/> Categories <ChevronDown className="h-4 w-4"/></button>
 
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-1 text-sm font-medium flex-shrink-0">
+          <div className="bz-header-primary-nav hidden xl:flex items-center gap-1 text-sm font-medium flex-shrink-0">
 
             {/* Primary links */}
             {primaryLinks.map(({ href, label, live }) => {
@@ -438,11 +438,10 @@ export function Navbar() {
 
           </div>
 
-          {/* Right section */}
-          <div className="flex flex-1 min-w-0 items-center gap-2 justify-end">
-
+          {/* Search occupies its own full-width slot beside navigation. */}
+          <div className="bz-header-search-slot">
             {/* Desktop search */}
-            <div ref={searchRef} className="relative hidden lg:block flex-1 min-w-0 max-w-[680px] mr-1">
+            <div ref={searchRef} className="relative hidden lg:block w-full min-w-0">
               <form onSubmit={handleSubmit}>
                 <SearchHeaderIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                 <Input
@@ -534,6 +533,12 @@ export function Navbar() {
                 </div>
               )}
             </div>
+
+
+          </div>
+
+          {/* Right section */}
+          <div className="bz-header-actions flex flex-1 min-w-0 items-center gap-2 justify-end">
 
             {/* Logged OUT actions */}
             {!user && (
