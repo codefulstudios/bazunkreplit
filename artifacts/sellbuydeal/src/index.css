@@ -3783,4 +3783,4 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .auction-create-ad{display:block;min-width:0}
 .auction-create-ad [data-ad-placement]{width:100%;min-height:90px}
 @media(min-width:1050px){.auction-create-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.auction-create-fields>section:first-child{grid-column:1/-1}.auction-create-fields>section:nth-child(2){grid-column:1;grid-row:2/span 2}.auction-create-fields>section:nth-child(3){grid-column:1;grid-row:4}.auction-create-fields>details:nth-child(4){grid-column:1;grid-row:5}.auction-create-fields>section:nth-child(5){grid-column:2;grid-row:2/span 2}.auction-create-fields>section:nth-child(6){grid-column:2;grid-row:4/span 2}.auction-create-fields>section:nth-child(7){grid-column:1/-1;grid-row:6}}
-@media(min-width:1750px){.auction-create-shell{grid-template-columns:minmax(0,1fr) 728px}.auction-create-ad{position:sticky;top:20px}}
+@media(min-width:1450px){.auction-create-shell{grid-template-columns:minmax(0,1fr) 728px}.auction-create-ad{position:sticky;top:20px}}
