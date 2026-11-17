@@ -139,3 +139,20 @@
 .bazunk-dashboard-subpage :is(button,a)[class*="bg-amber-400"]{color:#10213e!important}
 .bazunk-dashboard-subpage :is(button,a)[class*="bg-white"]{background:#19385b!important;color:#fff!important}
 .bazunk-dashboard-subpage :is(button,a)[class*="bg-white"] svg{color:#ffb354}
+
+/* Store manager is a dashboard panel, never a standalone page. */
+.bazunk-dashboard-store{min-width:0;padding:8px}
+.bazunk-dashboard-store>section,.bazunk-dashboard-store>div:not(:first-child){border-radius:16px}
+.bazunk-dashboard-store :is(input,textarea,select){color:#fff!important;background:#102746!important;border-color:#6a8bad!important}
+.bazunk-dashboard-store :is(input,textarea)::placeholder{color:#c4d3e6!important}
+.bazunk-dashboard-store :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"]{background:#102746!important;color:#fff!important;border-color:#34587e!important}
+.bazunk-dashboard-store :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] :is(h1,h2,h3,h4,p,span,label){color:#f8fbff}
+.bazunk-dashboard-store :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] .text-gray-500{color:#d1dff1!important}
+.bazunk-dashboard-store :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] svg{color:#ffad57}
+.bazunk-dashboard-store button[class*="bg-orange-500"]{color:#fff!important}
+.bazunk-dashboard-store button[class*="bg-orange-500"] svg{color:#fff!important}
+.bazunk-dashboard-store :is(.text-gray-900,.text-slate-950,.text-slate-900){color:#fff!important}
+.bazunk-dashboard-store :is(.text-gray-600,.text-slate-600,.text-slate-700){color:#d1dff1!important}
+.bazunk-dashboard-store :is(.from-violet-600,.from-purple-600){color:#fff!important}
+.bazunk-dashboard-store :is(.from-violet-600,.from-purple-600) :is(h1,h2,h3,p,span){color:#fff!important}
+@media(max-width:640px){.bazunk-dashboard-store{padding:0}.bazunk-dashboard-store>div:first-child{padding:14px}}
