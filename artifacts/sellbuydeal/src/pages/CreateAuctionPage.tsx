@@ -263,7 +263,7 @@ export function CreateAuctionPage() {
 
         <form onSubmit={submit} noValidate className="auction-create-form space-y-4">
 
-          <div className="space-y-4 min-w-0">
+          <div className="auction-create-layout min-w-0">
           {/* Colourful, accessible auction hero */}
           <div className="auction-create-header rounded-2xl overflow-hidden border border-violet-200 bg-gradient-to-r from-[#eee9ff] via-[#f7f5ff] to-[#fff0df] px-5 sm:px-7 py-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-5">
