@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
@@ -676,7 +677,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
 
   const totalThreads = visibleConvos.length + visibleTickets.length + visibleOffers.length;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -687,7 +688,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+            className="fixed inset-0 bg-[#06152c]/65 z-[10000] backdrop-blur-[3px]"
             onClick={onClose}
           />
 
@@ -698,7 +699,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-4 md:inset-8 z-[101] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white"
+            role="dialog" aria-modal="true" aria-label="Bazunk messages" className="fixed inset-3 md:inset-8 z-[10001] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white text-slate-900"
             style={{ maxWidth: 1200, maxHeight: 800, margin: "auto" }}
           >
             <div className="flex h-full min-h-0">
@@ -994,6 +995,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
