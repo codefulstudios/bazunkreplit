@@ -261,14 +261,14 @@ export function CreateAuctionPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate className="auction-create-form space-y-4">
+        <form onSubmit={submit} noValidate className="auction-create-form auction-create-shell">
 
           <div className="auction-create-layout min-w-0">
           {/* Colourful, accessible auction hero */}
           <div className="auction-create-header rounded-2xl overflow-hidden border border-violet-200 bg-gradient-to-r from-[#eee9ff] via-[#f7f5ff] to-[#fff0df] px-5 sm:px-7 py-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-5">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-9 h-9 text-white" /></div>
+                <div className="auction-hero-gavel w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-9 h-9 !text-white" /></div>
                 <div><h1 className="auction-create-header-title text-3xl sm:text-4xl font-black tracking-tight text-[#101c38]">List an Auction</h1><p className="auction-create-header-subtitle text-[#334155] text-sm mt-1">Create your auction in minutes and reach more buyers on Bazunk.</p></div>
               </div>
               <div className="flex flex-wrap gap-4 sm:gap-6 text-[#101c38] text-xs font-bold">
@@ -279,6 +279,7 @@ export function CreateAuctionPage() {
             </div>
           </div>
 
+          <div className="auction-create-fields min-w-0">
           {/* Import from existing listing */}
           <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
             <button type="button" onClick={() => setImportOpen(v => !v)} className="w-full flex items-center justify-between text-sm font-bold text-slate-800"><span>Import from an existing listing <span className="font-normal text-slate-600">(optional)</span></span><ChevronDown className={`w-4 h-4 transition-transform ${importOpen ? "rotate-180" : ""}`} /></button>
@@ -666,7 +667,8 @@ export function CreateAuctionPage() {
             </div>
           </section>
           </div>
-          <aside className="w-full min-w-0" aria-label="Auction listing advertisement">
+          </div>
+          <aside className="auction-create-ad w-full min-w-0" aria-label="Auction listing advertisement">
             <div className="w-full max-w-[728px] mx-auto">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">Advertisement · 728 × 90</p>
               <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="90" className="w-full min-h-[90px] rounded-md border border-dashed border-slate-300 bg-white overflow-hidden">
