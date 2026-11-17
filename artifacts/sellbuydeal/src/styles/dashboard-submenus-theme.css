@@ -128,3 +128,14 @@
 .bazunk-dashboard-subpage :is(.bg-white,.bg-gray-50,.bg-slate-50) svg{stroke-width:2.2}
 .bazunk-dashboard-subpage :is(a,button):hover{filter:brightness(1.09)}
 @media(max-width:640px){.bazunk-dashboard-subpage{padding:10px}}
+
+/* Preserve legible text inside deliberately bright action buttons and chips. */
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-orange-500"],
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-orange-600"],
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-blue-600"],
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-indigo-600"],
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-emerald-600"]{color:#fff!important}
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-yellow-400"],
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-amber-400"]{color:#10213e!important}
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-white"]{background:#19385b!important;color:#fff!important}
+.bazunk-dashboard-subpage :is(button,a)[class*="bg-white"] svg{color:#ffb354}
