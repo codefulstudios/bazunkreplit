@@ -21,6 +21,14 @@ import {
   Zap,
   Plus,
   ChevronDown,
+  Layers3,
+  FileText,
+  Coins,
+  ShieldCheck,
+  UsersRound,
+  Truck,
+  MapPin,
+  PlayCircle,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -73,6 +81,7 @@ export function CreateAuctionPage() {
   const [subcategory, setSubcategory] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [shippingMode, setShippingMode] = useState<"ship" | "collection">("ship");
   const selectedCategory = MARKET_CATEGORIES.find(c => c.name === category);
   const availableSubcategories = selectedCategory?.subcategories ?? [];
   const [condition, setCondition]       = useState("good");
@@ -207,7 +216,7 @@ export function CreateAuctionPage() {
   }
 
   if (success) return (
-    <div className="min-h-screen bg-[#f1f5f9] flex flex-col">
+    <div className="min-h-screen bg-[#f6f7fc] flex flex-col">
       <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <motion.div
@@ -252,18 +261,20 @@ export function CreateAuctionPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate className="auction-create-form grid grid-cols-1 min-[1450px]:grid-cols-[minmax(0,1fr)_728px] gap-4 items-start">
+        <form onSubmit={submit} noValidate className="auction-create-form space-y-4">
 
-          <div className="space-y-3 min-w-0">
-          {/* Header card */}
-          <div className="auction-create-header rounded-xl bg-gradient-to-r from-[#071b35] via-[#112d50] to-[#b94a0c] px-5 py-3 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <Gavel className="w-5 h-5 text-white" />
+          <div className="space-y-4 min-w-0">
+          {/* Colourful, accessible auction hero */}
+          <div className="auction-create-header rounded-2xl overflow-hidden border border-violet-200 bg-gradient-to-r from-[#eee9ff] via-[#f7f5ff] to-[#fff0df] px-5 sm:px-7 py-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-9 h-9 text-white" /></div>
+                <div><h1 className="auction-create-header-title text-3xl sm:text-4xl font-black tracking-tight text-[#101c38]">List an Auction</h1><p className="auction-create-header-subtitle text-[#334155] text-sm mt-1">Create your auction in minutes and reach more buyers on Bazunk.</p></div>
               </div>
-              <div>
-                <h1 className="auction-create-header-title text-2xl font-bold text-white">List an Auction</h1>
-                <p className="auction-create-header-subtitle text-orange-100 text-sm mt-0.5">Add photos, set your price — go live instantly</p>
+              <div className="flex flex-wrap gap-4 sm:gap-6 text-[#101c38] text-xs font-bold">
+                <span className="flex flex-col items-center gap-1"><Zap className="w-6 h-6 text-orange-600"/>No listing fees</span>
+                <span className="flex flex-col items-center gap-1"><ShieldCheck className="w-6 h-6 text-orange-600"/>Secure &amp; trusted</span>
+                <span className="flex flex-col items-center gap-1"><UsersRound className="w-6 h-6 text-orange-600"/>Bigger audience</span>
               </div>
             </div>
           </div>
@@ -276,7 +287,7 @@ export function CreateAuctionPage() {
 
           {/* Item Details */}
           <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950 mb-3">Item Details</h2>
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Layers3 className="w-5 h-5 text-orange-600" /> Item Details</h2>
 
             <div className="mb-4">
               <label className="text-sm font-medium text-slate-900 mb-1.5 block">
@@ -374,7 +385,7 @@ export function CreateAuctionPage() {
 
           {/* Photos */}
           <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950 mb-1">Photos</h2>
+            <h2 className="text-base font-black text-slate-950 mb-1 flex items-center gap-2"><Camera className="w-5 h-5 text-violet-600" /> Add Photos</h2>
             <p className="text-xs text-slate-600 mb-4">Upload up to 10 photos. First photo is the cover.</p>
 
             <input
@@ -437,7 +448,7 @@ export function CreateAuctionPage() {
 
           {/* Video */}
           <details className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
-            <summary className="cursor-pointer text-sm font-bold text-slate-900">Add a video (optional)</summary>
+            <summary className="cursor-pointer text-sm font-bold text-slate-900 flex items-center gap-2"><PlayCircle className="w-5 h-5 text-violet-600" /> Add a Video (optional)</summary>
           <section className="pt-3">
             <h2 className="text-base font-bold text-slate-950 mb-1">Video <span className="text-slate-600 font-normal text-sm">(optional)</span></h2>
             <p className="text-xs text-slate-600 mb-4">A short clip helps bidders trust the item is as described.</p>
@@ -488,7 +499,7 @@ export function CreateAuctionPage() {
 
           {/* Auction Settings */}
           <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
-            <h2 className="text-base font-bold text-slate-950 mb-3">Auction Settings</h2>
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Coins className="w-5 h-5 text-orange-600" /> Auction Settings</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
@@ -571,6 +582,15 @@ export function CreateAuctionPage() {
             </div>
           </section>
 
+          {/* Shipping choice: visual preference only; no unimplemented backend promise */}
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-4 border border-slate-300 shadow-sm">
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Truck className="w-5 h-5 text-orange-600" /> Delivery preference</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" aria-pressed={shippingMode === "ship"} onClick={() => setShippingMode("ship")} className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm ${shippingMode === "ship" ? "border-orange-500 bg-orange-50 text-slate-950" : "border-slate-300 bg-white text-slate-800"}`}><Truck className="w-5 h-5 text-orange-600" /> I will ship this item</button>
+              <button type="button" aria-pressed={shippingMode === "collection"} onClick={() => setShippingMode("collection")} className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm ${shippingMode === "collection" ? "border-orange-500 bg-orange-50 text-slate-950" : "border-slate-300 bg-white text-slate-800"}`}><MapPin className="w-5 h-5 text-violet-600" /> Collection only</button>
+            </div>
+            <p className="text-xs text-slate-600 mt-2">Arrange delivery or collection with the buyer after the auction.</p>
+          </section>
           {/* Ready to list */}
           <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
             <h2 className="text-lg font-bold text-slate-950 mb-1">Ready to List?</h2>
@@ -616,12 +636,12 @@ export function CreateAuctionPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#F26B21] to-[#e05a10] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-[#ff9900] to-[#fa5100] text-white font-black text-lg hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
               data-testid="button-submit-auction"
             >
               {submitting
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating auction…</>
-                : <><Gavel className="w-4 h-4" /> Start Auction</>
+                : <><Gavel className="w-4 h-4" /> List Auction</>
               }
             </button>
 
@@ -646,7 +666,7 @@ export function CreateAuctionPage() {
             </div>
           </section>
           </div>
-          <aside className="w-full min-w-0 min-[1450px]:sticky min-[1450px]:top-5" aria-label="Auction listing advertisement">
+          <aside className="w-full min-w-0" aria-label="Auction listing advertisement">
             <div className="w-full max-w-[728px] mx-auto">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 mb-1">Advertisement · 728 × 90</p>
               <div data-ad-placement="create-auction-leaderboard" data-ad-width="728" data-ad-height="90" className="w-full min-h-[90px] rounded-md border border-dashed border-slate-300 bg-white overflow-hidden">
