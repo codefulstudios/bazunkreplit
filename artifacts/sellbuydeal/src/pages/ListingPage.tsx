@@ -3,6 +3,7 @@ import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
 import { SellerCard } from "@/components/listing/ListingSellerCard";
 import { TrustProofBuyerPanel } from "@/components/listing/TrustProofBuyerPanel";
+import { useFeature } from "@/components/FeatureGate";
 import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
 import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
@@ -156,6 +157,8 @@ export function ListingPage() {
   const staticProduct = ALL_PRODUCTS.find((p) => p.id === parseInt(id ?? "0"));
   const [apiProduct, setApiProduct] = useState<(typeof ALL_PRODUCTS[0] & ApiListingExtra) | null>(null);
   const [loading, setLoading] = useState(!staticProduct);
+  const trustProofEnabled=useFeature("trust_proof");
+  const [informationTab,setInformationTab]=useState<"details"|"trust">("details");
 
   useEffect(() => {
     if (!staticProduct && id) {
@@ -513,8 +516,14 @@ export function ListingPage() {
                   })()}
                 </div></>} />
 
-            {/* Three separate trust claims; seller uploads never confer product authenticity. */}
-            {apiProduct?.id&&<TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)} />}
+            {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
+            <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600">
+              <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
+                <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
+                {trustProofEnabled&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
+              </div>
+              {trustProofEnabled&&apiProduct?.id&&informationTab==="trust"&&<div role="tabpanel" id="listing-trust-panel" aria-labelledby="listing-trust-tab" className="p-3"><TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)}/></div>}
+            </div>
 
             {/* {t("descriptionDetails")} */}
             {(() => {
@@ -522,7 +531,7 @@ export function ListingPage() {
               const specs = extra._specifications ?? [];
               const tags = extra._tags ?? [];
               return (
-                <ListingDetailsSection>
+                <div role="tabpanel" id="listing-details-panel" aria-labelledby="listing-details-tab" hidden={informationTab==="trust"&&trustProofEnabled&&Boolean(apiProduct?.id)}><ListingDetailsSection>
                   {/* Gradient header */}
                   <div className="bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-6 py-4 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -620,7 +629,7 @@ export function ListingPage() {
                     </div>
                     {reportOpen&&<div className="fixed inset-x-3 top-[8vh] z-[100] max-h-[84dvh] overflow-y-auto rounded-xl border border-orange-400 bg-white p-4 shadow-2xl dark:bg-[#10223d] dark:text-white lg:static lg:inset-auto lg:max-h-none lg:shadow-lg"><h3 className="text-lg font-bold">Report this listing</h3><p className="mb-3 text-sm text-slate-600 dark:text-slate-200">Your report goes to Bazunk support for review. Reporting does not automatically remove a listing.</p><form onSubmit={e=>void submitListingReport(e)} className="space-y-3"><label className="block text-sm font-semibold">Reason<select required value={reportReason} onChange={e=>setReportReason(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"><option value="">Select a reason</option>{["Scam or fraudulent","Prohibited item","Wrong category","Counterfeit / fake item","Abusive content","Misleading description","Other"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>{!viewer?.email&&<label className="block text-sm font-semibold">Your email<input required type="email" value={reportEmail} onChange={e=>setReportEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>}<label className="block text-sm font-semibold">Additional details<textarea value={reportDetails} maxLength={2000} onChange={e=>setReportDetails(e.target.value)} placeholder="Explain the issue (optional)" className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>{reportError&&<p role="alert" className="text-sm font-semibold text-red-700 dark:text-red-300">{reportError}</p>}<div className="flex gap-2"><button type="submit" disabled={reportBusy} className="rounded-lg bg-orange-600 px-4 py-2.5 font-bold text-white hover:bg-orange-700 disabled:opacity-50">{reportBusy?"Submitting…":"Submit report"}</button><button type="button" onClick={()=>setReportOpen(false)} className="rounded-lg border border-slate-400 px-4 py-2.5 font-bold text-slate-800 dark:text-white">Cancel</button></div></form></div>}
                   </div>
-                </ListingDetailsSection>
+                </ListingDetailsSection></div>
               );
             })()}
 
