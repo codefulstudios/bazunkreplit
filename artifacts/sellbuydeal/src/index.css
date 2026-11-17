@@ -3510,3 +3510,56 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-live-page main a.bg-\[\#ff7900\]{color:white!important}
 @media(max-width:900px){.bz-market-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bz-live-hero-art{flex-basis:250px}}
 @media(max-width:620px){.bz-market-stats{gap:7px}.bz-market-stat{padding:10px;grid-template-columns:29px 1fr;column-gap:6px;min-height:80px}.bz-market-stat>svg{width:28px;height:28px;padding:5px}.bz-market-stat>strong{font-size:21px}.bz-market-stat>span{font-size:11px}.bz-market-stat small{font-size:9px}.bz-live-hero{padding:22px;min-height:280px}.bz-live-hero-art{display:none}.bz-live-hero-actions a{padding:9px 12px;font-size:12px}}
+
+/* Shared design system for the three marketplace discovery pages. Keep global Navbar unchanged. */
+.bz-auction-page,.bz-flash-page,.bz-live-page{background:#f2f7ff!important;color:#0a2345!important}
+.bz-auction-page .bz-market-hero,.bz-flash-page .bz-market-hero,.bz-live-page .bz-market-hero{box-sizing:border-box;width:calc(100% - 32px);max-width:1248px;margin:16px auto 0;border:0!important;border-radius:22px!important;overflow:hidden;min-height:245px;box-shadow:0 7px 22px #123e711c}
+.bz-auction-page .bz-market-hero{background:radial-gradient(circle at 86% 42%,#d03cdb80,transparent 38%),linear-gradient(110deg,#133ec6,#264cdb 55%,#7a2ad6)!important}
+.bz-flash-page .bz-market-hero{background:radial-gradient(circle at 90% 44%,#e454dc99,transparent 38%),linear-gradient(110deg,#b7e1ff,#c3baff 58%,#9c71ed)!important}
+.bz-live-page .bz-market-hero{background:radial-gradient(circle at 87% 48%,#ed8cda91,transparent 38%),linear-gradient(110deg,#bce6ff,#c2c5ff 55%,#e7b3f4)!important;margin:0 0 18px;width:100%}
+.bz-auction-page .bz-market-hero h1,.bz-auction-page .bz-market-hero p{color:#fff!important}
+.bz-flash-page .bz-market-hero h1,.bz-flash-page .bz-market-hero p,.bz-live-page .bz-market-hero h1,.bz-live-page .bz-market-hero p{color:#092449!important}
+.bz-flash-page .bz-market-hero h1>span:first-child,.bz-live-page .bz-market-hero h1 em{color:#fa6400!important}
+.bz-auction-page .bz-market-hero h1>span{color:#ff9c36!important}
+.bz-flash-page .bz-market-hero .text-slate-100{color:#193d64!important}
+.bz-auction-page .bz-market-hero-art,.bz-flash-page .bz-market-hero-art,.bz-live-page .bz-market-hero-art{filter:drop-shadow(0 10px 12px #0a245833)}
+.bz-auction-page .bz-market-hero-art{min-height:210px}
+.bz-auction-page .bz-market-hero-art .bz-auction-hero-gavel{transform:rotate(-24deg)}
+.bz-auction-page .bz-market-hero-art .bz-auction-hero-gavel svg{width:190px;height:190px;stroke:#ffc45a;fill:#a4501c}
+.bz-auction-page .bz-market-hero-art>span:last-child{background:#ff7900;border-color:#fff}
+.bz-auction-page>main,.bz-flash-page>main,.bz-live-page>main{max-width:1248px!important;padding-top:16px!important}
+.bz-market-stats{gap:12px!important;margin:0 0 20px!important}
+.bz-market-stat{border-radius:15px!important;box-shadow:0 4px 13px #12365b24}
+.bz-market-stat.orange{background:linear-gradient(115deg,#ff8b09,#ef5c00)!important}
+.bz-market-stat.blue{background:linear-gradient(115deg,#137bf2,#004db6)!important}
+.bz-market-stat.green{background:linear-gradient(115deg,#00a87e,#007457)!important}
+.bz-market-stat.pink{background:linear-gradient(115deg,#b533df,#7021c4)!important}
+.bz-market-stat strong,.bz-market-stat span,.bz-market-stat small{color:#fff!important}
+.bz-market-item-card{background:#fff!important;color:#102748!important;border:1px solid #d5e0f0!important;box-shadow:0 4px 13px #113e6d18!important}
+.bz-market-item-card h3,.bz-market-item-card h3.text-white,.bz-market-item-card p.text-white,.bz-market-item-card .text-gray-300,.bz-market-item-card .text-gray-400,.bz-market-item-card .text-slate-200{color:#173254!important}
+.bz-market-item-card .text-slate-300{color:#677991!important}
+.bz-market-item-card .text-\[\#ffe04b\],.bz-market-item-card .text-\[\#ffe15b\]{color:#f06400!important}
+.bz-market-item-card .text-xs{line-height:1.45}
+.bz-market-item-card .bg-slate-100{background:#f3f7fc!important}
+.bz-market-item-card img{object-fit:contain}
+.bz-market-item-card button.bg-\[\#ff711d\],.bz-market-item-card button.bg-\[\#ff701e\]{background:#ff7900!important;color:#fff!important}
+.bz-auction-page main>div:has(>div>button),.bz-flash-page main>div:has(>div>button){border-radius:15px}
+.bz-auction-page main>div:has(>div>button):not(.bz-market-stats),.bz-flash-page main>div:has(>div>button):not(.bz-market-stats){color:#fff}
+.bz-auction-page main>div>p.text-white,.bz-flash-page main>div>p.text-white,.bz-flash-page main section h2.text-white{color:#12345b!important}
+.bz-auction-page main .bg-gradient-to-br.from-\[\#0b3266\],.bz-flash-page main .bg-gradient-to-br.from-\[\#092a59\]{background:linear-gradient(135deg,#123e7e,#253b83)!important}
+.bz-auction-page main .bg-\[\#082b55\],.bz-flash-page main .bg-\[\#08264b\]{background:#0b315f!important}
+.bz-live-page .bz-live-hero{min-height:245px;padding:26px 35px}
+.bz-live-page .bz-live-hero h2{color:#0c284a!important}
+.bz-live-page .bz-live-hero-art{height:205px}
+.bz-live-page .bz-live-screen{height:195px}
+.bz-live-page .bz-live-tabs a{border-radius:99px}
+.bz-live-page .bz-live-empty{background:#fff;color:#112d4d}
+.bz-live-page .bz-live-empty h2.text-white{color:#10294a!important}
+.bz-live-page .bz-live-empty p.text-gray-500{color:#4a6380!important}
+.bz-live-page main h1.text-white,.bz-live-page main h2.text-white{color:#112e54!important}
+.bz-live-page .bz-live-upcoming-card .text-gray-600,.bz-live-page .bz-live-upcoming-card .text-gray-400{color:#4d6683!important}
+.bz-live-page .bz-live-upcoming-card .bg-gray-800{background:#e7f0fb!important;color:#173c65!important}
+.bz-live-page .bz-live-stream-card .text-white,.bz-live-page .bz-live-upcoming-card .text-white{color:#123355!important}
+.bz-live-page .bz-live-stream-card .bg-red-500.text-white{color:#fff!important}
+.bz-live-page .bz-live-empty a.text-white{color:#fff!important}
+@media(max-width:650px){.bz-auction-page .bz-market-hero,.bz-flash-page .bz-market-hero,.bz-live-page .bz-market-hero{width:calc(100% - 16px);border-radius:16px!important}.bz-live-page .bz-market-hero{width:100%}.bz-market-stat{min-height:90px}.bz-auction-page .bz-market-hero h1,.bz-flash-page .bz-market-hero h1{font-size:35px!important}.bz-live-page .bz-live-hero{padding:20px}}
