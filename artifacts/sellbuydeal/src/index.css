@@ -3901,3 +3901,35 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] svg{stroke-width:2.1}
 .bazunk-account-page :is(.bg-white,.bg-gray-50,.bg-slate-50)[class*="rounded-"] a:not([class*="bg-"]){color:#9dd9ff}
 @media(max-width:640px){.bazunk-account-page :is(.rounded-2xl,.rounded-3xl){border-radius:14px}}
+
+/* Compact, high-contrast product detail layout — scoped to listing pages. */
+.bazunk-listing-redesign{--listing-text:#142743;background:#edf2f9;color:#142743}
+.bazunk-listing-redesign .bazunk-listing-content{padding-top:12px;padding-bottom:20px;max-width:1420px}
+.bazunk-listing-redesign .bazunk-listing-content>button:first-child{margin-bottom:6px;font-size:12px;color:#375171}
+.bazunk-listing-redesign .bazunk-listing-content>nav{margin-bottom:12px;color:#465d7b}
+.bazunk-listing-redesign .bazunk-listing-aside{row-gap:12px}
+.bazunk-listing-redesign .bazunk-listing-aside>*,.bazunk-listing-redesign .bazunk-listing-content section{border-color:#c4d2e4}
+.bazunk-listing-redesign .bz-mockup-buy-heading,.bazunk-listing-redesign .bz-mockup-product-key h2{display:flex;align-items:center;gap:8px;color:#102747;font-size:16px;font-weight:850;line-height:1.3}
+.bazunk-listing-redesign .bz-mockup-buy-heading svg,.bazunk-listing-redesign .bz-mockup-product-key h2 svg{color:#e8660b;flex-shrink:0}
+.bazunk-listing-redesign .bz-mockup-product-key{margin-top:10px;padding:10px 0}
+.bazunk-listing-redesign .bz-mockup-product-key p{font-size:12px;line-height:1.5;color:#40546d}
+.bazunk-listing-redesign .bz-mockup-product-meta{font-size:12px;line-height:1.5;margin:3px 0;color:#304862}
+.bazunk-listing-redesign .bz-mockup-product-meta svg{width:15px;height:15px;color:#d75c0b}
+.bazunk-listing-redesign .bz-mockup-product-promises{gap:8px;margin:8px 0}
+.bazunk-listing-redesign .bz-mockup-product-promises span{font-size:11px;font-weight:750;color:#26415f}
+.bazunk-listing-redesign .bz-mockup-product-promises svg{width:16px;height:16px}
+.bazunk-listing-redesign .bazunk-listing-essentials{padding:10px 12px;margin-bottom:10px;row-gap:6px;font-size:12px;background:#eef4fc;border:1px solid #c9d8eb;color:#18314f}
+.bazunk-listing-redesign .bazunk-listing-essentials span{color:#263f5c}
+.bazunk-listing-redesign .bazunk-listing-tabs{border-color:#bdcce0}
+.bazunk-listing-redesign .bazunk-listing-tabs button{padding-top:9px;padding-bottom:9px}
+.bazunk-listing-redesign .bz-listing-safety{padding:13px;border:1px solid #c2d7e7}
+.bazunk-listing-redesign .bz-listing-safety>div:first-child{margin-bottom:10px}
+.bazunk-listing-redesign .bz-listing-safety h3{font-size:16px}
+.bazunk-listing-redesign .bz-listing-safety .grid{gap:9px;margin-bottom:10px}
+.bazunk-listing-redesign .bz-safety-tile{padding:12px}
+.bazunk-listing-redesign .bz-safety-tile h4{font-size:13px}
+.bazunk-listing-redesign .bz-safety-tile p{font-size:11px}
+.bazunk-listing-redesign .bazunk-listing-content :is(h2,h3,h4){letter-spacing:-.015em}
+.bazunk-listing-redesign .bazunk-listing-content :is(input,select){color:#152d4b;border-color:#8ea4c0}
+.bazunk-listing-redesign .bazunk-listing-content :is(button,a):focus-visible{outline:3px solid #f18a28;outline-offset:2px}
+@media(max-width:640px){.bazunk-listing-redesign .bazunk-listing-content{padding-inline:10px}.bazunk-listing-redesign .bz-mockup-buy-heading{font-size:15px}}
