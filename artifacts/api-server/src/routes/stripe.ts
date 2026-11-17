@@ -290,7 +290,7 @@ router.post("/stripe/checkout-cart", async (req, res) => {
       const country=shippingCountry==="GB"?"UK":shippingCountry;
       const domestic=origin==="GB"?"UK":origin;
       const european=["GB","IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"].includes(shippingCountry);
-      if(!zone || (zone==="domestic"&&country!==domestic) || (zone==="europe"&&!european) || !["domestic","europe","worldwide","international"].includes(zone))
+      if(!zone || (zone==="domestic"&&country!==domestic) || (zone==="eu"&&!(european&&(origin==="UK"||origin==="GB"||shippingCountry!=="GB"))) || (zone==="eu-only"&&!european) || (zone==="europe"&&!([...["GB","NO","CH","IS","LI"],...["IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"]].includes(shippingCountry))) || (zone==="north-america"&&!["US","CA","MX"].includes(shippingCountry)) || (zone==="asia"&&!["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(shippingCountry)) || !["domestic","eu","eu-only","europe","north-america","asia","worldwide"].includes(zone))
         throw new QuoteError("One or more sellers have not enabled delivery to this destination. Please update your basket or delivery address.",409);
     }
     const quote=await quoteCart(body.items);
