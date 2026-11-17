@@ -439,7 +439,9 @@ export function CreateAuctionPage() {
           </section>
 
           {/* Video */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
+          <details className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <summary className="cursor-pointer text-sm font-bold text-slate-900">Add a video (optional)</summary>
+          <section className="pt-3">
             <h2 className="text-base font-bold text-gray-900 mb-1">Video <span className="text-slate-600 font-normal text-sm">(optional)</span></h2>
             <p className="text-xs text-slate-600 mb-4">A short clip helps bidders trust the item is as described.</p>
 
