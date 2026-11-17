@@ -11,8 +11,6 @@ import { useAdmin } from "@/context/AdminContext";
 interface Settings {
   listing_section_specifications: string;
   listing_section_buyer_protection: string;
-  listing_section_related: string;
-  listing_section_recent: string;
   listing_section_stats: string;
   listing_section_sharing: string;
   listing_section_quick_facts: string;
@@ -55,8 +53,6 @@ interface Settings {
 const DEFAULTS: Settings = {
   listing_section_specifications: "true",
   listing_section_buyer_protection: "true",
-  listing_section_related: "true",
-  listing_section_recent: "false",
   listing_section_stats: "false",
   listing_section_sharing: "true",
   listing_section_quick_facts: "false",
@@ -380,8 +376,6 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
             <p className="text-sm text-slate-600">Switch optional storefront sections on or off. Save Changes to publish. Core purchase, price, seller and checkout information cannot be hidden.</p>
             <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Item specifications</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_specifications !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_specifications:String(e.target.checked)}))}/></label>
             <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Buyer protection information</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_buyer_protection !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_buyer_protection:String(e.target.checked)}))}/></label>
-            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Related products</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_related !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_related:String(e.target.checked)}))}/></label>
-            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Recently viewed</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_recent !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_recent:String(e.target.checked)}))}/></label>
             <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Listing statistics</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_stats !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_stats:String(e.target.checked)}))}/></label>
             <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Social sharing controls</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_sharing !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_sharing:String(e.target.checked)}))}/></label>
             <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Quick facts</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_quick_facts !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_quick_facts:String(e.target.checked)}))}/></label>
