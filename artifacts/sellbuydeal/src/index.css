@@ -3745,3 +3745,26 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .auction-create-form .auction-create-header .auction-create-header-title,.auction-create-form .auction-create-header h1{color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;opacity:1!important}
 .auction-create-form .auction-create-header .auction-create-header-subtitle,.auction-create-form .auction-create-header p{color:#fff1df!important;-webkit-text-fill-color:#fff1df!important;opacity:1!important}
 .auction-create-form .auction-create-header svg{color:#ffffff!important;stroke:#ffffff!important}
+
+/* Light, colourful auction creation layout: header spans both columns. */
+.auction-create-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start}
+.auction-create-layout>section,.auction-create-layout>details{min-width:0;box-shadow:0 3px 12px rgba(17,34,68,.055);border-radius:16px}
+.auction-create-layout>section:hover,.auction-create-layout>details:hover{border-color:#b9c6dc}
+.auction-create-layout .auction-create-header{grid-column:1/-1}
+.auction-create-form .auction-create-header .auction-create-header-title,.auction-create-form .auction-create-header h1{color:#101c38!important;-webkit-text-fill-color:#101c38!important}
+.auction-create-form .auction-create-header .auction-create-header-subtitle,.auction-create-form .auction-create-header p{color:#334155!important;-webkit-text-fill-color:#334155!important}
+.auction-create-form .auction-create-header svg{color:#fff!important;stroke:currentColor!important}
+.auction-create-form .auction-create-layout button[aria-pressed="true"]{border-color:#f97316!important;background:#fff0df!important;color:#101c38!important}
+.auction-create-form .auction-create-layout button[type="submit"]{color:#fff!important}
+.auction-create-form .auction-create-layout button:not([type="submit"]):not([class*="bg-gradient"]){color:#0f172a}
+@media(min-width:1050px){
+ .auction-create-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+ .auction-create-layout>div:nth-child(1){grid-column:1/-1}
+ .auction-create-layout>section:nth-child(2){grid-column:1/-1}
+ .auction-create-layout>section:nth-child(3){grid-column:1;grid-row:3 / span 2}
+ .auction-create-layout>section:nth-child(4){grid-column:1;grid-row:5}
+ .auction-create-layout>details:nth-child(5){grid-column:1;grid-row:6}
+ .auction-create-layout>section:nth-child(6){grid-column:2;grid-row:3 / span 2}
+ .auction-create-layout>section:nth-child(7){grid-column:2;grid-row:5 / span 2}
+ .auction-create-layout>section:nth-child(8){grid-column:1/-1;grid-row:7}
+}
