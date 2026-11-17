@@ -539,7 +539,7 @@ function Router() {
       <Route path="/rewards">{() => <FeatureGate feature="games" name="Rewards Arcade"><RewardsPage /></FeatureGate>}</Route>
       <Route path="/treasure-hunt">{() => <Redirect to="/rewards" />}</Route>
       <Route path="/buyer-protection">{() => <FeatureGate feature="buyer_protection" name="Buyer Protection"><BuyerProtectionPage /></FeatureGate>}</Route>
-      <Route path="/cashback">{() => <CashbackErrorBoundary><FeatureGate feature="cashback" name="Cashback"><CashbackPage /></FeatureGate></CashbackErrorBoundary>}</Route>
+      <Route path="/cashback">{() => <Redirect to="/dashboard?section=cashback" />}</Route>
       <Route path="/welcome-new-buyers" component={WelcomeNewBuyers} />
       <Route component={NotFound} />
     </Switch>
