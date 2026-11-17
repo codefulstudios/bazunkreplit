@@ -47,7 +47,7 @@ const CATEGORY_IMAGES: Record<string,string> = {
   "toys-games":"https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=80",
   "office-products":"https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=400&q=80",
 };
-const themes = ["from-blue-500 to-blue-700","from-pink-500 to-fuchsia-700","from-violet-500 to-purple-800","from-emerald-400 to-teal-700","from-amber-300 to-orange-600","from-rose-400 to-rose-700","from-pink-400 to-fuchsia-700","from-sky-400 to-blue-700","from-fuchsia-400 to-pink-700"];
+const themes = ["from-blue-500 to-blue-700","from-pink-500 to-rose-700","from-sky-500 to-blue-800","from-emerald-400 to-teal-700","from-amber-300 to-orange-600","from-rose-400 to-rose-700","from-pink-400 to-rose-700","from-sky-400 to-blue-700","from-cyan-400 to-teal-700"];
 export function CategorySection() {
   const settings = useSiteSettings();
   const { isActive, ready } = usePublicCategoryVisibility();
