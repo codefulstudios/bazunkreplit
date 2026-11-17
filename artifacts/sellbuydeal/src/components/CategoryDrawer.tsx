@@ -8,7 +8,7 @@ type Category = (typeof ACTIVE_CATEGORIES)[number];
 
 export function CategoryDrawer({open,onClose}:{open:boolean;onClose:()=>void}) {
   const [location] = useLocation();
-  const {categoryIsActive} = usePublicCategoryVisibility();
+  const {isActive:categoryIsActive} = usePublicCategoryVisibility();
   const [selected,setSelected] = useState<Category|null>(null);
   const [search,setSearch] = useState("");
   useEffect(()=>{onClose();setSelected(null);},[location]);
