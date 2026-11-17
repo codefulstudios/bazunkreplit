@@ -448,6 +448,8 @@ function Router() {
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
       <Route path="/browse" component={BrowsePage} />
+      <Route path="/deals">{()=><BrowsePage collection="deals" />}</Route>
+      <Route path="/eco">{()=><BrowsePage collection="eco" />}</Route>
       <Route path="/search" component={BrowsePage} />
       <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
