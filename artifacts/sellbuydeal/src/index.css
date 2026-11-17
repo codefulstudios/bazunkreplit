@@ -2787,3 +2787,17 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
  .bazunk-listing-redesign .bazunk-listing-content {padding-inline:12px}
  .bazunk-listing-redesign .bazunk-listing-tabs [role="tab"] {font-size:.8rem}
 }
+
+
+/* Shared footer: keep every column visible and avoid the oversized empty navy block. */
+.bazunk-site-footer {background:linear-gradient(140deg,#0b1d35,#071426)!important;color:#e5edf8!important;min-height:0!important;height:auto!important}
+.bazunk-site-footer > .container {min-height:0!important;height:auto!important}
+.bazunk-site-footer h4 {color:#fff!important;letter-spacing:.06em}
+.bazunk-site-footer p {color:#c4d1e4!important}
+.bazunk-site-footer a {color:#d8e4f5!important;text-decoration:none}
+.bazunk-site-footer a:hover {color:#ff9b4c!important}
+.bazunk-site-footer ul {list-style:none;padding:0;margin:0}
+.bazunk-site-footer li {margin-bottom:8px}
+.bazunk-site-footer .grid {align-items:start}
+.bazunk-site-footer img {max-width:190px;max-height:45px;object-fit:contain}
+@media(max-width:640px){.bazunk-site-footer > .container{padding-block:32px!important}.bazunk-site-footer .grid{gap:24px 18px}}
