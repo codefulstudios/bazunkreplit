@@ -864,6 +864,25 @@ export function BrowsePage() {
       <div className="bg-white border-b">
         <div className="container mx-auto max-w-[1920px] px-4 py-5">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowMobileFilters(true)}
+              aria-label="Open listing filters"
+              aria-expanded={showMobileFilters}
+              className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#4A5CE8] transition-colors"
+              data-testid="button-mobile-filters"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters {activeFilterCount > 0 && <span className="w-5 h-5 rounded-full bg-[#4A5CE8] text-white text-xs font-bold flex items-center justify-center">{activeFilterCount}</span>}
+            </button>
+          </div>
+
+          {saveOpen && <form onSubmit={e=>{e.preventDefault();void saveCurrentSearch();}} className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-2 border-orange-300 bg-orange-50 p-4 text-slate-950">
+            <label className="min-w-[190px] flex-1 text-sm font-bold">Search name
+              <input maxLength={80} required value={saveName} onChange={e=>setSaveName(e.target.value)} placeholder={query||"e.g. Vintage games"} className="mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 font-semibold text-slate-950"/>
+            </label>
+            <label className="flex items-center gap-2 pb-2 text-sm font-bold">
+              <input type="checkbox" checked={saveAlert} onChange={e=>setSaveAlert(e.target.checked)}/> Alert on new matching listings
+            </label>
             <button type="submit" disabled={savingSearch} className="rounded-lg bg-orange-600 px-4 py-2.5 font-black text-white disabled:opacity-50">{savingSearch?"Saving…":"Save"}</button>
           </form>}
           {saveFeedback && <div role="status" className={`mb-3 rounded-lg border p-3 text-sm font-semibold ${saveSuccess?"border-green-300 bg-green-50 text-green-900":"border-red-300 bg-red-50 text-red-900"}`}>
