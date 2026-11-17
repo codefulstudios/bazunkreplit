@@ -3380,3 +3380,75 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-browse-hero.bz-deals-hero{background:radial-gradient(ellipse at 65% 95%,#ab4810 0%,transparent 45%),linear-gradient(115deg,#081c38,#133d63 63%,#08213c)!important}
 .bz-browse-hero.bz-deals-hero h1{color:#fff!important}
 .bz-browse-hero.bz-deals-hero .bz-browse-hero-points svg{color:#ffad48!important}
+
+/* My Offers: reference-matched redesign; scoped to this page only. */
+.bz-offers-page{background:linear-gradient(#f4f8ff 0 215px,#061a34 215px 100%);color:#fff}
+.bz-offers-wrap{max-width:1290px;margin:auto;padding:10px 12px 0}
+.bz-offers-hero{position:relative;min-height:250px;overflow:hidden;display:flex;align-items:center;border-radius:15px;margin-bottom:9px;padding:24px 36px;background:radial-gradient(ellipse at 35% 5%,#1575ff88,transparent 47%),linear-gradient(105deg,#073bc6 0%,#2525de 49%,#c216d8 100%);isolation:isolate}
+.bz-offers-hero-copy{position:relative;z-index:2}
+.bz-offers-back{display:inline-flex;align-items:center;gap:6px;font-weight:650;font-size:14px;color:#e6f2ff;margin-bottom:13px}
+.bz-offers-back:hover{color:#fff;text-decoration:underline}
+.bz-offers-hero h1{font-size:clamp(37px,5vw,60px);line-height:1.1;font-weight:950;letter-spacing:-.05em;color:#fff!important}
+.bz-offers-hero h1 span{color:#ff7900}
+.bz-offers-hero-copy>p{font-size:clamp(15px,1.7vw,21px);font-weight:750;margin-top:7px;color:#fff!important}
+.bz-offers-hero-perks{display:flex;align-items:center;gap:25px;margin-top:24px;font-size:16px;font-weight:800;color:#fff}
+.bz-offers-hero-perks span+span{border-left:1px solid #ffffff75;padding-left:25px}
+.bz-offers-hero-art{position:absolute;right:5%;bottom:0;width:310px;height:225px;z-index:1}
+.bz-offers-bag-blue,.bz-offers-bag-orange{position:absolute;bottom:0;display:grid;place-items:center;border-radius:15px 15px 7px 7px;box-shadow:9px 13px 15px #0004}
+.bz-offers-bag-blue{left:10px;width:140px;height:150px;background:linear-gradient(140deg,#4dc3ff,#0060c9);transform:rotate(8deg)}
+.bz-offers-bag-orange{left:125px;width:160px;height:175px;background:linear-gradient(145deg,#ffb34d,#f76b00);transform:rotate(-4deg)}
+.bz-offers-bag-blue svg,.bz-offers-bag-orange svg{position:absolute;top:-48px;width:95%;height:105px;stroke-width:1.8;opacity:.9}
+.bz-offers-bag-orange b{font-size:95px;color:#fff;font-weight:1000;font-style:italic;text-shadow:0 4px 8px #a5480055}
+.bz-offers-percent{position:absolute;right:-7px;top:12px;transform:rotate(15deg);background:#ff8c00;border-radius:14px;padding:2px 17px;font-size:47px;font-weight:950;color:#fff;box-shadow:0 8px 14px #0004}
+.bz-offers-spark{position:absolute;top:-10px;left:35px;font-size:52px;color:#ffa12a}
+.bz-offers-board{background:linear-gradient(115deg,#031b37,#062341 55%,#04182e);border-radius:15px 15px 0 0;padding:17px 19px 0;border:1px solid #163b64}
+.bz-offers-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.bz-offers-metric{display:flex;align-items:center;gap:22px;min-height:95px;padding:18px 23px;border-radius:10px;color:#fff}
+.bz-offers-metric-pending{background:linear-gradient(125deg,#d75b00,#ff8b00)}
+.bz-offers-metric-accepted{background:linear-gradient(125deg,#00674b,#00a574)}
+.bz-offers-metric-declined{background:linear-gradient(125deg,#a50758,#cf148c)}
+.bz-offers-metric svg{flex-shrink:0;color:#fff}
+.bz-offers-metric>div{display:flex;flex-direction:column;gap:1px}
+.bz-offers-metric strong{font-size:26px;font-weight:950;line-height:1.1;color:#fff}
+.bz-offers-metric b{font-size:15px;font-weight:900;color:#fff}
+.bz-offers-metric small{font-size:13px;color:#fff}
+.bz-offers-tabs{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 16px}
+.bz-offers-tab-list{display:flex;flex-wrap:wrap;gap:8px}
+.bz-offers-tab-list button{border:1px solid #1686c8;background:#092f56;color:#fff;border-radius:99px;padding:9px 14px;font-size:13px;font-weight:850;transition:.15s}
+.bz-offers-tab-list button.active{background:#fff;color:#0a2a4d;border-color:#b4ddff}
+.bz-offers-tab-list button:hover:not(.active){background:#115183}
+.bz-offers-notifications{display:flex;align-items:center;gap:8px;border:1px solid #fff9;border-radius:99px;padding:9px 14px;color:#fff;font-size:13px;font-weight:850}
+.bz-offers-notifications:hover{background:#ffffff20}
+.bz-offers-content{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(260px,1fr);gap:16px}
+.bz-offers-list{display:flex;flex-direction:column;gap:6px;min-height:320px}
+.bz-offer-card{background:linear-gradient(110deg,#142f55,#1b3964);border:1px solid #244d78;border-radius:12px;color:#fff}
+.bz-offer-card .bg-blue-50{background:#dbeafe!important}
+.bz-offer-card .bg-blue-50\/60{background:#dbeafe!important}
+.bz-offer-card .text-slate-900{color:#10213b!important}
+.bz-offer-card .text-blue-700,.bz-offer-card .text-blue-800{color:#123c81!important}
+.bz-offer-status{border:0!important;white-space:nowrap}
+.bz-offer-status-pending{background:#d96300!important;color:#fff!important}
+.bz-offer-status-accepted,.bz-offer-status-counter_accepted{background:#008b60!important;color:#fff!important}
+.bz-offer-status-declined,.bz-offer-status-counter_declined{background:#bd0b64!important;color:#fff!important}
+.bz-offer-status-countered{background:#0c62d3!important;color:#fff!important}
+.bz-offers-empty{min-height:310px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px;border-radius:13px;background:linear-gradient(130deg,#103c87,#172861);border:1px solid #234a85}
+.bz-offers-empty>span{font-size:45px}
+.bz-offers-empty h2{font-size:23px;font-weight:950;margin-top:9px;color:#fff}
+.bz-offers-empty p{font-size:14px;color:#dceaff;margin-top:7px}
+.bz-offers-empty button{display:flex;align-items:center;gap:7px;margin-top:18px;border-radius:99px;background:#ff7900;padding:10px 18px;font-weight:850;color:#fff}
+.bz-offers-tips{background:linear-gradient(135deg,#1457d3,#3113a2);border-radius:13px;padding:17px 15px}
+.bz-offers-tips h2{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:950;margin-bottom:13px;color:#fff}
+.bz-offers-tip{display:flex;align-items:center;gap:13px;padding:13px 12px;border-radius:11px;background:#0b2474bb;border:1px solid #ffffff16;margin-bottom:8px}
+.bz-offers-tip>span{font-size:26px;flex-shrink:0}
+.bz-offers-tip strong{display:block;color:#fff;font-size:14px;font-weight:900}
+.bz-offers-tip p{color:#f1f4ff;font-size:13px;line-height:1.4;margin-top:2px}
+.bz-offers-counter-alert{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:12px;padding:12px;border:1px solid #5bdcff;background:#063f67;border-radius:10px;color:#fff;font-weight:850}
+.bz-offers-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:18px;padding:15px 0 20px;border-top:1px solid #265274}
+.bz-offers-bottom button{display:flex;align-items:center;gap:12px;padding:6px 14px;text-align:left;color:#fff}
+.bz-offers-bottom button+button{border-left:1px solid #285577}
+.bz-offers-bottom button>span{font-size:32px}
+.bz-offers-bottom strong{display:block;font-size:14px;font-weight:900;color:#fff}
+.bz-offers-bottom small{display:block;font-size:12px;line-height:1.45;color:#d8e8fb;margin-top:3px}
+.bz-offers-bottom button:hover strong{text-decoration:underline}
+@media(max-width:850px){.bz-offers-content{grid-template-columns:1fr}.bz-offers-metric{padding:13px;gap:9px}.bz-offers-hero-art{right:-50px;transform:scale(.8);transform-origin:bottom right}.bz-offers-tips{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.bz-offers-tips h2{grid-column:1/-1}.bz-offers-tip{margin:0;align-items:flex-start}}
+@media(max-width:600px){.bz-offers-wrap{padding:7px 7px 0}.bz-offers-hero{min-height:210px;padding:19px}.bz-offers-hero-copy{max-width:95%}.bz-offers-hero-art{opacity:.25;right:-110px}.bz-offers-hero-perks{font-size:12px;gap:10px}.bz-offers-hero-perks span+span{padding-left:10px}.bz-offers-board{padding:12px 9px 0}.bz-offers-metrics{gap:6px}.bz-offers-metric{flex-direction:column;align-items:flex-start;min-height:118px;padding:11px 8px}.bz-offers-metric svg{width:24px;height:24px}.bz-offers-metric strong{font-size:23px}.bz-offers-metric b{font-size:11px}.bz-offers-metric small{font-size:10px}.bz-offers-tab-list button{padding:7px 9px;font-size:11px}.bz-offers-tips{display:block}.bz-offers-tip{margin-bottom:7px}.bz-offers-bottom{grid-template-columns:1fr}.bz-offers-bottom button+button{border-left:0;border-top:1px solid #285577}}
