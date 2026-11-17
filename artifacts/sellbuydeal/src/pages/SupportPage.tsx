@@ -226,7 +226,7 @@ export function SupportPage() {
   const all = useMemo(()=>categories.flatMap(c=>[...c.faqs,...(EXTRA_FAQS[c.label]||[])].filter(faqVisible).map(f=>({...f,category:c.label}))),[categories.map(c=>c.label).join("|"),settings]);
   const active = categories.some(c=>c.label===category)?category:(categories[0]?.label||"Buying");
   const results = all.filter(f=>search.trim()?((f.q+" "+f.a+" "+f.category).toLowerCase().includes(search.trim().toLowerCase())):f.category===active);
-    const toggle=(id:string)=>setExpanded(prev=>prev.includes(id)?prev.filter(v=>v!==id):[...prev,id]);
+    const toggle=(id:string)=>setExpanded(prev=>prev.includes(id)?[]:[id]);
   const choose=(cat:string,q?:string)=>{setCategory(cat);setSearch("");setSearched(false);setExpanded(q?[cat+":"+q]:[]);document.getElementById("support-faq")?.scrollIntoView({behavior:"smooth",block:"start"});};
   return <div className="bazunk-support-page min-h-screen bg-[#f1f5ff] text-[#102447] flex flex-col">
     <Navbar/>
