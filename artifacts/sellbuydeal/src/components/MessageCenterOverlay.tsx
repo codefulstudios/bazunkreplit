@@ -688,7 +688,8 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[2147483000] backdrop-blur-[3px]"\n            style={{ backgroundColor: "rgba(3, 15, 34, 0.64)" }}
+            className="fixed inset-0 z-[2147483000] backdrop-blur-[3px]"
+            style={{ backgroundColor: "rgba(3, 15, 34, 0.64)" }}
             onClick={onClose}
           />
 
@@ -699,8 +700,8 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            role="dialog" aria-modal="true" aria-label="Bazunk messages" className="fixed inset-3 md:inset-8 z-[10001] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white text-slate-900"
-            style={{ maxWidth: 1200, maxHeight: 800, margin: "auto" }}
+            role="dialog" aria-modal="true" aria-label="Bazunk messages" className="fixed inset-3 md:inset-8 z-[2147483001] bz-messages-dialog flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white text-slate-900"
+            style={{ maxWidth: 1200, maxHeight: 800, margin: "auto", backgroundColor: "#ffffff", isolation: "isolate" }}
           >
             <div className="flex h-full min-h-0">
 
