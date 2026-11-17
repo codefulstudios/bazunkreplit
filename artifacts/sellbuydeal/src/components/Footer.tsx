@@ -20,7 +20,7 @@ export function Footer() {
 
   return (
     <footer className="bazunk-site-footer bg-[#07172c] text-white/80 border-t border-sky-400/20">
-      <div className="container mx-auto max-w-7xl px-5 py-10 md:py-12">
+      <div className="container mx-auto max-w-[1920px] px-5 lg:px-8 py-10 md:py-12">
         <div className="grid grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1.1fr] gap-x-8 gap-y-9">
           <div className="col-span-2 lg:col-span-1 lg:pr-5">
             <Link href="/" className="inline-block mb-3">
