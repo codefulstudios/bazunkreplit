@@ -3867,3 +3867,15 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .sell-page section:last-child h2 span{color:#fef08a!important}
 .sell-page .bz-sell-option-art{isolation:isolate}
 .sell-page .bz-sell-option-emoji{font-size:clamp(48px,5vw,84px);line-height:1.25;white-space:nowrap}
+
+/* Classified posting dialog: isolated from page stacking contexts and global theme. */
+.classified-post-overlay{position:fixed!important;inset:0!important;z-index:99999!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(5,15,35,.68)!important;padding:16px!important}
+.classified-post-dialog{position:relative!important;display:block!important;width:100%!important;max-width:672px!important;max-height:calc(100dvh - 32px)!important;overflow-y:auto!important;overscroll-behavior:contain;background:#fff!important;color:#0f172a!important;border-radius:18px!important;box-shadow:0 25px 90px rgba(0,0,0,.4)!important}
+.classified-post-dialog h2,.classified-post-dialog h3,.classified-post-dialog label{color:#0f172a}
+.classified-post-dialog>div:first-child h2,.classified-post-dialog>div:first-child p,.classified-post-dialog>div:first-child button svg{color:#fff!important;-webkit-text-fill-color:#fff!important}
+.classified-post-dialog input,.classified-post-dialog textarea,.classified-post-dialog select{background:#fff!important;color:#0f172a!important;border-color:#94a3b8!important}
+.classified-post-dialog input::placeholder,.classified-post-dialog textarea::placeholder{color:#64748b!important;opacity:1}
+.classified-post-dialog button{cursor:pointer}
+.classified-post-dialog button[class*="bg-gradient"]{color:#fff!important}
+.classified-post-dialog .text-gray-400{color:#64748b}
+@media(max-width:640px){.classified-post-overlay{padding:8px!important}.classified-post-dialog{max-height:calc(100dvh - 16px)!important;border-radius:14px!important}}
