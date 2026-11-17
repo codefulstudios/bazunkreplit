@@ -180,7 +180,7 @@ export function FlashSalesPage() {
   return (
     <div className="bz-flash-page min-h-screen flex flex-col text-white">
       <Navbar />
-      <header className="relative overflow-hidden border-b border-[#2d65ff] bg-gradient-to-r from-[#082e61] via-[#154b91] to-[#263b79]">
+      <header className="bz-market-hero relative overflow-hidden">
         <div className="pointer-events-none absolute -top-24 right-[-8%] h-[260px] w-[380px] rounded-full bg-[#fb29c8]/40 blur-3xl"/>
         <div className="pointer-events-none absolute bottom-[-150px] left-[30%] h-[210px] w-[300px] rounded-full bg-[#00b9ff]/50 blur-3xl"/>
         <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-5 py-5 sm:px-8 md:grid-cols-[1.3fr_.7fr] md:py-6">
@@ -191,7 +191,7 @@ export function FlashSalesPage() {
             <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-xl border border-purple-200/40 bg-[#5c32e9] px-4 py-2.5 text-sm font-bold text-white shadow-lg"><Calendar className="h-4 w-4 shrink-0"/>{isWeekend() ? "Weekend Mega Sales are on — explore this weekend's deals!" : "Limited-time offers — check back for upcoming deals!"}</div>
             {user && <Link href="/flash-sales/create" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-[#ff711f] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8b42]"><Plus className="h-5 w-5"/> Run a Flash Sale</Link>}
           </div>
-          <div aria-hidden="true" className="relative hidden min-h-[155px] items-center justify-center sm:flex sm:min-h-[195px]">
+          <div aria-hidden="true" className="bz-market-hero-art relative hidden min-h-[155px] items-center justify-center sm:flex sm:min-h-[195px]">
             <div className="absolute left-[8%] top-[12%] rotate-[-18deg] text-4xl drop-shadow-2xl">🎮</div>
             <div className="absolute right-[5%] top-[8%] rotate-[18deg] text-4xl drop-shadow-2xl">⚡</div>
             <div className="absolute left-[8%] bottom-[5%] rotate-[-12deg] text-7xl drop-shadow-2xl">📦</div>
@@ -247,7 +247,7 @@ function SaleCard({ s, tab, formatPrice, setLocation }: {
   const sale = parseFloat(s.sale_price);
   const isLightning = s.sale_type === "lightning";
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-[#2875c2] bg-gradient-to-b from-[#0c315f] to-[#051c3a] shadow-lg shadow-black/20 transition-transform hover:-translate-y-1">
+    <article className="bz-market-item-card group flex flex-col overflow-hidden rounded-2xl transition-transform hover:-translate-y-1">
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
         {s.image?<img src={s.image} alt={s.title} className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"/>:<div className="flex h-full items-center justify-center text-7xl" aria-label="Product image unavailable">🎁</div>}
         <span className="absolute left-2 top-2 rounded-lg bg-[#ff315b] px-3 py-1 text-base font-black text-white shadow-lg">-{s.discount_percent}%</span>
@@ -256,7 +256,7 @@ function SaleCard({ s, tab, formatPrice, setLocation }: {
       <div className="flex flex-1 flex-col p-3.5">
         <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-snug text-white">{s.title}</h3>
         <div className="mt-1 flex flex-wrap items-baseline gap-2"><strong className="text-xl font-black text-[#ffe15b]">{formatPrice(sale)}</strong><span className="text-sm font-semibold text-slate-300 line-through">{formatPrice(orig)}</span></div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#34557b]"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#ff386a] to-[#ff812c]"/></div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e3eafa]"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#ff386a] to-[#ff812c]"/></div>
         <div className="mt-3 flex items-center justify-between gap-2"><CountdownPill target={tab==="active"?s.ends_at:s.starts_at} label={tab==="active"?"Ends":"Starts"} urgent={tab==="active"}/><NotifyButton sale={s}/></div>
         <button onClick={()=>setLocation(`/flash-sales/${s.id}`)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#ff701e] px-4 py-2.5 text-sm font-black text-white hover:bg-[#ff8b3e]">{tab==="active"?"View Deal":"Preview Deal"}<ChevronRight className="h-4 w-4"/></button>
       </div>
