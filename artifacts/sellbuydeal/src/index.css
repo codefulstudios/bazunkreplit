@@ -3217,3 +3217,16 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-messages-dialog .border-gray-100{border-color:#f3f4f6!important}
 .bz-messages-dialog .border-gray-200{border-color:#e5e7eb!important}
 @media(max-width:767px){.bz-messages-dialog{inset:10px!important;max-height:calc(100dvh - 20px)!important}.bz-messages-dialog .w-48{width:155px}}
+
+/* Daily Rewards: exact scoped contrast hierarchy, independent of homepage heading overrides. */
+.bz-mockup-home .bz-home-rewards{background:#fff!important;padding:30px 0 38px}
+.bz-mockup-home .bz-home-rewards-panel{background:linear-gradient(120deg,#071a33 0%,#0d294c 100%)!important;border:1px solid #254567!important;box-shadow:0 14px 32px #071b3520}
+.bz-mockup-home .bz-home-rewards-panel h2{color:#fff!important;font-size:clamp(24px,2.4vw,32px);font-weight:900!important;line-height:1.2}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-rewards-description{color:#d6e7fa!important;opacity:1!important;font-size:15px;line-height:1.5}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-game{background:#14345b!important;border:1px solid #436789!important;box-shadow:inset 0 1px 0 #ffffff12;min-height:136px}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-game:hover{background:#1c4773!important;border-color:#7bb5e8!important;transform:translateY(-2px)}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-icon{background:#244d75!important;border-color:#4d769d!important;color:#ffa336!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-icon svg{color:#ffae43!important;opacity:1!important}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-name{color:#fff!important;opacity:1!important;font-size:14px!important;line-height:1.35}
+.bz-mockup-home .bz-home-rewards-panel .bz-home-reward-credits{color:#ffcc77!important;opacity:1!important;font-size:12px!important}
+.bz-mockup-home .bz-home-rewards-panel a[href="/rewards"]:not(.bz-home-reward-game){color:#fff!important}
