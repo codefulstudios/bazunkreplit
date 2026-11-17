@@ -242,7 +242,7 @@ function cacheBrowse(key: string, items: ApiListing[]) {
   browseCache.set(key, { items, time: Date.now() });
 }
 
-export function BrowsePage() {
+export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
   const [marketRegion, setMarketRegion] = useMarketplaceRegion();
   const { getToken } = useClerkAuth();
   const [, refreshThirdLevels] = useState(0);
@@ -328,6 +328,7 @@ export function BrowsePage() {
   const browseSubsub = browseSub && selectedThirdLevels.length === 1 ? selectedThirdLevels[0] : "";
   const browseScope = new URLSearchParams();
   browseScope.set("region", marketRegion);
+  if(collection)browseScope.set("collection",collection);
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
@@ -545,7 +546,7 @@ export function BrowsePage() {
     (minRating !== null ? 1 : 0) +
     (listedWithin !== "any" ? 1 : 0);
 
-  const pageTitle = urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
+  const pageTitle = collection === "deals" ? "Promoted Deals" : collection === "eco" ? "Eco Marketplace" : urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "newest",    label: "Newest First" },
@@ -948,10 +949,10 @@ export function BrowsePage() {
       </div>
 
       <div className="bz-browse-hero-shell">
-        <section className="bz-browse-hero" aria-label="Shop on Bazunk">
-          <div className="bz-browse-hero-copy"><h1>Shop on <span>Bazunk</span></h1><p>Browse thousands of unique items from independent sellers.</p></div>
+        <section className={`bz-browse-hero ${collection==="eco"?"bz-eco-hero":collection==="deals"?"bz-deals-hero":""}`} aria-label={collection==="eco"?"Eco Marketplace":collection==="deals"?"Deals on Bazunk":"Shop on Bazunk"}>
+          <div className="bz-browse-hero-copy"><h1>{collection==="eco"?"Shop sustainably":collection==="deals"?"Discover great deals":<>Shop on <span>Bazunk</span></>}</h1><p>{collection==="eco"?"Explore items sellers have marked eco-friendly or recyclable. Reuse, resell and give great products another life.":collection==="deals"?"Discover listings with active promotions, featured placements and seller boosts.":"Browse thousands of unique items from independent sellers."}</p></div>
           <div className="bz-browse-hero-bags" aria-hidden="true"><div className="bz-browse-bag bz-browse-bag-blue"><ShoppingBag /></div><div className="bz-browse-bag bz-browse-bag-orange"><ShoppingBag /><strong>B</strong></div></div>
-          <div className="bz-browse-hero-points"><span><ShieldCheck/> Buyer Protected</span><span><Zap/> Great Deals</span><span><Tag/> Make an Offer</span></div>
+          <div className="bz-browse-hero-points"><span><ShieldCheck/> Buyer Protected</span><span><Zap/> {collection==="eco"?"Reuse & Resell":"Great Deals"}</span><span><Tag/> {collection==="deals"?"Promoted Listings":"Make an Offer"}</span></div>
         </section>
       </div>
       <AdSlot slotKey="browse_top" />
@@ -964,7 +965,7 @@ export function BrowsePage() {
             <div className="bz-browse-filter-heading"><h2><SlidersHorizontal size={21}/> Filters {activeFilterCount > 0 && <span className="bz-filter-count">{activeFilterCount}</span>}</h2><button type="button" onClick={clearAll}>Clear all</button></div>
             <div className="bz-browse-filter-body">{filterPanel}</div>
           </div>
-          <Link href="/flash-sales" className="bz-browse-flash-card"><span className="bz-browse-flash-icon"><Zap size={25}/></span><strong>Flash Sales</strong><span>Limited-time deals with extra savings.</span><span className="bz-browse-flash-action">Shop Flash Sales <ArrowRight size={16}/></span><Zap className="bz-browse-flash-watermark" aria-hidden="true"/></Link>
+          <Link href={collection==="deals"?"/eco":collection==="eco"?"/deals":"/flash-sales"} className="bz-browse-flash-card"><span className="bz-browse-flash-icon"><Zap size={25}/></span><strong>{collection==="deals"?"Eco Marketplace":collection==="eco"?"Promoted Deals":"Flash Sales"}</strong><span>{collection==="deals"?"Discover eco-friendly and recyclable finds.":collection==="eco"?"Explore featured and promoted listings.":"Limited-time deals with extra savings."}</span><span className="bz-browse-flash-action">{collection==="deals"?"Shop Eco":collection==="eco"?"Explore Deals":"Shop Flash Sales"} <ArrowRight size={16}/></span><Zap className="bz-browse-flash-watermark" aria-hidden="true"/></Link>
         </aside>
 
         {/* Main content */}
@@ -1040,7 +1041,7 @@ export function BrowsePage() {
                 <Search className="w-8 h-8 text-gray-300" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 mb-2">No listings found</h3>
-              <p className="text-sm text-gray-400 mb-6">Try adjusting your search or filters</p>
+              <p className="text-sm text-gray-400 mb-6">{collection==="eco"?"No eco-labelled listings yet. Sellers can mark new products as eco-friendly when listing.":collection==="deals"?"No actively promoted listings match these filters right now.":"Try adjusting your search or filters"}</p>
               <button
                 onClick={clearAll}
                 className="px-6 py-2.5 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
