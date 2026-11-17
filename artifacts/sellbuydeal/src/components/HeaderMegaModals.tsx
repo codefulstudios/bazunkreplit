@@ -12,15 +12,7 @@ const moreTiles:Tile[] = [
  {title:"Collections",subtitle:"Curated finds & trends",href:"/collections",icon:Layers,tone:"green"},
  {title:"Bundle Deals",subtitle:"Save when you buy multiple items",href:"/bundle",icon:Tag,tone:"peach"},
  {title:"Import Listings",subtitle:"Bring products from other marketplaces",href:"/importers",icon:Package,tone:"cyan"},
- {title:"Community",subtitle:"Connect, share & get help",href:"/community",icon:Users,tone:"lilac"},
  {title:"Support",subtitle:"FAQs, guides & contact",href:"/support",icon:LifeBuoy,tone:"blue"}
-];
-const moreQuick:Tile[] = [
- {title:"Bestsellers",subtitle:"",href:"/browse?sort=popular",icon:Sparkles,tone:"peach"},
- {title:"Trending",subtitle:"",href:"/browse?sort=trending",icon:Flame,tone:"pink"},
- {title:"Eco Marketplace",subtitle:"",href:"/eco",icon:Layers,tone:"green"},
- {title:"Partner Sellers",subtitle:"",href:"/browse",icon:Handshake,tone:"cyan"},
- {title:"Help Centre",subtitle:"",href:"/support",icon:CircleHelp,tone:"purple"}
 ];
 const sellTiles:Tile[] = [
  {title:"Quick Sell",subtitle:"List it now and sell at a fixed price",href:"/sell/quick",icon:Tag,tone:"gold"},
