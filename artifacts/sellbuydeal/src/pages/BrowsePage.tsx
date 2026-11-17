@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Bell, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
   Grid3X3, List, ChevronDown, ChevronUp, ArrowUpDown, Users,
-  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag,
+  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag, ShieldCheck, Tag, ArrowRight,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -140,12 +140,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
   if (view === "list") {
     return (
       <div
-        className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
+        className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-[#f5f7fa] dark:bg-[#18253a] flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
@@ -169,7 +169,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
             <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
@@ -183,12 +183,12 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 
   return (
     <div
-      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
+      className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bz-browse-product-image relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -207,11 +207,11 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
-      <div className="p-2.5 sm:p-4 flex flex-col flex-1">
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
+      <div className="bz-browse-product-details p-2.5 sm:p-3 flex flex-col flex-1">
+        <h3 className="bz-browse-product-title text-sm font-bold text-slate-900 line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
             <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><Eye className="w-3.5 h-3.5" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
@@ -857,12 +857,12 @@ export function BrowsePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bz-browse-page min-h-screen bg-[#f2f7fc] flex flex-col">
       <Navbar />
 
       {/* Search header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto max-w-[1920px] px-4 py-5">
+      <div className="bz-browse-filter-feedback bg-transparent">
+        <div className="container mx-auto max-w-[1440px] px-4 py-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowMobileFilters(true)}
@@ -968,27 +968,28 @@ export function BrowsePage() {
         </div>
       </div>
 
+      <div className="bz-browse-hero-shell">
+        <section className="bz-browse-hero" aria-label="Shop on Bazunk">
+          <div className="bz-browse-hero-copy"><h1>Shop on <span>Bazunk</span></h1><p>Browse thousands of unique items from independent sellers.</p></div>
+          <div className="bz-browse-hero-bags" aria-hidden="true"><div className="bz-browse-bag bz-browse-bag-blue"><ShoppingBag /></div><div className="bz-browse-bag bz-browse-bag-orange"><ShoppingBag /><strong>B</strong></div></div>
+          <div className="bz-browse-hero-points"><span><ShieldCheck/> Buyer Protected</span><span><Zap/> Great Deals</span><span><Tag/> Make an Offer</span></div>
+        </section>
+      </div>
       <AdSlot slotKey="browse_top" />
 
-      <div className="container mx-auto max-w-[1920px] px-3 sm:px-5 lg:px-7 py-4 sm:py-6 flex gap-6 flex-1 pb-24 md:pb-6">
+      <div className="bz-browse-content container mx-auto max-w-[1440px] px-3 sm:px-5 lg:px-6 py-4 sm:py-6 flex gap-4 lg:gap-5 flex-1 pb-24 md:pb-8">
 
         {/* Desktop sidebar */}
-        <aside className="hidden md:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:sticky md:top-24 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto overscroll-contain [scrollbar-width:thin] dark:bg-[#132543] dark:border-slate-700">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#4A5CE8]" /> Filters
-              </h2>
-              {activeFilterCount > 0 && (
-                <span className="text-xs font-bold bg-[#4A5CE8] text-white px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>
-              )}
-            </div>
-            {filterPanel}
+        <aside className="bz-browse-sidebar hidden md:block w-56 lg:w-60 flex-shrink-0">
+          <div className="bz-browse-filter-card md:sticky md:top-4">
+            <div className="bz-browse-filter-heading"><h2><SlidersHorizontal size={21}/> Filters {activeFilterCount > 0 && <span className="bz-filter-count">{activeFilterCount}</span>}</h2><button type="button" onClick={clearAll}>Clear all</button></div>
+            <div className="bz-browse-filter-body">{filterPanel}</div>
           </div>
+          <Link href="/flash-sales" className="bz-browse-flash-card"><span className="bz-browse-flash-icon"><Zap size={25}/></span><strong>Flash Sales</strong><span>Limited-time deals with extra savings.</span><span className="bz-browse-flash-action">Shop Flash Sales <ArrowRight size={16}/></span><Zap className="bz-browse-flash-watermark" aria-hidden="true"/></Link>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">
+        <main className="bz-browse-results flex-1 min-w-0">
           {/* Thumb-friendly sorting without an extra modal. Desktop keeps the detailed selector. */}
           <div className="mb-3 flex gap-2 overflow-x-auto pb-2 sm:hidden" aria-label="Quick sorting" data-testid="mobile-browse-sort">
             {([
@@ -1002,12 +1003,12 @@ export function BrowsePage() {
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
+              <h1 className="bz-browse-results-title text-xl font-extrabold text-[#0b2243]">{pageTitle}</h1>
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
             </div>
             <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
-                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-3 py-2 font-black text-sm text-white hover:bg-orange-700" data-testid="button-save-search">
+                className="bz-browse-save inline-flex items-center gap-2 rounded-xl border border-[#cbd9e9] bg-white px-3 py-2 font-bold text-sm text-[#0b2243] hover:border-orange-500" data-testid="button-save-search">
                 <Bell className="h-4 w-4"/> Save search
               </button>
               {/* Sort */}
@@ -1015,7 +1016,7 @@ export function BrowsePage() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="min-h-11 appearance-none border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 cursor-pointer dark:border-slate-500 dark:bg-[#172b49] dark:text-white"
+                  className="bz-browse-sort min-h-11 appearance-none border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 cursor-pointer dark:border-slate-500 dark:bg-[#172b49] dark:text-white"
                   data-testid="select-sort"
                 >
                   {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
@@ -1028,7 +1029,7 @@ export function BrowsePage() {
                 <button
                   onClick={() => setView("grid")}
                   aria-label="Grid view" aria-pressed={view==="grid"}
-                  className={`p-2 ${view === "grid" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  className={`p-2 ${view === "grid" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-grid"
                 >
                   <Grid3X3 className="w-4 h-4" />
@@ -1036,7 +1037,7 @@ export function BrowsePage() {
                 <button
                   onClick={() => setView("list")}
                   aria-label="List view" aria-pressed={view==="list"}
-                  className={`p-2 ${view === "list" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  className={`p-2 ${view === "list" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-list"
                 >
                   <List className="w-4 h-4" />
