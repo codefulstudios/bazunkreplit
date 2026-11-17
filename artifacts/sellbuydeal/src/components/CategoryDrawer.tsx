@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, ChevronRight, Grid3X3, Search, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Grid3X3, Search, X, House, Laptop, HeartPulse, Gamepad2, Shirt, Dumbbell, Car, Wrench, PawPrint, Utensils, BriefcaseBusiness, Gem, Package } from "lucide-react";
 import { ACTIVE_CATEGORIES } from "@/data/categories";
 import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 
 type Category = (typeof ACTIVE_CATEGORIES)[number];
+const categoryIcons = [House,Laptop,HeartPulse,Gamepad2,Shirt,Dumbbell,Car,Wrench,PawPrint,Utensils,BriefcaseBusiness,Gem,Package];
+const iconColours = ["#f97316","#2563eb","#e11d48","#8b5cf6","#6366f1","#ea580c","#0ea5e9","#64748b","#f97316","#d97706","#334155","#9333ea"];
+
 
 export function CategoryDrawer({open,onClose}:{open:boolean;onClose:()=>void}) {
   const [location] = useLocation();
@@ -36,7 +39,7 @@ export function CategoryDrawer({open,onClose}:{open:boolean;onClose:()=>void}) {
           {!selected ? <>
             <div className="bz-category-drawer-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Find a category" aria-label="Find a category"/></div>
             <Link className="bz-category-drawer-view-all" href="/categories" onClick={onClose}>Shop all categories <ChevronRight size={18}/></Link>
-            {categories.map(cat=><button key={cat.slug} type="button" className="bz-category-drawer-row" onClick={()=>setSelected(cat)}><span>{cat.name}</span><ChevronRight size={19}/></button>)}
+            {categories.map((cat,index)=>{const Icon=categoryIcons[index%categoryIcons.length];return <button key={cat.slug} type="button" className="bz-category-drawer-row" onClick={()=>setSelected(cat)}><span className="bz-category-row-title"><Icon size={23} strokeWidth={2.3} style={{color:iconColours[index%iconColours.length]}}/>{cat.name}</span><ChevronRight size={19}/></button>;})}
             {!categories.length&&<p className="p-5 text-sm">No matching categories</p>}
           </> : <>
             <h2 className="bz-category-drawer-title">{selected.name}</h2>
