@@ -27,23 +27,26 @@ export function HomepagePromoCards() {
   const primary=visible[0];
   const secondary=visible.slice(1);
   if (!primary) return null;
-  return <section data-design-home-promos={design?"true":"false"} data-design-icons={icons?"true":"false"} style={{...sectionStyle(design),...iconStyle(icons)}} className="bz-design-home-promos bg-slate-50 dark:bg-slate-950 py-7 border-b border-slate-200 dark:border-slate-800" aria-label="Explore Bazunk">
-    <div className="max-w-6xl mx-auto px-4 grid gap-3 lg:grid-cols-[1.35fr_2fr]">
-      <Link href={primary.href} className="bz-design-promo-card group flex flex-col justify-between gap-5 rounded-2xl p-6 min-h-[180px] transition-all hover:shadow-lg" style={{backgroundColor:primary.background||"#17253C",color:primary.textColor||"#FFFFFF"}}>
-        <div>{primary.image&&<img data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="image" src={primary.image} alt="" className="w-full h-28 object-cover rounded-lg mb-3"/>}<div className="flex items-center gap-2 text-sm font-semibold" style={{color:"#FDBA74"}}><primary.icon className="w-5 h-5"/> Featured</div>
-          <h2 data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="title" className="mt-3 text-2xl font-bold tracking-tight" style={{color:primary.textColor||"#FFFFFF"}}>{primary.title}</h2>
-          <p data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="description" className="mt-2 text-base leading-relaxed" style={{color:primary.textColor||"#E2E8F0"}}>{primary.description}</p></div>
-        <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{color:"#FFFFFF"}}>Start shopping <ArrowRight className="w-4 h-4"/></span>
+  return <section data-design-home-promos={design?"true":"false"} data-design-icons={icons?"true":"false"} style={{...sectionStyle(design),...iconStyle(icons)}} className="bz-design-home-promos bz-premium-promos" aria-label="Explore Bazunk">
+    <div className="bz-premium-promo-grid">
+      <Link href={primary.href} className="bz-premium-promo bz-premium-promo-featured group">
+        <div className="bz-premium-promo-content">
+          <span className="bz-premium-feature-label"><ShoppingBag size={17}/> Featured</span>
+          <h2 data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="title">{primary.title}</h2>
+          <p data-theme-section="promos" data-theme-card={configured.indexOf(primary)} data-theme-card-field="description">{primary.description}</p>
+          <span className="bz-premium-cta">Start shopping <ArrowRight size={18}/></span>
+        </div>
+        {primary.image?<img src={primary.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-bag-art" aria-hidden="true"><ShoppingBag/><span>B</span></div>}
       </Link>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {secondary.map((item)=><Link key={item.title} href={item.href} className="bz-design-promo-card group flex min-h-[160px] flex-col rounded-2xl border p-5 hover:shadow-md hover:border-orange-400 transition-all" style={{backgroundColor:item.background||"#1D2C44",borderColor:"#64748B",color:item.textColor||"#FFFFFF"}}>
-          {item.image&&<img data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="image" src={item.image} alt="" className="w-full h-24 object-cover rounded-lg mb-3"/>}
-          <div className="bz-design-promo-icon mb-4 flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:"#35445B",color:"#FDBA74"}}><item.icon className="h-5 w-5"/></div>
-          <h3 data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="title" className="text-lg font-semibold" style={{color:item.textColor||"#FFFFFF"}}>{item.title}</h3>
-          <p data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="description" className="mt-2 text-sm leading-relaxed" style={{color:item.textColor||"#E2E8F0"}}>{item.description}</p>
-          <span className="mt-auto pt-4 inline-flex items-center gap-1 text-sm font-semibold" style={{color:"#FDBA74"}}>Explore <ArrowRight className="h-4 w-4"/></span>
-        </Link>)}
-      </div>
+      {secondary.map((item,index)=><Link key={item.title} href={item.href} className={"bz-premium-promo bz-premium-promo-secondary bz-premium-promo-"+index+" group"}>
+        {item.image?<img src={item.image} alt="" className="bz-premium-promo-photo"/>:<div className="bz-premium-promo-decor" aria-hidden="true"><item.icon/></div>}
+        <div className="bz-premium-promo-content">
+          <span className="bz-premium-promo-icon"><item.icon size={27}/></span>
+          <h3 data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="title">{item.title}</h3>
+          <p data-theme-section="promos" data-theme-card={configured.indexOf(item)} data-theme-card-field="description">{item.description}</p>
+          <span className="bz-premium-cta">Explore <ArrowRight size={17}/></span>
+        </div>
+      </Link>)}
     </div>
   </section>;
 }
