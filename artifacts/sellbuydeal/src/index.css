@@ -3784,3 +3784,29 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .auction-create-ad [data-ad-placement]{width:100%;min-height:90px}
 @media(min-width:1050px){.auction-create-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.auction-create-fields>section:first-child{grid-column:1/-1}.auction-create-fields>section:nth-child(2){grid-column:1;grid-row:2/span 2}.auction-create-fields>section:nth-child(3){grid-column:1;grid-row:4}.auction-create-fields>details:nth-child(4){grid-column:1;grid-row:5}.auction-create-fields>section:nth-child(5){grid-column:2;grid-row:2/span 2}.auction-create-fields>section:nth-child(6){grid-column:2;grid-row:4/span 2}.auction-create-fields>section:nth-child(7){grid-column:1/-1;grid-row:6}}
 @media(min-width:1450px){.auction-create-shell{grid-template-columns:minmax(0,1fr) 728px}.auction-create-ad{position:sticky;top:20px}}
+
+/* Auction mockup v3: eliminate stretched empty cards and strengthen hierarchy. */
+.auction-create-shell{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:16px!important}
+.auction-create-layout{display:flex!important;flex-direction:column;gap:14px}
+.auction-create-header{margin:0!important;min-height:148px;padding:22px 26px!important;background:linear-gradient(110deg,#d8c5ff 0%,#f2efff 44%,#ffe5c3 100%)!important;box-shadow:0 6px 20px rgba(75,44,145,.12)!important}
+.auction-create-header .auction-create-header-title{font-size:clamp(27px,3vw,42px)!important;font-weight:900!important;line-height:1.12!important;letter-spacing:-.035em!important}
+.auction-create-header .auction-create-header-subtitle{font-size:14px!important;font-weight:600!important;line-height:1.5!important}
+.auction-create-header .auction-hero-gavel{background:linear-gradient(135deg,#763cf5,#ff8300)!important;box-shadow:0 7px 16px rgba(116,60,245,.22)!important}
+.auction-create-header .auction-hero-gavel svg{width:48px!important;height:48px!important;stroke:#fff!important}
+.auction-create-fields{display:grid!important;grid-template-columns:minmax(0,1fr);gap:14px!important;align-items:start!important}
+.auction-create-fields>section,.auction-create-fields>details{grid-row:auto!important;grid-column:auto!important;align-self:start!important;height:auto!important;min-height:0!important}
+.auction-create-fields>section:first-child{grid-column:1/-1!important}
+.auction-create-fields>section:last-child{grid-column:1/-1!important}
+.auction-create-fields>section h2{font-size:16px!important;font-weight:800!important}
+.auction-create-fields>section h2>svg,.auction-create-fields>details summary>svg{width:21px!important;height:21px!important;color:#f97316!important;stroke:#f97316!important}
+.auction-create-fields>section{padding:17px!important}
+.auction-create-fields>details{padding:15px 17px!important;background:#f3ecff!important}
+.auction-create-fields input,.auction-create-fields textarea,.auction-create-fields select{border-radius:10px!important}
+.auction-create-fields .auction-photo-drop{min-height:145px!important;border-color:#f59e0b!important;background:linear-gradient(110deg,#fff7ed,#fff,#f5f3ff)!important}
+.auction-create-fields button[type="submit"]{min-height:58px!important;font-size:19px!important;background:linear-gradient(90deg,#ff9900,#ff5600)!important;color:#fff!important}
+.auction-create-ad{display:block!important;min-height:112px!important}
+.auction-create-ad>div{max-width:728px!important}
+.auction-create-ad [data-ad-placement]{height:90px!important;min-height:90px!important;background:#fff!important;border:2px dashed #c4b5fd!important}
+@media(min-width:780px){.auction-create-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.auction-create-fields>section:nth-child(2){grid-column:1!important}.auction-create-fields>section:nth-child(3){grid-column:1!important}.auction-create-fields>details:nth-child(4){grid-column:1!important}.auction-create-fields>section:nth-child(5){grid-column:2!important;grid-row:2!important}.auction-create-fields>section:nth-child(6){grid-column:2!important;grid-row:3!important}}
+@media(min-width:1450px){.auction-create-shell{grid-template-columns:minmax(0,1fr) 728px!important;align-items:start!important}.auction-create-ad{grid-column:2!important;grid-row:1!important;position:sticky;top:20px}.auction-create-layout{grid-column:1!important;grid-row:1!important}}
+@media(min-width:1450px) and (max-width:1740px){.auction-create-fields{grid-template-columns:minmax(0,1fr)!important}.auction-create-fields>section,.auction-create-fields>details{grid-column:1!important;grid-row:auto!important}}
