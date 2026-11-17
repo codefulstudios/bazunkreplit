@@ -38,9 +38,9 @@ export function RewardsTeaser() {
   if (games.length === 0) return null;
 
   return (
-    <section className="py-8">
+    <section className="bz-home-rewards py-8">
       <div className="container mx-auto px-4">
-        <div className="rounded-3xl bg-[#1A1D2E] p-6 md:p-8 relative overflow-hidden">
+        <div className="bz-home-rewards-panel rounded-3xl bg-[#071b35] p-6 md:p-8 relative overflow-hidden">
           <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-[#F26B21]/15 blur-3xl pointer-events-none" />
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
@@ -49,7 +49,7 @@ export function RewardsTeaser() {
                 <span className="text-[#F26B21] font-black text-xs uppercase tracking-widest">Daily Rewards</span>
               </div>
               <h2 className="text-2xl font-black text-white">{config.title}</h2>
-              <p className="text-white/50 text-sm mt-1">{config.description}</p>
+              <p className="bz-home-rewards-description text-sm mt-1">{config.description}</p>
             </div>
             <Link href={config.url.startsWith("/")&&!config.url.startsWith("//")?config.url:"/rewards"} className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90 transition-opacity self-start md:self-auto">
               {config.button||"Play now"} <ChevronRight className="w-4 h-4" />
@@ -59,12 +59,12 @@ export function RewardsTeaser() {
             {games.map(g => {
               const Icon = GAME_ICONS[g.id] ?? Gift;
               return (
-              <Link key={g.id} href="/rewards" className="rounded-2xl bg-white/10 border border-white/10 hover:bg-white/15 transition-colors p-4 text-center group">
-                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 border border-white/10 group-hover:scale-105 transition-transform">
+              <Link key={g.id} href="/rewards" className="bz-home-reward-game rounded-2xl border transition-colors p-4 text-center group">
+                <div className="bz-home-reward-icon mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border group-hover:scale-105 transition-transform">
                   <Icon className="h-6 w-6 text-[#F26B21]" />
                 </div>
-                <p className="text-white font-bold text-sm leading-tight">{g.name}</p>
-                <p className="text-amber-400 text-xs font-semibold mt-1">
+                <p className="bz-home-reward-name font-bold text-sm leading-tight">{g.name}</p>
+                <p className="bz-home-reward-credits text-xs font-semibold mt-1">
                   {g.creditsMin === g.creditsMax ? `+${g.creditsMax}` : `+${g.creditsMin}–${g.creditsMax}`} credits
                 </p>
               </Link>
