@@ -38,9 +38,10 @@ export function CategoryDrawer({open,onClose}:{open:boolean;onClose:()=>void}) {
         <div className="bz-category-drawer-scroll" key={selected?.slug||"root"}>
           {!selected ? <>
             <div className="bz-category-drawer-search"><Search size={17}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search categories..." aria-label="Find a category"/></div>
-            <Link className="bz-category-drawer-view-all bz-category-all-bottom" href="/categories" onClick={onClose}>Shop all categories <ChevronRight size={18}/></Link>
             {categories.map((cat,index)=>{const Icon=categoryIcons[index%categoryIcons.length];return <button key={cat.slug} type="button" className="bz-category-drawer-row" onClick={()=>setSelected(cat)}><span className="bz-category-row-title"><Icon size={23} strokeWidth={2.3} style={{color:iconColours[index%iconColours.length]}}/>{cat.name}</span><ChevronRight size={19}/></button>;})}
             {!categories.length&&<p className="p-5 text-sm">No matching categories</p>}
+<Link className="bz-category-drawer-view-all bz-category-all-bottom" href="/categories" onClick={onClose}>Shop all categories <ChevronRight size={18}/></Link>
+
           </> : <>
             <h2 className="bz-category-drawer-title">{selected.name}</h2>
             <Link className="bz-category-drawer-view-all" href={`/browse?category=${encodeURIComponent(selected.slug)}`} onClick={onClose}>View all {selected.name}<ChevronRight size={18}/></Link>
