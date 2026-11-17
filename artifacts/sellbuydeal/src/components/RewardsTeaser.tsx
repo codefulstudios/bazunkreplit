@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Gift, ChevronRight, CalendarCheck, RotateCcw, Brain, Ticket, PackageOpen, Dices } from "lucide-react";
 
+const GAME_DETAILS: Record<string,{title:string;subtitle:string}> = {
+  "daily-checkin": {title:"Streak Rewards",subtitle:"Keep your streak going"},
+  "spin-wheel": {title:"Spin to Win",subtitle:"Try your luck daily"},
+  "daily-quiz": {title:"Challenges",subtitle:"Complete & earn"},
+  "scratch-card": {title:"Daily Games",subtitle:"Play & earn credits"},
+  "lucky-number": {title:"Bonus Credits",subtitle:"Unlock extra rewards"},
+};
 const GAME_ICONS: Record<string, React.ElementType> = {
   "daily-checkin": CalendarCheck,
   "spin-wheel": RotateCcw,
@@ -40,7 +47,7 @@ export function RewardsTeaser() {
   return (
     <section className="bz-home-rewards py-8">
       <div className="container mx-auto px-4">
-        <div className="bz-home-rewards-panel rounded-3xl bg-[#071b35] p-6 md:p-8 relative overflow-hidden">
+        <div style={{backgroundColor:"#071b35",color:"#ffffff"}} className="bz-home-rewards-panel rounded-3xl bg-[#071b35] p-6 md:p-8 relative overflow-hidden">
           <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-[#F26B21]/15 blur-3xl pointer-events-none" />
           <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
@@ -58,14 +65,15 @@ export function RewardsTeaser() {
           <div className="relative grid grid-cols-2 md:grid-cols-5 gap-3">
             {games.map(g => {
               const Icon = GAME_ICONS[g.id] ?? Gift;
+              const details = GAME_DETAILS[g.id];
               return (
-              <Link key={g.id} href="/rewards" className="bz-home-reward-game rounded-2xl border transition-colors p-4 text-center group">
+              <Link key={g.id} href="/rewards" style={{backgroundColor:"#102b50",color:"#ffffff",borderColor:"#315b84"}} className="bz-home-reward-game rounded-2xl border transition-colors p-4 text-center group">
                 <div className="bz-home-reward-icon mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border group-hover:scale-105 transition-transform">
                   <Icon className="h-6 w-6 text-[#F26B21]" />
                 </div>
-                <p className="bz-home-reward-name font-bold text-sm leading-tight">{g.name}</p>
-                <p className="bz-home-reward-credits text-xs font-semibold mt-1">
-                  {g.creditsMin === g.creditsMax ? `+${g.creditsMax}` : `+${g.creditsMin}–${g.creditsMax}`} credits
+                <p style={{color:"#ffffff"}} className="bz-home-reward-name font-bold text-sm leading-tight">{details?.title || g.name}</p>
+                <p style={{color:"#d6e8fb"}} className="bz-home-reward-credits text-xs font-semibold mt-1">
+                  {details?.subtitle || (g.creditsMin === g.creditsMax ? `+${g.creditsMax} credits` : `+${g.creditsMin}–${g.creditsMax} credits`)}
                 </p>
               </Link>
               );
