@@ -47,7 +47,6 @@ export const PROMO_DEFAULTS: Record<string, PromoDefault> = {
   "advanced-analytics":   L(1.99, 30, "Advanced Analytics"),
   "social-share":         L(0.99, 30, "Social Sharing Boost"),
   "reserve-auction":      { cost: 0.99, daysValid: 1, label: "Reserve Price Auction", kind: "auction", oneShot: true },
-  "auction-extension":    { cost: 0.99, daysValid: 1, label: "Auction Extensions",    kind: "auction", oneShot: true },
 
   // ── Listed, not buyable yet ──
   "auto-relist":          L(1.49, 30, "Auto-relist",        { comingSoon: true }),
