@@ -1,3 +1,4 @@
+import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { useState, useRef, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -178,6 +179,7 @@ export function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categoryDrawerOpen,setCategoryDrawerOpen] = useState(false);
   const [messageCenterOpen, setMessageCenterOpen] = useState(false);
   useEffect(() => { const openInbox = () => setMessageCenterOpen(true); window.addEventListener("bazunk-open-inbox", openInbox); return () => window.removeEventListener("bazunk-open-inbox", openInbox); }, []);
   const [location, setLocation] = useLocation();
@@ -355,7 +357,9 @@ export function Navbar() {
             {/* Primary links */}
             {primaryLinks.map(({ href, label, live }) => {
               const active = location === href && !(href === "/" && location !== "/");
-              return (
+              return href === "/categories" ? (
+                <button type="button" key={href} onClick={()=>setCategoryDrawerOpen(true)} aria-haspopup="dialog" aria-expanded={categoryDrawerOpen} className="px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap flex items-center gap-1 text-gray-700 hover:text-orange-600 hover:bg-orange-50 dark:text-white dark:hover:bg-slate-700">Categories <ChevronRight className="h-3.5 w-3.5 rotate-90"/></button>
+              ) : (
                 <Link
                   key={href}
                   href={href}
@@ -870,6 +874,7 @@ export function Navbar() {
       </AnimatePresence>
 
       <MessageCenterOverlay open={messageCenterOpen} onClose={() => setMessageCenterOpen(false)} />
+          <CategoryDrawer open={categoryDrawerOpen} onClose={()=>setCategoryDrawerOpen(false)} />
     </>
   );
 }
