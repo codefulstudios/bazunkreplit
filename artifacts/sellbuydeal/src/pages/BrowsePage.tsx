@@ -280,6 +280,8 @@ export function BrowsePage() {
   const [listedWithin, setListedWithin] = useState(params.get("listedWithin")||"any");
   const [apiListings, setApiListings] = useState<(typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] })[]>([]);
   const [hasMoreListings, setHasMoreListings] = useState(true);
+  const [currentPage,setCurrentPage] = useState(1);
+  const [highestPage,setHighestPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const moreController = useRef<AbortController | null>(null);
   const scopeRef = useRef("");
@@ -342,6 +344,7 @@ export function BrowsePage() {
   if (freeShipping) browseScope.set("freeShipping", "true");
   if (listedWithin !== "any") browseScope.set("listedWithin", listedWithin);
   const browseScopeQuery = browseScope.toString();
+  useEffect(()=>{setCurrentPage(1);setHighestPage(1);},[browseScopeQuery]);
 
 
   useEffect(() => {
@@ -373,7 +376,8 @@ export function BrowsePage() {
     setLoadingMore(false);
     setMoreError(null);
     setListingError(null);
-    const key = `listings:24:0:${browseScopeQuery}`;
+    const offset = (currentPage-1)*LISTING_BATCH;
+    const key = `listings:${LISTING_BATCH}:${offset}:${browseScopeQuery}`;
     const cached = loadAttempt === 0 ? getCachedBrowse(key) : null;
     if (cached) {
       setApiListings(cached.map(mapApiListing));
@@ -407,42 +411,17 @@ export function BrowsePage() {
         if (scopeRef.current === browseScopeQuery) setLoadingListings(false);
       });
     return () => { clearTimeout(timeout); controller.abort("scope-change"); };
-  }, [loadAttempt, browseScopeQuery]);
+  }, [loadAttempt, browseScopeQuery, currentPage]);
 
   useEffect(() => () => moreController.current?.abort(), []);
 
-  async function loadMoreListings() {
-    if (loadingMore || loadingListings || !hasMoreListings) return;
-    moreController.current?.abort();
-    const controller = new AbortController();
-    moreController.current = controller;
-    const scope = browseScopeQuery;
-    const offset = apiListings.length;
-    const key = `listings:24:${offset}:${scope}`;
-    setLoadingMore(true);
+  function goToPage(page:number) {
+    if(page<1||loadingListings||page===currentPage)return;
+    if(page>highestPage && !hasMoreListings)return;
+    setHighestPage(n=>Math.max(n,page));
+    setCurrentPage(page);
     setMoreError(null);
-    const timeout = setTimeout(() => controller.abort(), 12000);
-    try {
-      let data = getCachedBrowse(key);
-      if (!data) {
-        const response = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${offset}${scope ? `&${scope}` : ""}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("Could not load more listings");
-        data = await response.json() as ApiListing[];
-        if (!Array.isArray(data)) throw new Error("Invalid listings response");
-        if (!controller.signal.aborted) cacheBrowse(key, data);
-      }
-      if (controller.signal.aborted || scopeRef.current !== scope) return;
-      setApiListings(current => [...current, ...data.map(mapApiListing)]);
-      setHasMoreListings(data.length === LISTING_BATCH);
-    } catch {
-      if (!controller.signal.aborted && scopeRef.current === scope)
-        setMoreError("We couldn’t load more listings. Your current results are still available. Please try again.");
-      else if (controller.signal.reason?.name === "TimeoutError" && scopeRef.current === scope)
-        setMoreError("The request timed out. Please try loading more again.");
-    } finally {
-      clearTimeout(timeout);
-      if (moreController.current === controller && scopeRef.current === scope) setLoadingMore(false);
-    }
+    window.scrollTo({top:Math.max(0,(document.querySelector(".bz-browse-results")?.getBoundingClientRect().top||0)+window.scrollY-90),behavior:"smooth"});
   }
 
   useEffect(() => {
@@ -1004,7 +983,7 @@ export function BrowsePage() {
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
               <h1 className="bz-browse-results-title text-xl font-extrabold text-[#0b2243]">{pageTitle}</h1>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `Page ${currentPage} · ${filtered.length} listing${filtered.length !== 1 ? "s" : ""} shown`}</p>
             </div>
             <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
@@ -1081,18 +1060,14 @@ export function BrowsePage() {
               ))}
             </div>
           )}
-          {moreError && <p role="alert" className="mt-6 text-center text-sm text-red-600">{moreError}</p>}
-          {!loadingListings && !listingError && hasMoreListings && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={loadMoreListings}
-                disabled={loadingMore}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:border-[#4A5CE8] hover:text-[#4A5CE8] disabled:opacity-50 transition-colors"
-              >
-                {loadingMore ? "Loading…" : moreError ? "Try loading more again" : "Load more listings"}
-              </button>
-            </div>
+          {!loadingListings && !listingError && (currentPage>1 || hasMoreListings) && (
+            <nav className="bz-browse-pagination" aria-label="Listing pages">
+              <button type="button" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)} aria-label="Previous page">‹ <span>Previous</span></button>
+              {Array.from({length:Math.max(highestPage,currentPage+(hasMoreListings?1:0))},(_,i)=>i+1).filter(n=>n===1||n===highestPage||Math.abs(n-currentPage)<=2||n===currentPage+1&&hasMoreListings).map(n=><button type="button" key={n} aria-current={n===currentPage?"page":undefined} className={n===currentPage?"active":""} onClick={()=>goToPage(n)}>{n}</button>)}
+              <button type="button" disabled={!hasMoreListings} onClick={()=>goToPage(currentPage+1)} aria-label="Next page"><span>Next</span> ›</button>
+            </nav>
           )}
+
         </main>
       </div>
 
