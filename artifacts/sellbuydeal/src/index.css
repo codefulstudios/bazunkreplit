@@ -3997,3 +3997,45 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bazunk-quick-sell>section button[type=submit]{background:linear-gradient(90deg,#ff8b00,#ff6a00)!important;color:white!important;font-weight:850!important}
 @media(min-width:1024px){.bazunk-quick-sell{grid-template-columns:minmax(0,1.75fr) minmax(300px,.95fr)!important}}
 @media(max-width:1023px){.bazunk-quick-sell>section{padding:15px!important}}
+
+/* Quick Sell v2: balanced two-column layout; no empty left grid tracks. */
+@media(min-width:1024px){
+.bazunk-quick-sell{display:grid!important;grid-template-columns:minmax(0,1.72fr) minmax(320px,.98fr)!important;grid-auto-flow:row!important;align-items:start!important;gap:12px!important}
+.bazunk-quick-sell>div:first-child{grid-column:1/-1!important;grid-row:1!important}
+.bazunk-quick-sell>section{grid-column:1!important;grid-row:auto!important}
+.bazunk-quick-sell>aside{grid-column:2!important;grid-row:2 / span 8!important;position:static!important;align-self:start!important;margin:0!important}
+.bazunk-quick-sell>.bz-quick-item-details{order:1}
+.bazunk-quick-sell>section[data-quick-panel=photos]{order:2}
+.bazunk-quick-sell>section[data-quick-panel=condition]{order:3}
+.bazunk-quick-sell>section[data-quick-panel=eco]{order:4}
+.bazunk-quick-sell>section[data-quick-panel=publish]{order:9;grid-column:1/-1!important}
+.bazunk-quick-sell>aside{order:0}
+}
+.bazunk-quick-sell>section{color:#f5f9ff!important}
+.bazunk-quick-sell>section :is(h2,h3,h4,label,strong,legend){color:#fff!important;-webkit-text-fill-color:#fff}
+.bazunk-quick-sell>section :is(p,small,span):not([class*="bg-"]){color:#dce9ff}
+.bazunk-quick-sell>section button:not([class*="bg-white"]){color:#fff}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"]{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:5px;padding:10px 6px!important;min-height:112px!important}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"]>div{flex:none!important;text-align:center!important}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"]>div:first-child{margin:auto!important}
+.bazunk-quick-sell>section button[data-testid^="button-condition-"] p{font-size:11px!important;line-height:1.2!important}
+.bazunk-quick-sell .bz-quick-conditions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.bazunk-quick-sell>section[data-quick-panel=condition]{padding:12px 14px!important}
+.bazunk-quick-sell>section[data-quick-panel=photos]{padding:13px 15px!important}
+.bazunk-quick-sell>section[data-quick-panel=photos] .aspect-square{max-height:105px}
+.bazunk-quick-sell>section[data-quick-panel=eco]{padding:8px 12px!important}
+.bazunk-quick-sell>section[data-quick-panel=eco] label{padding:9px!important}
+.bazunk-quick-sell>section[data-quick-panel=eco] p{font-size:11px!important;line-height:1.35!important}
+.bazunk-quick-sell>section[data-quick-panel=publish]{padding:13px 16px!important}
+.bazunk-quick-sell>aside>section{background:#0d2747!important;border:1px solid #4272a5!important;color:#fff!important}
+.bazunk-quick-sell>aside>section :is(h2,h3,h4,p,li,span,strong){color:#f3f8ff!important;-webkit-text-fill-color:#f3f8ff!important}
+.bazunk-quick-sell>aside>section svg{color:#ffad26!important}
+.bazunk-quick-sell>aside .bz-quick-ai{background:linear-gradient(110deg,#1156ec,#8020dc 65%,#c929c5)!important}
+.bazunk-quick-sell>aside .bz-quick-ai a,.bazunk-quick-sell>aside .bz-quick-ai a *{color:#24144e!important;-webkit-text-fill-color:#24144e!important}
+.bazunk-quick-sell>aside>section:has(.aspect-\[4\/3\]) .aspect-\[4\/3\]{aspect-ratio:2/1!important}
+.bazunk-quick-sell>aside>section ul{margin-top:6px}
+.bazunk-quick-sell>aside>section li{padding:2px 0}
+.bazunk-quick-sell>aside>section p{margin-bottom:5px}
+.bazunk-quick-sell :is(input,select,textarea)::placeholder{color:#c5d8f2!important;opacity:1}
+.bazunk-quick-sell button:focus-visible,.bazunk-quick-sell a:focus-visible{outline:3px solid #ffb238!important;outline-offset:2px}
+@media(max-width:640px){.bazunk-quick-sell .bz-quick-conditions{grid-template-columns:repeat(2,minmax(0,1fr))}.bazunk-quick-sell>section button[data-testid^="button-condition-"]{min-height:86px!important}}
