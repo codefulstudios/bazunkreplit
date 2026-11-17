@@ -7,6 +7,7 @@ import {
   ArrowRight, Bell, BellOff, Tag, MessageSquare, Zap, AlertTriangle, X,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { LiveCommerceDiscovery } from "@/components/LiveCommerceDiscovery";
 import { Footer } from "@/components/Footer";
 import { useLiveStream } from "@/context/LiveStreamContext";
 import { PLATFORM_META, extractEmbedSrc } from "@/data/livestreams";
@@ -175,6 +176,7 @@ export function LiveHubPage() {
           </div>
         </div>
 
+        <LiveCommerceDiscovery />
         <AdSlot slotKey="live_bottom" className="mt-8" />
       </main>
     </div>
