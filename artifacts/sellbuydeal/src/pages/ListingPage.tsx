@@ -522,10 +522,10 @@ export function ListingPage() {
             {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
             <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600">
               <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
-                <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
+                <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled||!showSection("trust")} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
                 {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
               </div>
-              {trustProofEnabled&&apiProduct?.id&&informationTab==="trust"&&<div role="tabpanel" id="listing-trust-panel" aria-labelledby="listing-trust-tab" className="p-3"><TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)}/></div>}
+              {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&informationTab==="trust"&&<div role="tabpanel" id="listing-trust-panel" aria-labelledby="listing-trust-tab" className="p-3"><TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)}/></div>}
             </div>
 
             {/* {t("descriptionDetails")} */}
