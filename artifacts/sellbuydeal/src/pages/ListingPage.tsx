@@ -525,10 +525,20 @@ export function ListingPage() {
               <div className="bz-mockup-product-seller"><span className="bz-mockup-condition">{product.condition}</span><span>Sold by {(product as typeof product & ApiListingExtra)._sellerName || (product as typeof product & ApiListingExtra)._sellerUsername || "Marketplace seller"}</span>{product.verified&&<CheckCircle2 size={18} className="text-emerald-500" aria-label="Identity verified"/>}</div>
               <div className="bz-mockup-product-price">{formatPrice(product.price + (product.variants?.reduce((sum,v)=>sum+(v.options.find(o=>o.value===selectedVariants[v.type])?.priceDelta??0),0)??0))}</div>
               <div className="bz-mockup-product-stock"><CheckCircle2 size={20}/> {isDemoListing?"Currently unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock ("+(product as typeof product & ApiListingExtra).quantity+" available)":"Out of stock"):"Check availability with seller"}</div>
-              <p className="bz-mockup-product-meta"><Tag size={18}/> <strong>Condition:</strong> {CONDITION_DESC[product.condition] || product.condition}</p>
-              <p className="bz-mockup-product-meta"><Grid3X3 size={18}/> <strong>Category:</strong> {category?.name || product.category}{subcategoryLabel?" › "+subcategoryLabel:""}</p>
-              <div className="bz-mockup-product-key"><h2><Info size={17} aria-hidden="true"/> About this item</h2><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,300)}</p></div>
-              <div className="bz-mockup-product-promises"><span><Shield size={25}/>Buyer protection</span><span><Truck size={25}/>Seller delivery</span><span><CheckCircle2 size={25}/>Secure checkout</span></div>
+
+              <div className="bz-visual-feature-grid" aria-label="Listing highlights">
+                <div className="bz-feature-blue"><Zap size={24}/><span><strong>Quick facts</strong><small>{category?.name || product.category}</small></span></div>
+                <div className="bz-feature-cyan"><CheckCircle2 size={24}/><span><strong>Condition</strong><small>{product.condition}</small></span></div>
+                <div className="bz-feature-purple"><Package size={24}/><span><strong>Availability</strong><small>{isDemoListing?"Unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock":"Out of stock"):"Ask seller"}</small></span></div>
+                <div className="bz-feature-orange"><Truck size={24}/><span><strong>Postage</strong><small>{(product as typeof product & ApiListingExtra).shippingPrice==null?"At checkout":(product as typeof product & ApiListingExtra).shippingPrice===0?"Free":formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</small></span></div>
+              </div>
+              <div className="bz-visual-facts">
+                <span><Tag size={18}/><strong>Condition</strong>{product.condition}</span>
+                <span><Grid3X3 size={18}/><strong>Category</strong>{category?.name||product.category}</span>
+                <span><MapPin size={18}/><strong>Location</strong>{(product as typeof product & ApiListingExtra).location||"See delivery"}</span>
+              </div>
+              <details className="bz-visual-description"><summary><BookOpen size={18}/> About this item <ChevronDown size={16}/></summary><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,500)}</p></details>
+
             </section>
 
             {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
@@ -703,22 +713,22 @@ export function ListingPage() {
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
             <ListingPurchaseSection>
-              <h2 className="bz-mockup-buy-heading"><ShoppingCart size={18} aria-hidden="true"/> Buy this item</h2>
+              <h2 className="bz-mockup-buy-heading"><ShoppingCart size={22} aria-hidden="true"/> Buy This Item</h2>
 
               {/* Buyer's essentials: price, condition, stock and delivery together. */}
               <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5 bazunk-listing-essentials">
                 <div className="flex justify-between gap-3">
-                  <span className="font-semibold text-slate-600">Availability</span>
+                  <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><Package size={17} className="text-indigo-600"/>Availability</span>
                   <span className="font-bold">{isDemoListing ? "Unavailable" : (product as typeof product & ApiListingExtra).quantity != null ? (product as typeof product & ApiListingExtra).quantity! > 0 ? `${(product as typeof product & ApiListingExtra).quantity} available` : "Out of stock" : "Check with seller"}</span>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <span className="font-semibold text-slate-600">Condition</span>
+                  <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><BadgeCheck size={17} className="text-indigo-600"/>Condition</span>
                   <span className="font-bold capitalize">{product.condition}</span>
                 </div>
                 <p className="text-xs text-slate-600">{CONDITION_DESC[product.condition] || "See description for item details."}</p>
                 <div className="border-t border-slate-200 pt-2.5">
                   <div className="flex justify-between gap-3">
-                    <span className="font-semibold text-slate-600">Postage</span>
+                    <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><Truck size={17} className="text-indigo-600"/>Postage</span>
                     <span className="font-bold">{(product as typeof product & ApiListingExtra).shippingPrice == null ? "Confirm at checkout" : (product as typeof product & ApiListingExtra).shippingPrice === 0 ? "Free" : formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-600">Ships from {(product as typeof product & ApiListingExtra).shipOriginOther || (product as typeof product & ApiListingExtra).shipOrigin || product.location}. Delivery timing depends on seller and destination.</p>
