@@ -595,7 +595,7 @@ export function ListingPage() {
                     )}
 
                     {/* Item Details table */}
-                    <div>
+                    {showSection("specifications")&&<div>
                       <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                         <Info className="w-4 h-4 text-violet-500" /> Item Details
                       </h3>
@@ -617,16 +617,16 @@ export function ListingPage() {
                     </div>
 
                     {/* Stats row */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
+                    {showSection("stats",false)&&<div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
                       <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{product.views.toLocaleString()} views</span>
                       <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
-                    </div>
+                    </div>}
                     <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2.5 dark:border-[#3b5172] dark:bg-[#10223d]">
-                      <div className="relative">
+                      {showSection("sharing")&&<div className="relative">
                         <button type="button" onClick={()=>{setShareOpen(!shareOpen);setReportOpen(false);}} aria-expanded={shareOpen} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-orange-500 px-3 font-bold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#2d4264]" data-testid="button-share"><Share2 className="h-4 w-4 text-orange-600 dark:text-orange-300"/>Share listing<ChevronRight className={`h-4 w-4 transition-transform ${shareOpen?"rotate-90":""}`}/></button>
                         {shareOpen&&<div className="absolute bottom-full left-0 z-50 mb-2 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-300 bg-white p-2 shadow-2xl dark:border-[#496286] dark:bg-[#132742]">{([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["X (Twitter)",()=>shareTo("x")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,fn])=><button type="button" key={label} onClick={()=>{fn();if(label==="Copy link")setShareOpen(false);}} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}</div>}
-                      </div>
-                      <button type="button" onClick={()=>void copyListingUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Copy className="h-4 w-4"/>{copied?"Copied!":"Copy link"}</button>
+                      </div>}
+                      {showSection("sharing")&&<button type="button" onClick={()=>void copyListingUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Copy className="h-4 w-4"/>{copied?"Copied!":"Copy link"}</button>}
                       <button type="button" onClick={handleWatchlist} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Heart className="h-4 w-4"/>Save</button>
                       <button type="button" onClick={()=>{setReportOpen(true);setShareOpen(false);}} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-rose-400 px-3 text-sm font-bold text-rose-800 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-[#3c2740]" data-testid="button-report"><Flag className="h-4 w-4"/>{reported?"Report submitted":"Report listing"}</button>
                     </div>
@@ -807,7 +807,7 @@ export function ListingPage() {
               </p>
 
               {/* Meta */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-slate-600">
+              {showSection("stats",false)&&<div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-slate-600">
                 <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views} views</span>
                 <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
