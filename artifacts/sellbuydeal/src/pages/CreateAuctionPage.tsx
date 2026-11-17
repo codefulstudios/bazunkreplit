@@ -256,14 +256,14 @@ export function CreateAuctionPage() {
 
           <div className="space-y-3 min-w-0">
           {/* Header card */}
-          <div className="rounded-xl bg-gradient-to-r from-[#071b35] via-[#112d50] to-[#b94a0c] px-5 py-3 shadow-md">
+          <div className="auction-create-header rounded-xl bg-gradient-to-r from-[#071b35] via-[#112d50] to-[#b94a0c] px-5 py-3 shadow-md">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                 <Gavel className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">List an Auction</h1>
-                <p className="text-orange-100 text-sm mt-0.5">Add photos, set your price — go live instantly</p>
+                <h1 className="auction-create-header-title text-2xl font-bold text-white">List an Auction</h1>
+                <p className="auction-create-header-subtitle text-orange-100 text-sm mt-0.5">Add photos, set your price — go live instantly</p>
               </div>
             </div>
           </div>
