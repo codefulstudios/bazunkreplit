@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart, Eye, Users, MapPin, CheckCircle2, Star, Share2, Copy, Link2, ExternalLink,
   ShoppingCart, Tag, MessageSquare, Shield, Truck, Grid3X3,
-  ChevronLeft, ChevronRight, Package, Calendar, Flag, ArrowRight, Zap, TrendingUp,
+  ChevronLeft, ChevronRight, ChevronDown, Package, Calendar, Flag, ArrowRight, Zap, TrendingUp,
   BookOpen, Hash, Info, List, FileText, Flame, Phone, Mail, Globe2, Plane, Box, BadgeCheck,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
