@@ -126,6 +126,30 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
   } as unknown as typeof ALL_PRODUCTS[0] & ApiListingExtra;
 }
 
+
+/** Destination eligibility preview. Never presents a flat seller rate as a live courier quote. */
+function ListingDeliveryCalculator({origin,zone,shippingPrice,formatPrice}:{origin:string;zone:string;shippingPrice?:number;formatPrice:(amount:number)=>string}) {
+  const [destination,setDestination]=useState("UK");
+  const [postcode,setPostcode]=useState("");
+  const [checked,setChecked]=useState(false);
+  const domestic=origin.toUpperCase()==="GB"?"UK":origin.toUpperCase();
+  const eligible=zone==="worldwide"||zone==="international"||(zone==="domestic"&&destination===domestic)||(zone==="europe"&&["UK","EU"].includes(destination));
+  return <section className="mb-5 rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-[#132742] dark:text-white" aria-label="Calculate delivery">
+    <h3 className="mb-1 flex items-center gap-2 font-bold"><Truck className="h-5 w-5 text-orange-500"/> Calculate delivery</h3>
+    <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">Check seller delivery coverage and any advertised flat postage. Final delivery cost is confirmed at checkout.</p>
+    <label className="mb-2 block text-xs font-semibold">Delivery country
+      <select value={destination} onChange={e=>{setDestination(e.target.value);setChecked(false);}} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:bg-[#192f4d] dark:text-white">
+        <option value="UK">United Kingdom</option><option value="US">United States</option><option value="EU">European Union</option><option value="CA">Canada</option><option value="AU">Australia</option>
+      </select>
+    </label>
+    <label className="mb-3 block text-xs font-semibold">Postcode / ZIP code
+      <input value={postcode} onChange={e=>{setPostcode(e.target.value);setChecked(false);}} maxLength={20} placeholder="Enter your postcode" className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:bg-[#192f4d] dark:text-white"/>
+    </label>
+    <button type="button" disabled={!postcode.trim()} onClick={()=>setChecked(true)} className="w-full rounded-lg bg-orange-600 px-3 py-2.5 font-bold text-white disabled:opacity-50">Check delivery</button>
+    {checked&&<p role="status" className="mt-3 text-sm">{!zone?"Seller has not specified delivery destinations. Confirm shipping at checkout.":!eligible?"This destination is not included in the seller's stated delivery zone.":shippingPrice==null?"Destination is within the seller's stated zone. A delivery quote is required at checkout.":`Seller's advertised flat postage: ${shippingPrice===0?"Free":formatPrice(shippingPrice)}. This is not a postcode-specific courier quote; confirm the final amount at checkout.`}</p>}
+  </section>;
+}
+
 export function ListingPage() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useWouter();
@@ -606,7 +630,7 @@ export function ListingPage() {
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
               const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, europe: "Europe", worldwide: "Worldwide", international: "International" };
-              const destination = zoneLabels[x.shipZone || ""] || "Ask seller";
+              const destination = zoneLabels[x.shipZone || ""] || "Seller has not specified destinations";
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
               return (
@@ -619,7 +643,7 @@ export function ListingPage() {
                     <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
                     <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
                     {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-xs uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null ? "Calculated at checkout" : x.shippingPrice === 0 ? "Free (seller rate)" : formatPrice(x.shippingPrice)}</p></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
                 </ListingDeliverySection>
@@ -668,11 +692,7 @@ export function ListingPage() {
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
             <ListingPurchaseSection>
-              <div className="-mx-5 -mt-5 mb-5 rounded-t-2xl bg-gradient-to-r from-[#F26B21] to-[#EAA008] px-5 py-4 text-white">
-                <p className="text-sm font-black flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> Make it yours</p>
-                <p className="mt-1 text-xs text-white/90">Buy now or agree a price with the seller</p>
-              </div>
-              <h1 className="text-base font-semibold text-gray-800 leading-snug mb-3 break-words">{product.title}</h1>
+              <h2 className="mb-3 text-lg font-bold leading-snug text-slate-900 dark:text-white">{product.title}</h2>
 
               {(() => {
                 const priceDelta = product.variants
@@ -683,8 +703,8 @@ export function ListingPage() {
                   : 0;
                 const totalPrice = product.price + priceDelta;
                 return (
-                  <div className="flex flex-wrap items-baseline gap-2 mb-5 rounded-xl bg-orange-50 border border-orange-100 px-4 py-3">
-                    <span className="text-3xl font-bold text-gray-900">{formatPrice(totalPrice)}</span>
+                  <div className="flex flex-wrap items-baseline gap-2 mb-5">
+                    <span className="text-4xl font-extrabold text-slate-900 dark:text-white">{formatPrice(totalPrice)}</span>
                   </div>
                 );
               })()}
@@ -723,6 +743,8 @@ export function ListingPage() {
                   />
                 </div>
               )}
+
+              <ListingDeliveryCalculator origin={(product as typeof product & ApiListingExtra).shipOrigin || ""} zone={(product as typeof product & ApiListingExtra).shipZone || ""} shippingPrice={(product as typeof product & ApiListingExtra).shippingPrice} formatPrice={formatPrice} />
 
               {/* Buy Now */}
               <button
