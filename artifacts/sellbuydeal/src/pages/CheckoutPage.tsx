@@ -60,6 +60,7 @@ export function CheckoutPage() {
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [deliveryAddress,setDeliveryAddress]=useState({name:"",line1:"",line2:"",city:"",region:"",postcode:"",country:"GB",phone:""});
   const [discountCode,setDiscountCode] = useState("");
   const [discountMessage,setDiscountMessage] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
@@ -128,6 +129,7 @@ export function CheckoutPage() {
       setCheckoutError("Please enter a valid email address to continue.");
       return;
     }
+    if(!deliveryAddress.name.trim() || !deliveryAddress.line1.trim() || !deliveryAddress.city.trim() || !deliveryAddress.postcode.trim()) {setCheckoutError("Enter your full delivery address before continuing to Stripe.");return;}
     if(!quote || quoteLoading || quotedKey!==cartKey) {setCheckoutError("Wait for your fee breakdown before paying.");return;}
     setCheckoutError(null);
     setCheckoutLoading(true);
@@ -154,6 +156,7 @@ export function CheckoutPage() {
             currency: i.product.currency ?? "GBP",
             priceGbp: i.product.priceGbp,
           })),
+          shippingAddress:deliveryAddress,
           expectedTotal:total,
           deliveryGbp: delivery,
         }),
@@ -358,6 +361,15 @@ export function CheckoutPage() {
                     </div>
                   </div>
                   <p className="mt-3 text-xs font-semibold text-slate-700">The price is calculated by Bazunk. It will be confirmed again before Stripe payment.</p>
+                </section>
+
+                <section aria-label="Delivery address" className="mt-5 rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#132742] dark:text-white">
+                  <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Truck className="h-5 w-5 text-orange-500"/> Delivery address</h2>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Enter your address before Stripe. Delivery charges shown above are calculated by Bazunk and must be confirmed for your destination.</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {([{key:"name",label:"Full name",required:true},{key:"line1",label:"Address line 1",required:true},{key:"line2",label:"Address line 2",required:false},{key:"city",label:"Town / city",required:true},{key:"region",label:"County / state",required:false},{key:"postcode",label:"Postcode / ZIP",required:true},{key:"phone",label:"Contact phone (optional)",required:false}] as const).map(field=><label key={field.key} className="block text-sm font-semibold">{field.label}<input required={field.required} autoComplete={field.key==="name"?"shipping name":field.key==="line1"?"shipping address-line1":field.key==="line2"?"shipping address-line2":field.key==="city"?"shipping address-level2":field.key==="region"?"shipping address-level1":field.key==="postcode"?"shipping postal-code":"tel"} value={deliveryAddress[field.key]} onChange={e=>setDeliveryAddress(a=>({...a,[field.key]:e.target.value}))} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900" /></label>)}
+                    <label className="block text-sm font-semibold">Country<select value={deliveryAddress.country} onChange={e=>setDeliveryAddress(a=>({...a,country:e.target.value}))} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900">{[["GB","United Kingdom"],["US","United States"],["IE","Ireland"],["FR","France"],["DE","Germany"],["CA","Canada"],["AU","Australia"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>
+                  </div>
                 </section>
 
                 <button

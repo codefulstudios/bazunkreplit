@@ -275,7 +275,7 @@ export function OffersPage() {
               { label:"Declined Offers", value:counts.declined, detail:"Keep trying!", icon:XCircle, cls:"from-[#9d174d] via-[#86198f] to-[#581c87]" },
             ].map(item => <div key={item.label} className={`flex items-center gap-4 rounded-2xl border border-white/20 bg-gradient-to-br ${item.cls} p-4 shadow-lg`}>
               <div className="p-3 rounded-xl bg-white/20"><item.icon className="w-8 h-8 text-white"/></div>
-              <div><p className="text-3xl font-black text-white">{item.value}</p><p className="font-extrabold text-white">{item.label}</p><p className="text-white/90 text-sm">{item.detail}</p></div>
+              <div><p className="text-3xl font-black text-white bz-offers-metric-text">{item.value}</p><p className="font-extrabold text-white bz-offers-metric-text">{item.label}</p><p className="text-white/90 text-sm bz-offers-metric-text">{item.detail}</p></div>
             </div>)}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">

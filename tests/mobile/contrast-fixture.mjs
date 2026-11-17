@@ -33,7 +33,7 @@ const samples=[
  {id:"dealpilot-checkbox",className:"text-slate-900 dark:!text-white",tag:"label",bg:"#172541",value:"Suggest offers for my approval",skipLight:true},
  {id:"dealpilot-muted",className:"text-slate-200",tag:"p",bg:"#172541",value:"Your matched items are shown here",skipLight:true},
  {id:"offers-heading",className:"text-[#fff0a8]",tag:"span",bg:"#2528e9",value:"Offers"},
- {id:"offers-metrics",className:"text-white",tag:"span",bg:"#9a3412",value:"Pending Offers"},
+ {id:"offers-metrics",className:"text-white bz-offers-metric-text",tag:"span",bg:"#9a3412",value:"Pending Offers"},
  {id:"importer-modal",className:"dark:!text-orange-100",outer:"bz-importer-dialog",tag:"p",bg:"#0d0d0d",value:"See how products move to your Bazunk store",skipLight:true},
  {id:"importer-tab",className:"text-orange-300",tag:"span",bg:"#0d0d0d",value:"Amazon",skipLight:true},
  {id:"importer-preview",className:"!text-slate-950",outer:"bz-importer-dialog bz-example-light !bg-white",tag:"span",bg:"#ffffff",value:"Sample search results",skipLight:true},

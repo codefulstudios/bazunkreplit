@@ -9,6 +9,13 @@ import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Settings {
+  listing_section_specifications: string;
+  listing_section_buyer_protection: string;
+  listing_section_stats: string;
+  listing_section_sharing: string;
+  listing_section_quick_facts: string;
+  listing_section_delivery_details: string;
+  listing_section_trust: string;
   site_name: string;
   site_tagline: string;
   primary_color: string;
@@ -44,6 +51,13 @@ interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  listing_section_specifications: "true",
+  listing_section_buyer_protection: "true",
+  listing_section_stats: "false",
+  listing_section_sharing: "true",
+  listing_section_quick_facts: "false",
+  listing_section_delivery_details: "true",
+  listing_section_trust: "true",
   site_name: "Bazunk",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
@@ -72,11 +86,12 @@ const DEFAULTS: Settings = {
   seo_description: "The smarter way to buy and sell locally. Free listings, secure checkout, real reviews.",
 };
 
-type Tab = "branding" | "homepage" | "footer" | "access" | "advertising" | "fees";
+type Tab = "branding" | "homepage" | "footer" | "access" | "advertising" | "fees" | "listing";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "branding", label: "Branding & SEO", icon: Paintbrush },
   { id: "homepage", label: "Homepage", icon: Layout },
+  { id: "listing", label: "Listing Page", icon: Layout },
   { id: "footer", label: "Footer & Contact", icon: Globe },
   { id: "advertising", label: "Advertising", icon: Megaphone },
   { id: "fees", label: "Buyer Protection & Fees", icon: Percent },
@@ -356,6 +371,18 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
           )}
 
           {/* ── HOMEPAGE ── */}
+          {tab === "listing" && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="text-xl font-black text-slate-900">Listing page sections</h2>
+            <p className="text-sm text-slate-600">Switch optional storefront sections on or off. Save Changes to publish. Core purchase, price, seller and checkout information cannot be hidden.</p>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Item specifications</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_specifications !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_specifications:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Buyer protection information</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_buyer_protection !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_buyer_protection:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Listing statistics</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_stats !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_stats:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Social sharing controls</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_sharing !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_sharing:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Quick facts</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_quick_facts !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_quick_facts:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Detailed delivery panel</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_delivery_details !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_delivery_details:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>TrustProof tab (requires TrustProof feature enabled)</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_trust !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_trust:String(e.target.checked)}))}/></label>
+            <a href="/browse" target="_blank" rel="noopener noreferrer" className="inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-800">Preview storefront in a new tab</a>
+          </section>}
           {tab === "homepage" && (
             <>
               <SectionCard title="Hero Banner">

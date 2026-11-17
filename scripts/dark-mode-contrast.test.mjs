@@ -38,10 +38,12 @@ for(const part of ["select","dropdown-menu","popover","dialog"]){
 }
 
 const source=(path)=>fs.readFileSync("artifacts/sellbuydeal/src/"+path,"utf8");
-test("front-end categories hero has explicit high-contrast surface",()=>{
-  assert.match(source("pages/CategoriesPage.tsx"),/bz-contrast-hero relative overflow-hidden/);
-  assert.match(css,/\.dark \.bz-contrast-hero[\s\S]*?background-image:linear-gradient/);
-  assert.match(css,/\.dark \.bz-contrast-hero :is\(h1,h2,h3,h4,p,span,small,svg\)[\s\S]*?color:#152344 !important/);
+test("front-end categories hero uses the shared contrast-aware compact hero",()=>{
+  assert.match(source("pages/CategoriesPage.tsx"),/<CompactPageHero kind="categories"/);
+  assert.match(source("components/CompactPageHero.tsx"),/bz-compact-hero/);
+  assert.match(css,/\.bz-compact-hero\{[^}]*background:linear-gradient/);
+  assert.match(css,/\.bz-compact-hero h1\{[^}]*color:var\(--bz-hero-text\)!important/);
+  assert.match(css,/\.bz-compact-hero-copy>p\{[^}]*color:var\(--bz-hero-sub\)!important/);
 });
 for(const [name,file] of [["Snap & Sell","AdminSnapSellPage.tsx"],["DealPilot","AdminDealPilotPage.tsx"],["Find It","AdminFindItPage.tsx"]]){
  test(name+" dark hero uses contrast contract",()=>{

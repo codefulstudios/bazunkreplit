@@ -57,6 +57,7 @@ export function AdminRewardsPage() {
       .finally(() => setLoading(false));
   }, [authFetch]);
 
+  async function saveSound(){setSoundSaving(true);setSoundMessage("");try{const response=await authFetch("/api/admin/rewards/sound-settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(sound)});const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not save sound settings");setSoundMessage("Sound settings saved");}catch(error){setSoundMessage(error instanceof Error?error.message:"Could not save sound settings");}finally{setSoundSaving(false);}}
   useEffect(()=>{authFetch("/api/admin/rewards/sound-settings").then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Could not load sound settings");setSound({enabled:d.enabled!==false,spinWheel:d.spinWheel!==false,scratchCard:d.scratchCard!==false});}).catch(e=>setSoundMessage(e.message||"Could not load sound settings"));},[authFetch]);
   useEffect(()=>{authFetch("/api/admin/rewards/overview").then(async r=>{if(!r.ok)throw new Error("Monitoring unavailable");return r.json()}).then(setOverview).catch(e=>setMonitorError(e.message));},[authFetch]);
   function update(id: string, field: string, value: unknown) {

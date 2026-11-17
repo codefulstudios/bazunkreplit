@@ -272,6 +272,27 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     // Credits and demo promo codes were never discounted by Stripe. Do not charge
     // a full cash price while also subtracting credits from the buyer's balance.
     if(Number(body.creditsApplied??0)>0 || body.promoCode) throw new QuoteError("Marketplace credits and promotion codes are not supported for this checkout.");
+    const shipping=body.shippingAddress as Record<string,unknown>|undefined;
+    const shippingName=String(shipping?.name??"").trim();
+    const shippingLine1=String(shipping?.line1??"").trim();
+    const shippingCity=String(shipping?.city??"").trim();
+    const shippingPostcode=String(shipping?.postcode??"").trim();
+    const shippingCountry=String(shipping?.country??"").trim().toUpperCase();
+    if(!shippingName || !shippingLine1 || !shippingCity || !shippingPostcode || !/^[A-Z]{2}$/.test(shippingCountry) || [shippingName,shippingLine1,shippingCity,shippingPostcode].some(v=>v.length>200))
+      throw new QuoteError("Enter a valid full delivery address before payment.");
+    // Check destination against each seller's stated zone. Missing shipping rules
+    // cannot be interpreted as free or worldwide shipping.
+    const cartIds=(body.items as Array<{id:number}>).map(x=>Number(x.id));
+    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(cartIds.map(id=>sql`${id}`),sql`, `)})`)).rows as Array<Record<string,unknown>>;
+    if(shippingRows.length!==new Set(cartIds).size)throw new QuoteError("A listing is no longer available.",409);
+    for(const row of shippingRows){
+      const zone=String(row.ship_zone??"").toLowerCase(), origin=String(row.ship_origin??"").toUpperCase();
+      const country=shippingCountry==="GB"?"UK":shippingCountry;
+      const domestic=origin==="GB"?"UK":origin;
+      const european=["GB","IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"].includes(shippingCountry);
+      if(!zone || (zone==="domestic"&&country!==domestic) || (zone==="eu"&&!(european&&(origin==="UK"||origin==="GB"||shippingCountry!=="GB"))) || (zone==="eu-only"&&!european) || (zone==="europe"&&!([...["GB","NO","CH","IS","LI"],...["IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"]].includes(shippingCountry))) || (zone==="north-america"&&!["US","CA","MX"].includes(shippingCountry)) || (zone==="asia"&&!["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(shippingCountry)) || !["domestic","eu","eu-only","europe","north-america","asia","worldwide"].includes(zone))
+        throw new QuoteError("One or more sellers have not enabled delivery to this destination. Please update your basket or delivery address.",409);
+    }
     const quote=await quoteCart(body.items);
     if(body.expectedTotal==null || Math.round(Number(body.expectedTotal)*100)!==quote.totalMinor)
       throw new QuoteError("Your cart price or fees changed. Refresh the fee breakdown before paying.",409);
@@ -293,7 +314,7 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     let user=await storage.getUser(email);let stripeCustomerId=user?.stripeCustomerId;
     if(!stripeCustomerId) {const customer=await stripe.customers.create({email,name});await storage.setStripeCustomerId(email,customer.id);stripeCustomerId=customer.id;}
     const origin=resolveOrigin(req);
-    const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
+    const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",shippingName,shippingLine1,shippingLine2:String(shipping?.line2??"").slice(0,200),shippingCity,shippingRegion:String(shipping?.region??"").slice(0,200),shippingPostcode,shippingCountry,shippingPhone:String(shipping?.phone??"").slice(0,100),feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
     let session;
     try {
       session = await stripe.checkout.sessions.create(sessionParams);
