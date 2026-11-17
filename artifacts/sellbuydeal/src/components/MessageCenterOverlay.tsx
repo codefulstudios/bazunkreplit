@@ -688,7 +688,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-[#06152c]/65 z-[10000] backdrop-blur-[3px]"
+            className="fixed inset-0 z-[2147483000] backdrop-blur-[3px]"\n            style={{ backgroundColor: "rgba(3, 15, 34, 0.64)" }}
             onClick={onClose}
           />
 
