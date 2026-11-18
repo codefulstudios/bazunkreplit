@@ -1,7 +1,7 @@
 /** All amounts are integer GBP pence. Protection's fixed fee applies once per checkout. */
 export type FeeItem = { id: number; quantity: number; priceMinor: number; sellerType: string; businessRate: number; title: string; image: string | null; sellerEmail: string; category: string };
 export type FeeUnit = Omit<FeeItem, "quantity"> & { sellerFeeMinor: number; sellerNetMinor: number; protectionMinor: number; deliveryMinor: number; buyerTotalMinor: number };
-export const FEE_POLICY = "private-buyer-business-seller-v1";
+export const FEE_POLICY = "universal-buyer-business-five-v2";
 export function percentage(value: unknown, fallback: number): number {
   const n = value == null || value === "" ? NaN : Number(value);
   if (!Number.isFinite(n) || n < 0 || n > 100) return fallback;
@@ -29,8 +29,9 @@ export function calculateFees(items: FeeItem[], protectionPercent = 6, fixedMino
     return {...unit, sellerFeeMinor, sellerNetMinor:item.priceMinor-sellerFeeMinor, protectionMinor:0, deliveryMinor:0, buyerTotalMinor:item.priceMinor};
   }));
   const privateSubtotalMinor = units.reduce((sum,u) => sum + (u.sellerType === "private" ? u.priceMinor : 0), 0);
-  const buyerProtectionMinor = privateSubtotalMinor > 0 ? Math.round(privateSubtotalMinor * protectionPercent / 100) + fixedMinor : 0;
-  const protectionShares = allocate(buyerProtectionMinor, units.map(u => u.sellerType === "private" ? u.priceMinor : 0));
+  const eligibleSubtotalMinor = units.reduce((sum,u) => sum + u.priceMinor, 0);
+  const buyerProtectionMinor = eligibleSubtotalMinor > 0 ? Math.round(eligibleSubtotalMinor * protectionPercent / 100) + fixedMinor : 0;
+  const protectionShares = allocate(buyerProtectionMinor, units.map(u => u.priceMinor));
   const deliveryShares = allocate(deliveryMinor, units.map(u => u.priceMinor));
   units.forEach((u,i) => { u.protectionMinor=protectionShares[i]; u.deliveryMinor=deliveryShares[i]; u.buyerTotalMinor=u.priceMinor+u.protectionMinor+u.deliveryMinor; });
   const subtotalMinor = units.reduce((sum,u)=>sum+u.priceMinor,0);
