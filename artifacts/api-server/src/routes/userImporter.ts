@@ -1,5 +1,5 @@
 import { browseShopify } from "../lib/shopifyPublic.js";
-import { marketplaceDataRequest } from "../../../../lib/data-platform-client.js";
+import { marketplaceDataRequest } from "../lib/data-platform-client.js";
 
 async function browseShopifyForMarketplace(url:string):ReturnType<typeof browseShopify>{
  if(!process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY||!process.env.BAZUNK_DATA_PLATFORM_URL)return browseShopify(url);
