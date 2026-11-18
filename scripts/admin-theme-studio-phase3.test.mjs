@@ -79,5 +79,5 @@ test("Published Design Center activation reaches shoppers without exposing draft
  assert.match(api,/\["theme_studio_enabled","true"\]/);
  assert.match(context,/fetch\(`\$\{API_BASE\}\/api\/settings\/public`/);
  assert.match(hero,/theme_studio_enabled==="true"/);
- assert.match(footer,/theme_studio_enabled==="true"/);
+ assert.match(footer,/const footerAbout=s.footer_about\?\.trim\(\)\|\|""/);
 });
