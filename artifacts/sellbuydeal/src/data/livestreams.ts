@@ -39,7 +39,7 @@ export const FEATURED_KEY = "sbd_live_featured_v2";
 export const PLATFORM_META: Record<LivePlatform, PlatformMeta> = {
   youtube:   { label: "YouTube",          bg: "bg-red-500",     text: "text-red-500",     canEmbed: true,  placeholder: "https://www.youtube.com/watch?v=..." },
   twitch:    { label: "Twitch",           bg: "bg-purple-600",  text: "text-purple-600",  canEmbed: true,  placeholder: "https://www.twitch.tv/yourchannel" },
-  tiktok:    { label: "TikTok",           bg: "bg-gray-900",    text: "text-gray-900",    canEmbed: false, placeholder: "https://www.tiktok.com/@you/live" },
+  tiktok:    { label: "TikTok",           bg: "bg-gray-900",    text: "text-white",    canEmbed: false, placeholder: "https://www.tiktok.com/@you/live" },
   zoom:      { label: "Zoom",             bg: "bg-blue-500",    text: "text-blue-500",    canEmbed: false, placeholder: "https://us02web.zoom.us/j/..." },
   instagram: { label: "Instagram",        bg: "bg-pink-500",    text: "text-pink-500",    canEmbed: false, placeholder: "https://www.instagram.com/yourhandle/" },
   facebook:  { label: "Facebook",         bg: "bg-blue-700",    text: "text-blue-700",    canEmbed: false, placeholder: "https://www.facebook.com/yourpage/live" },
