@@ -449,10 +449,10 @@ function Router() {
       <Route path="/my-store">{() => <Redirect to="/dashboard?section=my-store" />}</Route>
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
-      <Route path="/browse" component={BrowsePage} />
+      <Route path="/browse">{() => <BrowsePage />}</Route>
       <Route path="/deals">{()=><BrowsePage collection="deals" />}</Route>
       <Route path="/eco">{()=><BrowsePage collection="eco" />}</Route>
-      <Route path="/search" component={BrowsePage} />
+      <Route path="/search">{() => <BrowsePage />}</Route>
       <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/notifications" component={MobileNotificationsPage} />
