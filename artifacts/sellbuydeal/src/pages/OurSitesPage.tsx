@@ -4,9 +4,9 @@ import { Footer } from "@/components/Footer";
 
 const sites = [
   { name: "Data Platform", description: "Product data, search, and marketplace import tools for connected commerce.", url: "https://data.bazunk.com", Icon: Database },
-  { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue-1gkn.onrender.com", Icon: Ticket },
-  { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa-preview-gc9d.onrender.com", Icon: Store },
-  { name: "Codeful Studios", description: "Digital design and development for websites, applications, and software.", url: "https://codefulstudio.co.uk", Icon: Code2 },
+  { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue.bazunk.com", Icon: Ticket },
+  { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa.bazunk.com", Icon: Store },
+  { name: "Codeful Studios", description: "Digital design and development for websites, applications, and software.", url: "https://codefulstudio.bazunk.com", Icon: Code2 },
 ];
 
 export function OurSitesPage() {
