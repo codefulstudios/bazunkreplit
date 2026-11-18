@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BadgeCheck, Boxes, ChevronRight, CircleHelp, Coins, Film, Flame, Gavel, Gift, Grid2X2, Handshake, Heart, Layers, LifeBuoy, Package, Radio, Rocket, Search, ShieldCheck, ShoppingCart, Sparkles, Store, Tag, TrendingUp, Truck, Users, Wrench, X, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, Boxes, ChevronRight, CircleHelp, Coins, Film, Database, Flame, Gavel, Gift, Grid2X2, Handshake, Heart, Layers, LifeBuoy, Package, Radio, Rocket, Search, ShieldCheck, ShoppingCart, Sparkles, Store, Tag, TrendingUp, Truck, Users, Wrench, X, Zap } from "lucide-react";
 
 type ModalKind = "more" | "sell";
 type Tile = { title:string; subtitle:string; href:string; icon:typeof Tag; tone:string };
@@ -12,7 +12,8 @@ const moreTiles:Tile[] = [
  {title:"Bundle Deals",subtitle:"Save when you buy multiple items",href:"/bundle",icon:Tag,tone:"peach"},
  {title:"Import Listings",subtitle:"Bring products from other marketplaces",href:"/importers",icon:Package,tone:"cyan"},
  {title:"Support",subtitle:"FAQs, guides & contact",href:"/support",icon:LifeBuoy,tone:"blue"},
- {title:"Promotional Videos",subtitle:"Explore Bazunk video promotions",href:"/videos",icon:Film,tone:"purple"}
+ {title:"Promotional Videos",subtitle:"Explore Bazunk video promotions",href:"/videos",icon:Film,tone:"purple"},
+ {title:"Data Platform",subtitle:"Product data, search & import tools",href:"https://data.bazunk.com",icon:Database,tone:"cyan"}
 ];
 const sellTiles:Tile[] = [
  {title:"Quick Sell",subtitle:"List it now and sell at a fixed price",href:"/sell/quick",icon:Tag,tone:"gold"},
@@ -37,7 +38,7 @@ export function HeaderMegaModals({kind,onClose}:{kind:ModalKind|null;onClose:()=
  const [section,setSection]=useState("Start Selling");
  useEffect(()=>{if(!kind)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")onClose()};document.addEventListener("keydown",onKey);const old=document.body.style.overflow;document.body.style.overflow="hidden";return()=>{document.removeEventListener("keydown",onKey);document.body.style.overflow=old}},[kind,onClose]);
  if(!kind)return null;
- const TileLink=({item,small=false}:{item:Tile;small?:boolean})=>{const Icon=item.icon;return <Link href={item.href} onClick={onClose} className={`bz-mega-tile bz-mega-${item.tone} ${small?"bz-mega-small":""}`}><Icon className="bz-mega-tile-icon"/><span className="bz-mega-tile-copy"><strong>{item.title}</strong>{item.subtitle&&<small>{item.subtitle}</small>}</span><ChevronRight className="bz-mega-chevron"/></Link>};
+ const TileLink=({item,small=false}:{item:Tile;small?:boolean})=>{const Icon=item.icon;const content=<><Icon className="bz-mega-tile-icon"/><span className="bz-mega-tile-copy"><strong>{item.title}</strong>{item.subtitle&&<small>{item.subtitle}</small>}</span><ChevronRight className="bz-mega-chevron"/></>;const className=`bz-mega-tile bz-mega-${item.tone} ${small?"bz-mega-small":""}`;return item.href.startsWith("https://")?<a href={item.href} target="_blank" rel="noopener noreferrer" onClick={onClose} className={className}>{content}</a>:<Link href={item.href} onClick={onClose} className={className}>{content}</Link>};
  return <div className="bz-mega-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}>
   <section role="dialog" aria-modal="true" aria-label={kind==="more"?"More on Bazunk":"Sell on Bazunk"} className={`bz-mega-panel ${kind==="sell"?"bz-mega-sell":""}`}>
    <button type="button" className="bz-mega-close" onClick={onClose} aria-label="Close menu"><X/></button>
