@@ -233,7 +233,7 @@ router.post("/stripe/seller-fee-estimate",async(req,res)=>{
     const sellerType=String(row?.seller_type??"private");
     const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%'`)).rows as any[];
     const fees=Object.fromEntries(settings.map(r=>[r.key,r.value]));
-    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,8));
+    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,5));
     const amount=minor(req.body.amount??0),fee=Math.round(amount*rate/100);
     res.json({sellerType,rate,sellerFee:fee/100,sellerNet:(amount-fee)/100,currency:"GBP"});
   }catch(err){res.status(400).json({error:"Could not calculate seller fees."});}
