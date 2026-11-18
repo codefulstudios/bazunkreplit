@@ -145,7 +145,8 @@
 .dark .bazunk-admin main .admin-orders-page .grid > div > p.text-2xl { color:#fff !important; }
 .dark .bazunk-admin main .admin-orders-page .grid > div { color:#ecf3ff !important; }
 .dark .bazunk-admin main .admin-orders-page .grid > div > p:last-child {color:#cbd8ee !important;}
-.dark .bazunk-admin main button[class*="bg-[#"] {color:#fff;}
+/* Do not override every custom-colour button: bright buttons may require dark text. */
+.dark .bazunk-admin main button[class*="bg-[#"]:not([class*="text-[#"]):not([class*="text-black"]):not([class*="text-slate-9"]) {color:#fff;}
 /* Users: allow a real, legible table rather than compressing ten columns into tiny vertical strips. */
 .bazunk-admin main .admin-users-table { max-width:100%; }
 .bazunk-admin main .admin-users-table .overflow-x-auto { overflow-x:auto; }
