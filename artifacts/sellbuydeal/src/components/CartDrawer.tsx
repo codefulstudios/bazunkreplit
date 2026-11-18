@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   X, Minus, Plus, Trash2, ShoppingBag, ArrowRight,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { BuyerProtectionModal } from "@/components/BuyerProtectionModal";
 
 const CONDITION_COLORS: Record<string, string> = {
   "new":      "bg-emerald-100 text-emerald-700",
@@ -21,6 +22,23 @@ export function CartDrawer() {
   const { items, isOpen, closeCart, removeFromCart, updateQuantity, clearCart, itemCount, subtotal } = useCart();
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
+
+  const [protectionOpen, setProtectionOpen] = useState(false);
+  const [quote, setQuote] = useState<{ buyerProtectionFee: number; delivery: number; total: number } | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
+  const cartKey = JSON.stringify(items.map(item => ({ id: item.product.id, quantity: item.quantity })));
+  useEffect(() => {
+    if (!isOpen || !items.length) { setQuote(null); return; }
+    const controller = new AbortController();
+    setQuote(null); setQuoteError(false); setQuoteLoading(true);
+    fetch("/api/stripe/quote-cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: JSON.parse(cartKey) }), signal: controller.signal })
+      .then(async response => { if (!response.ok) throw new Error("Quote unavailable"); return response.json(); })
+      .then(data => { if (!controller.signal.aborted) setQuote({ buyerProtectionFee: Number(data.buyerProtectionFee), delivery: Number(data.delivery), total: Number(data.total) }); })
+      .catch(() => { if (!controller.signal.aborted) setQuoteError(true); })
+      .finally(() => { if (!controller.signal.aborted) setQuoteLoading(false); });
+    return () => controller.abort();
+  }, [cartKey, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,10 +54,11 @@ export function CartDrawer() {
     setLocation("/checkout");
   }
 
-  const delivery = subtotal >= 50 ? 0 : 3.99;
-  const total = subtotal + delivery;
+  const delivery = quote?.delivery;
+  const total = quote?.total;
 
   return typeof document === "undefined" ? null : createPortal(
+    <>
     <AnimatePresence>
       {isOpen && (
         <>
@@ -105,7 +124,7 @@ export function CartDrawer() {
             {subtotal > 0 && (
               <div className="mx-4 mt-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl">
                 <p className="text-xs text-blue-700 font-medium text-center">
-                  🔒 Payments go through Bazunk — never directly to the seller
+                  🔒 Payments secured by Bazunk/Stripe
                 </p>
               </div>
             )}
@@ -228,23 +247,24 @@ export function CartDrawer() {
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
-                      {delivery === 0 ? "FREE" : formatPrice(delivery)}
+                      {quoteLoading ? "Calculating…" : delivery == null ? "At checkout" : delivery === 0 ? "FREE" : formatPrice(delivery)}
                     </span>
-                  </div>
-                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
-                    <span>Total before Buyer Protection</span>
-                    <span>{formatPrice(total)}</span>
                   </div>
                   <div className="flex justify-between gap-3 text-gray-600">
                     <span>Buyer Protection</span>
-                    <span className="text-right">Calculated at checkout</span>
+                    <span className="text-right font-semibold text-gray-900">{quoteLoading ? "Calculating…" : quote ? formatPrice(quote.buyerProtectionFee) : "At checkout"}</span>
                   </div>
+                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
+                    <span>Estimated total</span>
+                    <span>{quoteLoading ? "Calculating…" : total == null ? "At checkout" : formatPrice(total)}</span>
+                  </div>
+                  {quoteError && <p role="status" className="text-xs text-amber-800">Live fees are temporarily unavailable. Your final charges will be calculated at checkout.</p>}
                   <p className="rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
-                    Buyer Protection is added at checkout for personal-seller items
-                    (6% + £1 by default in the UK, with one fixed fee per checkout).
-                    Business-seller purchases include protection with no extra buyer fee.
-                    Your final total is shown before payment.
+                    Buyer Protection is included for business-seller purchases. Personal-seller purchases may have an additional fee, shown above when available. The final amount is confirmed at checkout.
                   </p>
+                  <button type="button" onClick={() => setProtectionOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700" data-testid="button-cart-buyer-protection">
+                    <Shield className="h-4 w-4" /> Buyer Protection <ArrowRight className="h-4 w-4" />
+                  </button>
                 </div>
 
                 {/* Checkout button */}
@@ -268,7 +288,9 @@ export function CartDrawer() {
           </motion.div>
         </>
       )}
-    </AnimatePresence>,
+    </AnimatePresence>
+    <BuyerProtectionModal open={protectionOpen && isOpen} onClose={() => setProtectionOpen(false)} />
+    </>,
     document.body
   );
 }
