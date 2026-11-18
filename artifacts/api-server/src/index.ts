@@ -582,32 +582,43 @@ async function runAppMigrations() {
     END IF;
   END $$`, "site_settings.fee_policy_private_business_v1");
 
-  // Seed default fee rates (8% for business categories) — DO NOTHING if already set
+  // One-time transition: migrate only legacy 8% defaults, preserving custom rates.
+  await run(sql`DO $ BEGIN
+    PERFORM pg_advisory_xact_lock(hashtext('bazunk-universal-buyer-business-five-v2'));
+    IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='fee_policy_universal_business_five_v2') THEN
+      UPDATE site_settings SET value='5',updated_at=NOW()
+      WHERE (key='fee_rate_default' OR key LIKE 'fee_rate_%') AND value='8';
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('fee_policy_universal_business_five_v2','applied',NOW());
+    END IF;
+  END $`, "site_settings.fee_policy_universal_business_five_v2");
+
+  // Seed default fee rates (5% for business categories) — DO NOTHING if already set
   await run(sql`
     INSERT INTO site_settings (key, value, updated_at) VALUES
-      ('fee_rate_default',              '8', NOW()),
+      ('fee_rate_default',              '5', NOW()),
       ('fee_listing_free',           'true', NOW()),
       ('buyer_protection_percent',      '6', NOW()),
       ('buyer_protection_fixed_gbp',   '1.00', NOW()),
       ('buyer_protection_fixed_usd',   '1.00', NOW()),
       ('buyer_protection_fixed_eur',   '1.00', NOW()),
-      ('fee_rate_electronics',           '8', NOW()),
-      ('fee_rate_cell-phones',           '8', NOW()),
-      ('fee_rate_clothing-shoes-jewelry','8', NOW()),
-      ('fee_rate_automotive',            '8', NOW()),
-      ('fee_rate_home-garden',           '8', NOW()),
-      ('fee_rate_sports-outdoors',       '8', NOW()),
-      ('fee_rate_toys-games',            '8', NOW()),
-      ('fee_rate_books',                 '8', NOW()),
-      ('fee_rate_cds-vinyl',             '8', NOW()),
-      ('fee_rate_beauty-personal-care',  '8', NOW()),
-      ('fee_rate_baby-products',         '8', NOW()),
-      ('fee_rate_health-household',      '8', NOW()),
-      ('fee_rate_arts-crafts-sewing',    '8', NOW()),
-      ('fee_rate_appliances',            '8', NOW()),
-      ('fee_rate_eco-friendly',          '8', NOW()),
-      ('fee_rate_digital',               '8', NOW()),
-      ('fee_rate_adult',                 '8', NOW())
+      ('fee_rate_electronics',           '5', NOW()),
+      ('fee_rate_cell-phones',           '5', NOW()),
+      ('fee_rate_clothing-shoes-jewelry','5', NOW()),
+      ('fee_rate_automotive',            '5', NOW()),
+      ('fee_rate_home-garden',           '5', NOW()),
+      ('fee_rate_sports-outdoors',       '5', NOW()),
+      ('fee_rate_toys-games',            '5', NOW()),
+      ('fee_rate_books',                 '5', NOW()),
+      ('fee_rate_cds-vinyl',             '5', NOW()),
+      ('fee_rate_beauty-personal-care',  '5', NOW()),
+      ('fee_rate_baby-products',         '5', NOW()),
+      ('fee_rate_health-household',      '5', NOW()),
+      ('fee_rate_arts-crafts-sewing',    '5', NOW()),
+      ('fee_rate_appliances',            '5', NOW()),
+      ('fee_rate_eco-friendly',          '5', NOW()),
+      ('fee_rate_digital',               '5', NOW()),
+      ('fee_rate_adult',                 '5', NOW())
     ON CONFLICT (key) DO NOTHING
   `, "site_settings.seed");
 
