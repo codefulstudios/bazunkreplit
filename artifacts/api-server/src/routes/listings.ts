@@ -113,7 +113,7 @@ router.get("/listings", async (req, res) => {
     // Apply browsing criteria before LIMIT/OFFSET, across the complete database.
     const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
     // Apply collection criteria in SQL before pagination.
-    if (collection === "eco") clauses.push(sql`COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%'`);
+    if (collection === "eco") clauses.push(sql`(COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%' OR ${listingsTable.category} = 'eco-friendly')`);
     if (collection === "deals") clauses.push(sql`EXISTS (SELECT 1 FROM ${listingPromotionsTable} lp WHERE lp.listing_id = ${listingsTable.id} AND lp.expires_at > NOW() AND lp.type IN ('homepage-spotlight','spotlight','premium-placement','featured-badge','featured','visibility-boost','move-to-top','flash'))`);
     if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
     if (q?.trim()) {
