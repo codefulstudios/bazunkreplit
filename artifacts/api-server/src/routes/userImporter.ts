@@ -1,4 +1,12 @@
 import { browseShopify } from "../lib/shopifyPublic.js";
+import { marketplaceDataRequest } from "../../../../lib/data-platform-client.js";
+
+async function browseShopifyForMarketplace(url:string):ReturnType<typeof browseShopify>{
+ if(!process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY||!process.env.BAZUNK_DATA_PLATFORM_URL)return browseShopify(url);
+ const result=await marketplaceDataRequest("/v1/shopify/import-preview",{url});
+ if(!result||typeof result!=="object"||!Array.isArray((result as {items?:unknown}).items))throw new Error("Invalid Data Platform Shopify preview");
+ return result as Awaited<ReturnType<typeof browseShopify>>;
+}
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
@@ -453,7 +461,7 @@ router.post("/user/import-ebay", async (req, res) => {
 router.post("/user/shopify-public/preview", async (req,res)=>{
  const email=await requestEmail(req);if(!email){res.status(401).json({error:"Sign in to import Shopify products."});return;}
  try{
-  res.json(await browseShopify(String(req.body.url ?? "")));
+  res.json(await browseShopifyForMarketplace(String(req.body.url ?? "")));
  }catch(e){res.status(422).json({error:e instanceof Error?e.message:"Could not read this Shopify storefront."});}
 });
 
@@ -479,7 +487,7 @@ router.post("/user/import-shopify-public", async (req, res) => {
   const products: Awaited<ReturnType<typeof browseShopify>>["items"] = [];
   try {
   for (const raw of items) {
-   const result = await browseShopify(String(raw.sourceUrl ?? ""));
+   const result = await browseShopifyForMarketplace(String(raw.sourceUrl ?? ""));
    if (result.kind !== "product" || result.items[0]?.externalId !== String(raw.externalId)) { res.status(400).json({error:"Invalid Shopify product selection"}); return; }
    products.push(result.items[0]);
   }
