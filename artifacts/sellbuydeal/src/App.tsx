@@ -357,7 +357,7 @@ function Home() {
     }
   };
   return (
-    <div className="bz-mockup-home min-h-screen bg-background flex flex-col">
+    <div className="bz-mockup-home bz-home-refined min-h-screen bg-background flex flex-col">
       <Navbar />
       <main className="flex-1">
         {/* Preserve the essential shopping journey above optional marketing blocks. */}
