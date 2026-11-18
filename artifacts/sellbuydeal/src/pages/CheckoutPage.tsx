@@ -426,7 +426,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1">Buyer Protection <Link href="/buyer-protection" className="text-[#4A5CE8] underline text-xs">Learn more</Link></span>
                   <span className="font-semibold text-gray-900">{quoteLoading ? "Calculating…" : !quote ? "Unavailable" : buyerProtectionFee>0 ? formatPrice(buyerProtectionFee) : "Included"}</span>
                 </div>
-                <p className="text-xs text-slate-600">{quote?.privateSubtotal ? `${quote.protectionPercent}% of eligible items from all seller types + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
+                <p className="text-xs text-slate-600">{quote ? `${quote.protectionPercent}% of all eligible items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Buyer Protection applies to all eligible seller types."}</p>
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery (combined by seller where offered)</span>
                   <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
