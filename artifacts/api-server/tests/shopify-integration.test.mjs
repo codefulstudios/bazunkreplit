@@ -70,7 +70,7 @@ test('Shopify preview → seller selection → transaction → source sync', asy
   const preview=await call('/user/shopify-public/preview',{url:'shop.example.com/products/same-handle'});
   assert.equal(preview.statusCode,200);assert.equal(preview.body.items[0].price.amount,12.5);
   assert.equal(preview.body.items[0].price.currency,'GBP');
-  const payload={items:preview.body.items,category:'fashion',subcategory:'shirts',markupType:'percentage',markupValue:20,syncEnabled:true};
+  const payload={items:preview.body.items,category:'fashion',subcategory:'shirts',markupType:'percentage',markupValue:20,syncEnabled:true,marketplaceRegion:'uk'};
   assert.equal((await call('/user/import-shopify-public',{...payload,markupValue:'NaN'})).statusCode,400);
   // A tampered handoff price/title is replaced by the source response.
   const imported=await call('/user/import-shopify-public',{...payload,items:[{...preview.body.items[0],title:'Tampered',price:{amount:999,currency:'USD'}}]});
