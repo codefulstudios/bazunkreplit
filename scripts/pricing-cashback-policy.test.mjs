@@ -42,7 +42,7 @@ test("one-time migration updates stored settings, not any earned ledger entries"
  assert.doesNotMatch(block,/cashback_runtime_policy/);
 });
 test("fee pricing appears in legal and sitewide explanations",()=>{
- assert.match(terms,/6% of their combined item price plus £1\.00/);
+ assert.match(terms,/6% of their combined eligible item price plus £1\.00/);
  assert.match(cart,/6% \+ £1 by default/);
  assert.match(protection,/useRawSettings/);
  assert.match(admin,/buyer_protection_percent: "6"/);
