@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BadgeCheck, Boxes, ChevronRight, CircleHelp, Coins, Flame, Gavel, Gift, Grid2X2, Handshake, Heart, Layers, LifeBuoy, Package, Radio, Rocket, Search, ShieldCheck, ShoppingCart, Sparkles, Store, Tag, TrendingUp, Truck, Users, Wrench, X, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, Boxes, ChevronRight, CircleHelp, Coins, Film, Flame, Gavel, Gift, Grid2X2, Handshake, Heart, Layers, LifeBuoy, Package, Radio, Rocket, Search, ShieldCheck, ShoppingCart, Sparkles, Store, Tag, TrendingUp, Truck, Users, Wrench, X, Zap } from "lucide-react";
 
 type ModalKind = "more" | "sell";
 type Tile = { title:string; subtitle:string; href:string; icon:typeof Tag; tone:string };
@@ -11,7 +11,8 @@ const moreTiles:Tile[] = [
  {title:"Live Shopping",subtitle:"Watch, shop & interact",href:"/live",icon:Radio,tone:"purple"},
  {title:"Bundle Deals",subtitle:"Save when you buy multiple items",href:"/bundle",icon:Tag,tone:"peach"},
  {title:"Import Listings",subtitle:"Bring products from other marketplaces",href:"/importers",icon:Package,tone:"cyan"},
- {title:"Support",subtitle:"FAQs, guides & contact",href:"/support",icon:LifeBuoy,tone:"blue"}
+ {title:"Support",subtitle:"FAQs, guides & contact",href:"/support",icon:LifeBuoy,tone:"blue"},
+ {title:"Promotional Videos",subtitle:"Explore Bazunk video promotions",href:"/videos",icon:Film,tone:"purple"}
 ];
 const sellTiles:Tile[] = [
  {title:"Quick Sell",subtitle:"List it now and sell at a fixed price",href:"/sell/quick",icon:Tag,tone:"gold"},
