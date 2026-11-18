@@ -1,6 +1,6 @@
 /* Modern Blue admin foundation, scoped to the admin shell.
    Keep light/dark surfaces consistent without overriding storefront styles. */
-.bazunk-admin{--admin-blue:#1769ff;--admin-blue-hover:#0b55df;--admin-ink:#0f172a;--admin-line:#e2e8f0;font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+.bazunk-admin{--admin-blue:#1769ff;--admin-blue-hover:#0b55df;--admin-ink:#0f172a;--admin-line:#e2e8f0;font-family:var(--app-font-sans)}
 .bazunk-admin .admin-dashboard{max-width:1680px;margin-inline:auto}
 .bazunk-admin .admin-dashboard .admin-kpi{background:#fff;color:var(--admin-ink);border:1px solid var(--admin-line);box-shadow:0 2px 10px rgb(15 23 42 / 4%)}
 .bazunk-admin .admin-dashboard .admin-kpi-icon{background:#eaf2ff;color:#1769ff}
