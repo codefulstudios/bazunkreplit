@@ -1,7 +1,7 @@
 import {useEffect,useState} from "react";
 import {useAdmin} from "@/context/AdminContext";
 type Setting={font:string;heading:number;body:number;sidebar:number;density:"compact"|"comfortable"|"spacious";radius:number;button:"rounded"|"pill"|"square";shadow:"none"|"soft"|"medium";header:"solid"|"transparent";sidebarStyle:"solid"|"bordered";stickyHeader:boolean};
-export const DEFAULT_COMPONENT_STYLE:Setting={font:"Inter",heading:30,body:14,sidebar:238,density:"comfortable",radius:12,button:"rounded",shadow:"soft",header:"solid",sidebarStyle:"solid",stickyHeader:true};
+export const DEFAULT_COMPONENT_STYLE:Setting={font:"Plus Jakarta Sans",heading:30,body:14,sidebar:238,density:"comfortable",radius:12,button:"rounded",shadow:"soft",header:"solid",sidebarStyle:"solid",stickyHeader:true};
 const KEY="design_admin_components_v1";
 function valid(x:unknown):Setting{const v=(x&&typeof x==="object"?x:{}) as Partial<Setting>;return {
 font:["Inter","Arial","system-ui","Georgia"].includes(v.font||"")?v.font!:DEFAULT_COMPONENT_STYLE.font,
