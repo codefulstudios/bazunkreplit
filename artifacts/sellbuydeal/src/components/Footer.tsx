@@ -9,6 +9,8 @@ const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL|
 export function Footer() {
   const s=useSiteSettings();
   const raw=useRawSettings();
+  const studioPublished=raw.theme_studio_enabled==="true";
+  const footerAbout=studioPublished?s.footer_about:"";
   const studioIcons=parseIconOverrides(raw.icon_overrides);
   const social=[
     {url:s.footer_youtube,Icon:iconForPlacement(studioIcons,"footer_youtube"),label:"YouTube"},
@@ -26,7 +28,7 @@ export function Footer() {
           <nav className="bz-compact-footer-links" aria-label="Footer links">
             <Link href="/privacy"><ShieldCheck size={20}/> <span>Privacy</span></Link>
             <Link href="/terms"><FileText size={20}/> <span>Terms</span></Link>
-            <Link href="/cookies"><Cookie size={20}/> <span>Cookies</span></Link>
+            <a href="https://bazunk.com/cookies" target="_blank" rel="noopener noreferrer"><Cookie size={20}/> <span>Cookies</span></a>
             <Link href="/support"><Headphones size={20}/> <span>Help</span></Link>
             <Link href="/support"><Mail size={20}/> <span>Contact</span></Link>
           </nav>
@@ -34,6 +36,7 @@ export function Footer() {
             {social.map(({url,Icon,label})=><a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label}><Icon size={19}/></a>)}
           </div>
         </div>
+        {footerAbout&&<p className="bz-compact-footer-about" data-theme-edit="footer_about">{footerAbout}</p>}
         <div className="bz-compact-footer-bottom">
           <p>&copy; {new Date().getFullYear()} {s.footer_copyright||"Bazunk Marketplace USA LLC."} All rights reserved.</p>
           <button type="button" onClick={openCookieSettings}>Cookie Settings</button>
