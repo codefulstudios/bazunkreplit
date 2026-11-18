@@ -227,6 +227,7 @@ router.post("/user/import-amazon", async (req, res) => {
       ? buildAmazonDescription(details, p.price_gbp)
       : [p.title, "", "Product sourced from Amazon UK.", "", `Original Amazon UK price: £${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = details?.image ?? p.image ?? null;
+    const shouldTagEco = ecoFriendly || category === 'eco-friendly' || /\beco[ -]?friendly\b/i.test(richTitle);
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
@@ -235,7 +236,7 @@ router.post("/user/import-amazon", async (req, res) => {
         ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, 'GBP', ${category}, ${subcategory},
         ${description},
         'new', ${image}, ${sellerEmail}, ${sellerName},
-        ${specs}, ${ecoFriendly ? 'eco-friendly' : ''}, 'active', NOW(), NOW()
+        ${specs}, ${shouldTagEco ? 'eco-friendly' : ''}, 'active', NOW(), NOW()
       )
     `);
     inserted++;
