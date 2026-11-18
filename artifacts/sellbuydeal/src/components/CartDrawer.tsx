@@ -44,10 +44,10 @@ export function CartDrawer() {
     if (!isOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeCart(); };
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !protectionOpen) closeCart(); };
     document.addEventListener("keydown", onKeyDown);
     return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); };
-  }, [isOpen, closeCart]);
+  }, [isOpen, closeCart, protectionOpen]);
 
   function goToCheckout() {
     closeCart();
@@ -60,7 +60,7 @@ export function CartDrawer() {
   return typeof document === "undefined" ? null : createPortal(
     <>
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && !protectionOpen && (
         <>
           {/* Backdrop */}
           <motion.div
