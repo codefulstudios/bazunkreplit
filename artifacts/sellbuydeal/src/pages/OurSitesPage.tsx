@@ -4,30 +4,30 @@ import { Footer } from "@/components/Footer";
 
 const sites = [
   { name: "Data Platform", description: "Product data, search, and marketplace import tools for connected commerce.", url: "https://data.bazunk.com", Icon: Database },
-  { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue.bazunk.com", Icon: Ticket },
-  { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa.bazunk.com", Icon: Store },
+  { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue-1gkn.onrender.com", Icon: Ticket },
+  { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa-preview-gc9d.onrender.com", Icon: Store },
   { name: "Codeful Studios", description: "Digital design and development for websites, applications, and software.", url: "https://codefulstudio.co.uk", Icon: Code2 },
 ];
 
 export function OurSitesPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0D1425] text-white">
+    <div className="min-h-screen flex flex-col !bg-[#0D1425] !text-white" style={{ backgroundColor: "#0D1425", color: "#ffffff" }}>
       <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-5 py-14 sm:py-20">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-5 py-14 sm:py-20 !text-white" style={{ color: "#ffffff" }}>
         <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-400">The Bazunk network</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-black tracking-tight text-white">Our Sites</h1>
-          <p className="mt-5 text-lg leading-relaxed text-slate-300">Explore our connected platforms, products and digital services.</p>
+          <p className="text-sm font-bold uppercase tracking-[0.2em] !text-[#ffba75]" style={{ color: "#ffba75" }}>The Bazunk network</p>
+          <h1 className="mt-3 text-4xl sm:text-5xl font-black tracking-tight !text-white" style={{ color: "#ffffff" }}>Our Sites</h1>
+          <p className="mt-5 text-lg leading-relaxed !text-[#e2e8f0]" style={{ color: "#e2e8f0" }}>Explore our connected platforms, products and digital services.</p>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           {sites.map(({name, description, url, Icon}) => (
-            <article key={name} className="group rounded-2xl border border-white/15 bg-[#18243A] p-6 sm:p-8 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:border-orange-400/70 hover:shadow-orange-950/30">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/30 bg-orange-500/15 text-orange-300">
+            <article key={name} className="group rounded-2xl border border-white/25 !bg-[#18243A] !text-white p-6 sm:p-8 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:border-orange-400/70 hover:shadow-orange-950/30" style={{ backgroundColor: "#18243A", color: "#ffffff" }}>
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/30 !bg-[#402b24] !text-[#ffd19d]" style={{ backgroundColor: "#402b24", color: "#ffd19d" }}>
                 <Icon size={29} aria-hidden="true" />
               </div>
-              <h2 className="mt-6 text-2xl font-extrabold text-white">{name}</h2>
-              <p className="mt-3 min-h-14 leading-relaxed text-slate-200">{description}</p>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 font-bold text-[#111827] transition-colors hover:bg-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400" aria-label={`Visit ${name} (opens in a new tab)`}>
+              <h2 className="mt-6 text-2xl font-extrabold !text-white" style={{ color: "#ffffff" }}>{name}</h2>
+              <p className="mt-3 min-h-14 leading-relaxed !text-[#e2e8f0]" style={{ color: "#e2e8f0" }}>{description}</p>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-lg !bg-[#fb923c] px-4 py-2.5 font-bold !text-[#111827] transition-colors hover:!bg-[#fdba74] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400" style={{ backgroundColor: "#fb923c", color: "#111827" }} aria-label={`Visit ${name} (opens in a new tab)`}>
                 Visit website <ArrowUpRight size={18} aria-hidden="true" />
               </a>
             </article>
