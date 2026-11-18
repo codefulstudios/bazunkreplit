@@ -9,8 +9,8 @@ const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL|
 export function Footer() {
   const s=useSiteSettings();
   const raw=useRawSettings();
-  const studioPublished=raw.theme_studio_enabled==="true";
-  const footerAbout=studioPublished?s.footer_about:"";
+  // Footer copy is a published site setting independent of Theme Studio activation.
+  const footerAbout=s.footer_about?.trim()||"";
   const studioIcons=parseIconOverrides(raw.icon_overrides);
   const social=[
     {url:s.footer_youtube,Icon:iconForPlacement(studioIcons,"footer_youtube"),label:"YouTube"},
