@@ -17,7 +17,7 @@ test("homepage and other routes share persistent, user-controlled cookie prefere
   assert.match(app, /<CookieConsentProvider>/);
   assert.match(app, /<CookieConsentBanner \/>/);
   assert.match(app, /<Route path="\/cookies" component=\{CookiePolicyPage\}/);
-  assert.match(footer, /href="https:\/\/bazunk\.com\/cookies" target="_blank" rel="noopener noreferrer"/);
+  assert.match(footer, /<Link href="\/cookies">/);
   assert.match(footer, /onClick=\{openCookieSettings\}/);
   assert.match(consent, /bazunk_cookie_preferences_v1/);
   assert.match(consent, /Reject optional/);
