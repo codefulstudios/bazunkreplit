@@ -3052,7 +3052,7 @@ html:not(.dark) .bz-compact-hero-sell{--bz-hero-bg1:#e9f4ff;--bz-hero-bg2:#fff0e
 
 
 /* Approved Bazunk navy-only header, with the storefront itself remaining light. */
-:root{--app-font-sans:'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif}
+:root{--app-font-sans:var(--bz-brand-font)}
 html,body,#root{font-family:var(--app-font-sans)!important}
 :is(h1,h2,h3,h4,h5,h6,button,input,select,textarea){font-family:inherit}
 .bz-mockup-header{background:#061b33!important;color:#fff!important}
@@ -4048,10 +4048,10 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 /* Homepage-only brand refinement: no changes to inner pages or admin.
    Restrict the header treatment to the homepage, whose wrapper owns the navbar. */
 .bz-home-refined{
-  --bz-home-navy:#061b33;
-  --bz-home-ink:#172b4d;
-  --bz-home-orange:#ff7900;
-  --bz-home-canvas:#f5f7fa;
+  --bz-home-navy:var(--bz-brand-navy);
+  --bz-home-ink:var(--bz-brand-ink);
+  --bz-home-orange:var(--bz-brand-orange);
+  --bz-home-canvas:var(--bz-brand-canvas);
   background:var(--bz-home-canvas);
   color:var(--bz-home-ink);
   font-family:var(--app-font-sans);
