@@ -1,3 +1,4 @@
+import { toast } from "@/hooks/use-toast";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useEffect, useMemo, useState } from "react";
@@ -82,7 +83,7 @@ export function SellerProfilePage() {
     try {
       const data = await authPost(`/api/reviews/${review.id}/reply`, { reply });
       setReviews(prev => prev.map(r => r.id === review.id ? { ...r, seller_reply: data.reply, seller_replied_at: data.repliedAt } : r));
-    } catch (e) { window.alert(e instanceof Error ? e.message : "Couldn't save reply"); }
+    } catch (e) { toast({title:"Reply not saved",description:e instanceof Error ? e.message : "Could not save reply",variant:"destructive"}); }
     finally { setActionBusy(null); }
   }
 
@@ -92,8 +93,8 @@ export function SellerProfilePage() {
     const normalised = reason.trim().toLowerCase().replace(/\s+/g, "_");
     const details = window.prompt("Add details for Bazunk moderation (optional):") ?? "";
     setActionBusy(review.id);
-    try { await authPost(`/api/reviews/${review.id}/report`, { reason: normalised, details }); window.alert("Thanks. Bazunk moderation has received your report."); }
-    catch (e) { window.alert(e instanceof Error ? e.message : "Couldn't report review"); }
+    try { await authPost(`/api/reviews/${review.id}/report`, { reason: normalised, details }); toast({title:"Report submitted",description:"Bazunk moderation has received your report."}); }
+    catch (e) { toast({title:"Report not submitted",description:e instanceof Error ? e.message : "Could not report review",variant:"destructive"}); }
     finally { setActionBusy(null); }
   }
 
