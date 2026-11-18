@@ -206,9 +206,9 @@ export function AuctionsPage() {
                           <p className="text-xl font-black text-[#ffe04b]">{formatPrice(displayBid)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-400">{a.bid_count} bid{a.bid_count !== 1 ? "s" : ""}</p>
+                          <p className="text-xs text-slate-200">{a.bid_count} bid{a.bid_count !== 1 ? "s" : ""}</p>
                           <div className="flex items-center gap-1 justify-end mt-0.5">
-                            <Clock className="w-3 h-3 text-gray-400" />
+                            <Clock className="w-3 h-3 text-slate-200" />
                             <Countdown endTime={a.end_time} />
                           </div>
                         </div>
