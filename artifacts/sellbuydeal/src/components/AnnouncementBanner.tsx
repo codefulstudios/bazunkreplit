@@ -9,7 +9,7 @@ export function AnnouncementBanner() {
   const legacyFeeMessage = "No listing fees. No final-value fees. No seller commission. Plus, earn free Bazunk Credits to promote your listings.";
   const isFeeMessage = announcement_text.trim() === legacyFeeMessage;
   const bannerText = isFeeMessage
-    ? "Private sellers: no listing fees or selling commission. Business sellers: 8% selling fee by default, including protection and support; category rates may differ. Earn free Bazunk Credits to promote your listings."
+    ? "Private sellers: no listing fees or selling commission. Business sellers: 5% selling fee by default; category rates may differ. Buyers pay Buyer Protection on all eligible sales. Earn free Bazunk Credits to promote your listings."
     : announcement_text;
 
   if (announcement_enabled !== "true" || dismissed) return null;
