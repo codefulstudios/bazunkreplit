@@ -30,3 +30,18 @@ test("Seller dashboard panels are not rendered twice",()=>{
  assert.equal((dashboard.match(/activeSection === "seller-analytics" &&/g)||[]).length,1);
  assert.equal((dashboard.match(/activeSection === "shipping-centre" &&/g)||[]).length,1);
 });
+
+test("Storefront errors use non-blocking toast notifications",()=>{
+ for(const file of ["pages/ListingPage.tsx","pages/SellerProfilePage.tsx","context/AuthContext.tsx"]){
+  const source=read(root+file);
+  assert.doesNotMatch(source,/window\.alert\(/);
+  assert.match(source,/toast\(\{/);
+ }
+});
+test("External live providers have accurate viewing instructions",()=>{
+ const providers=read(root+"data/livestreams.ts");
+ const live=read(root+"pages/LivePage.tsx");
+ for(const provider of ["tiktok","instagram","facebook","zoom"])assert.match(providers,new RegExp(provider+":\\s*\\{[^\\n]*canEmbed: false, viewingNote:"));
+ assert.match(live,/meta\.viewingNote/);
+ assert.match(live,/target="_blank"/);
+});
