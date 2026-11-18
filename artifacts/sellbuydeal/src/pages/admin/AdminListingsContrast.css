@@ -1,0 +1,16 @@
+/* Admin listings: readable controls regardless of global admin/theme button overrides. */
+.bz-admin-listing-actions,.bz-admin-listing-actions>td{background:#101e35!important;color:#f8fafc!important}
+.bz-admin-listing-actions button,.bz-admin-listing-actions a{color:#fff!important;text-decoration:none}
+.bz-admin-listing-actions button:not(:disabled),.bz-admin-listing-actions a{opacity:1!important}
+.bz-admin-listing-actions button:disabled{opacity:.55!important;color:#e2e8f0!important}
+.bz-admin-listing-actions button:hover,.bz-admin-listing-actions a:hover{filter:brightness(1.18)}
+.bz-admin-listing-actions button:focus-visible,.bz-admin-listing-actions a:focus-visible{outline:3px solid #ff7900!important;outline-offset:3px}
+.bz-admin-listing-actions .text-slate-200,.bz-admin-listing-actions .text-slate-300{color:#e2e8f0!important}
+.bz-admin-listing-actions [class*="bg-[#1b385c]"]{background:#24466d!important}
+.bz-admin-listing-actions [class*="bg-[#2d344b]"]{background:#354563!important}
+.bz-admin-listing-actions [class*="bg-[#334155]"]{background:#405572!important}
+.bz-admin-listing-actions [class*="bg-blue-700"]{background:#1d4ed8!important}
+.bz-admin-listing-actions [class*="bg-amber-700"]{background:#a16207!important}
+.bz-admin-listing-actions [class*="bg-red-700"]{background:#b91c1c!important}
+.bz-admin-listing-actions [class*="bg-[#92400e]"]{background:#92400e!important}
+.bz-admin-listing-actions .bg-white input{color:#0f172a!important}

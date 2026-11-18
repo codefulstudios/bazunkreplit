@@ -1,3 +1,4 @@
+import "./AdminListingsContrast.css";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { Fragment, useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -388,7 +389,7 @@ export function AdminListingsPage() {
                     </td>
 
                   </tr>
-                  <tr className="border-b border-slate-700 !bg-[#101e35] text-white">
+                  <tr className="bz-admin-listing-actions border-b border-slate-700 !bg-[#101e35] text-white">
                     <td />
                     <td colSpan={5} className="px-3 pb-3 pt-2 align-top !bg-[#101e35] text-white">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
