@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Film, Play } from "lucide-react";
+import { Film, Play, Clapperboard, Sparkles, ArrowUpRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -17,32 +17,41 @@ export default function VideoPage() {
   const [selected, setSelected] = useState<typeof videos[number] | null>(null);
   const [failed, setFailed] = useState(false);
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-[#06162d] text-white">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-12 sm:py-16">
-        <div className="relative isolate overflow-hidden rounded-[1.7rem] bg-gradient-to-r from-fuchsia-600 via-indigo-700 to-sky-500 px-6 py-7 sm:px-9 sm:py-8 text-white mb-8 shadow-lg">
-          <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-28 h-56 w-72 rounded-full bg-pink-400/50 blur-2xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute right-0 -bottom-24 h-48 w-72 rounded-full bg-cyan-300/50 blur-2xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -top-24 h-40 w-56 rounded-full bg-blue-400/30 blur-3xl" />
-          <div className="relative flex items-center gap-5 sm:gap-7">
-            <div className="shrink-0 rounded-2xl border border-white/30 bg-white/15 p-3 shadow-lg backdrop-blur-sm"><Film className="h-8 w-8 text-white" aria-hidden="true" /></div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">Bazunk <span className="text-amber-300">Promo Videos</span></h1>
-              <p className="mt-1 text-sm sm:text-base text-white/90">Meet the marketplace. Enjoy the adverts.</p>
-            </div>
-            <div aria-hidden="true" className="hidden sm:flex shrink-0 h-20 w-20 rotate-[-9deg] items-center justify-center rounded-3xl bg-slate-950/65 ring-4 ring-white/20 shadow-xl"><Play className="h-10 w-10 fill-white text-white" /></div>
+      <header className="bz-market-hero relative overflow-hidden">
+        <div aria-hidden="true" className="pointer-events-none absolute -top-24 right-[-8%] h-[260px] w-[380px] rounded-full bg-[#fb29c8]/35 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 left-[25%] h-[240px] w-[350px] rounded-full bg-[#00b9ff]/35 blur-3xl" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-6 px-5 py-8 sm:px-8 md:grid-cols-[1.4fr_.6fr] md:py-12">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-[#ff315f] px-4 py-2 text-sm font-black uppercase tracking-wide text-white shadow-lg"><Clapperboard className="h-5 w-5" /> Promotional Videos</span>
+            <h1 className="mt-4 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bazunk <span className="text-[#ffab36]">on Screen</span><span className="block text-[.55em] tracking-normal text-white">Big ideas. Brilliantly ridiculous adverts.</span></h1>
+            <p className="mt-4 max-w-xl text-sm font-medium leading-relaxed text-slate-100 sm:text-base">Discover Bazunk through our original promotional videos. Pick an advert, press play and enjoy the show.</p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-xl border border-[#4779b7] bg-[#103b70] px-4 py-2.5 text-sm font-bold text-white"><Film className="h-4 w-4 text-[#ffce51]" /> {videos.length} original videos to watch</div>
           </div>
+          <div aria-hidden="true" className="hidden items-center justify-center md:flex"><div className="relative flex h-44 w-44 rotate-[-8deg] items-center justify-center rounded-[2rem] border-[5px] border-[#ff80ac] bg-gradient-to-br from-[#ffdf43] to-[#ff792e] text-[#102047] shadow-[0_22px_50px_rgba(0,0,0,.4)]"><Play className="h-20 w-20 fill-current" /><Sparkles className="absolute -right-7 -top-5 h-12 w-12 text-white" /></div></div>
         </div>
-        <div className="grid gap-8 md:grid-cols-2">
-          {videos.map(video => (
-            <article key={video.file} className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-              <button type="button" aria-label={`Play ${video.title}`} onClick={() => { setFailed(false); setSelected(video); }} className="relative block w-full aspect-video group focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-600">
-                <img src={asset(posterFor(video))} alt={`Preview of ${video.title}`} width={960} height={540} className="w-full h-full object-cover" loading="lazy" />
-                <span className="absolute inset-0 bg-black/15 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <span className="rounded-full bg-white text-blue-700 p-5 shadow-xl group-hover:scale-110 transition-transform"><Play className="w-7 h-7 fill-current" aria-hidden="true" /></span>
+      </header>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-8 sm:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-2xl font-black text-white">Watch the adverts</h2><p className="mt-1 text-sm font-medium text-slate-200">A little marketplace magic, with a healthy dose of mischief.</p></div>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#2c639e] bg-[#0b2d58] px-4 py-2 text-xs font-bold text-white"><Film className="h-4 w-4 text-[#ffbd41]" /> Bazunk Originals</span>
+        </div>
+        <div className="bz-market-product-grid grid gap-5 md:grid-cols-2">
+          {videos.map((video, index) => (
+            <article key={video.file} className="bz-market-item-card group flex flex-col overflow-hidden rounded-2xl border border-[#285b91] bg-[#0b2b54] shadow-lg transition-transform hover:-translate-y-1">
+              <button type="button" aria-label={`Play ${video.title}`} onClick={() => { setFailed(false); setSelected(video); }} className="relative block w-full aspect-video overflow-hidden bg-[#102348] focus-visible:outline focus-visible:outline-4 focus-visible:outline-[#ffb340]">
+                <img src={asset(posterFor(video))} alt={`Preview of ${video.title}`} width={960} height={540} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/45">
+                  <span className="grid h-16 w-16 place-items-center rounded-full border-2 border-white/80 bg-[#ff741e] text-white shadow-xl transition-transform group-hover:scale-110"><Play className="h-7 w-7 fill-current" aria-hidden="true" /></span>
                 </span>
+                <span className="absolute left-3 top-3 rounded-lg bg-[#ff315f] px-3 py-1 text-xs font-black text-white">VIDEO {String(index + 1).padStart(2, "0")}</span>
               </button>
-              <div className="p-6"><h2 className="text-xl font-bold text-slate-900">{video.title}</h2><p className="text-slate-500 mt-2">{video.description}</p></div>
+              <div className="flex flex-1 flex-col p-5">
+                <h3 className="text-xl font-black text-white">{video.title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-200">{video.description}</p>
+                <button type="button" onClick={() => { setFailed(false); setSelected(video); }} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#ff711f] px-4 py-3 text-sm font-black text-white transition-colors hover:bg-[#ff8b42] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"><Play className="h-4 w-4 fill-current" /> Watch video <ArrowUpRight className="h-4 w-4" /></button>
+              </div>
             </article>
           ))}
         </div>
