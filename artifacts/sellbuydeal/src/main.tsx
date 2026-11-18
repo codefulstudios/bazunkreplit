@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { loadCategoryPresentation } from "./data/categories";
 import "./index.css";
+import "./design-system/brand-tokens.css";
 import "./design-system/protected.css";
 
 // The production frontend is a static Render site, so Vite's dev /api proxy
