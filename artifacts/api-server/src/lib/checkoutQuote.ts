@@ -44,7 +44,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     const category=String(row.category??"").toLowerCase();
     const sellerType=String(row.seller_type??"private").toLowerCase();
     if(!["private","business","sole_trader"].includes(sellerType)) throw new QuoteError("Seller account type needs to be checked before checkout.",409);
-    items.push({id,quantity:counts.get(id)!,priceMinor,sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),title:String(row.title),image:row.image ? String(row.image):null,sellerEmail:String(row.seller_email),category});
+    items.push({id,quantity:counts.get(id)!,priceMinor,sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,5)),title:String(row.title),image:row.image ? String(row.image):null,sellerEmail:String(row.seller_email),category});
   }
   const subtotal=items.reduce((sum,item)=>sum+item.priceMinor*item.quantity,0);
   const fixed=fees.buyer_protection_fixed_gbp==null ? 100 : minor(fees.buyer_protection_fixed_gbp);
