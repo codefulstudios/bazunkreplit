@@ -111,7 +111,7 @@ const MORE_NAV = [
   { href: "/classifieds",       label: "Classifieds",      icon: Newspaper,       color: "text-purple-600",  bg: "bg-purple-50" },
   { href: "/buyer-protection",  label: "Buyer Protection", icon: ShieldCheck,     color: "text-emerald-600", bg: "bg-emerald-50" },
   { href: "/support",           label: "Support",          icon: HelpCircle,      color: "text-sky-600",     bg: "bg-sky-50" },
-  { href: "/videos",            label: "Bazunk Promo Videos", icon: Film,          color: "text-blue-600",    bg: "bg-blue-50" },
+  { href: "/videos",            label: "Promotional Videos", icon: Film,          color: "text-blue-600",    bg: "bg-blue-50" },
   { href: "https://data.bazunk.com", label: "Bazunk Data Platform", icon: Database, color: "text-indigo-600", bg: "bg-indigo-50", external: true },
 ];
 
@@ -136,7 +136,7 @@ const MOBILE_NAV_LINKS = [
   { href: "/buyer-protection", label: "Buyer Protection", icon: ShieldCheck },
   { href: "/importers",        label: "Importers",        icon: ArrowDownToLine },
   { href: "/support",          label: "Support",          icon: HelpCircle },
-  { href: "/videos",           label: "Bazunk Promo Videos", icon: Film },
+  { href: "/videos",           label: "Promotional Videos", icon: Film },
 ];
 
 export function Navbar() {
