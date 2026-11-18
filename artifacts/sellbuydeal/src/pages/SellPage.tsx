@@ -123,7 +123,7 @@ const STRIPE_RATE = 0.029;
 const STRIPE_FIXED = 0.30;
 
 function useMktRate(rawSettings: Record<string, string>) {
-  return (parseFloat(rawSettings["fee_rate_default"] ?? "8") || 8) / 100;
+  return (parseFloat(rawSettings["fee_rate_default"] ?? "5") || 5) / 100;
 }
 
 function buildFeeRows(mktRatePct: number) {
@@ -181,7 +181,7 @@ function FeeCalculator() {
   const [amount, setAmount] = useState("50");
   const [sellerType, setSellerType] = useState<"private"|"business">("private");
   const val = Math.max(0, parseFloat(amount) || 0);
-  const buyerProtection = sellerType === "private" ? val * buyerPct + (val > 0 ? buyerFixed : 0) : 0;
+  const buyerProtection = val > 0 ? val * buyerPct + buyerFixed : 0;
   const buyerPays = val + buyerProtection;
   const sellerFee = sellerType === "business" ? val * businessRate : 0;
   const sellerReceives = Math.max(0, val - sellerFee);

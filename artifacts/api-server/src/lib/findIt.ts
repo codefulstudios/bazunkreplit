@@ -54,7 +54,7 @@ export async function findQuote(offer:{price_minor:number|string;seller_email:st
   const fees=Object.fromEntries(settings.map(s=>[String(s.key),String(s.value)]));
   const category=String(offer.category||"").toLowerCase();
   const calc=calculateFees([{id:1,quantity:1,priceMinor,sellerType,
-    businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),
+    businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,5)),
     title:"Find It offer",image:null,sellerEmail:offer.seller_email,category}],
     percentage(fees.buyer_protection_percent,6),
     fees.buyer_protection_fixed_gbp==null ? 100 : minor(fees.buyer_protection_fixed_gbp),

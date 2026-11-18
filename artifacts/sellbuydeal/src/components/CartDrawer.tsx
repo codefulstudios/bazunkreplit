@@ -260,7 +260,7 @@ export function CartDrawer() {
                   </div>
                   {quoteError && <p role="status" className="text-xs text-amber-800">Live fees are temporarily unavailable. Your final charges will be calculated at checkout.</p>}
                   <p className="rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
-                    Buyer Protection is included for business-seller purchases. Personal-seller purchases may have an additional fee, shown above when available. The final amount is confirmed at checkout.
+                    Buyer Protection applies to eligible purchases from both personal and business sellers. The fee is shown above when available. The final amount is confirmed at checkout.
                   </p>
                   <button type="button" onClick={() => setProtectionOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700" data-testid="button-cart-buyer-protection">
                     <Shield className="h-4 w-4" /> Buyer Protection <ArrowRight className="h-4 w-4" />
