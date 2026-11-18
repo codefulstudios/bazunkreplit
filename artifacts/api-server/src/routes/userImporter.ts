@@ -185,6 +185,7 @@ router.post("/user/import-amazon", async (req, res) => {
   const destination = canonicalEbayDestination(req.body.category ?? "other", req.body.subcategory);
   if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
   const { category, subcategory } = destination;
+  const ecoFriendly = req.body.ecoFriendly === true;
   const sellerEmail = (req.body.sellerEmail as string)?.trim();
 
   if (!sellerEmail)    { res.status(400).json({ error: "sellerEmail required" }); return; }
@@ -234,7 +235,7 @@ router.post("/user/import-amazon", async (req, res) => {
         ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, 'GBP', ${category}, ${subcategory},
         ${description},
         'new', ${image}, ${sellerEmail}, ${sellerName},
-        ${specs}, 'active', NOW(), NOW()
+        ${specs}, ${ecoFriendly ? 'eco-friendly' : ''}, 'active', NOW(), NOW()
       )
     `);
     inserted++;
