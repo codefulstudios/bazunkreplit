@@ -619,6 +619,10 @@
   /* Plain black/near-black text and the brand blue need lifting on dark. */
   :where(.dark) .text-black,
   :where(.dark) .text-\[\#1A1D2E\] { color: hsl(220 25% 94%); }
+  /* Preserve dark lettering on intentionally bright action buttons. */
+  :where(.dark) .bg-amber-500.text-black,
+  :where(.dark) .bg-orange-500.text-black,
+  :where(.dark) .bg-yellow-500.text-black { color: #111827; }
   :where(.dark) .text-\[\#4A5CE8\],
   :where(.dark) .text-\[\#3B4FD8\],
   :where(.dark) .hover\:text-\[\#4A5CE8\]:hover { color: #8c99f7; }
