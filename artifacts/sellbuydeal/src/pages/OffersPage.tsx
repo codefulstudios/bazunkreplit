@@ -83,7 +83,7 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
             </div>
             <div>
               <p className="text-xs text-blue-100">{isSeller ? "Buyer offered" : "Your offer"}</p>
-              <p className="font-black text-[#ff9b3d]">{formatPrice(offer.offerPrice)}</p>
+              <p className="font-black text-[#fff0a8]">{formatPrice(offer.offerPrice)}</p>
             </div>
             {savings > 0 && (
               <div>
