@@ -123,7 +123,7 @@ const STRIPE_RATE = 0.029;
 const STRIPE_FIXED = 0.30;
 
 function useMktRate(rawSettings: Record<string, string>) {
-  return (parseFloat(rawSettings["fee_rate_default"] ?? "8") || 8) / 100;
+  return (parseFloat(rawSettings["fee_rate_default"] ?? "5") || 5) / 100;
 }
 
 function buildFeeRows(mktRatePct: number) {
