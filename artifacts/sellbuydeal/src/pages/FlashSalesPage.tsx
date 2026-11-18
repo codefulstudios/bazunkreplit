@@ -230,7 +230,7 @@ export function FlashSalesPage() {
         <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-fuchsia-300/60 bg-gradient-to-r from-[#6526f9] via-[#c41bdc] to-[#ff6284] px-6 py-6 shadow-xl">
           <span aria-hidden="true" className="absolute -left-5 bottom-[-22px] rotate-[-15deg] text-7xl">📣</span>
           <div className="relative pl-14 sm:pl-20"><h2 className="text-2xl font-black text-[#fff22a] sm:text-3xl">Weekend Mega Sales!</h2><p className="mt-1 text-sm font-bold text-white">Discover limited-time deals across your favourite categories.</p></div>
-          <button onClick={()=>{setSaleTypeFilter("weekend_mega");setTab("active");window.scrollTo({top:0,behavior:"smooth"});}} className="relative rounded-xl bg-white px-5 py-3 font-black text-[#5025d4] hover:bg-yellow-100">View Mega Sales →</button>
+          <button onClick={()=>{setSaleTypeFilter("weekend_mega");setTab("active");window.scrollTo({top:0,behavior:"smooth"});}} className="relative rounded-xl !bg-white px-5 py-3 font-black !text-[#5025d4] hover:bg-yellow-100">View Mega Sales →</button>
         </div>
       </main>
       <Footer/>
