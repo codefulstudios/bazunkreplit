@@ -29,12 +29,12 @@ test("Cashback loading effect does not restart whenever authentication callbacks
   assert.doesNotMatch(admin,/\},\[authFetch\]\)/);
 });
 
-test("both Cashback routes recover from rendering errors instead of showing an empty page",()=>{
+test("admin Cashback recovers from render errors and customer Cashback redirects to dashboard",()=>{
   assert.match(app,/class CashbackErrorBoundary extends React\.Component/);
   assert.match(app,/Cashback could not open/);
   assert.match(app,/Retry Cashback/);
   assert.match(app,/<CashbackErrorBoundary admin><AdminCashbackPage/);
-  assert.match(app,/<CashbackErrorBoundary><FeatureGate feature="cashback"/);
+  assert.match(app,/<Route path="\/cashback">\{\(\) => <Redirect to="\/dashboard\?section=cashback" \/>\}<\/Route>/);
   assert.match(front,/role="alert"/);
   assert.match(admin,/role="alert"/);
   assert.match(front,/Retry cashback/);
