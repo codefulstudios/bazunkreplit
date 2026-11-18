@@ -38,7 +38,7 @@ return <section className="space-y-4 rounded-xl border border-slate-200 bg-white
 <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={v.stickyHeader} onChange={e=>change("stickyHeader",e.target.checked)} className="h-5 w-5 accent-blue-600"/>Sticky header</label>
 </>}
 </div>
-<div className="rounded-xl border border-slate-300 p-5 dark:border-slate-600" style={{fontFamily:v.font,fontSize:v.body}}>
+<div className="rounded-xl border border-slate-300 p-5 dark:border-slate-600" style={{fontFamily:"var(--app-font-sans)",fontSize:v.body}}>
 <h3 style={{fontSize:v.heading,fontWeight:800}}>Sample dashboard card</h3><div className="mt-3 border border-slate-200 bg-slate-50 p-4 text-slate-900" style={{borderRadius:v.radius,boxShadow:v.shadow==="none"?"none":v.shadow==="soft"?"0 2px 8px #0001":"0 8px 24px #0002",padding:v.density==="compact"?12:v.density==="spacious"?28:20}}>
 <p className="font-semibold">Marketplace activity</p><p className="my-2">Clear readable buttons, labels and cards.</p><button type="button" style={{borderRadius:v.button==="pill"?999:v.button==="square"?0:8}} className="bg-blue-600 px-5 py-2 font-bold text-white">Primary action</button></div></div>
 <div className="flex flex-wrap gap-3"><button type="button" onClick={()=>{setV(DEFAULT_COMPONENT_STYLE);setDirty(true);setNotice("Defaults selected — save to publish.")}} className="rounded-lg border border-slate-400 px-4 py-2 font-bold">Reset to defaults</button><span role="status" className="text-sm font-semibold text-slate-700 dark:text-slate-200">{notice}</span></div>
