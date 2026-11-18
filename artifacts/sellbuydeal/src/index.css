@@ -4043,3 +4043,54 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bazunk-quick-sell :is(input,select,textarea)::placeholder{color:#c5d8f2!important;opacity:1}
 .bazunk-quick-sell button:focus-visible,.bazunk-quick-sell a:focus-visible{outline:3px solid #ffb238!important;outline-offset:2px}
 @media(max-width:640px){.bazunk-quick-sell .bz-quick-conditions{grid-template-columns:repeat(2,minmax(0,1fr))}.bazunk-quick-sell>section button[data-testid^="button-condition-"]{min-height:86px!important}}
+
+
+/* Homepage-only brand refinement: no changes to inner pages or admin.
+   Restrict the header treatment to the homepage, whose wrapper owns the navbar. */
+.bz-home-refined{
+  --bz-home-navy:#061b33;
+  --bz-home-ink:#172b4d;
+  --bz-home-orange:#ff7900;
+  --bz-home-canvas:#f5f7fa;
+  background:var(--bz-home-canvas);
+  color:var(--bz-home-ink);
+  font-family:var(--app-font-sans);
+}
+.bz-home-refined main{background:var(--bz-home-canvas)}
+.bz-home-refined .bz-mockup-header,
+.bz-home-refined .bz-mockup-header .bz-mockup-mainbar{
+  background:var(--bz-home-navy)!important;
+  box-shadow:none!important;
+}
+.bz-home-refined .bz-mockup-header .bz-mockup-topbar{
+  background:var(--bz-home-navy)!important;
+  border-bottom:1px solid #ffffff24!important;
+}
+.bz-home-refined .bz-mockup-header .bz-mockup-top-sell{
+  background:var(--bz-home-orange)!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+.bz-home-refined .bz-mockup-header .bz-header-primary-nav>a:hover,
+.bz-home-refined .bz-mockup-header .bz-header-primary-nav>div>button:hover{
+  background:#ffffff14!important;
+}
+.bz-home-refined main :is(h1,h2,h3,h4){font-family:var(--app-font-sans);letter-spacing:-.025em}
+.bz-home-refined main :is(article,[class*="product-card"],[class*="listing-card"]){
+  border-radius:14px;
+}
+.bz-home-refined main :is(article,[class*="product-card"],[class*="listing-card"]):not([class*="hero"]){
+  box-shadow:0 2px 12px #061b330b;
+}
+.bz-home-refined main :is(a,button)[class*="from-[#F26B21"],
+.bz-home-refined main :is(a,button)[class*="bg-[#F26B21"],
+.bz-home-refined main :is(a,button)[class*="bg-[#FF7900"]{
+  background:var(--bz-home-orange)!important;
+  background-image:none!important;
+}
+.bz-home-refined main :is(a,button)[class*="bg-[#4A5CE8"]{
+  background:var(--bz-home-orange)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .bz-home-refined main :is(a,button){transition-duration:0.01ms}
+}
