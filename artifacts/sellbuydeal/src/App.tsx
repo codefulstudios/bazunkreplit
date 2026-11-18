@@ -110,6 +110,7 @@ const CreditsPage = React.lazy(() => import("@/pages/CreditsPage").then(module =
 const PromotionsPage = React.lazy(() => import("@/pages/PromotionsPage").then(module => ({ default: module.PromotionsPage })));
 const SupportPage = React.lazy(() => import("@/pages/SupportPage").then(module => ({ default: module.SupportPage })));
 const TermsPage = React.lazy(() => import("@/pages/TermsPage").then(module => ({ default: module.TermsPage })));
+const OurSitesPage = React.lazy(() => import("@/pages/OurSitesPage").then(module => ({ default: module.OurSitesPage })));
 const PrivacyPage = React.lazy(() => import("@/pages/PrivacyPage").then(module => ({ default: module.PrivacyPage })));
 const CookiePolicyPage = React.lazy(() => import("@/pages/CookiePolicyPage").then(module => ({ default: module.CookiePolicyPage })));
 import { CookieConsentProvider, CookieConsentBanner, CookieMarketingScripts } from "@/components/CookieConsent";
@@ -465,6 +466,7 @@ function Router() {
       <Route path="/faq">{() => <Redirect to="/support" />}</Route>
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/our-sites" component={OurSitesPage} />
       <Route path="/cookies" component={CookiePolicyPage} />
       <Route path="/offers">{() => <FeatureGate feature="offers" name="Make an Offer"><OffersPage /></FeatureGate>}</Route>
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
