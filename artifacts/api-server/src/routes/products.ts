@@ -480,6 +480,7 @@ router.get("/admin/products/:id", async (req, res) => {
       ships_from_location: String(specs.ships_from_location ?? specs.source_item_location ?? ""),
       ships_to: String(specs.ships_to ?? ""),
       shipping_price: specs.shipping_price ?? specs.shipping ?? "",
+      handling_charge: specs.handling_charge ?? "",
       free_shipping: Boolean(specs.free_shipping ?? (String(specs.source_shipping_label ?? "").toLowerCase() === "free")),
       dispatch_time: String(specs.dispatch_time ?? ""),
       delivery_estimate: String(specs.delivery_estimate ?? ""),
@@ -505,7 +506,7 @@ router.put("/admin/products/:id", async (req, res) => {
     const {
       title, description, price, condition, status, category_id, subcategory, subsubcategory,
       seller_email, tags, images, currency, inventory, brand, sku,
-      ships_from, ships_from_location, ships_to, shipping_price, free_shipping,
+      ships_from, ships_from_location, ships_to, shipping_price, handling_charge, free_shipping,
       dispatch_time, delivery_estimate,
     } = req.body;
     if (!title) { res.status(400).json({ error: "title required" }); return; }
@@ -522,6 +523,7 @@ router.put("/admin/products/:id", async (req, res) => {
       brand: brand ?? "", sku: sku ?? "",
       ships_from: ships_from ?? "", ships_from_location: ships_from_location ?? "",
       ships_to: ships_to ?? "", shipping_price: shipping_price === "" ? null : Number(shipping_price),
+      handling_charge: handling_charge === "" ? null : Math.max(0, Number(handling_charge ?? specs.handling_charge ?? 0)),
       free_shipping: Boolean(free_shipping), dispatch_time: dispatch_time ?? "",
       delivery_estimate: delivery_estimate ?? "",
       admin_gallery_images: Array.isArray(images)?images.slice(0,12):specs.admin_gallery_images,
