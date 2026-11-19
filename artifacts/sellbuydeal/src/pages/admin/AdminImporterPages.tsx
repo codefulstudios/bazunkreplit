@@ -11,7 +11,6 @@ const sources = [
  {name:"eBay",href:"/admin/importers/ebay",detail:"eBay searches, source-specific listing management and sync"},
  {name:"AliExpress",href:"/admin/importers/aliexpress",detail:"AliExpress search and import using the configured integration"},
  {name:"Gumtree",href:"/admin/importers/gumtree",detail:"Classified adverts and expiry controls"},
- {name:"Craigslist",href:"/admin/importers/craigslist",detail:"RapidAPI search · separate 100 monthly request hard cap"},
  {name:"OLX",href:"/admin/importers/olx",detail:"RapidAPI search · separate 100 monthly request hard cap"},
 ];
 export function AdminImporterOverviewPage(){
