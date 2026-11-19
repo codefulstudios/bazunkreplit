@@ -4838,9 +4838,11 @@ function GoLiveSection() {
 
       <button
         onClick={handleGoLive}
+        disabled={startingLive}
+        aria-busy={startingLive}
         className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-red-500 to-[#F26B21] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
       >
-        <Radio className="w-5 h-5" /> Go Live Now
+        <Radio className="w-5 h-5" /> {startingLive ? "Registering your live stream…" : "Go Live Now"}
       </button>
       <p className="text-[10px] text-gray-400 text-center mt-3">
         You'll be taken to your live page where buyers can browse and purchase while watching your stream.
