@@ -66,9 +66,28 @@ function LiveHubCreatorSection({live,upcoming}:{live:Array<{id:string;title:stri
       if(fresh.ok)setSchedules((await fresh.json()).schedules||[]);
     }catch(e){setMessage(e instanceof Error?e.message:"Could not schedule stream");}
   }
-  const nav=[["Go Live Now","/dashboard?section=go-live","📹"],["Schedule Stream","#bz-schedule","▦"],["My Streams & Replays","#bz-live-list","▶"],["Followers","#bz-notifications","♟"],["Moderation","/dashboard?section=go-live","⬡"],["Analytics","/dashboard?section=go-live","▥"],["Monetisation","/credits","◉"],["Live Channels","#bz-external-live","↗"]];
-  const featureCards=[["Schedule Stream","#bz-schedule","▦","Plan and promote your next live"],["Live Auctions","/auctions","⚒","Real-time bidding on exclusive items"],["Flash Deals","/flash-sales","ϟ","Limited-time offers with countdowns"],["Shop the Stream","#bz-live-list","♧","Buy products as you watch"],["Replays","#bz-live-list","▷","Watch saved broadcasts"],["Analytics","/dashboard?section=go-live","▥","Track views and engagement"]];
   const featured=live[0];
+  const studioRoom=featured ? `/live/${encodeURIComponent(featured.id)}#bz-creator-tools` : "/dashboard?section=go-live";
+  const saleRoom=featured ? `/live/${encodeURIComponent(featured.id)}#bz-live-events` : "#bz-live-list";
+  const nav=[
+    ["Go Live Now","/dashboard?section=go-live","📹"],
+    ["Schedule Stream","#bz-schedule","▦"],
+    ["Live Streams","#bz-live-list","▶"],
+    ["Follower Notifications",user?"#bz-notifications":"/sign-in","♟"],
+    ["Moderation",studioRoom,"⬡"],
+    ["Creator Analytics",studioRoom,"▥"],
+    ["Bazunk Credits","/credits","◉"],
+    ["Live Channels","#bz-external-discovery","↗"],
+  ];
+  const featureCards=[
+    ["Schedule Stream","#bz-schedule","▦","Plan and promote your next live"],
+    ["Live Auctions",saleRoom,"⚒","Explore live auction events"],
+    ["Flash Deals",saleRoom,"ϟ","Discover live flash promotions"],
+    ["Shop the Stream","#bz-live-list","♧","Buy products while watching"],
+    ["Replays",studioRoom,"▷","View seller-provided replay links"],
+    ["Analytics",studioRoom,"▥","Creator-only stream analytics"],
+  ];
+
   return <section className="bz-studio-mock mt-4 mb-8 text-white">
     <div className="bz-studio-heading"><div className="flex items-center gap-3"><span className="bz-studio-broadcast"><Radio size={29}/></span><div><h1 className="text-3xl font-black">Bazunk <span className="text-[#ff7300]">Live</span></h1><p className="text-slate-300 text-sm">Live shopping, auctions, flash deals and creator streams</p></div></div><div className="bz-studio-numbers"><span><Radio size={17}/> <b>{live.length}</b> Live Now</span><span><Users size={17}/> <b>{live.reduce((n,s)=>n+(Number(s.viewerCount)||0),0).toLocaleString()}</b> Watching</span><span><Tag size={17}/> <b>{live.reduce((n,s)=>n+s.productIds.length,0)}</b> Live Items</span></div></div>
     <div className="bz-studio-main">
@@ -81,7 +100,7 @@ function LiveHubCreatorSection({live,upcoming}:{live:Array<{id:string;title:stri
     <div className="bz-studio-bottom">
       <div id="bz-schedule" className="bz-studio-panel"><h2>▦ Scheduled Live Streams</h2>{schedules.length?schedules.slice(0,4).map(s=><div className="bz-studio-schedule" key={s.id}><span className="text-[#ff7900]">▦</span><span><b>{s.title}</b><small>{new Date(s.scheduledAt).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</small></span></div>):<p className="text-slate-400 text-sm py-3">No upcoming broadcasts scheduled yet.</p>}{user?<div className="space-y-2 mt-3"><input className="bz-studio-input" aria-label="Stream title" placeholder="Stream title" value={title} onChange={e=>setTitle(e.target.value)}/><input className="bz-studio-input" aria-label="Stream date and time" type="datetime-local" value={date} onChange={e=>setDate(e.target.value)}/><button className="bz-studio-btn-blue w-full" disabled={!title||!date} onClick={()=>void schedule()}>+ Schedule a Live Stream</button>{message&&<p role="status" className="text-xs text-orange-300">{message}</p>}</div>:<Link href="/sign-in" className="bz-studio-btn-blue mt-3">Sign in to schedule</Link>}</div>
       <div id="bz-external-live" className="bz-studio-panel"><h2>↗ External Platform Discovery</h2><p className="text-slate-300 text-sm mb-4">Explore approved creators and streams from other platforms.</p><div className="bz-studio-platforms"><a href="#bz-external-discovery">TikTok</a><a href="#bz-external-discovery">eBay</a><a href="#bz-external-discovery">YouTube</a><a href="#bz-external-discovery">Twitch</a></div><a href="#bz-external-discovery" className="bz-studio-btn-blue mt-5">View external channels →</a></div>
-      <div className="bz-studio-panel"><h2>◉ Monetisation & Promotions</h2>{[["Featured Placement","Get higher visibility in Live and Discovery","/promotions"],["Seller Upgrades","Unlock advanced tools and analytics","/dashboard"],["Bazunk Credits","Top up credits for promotions and features","/credits"],["Affiliate Referrals","Approved partner referrals only","#bz-external-discovery"]].map(([label,desc,url])=><a key={label} href={url} className="bz-studio-money"><span><b>{label}</b><small>{desc}</small></span><ArrowRight size={17}/></a>)}</div>
+      <div className="bz-studio-panel"><h2>◉ Monetisation & Promotions</h2>{[["Creator Analytics","View your stream performance",studioRoom],["Live Auctions","Manage active stream events",saleRoom],["Bazunk Credits","View available promotional credits","/credits"],["External Channels","Browse approved external live listings","#bz-external-discovery"]].map(([label,desc,url])=><a key={label} href={url} className="bz-studio-money"><span><b>{label}</b><small>{desc}</small></span><ArrowRight size={17}/></a>)}</div>
     </div>
     {user&&<div id="bz-notifications" className="bz-studio-panel mt-4"><h2><Bell size={18}/> Follower notifications</h2>{notifications.length?notifications.slice(0,4).map(n=><p key={n.id} className="text-sm text-slate-300 py-2 border-b border-white/10">{n.content}</p>):<p className="text-sm text-slate-400">No new notifications.</p>}</div>}
   </section>;
@@ -625,8 +644,8 @@ export function LivePage() {
         <div className="flex flex-col gap-4">
 
           {shoppingError && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-200">{shoppingError}</p>}
-          {session.isLive && <LiveSalePanel sessionId={session.id} sellerEmail={session.sellerId} productIds={session.productIds} />}
-          {session.isLive && <CreatorTools sessionId={session.id} sellerEmail={session.sellerId} />}
+          {session.isLive && <div id="bz-live-events"><LiveSalePanel sessionId={session.id} sellerEmail={session.sellerId} productIds={session.productIds} /></div>}
+          {session.isLive && <div id="bz-creator-tools"><CreatorTools sessionId={session.id} sellerEmail={session.sellerId} /></div>}
           {/* Featured Product Spotlight */}
           <AnimatePresence mode="wait">
             {featuredProduct && featuredItem && (
