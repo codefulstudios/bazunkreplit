@@ -244,6 +244,50 @@ function LiveSalePanel({sessionId,sellerEmail,productIds}:{sessionId:string;sell
   </section>;
 }
 
+function CreatorTools({sessionId,sellerEmail}:{sessionId:string;sellerEmail:string}){
+  const {user}=useUser();const {getToken}=useAuth();
+  const own=!!user?.primaryEmailAddress?.emailAddress&&user.primaryEmailAddress.emailAddress.toLowerCase()===sellerEmail.toLowerCase();
+  const [title,setTitle]=useState("");const [date,setDate]=useState("");
+  const [replay,setReplay]=useState("");const [blocked,setBlocked]=useState("");
+  const [analytics,setAnalytics]=useState<Record<string,number>|null>(null);
+  const [replays,setReplays]=useState<{id:number;title:string;url:string}[]>([]);
+  const [schedules,setSchedules]=useState<{id:number;title:string;scheduledAt:string;sellerEmail:string}[]>([]);
+  const [message,setMessage]=useState("");
+  useEffect(()=>{let active=true;const load=async()=>{
+    try{
+      const [r,s]=await Promise.all([fetch(`/api/live/session/${encodeURIComponent(sessionId)}/replays`),fetch("/api/live/creator/schedules")]);
+      if(active&&r.ok)setReplays((await r.json()).replays||[]);
+      if(active&&s.ok)setSchedules((await s.json()).schedules||[]);
+      if(own){const token=await getToken();const a=await fetch(`/api/live/session/${encodeURIComponent(sessionId)}/creator-analytics`,{headers:token?{Authorization:`Bearer ${token}`}:{}});
+        if(active&&a.ok)setAnalytics((await a.json()).analytics);}
+    }catch{}
+  };void load();const timer=setInterval(()=>void load(),15000);return()=>{active=false;clearInterval(timer)};},[sessionId,own,getToken]);
+  async function submit(url:string,body:object){
+    setMessage("");
+    try{const token=await getToken();const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)});
+      const d=await r.json();if(!r.ok)throw Error(d.error||"Request failed");setMessage("Saved successfully.");
+    }catch(e){setMessage(e instanceof Error?e.message:"Request failed");}
+  }
+  return <section className="bg-gray-900 border border-gray-700 rounded-2xl p-4 space-y-3 text-white">
+    <h2 className="font-bold">Creator tools</h2>
+    {message&&<p role="status" className="text-sm text-orange-300">{message}</p>}
+    {!own&&<button className="rounded-lg bg-orange-500 text-black font-bold px-3 py-2 text-sm" onClick={()=>void submit(`/api/live/creator/${encodeURIComponent(sellerEmail)}/follow`,{})}>Follow creator</button>}
+    {own&&<>
+      <div className="grid grid-cols-2 gap-2">
+        <input aria-label="Scheduled stream title" placeholder="Upcoming stream title" value={title} onChange={e=>setTitle(e.target.value)} className="bg-gray-800 rounded p-2 text-sm"/>
+        <input aria-label="Stream date and time" type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} className="bg-gray-800 rounded p-2 text-sm"/>
+        <button className="col-span-2 bg-orange-500 text-black rounded p-2 font-bold" onClick={()=>void submit("/api/live/creator/schedules",{title,scheduledAt:new Date(date).toISOString()})} disabled={!title||!date}>Schedule stream & notify followers in-app</button>
+      </div>
+      <div className="flex gap-2"><input aria-label="Replay URL" placeholder="HTTPS replay URL" value={replay} onChange={e=>setReplay(e.target.value)} className="bg-gray-800 rounded p-2 min-w-0 flex-1 text-sm"/><button className="bg-gray-700 rounded px-3" onClick={()=>void submit(`/api/live/session/${encodeURIComponent(sessionId)}/replays`,{title:"Stream replay",url:replay})}>Add replay</button></div>
+      <div className="flex gap-2"><input aria-label="Block chat participant email" placeholder="Chat participant email" value={blocked} onChange={e=>setBlocked(e.target.value)} className="bg-gray-800 rounded p-2 min-w-0 flex-1 text-sm"/><button className="bg-red-900 rounded px-3" onClick={()=>void submit(`/api/live/session/${encodeURIComponent(sessionId)}/moderation/block`,{email:blocked})}>Block chat</button></div>
+      {analytics&&<p className="text-xs text-gray-300">Viewers: {analytics.viewerCount??0} · Chat messages: {analytics.chatMessages??0} · Bids: {analytics.bids??0} · Followers: {analytics.followers??0}</p>}
+    </>}
+    {schedules.filter(s=>s.sellerEmail?.toLowerCase()===sellerEmail.toLowerCase()).slice(0,3).map(s=><p key={s.id} className="text-xs text-gray-300">Upcoming: {s.title} — {new Date(s.scheduledAt).toLocaleString()}</p>)}
+    {replays.map(r=><a key={r.id} href={r.url} target="_blank" rel="noopener noreferrer" className="block text-orange-300 text-sm underline">{r.title} (external replay)</a>)}
+    <p className="text-xs text-gray-400">Notifications are currently in-app records, not email or push. Replays are seller-provided links, not automatic recordings.</p>
+  </section>;
+}
+
 export function LivePage() {
   const { formatPrice, currency } = useCurrency();
   const { id } = useParams<{ id: string }>();
@@ -544,6 +588,7 @@ export function LivePage() {
 
           {shoppingError && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-200">{shoppingError}</p>}
           {session.isLive && <LiveSalePanel sessionId={session.id} sellerEmail={session.sellerId} productIds={session.productIds} />}
+          {session.isLive && <CreatorTools sessionId={session.id} sellerEmail={session.sellerId} />}
           {/* Featured Product Spotlight */}
           <AnimatePresence mode="wait">
             {featuredProduct && featuredItem && (
