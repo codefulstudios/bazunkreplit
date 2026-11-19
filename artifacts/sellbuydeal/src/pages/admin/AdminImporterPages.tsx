@@ -58,7 +58,7 @@ export function AdminImporterBulkUpdatePage(){
 
 export function AdminCsvImporterPage(){
  const {authFetch}=useAdmin();
- const [csv,setCsv]=useState("");const [seller,setSeller]=useState("");const [region,setRegion]=useState("us");
+ const [csv,setCsv]=useState("");const [seller,setSeller]=useState("cczslater@gmail.com");const [region,setRegion]=useState("us");
  const [error,setError]=useState("");const [busy,setBusy]=useState(false);const [result,setResult]=useState("");
  const [preview,setPreview]=useState<Record<string,string>[]>([]);
  function parse(text:string){
@@ -77,12 +77,12 @@ export function AdminCsvImporterPage(){
   return rows.map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]||"").trim()])));
  }
  async function load(file?:File){
-  setPreview([]);setResult("");setError("");if(!file)return;
+  setPreview([]);setCsv("");setResult("");setError("");if(!file)return;
   if(file.size>1000000||!file.name.toLowerCase().endsWith(".csv")){setError("Choose a CSV under 1 MB");return;}
-  try{const data=await file.text();setCsv(data);setPreview(parse(data.replace(/^\uFEFF/,"")));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
+  try{const data=(await file.text()).replace(/^\uFEFF/,"");setCsv(data);setPreview(parse(data));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
  }
  async function submit(){
-  if(busy)return;setBusy(true);setError("");setResult("");
+  if(busy)return;if(!csv){setError("Select a CSV file first. The preview will appear when its columns are valid.");return;}setBusy(true);setError("");setResult("");
   try{
    const rows=parse(csv);if(!rows.length)throw Error("No products found");
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
@@ -95,12 +95,14 @@ export function AdminCsvImporterPage(){
  return <AdminLayout><div className="max-w-5xl space-y-5 text-slate-900 dark:text-white">
   <h1 className="text-2xl font-black">CSV Product Import</h1>
   <p>Import listings for a chosen seller. All imported products are saved as drafts, never published automatically. Existing seller SKUs are skipped.</p>
-  <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded border p-3 text-slate-900"/></label>
-  <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded border p-3 text-slate-900"><option value="us">USA</option><option value="uk">UK</option></select></label>
-  <label className="block font-bold">CSV file<input type="file" accept=".csv,text/csv" className="mt-2 block" onChange={e=>void load(e.target.files?.[0])}/></label>
+  <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"/></label>
+  <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"><option value="us">USA</option><option value="uk">UK</option></select></label>
+  <label className="block font-bold">CSV file<input type="file" accept=".csv,text/csv" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-orange-700" onChange={e=>void load(e.target.files?.[0])}/></label>
   <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
-  {preview.length>0&&<div className="rounded border p-4"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
-  {error&&<p role="alert" className="text-red-600">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
-  <button disabled={busy||!preview.length||!seller.trim()} onClick={()=>void submit()} className="rounded bg-orange-600 px-5 py-3 font-bold text-white disabled:opacity-50">{busy?"Importing…":"Create "+preview.length+" draft listings"}</button>
+  {csv&&!preview.length&&!error&&<p role="status" className="font-semibold text-amber-700 dark:text-amber-300">No valid products were found. Check the CSV headings and rows.</p>}
+  {preview.length>0&&<div className="rounded border border-slate-400 bg-white p-4 text-slate-950 dark:bg-slate-900 dark:text-white"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
+  {error&&<p role="alert" className="rounded-lg border border-red-500 bg-red-50 p-3 font-semibold text-red-800 dark:bg-red-950 dark:text-red-100">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
+  <button type="button" disabled={busy} onClick={()=>void submit()} className="rounded-lg border-2 border-orange-800 bg-orange-600 px-5 py-3 font-bold text-white shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:cursor-wait disabled:border-slate-500 disabled:bg-slate-600 disabled:text-white">{busy?"Importing…":"Create "+(preview.length||"")+(preview.length?" ":"")+"draft listings"}</button>
+  <p className="text-sm font-medium text-slate-700 dark:text-slate-200">The button remains clickable so validation errors are shown instead of silently disabling it. A valid CSV preview is required before import.</p>
  </div></AdminLayout>;
 }
