@@ -368,6 +368,8 @@ function ProductDrawer({
 
   const [saving, setSaving] = useState(false);
   const editorScrollRef=useRef<HTMLDivElement>(null);
+  const dialogRef=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{const dialog=dialogRef.current;if(!dialog)return;if(!dialog.open)dialog.showModal();return ()=>{if(dialog.open)dialog.close();};},[]);
   useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow="hidden";return ()=>{document.body.style.overflow=previous;};},[]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -434,7 +436,7 @@ function ProductDrawer({
 
   return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/80 z-[9998]" onClick={tryClose} />
+
       <style>{`
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
@@ -480,7 +482,7 @@ function ProductDrawer({
           border:1px solid #566c87 !important;
         }
       `}</style>
-      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[9999] flex h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
+      <dialog ref={dialogRef} id="bazunk-listing-editor" aria-label="Edit listing" onCancel={e=>{e.preventDefault();tryClose();}} onClick={e=>{if(e.target===dialogRef.current)tryClose();}} className="m-auto h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-black/85 dark:border-slate-600 dark:bg-[#101c30] dark:text-white" style={{position:"fixed",inset:0,margin:"auto",display:"flex",flexDirection:"column",zIndex:2147483647}}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
           <div>
@@ -748,7 +750,7 @@ function ProductDrawer({
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
-      </div>
+      </dialog>
     </>,
     document.body
   );
