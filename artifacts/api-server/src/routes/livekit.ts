@@ -290,5 +290,101 @@ router.get("/live/session/:id/product/:productId/quote",async(req,res)=>{
     res.json({id:Number(p.id),title:p.title,price:Number(p.price),quantity,available});
   }catch(err){logger.error({err},"Failed to quote live product");res.status(503).json({error:"Could not verify live price and stock."});}
 });
+
+async function ensureLiveEvents(){
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_sale_events (
+    id BIGSERIAL PRIMARY KEY, session_id TEXT NOT NULL, product_id INTEGER NOT NULL,
+    kind TEXT NOT NULL CHECK(kind IN ('auction','flash')),
+    starting_price NUMERIC(12,2), current_bid NUMERIC(12,2), discount_percent INTEGER,
+    ends_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    cancelled_at TIMESTAMPTZ, winner_email TEXT
+  )`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_sale_bids (
+    id BIGSERIAL PRIMARY KEY, event_id BIGINT NOT NULL REFERENCES live_sale_events(id),
+    bidder_email TEXT NOT NULL, amount NUMERIC(12,2) NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+}
+router.get("/live/session/:id/events",async(req,res)=>{
+  try{
+    await ensureLiveEvents();
+    const r:any=await db.execute(sql`SELECT id,product_id AS "productId",kind,starting_price AS "startingPrice",
+      current_bid AS "currentBid",discount_percent AS "discountPercent",ends_at AS "endsAt",
+      cancelled_at IS NOT NULL AS cancelled,
+      CASE WHEN ends_at<=NOW() THEN 'ended' ELSE 'active' END AS status
+      FROM live_sale_events WHERE session_id=${req.params.id} ORDER BY created_at DESC LIMIT 30`);
+    res.setHeader("Cache-Control","no-store");
+    res.json({events:r.rows||[]});
+  }catch(err){logger.error({err},"Live events lookup failed");res.status(503).json({error:"Could not load live sales."});}
+});
+router.post("/live/session/:id/events",async(req,res)=>{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in as the seller."});return;}
+  const productId=Number(req.body?.productId),minutes=Number(req.body?.minutes),kind=String(req.body?.kind||"");
+  const startingPrice=Number(req.body?.startingPrice),discount=Number(req.body?.discountPercent);
+  if(!Number.isSafeInteger(productId)||productId<=0||!Number.isInteger(minutes)||minutes<1||minutes>120||
+    !["auction","flash"].includes(kind)||(kind==="auction"&&(!Number.isFinite(startingPrice)||startingPrice<=0))||
+    (kind==="flash"&&(!Number.isInteger(discount)||discount<1||discount>70))){
+    res.status(400).json({error:"Invalid event settings."});return;
+  }
+  try{
+    const owned:any=await db.execute(sql`SELECT product_ids FROM live_stream_sessions WHERE id=${req.params.id}
+      AND LOWER(seller_email)=LOWER(${email}) AND is_live=TRUE LIMIT 1`);
+    if(!owned.rows?.length){res.status(403).json({error:"Active seller session required."});return;}
+    if(!Array.isArray(owned.rows[0].product_ids)||!owned.rows[0].product_ids.some((x:unknown)=>Number(x)===productId)){
+      res.status(400).json({error:"Product is not in this stream."});return;
+    }
+    const item:any=await db.execute(sql`SELECT price,quantity,status FROM listings WHERE id=${productId} AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+    if(!item.rows?.length||Number(item.rows[0].quantity)<=0||!["active","approved","published"].includes(String(item.rows[0].status).toLowerCase())){
+      res.status(400).json({error:"An available seller-owned listing is required."});return;
+    }
+    await ensureLiveEvents();
+    const existing:any=await db.execute(sql`SELECT 1 FROM live_sale_events WHERE session_id=${req.params.id}
+      AND product_id=${productId} AND ends_at>NOW() AND cancelled_at IS NULL LIMIT 1`);
+    if(existing.rows?.length){res.status(409).json({error:"An event for this product is already active."});return;}
+    const r:any=await db.execute(sql`INSERT INTO live_sale_events(session_id,product_id,kind,starting_price,discount_percent,ends_at)
+      VALUES(${req.params.id},${productId},${kind},${kind==="auction"?startingPrice.toFixed(2):null},
+      ${kind==="flash"?discount:null},NOW()+${minutes}*INTERVAL '1 minute') RETURNING id,ends_at`);
+    res.status(201).json({ok:true,event:r.rows?.[0]});
+  }catch(err){logger.error({err},"Could not create live event");res.status(503).json({error:"Could not start live event."});}
+});
+router.post("/live/session/:id/events/:eventId/bids",async(req,res)=>{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in to bid."});return;}
+  const amount=Number(req.body?.amount),eventId=Number(req.params.eventId);
+  if(!Number.isSafeInteger(eventId)||!Number.isFinite(amount)||amount<=0||Math.round(amount*100)!==amount*100){
+    res.status(400).json({error:"Enter a valid bid amount in pounds and pence."});return;
+  }
+  try{
+    await ensureLiveEvents();
+    // A conditional UPDATE makes competing bids atomic: a lower simultaneous bid
+    // cannot overwrite a higher one. Never accept a bid after the server deadline.
+    const r:any=await db.execute(sql`UPDATE live_sale_events e SET current_bid=${amount.toFixed(2)}
+      FROM live_stream_sessions s WHERE e.id=${eventId} AND e.session_id=${req.params.id}
+      AND s.id=e.session_id AND s.is_live=TRUE AND e.kind='auction'
+      AND e.ends_at>NOW() AND e.cancelled_at IS NULL
+      AND LOWER(s.seller_email)<>LOWER(${email})
+      AND ${amount.toFixed(2)}::numeric >= COALESCE(e.current_bid+0.01,e.starting_price)
+      RETURNING e.id`);
+    if(!r.rows?.length){res.status(409).json({error:"Auction ended, unavailable, or your bid is too low."});return;}
+    await db.execute(sql`INSERT INTO live_sale_bids(event_id,bidder_email,amount) VALUES(${eventId},${email},${amount.toFixed(2)})`);
+    res.status(201).json({ok:true,amount});
+  }catch(err){logger.error({err},"Live bid failed");res.status(503).json({error:"Bid could not be recorded."});}
+});
+router.post("/live/session/:id/events/:eventId/cancel",async(req,res)=>{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in as the seller."});return;}
+  try{
+    await ensureLiveEvents();
+    const r:any=await db.execute(sql`UPDATE live_sale_events e SET cancelled_at=NOW()
+      FROM live_stream_sessions s WHERE e.id=${Number(req.params.eventId)} AND e.session_id=${req.params.id}
+      AND s.id=e.session_id AND LOWER(s.seller_email)=LOWER(${email})
+      AND e.ends_at>NOW() AND e.cancelled_at IS NULL RETURNING e.id`);
+    if(!r.rows?.length){res.status(404).json({error:"Active event not found."});return;}
+    res.json({ok:true});
+  }catch(err){logger.error({err},"Live event cancellation failed");res.status(503).json({error:"Could not cancel event."});}
+});
+// Events are promotional/bidding records only. Payment capture and auction winner
+// fulfilment must be implemented in the existing checkout service before launch.
+
 export default router;
 
