@@ -7,6 +7,7 @@ import { OLXAdminImporter } from "./OlxAdminImporter";
 import { useAdmin } from "@/context/AdminContext";
 
 const sources = [
+ {name:"CSV Products",href:"/admin/importers/csv",detail:"Bulk import seller listings from CSV as drafts"},
  {name:"Amazon",href:"/admin/importers/amazon",detail:"UK and USA product searches, imports and markup"},
  {name:"eBay",href:"/admin/importers/ebay",detail:"eBay searches, source-specific listing management and sync"},
  {name:"AliExpress",href:"/admin/importers/aliexpress",detail:"AliExpress search and import using the configured integration"},
@@ -60,3 +61,52 @@ export function AdminImporterBulkUpdatePage(){
 }
 export function AdminCraigslistPage(){return <AdminLayout><div className="text-slate-900 dark:text-white"><h1 className="text-2xl font-black mb-4">Craigslist importer</h1><CraigslistAdminImporter/></div></AdminLayout>}
 export function AdminOlxPage(){return <AdminLayout><div className="text-slate-900 dark:text-white"><h1 className="text-2xl font-black mb-4">OLX importer</h1><OLXAdminImporter/></div></AdminLayout>}
+
+export function AdminCsvImporterPage(){
+ const {authFetch}=useAdmin();
+ const [csv,setCsv]=useState("");const [seller,setSeller]=useState("");const [region,setRegion]=useState("us");
+ const [error,setError]=useState("");const [busy,setBusy]=useState(false);const [result,setResult]=useState("");
+ const [preview,setPreview]=useState<Record<string,string>[]>([]);
+ function parse(text:string){
+  const rows:string[][]=[];let row:string[]=[],field="",quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+   if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
+   else if(c===","&&!quoted){row.push(field);field="";}
+   else if((c==="\\n"||c==="\\r")&&!quoted){if(c==="\\r"&&text[i+1]==="\\n")i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field="";}
+   else field+=c;
+  }
+  if(quoted)throw Error("Unclosed quoted field");
+  row.push(field);if(row.some(x=>x.trim()))rows.push(row);
+  const headers=(rows.shift()||[]).map(x=>x.trim().toLowerCase());
+  if(new Set(headers).size!==headers.length||!["title","price","category"].every(x=>headers.includes(x)))throw Error("CSV needs unique headings and title, price, category columns");
+  if(rows.length>100)throw Error("Maximum 100 rows per admin import");
+  return rows.map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]||"").trim()])));
+ }
+ async function load(file?:File){
+  setPreview([]);setResult("");setError("");if(!file)return;
+  if(file.size>1000000||!file.name.toLowerCase().endsWith(".csv")){setError("Choose a CSV under 1 MB");return;}
+  try{const data=await file.text();setCsv(data);setPreview(parse(data.replace(/^\\uFEFF/,"")));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
+ }
+ async function submit(){
+  if(busy)return;setBusy(true);setError("");setResult("");
+  try{
+   const rows=parse(csv);if(!rows.length)throw Error("No products found");
+   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
+   const response=await authFetch("/api/admin/products/csv-listings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,sellerEmail:seller.trim(),region})});
+   const data=await response.json();if(!response.ok)throw Error(data.error||"Import failed");
+   setResult(data.created+" drafts created; "+data.skipped+" duplicates skipped. "+data.results.filter((x:{status:string})=>x.status==="error").length+" errors.");
+  }catch(e){setError(e instanceof Error?e.message:"Import failed");}
+  finally{setBusy(false);}
+ }
+ return <AdminLayout><div className="max-w-5xl space-y-5 text-slate-900 dark:text-white">
+  <h1 className="text-2xl font-black">CSV Product Import</h1>
+  <p>Import listings for a chosen seller. All imported products are saved as drafts, never published automatically. Existing seller SKUs are skipped.</p>
+  <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded border p-3 text-slate-900"/></label>
+  <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded border p-3 text-slate-900"><option value="us">USA</option><option value="uk">UK</option></select></label>
+  <label className="block font-bold">CSV file<input type="file" accept=".csv,text/csv" className="mt-2 block" onChange={e=>void load(e.target.files?.[0])}/></label>
+  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
+  {preview.length>0&&<div className="rounded border p-4"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
+  {error&&<p role="alert" className="text-red-600">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
+  <button disabled={busy||!preview.length||!seller.trim()} onClick={()=>void submit()} className="rounded bg-orange-600 px-5 py-3 font-bold text-white disabled:opacity-50">{busy?"Importing…":"Create "+preview.length+" draft listings"}</button>
+ </div></AdminLayout>;
+}
