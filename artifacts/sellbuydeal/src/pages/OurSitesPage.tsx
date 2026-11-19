@@ -6,7 +6,7 @@ const sites = [
   { name: "Data Platform", description: "Product data, search, and marketplace import tools for connected commerce.", url: "https://data.bazunk.com", Icon: Database },
   { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue.bazunk.com", Icon: Ticket },
   { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa.bazunk.com", Icon: Store },
-  { name: "Codeful Studios", description: "Digital design and development for websites, applications, and software.", url: "https://codefulstudio.bazunk.com", Icon: Code2 },
+  { name: "Digital Origin Studios", description: "Digital design and development for websites, applications, and software.", url: "https://digitaloriginstudios.bazunk.com", Icon: Code2 },
 ];
 
 export function OurSitesPage() {
