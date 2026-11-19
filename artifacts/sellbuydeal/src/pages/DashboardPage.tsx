@@ -5690,6 +5690,7 @@ export function DashboardPage() {
     const destination=DASHBOARD_PAGE_ROUTES[id];
     if(destination){
       setSidebarOpen(false);
+      setTileMenuOpen(false);
       setActiveCategory(null);
       setMobileExpandedCat(null);
       setLocation(destination);
@@ -5697,6 +5698,7 @@ export function DashboardPage() {
     }
     setActiveSectionRaw(id);
     setSidebarOpen(false);
+    setTileMenuOpen(false);
     setActiveCategory(SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null);
     setSectionNavigation(value => value + 1);
     setMobileExpandedCat(
@@ -5704,7 +5706,9 @@ export function DashboardPage() {
     );
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tileMenuOpen, setTileMenuOpen] = useState(false);
+  const [tileCategory, setTileCategory] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(() => { const section = new URLSearchParams(window.location.search).get("section"); return SIDEBAR_CATEGORIES.find(c => c.items.some(i=>i.id===section))?.id ?? null; });
   const [flyoutY, setFlyoutY] = useState(0);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(() => {
@@ -5799,60 +5803,30 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Dashboard drawer toggle — available on every dashboard section */}
-      <div className="relative z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
-        <button
-          onClick={() => {
-            setSidebarOpen(open => !open);
-            const activeCat = SIDEBAR_CATEGORIES.find(c =>
-              c.id === activeSection || c.items.some(i => i.id === activeSection)
-            );
-            if (activeCat) setMobileExpandedCat(activeCat.id);
-          }}
-          aria-label={sidebarOpen ? "Hide dashboard menu" : "Show dashboard menu"}
-          aria-expanded={sidebarOpen}
-          aria-controls="bazunk-dashboard-drawer"
-          className="flex items-center gap-2 text-gray-700 font-semibold text-sm"
-        >
-          <Menu className="w-5 h-5 text-gray-500" />
-          <span>{SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items : [{ id: c.id, label: c.label }]).find(s => s.id === activeSection)?.label ?? "Dashboard"}</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <Link href="/credits" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F59E0B] text-white text-xs font-semibold">
-            <Coins className="w-3.5 h-3.5" /> Credits
-          </Link>
-          <div className="w-8 h-8 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {initial}
-          </div>
-        </div>
+      {/* Dashboard navigation controls remain visible on all dashboard subpages. */}
+      <div className="bz-hub-toolbar">
+        <button type="button" className="bz-hub-menu-button" onClick={() => {setTileCategory(null);setTileMenuOpen(true);}} aria-label="Open dashboard navigation" aria-expanded={tileMenuOpen} aria-controls="bz-dashboard-hub"><Menu size={21}/><span>Dashboard Menu</span></button>
+        <span className="bz-hub-toolbar-title">Bazunk <span>Seller Dashboard</span></span>
+        <button type="button" className="bz-hub-mobile-nav" onClick={()=>setSidebarOpen(v=>!v)} aria-label="Toggle sidebar navigation"><LayoutDashboard size={18}/> Sections</button>
       </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       <div className="flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
 
-        {/* Dashboard categories-style slide-out drawer */}
-        <aside id="bazunk-dashboard-drawer" aria-label="Dashboard navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen} className={`
-          fixed inset-y-0 left-0 z-[70]
+        {/* Persistent neon navigation sidebar */}
+        <aside id="bazunk-dashboard-drawer" aria-label="Dashboard navigation" className={`
+          bz-hub-sidebar
           w-72 max-w-[100vw] lg:w-[294px] flex-shrink-0
           flex flex-col
-          bg-[#071b38] max-h-screen
+          bg-[#071b38]
           transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"}
+          ${sidebarOpen ? "bz-hub-sidebar-mobile-open" : ""}
         `}>
           {/* Scrollable inner container */}
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-y-auto">
 
-            {/* Mobile close row */}
+            {/* Sidebar heading */}
             <div className="flex items-center justify-between pb-1 flex-shrink-0">
-              <span className="font-bold text-gray-900 text-sm">My Dashboard</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-700 p-1">
+              <span className="font-bold text-white text-sm">Navigation</span>
+              <button onClick={() => setSidebarOpen(false)} aria-label="Close mobile navigation" className="lg:hidden text-white p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -5987,6 +5961,15 @@ export function DashboardPage() {
           </div>
         </aside>
 
+        {tileMenuOpen && <div id="bz-dashboard-hub" className="bz-hub-overlay" role="dialog" aria-modal="true" aria-label="Dashboard navigation menu" onKeyDown={e=>{if(e.key==="Escape")setTileMenuOpen(false);}}>
+          <div className="bz-hub-panel">
+            <div className="bz-hub-top"><div><span className="bz-hub-eyebrow">BAZUNK / DASHBOARD</span><h2>{tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.label : "Where would you like to go?"}</h2><p>{tileCategory ? "Choose a destination within this section." : "Explore your store, sales, buying and account tools."}</p></div><button type="button" onClick={()=>setTileMenuOpen(false)} aria-label="Close dashboard navigation"><X size={23}/></button></div>
+            {tileCategory && <button type="button" className="bz-hub-back" onClick={()=>setTileCategory(null)}><ArrowLeft size={17}/> All dashboard sections</button>}
+            <div className="bz-hub-tiles">
+              {tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.items.map(item=>{const Icon=item.icon;return <button type="button" key={item.id} className={`bz-hub-tile ${item.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>setActiveSection(item.id)}><Icon size={29}/><strong>{item.label}</strong><span>Open {item.label.toLowerCase()}</span></button>}) : visibleSidebarCategories.map(cat=>{const Icon=cat.icon;return <button type="button" key={cat.id} className={`bz-hub-tile ${cat.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>cat.items.length ? setTileCategory(cat.id) : setActiveSection(cat.id)}><Icon size={31}/><strong>{cat.label}</strong><span>{cat.items.length ? `${cat.items.length} tools and pages` : "Dashboard overview"}</span></button>})}
+            </div>
+          </div>
+        </div>}
         {/* Main content */}
         <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
