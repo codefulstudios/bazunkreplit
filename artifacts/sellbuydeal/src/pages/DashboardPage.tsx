@@ -5863,18 +5863,18 @@ export function DashboardPage() {
             className="h-full"
           >
             {(activeSection === "my-store" || activeSection === "store-settings") && (
-              <section className="bazunk-dashboard-store">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-[#102746] border border-[#34587e] p-5">
+              <section className="bazunk-dashboard-store bz-store-light-theme">
+                <div className="bz-store-page-heading flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-white border border-[#dce7f5] p-5">
                   <div className="flex items-center gap-3">
                     <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500 text-white"><Store size={26} /></span>
-                    <div><h1 className="text-xl font-black !text-white">{activeSection === "store-settings" ? "Store Settings" : "My Store"}</h1><p className="text-sm !text-slate-200">Manage your storefront, branding and selling preferences.</p></div>
+                    <div><h1 className="text-xl font-black !text-[#142d50]">{activeSection === "store-settings" ? "Store Settings" : "My Store"}</h1><p className="text-sm !text-[#536b87]">Manage your storefront, branding and selling preferences.</p></div>
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setActiveSection("my-store")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "my-store" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>My Store</button>
                     <button type="button" onClick={() => setActiveSection("store-settings")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "store-settings" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>Settings</button>
                   </div>
                 </div>
-                <MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} />
+                <div className="bz-store-page-content"><MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} /></div>
               </section>
             )}
             {activeSection === "cashback" && <CashbackPage embedded />}
