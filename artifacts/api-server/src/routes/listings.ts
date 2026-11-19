@@ -15,6 +15,9 @@ import { awardReferralMilestone } from "../lib/referrals.js";
 import { getPromoConfig } from "../lib/promoConfig.js";
 
 const router = Router();
+const listingMediaUrl=(value:unknown):unknown=>typeof value==="string"&&value.startsWith("/api/listing-media/")?"https://bazunk-api-ifqs.onrender.com"+value:value;
+const normalizeListingMedia=<T extends Record<string,any>>(item:T):T=>({...item,image:listingMediaUrl(item.image)});
+
 
 // Server-side visibility: missing setting means visible; parent OFF overrides children.
 async function categoryVisibility() {
@@ -101,7 +104,7 @@ router.get("/listings", async (req, res) => {
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
       const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), eq(listingsTable.status, "active"), visible, regionalVisibility));
-      res.json(rows);
+      res.json(rows.map(normalizeListingMedia));
       return;
     }
 
@@ -179,7 +182,7 @@ router.get("/listings", async (req, res) => {
     // Public browse cards change relatively infrequently; a tiny cache removes repeated
     // database work while keeping new/edited listings fresh within seconds.
     res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=45");
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -201,7 +204,7 @@ router.get("/listings/category-counts", async (req, res) => {
       WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND ${demoVisibility} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
-    res.json(rows.rows);
+    res.json(rows.rows.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching category counts:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -237,7 +240,7 @@ router.get("/listings/spotlight", async (req, res) => {
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching spotlight listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -290,7 +293,7 @@ router.get("/listings/mine", async (req, res) => {
       .orderBy(desc(listingsTable.createdAt))
       .limit(100);
     const withPromos = await attachPromotions(rows);
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching my listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -347,7 +350,7 @@ router.get("/listings/:id", async (req, res) => {
     }
 
     const tokenResult=await db.execute(sql`SELECT public_url_token FROM listings WHERE id=${row.id}`);
-    res.json({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified });
+    res.json(normalizeListingMedia({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified }));
   } catch (err) {
     console.error("Error fetching listing:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
