@@ -7,7 +7,7 @@ interface LiveStreamContextValue {
   sessions: LiveSession[];
   liveSessions: LiveSession[];
   mySession: LiveSession | null;
-  goLive: (session: Omit<LiveSession, "id" | "startedAt" | "viewerCount">) => LiveSession;
+  goLive: (session: Omit<LiveSession, "id" | "startedAt" | "viewerCount">) => Promise<LiveSession>;
   endSession: (id: string) => void;
   featureProduct: (sessionId: string, productId: number, opts?: { discount?: number; stockAlert?: number; flashDeal?: boolean }) => void;
   clearFeatured: (sessionId: string) => void;
@@ -116,21 +116,34 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
 
   const liveSessions = sessions.filter((s) => s.isLive);
 
-  function goLive(data: Omit<LiveSession, "id" | "startedAt" | "viewerCount">): LiveSession {
+  async function goLive(data: Omit<LiveSession, "id" | "startedAt" | "viewerCount">): Promise<LiveSession> {
+    if (!liveEnabled) throw new Error("Live streaming is currently unavailable.");
     const session: LiveSession = {
       ...data,
-      id: `live_user_${Date.now()}`,
+      id: `live_user_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
       startedAt: new Date().toISOString(),
       viewerCount: 0,
     };
-    setUserSessions((prev) => [session, ...prev.filter((s) => s.sellerId !== data.sellerId)]);
+    // Do not publish local state until the server confirms persistence.
+    const token = await getToken();
+    if (!token) throw new Error("Please sign in before starting a live stream.");
+    let response: Response;
+    try {
+      response = await fetch("/api/live/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(session),
+      });
+    } catch {
+      throw new Error("Could not reach the live streaming server. Check your connection and try again.");
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.ok !== true) {
+      throw new Error(typeof result?.error === "string" ? result.error : "The live session could not be registered. Please try again.");
+    }
+    setUserSessions(prev => [session, ...prev.filter(s => s.sellerId !== data.sellerId)]);
     setMySession(session);
-    // Mirror the public session to PostgreSQL so buyers on other devices can open it.
-    void getToken().then((token) => fetch("/api/live/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      body: JSON.stringify(session),
-    })).catch(() => {});
+    setRemoteSessions(prev => [session, ...prev.filter(s => s.id !== session.id && s.sellerId !== data.sellerId)]);
     return session;
   }
 
