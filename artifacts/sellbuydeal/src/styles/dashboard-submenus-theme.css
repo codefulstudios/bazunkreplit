@@ -278,3 +278,14 @@ body:has([data-testid="dashboard-content"]) aside .bz-dashboard-signout{backgrou
 [data-testid="dashboard-content"] .bazunk-dashboard-store{background:#fff!important;}
 [data-testid="dashboard-content"] .bazunk-dashboard-store>div:first-child{background:linear-gradient(100deg,#0069d9,#ff7700)!important;}
 @media(max-width:1023px){body:has([data-testid="dashboard-content"]) aside{width:288px!important;border-radius:0!important}[data-testid="dashboard-content"]{padding:10px!important}}
+
+
+/* Dashboard categories-style slide-out navigation: drawer overlays full-width content. */
+body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer{position:fixed!important;inset:0 auto 0 0!important;top:0!important;bottom:0!important;z-index:70!important;width:min(340px,90vw)!important;max-height:100dvh!important;border-radius:0 20px 20px 0!important;overflow-y:auto!important;transition:transform .28s cubic-bezier(.2,.8,.2,1)!important;box-shadow:12px 0 38px #00122c80!important;}
+body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer>div{min-height:100%;overflow-y:auto!important;}
+body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer .bz-neon-brand{padding-right:8px!important;}
+body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer .bz-dashboard-accordion{padding-bottom:24px!important;}
+body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer button[aria-label="Close dashboard menu"]{color:white!important;}
+body:has([data-testid="dashboard-content"]) .container.max-w-6xl{max-width:1740px!important;width:100%!important;}
+@media(max-width:1023px){body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer{width:min(320px,90vw)!important;border-radius:0 16px 16px 0!important;}body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer .lg\\:hidden{color:#fff}}
+@media(prefers-reduced-motion:reduce){body:has([data-testid="dashboard-content"]) #bazunk-dashboard-drawer{transition:none!important}}
