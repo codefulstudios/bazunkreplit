@@ -1,3 +1,4 @@
+import "./BazunkLiveStudio.css";
 import { CashbackPage } from "@/pages/CashbackPage";
 import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
 import { SellerTrustInsights } from "@/components/SellerTrustInsights";
@@ -4164,7 +4165,7 @@ function DisputesSection() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
+    <div className="bz-studio-control bz-studio-setup rounded-2xl p-6" style={{ minHeight: 400 }}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-black text-gray-900 text-lg">Disputes</h2>
@@ -4733,7 +4734,7 @@ function GoLiveSection() {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
       <div className="mb-6">
-        <h2 className="font-black text-gray-900 text-lg">Go Live</h2>
+        <h2 className="font-black text-white text-2xl">Creator Studio <span className="text-[#ff7900]">/ Go Live</span></h2>
         <p className="text-sm text-gray-400 mt-1">Stream on your favourite platform and sell directly on Bazunk.</p>
       </div>
 
@@ -4858,7 +4859,7 @@ function GoLiveSection() {
         onClick={handleGoLive}
         disabled={startingLive}
         aria-busy={startingLive}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-red-500 to-[#F26B21] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#008fff] to-[#0065d9] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
       >
         <Radio className="w-5 h-5" /> {startingLive ? "Registering your live stream…" : "Go Live Now"}
       </button>
