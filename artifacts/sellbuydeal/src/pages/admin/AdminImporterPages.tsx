@@ -57,50 +57,67 @@ export function AdminImporterBulkUpdatePage(){
 }
 
 // Extract one CSV from a ZIP without accepting executable or nested archive content.
-async function readCsvZip(file:File):Promise<string>{
- if(file.size>5_000_000)throw Error("ZIP must be under 5 MB");
+
+type ZipPicture={filename:string;mime:string;dataUrl:string};
+async function readCsvZip(file:File):Promise<{csv:string;images:Record<string,ZipPicture>}>{
+ if(file.size>15_000_000)throw Error("ZIP must be under 15 MB");
  const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer);
  let end=-1;
  for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--){if(view.getUint32(i,true)===0x06054b50){end=i;break;}}
  if(end<0)throw Error("Invalid ZIP archive");
  const count=view.getUint16(end+10,true),directory=view.getUint32(end+16,true);
- if(count<1||count>100||directory>=bytes.length)throw Error("ZIP contains too many files or is invalid");
- let offset=directory;const entries:{name:string;method:number;size:number;packed:number;local:number;flags:number}[]=[];
+ if(count<1||count>150||directory>=bytes.length)throw Error("ZIP contains too many files or is invalid");
+ let offset=directory;
+ const entries:{name:string;method:number;size:number;packed:number;local:number;flags:number}[]=[];
  const decoder=new TextDecoder();
  for(let i=0;i<count;i++){
   if(offset+46>bytes.length||view.getUint32(offset,true)!==0x02014b50)throw Error("Invalid ZIP directory");
   const flags=view.getUint16(offset+8,true),method=view.getUint16(offset+10,true),packed=view.getUint32(offset+20,true),size=view.getUint32(offset+24,true),nameLen=view.getUint16(offset+28,true),extra=view.getUint16(offset+30,true),comment=view.getUint16(offset+32,true),local=view.getUint32(offset+42,true);
+  if(offset+46+nameLen+extra+comment>bytes.length)throw Error("Invalid ZIP filename");
   const name=decoder.decode(bytes.slice(offset+46,offset+46+nameLen));
   entries.push({name,method,size,packed,local,flags});offset+=46+nameLen+extra+comment;
  }
- const csvFiles=entries.filter(e=>e.name.toLowerCase().endsWith(".csv")&&!e.name.startsWith("__MACOSX/")&&!e.name.split("/").some(part=>part===".."));
+ const validName=(name:string)=>!name.startsWith("/")&&!name.includes("\\")&&!name.split("/").some(part=>part===".."||part==="__MACOSX");
+ const csvFiles=entries.filter(e=>validName(e.name)&&e.name.toLowerCase().endsWith(".csv"));
  if(csvFiles.length!==1)throw Error("ZIP must contain exactly one CSV file");
- const entry=csvFiles[0];
- if(entry.flags&1)throw Error("Password-protected ZIP files are not supported");
- if(entry.size>1_000_000||entry.packed>5_000_000)throw Error("CSV inside ZIP must be under 1 MB");
- if(entry.method!==0&&entry.method!==8)throw Error("ZIP compression method is unsupported");
- const p=entry.local;
- if(p+30>bytes.length||view.getUint32(p,true)!==0x04034b50)throw Error("Invalid ZIP entry");
- const start=p+30+view.getUint16(p+26,true)+view.getUint16(p+28,true);
- if(start+entry.packed>bytes.length)throw Error("Truncated ZIP file");
- const compressed=bytes.slice(start,start+entry.packed);
- let output:Uint8Array;
- if(entry.method===0)output=compressed;
- else{
-  if(typeof DecompressionStream==="undefined")throw Error("ZIP extraction is unsupported in this browser");
-  const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat));
-  const reader=stream.getReader();const chunks:Uint8Array[]=[];let total=0;
-  while(true){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>1_000_000){await reader.cancel();throw Error("Extracted CSV exceeds 1 MB");}chunks.push(value);}
-  output=new Uint8Array(total);let pos=0;for(const chunk of chunks){output.set(chunk,pos);pos+=chunk.length;}
+ const extract=async(entry:typeof entries[number],maxSize:number):Promise<Uint8Array>=>{
+  if(entry.flags&1)throw Error("Encrypted ZIP entries are unsupported");
+  if(entry.size>maxSize||entry.packed>15_000_000)throw Error("ZIP entry too large: "+entry.name);
+  if(entry.method!==0&&entry.method!==8)throw Error("Unsupported ZIP compression");
+  const p=entry.local;
+  if(p+30>bytes.length||view.getUint32(p,true)!==0x04034b50)throw Error("Invalid ZIP entry");
+  const begin=p+30+view.getUint16(p+26,true)+view.getUint16(p+28,true);
+  if(begin+entry.packed>bytes.length)throw Error("Truncated ZIP entry");
+  const compressed=bytes.slice(begin,begin+entry.packed);
+  if(entry.method===0){if(compressed.length!==entry.size)throw Error("ZIP size mismatch");return compressed;}
+  if(typeof DecompressionStream==="undefined")throw Error("ZIP extraction is unsupported by this browser");
+  const reader=new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat)).getReader();
+  const chunks:Uint8Array[]=[];let total=0;
+  while(true){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>maxSize){await reader.cancel();throw Error("Extracted ZIP entry exceeds limit");}chunks.push(value);}
+  if(total!==entry.size)throw Error("ZIP size mismatch");
+  const output=new Uint8Array(total);let pos=0;for(const chunk of chunks){output.set(chunk,pos);pos+=chunk.length;}return output;
+ };
+ const csv=decoder.decode(await extract(csvFiles[0],1_000_000));
+ const images:Record<string,ZipPicture>={};
+ const imageEntries=entries.filter(e=>validName(e.name)&&/\.(jpg|jpeg|png|webp)$/i.test(e.name));
+ if(imageEntries.length>100)throw Error("ZIP supports at most 100 images");
+ for(const entry of imageEntries){
+  const content=await extract(entry,3_145_728);
+  const mime=/\.png$/i.test(entry.name)?"image/png":/\.webp$/i.test(entry.name)?"image/webp":"image/jpeg";
+  const valid=mime==="image/png"?[137,80,78,71,13,10,26,10].every((b,i)=>content[i]===b):mime==="image/jpeg"?content[0]===255&&content[1]===216:decoder.decode(content.slice(0,4))==="RIFF"&&decoder.decode(content.slice(8,12))==="WEBP";
+  if(!valid)throw Error("Invalid image: "+entry.name);
+  const filename=entry.name.split("/").pop()!,key=filename.toLowerCase();
+  if(images[key])throw Error("Duplicate image filename: "+filename);
+  let binary="";for(let i=0;i<content.length;i+=8192)binary+=String.fromCharCode(...content.slice(i,i+8192));
+  images[key]={filename,mime,dataUrl:"data:"+mime+";base64,"+btoa(binary)};
  }
- if(output.length!==entry.size)throw Error("ZIP CSV size mismatch");
- return decoder.decode(output);
+ return {csv,images};
 }
 export function AdminCsvImporterPage(){
  const {authFetch}=useAdmin();
  const [csv,setCsv]=useState("");const [seller,setSeller]=useState("cczslater@gmail.com");const [region,setRegion]=useState("us");
  const [error,setError]=useState("");const [busy,setBusy]=useState(false);const [result,setResult]=useState("");
- const [preview,setPreview]=useState<Record<string,string>[]>([]);
+ const [preview,setPreview]=useState<Record<string,string>[]>([]);\n const [zipImages,setZipImages]=useState<Record<string,ZipPicture>>({});
  function parse(text:string){
   const firstLine=text.replace(/^\uFEFF/,"").split(/\r?\n/,1)[0]||"";
   const delimiter=["\t",";",","].map(d=>({d,n:firstLine.split(d).length})).sort((a,b)=>b.n-a.n)[0].d;
@@ -123,14 +140,29 @@ export function AdminCsvImporterPage(){
   return rows.map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]||"").trim()])));
  }
  async function load(file?:File){
-  setPreview([]);setCsv("");setResult("");setError("");if(!file)return;
-  if(!/\\.(csv|zip)$/i.test(file.name)||file.size>(file.name.toLowerCase().endsWith(".zip")?5_000_000:1_000_000)){setError("Choose a CSV under 1 MB or ZIP under 5 MB");return;}
-  try{const data=(await file.text()).replace(/^\uFEFF/,"");setCsv(data);setPreview(parse(data));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
+  setPreview([]);setCsv("");setZipImages({});setResult("");setError("");if(!file)return;
+  if(!/\\.(csv|zip)$/i.test(file.name)||file.size>(file.name.toLowerCase().endsWith(".zip")?15_000_000:1_000_000)){setError("Choose a CSV under 1 MB or ZIP under 15 MB");return;}
+  try{const archive=file.name.toLowerCase().endsWith(".zip")?await readCsvZip(file):{csv:await file.text(),images:{} as Record<string,ZipPicture>};const data=archive.csv.replace(/^\uFEFF/,"");setCsv(data);setPreview(parse(data));setZipImages(archive.images);}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
  }
  async function submit(){
   if(busy)return;if(!csv){setError("Select a CSV file first. The preview will appear when its columns are valid.");return;}setBusy(true);setError("");setResult("");
   try{
    const rows=parse(csv);if(!rows.length)throw Error("No products found");
+   const uploaded=new Map<string,string>(),keys=Object.keys(zipImages);
+   for(const row of rows){
+    const explicit=(row.image_url||"").trim().split("/").pop()?.toLowerCase()||"";
+    const sku=(row.sku||"").trim().toLowerCase();
+    const match=(explicit&&zipImages[explicit]?explicit:"")||(sku?keys.find(k=>k.replace(/\.(jpg|jpeg|png|webp)$/i,"")===sku):"");
+    if(!match)continue;
+    if(!uploaded.has(match)){
+     const image=zipImages[match];
+     const response=await authFetch("/api/admin/products/media-upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:image.filename,dataUrl:image.dataUrl})});
+     const data=await response.json().catch(()=>({}));
+     if(!response.ok)throw Error("Image upload failed for "+image.filename+": "+(data.error||response.status));
+     uploaded.set(match,data.url);
+    }
+    row.image_url=uploaded.get(match)!;
+   }
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
    const response=await authFetch("/api/admin/products/csv-listings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,sellerEmail:seller.trim(),region})});
    const data=await response.json();if(!response.ok)throw Error(data.error||"Import failed");
@@ -144,8 +176,8 @@ export function AdminCsvImporterPage(){
   <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"/></label>
   <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"><option value="us">USA</option><option value="uk">UK</option></select></label>
   <label className="block font-bold">CSV or ZIP file<input type="file" accept=".csv,.zip,text/csv,application/zip" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-orange-700" onChange={e=>void load(e.target.files?.[0])}/></label>
-  <p className="text-sm">Upload a CSV directly or a ZIP containing one CSV. ZIP files are extracted and previewed before import; maximum 100 products per batch.</p>\n  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
-  {csv&&!preview.length&&!error&&<p role="status" className="font-semibold text-amber-700 dark:text-amber-300">No valid products were found. Check the CSV headings and rows.</p>}
+  <p className="text-sm">Upload a CSV directly or a ZIP containing one CSV. ZIP files are extracted and previewed before import; maximum 100 products and 100 images per batch.</p>\n  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images match by image_url filename or SKU (for example ABC123.jpg).</p>
+  {Object.keys(zipImages).length>0&&<p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{Object.keys(zipImages).length} images found in ZIP; matching images upload when importing.</p>}\n  {csv&&!preview.length&&!error&&<p role="status" className="font-semibold text-amber-700 dark:text-amber-300">No valid products were found. Check the CSV headings and rows.</p>}
   {preview.length>0&&<div className="rounded border border-slate-400 bg-white p-4 text-slate-950 dark:bg-slate-900 dark:text-white"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
   {error&&<p role="alert" className="rounded-lg border border-red-500 bg-red-50 p-3 font-semibold text-red-800 dark:bg-red-950 dark:text-red-100">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
   <button type="button" disabled={busy} onClick={()=>void submit()} className="rounded-lg border-2 border-orange-800 bg-orange-600 px-5 py-3 font-bold text-white shadow-sm hover:bg-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 disabled:cursor-wait disabled:border-slate-500 disabled:bg-slate-600 disabled:text-white">{busy?"Importing…":"Create "+(preview.length||"")+(preview.length?" ":"")+"draft listings"}</button>
