@@ -138,7 +138,6 @@ const AdminImporterOverviewPage = React.lazy(() => import("@/pages/admin/AdminIm
 const AdminCsvImporterPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCsvImporterPage })));
 const AdminImporterSettingsPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterSettingsPage })));
 const AdminImporterBulkUpdatePage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterBulkUpdatePage })));
-const AdminOlxPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminOlxPage })));
 const AdminCreditsEconomyPage = React.lazy(() => import("@/pages/admin/AdminCreditsEconomyPage").then(module => ({ default: module.AdminCreditsEconomyPage })));
 const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage").then(module => ({ default: module.AdminUsersPage })));
 const AdminSellerCompliancePage = React.lazy(() => import("@/pages/admin/AdminSellerCompliancePage").then(module => ({ default: module.AdminSellerCompliancePage })));
@@ -501,7 +500,6 @@ function Router() {
       <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
       <Route path="/admin/importers/aliexpress">{() => <AdminImportsPage source="aliexpress" />}</Route>
       <Route path="/admin/importers/gumtree">{() => <AdminImportsPage source="gumtree" />}</Route>
-      <Route path="/admin/importers/olx" component={AdminOlxPage} />
       <Route path="/admin/importers/csv" component={AdminCsvImporterPage} />
       <Route path="/admin/importers/settings" component={AdminImporterSettingsPage} />
       <Route path="/admin/importers/bulk-update" component={AdminImporterBulkUpdatePage} />
