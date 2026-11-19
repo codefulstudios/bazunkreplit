@@ -28,7 +28,7 @@ interface Product {
   images: string[]; variants: Variant[]; seller_email: string | null;
   category_id: string | null; category_name: string | null; subcategory?: string | null; subsubcategory?: string | null; created_at: string;
   currency?: string; brand?: string; sku?: string; ships_from?: string; ships_from_location?: string;
-  ships_to?: string; shipping_price?: string | number; free_shipping?: boolean; dispatch_time?: string;
+  ships_to?: string; shipping_price?: string | number; handling_charge?: string | number; free_shipping?: boolean; dispatch_time?: string;
   delivery_estimate?: string; source?: string | null; source_url?: string | null; source_item_id?: string | null;
   source_condition?: string | null; source_price?: string | number | null; source_postage?: string | number | null;
   last_source_check?: string | null; markup_pct?: string | number | null; minimum_profit?: string | number | null;
@@ -39,14 +39,14 @@ interface ProductForm {
   condition: string; status: string; inventory: string; tags: string;
   seller_email: string; images: string[]; variants: Variant[]; subcategory: string; subsubcategory: string; currency: string;
   brand: string; sku: string; ships_from: string; ships_from_location: string; ships_to: string;
-  shipping_price: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
+  shipping_price: string; handling_charge: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
 }
 
 const EMPTY_FORM: ProductForm = {
   title: "", description: "", price: "0", category_id: "", condition: "new",
   status: "pending", inventory: "0", tags: "", seller_email: "", images: [], variants: [],
   subcategory: "", subsubcategory: "", currency: "GBP", brand: "", sku: "", ships_from: "", ships_from_location: "",
-  ships_to: "", shipping_price: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
+  ships_to: "", shipping_price: "", handling_charge: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -362,7 +362,7 @@ function ProductDrawer({
     variants: Array.isArray(product.variants) ? product.variants.map(v => ({ ...v, priceModifier: String(v.priceModifier), inventory: String(v.inventory) })) : [],
     subcategory: product.subcategory ?? "", subsubcategory: product.subsubcategory ?? "", currency: product.currency ?? "GBP", brand: product.brand ?? "", sku: product.sku ?? "",
     ships_from: product.ships_from ?? "", ships_from_location: product.ships_from_location ?? "", ships_to: product.ships_to ?? "",
-    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), free_shipping: Boolean(product.free_shipping),
+    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), handling_charge: product.handling_charge == null ? "" : String(product.handling_charge), free_shipping: Boolean(product.free_shipping),
     dispatch_time: product.dispatch_time ?? "", delivery_estimate: product.delivery_estimate ?? "",
   } : { ...EMPTY_FORM });
 
@@ -511,6 +511,7 @@ function ProductDrawer({
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
             <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
           </div>}
+          <p className="rounded-lg border border-blue-400 bg-blue-50 p-3 text-sm font-semibold text-blue-950 dark:bg-blue-950 dark:text-white">Edit imported CSV fields here: title, price, category, SKU, description, currency, quantity (Inventory), condition, image URLs or uploads, shipping origin/destination, postage, handling charge and tags. Select Images or Pricing & Shipping above to jump to those fields.</p>
           {/* Core fields */}
           <div className="space-y-3">
             <label className="block">
@@ -631,6 +632,7 @@ function ProductDrawer({
                   <input value={form.ships_to} onChange={e => set("ships_to", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="United Kingdom" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Postage price</span>
                   <input type="number" min="0" step="0.01" disabled={form.free_shipping} value={form.shipping_price} onChange={e => set("shipping_price", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm disabled:bg-gray-50" /></label>
+                <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Handling charge</span><input type="number" min="0" step="0.01" value={form.handling_charge} onChange={e=>set("handling_charge",e.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Dispatch time</span>
                   <input value={form.dispatch_time} onChange={e => set("dispatch_time", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="1 business day" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Delivery estimate</span>
