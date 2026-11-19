@@ -187,3 +187,32 @@
 .bazunk-cashback-embedded :is(button,a)[class*="bg-orange-"]{color:#fff!important}
 .bazunk-cashback-embedded :is(button,a):focus-visible{outline:3px solid #ffb453!important;outline-offset:2px}
 .bazunk-cashback-embedded :is(svg){flex-shrink:0}
+
+
+/* Bazunk 2026 unified white workspace — shared by every dashboard section. */
+body:has([data-testid="dashboard-content"]) { background:#f8faff!important; }
+body:has([data-testid="dashboard-content"]) .container.max-w-6xl {max-width:1680px!important;gap:22px;}
+body:has([data-testid="dashboard-content"]) aside {background:#fff!important;border:1px solid #e8eaf4!important;box-shadow:0 12px 38px #26357912!important;border-radius:20px!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-accordion {padding:12px!important;gap:5px!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group {background:transparent!important;border:0!important;box-shadow:none!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group-trigger {color:#25314d!important;background:transparent!important;border:0!important;border-radius:12px!important;min-height:47px!important;font-weight:750!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group-trigger svg {color:#7c22e9!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group-trigger:hover {background:#f2edff!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group-trigger.is-active,
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group.is-selected > .bz-dashboard-group-trigger {background:linear-gradient(110deg,#9227f5,#6419df)!important;color:#fff!important;box-shadow:0 7px 15px #7921de33!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group-trigger.is-active svg,
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group.is-selected > .bz-dashboard-group-trigger svg {color:#fff!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group button:not(.bz-dashboard-group-trigger) {color:#3e4560!important;border-radius:10px!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-group button:not(.bz-dashboard-group-trigger):hover {background:#f0e9ff!important;color:#6f20d9!important;}
+body:has([data-testid="dashboard-content"]) aside .bz-dashboard-signout {color:#d52b61!important;background:#fff2f6!important;border-radius:12px!important;margin:10px!important;}
+[data-testid="dashboard-content"] {--bd-text:#17203c;--bd-muted:#59677f;--bd-card:#fff;--bd-border:#e5e9f4;--bd-input:#fff;--bd-shadow:0 8px 26px #273b7310;background:#fff!important;color:#17203c!important;border:1px solid #e9ecf5;border-radius:20px;padding:20px;box-shadow:0 12px 34px #2338760c;min-height:75vh;}
+[data-testid="dashboard-content"] :is(h1,h2,h3,h4){color:#15203a!important;}
+[data-testid="dashboard-content"] :is(.bg-white,.bg-gray-50,.bg-slate-50){background-color:#fff;}
+[data-testid="dashboard-content"] :is(input,select,textarea){color:#1e2a43;background:#fff;border-color:#d7dfef;}
+[data-testid="dashboard-content"] :is(.rounded-2xl,.rounded-xl){transition:box-shadow .18s ease,transform .18s ease;}
+[data-testid="dashboard-content"] :is(.rounded-2xl,.rounded-xl):hover {box-shadow:0 10px 25px #5a5eb514;}
+[data-testid="dashboard-content"] :is(a,button):focus-visible{outline:3px solid #8b36ed!important;outline-offset:3px;}
+[data-testid="dashboard-content"] .bazunk-dashboard-store > div:first-child {background:linear-gradient(115deg,#7825ed,#a34efb)!important;border-color:#a87af3!important;}
+[data-testid="dashboard-content"] .bazunk-dashboard-store > div:first-child :is(h1,p,svg){color:#fff!important;}
+@media(max-width:1023px){[data-testid="dashboard-content"]{padding:12px;border-radius:14px}body:has([data-testid="dashboard-content"]) aside{border-radius:0!important}}
+@media(prefers-reduced-motion:reduce){[data-testid="dashboard-content"] *{transition:none!important}}
