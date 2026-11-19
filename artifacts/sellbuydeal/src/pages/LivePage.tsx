@@ -193,6 +193,9 @@ export function LivePage() {
   const { addToCart: addItem, openCart } = useCart();
 
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
+  const [liveQuotes, setLiveQuotes] = useState<Record<number,{price:number;quantity:number;available:boolean}>>({});
+  const [shoppingError,setShoppingError] = useState<string | null>(null);
+  const [checkingProduct,setCheckingProduct] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [following, setFollowing] = useState(false);
   const [offerProduct, setOfferProduct] = useState<LiveProduct | null>(null);
@@ -234,6 +237,25 @@ export function LivePage() {
     const timer = setInterval(()=>void refresh(),10000);
     return ()=>{cancelled=true;clearInterval(timer);};
   }, [session?.id, session?.productIds.join(",")]);
+
+  useEffect(() => {
+    if (!session?.isLive || !session.productIds.length) {setLiveQuotes({});return;}
+    let cancelled=false;
+    const refresh=async()=>{
+      const quotes=await Promise.all(session.productIds.slice(0,50).map(async rawId=>{
+        const productId=Number(rawId);
+        try {
+          const r=await fetch(`/api/live/session/${encodeURIComponent(session.id)}/product/${productId}/quote`,{cache:"no-store"});
+          if(!r.ok)return [productId,{price:0,quantity:0,available:false}] as const;
+          const q=await r.json();
+          return [productId,{price:Number(q.price),quantity:Number(q.quantity),available:q.available===true}] as const;
+        }catch{return [productId,{price:0,quantity:0,available:false}] as const;}
+      }));
+      if(!cancelled)setLiveQuotes(Object.fromEntries(quotes));
+    };
+    void refresh();const timer=setInterval(()=>void refresh(),10000);
+    return ()=>{cancelled=true;clearInterval(timer);};
+  },[session?.id,session?.isLive,session?.productIds.join(",")]);
 
   const featuredItem = session ? getFeatured(session.id) : null;
   const featuredProduct = featuredItem
@@ -283,10 +305,19 @@ export function LivePage() {
     return discount ? n * (1 - discount / 100) : n;
   }
 
-  function handleAddToCart(product: LiveProduct) {
-    addItem({ id: product.id, title: product.title, price: Number(product.price), image: product.images?.[0] ?? "" } as never, 1);
-    setAddedIds((prev) => new Set(prev).add(product.id));
-    openCart();
+  async function handleAddToCart(product: LiveProduct) {
+    if(!session)return;
+    setShoppingError(null);setCheckingProduct(product.id);
+    try {
+      const r=await fetch(`/api/live/session/${encodeURIComponent(session.id)}/product/${product.id}/quote`,{cache:"no-store"});
+      const quote=await r.json();
+      if(!r.ok || !quote.available || Number(quote.quantity)<1 || !Number.isFinite(Number(quote.price)) || Number(quote.price)<=0)
+        throw new Error(quote.error || "This item is sold out or unavailable.");
+      addItem({ id: product.id, title: product.title, price: Number(quote.price), image: product.images?.[0] ?? "" } as never, 1);
+      setAddedIds(prev=>new Set(prev).add(product.id));
+      openCart();
+    }catch(err){setShoppingError(err instanceof Error?err.message:"Could not verify current price or stock.");}
+    finally{setCheckingProduct(null);}
   }
 
   function handleShare() {
@@ -453,6 +484,7 @@ export function LivePage() {
         {/* ── Right column: featured spotlight + products ── */}
         <div className="flex flex-col gap-4">
 
+          {shoppingError && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-200">{shoppingError}</p>}
           {/* Featured Product Spotlight */}
           <AnimatePresence mode="wait">
             {featuredProduct && featuredItem && (
@@ -472,7 +504,7 @@ export function LivePage() {
                   <span className="text-white text-xs font-black uppercase tracking-widest flex-1">
                     Now Featured
                   </span>
-                  {featuredItem.flashDeal && (
+                  {false && featuredItem.flashDeal && (
                     <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
                       FLASH DEAL
                     </span>
@@ -492,7 +524,7 @@ export function LivePage() {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                    {featuredItem.discount && (
+                    {false && featuredItem.discount && (
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full shadow-lg">
                         -{featuredItem.discount}% OFF
                       </div>
@@ -505,7 +537,7 @@ export function LivePage() {
 
                   <div className="flex items-baseline gap-2 mb-2">
                     <p className="text-amber-400 font-black text-2xl">
-                      {formatPrice(discountedPrice(featuredProduct.price, featuredItem.discount))}
+                      {formatPrice(liveQuotes[featuredProduct.id]?.price ?? Number(featuredProduct.price))}
                     </p>
                     {featuredItem.discount && (
                       <p className="text-gray-500 text-sm line-through">
@@ -514,18 +546,19 @@ export function LivePage() {
                     )}
                   </div>
 
-                  {featuredItem.stockAlert != null && featuredItem.stockAlert > 0 && (
+                  {liveQuotes[featuredProduct.id]?.available && liveQuotes[featuredProduct.id]?.quantity > 0 && (
                     <div className="flex items-center gap-1.5 mb-3 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-xl">
                       <AlertTriangle className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
                       <span className="text-orange-400 text-xs font-bold">
-                        Only {featuredItem.stockAlert} remaining!
+                        {liveQuotes[featuredProduct.id].quantity} in stock
                       </span>
                     </div>
                   )}
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleAddToCart(featuredProduct)}
+                      onClick={() => void handleAddToCart(featuredProduct)}
+                      disabled={!liveQuotes[featuredProduct.id]?.available || checkingProduct===featuredProduct.id}
                       className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-black text-sm transition-all ${
                         addedIds.has(featuredProduct.id)
                           ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
@@ -599,7 +632,7 @@ export function LivePage() {
                           {product.title}
                         </Link>
                         <p className="font-black text-[#F26B21] text-sm mt-0.5">
-                          {formatPrice(Number(product.price))}
+                          {formatPrice(liveQuotes[product.id]?.price ?? Number(product.price))}
                         </p>
                         <p className="text-[10px] text-gray-500 capitalize mt-0.5">
                           {product.condition}
@@ -607,8 +640,8 @@ export function LivePage() {
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <button
-                          onClick={() => handleAddToCart(product)}
-                          disabled={added}
+                          onClick={() => void handleAddToCart(product)}
+                          disabled={added || !liveQuotes[product.id]?.available || checkingProduct===product.id}
                           className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                             added
                               ? "bg-emerald-500/20 text-emerald-400"
