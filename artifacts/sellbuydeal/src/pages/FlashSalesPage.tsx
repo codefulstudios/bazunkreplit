@@ -253,6 +253,7 @@ export function FlashSalesPage() {
         </div>
       </main>
       <Footer/>
+      </div>
     </div>
   );
 }
