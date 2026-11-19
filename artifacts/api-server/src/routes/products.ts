@@ -354,7 +354,7 @@ router.post("/admin/products/import", async (req, res) => {
 
 router.post("/admin/products/csv-listings", async(req,res)=>{
  const {rows,sellerEmail,region="us"}=req.body||{};
- if(!Array.isArray(rows)||rows.length<1||rows.length>100||typeof sellerEmail!=="string"||!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(sellerEmail)||!["us","uk"].includes(region)){
+ if(!Array.isArray(rows)||rows.length<1||rows.length>100||typeof sellerEmail!=="string"||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)||!["us","uk"].includes(region)){
   res.status(400).json({error:"Provide 1–100 rows, valid seller email and marketplace region"});return;
  }
  const results:{line:number;status:string;message?:string}[]=[];
