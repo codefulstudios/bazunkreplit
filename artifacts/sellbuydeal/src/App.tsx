@@ -135,10 +135,9 @@ const AdminAnalyticsPage = React.lazy(() => import("@/pages/admin/AdminManagemen
 const AdminMarketingOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminMarketingOverviewPage })));
 const AdminSettingsOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminSettingsOverviewPage })));
 const AdminImporterOverviewPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterOverviewPage })));
+const AdminCsvImporterPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCsvImporterPage })));
 const AdminImporterSettingsPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterSettingsPage })));
 const AdminImporterBulkUpdatePage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterBulkUpdatePage })));
-const AdminCraigslistPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCraigslistPage })));
-const AdminOlxPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminOlxPage })));
 const AdminCreditsEconomyPage = React.lazy(() => import("@/pages/admin/AdminCreditsEconomyPage").then(module => ({ default: module.AdminCreditsEconomyPage })));
 const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage").then(module => ({ default: module.AdminUsersPage })));
 const AdminSellerCompliancePage = React.lazy(() => import("@/pages/admin/AdminSellerCompliancePage").then(module => ({ default: module.AdminSellerCompliancePage })));
@@ -501,8 +500,7 @@ function Router() {
       <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
       <Route path="/admin/importers/aliexpress">{() => <AdminImportsPage source="aliexpress" />}</Route>
       <Route path="/admin/importers/gumtree">{() => <AdminImportsPage source="gumtree" />}</Route>
-      <Route path="/admin/importers/craigslist" component={AdminCraigslistPage} />
-      <Route path="/admin/importers/olx" component={AdminOlxPage} />
+      <Route path="/admin/importers/csv" component={AdminCsvImporterPage} />
       <Route path="/admin/importers/settings" component={AdminImporterSettingsPage} />
       <Route path="/admin/importers/bulk-update" component={AdminImporterBulkUpdatePage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />

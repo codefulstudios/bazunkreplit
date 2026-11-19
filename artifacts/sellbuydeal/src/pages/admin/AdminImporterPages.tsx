@@ -2,17 +2,14 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { AdminLayout } from "./AdminLayout";
 import { RapidApiPanel } from "./RapidApiPanel";
-import { CraigslistAdminImporter } from "./CraigslistAdminImporter";
-import { OLXAdminImporter } from "./OlxAdminImporter";
 import { useAdmin } from "@/context/AdminContext";
 
 const sources = [
+ {name:"CSV Products",href:"/admin/importers/csv",detail:"Bulk import seller listings from CSV as drafts"},
  {name:"Amazon",href:"/admin/importers/amazon",detail:"UK and USA product searches, imports and markup"},
  {name:"eBay",href:"/admin/importers/ebay",detail:"eBay searches, source-specific listing management and sync"},
  {name:"AliExpress",href:"/admin/importers/aliexpress",detail:"AliExpress search and import using the configured integration"},
  {name:"Gumtree",href:"/admin/importers/gumtree",detail:"Classified adverts and expiry controls"},
- {name:"Craigslist",href:"/admin/importers/craigslist",detail:"RapidAPI search · separate 100 monthly request hard cap"},
- {name:"OLX",href:"/admin/importers/olx",detail:"RapidAPI search · separate 100 monthly request hard cap"},
 ];
 export function AdminImporterOverviewPage(){
  return <AdminLayout><div className="space-y-5 text-slate-900 dark:text-white">
@@ -24,7 +21,7 @@ export function AdminImporterOverviewPage(){
 export function AdminImporterSettingsPage(){
  return <AdminLayout><div className="space-y-5"><div><h1 className="text-2xl font-black text-slate-900 dark:text-white">Importer general settings</h1><p className="text-slate-700 dark:text-slate-200">Manage shared API credentials here, rather than on every importer page.</p></div>
  <RapidApiPanel/>
- <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 text-slate-900 dark:text-white"><h2 className="font-bold">Provider configuration</h2><p className="text-sm mt-2">Craigslist: CRAIGSLIST_RAPIDAPI_HOST and CRAIGSLIST_RAPIDAPI_SEARCH_URL. OLX: OLX_RAPIDAPI_HOST and OLX_RAPIDAPI_SEARCH_URL. Configure these on the Render API service; keys remain on the server. Both have independent, non-resettable 100-request monthly application caps.</p><p className="text-sm mt-2">Provider search and preview are not the same as publishing listings. Check source permissions and availability before advertising items.</p></div></div></AdminLayout>;
+ <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 text-slate-900 dark:text-white"><h2 className="font-bold">Provider configuration</h2><p className="text-sm mt-2">Provider credentials are configured on the Render API service; keys remain on the server.</p><p className="text-sm mt-2">Provider search and preview are not the same as publishing listings. Check source permissions and availability before advertising items.</p></div></div></AdminLayout>;
 }
 export function AdminImporterBulkUpdatePage(){
  const {authFetch}=useAdmin();
@@ -47,16 +44,63 @@ export function AdminImporterBulkUpdatePage(){
   setBusy(false);
  }
  return <AdminLayout><div className="max-w-3xl space-y-5 text-slate-900 dark:text-white">
-  <h1 className="text-2xl font-black">Apply update to all</h1><p className="text-slate-700 dark:text-slate-200">Bulk-update markup and shipping on existing imported listings. This calls each existing provider's bulk-update endpoint; it does not trigger API searches or consume the Craigslist/OLX quotas.</p>
+  <h1 className="text-2xl font-black">Apply update to all</h1><p className="text-slate-700 dark:text-slate-200">Bulk-update markup and shipping on existing imported listings. This calls each existing provider's bulk-update endpoint; it does not trigger API searches.</p>
   <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 space-y-4">
    <h2 className="font-bold">Select importer sources</h2>
    <label className="flex gap-2 items-center"><input type="checkbox" checked={amazon} onChange={e=>setAmazon(e.target.checked)}/> Amazon imports</label>
    <label className="flex gap-2 items-center"><input type="checkbox" checked={ebay} onChange={e=>setEbay(e.target.checked)}/> eBay imports</label>
-   <p className="text-sm text-slate-700 dark:text-slate-200">AliExpress, Gumtree, Craigslist and OLX are excluded until compatible, tested bulk-update endpoints exist. No unsupported provider will be silently modified.</p>
+   <p className="text-sm text-slate-700 dark:text-slate-200">AliExpress and Gumtree are excluded until compatible, tested bulk-update endpoints exist. No unsupported provider will be silently modified.</p>
    <div className="grid sm:grid-cols-2 gap-3"><label className="text-sm font-bold">Markup (%)<input type="number" min="0" max="500" step="0.01" value={markup} onChange={e=>setMarkup(e.target.value)} className="block w-full mt-1 rounded-lg border border-slate-400 bg-white text-slate-950 p-3"/></label><label className="text-sm font-bold">Shipping (£)<input type="number" min="0" max="10000" step="0.01" value={shipping} onChange={e=>setShipping(e.target.value)} className="block w-full mt-1 rounded-lg border border-slate-400 bg-white text-slate-950 p-3"/></label></div>
    <button disabled={busy||(!amazon&&!ebay)} onClick={apply} className="bg-orange-600 text-white font-bold rounded-lg px-5 py-3 disabled:opacity-50">{busy?"Applying updates…":"Review and apply to selected sources"}</button>
    {results.length>0&&<div role="status" className="text-sm space-y-1">{results.map((r,i)=><p key={i}>{r}</p>)}</div>}
   </div></div></AdminLayout>;
 }
-export function AdminCraigslistPage(){return <AdminLayout><div className="text-slate-900 dark:text-white"><h1 className="text-2xl font-black mb-4">Craigslist importer</h1><CraigslistAdminImporter/></div></AdminLayout>}
-export function AdminOlxPage(){return <AdminLayout><div className="text-slate-900 dark:text-white"><h1 className="text-2xl font-black mb-4">OLX importer</h1><OLXAdminImporter/></div></AdminLayout>}
+
+export function AdminCsvImporterPage(){
+ const {authFetch}=useAdmin();
+ const [csv,setCsv]=useState("");const [seller,setSeller]=useState("");const [region,setRegion]=useState("us");
+ const [error,setError]=useState("");const [busy,setBusy]=useState(false);const [result,setResult]=useState("");
+ const [preview,setPreview]=useState<Record<string,string>[]>([]);
+ function parse(text:string){
+  const rows:string[][]=[];let row:string[]=[],field="",quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+   if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
+   else if(c===","&&!quoted){row.push(field);field="";}
+   else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&text[i+1]==="\n")i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field="";}
+   else field+=c;
+  }
+  if(quoted)throw Error("Unclosed quoted field");
+  row.push(field);if(row.some(x=>x.trim()))rows.push(row);
+  const headers=(rows.shift()||[]).map(x=>x.trim().toLowerCase());
+  if(new Set(headers).size!==headers.length||!["title","price","category"].every(x=>headers.includes(x)))throw Error("CSV needs unique headings and title, price, category columns");
+  if(rows.length>100)throw Error("Maximum 100 rows per admin import");
+  return rows.map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]||"").trim()])));
+ }
+ async function load(file?:File){
+  setPreview([]);setResult("");setError("");if(!file)return;
+  if(file.size>1000000||!file.name.toLowerCase().endsWith(".csv")){setError("Choose a CSV under 1 MB");return;}
+  try{const data=await file.text();setCsv(data);setPreview(parse(data.replace(/^\uFEFF/,"")));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
+ }
+ async function submit(){
+  if(busy)return;setBusy(true);setError("");setResult("");
+  try{
+   const rows=parse(csv);if(!rows.length)throw Error("No products found");
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
+   const response=await authFetch("/api/admin/products/csv-listings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,sellerEmail:seller.trim(),region})});
+   const data=await response.json();if(!response.ok)throw Error(data.error||"Import failed");
+   setResult(data.created+" drafts created; "+data.skipped+" duplicates skipped. "+data.results.filter((x:{status:string})=>x.status==="error").length+" errors.");
+  }catch(e){setError(e instanceof Error?e.message:"Import failed");}
+  finally{setBusy(false);}
+ }
+ return <AdminLayout><div className="max-w-5xl space-y-5 text-slate-900 dark:text-white">
+  <h1 className="text-2xl font-black">CSV Product Import</h1>
+  <p>Import listings for a chosen seller. All imported products are saved as drafts, never published automatically. Existing seller SKUs are skipped.</p>
+  <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded border p-3 text-slate-900"/></label>
+  <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded border p-3 text-slate-900"><option value="us">USA</option><option value="uk">UK</option></select></label>
+  <label className="block font-bold">CSV file<input type="file" accept=".csv,text/csv" className="mt-2 block" onChange={e=>void load(e.target.files?.[0])}/></label>
+  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
+  {preview.length>0&&<div className="rounded border p-4"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
+  {error&&<p role="alert" className="text-red-600">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
+  <button disabled={busy||!preview.length||!seller.trim()} onClick={()=>void submit()} className="rounded bg-orange-600 px-5 py-3 font-bold text-white disabled:opacity-50">{busy?"Importing…":"Create "+preview.length+" draft listings"}</button>
+ </div></AdminLayout>;
+}

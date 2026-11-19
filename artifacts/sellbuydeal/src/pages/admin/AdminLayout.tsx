@@ -39,8 +39,6 @@ const NAV = [
   { label: "eBay", href: "/admin/importers/ebay", icon: ArrowDownToLine },
   { label: "AliExpress", href: "/admin/importers/aliexpress", icon: ArrowDownToLine },
   { label: "Gumtree", href: "/admin/importers/gumtree", icon: ArrowDownToLine },
-  { label: "Craigslist", href: "/admin/importers/craigslist", icon: ArrowDownToLine },
-  { label: "OLX", href: "/admin/importers/olx", icon: ArrowDownToLine },
   { label: "General Settings", href: "/admin/importers/settings", icon: ArrowDownToLine },
   { label: "Apply Update to All", href: "/admin/importers/bulk-update", icon: ArrowDownToLine },
   { label: "Demo Creator", href: "/admin/demo-creator", icon: Package },
@@ -77,7 +75,7 @@ const NAV_GROUPS = [
  {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Live Commerce","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
- {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","Craigslist","OLX","General Settings","Apply Update to All","Importer Control"]},
+ {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","General Settings","Apply Update to All","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
  {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Advertising","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
