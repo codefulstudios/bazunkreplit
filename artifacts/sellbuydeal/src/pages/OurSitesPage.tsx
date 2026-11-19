@@ -4,7 +4,8 @@ import { Footer } from "@/components/Footer";
 
 const sites = [
   { name:"Bazunk", eyebrow:"BUY. SELL. TRADE. LIVE.", description:"The marketplace for a smarter, faster and more exciting way to shop.", url:"https://www.bazunk.com", Icon:Store, accent:"orange", mark:"B" },
-  { name:"Digital Origin Studios", eyebrow:"DESIGN. DEVELOP. DELIVER.", description:"Creative websites, applications and software designed to make your business stand out.", url:"https://digitaloriginstudios.bazunk.com", Icon:Code2, accent:"purple", mark:"D" },
+  { name:"Digital Origin Studios", eyebrow:"DESIGN. DEVELOP. DELIVER.", description:"Creative websites, applications and software designed to make your business stand out.", url:"https://digital-origin-studios.onrender.com", Icon:Code2, accent:"purple", mark:"D" },
+  { name:"MarketNexa", eyebrow:"COMMERCE. TECHNOLOGY. GROWTH.", description:"Digital commerce tools and marketplace technology.", url:"https://marketnexa-preview-gc9d.onrender.com", Icon:Store, accent:"cyan", mark:"M" },
   { name:"Nexvenue", eyebrow:"EVENTS. TICKETS. EXPERIENCES.", description:"Connecting event organisers, venues and audiences through modern technology.", url:"https://nexvenue.bazunk.com", Icon:Ticket, accent:"cyan", mark:"N" },
   { name:"Bazunk Data", eyebrow:"DATA. INSIGHTS. GROWTH.", description:"Product data and integration tools for a smarter e-commerce ecosystem.", url:"https://data.bazunk.com", Icon:Database, accent:"orange", mark:"D" },
 ];
