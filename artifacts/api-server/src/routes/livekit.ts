@@ -488,5 +488,46 @@ router.post("/live/session/:id/moderation/block",async(req,res)=>{
   }catch(err){logger.error({err},"Moderation failed");res.status(503).json({error:"Could not block participant."});}
 });
 
+
+// Moderation actions require the owner of the stream. Deleted messages are
+// removed from the shared database so they disappear on the next chat refresh.
+router.delete("/live/session/:id/messages/:messageId",async(req,res)=>{
+ const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+ const messageId=Number(req.params.messageId);
+ if(!Number.isSafeInteger(messageId)||messageId<=0){res.status(400).json({error:"Invalid message."});return;}
+ try{
+  const owned:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE id=${req.params.id}
+    AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+  if(!owned.rows?.length){res.status(403).json({error:"Not your stream."});return;}
+  const deleted:any=await db.execute(sql`DELETE FROM live_stream_messages WHERE id=${messageId}
+    AND session_id=${req.params.id} RETURNING id`);
+  if(!deleted.rows?.length){res.status(404).json({error:"Message not found."});return;}
+  res.json({ok:true});
+ }catch(err){logger.error({err},"Moderation delete failed");res.status(503).json({error:"Could not delete message."});}
+});
+router.post("/live/session/:id/moderation/unblock",async(req,res)=>{
+ const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+ const target=String(req.body?.email||"").trim().toLowerCase();
+ if(!target.includes("@")){res.status(400).json({error:"Invalid participant."});return;}
+ try{
+  await ensureCreatorTables();
+  const owned:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE id=${req.params.id}
+    AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+  if(!owned.rows?.length){res.status(403).json({error:"Not your stream."});return;}
+  await db.execute(sql`DELETE FROM live_creator_chat_blocks WHERE session_id=${req.params.id} AND blocked_email=${target}`);
+  res.json({ok:true});
+ }catch(err){logger.error({err},"Unblock failed");res.status(503).json({error:"Could not unblock participant."});}
+});
+router.delete("/live/creator/schedules/:id",async(req,res)=>{
+ const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+ const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<=0){res.status(400).json({error:"Invalid schedule."});return;}
+ try{await ensureCreatorTables();
+  const r:any=await db.execute(sql`UPDATE live_creator_schedules SET cancelled_at=NOW()
+    WHERE id=${id} AND LOWER(seller_email)=LOWER(${email}) AND cancelled_at IS NULL RETURNING id`);
+  if(!r.rows?.length){res.status(404).json({error:"Schedule not found."});return;}
+  res.json({ok:true});
+ }catch(err){logger.error({err},"Cancel schedule failed");res.status(503).json({error:"Could not cancel schedule."});}
+});
+
 export default router;
 
