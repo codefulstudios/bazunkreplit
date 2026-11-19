@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
 import { RapidApiPanel } from "./RapidApiPanel";
-import { CraigslistAdminImporter } from "./CraigslistAdminImporter";
 import { OLXAdminImporter } from "./OlxAdminImporter";
 import { ImportModal } from "@/components/ImporterSection";
 import { useAdmin } from "@/context/AdminContext";
