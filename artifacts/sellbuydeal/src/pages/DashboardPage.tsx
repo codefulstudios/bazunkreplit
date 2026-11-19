@@ -5842,7 +5842,7 @@ export function DashboardPage() {
       <Navbar />
 
       {/* Permanent glassmorphism sidebar: no pop-up navigation. */}
-      <div className="bz-dashboard-workspace bz-glass-workspace bz-glass-sidebar-workspace flex-1 container mx-auto px-4 py-6 max-w-6xl">
+      <div className="bz-glass-v8-layout flex-1">
         <aside className="bz-glass-sidebar" aria-label="Dashboard navigation">
           <div className="bz-glass-sidebar-heading"><span>BAZUNK / YOUR SPACE</span><h2>Dashboard</h2><p>Manage your marketplace</p></div>
           <nav className="bz-glass-sidebar-nav">
