@@ -272,5 +272,23 @@ router.delete("/live/session/:id/featured", async(req,res)=>{
   }catch(err){logger.error({err},"Failed to clear live spotlight");res.status(503).json({error:"Unable to clear spotlight."});}
 });
 
+
+// Authoritative live product quote. Never trust promotional prices from the browser.
+router.get("/live/session/:id/product/:productId/quote",async(req,res)=>{
+  const productId=Number(req.params.productId);
+  if(!Number.isSafeInteger(productId)||productId<=0){res.status(400).json({error:"Invalid product."});return;}
+  try{
+    const r:any=await db.execute(sql`SELECT l.id,l.title,l.price,l.quantity,l.status
+      FROM listings l JOIN live_stream_sessions s ON s.id=${req.params.id}
+      WHERE l.id=${productId} AND s.is_live=TRUE
+      AND s.product_ids::jsonb @> ${JSON.stringify([productId])}::jsonb LIMIT 1`);
+    const p:any=r.rows?.[0];
+    if(!p){res.status(404).json({error:"Product is unavailable in this stream."});return;}
+    const quantity=Math.max(0,Number(p.quantity??0));
+    const available=quantity>0 && ["active","approved","published"].includes(String(p.status).toLowerCase());
+    res.setHeader("Cache-Control","no-store");
+    res.json({id:Number(p.id),title:p.title,price:Number(p.price),quantity,available});
+  }catch(err){logger.error({err},"Failed to quote live product");res.status(503).json({error:"Could not verify live price and stock."});}
+});
 export default router;
 
