@@ -30,6 +30,7 @@ import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const SELL_OPTIONS = [
+  { id:"bulk-import",title:"Bulk Import",description:"Upload a CSV to create multiple product listings with a preview before publishing.",icon:Layers,gradient:"from-indigo-500 to-purple-600",cta:"Import CSV",ctaColor:"text-indigo-600",href:"/sell/import",badge:"NEW" },
   {
     id:"snap-sell",title:"Snap & Sell",
     description:"Take a photo or scan a barcode to start an editable listing with AI-assisted details.",
