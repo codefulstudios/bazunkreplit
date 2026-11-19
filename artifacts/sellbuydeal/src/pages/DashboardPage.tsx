@@ -1112,7 +1112,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
         <div className="bz-arcade-actions">
           <Link href="/sell/direct" className="bz-arcade-action bz-arcade-blue"><Plus size={19}/> List an Item</Link>
           <button type="button" onClick={() => onNavigate("go-live")} className="bz-arcade-action bz-arcade-red"><Radio size={19}/> Go Live</button>
-          <Link href="/sell" className="bz-arcade-action bz-arcade-orange"><Gavel size={19}/> Start Selling</Link>
+          <button type="button" onClick={() => onNavigate("my-auctions")} className="bz-arcade-action bz-arcade-orange"><Gavel size={19}/> Start an Auction</button>
           <button type="button" onClick={() => onNavigate("my-flash-sales")} className="bz-arcade-action bz-arcade-light"><Zap size={19}/> Flash Deals</button>
         </div>
       </div>
@@ -1197,6 +1197,9 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
           <div className="overview-new-actions">
             <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button type="button" onClick={()=>onNavigate("my-store")} className="overview-new-action action-blue"><Store className="w-6 h-6"/><span><b>Manage Store</b><small>Storefront and settings</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("my-auctions")} className="overview-new-action action-orange"><Gavel className="w-6 h-6"/><span><b>Start an Auction</b><small>Manage your auctions</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("seller-analytics")} className="overview-new-action action-blue"><BarChart2 className="w-6 h-6"/><span><b>Analytics</b><small>Track selling performance</small></span><ChevronRight className="w-4 h-4"/></button>
             <Link href="/sell/snap" className="overview-new-action action-pink"><Camera className="w-6 h-6"/><span><b>Snap & Sell</b><small>Photo / barcode assistant</small></span><ChevronRight className="w-4 h-4"/></Link>
             <Link href="/importers" className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></Link>
             <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
@@ -1205,6 +1208,17 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           <button onClick={()=>onNavigate("promotions")} className="overview-new-promo"><Crown className="w-9 h-9"/><span><b>Boost Your Listings</b><small>Use Promotions to reach more buyers.</small></span><Megaphone className="w-9 h-9"/></button>
         </section>
       </div>
+
+      <section className="bz-arcade-todo overview-section-card" aria-label="To Do">
+        <div className="bz-arcade-todo-header"><h2><Check size={22}/> To Do</h2><span>Marketplace checklist</span></div>
+        <div className="bz-arcade-todo-items">
+          {myListings.length === 0 && <button type="button" onClick={()=>onNavigate("my-listings")}><Package size={18}/><span>Create your first listing</span><ChevronRight size={17}/></button>}
+          {myListings.some(l=>l.status==="draft") && <button type="button" onClick={()=>onNavigate("my-listings")}><Tag size={18}/><span>Review draft listings</span><ChevronRight size={17}/></button>}
+          {overviewOrders.sold > 0 && <button type="button" onClick={()=>onNavigate("sales")}><ShoppingBag size={18}/><span>Review seller orders and fulfilment</span><ChevronRight size={17}/></button>}
+          <button type="button" onClick={()=>onNavigate("offers")}><Handshake size={18}/><span>Check offers</span><ChevronRight size={17}/></button>
+          <button type="button" onClick={()=>onNavigate("my-auctions")}><Gavel size={18}/><span>Review your auctions</span><ChevronRight size={17}/></button>
+        </div>
+      </section>
 
       {/* Referral rewards — deliberately prominent on the dashboard */}
       <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#F26B21] via-[#E85D2A] to-[#4A5CE8] text-white shadow-sm">
