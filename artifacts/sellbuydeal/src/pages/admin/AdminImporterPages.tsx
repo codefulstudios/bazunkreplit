@@ -141,7 +141,7 @@ export function AdminCsvImporterPage(){
  }
  async function load(file?:File){
   setPreview([]);setCsv("");setZipImages({});setResult("");setError("");if(!file)return;
-  if(!/\\.(csv|zip)$/i.test(file.name)||file.size>(file.name.toLowerCase().endsWith(".zip")?15_000_000:1_000_000)){setError("Choose a CSV under 1 MB or ZIP under 15 MB");return;}
+  if(!/\.(csv|zip)$/i.test(file.name)||file.size>(file.name.toLowerCase().endsWith(".zip")?15_000_000:1_000_000)){setError("Choose a CSV under 1 MB or ZIP under 15 MB");return;}
   try{const archive=file.name.toLowerCase().endsWith(".zip")?await readCsvZip(file):{csv:await file.text(),images:{} as Record<string,ZipPicture>};const data=archive.csv.replace(/^\uFEFF/,"");setCsv(data);setPreview(parse(data));setZipImages(archive.images);}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
  }
  async function submit(){
