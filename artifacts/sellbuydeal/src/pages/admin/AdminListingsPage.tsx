@@ -367,7 +367,7 @@ export function AdminListingsPage() {
 
                     {/* Title */}
                     <td className="px-2 py-3 align-top">
-                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
+                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image.startsWith("/api/listing-media/") ? `https://bazunk-api-ifqs.onrender.com${l.image}` : l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
                       <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{l.condition}</p>
                     </td>
 
