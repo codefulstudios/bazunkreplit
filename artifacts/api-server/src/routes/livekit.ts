@@ -208,6 +208,11 @@ router.get("/live/session/:id/messages", async (req,res) => {
 router.post("/live/session/:id/messages", async (req,res) => {
   const email=await authenticatedEmail(req);
   if(!email){res.status(401).json({error:"Sign in to chat."});return;}
+  try {
+    await ensureCreatorTables();
+    const blocked:any=await db.execute(sql`SELECT 1 FROM live_creator_chat_blocks WHERE session_id=${req.params.id} AND blocked_email=${email} LIMIT 1`);
+    if(blocked.rows?.length){res.status(403).json({error:"You cannot chat in this stream."});return;}
+  }catch(err){logger.error({err},"Chat moderation lookup failed");res.status(503).json({error:"Chat unavailable."});return;}
   const text=String(req.body?.text??"").trim().slice(0,500);
   if(!text){res.status(400).json({error:"Message is empty."});return;}
   try {
@@ -385,6 +390,103 @@ router.post("/live/session/:id/events/:eventId/cancel",async(req,res)=>{
 });
 // Events are promotional/bidding records only. Payment capture and auction winner
 // fulfilment must be implemented in the existing checkout service before launch.
+
+
+async function ensureCreatorTables(){
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_creator_schedules(
+    id BIGSERIAL PRIMARY KEY,seller_email TEXT NOT NULL,title TEXT NOT NULL,
+    scheduled_at TIMESTAMPTZ NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),cancelled_at TIMESTAMPTZ)`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_creator_followers(
+    seller_email TEXT NOT NULL,follower_email TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(seller_email,follower_email))`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_creator_notifications(
+    id BIGSERIAL PRIMARY KEY,recipient_email TEXT NOT NULL,seller_email TEXT NOT NULL,
+    schedule_id BIGINT,content TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),read_at TIMESTAMPTZ)`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_creator_replays(
+    id BIGSERIAL PRIMARY KEY,session_id TEXT NOT NULL,seller_email TEXT NOT NULL,
+    title TEXT NOT NULL,url TEXT NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_creator_chat_blocks(
+    session_id TEXT NOT NULL,blocked_email TEXT NOT NULL,blocked_by TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(session_id,blocked_email))`);
+}
+router.get("/live/creator/schedules",async(_req,res)=>{
+  try{await ensureCreatorTables();const r:any=await db.execute(sql`SELECT id,seller_email AS "sellerEmail",title,scheduled_at AS "scheduledAt"
+    FROM live_creator_schedules WHERE cancelled_at IS NULL AND scheduled_at>NOW() ORDER BY scheduled_at ASC LIMIT 100`);
+    res.json({schedules:r.rows||[]});}catch(err){logger.error({err},"Schedules failed");res.status(503).json({error:"Schedules unavailable."});}
+});
+router.post("/live/creator/schedules",async(req,res)=>{
+  const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+  const title=String(req.body?.title||"").trim().slice(0,160),date=new Date(req.body?.scheduledAt);
+  if(!title||!Number.isFinite(date.getTime())||date.getTime()<Date.now()+60000||date.getTime()>Date.now()+90*86400000){
+    res.status(400).json({error:"Provide a title and a date within the next 90 days."});return;}
+  try{await ensureCreatorTables();
+    const r:any=await db.execute(sql`INSERT INTO live_creator_schedules(seller_email,title,scheduled_at)
+      VALUES(${email},${title},${date}) RETURNING id`);
+    const id=r.rows[0].id;
+    await db.execute(sql`INSERT INTO live_creator_notifications(recipient_email,seller_email,schedule_id,content)
+      SELECT follower_email,${email},${id},${title} FROM live_creator_followers WHERE seller_email=${email}`);
+    res.status(201).json({ok:true,id});
+  }catch(err){logger.error({err},"Scheduling failed");res.status(503).json({error:"Could not schedule event."});}
+});
+router.post("/live/creator/:seller/follow",async(req,res)=>{
+  const email=await authenticatedEmail(req),seller=String(req.params.seller).trim().toLowerCase();
+  if(!email){res.status(401).json({error:"Sign in to follow."});return;}
+  if(!seller.includes("@")||seller===email){res.status(400).json({error:"Invalid creator."});return;}
+  try{await ensureCreatorTables();
+    await db.execute(sql`INSERT INTO live_creator_followers(seller_email,follower_email) VALUES(${seller},${email}) ON CONFLICT DO NOTHING`);
+    res.json({ok:true});
+  }catch(err){logger.error({err},"Follow failed");res.status(503).json({error:"Could not follow creator."});}
+});
+router.get("/live/creator/notifications",async(req,res)=>{
+  const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+  try{await ensureCreatorTables();
+    const r:any=await db.execute(sql`SELECT id,seller_email AS "sellerEmail",content,created_at AS "createdAt"
+      FROM live_creator_notifications WHERE recipient_email=${email} ORDER BY created_at DESC LIMIT 50`);
+    res.json({notifications:r.rows||[]});
+  }catch(err){logger.error({err},"Notifications failed");res.status(503).json({error:"Notifications unavailable."});}
+});
+router.get("/live/session/:id/creator-analytics",async(req,res)=>{
+  const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+  try{await ensureCreatorTables();
+    const r:any=await db.execute(sql`SELECT s.id,s.viewer_count AS "viewerCount",
+      (SELECT COUNT(*)::int FROM live_stream_messages m WHERE m.session_id=s.id) AS "chatMessages",
+      (SELECT COUNT(*)::int FROM live_sale_bids b JOIN live_sale_events e ON e.id=b.event_id WHERE e.session_id=s.id) AS bids,
+      (SELECT COUNT(*)::int FROM live_creator_followers f WHERE f.seller_email=s.seller_email) AS followers
+      FROM live_stream_sessions s WHERE s.id=${req.params.id} AND LOWER(s.seller_email)=LOWER(${email}) LIMIT 1`);
+    if(!r.rows?.length){res.status(404).json({error:"Session not found."});return;}
+    res.json({analytics:r.rows[0]});
+  }catch(err){logger.error({err},"Creator analytics failed");res.status(503).json({error:"Analytics unavailable."});}
+});
+router.get("/live/session/:id/replays",async(req,res)=>{
+  try{await ensureCreatorTables();const r:any=await db.execute(sql`SELECT id,title,url,created_at AS "createdAt" FROM live_creator_replays
+    WHERE session_id=${req.params.id} ORDER BY created_at DESC LIMIT 20`);res.json({replays:r.rows||[]});
+  }catch(err){logger.error({err},"Replays failed");res.status(503).json({error:"Replays unavailable."});}
+});
+router.post("/live/session/:id/replays",async(req,res)=>{
+  const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+  const title=String(req.body?.title||"").trim().slice(0,160),url=String(req.body?.url||"").trim();
+  let parsed:URL;try{parsed=new URL(url);if(parsed.protocol!=="https:")throw Error();}catch{res.status(400).json({error:"Valid HTTPS replay URL required."});return;}
+  if(!title||url.length>2000){res.status(400).json({error:"Invalid replay details."});return;}
+  try{await ensureCreatorTables();
+    const owned:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+    if(!owned.rows?.length){res.status(403).json({error:"Not your stream."});return;}
+    const r:any=await db.execute(sql`INSERT INTO live_creator_replays(session_id,seller_email,title,url)
+      VALUES(${req.params.id},${email},${title},${url}) RETURNING id`);
+    res.status(201).json({ok:true,id:r.rows[0].id});
+  }catch(err){logger.error({err},"Replay save failed");res.status(503).json({error:"Could not save replay."});}
+});
+router.post("/live/session/:id/moderation/block",async(req,res)=>{
+  const email=await authenticatedEmail(req);if(!email){res.status(401).json({error:"Sign in required."});return;}
+  const target=String(req.body?.email||"").trim().toLowerCase();
+  if(!target.includes("@")||target===email){res.status(400).json({error:"Invalid participant."});return;}
+  try{await ensureCreatorTables();
+    const owned:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+    if(!owned.rows?.length){res.status(403).json({error:"Not your stream."});return;}
+    await db.execute(sql`INSERT INTO live_creator_chat_blocks(session_id,blocked_email,blocked_by)
+      VALUES(${req.params.id},${target},${email}) ON CONFLICT DO NOTHING`);
+    res.json({ok:true});
+  }catch(err){logger.error({err},"Moderation failed");res.status(503).json({error:"Could not block participant."});}
+});
 
 export default router;
 
