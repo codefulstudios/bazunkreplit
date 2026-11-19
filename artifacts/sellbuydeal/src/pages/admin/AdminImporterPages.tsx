@@ -66,7 +66,7 @@ export function AdminCsvImporterPage(){
   for(let i=0;i<text.length;i++){const c=text[i];
    if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
    else if(c===","&&!quoted){row.push(field);field="";}
-   else if((c==="\\n"||c==="\\r")&&!quoted){if(c==="\\r"&&text[i+1]==="\\n")i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field="";}
+   else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&text[i+1]==="\n")i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field="";}
    else field+=c;
   }
   if(quoted)throw Error("Unclosed quoted field");
@@ -79,13 +79,13 @@ export function AdminCsvImporterPage(){
  async function load(file?:File){
   setPreview([]);setResult("");setError("");if(!file)return;
   if(file.size>1000000||!file.name.toLowerCase().endsWith(".csv")){setError("Choose a CSV under 1 MB");return;}
-  try{const data=await file.text();setCsv(data);setPreview(parse(data.replace(/^\\uFEFF/,"")));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
+  try{const data=await file.text();setCsv(data);setPreview(parse(data.replace(/^\uFEFF/,"")));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
  }
  async function submit(){
   if(busy)return;setBusy(true);setError("");setResult("");
   try{
    const rows=parse(csv);if(!rows.length)throw Error("No products found");
-   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
    const response=await authFetch("/api/admin/products/csv-listings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,sellerEmail:seller.trim(),region})});
    const data=await response.json();if(!response.ok)throw Error(data.error||"Import failed");
    setResult(data.created+" drafts created; "+data.skipped+" duplicates skipped. "+data.results.filter((x:{status:string})=>x.status==="error").length+" errors.");
