@@ -98,3 +98,25 @@
 .bazunk-overview-v2 .overview-new-action{min-height:64px}
 .bazunk-overview-v2 .overview-new-promo{background:linear-gradient(110deg,#123f7b,#0b2d58)!important}
 .bazunk-overview-v2 .overview-hero-v2{border-radius:18px!important}
+
+
+/* Neon Arcade overview: clean white dashboard and vivid metric tiles. */
+[data-testid="dashboard-content"] .bazunk-overview-v2{background:#fff!important;color:#111c39!important;padding:10px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-v2{min-height:108px!important;padding:17px 23px!important;background:linear-gradient(105deg,#006de8,#0649bd 60%,#ff7900)!important;border:0!important;border-radius:17px!important;box-shadow:0 8px 21px #0762c42c!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-copy h1{font-size:clamp(21px,2vw,30px)!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-copy p{color:#f4f9ff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-art{font-size:36px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-original-heading{padding:6px 2px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid{gap:11px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{border:0!important;border-radius:15px!important;box-shadow:0 5px 12px #14316d22!important;padding:16px!important;min-height:112px;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+1){background:linear-gradient(135deg,#0796ff,#004ac4)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+2){background:linear-gradient(135deg,#ffa600,#ff5800)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+3){background:linear-gradient(135deg,#0ccf73,#008e41)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+4){background:linear-gradient(135deg,#ff5360,#e90030)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+5){background:linear-gradient(135deg,#168fff,#084bd4)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div :is(p,span,strong,svg){color:#fff!important;-webkit-text-fill-color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div :is(.bg-white,.bg-gray-100){background:#ffffff29!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card{border:1px solid #dce6f7!important;border-radius:17px!important;box-shadow:0 5px 14px #173b7816!important;background:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card h2{color:#101b39!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card :is(button,a):hover{filter:brightness(.96);}
+@media(max-width:640px){[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{min-height:95px;padding:12px!important}[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-v2{padding:15px!important;min-height:95px!important}}
