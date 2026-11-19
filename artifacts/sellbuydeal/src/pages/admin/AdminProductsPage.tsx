@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import {
   Search, Plus, Pencil, Trash2, RefreshCw, Package, CheckCircle, XCircle,
@@ -428,9 +429,9 @@ function ProductDrawer({
     setSaving(false);
   }
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
+      <div className="fixed inset-0 bg-black/80 z-[9998]" onClick={tryClose} />
       <style>{`
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
@@ -476,7 +477,7 @@ function ProductDrawer({
           border:1px solid #566c87 !important;
         }
       `}</style>
-      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
+      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[9999] flex h-[min(90dvh,780px)] w-[min(94vw,900px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
           <div>
@@ -741,7 +742,8 @@ function ProductDrawer({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
