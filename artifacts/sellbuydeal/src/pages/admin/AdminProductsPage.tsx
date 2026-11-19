@@ -446,6 +446,25 @@ function ProductDrawer({
         #bazunk-listing-editor .editor-body label span, #bazunk-listing-editor .editor-body h3, #bazunk-listing-editor .editor-body p { color: #f8fafc !important; }
         #bazunk-listing-editor .editor-body input:not([type=checkbox]):not([type=file]), #bazunk-listing-editor .editor-body textarea, #bazunk-listing-editor .editor-body select { background: #fff !important; color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; border: 1px solid #94a3b8 !important; }
         #bazunk-listing-editor .editor-body option { background: #fff !important; color: #0f172a !important; }
+        /* The global admin theme forces transparent inputs and white text; override both together. */
+        dialog#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        dialog#bazunk-listing-editor .editor-body textarea,
+        dialog#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          opacity: 1 !important; caret-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; box-shadow: none !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input::placeholder,
+        dialog#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input:disabled {
+          background: #e2e8f0 !important; color: #334155 !important; -webkit-text-fill-color: #334155 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input[type="file"] { color: #fff !important; }
+        dialog#bazunk-listing-editor .editor-body select option { background: #fff !important; color: #111827 !important; }
+
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
           background: #263b57 !important;
