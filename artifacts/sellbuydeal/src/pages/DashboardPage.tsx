@@ -5699,8 +5699,8 @@ export function DashboardPage() {
     // Switch dashboard sections in-place; a full page reload can lose the
     // authenticated SPA state and display an empty destination.
     const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
-    window.history.pushState({ dashboardSection: id }, "", target);
     setActiveSectionRaw(id);
+    setLocation(target);
     setTileMenuOpen(false);
     setTileCategory(null);
     setSidebarOpen(false);
