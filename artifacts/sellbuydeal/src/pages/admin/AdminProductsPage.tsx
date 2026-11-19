@@ -438,6 +438,14 @@ function ProductDrawer({
     <>
 
       <style>{`
+        dialog#bazunk-listing-editor#bazunk-listing-editor { background: #101c30 !important; background-color: #101c30 !important; color: #fff !important; opacity: 1 !important; isolation: isolate !important; }
+        dialog#bazunk-listing-editor::backdrop { background: rgba(0,0,0,.88) !important; opacity: 1 !important; }
+        #bazunk-listing-editor .editor-header { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body { background: #101c30 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-footer { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body label span, #bazunk-listing-editor .editor-body h3, #bazunk-listing-editor .editor-body p { color: #f8fafc !important; }
+        #bazunk-listing-editor .editor-body input:not([type=checkbox]):not([type=file]), #bazunk-listing-editor .editor-body textarea, #bazunk-listing-editor .editor-body select { background: #fff !important; color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; border: 1px solid #94a3b8 !important; }
+        #bazunk-listing-editor .editor-body option { background: #fff !important; color: #0f172a !important; }
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
           background: #263b57 !important;
@@ -482,9 +490,9 @@ function ProductDrawer({
           border:1px solid #566c87 !important;
         }
       `}</style>
-      <dialog ref={dialogRef} id="bazunk-listing-editor" aria-label="Edit listing" onCancel={e=>{e.preventDefault();tryClose();}} onClick={e=>{if(e.target===dialogRef.current)tryClose();}} className="m-auto h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-black/85 dark:border-slate-600 dark:bg-[#101c30] dark:text-white" style={{position:"fixed",inset:0,margin:"auto",display:"flex",flexDirection:"column",zIndex:2147483647}}>
+      <dialog ref={dialogRef} id="bazunk-listing-editor" aria-label="Edit listing" onCancel={e=>{e.preventDefault();tryClose();}} onClick={e=>{if(e.target===dialogRef.current)tryClose();}} className="m-auto h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-black/85 dark:border-slate-600 dark:bg-[#101c30] dark:text-white" style={{position:"fixed",inset:0,margin:"auto",display:"flex",flexDirection:"column",zIndex:2147483647,backgroundColor:"#101c30",color:"#ffffff",opacity:1}}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
+        <div className="editor-header flex shrink-0 items-center justify-between border-b border-slate-600 bg-[#172943] px-5 py-4">
           <div>
             <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Listing" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
@@ -499,7 +507,7 @@ function ProductDrawer({
             <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);const target=document.getElementById("product-editor-"+t.id);const scroller=editorScrollRef.current;if(target&&scroller)scroller.scrollTo({top:target.offsetTop-scroller.offsetTop,behavior:"smooth"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
         </nav>
         {/* Body */}
-        <div ref={editorScrollRef} className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
+        <div ref={editorScrollRef} className="editor-body min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -740,7 +748,7 @@ function ProductDrawer({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-slate-500 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
+        <div className="editor-footer flex shrink-0 gap-3 border-t border-slate-500 bg-[#172943] px-5 py-4">
           <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 !bg-[#334155] py-2.5 text-sm font-black !text-white hover:!bg-[#475569] transition-colors">
             Cancel
           </button>
