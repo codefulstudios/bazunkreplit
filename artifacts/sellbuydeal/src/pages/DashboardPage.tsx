@@ -5699,8 +5699,10 @@ export function DashboardPage() {
     // Switch dashboard sections in-place; a full page reload can lose the
     // authenticated SPA state and display an empty destination.
     const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
+    // Dashboard subpages are panels of this mounted component, not separate
+    // router pages. Keep the URL bookmarkable without remounting the dashboard.
     setActiveSectionRaw(id);
-    setLocation(target);
+    window.history.replaceState(window.history.state, "", target);
     setTileMenuOpen(false);
     setTileCategory(null);
     setSidebarOpen(false);
