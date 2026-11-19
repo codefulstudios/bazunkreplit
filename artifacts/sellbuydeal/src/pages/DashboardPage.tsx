@@ -1104,40 +1104,18 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
 
   return (
     <div className="bazunk-overview-v2 flex-1 p-4 sm:p-6 space-y-6">
-      <div className="overview-hero-v2">
-        <div className="overview-hero-copy">
-          <span className="overview-hero-wave" aria-hidden="true">👋</span>
-          <div><h1>Welcome back, {user.name?.split(" ")[0] || user.username || "Seller"}!</h1>
-          <p>Manage your marketplace activity, grow your sales, and reach more buyers.</p></div>
+      <div className="bz-arcade-heading">
+        <div className="bz-arcade-title">
+          <h1>My Dashboard</h1>
+          <p>Welcome back, <strong>{user.name?.split(" ")[0] || user.username || "Seller"}</strong> 👋</p>
         </div>
-        <div className="overview-hero-art" aria-hidden="true"><span>🏬</span><span>📦</span><span>✨</span><span>↗</span></div>
-      </div>
-      {/* Header */}
-      <div className="overview-original-heading flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Manage your account, orders, and marketplace activity</p>
-        </div>
-        <div className="hidden lg:flex items-center gap-2">
-          <a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4A5CE8]/10 hover:bg-[#4A5CE8]/20 transition-colors text-[#4A5CE8] border border-[#4A5CE8]/20 text-sm font-semibold" title="Open Bazunk Data Platform">
-            <ExternalLink className="w-4 h-4" /> Bazunk Data Platform
-          </a>
-          <Link href="/cashback" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-sm font-semibold"><Gift className="w-4 h-4" /> Cashback</Link>
-          <Link href="/rewards" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F26B21]/10 hover:bg-[#F26B21]/20 transition-colors text-[#F26B21] border border-[#F26B21]/20 text-sm font-semibold">
-            <Gift className="w-4 h-4" /> Rewards
-          </Link>
-          <Link href="/promotions" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 transition-colors text-[#7C3AED] border border-[#7C3AED]/20 text-sm font-semibold">
-            <Megaphone className="w-4 h-4" /> Promotions
-          </Link>
-          <Link href="/credits" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F59E0B] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm" data-testid="button-buy-credits">
-            <Coins className="w-4 h-4" /> Buy Credits
-          </Link>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold">
-            <Tag className="w-4 h-4" /> £{user.balance.toFixed(2)}
-          </div>
+        <div className="bz-arcade-actions">
+          <Link href="/sell/direct" className="bz-arcade-action bz-arcade-blue"><Plus size={19}/> List an Item</Link>
+          <button type="button" onClick={() => onNavigate("go-live")} className="bz-arcade-action bz-arcade-red"><Radio size={19}/> Go Live</button>
+          <Link href="/sell" className="bz-arcade-action bz-arcade-orange"><Gavel size={19}/> Start Selling</Link>
+          <button type="button" onClick={() => onNavigate("my-flash-sales")} className="bz-arcade-action bz-arcade-light"><Zap size={19}/> Flash Deals</button>
         </div>
       </div>
-
       {/* Stats row */}
       <div className="overview-stat-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* User card */}
