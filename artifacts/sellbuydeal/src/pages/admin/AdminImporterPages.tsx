@@ -56,6 +56,46 @@ export function AdminImporterBulkUpdatePage(){
   </div></div></AdminLayout>;
 }
 
+// Extract one CSV from a ZIP without accepting executable or nested archive content.
+async function readCsvZip(file:File):Promise<string>{
+ if(file.size>5_000_000)throw Error("ZIP must be under 5 MB");
+ const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer);
+ let end=-1;
+ for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65557);i--){if(view.getUint32(i,true)===0x06054b50){end=i;break;}}
+ if(end<0)throw Error("Invalid ZIP archive");
+ const count=view.getUint16(end+10,true),directory=view.getUint32(end+16,true);
+ if(count<1||count>100||directory>=bytes.length)throw Error("ZIP contains too many files or is invalid");
+ let offset=directory;const entries:{name:string;method:number;size:number;packed:number;local:number;flags:number}[]=[];
+ const decoder=new TextDecoder();
+ for(let i=0;i<count;i++){
+  if(offset+46>bytes.length||view.getUint32(offset,true)!==0x02014b50)throw Error("Invalid ZIP directory");
+  const flags=view.getUint16(offset+8,true),method=view.getUint16(offset+10,true),packed=view.getUint32(offset+20,true),size=view.getUint32(offset+24,true),nameLen=view.getUint16(offset+28,true),extra=view.getUint16(offset+30,true),comment=view.getUint16(offset+32,true),local=view.getUint32(offset+42,true);
+  const name=decoder.decode(bytes.slice(offset+46,offset+46+nameLen));
+  entries.push({name,method,size,packed,local,flags});offset+=46+nameLen+extra+comment;
+ }
+ const csvFiles=entries.filter(e=>e.name.toLowerCase().endsWith(".csv")&&!e.name.startsWith("__MACOSX/")&&!e.name.split("/").some(part=>part===".."));
+ if(csvFiles.length!==1)throw Error("ZIP must contain exactly one CSV file");
+ const entry=csvFiles[0];
+ if(entry.flags&1)throw Error("Password-protected ZIP files are not supported");
+ if(entry.size>1_000_000||entry.packed>5_000_000)throw Error("CSV inside ZIP must be under 1 MB");
+ if(entry.method!==0&&entry.method!==8)throw Error("ZIP compression method is unsupported");
+ const p=entry.local;
+ if(p+30>bytes.length||view.getUint32(p,true)!==0x04034b50)throw Error("Invalid ZIP entry");
+ const start=p+30+view.getUint16(p+26,true)+view.getUint16(p+28,true);
+ if(start+entry.packed>bytes.length)throw Error("Truncated ZIP file");
+ const compressed=bytes.slice(start,start+entry.packed);
+ let output:Uint8Array;
+ if(entry.method===0)output=compressed;
+ else{
+  if(typeof DecompressionStream==="undefined")throw Error("ZIP extraction is unsupported in this browser");
+  const stream=new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat));
+  const reader=stream.getReader();const chunks:Uint8Array[]=[];let total=0;
+  while(true){const {done,value}=await reader.read();if(done)break;total+=value.length;if(total>1_000_000){await reader.cancel();throw Error("Extracted CSV exceeds 1 MB");}chunks.push(value);}
+  output=new Uint8Array(total);let pos=0;for(const chunk of chunks){output.set(chunk,pos);pos+=chunk.length;}
+ }
+ if(output.length!==entry.size)throw Error("ZIP CSV size mismatch");
+ return decoder.decode(output);
+}
 export function AdminCsvImporterPage(){
  const {authFetch}=useAdmin();
  const [csv,setCsv]=useState("");const [seller,setSeller]=useState("cczslater@gmail.com");const [region,setRegion]=useState("us");
@@ -84,7 +124,7 @@ export function AdminCsvImporterPage(){
  }
  async function load(file?:File){
   setPreview([]);setCsv("");setResult("");setError("");if(!file)return;
-  if(file.size>1000000||!file.name.toLowerCase().endsWith(".csv")){setError("Choose a CSV under 1 MB");return;}
+  if(!/\\.(csv|zip)$/i.test(file.name)||file.size>(file.name.toLowerCase().endsWith(".zip")?5_000_000:1_000_000)){setError("Choose a CSV under 1 MB or ZIP under 5 MB");return;}
   try{const data=(await file.text()).replace(/^\uFEFF/,"");setCsv(data);setPreview(parse(data));}catch(e){setError(e instanceof Error?e.message:"Invalid CSV");}
  }
  async function submit(){
@@ -103,8 +143,8 @@ export function AdminCsvImporterPage(){
   <p>Import listings for a chosen seller. All imported products are saved as drafts, never published automatically. Existing seller SKUs are skipped.</p>
   <label className="block font-bold">Seller email<input value={seller} onChange={e=>setSeller(e.target.value)} placeholder="seller@example.com" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"/></label>
   <label className="block font-bold">Marketplace region<select value={region} onChange={e=>setRegion(e.target.value)} className="mt-2 block rounded-lg border border-slate-400 bg-white p-3 text-slate-950 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"><option value="us">USA</option><option value="uk">UK</option></select></label>
-  <label className="block font-bold">CSV file<input type="file" accept=".csv,text/csv" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-orange-700" onChange={e=>void load(e.target.files?.[0])}/></label>
-  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
+  <label className="block font-bold">CSV or ZIP file<input type="file" accept=".csv,.zip,text/csv,application/zip" className="mt-2 block w-full rounded-lg border border-slate-400 bg-white p-3 text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-orange-600 file:px-4 file:py-2 file:font-bold file:text-white hover:file:bg-orange-700" onChange={e=>void load(e.target.files?.[0])}/></label>
+  <p className="text-sm">Upload a CSV directly or a ZIP containing one CSV. ZIP files are extracted and previewed before import; maximum 100 products per batch.</p>\n  <p className="text-sm">Required columns: title, price, category. Optional: sku, description, currency, quantity, condition, image_url, ship_origin, ship_zone, shipping_price, handling_charge, tags. Images require hosted HTTPS URLs; ZIP images are not supported yet.</p>
   {csv&&!preview.length&&!error&&<p role="status" className="font-semibold text-amber-700 dark:text-amber-300">No valid products were found. Check the CSV headings and rows.</p>}
   {preview.length>0&&<div className="rounded border border-slate-400 bg-white p-4 text-slate-950 dark:bg-slate-900 dark:text-white"><h2 className="font-bold">Preview ({preview.length})</h2><div className="max-h-72 overflow-auto"><table className="w-full text-left text-sm"><thead><tr><th>Title</th><th>Price</th><th>SKU</th></tr></thead><tbody>{preview.map((r,i)=><tr key={i} className="border-t"><td className="p-2">{r.title}</td><td className="p-2">{r.price}</td><td className="p-2">{r.sku}</td></tr>)}</tbody></table></div></div>}
   {error&&<p role="alert" className="rounded-lg border border-red-500 bg-red-50 p-3 font-semibold text-red-800 dark:bg-red-950 dark:text-red-100">{error}</p>}{result&&<p role="status" className="font-bold">{result}</p>}
