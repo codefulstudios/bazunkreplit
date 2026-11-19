@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Cookie, FileText, Headphones, Mail, ShieldCheck, Globe2 } from "lucide-react";
+import { Cookie, FileText, Mail, ShieldCheck, Globe2 } from "lucide-react";
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import { parseIconOverrides, iconForPlacement } from "@/design-system/designCenterFields";
 import { openCookieSettings } from "@/components/CookieConsent";
@@ -27,7 +27,6 @@ export function Footer() {
             <Link href="/privacy"><ShieldCheck size={20}/> <span>Privacy</span></Link>
             <Link href="/terms"><FileText size={20}/> <span>Terms</span></Link>
             <Link href="/cookies"><Cookie size={20}/> <span>Cookies</span></Link>
-            <Link href="/support"><Headphones size={20}/> <span>Help</span></Link>
             <Link href="/support"><Mail size={20}/> <span>Contact</span></Link>
             <Link href="/our-sites"><Globe2 size={20}/> <span>Our Sites</span></Link>
           </nav>
