@@ -182,20 +182,19 @@ export function FlashSalesPage() {
     <div className="bz-flash-page min-h-screen flex flex-col text-white">
       <Navbar />
       {showIntro && (
-        <section aria-label="Flash Sales introduction" className="relative isolate flex min-h-[calc(100svh-80px)] items-center overflow-hidden bg-[#0c090a] text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_85%_40%,#8b2c0b_0%,#32140d_36%,#09090b_80%)]" />
-          <img src="/images/flash-sales-intro.png" alt="Model dramatically opening his jacket to reveal a shirtless torso" className="absolute inset-0 h-full w-full object-cover object-[65%_center]" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#08090b]/95 via-[#08090b]/80 to-transparent" />
-          <div className="relative mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 lg:px-14">
-            <div className="max-w-2xl">
-              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-500/60 bg-orange-500/10 px-4 py-2 text-xs font-black uppercase tracking-[.2em] text-orange-200"><Zap className="h-4 w-4" /> Bazunk presents</p>
-              <h1 className="text-[clamp(4rem,12vw,9rem)] font-black italic uppercase leading-[.82] tracking-[-.075em] text-white drop-shadow-[0_0_28px_rgba(255,111,0,.65)]"><span className="block text-[#ff8a18]">Flash</span><span className="block">Sales</span></h1>
-              <p className="mt-8 text-2xl font-bold text-white sm:text-3xl">Careful. These deals reveal everything.</p>
-              <p className="mt-3 max-w-md text-base text-slate-100 sm:text-lg">Naughty prices. Ridiculously good finds. And offers that won't hang around.</p>
-              <button type="button" onClick={() => setShowIntro(false)} className="mt-9 inline-flex items-center gap-3 rounded-xl bg-[#ff7900] px-8 py-4 text-lg font-black text-[#160b05] shadow-[0_10px_35px_rgba(255,105,0,.3)] transition hover:-translate-y-0.5 hover:bg-[#ff9c35] focus-visible:outline focus-visible:outline-4 focus-visible:outline-white">Reveal the Deals <ChevronRight className="h-6 w-6" /></button>
-              <p className="mt-4 text-sm font-medium text-slate-200">No tricks. Just flash deals.</p>
-            </div>
-          </div>
+        <section aria-label="Flash Sales introduction" className="relative isolate flex min-h-[calc(100svh-80px)] items-center justify-center overflow-hidden bg-[#090606]">
+          <img
+            src="/images/flash-sales-intro.png"
+            alt="Bazunk Flash Sales: Hot Deals, Limited Time, Don't Miss Out! Shirtless model opening his jacket."
+            className="block h-auto max-h-[calc(100svh-80px)] w-full object-contain"
+          />
+          <button
+            type="button"
+            aria-label="Reveal the deals and enter Flash Sales"
+            title="Reveal the Deals"
+            onClick={() => setShowIntro(false)}
+            className="absolute inset-0 z-10 cursor-pointer bg-transparent focus-visible:outline focus-visible:outline-4 focus-visible:outline-orange-400"
+          />
         </section>
       )}
       <div className={showIntro ? "hidden" : "contents"}>
