@@ -37,6 +37,64 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
+function LiveHubCreatorSection(){
+  const {user}=useUser();const {getToken}=useAuth();
+  const [schedules,setSchedules]=useState<{id:number;title:string;scheduledAt:string;sellerEmail:string}[]>([]);
+  const [notifications,setNotifications]=useState<{id:number;content:string;createdAt:string}[]>([]);
+  const [title,setTitle]=useState("");const [date,setDate]=useState("");const [message,setMessage]=useState("");
+  useEffect(()=>{let active=true;const load=async()=>{
+    try{
+      const r=await fetch("/api/live/creator/schedules",{cache:"no-store"});
+      if(r.ok&&active)setSchedules((await r.json()).schedules||[]);
+      if(user){const token=await getToken();const n=await fetch("/api/live/creator/notifications",{headers:token?{Authorization:`Bearer ${token}`}:{}});
+        if(n.ok&&active)setNotifications((await n.json()).notifications||[]);}
+    }catch{}
+  };void load();const timer=setInterval(()=>void load(),30000);return()=>{active=false;clearInterval(timer)};},[user?.id,getToken]);
+  async function schedule(){
+    setMessage("");
+    try{
+      const token=await getToken();const r=await fetch("/api/live/creator/schedules",{
+        method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
+        body:JSON.stringify({title,scheduledAt:new Date(date).toISOString()})});
+      const d=await r.json();if(!r.ok)throw Error(d.error||"Could not schedule stream");
+      setMessage("Stream scheduled. Followers will receive an in-app notification record.");
+      setTitle("");setDate("");
+      const fresh=await fetch("/api/live/creator/schedules",{cache:"no-store"});
+      if(fresh.ok)setSchedules((await fresh.json()).schedules||[]);
+    }catch(e){setMessage(e instanceof Error?e.message:"Could not schedule stream");}
+  }
+  return <section className="mt-7 mb-8 rounded-2xl border border-orange-500/30 bg-gray-900 p-5 text-white space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div><h2 className="text-xl font-black text-white">Live Creator Studio</h2><p className="text-gray-300 text-sm">Schedule broadcasts, manage your audience and discover upcoming live events.</p></div>
+      <Link href="/dashboard?section=go-live" className="rounded-xl bg-orange-500 px-4 py-2 font-bold text-black">Start broadcasting</Link>
+    </div>
+    <div className="grid gap-3 md:grid-cols-3">
+      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Live auctions</strong><p className="text-sm text-gray-300 mt-1">Timed bids and seller controls inside active streams.</p></div>
+      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Flash deals</strong><p className="text-sm text-gray-300 mt-1">Limited-time promotional events. Checkout discounts are not enabled yet.</p></div>
+      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Shop the Stream</strong><p className="text-sm text-gray-300 mt-1">Pinned products, stock checks and the Bazunk basket.</p></div>
+    </div>
+    {user&&<div className="rounded-xl border border-gray-700 p-4 space-y-2">
+      <h3 className="font-bold">Schedule your next stream</h3>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+        <input aria-label="Stream title" placeholder="Stream title" value={title} onChange={e=>setTitle(e.target.value)} className="rounded bg-gray-800 p-2 text-white"/>
+        <input aria-label="Stream date" type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} className="rounded bg-gray-800 p-2 text-white"/>
+        <button disabled={!title||!date} onClick={()=>void schedule()} className="rounded bg-orange-500 px-4 py-2 font-bold text-black disabled:opacity-50">Schedule</button>
+      </div>
+      {message&&<p role="status" className="text-sm text-orange-300">{message}</p>}
+    </div>}
+    <div className="grid gap-4 md:grid-cols-2">
+      <div><h3 className="font-bold mb-2">Upcoming scheduled streams</h3>
+        {schedules.length===0?<p className="text-sm text-gray-400">No upcoming broadcasts scheduled yet.</p>:
+        schedules.slice(0,6).map(s=><div key={s.id} className="rounded bg-gray-800 p-3 mb-2 text-sm"><strong>{s.title}</strong><p className="text-gray-300">{new Date(s.scheduledAt).toLocaleString()}</p></div>)}
+      </div>
+      {user&&<div><h3 className="font-bold mb-2">Follower notifications</h3>
+        {notifications.length===0?<p className="text-sm text-gray-400">No notifications yet.</p>:
+        notifications.slice(0,5).map(n=><p key={n.id} className="rounded bg-gray-800 p-3 mb-2 text-sm">{n.content}</p>)}
+      </div>}
+    </div>
+  </section>;
+}
+
 /* ─── Live Hub — /live ─── */
 export function LiveHubPage() {
   const { sessions } = useLiveStream();
@@ -58,6 +116,7 @@ export function LiveHubPage() {
           </div>
           <div className="bz-live-hero-art bz-market-hero-art" aria-hidden="true"><div className="bz-live-screen"><span>● LIVE</span><Radio size={85}/><strong>BAZUNK LIVE</strong></div><span className="bz-live-bag">B</span></div>
         </section>
+        <LiveHubCreatorSection />
         <div className="bz-market-stats">
           <div className="bz-market-stat blue"><Radio/><strong>{live.length}</strong><span>Live Now<small>Shop with sellers in real time</small></span></div>
           <div className="bz-market-stat orange"><Clock/><strong>{upcoming.length}</strong><span>Upcoming Streams<small>Don't miss the next event</small></span></div>
