@@ -341,3 +341,24 @@ body:has(#bz-dashboard-main) .bz-hub-tiles{grid-template-columns:repeat(4,minmax
 @media(min-width:1500px){body:has(#bz-dashboard-main) .bz-dashboard-workspace.container{grid-template-columns:260px minmax(0,1fr)!important;}body:has(#bz-dashboard-main) .bz-dashboard-workspace #bazunk-dashboard-drawer.bz-hub-sidebar{width:260px!important;max-width:260px!important;}body:has(#bz-dashboard-main) .bz-hub-overlay{left:260px!important;}}
 @media(max-width:1023px){body:has(#bz-dashboard-main) .bz-dashboard-workspace.container{display:block!important;padding:14px!important;}body:has(#bz-dashboard-main) .bz-dashboard-workspace #bz-dashboard-main{width:100%!important;}body:has(#bz-dashboard-main) .bz-dashboard-workspace #bazunk-dashboard-drawer.bz-hub-sidebar{display:none!important;}body:has(#bz-dashboard-main) .bz-dashboard-workspace #bazunk-dashboard-drawer.bz-hub-sidebar.bz-hub-sidebar-mobile-open{display:flex!important;position:fixed!important;top:0!important;left:0!important;right:auto!important;bottom:0!important;max-height:100dvh!important;width:min(300px,90vw)!important;max-width:90vw!important;z-index:110!important;border-radius:0 18px 18px 0!important;}body:has(#bz-dashboard-main) .bz-hub-overlay{left:0!important;padding:16px!important;}body:has(#bz-dashboard-main) .bz-hub-tiles{grid-template-columns:repeat(3,minmax(0,1fr))!important;}}
 @media(max-width:600px){body:has(#bz-dashboard-main) .bz-hub-tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important;}body:has(#bz-dashboard-main) .bz-hub-overlay{padding:8px!important;}body:has(#bz-dashboard-main) .bz-hub-toolbar-title{display:none!important;}}
+
+
+/* Screenshot-driven compact navigation: entire seven-category menu fits without an internal scrollbar. */
+@media(min-width:1024px){
+body:has(#bz-dashboard-main) .bz-dashboard-workspace #bazunk-dashboard-drawer.bz-hub-sidebar{height:auto!important;max-height:none!important;overflow:visible!important;align-self:start!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer>div{min-height:0!important;height:auto!important;max-height:none!important;overflow:visible!important;overscroll-behavior:auto!important;gap:5px!important;padding:9px 9px 11px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-neon-brand{padding:2px 3px 7px!important;margin:0!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-neon-brand-icon{width:37px!important;height:39px!important;font-size:25px!important;border-radius:9px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-neon-brand strong{font-size:21px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-neon-brand small{font-size:8px!important;margin-top:2px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-profile{padding:6px!important;gap:1px!important;min-height:0!important;margin:0!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-profile>div:first-child{width:29px!important;height:29px!important;font-size:13px!important;margin:0!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-profile p{font-size:11px!important;line-height:1.2!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-accordion{gap:4px!important;padding:2px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-group{border-radius:9px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-group-trigger{min-height:30px!important;padding:5px 9px!important;font-size:11px!important;border-radius:8px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-group-trigger svg{width:15px!important;height:15px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-group .bz-dashboard-subitem{min-height:26px!important;padding:4px 7px 4px 20px!important;font-size:10px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-group-items{gap:1px!important;}
+body:has(#bz-dashboard-main) #bazunk-dashboard-drawer .bz-dashboard-signout{padding:7px!important;font-size:11px!important;}
+}
