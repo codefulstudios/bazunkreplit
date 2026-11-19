@@ -1,58 +1,38 @@
-import { ArrowUpRight, Code2, Database, Store, Ticket, Layers3, Sparkles, Globe2, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Code2, Database, Store, Ticket, Headphones, ShieldCheck, Cookie, FileText, Mail } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 const sites = [
-  { name: "Data Platform", eyebrow: "DATA & INTELLIGENCE", description: "Product data, intelligent search and powerful import tools built for connected commerce.", url: "https://data.bazunk.com", Icon: Database, accent: "blue", number: "01" },
-  { name: "Nexvenue", eyebrow: "EVENT TECHNOLOGY", description: "Digital experiences that connect venues, events and audiences in one seamless ecosystem.", url: "https://nexvenue.bazunk.com", Icon: Ticket, accent: "violet", number: "02" },
-  { name: "MarketNexa", eyebrow: "COMMERCE TECHNOLOGY", description: "Modern marketplace technology and commerce solutions designed to grow with businesses.", url: "https://marketnexa.bazunk.com", Icon: Store, accent: "cyan", number: "03" },
-  { name: "Digital Origin Studios", eyebrow: "DESIGN & DEVELOPMENT", description: "Distinctive websites, applications and software crafted with creativity and technical precision.", url: "https://digitaloriginstudios.bazunk.com", Icon: Code2, accent: "orange", number: "04" },
+  { name:"Bazunk", eyebrow:"BUY. SELL. TRADE. LIVE.", description:"The marketplace for a smarter, faster and more exciting way to shop.", url:"https://www.bazunk.com", Icon:Store, accent:"orange", mark:"B" },
+  { name:"Digital Origin Studios", eyebrow:"DESIGN. DEVELOP. DELIVER.", description:"Creative websites, applications and software designed to make your business stand out.", url:"https://digitaloriginstudios.bazunk.com", Icon:Code2, accent:"purple", mark:"D" },
+  { name:"Nexvenue", eyebrow:"EVENTS. TICKETS. EXPERIENCES.", description:"Connecting event organisers, venues and audiences through modern technology.", url:"https://nexvenue.bazunk.com", Icon:Ticket, accent:"cyan", mark:"N" },
+  { name:"Bazunk Data", eyebrow:"DATA. INSIGHTS. GROWTH.", description:"Product data and integration tools for a smarter e-commerce ecosystem.", url:"https://data.bazunk.com", Icon:Database, accent:"orange", mark:"D" },
 ];
 
-export function OurSitesPage() {
-  return (
-    <div className="dos-network-page min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        <section className="dos-network-hero" aria-labelledby="network-title">
-          <div className="dos-network-hero-image" aria-hidden="true" />
-          <div className="dos-network-hero-shade" aria-hidden="true" />
-          <div className="dos-network-hero-inner">
-            <div className="dos-network-eyebrow"><Sparkles size={17}/> DIGITAL ORIGIN STUDIOS <span className="dos-network-eyebrow-line"/></div>
-            <h1 id="network-title">Different ideas.<br/><em>One digital universe.</em></h1>
-            <p>Explore the platforms, products and digital experiences shaping our connected network. Thoughtful design meets ambitious technology.</p>
-            <a href="#explore-network" className="dos-network-primary">Explore our platforms <ArrowUpRight size={19}/></a>
-            <div className="dos-network-hero-foot"><span><Globe2 size={16}/> Connected digital ventures</span><span><ShieldCheck size={16}/> Built for what's next</span></div>
-          </div>
+export function OurSitesPage(){
+  return <div className="bz-sites-mockup">
+    <Navbar />
+    <main className="bz-sites-stage">
+      <div className="bz-sites-photo" aria-hidden="true"/>
+      <div className="bz-sites-gradient" aria-hidden="true"/>
+      <div className="bz-sites-inner">
+        <header className="bz-sites-heading">
+          <p className="bz-sites-kicker"><span/> DIGITAL PLATFORMS</p>
+          <h1>Our <em>Sites</em></h1>
+          <h2>A growing ecosystem of powerful platforms,<br/>built for buyers, sellers and creators.</h2>
+          <p>Each site is part of our mission to create innovative, user-friendly marketplaces and digital tools that make life easier, more connected and more rewarding.</p>
+        </header>
+        <section className="bz-sites-cards" aria-label="Explore our digital platforms">
+          {sites.map(({name,eyebrow,description,url,Icon,accent,mark})=><article className={`bz-sites-card bz-sites-card-${accent}`} key={name}>
+            <div className="bz-sites-brand"><span className="bz-sites-logo"><Icon size={25}/></span><strong>{name}</strong></div>
+            <h3>{eyebrow}</h3>
+            <p>{description}</p>
+            <span className="bz-sites-watermark" aria-hidden="true">{mark}</span>
+            <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Visit ${name} (opens in new tab)`}><ArrowUpRight size={20}/></a>
+          </article>)}
         </section>
-
-        <section className="dos-network-work" id="explore-network" aria-labelledby="network-work-title">
-          <div className="dos-network-work-inner">
-            <div className="dos-network-section-heading">
-              <div><p className="dos-network-kicker"><span/> OUR ECOSYSTEM</p><h2 id="network-work-title">Explore the <em>network.</em></h2></div>
-              <p>Four distinct ventures. One commitment to creating better digital experiences.</p>
-            </div>
-            <div className="dos-network-grid">
-              {sites.map(({name,eyebrow,description,url,Icon,accent,number})=>(
-                <article key={name} className={`dos-network-card dos-network-card-${accent}`}>
-                  <div className="dos-network-card-top"><span className="dos-network-card-number">{number} / 04</span><span className="dos-network-card-mark"><Icon size={27} strokeWidth={1.8}/></span></div>
-                  <div className="dos-network-card-content">
-                    <p className="dos-network-card-eyebrow">{eyebrow}</p>
-                    <h3>{name}</h3>
-                    <p className="dos-network-card-description">{description}</p>
-                    <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Explore ${name} (opens in a new tab)`}>Explore platform <span><ArrowUpRight size={19}/></span></a>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-        <section className="dos-network-outro">
-          <div><Layers3 size={28}/><div><h2>Built with purpose. Designed to stand apart.</h2><p>Discover what's possible across the Bazunk digital ecosystem.</p></div></div>
-          <a href="https://digitaloriginstudios.bazunk.com" target="_blank" rel="noopener noreferrer">Discover Digital Origin Studios <ArrowUpRight size={19}/></a>
-        </section>
-      </main>
-      <Footer />
-    </div>
-  );
+      </div>
+    </main>
+    <Footer />
+  </div>;
 }
