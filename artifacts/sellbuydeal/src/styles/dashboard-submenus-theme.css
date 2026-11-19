@@ -495,3 +495,22 @@ body:has(#bz-dashboard-main) .bz-glass-v8-layout .bz-glass-sidebar-signout{color
 #bz-dashboard-main .bz-store-light-theme .bz-store-edit button.hover\:border-blue-400:nth-child(2) svg{color:#e7770b!important;}
 #bz-dashboard-main .bz-store-light-theme .bz-store-edit button.hover\:border-blue-400:nth-child(3) svg{color:#07976b!important;}
 #bz-dashboard-main .bz-store-light-theme .bz-store-edit button.hover\:border-blue-400:nth-child(4) svg{color:#db4262!important;}
+
+
+/* Contrast correction: light store surfaces ALWAYS have dark foregrounds.
+   Prior theme used inherited text-white utility classes from the dark layout. */
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup){color:#183454!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) :is(h1,h2,h3,h4,h5,h6,p,span,small,strong,b,label,li,a,legend){color:#183454!important;text-shadow:none!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) :is(input:not([type=checkbox]):not([type=radio]),select,textarea){color:#122c4c!important;-webkit-text-fill-color:#122c4c!important;background-color:#f8fbff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) :is(input,textarea)::placeholder{color:#637b99!important;-webkit-text-fill-color:#637b99!important;opacity:1!important;}
+/* Strongly coloured surfaces: white text only where the surface is actually dark. */
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-setup>div:first-child>div:first-child :is(h2,p,span,strong){color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) button[class*="bg-[#3B4FD8]"],#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) button[class*="bg-[#F59E0B]"]{color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) button[class*="bg-[#3B4FD8]"] :is(span,svg),#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bz-store-edit,.bz-store-setup) button[class*="bg-[#F59E0B]"] :is(span,svg){color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-edit nav button.bg-\[\#3B4FD8\]{color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-edit nav button.bg-\[\#3B4FD8\] :is(span,svg){color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-setup button[class*="from-violet-600"]{color:#fff!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-setup button[class*="from-violet-600"] :is(span,svg){color:#fff!important;}
+/* Store previews, tiles and cards with pale backgrounds. */
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bg-background,.bg-card,.bg-white,.bg-slate-50,.bg-blue-50,.bg-orange-50) :is(p,span,h2,h3,h4,label){color:#173759!important;}
+#bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-edit button.hover\:border-blue-400 :is(span,svg){color:#164a7c!important;}
