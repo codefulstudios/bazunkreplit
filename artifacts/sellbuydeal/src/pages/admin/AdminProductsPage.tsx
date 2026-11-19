@@ -446,6 +446,19 @@ function ProductDrawer({
         #bazunk-listing-editor .editor-body label span, #bazunk-listing-editor .editor-body h3, #bazunk-listing-editor .editor-body p { color: #f8fafc !important; }
         #bazunk-listing-editor .editor-body input:not([type=checkbox]):not([type=file]), #bazunk-listing-editor .editor-body textarea, #bazunk-listing-editor .editor-body select { background: #fff !important; color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; border: 1px solid #94a3b8 !important; }
         #bazunk-listing-editor .editor-body option { background: #fff !important; color: #0f172a !important; }
+        /* Maximum specificity to defeat site-wide admin input overrides. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; opacity: 1 !important;
+          caret-color: #111827 !important; text-shadow: none !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
         /* The global admin theme forces transparent inputs and white text; override both together. */
         dialog#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
         dialog#bazunk-listing-editor .editor-body textarea,
