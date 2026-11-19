@@ -5806,10 +5806,10 @@ export function DashboardPage() {
       {/* Dashboard navigation controls remain visible on all dashboard subpages. */}
       <div className="bz-hub-toolbar">
         <button type="button" className="bz-hub-menu-button" onClick={() => {setTileCategory(null);setTileMenuOpen(true);}} aria-label="Open dashboard navigation" aria-expanded={tileMenuOpen} aria-controls="bz-dashboard-hub"><Menu size={21}/><span>Dashboard Menu</span></button>
-        <span className="bz-hub-toolbar-title">Bazunk <span>Seller Dashboard</span></span>
+        <span className="bz-hub-toolbar-title">Dashboard <span>Navigation &amp; tools</span></span>
         <button type="button" className="bz-hub-mobile-nav" onClick={()=>setSidebarOpen(v=>!v)} aria-label="Toggle sidebar navigation"><LayoutDashboard size={18}/> Sections</button>
       </div>
-      <div className="flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
+      <div className="bz-dashboard-workspace flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
 
         {/* Persistent neon navigation sidebar */}
         <aside id="bazunk-dashboard-drawer" aria-label="Dashboard navigation" className={`
@@ -5833,7 +5833,7 @@ export function DashboardPage() {
 
             <div className="bz-neon-brand hidden lg:flex" aria-label="Bazunk dashboard"><span className="bz-neon-brand-icon">B</span><span><strong>Bazunk</strong><small>Buy · Sell · Live · Trade</small></span></div>
             {/* User card */}
-            <div className="bz-dashboard-user bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
+            <div className="bz-dashboard-user bz-dashboard-profile bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
               <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
                 {initial}
               </div>
@@ -5961,7 +5961,7 @@ export function DashboardPage() {
           </div>
         </aside>
 
-        {tileMenuOpen && <div id="bz-dashboard-hub" className="bz-hub-overlay" role="dialog" aria-modal="true" aria-label="Dashboard navigation menu" onKeyDown={e=>{if(e.key==="Escape")setTileMenuOpen(false);}}>
+        {tileMenuOpen && <div id="bz-dashboard-hub" className="bz-hub-overlay" role="dialog" aria-modal="true" aria-label="Dashboard navigation menu" tabIndex={-1} onKeyDown={e=>{if(e.key==="Escape")setTileMenuOpen(false);}}>
           <div className="bz-hub-panel">
             <div className="bz-hub-top"><div><span className="bz-hub-eyebrow">BAZUNK / DASHBOARD</span><h2>{tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.label : "Where would you like to go?"}</h2><p>{tileCategory ? "Choose a destination within this section." : "Explore your store, sales, buying and account tools."}</p></div><button type="button" onClick={()=>setTileMenuOpen(false)} aria-label="Close dashboard navigation"><X size={23}/></button></div>
             {tileCategory && <button type="button" className="bz-hub-back" onClick={()=>setTileCategory(null)}><ArrowLeft size={17}/> All dashboard sections</button>}
@@ -5971,7 +5971,7 @@ export function DashboardPage() {
           </div>
         </div>}
         {/* Main content */}
-        <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
+        <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 10 }}
