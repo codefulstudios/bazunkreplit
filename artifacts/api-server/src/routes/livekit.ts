@@ -50,6 +50,15 @@ router.get("/livekit/token", async (req, res) => {
       res.status(401).json({ error: "You must be signed in as the broadcaster." });
       return;
     }
+    try {
+      const owned:any = await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE broadcast_room=${String(room || "")} AND LOWER(seller_email)=LOWER(${email}) AND is_live=TRUE LIMIT 1`);
+      if (!owned.rows?.length) { res.status(403).json({ error: "Start your own live session before publishing to this room." }); return; }
+    } catch (err) { logger.error({ err }, "Live room authorization failed"); res.status(503).json({ error: "Unable to verify live room ownership." }); return; }
+  } else {
+    try {
+      const active:any = await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE broadcast_room=${String(room || "")} AND is_live=TRUE LIMIT 1`);
+      if (!active.rows?.length) { res.status(404).json({ error: "This live room is not active." }); return; }
+    } catch (err) { logger.error({ err }, "Live room lookup failed"); res.status(503).json({ error: "Unable to verify live room." }); return; }
   }
   if (!room || !identity) {
     res.status(400).json({ error: "room and identity query parameters are required" });
@@ -154,12 +163,17 @@ router.post("/live/session", async (req, res) => {
   const email = await authenticatedEmail(req);
   if (!email) { res.status(401).json({ error: "Sign in to create a live session." }); return; }
   const b = req.body ?? {};
-  if (!b.id || !b.title || !b.platform || !b.streamUrl) { res.status(400).json({ error: "Invalid live session." }); return; }
+  if (!b.id || !b.title || !b.platform || !b.streamUrl || String(b.id).length > 120 || String(b.title).length > 160 || !/^[a-z0-9_-]{1,120}$/i.test(String(b.id))) { res.status(400).json({ error: "Invalid live session." }); return; }
+  if (b.platform === "livekit" && (!b.broadcastRoom || String(b.broadcastRoom) !== String(b.streamUrl))) { res.status(400).json({ error: "Invalid broadcast room." }); return; }
+  try {
+    const existing:any = await db.execute(sql`SELECT seller_email FROM live_stream_sessions WHERE id=${String(b.id)} LIMIT 1`);
+    if (existing.rows?.length && String(existing.rows[0].seller_email).toLowerCase() !== email) { res.status(403).json({ error: "You cannot modify another seller\'s stream." }); return; }
+  } catch (err) { logger.error({ err }, "Failed to check live session ownership"); res.status(503).json({ error: "Unable to verify stream ownership." }); return; }
   try {
     await db.execute(sql`
       INSERT INTO live_stream_sessions (id,seller_email,seller_name,seller_initials,title,platform,stream_url,broadcast_room,is_live,product_ids,viewer_count,started_at)
       VALUES (${String(b.id)},${email},${String(b.sellerName||email)},${String(b.sellerInitials||"")},${String(b.title)},${String(b.platform)},${String(b.streamUrl)},${b.broadcastRoom ? String(b.broadcastRoom) : null},TRUE,${JSON.stringify(Array.isArray(b.productIds)?b.productIds:[])}::jsonb,0,${b.startedAt ? new Date(b.startedAt) : new Date()})
-      ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, stream_url=EXCLUDED.stream_url, broadcast_room=EXCLUDED.broadcast_room, is_live=TRUE, product_ids=EXCLUDED.product_ids
+      ON CONFLICT (id) DO UPDATE SET title=EXCLUDED.title, stream_url=EXCLUDED.stream_url, broadcast_room=EXCLUDED.broadcast_room, is_live=TRUE, product_ids=EXCLUDED.product_ids WHERE LOWER(live_stream_sessions.seller_email)=LOWER(EXCLUDED.seller_email)
     `);
     res.json({ ok: true });
   } catch (err) { logger.error({ err }, "Failed to persist live session"); res.status(500).json({ error: "Could not create live session." }); }
@@ -177,8 +191,11 @@ router.get("/live/session/:id", async (req, res) => {
 router.post("/live/session/:id/end", async (req, res) => {
   const email = await authenticatedEmail(req);
   if (!email) { res.status(401).json({ error: "Sign in required." }); return; }
-  await db.execute(sql`UPDATE live_stream_sessions SET is_live=FALSE, ended_at=NOW() WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email})`);
-  res.json({ ok:true });
+  try {
+    const r:any = await db.execute(sql`UPDATE live_stream_sessions SET is_live=FALSE, ended_at=NOW() WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email}) AND is_live=TRUE RETURNING id`);
+    if (!r.rows?.length) { res.status(404).json({ error: "No active stream owned by you was found." }); return; }
+    res.json({ ok:true });
+  } catch (err) { logger.error({ err }, "Failed to end live session"); res.status(500).json({ error: "Could not end live session." }); }
 });
 
 router.get("/live/session/:id/messages", async (req,res) => {
@@ -193,6 +210,10 @@ router.post("/live/session/:id/messages", async (req,res) => {
   if(!email){res.status(401).json({error:"Sign in to chat."});return;}
   const text=String(req.body?.text??"").trim().slice(0,500);
   if(!text){res.status(400).json({error:"Message is empty."});return;}
+  try {
+    const active:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions WHERE id=${req.params.id} AND is_live=TRUE LIMIT 1`);
+    if(!active.rows?.length){res.status(404).json({error:"This stream is not live."});return;}
+  } catch(err){logger.error({err},"Live chat stream lookup failed");res.status(503).json({error:"Unable to verify stream."});return;}
   const auth=getAuth(req); const u=auth.userId?await clerkClient.users.getUser(auth.userId):null;
   const name=u ? ([u.firstName,u.lastName].filter(Boolean).join(" ") || email.split("@")[0]) : email.split("@")[0];
   const r:any=await db.execute(sql`INSERT INTO live_stream_messages(session_id,sender_email,sender_name,text) VALUES(${req.params.id},${email},${name},${text}) RETURNING id,sender_email,sender_name,text,created_at`);
