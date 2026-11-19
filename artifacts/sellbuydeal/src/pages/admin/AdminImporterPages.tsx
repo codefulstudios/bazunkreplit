@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { AdminLayout } from "./AdminLayout";
 import { RapidApiPanel } from "./RapidApiPanel";
-import { OLXAdminImporter } from "./OlxAdminImporter";
 import { useAdmin } from "@/context/AdminContext";
 
 const sources = [
@@ -11,7 +10,6 @@ const sources = [
  {name:"eBay",href:"/admin/importers/ebay",detail:"eBay searches, source-specific listing management and sync"},
  {name:"AliExpress",href:"/admin/importers/aliexpress",detail:"AliExpress search and import using the configured integration"},
  {name:"Gumtree",href:"/admin/importers/gumtree",detail:"Classified adverts and expiry controls"},
- {name:"OLX",href:"/admin/importers/olx",detail:"RapidAPI search · separate 100 monthly request hard cap"},
 ];
 export function AdminImporterOverviewPage(){
  return <AdminLayout><div className="space-y-5 text-slate-900 dark:text-white">
@@ -23,7 +21,7 @@ export function AdminImporterOverviewPage(){
 export function AdminImporterSettingsPage(){
  return <AdminLayout><div className="space-y-5"><div><h1 className="text-2xl font-black text-slate-900 dark:text-white">Importer general settings</h1><p className="text-slate-700 dark:text-slate-200">Manage shared API credentials here, rather than on every importer page.</p></div>
  <RapidApiPanel/>
- <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 text-slate-900 dark:text-white"><h2 className="font-bold">Provider configuration</h2><p className="text-sm mt-2">OLX: OLX_RAPIDAPI_HOST and OLX_RAPIDAPI_SEARCH_URL. Configure these on the Render API service; keys remain on the server. OLX has a non-resettable 100-request monthly application cap.</p><p className="text-sm mt-2">Provider search and preview are not the same as publishing listings. Check source permissions and availability before advertising items.</p></div></div></AdminLayout>;
+ <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 text-slate-900 dark:text-white"><h2 className="font-bold">Provider configuration</h2><p className="text-sm mt-2">Provider credentials are configured on the Render API service; keys remain on the server.</p><p className="text-sm mt-2">Provider search and preview are not the same as publishing listings. Check source permissions and availability before advertising items.</p></div></div></AdminLayout>;
 }
 export function AdminImporterBulkUpdatePage(){
  const {authFetch}=useAdmin();
@@ -46,18 +44,17 @@ export function AdminImporterBulkUpdatePage(){
   setBusy(false);
  }
  return <AdminLayout><div className="max-w-3xl space-y-5 text-slate-900 dark:text-white">
-  <h1 className="text-2xl font-black">Apply update to all</h1><p className="text-slate-700 dark:text-slate-200">Bulk-update markup and shipping on existing imported listings. This calls each existing provider's bulk-update endpoint; it does not trigger API searches or consume the OLX quota.</p>
+  <h1 className="text-2xl font-black">Apply update to all</h1><p className="text-slate-700 dark:text-slate-200">Bulk-update markup and shipping on existing imported listings. This calls each existing provider's bulk-update endpoint; it does not trigger API searches.</p>
   <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 p-5 space-y-4">
    <h2 className="font-bold">Select importer sources</h2>
    <label className="flex gap-2 items-center"><input type="checkbox" checked={amazon} onChange={e=>setAmazon(e.target.checked)}/> Amazon imports</label>
    <label className="flex gap-2 items-center"><input type="checkbox" checked={ebay} onChange={e=>setEbay(e.target.checked)}/> eBay imports</label>
-   <p className="text-sm text-slate-700 dark:text-slate-200">AliExpress, Gumtree and OLX are excluded until compatible, tested bulk-update endpoints exist. No unsupported provider will be silently modified.</p>
+   <p className="text-sm text-slate-700 dark:text-slate-200">AliExpress and Gumtree are excluded until compatible, tested bulk-update endpoints exist. No unsupported provider will be silently modified.</p>
    <div className="grid sm:grid-cols-2 gap-3"><label className="text-sm font-bold">Markup (%)<input type="number" min="0" max="500" step="0.01" value={markup} onChange={e=>setMarkup(e.target.value)} className="block w-full mt-1 rounded-lg border border-slate-400 bg-white text-slate-950 p-3"/></label><label className="text-sm font-bold">Shipping (£)<input type="number" min="0" max="10000" step="0.01" value={shipping} onChange={e=>setShipping(e.target.value)} className="block w-full mt-1 rounded-lg border border-slate-400 bg-white text-slate-950 p-3"/></label></div>
    <button disabled={busy||(!amazon&&!ebay)} onClick={apply} className="bg-orange-600 text-white font-bold rounded-lg px-5 py-3 disabled:opacity-50">{busy?"Applying updates…":"Review and apply to selected sources"}</button>
    {results.length>0&&<div role="status" className="text-sm space-y-1">{results.map((r,i)=><p key={i}>{r}</p>)}</div>}
   </div></div></AdminLayout>;
 }
-export function AdminOlxPage(){return <AdminLayout><div className="text-slate-900 dark:text-white"><h1 className="text-2xl font-black mb-4">OLX importer</h1><OLXAdminImporter/></div></AdminLayout>}
 
 export function AdminCsvImporterPage(){
  const {authFetch}=useAdmin();
