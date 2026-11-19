@@ -62,18 +62,24 @@ export function AdminCsvImporterPage(){
  const [error,setError]=useState("");const [busy,setBusy]=useState(false);const [result,setResult]=useState("");
  const [preview,setPreview]=useState<Record<string,string>[]>([]);
  function parse(text:string){
+  const firstLine=text.replace(/^\uFEFF/,"").split(/\r?\n/,1)[0]||"";
+  const delimiter=["\t",";",","].map(d=>({d,n:firstLine.split(d).length})).sort((a,b)=>b.n-a.n)[0].d;
   const rows:string[][]=[];let row:string[]=[],field="",quoted=false;
   for(let i=0;i<text.length;i++){const c=text[i];
    if(c==='"'){if(quoted&&text[i+1]==='"'){field+='"';i++;}else quoted=!quoted;}
-   else if(c===","&&!quoted){row.push(field);field="";}
+   else if(c===delimiter&&!quoted){row.push(field);field="";}
    else if((c==="\n"||c==="\r")&&!quoted){if(c==="\r"&&text[i+1]==="\n")i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field="";}
    else field+=c;
   }
-  if(quoted)throw Error("Unclosed quoted field");
+  if(quoted)throw Error("Unclosed quoted field in CSV");
   row.push(field);if(row.some(x=>x.trim()))rows.push(row);
-  const headers=(rows.shift()||[]).map(x=>x.trim().toLowerCase());
-  if(new Set(headers).size!==headers.length||!["title","price","category"].every(x=>headers.includes(x)))throw Error("CSV needs unique headings and title, price, category columns");
+  const aliases:Record<string,string>={name:"title",product:"title",product_name:"title",product_title:"title",listing_title:"title",item:"title",item_name:"title",sale_price:"price",unit_price:"price",amount:"price",cost:"price",price_usd:"price",price_gbp:"price",product_category:"category",category_name:"category",type:"category",stock:"quantity",inventory:"quantity",qty:"quantity",image:"image_url",image_link:"image_url",photo_url:"image_url",shipping_cost:"shipping_price"};
+  const original=(rows.shift()||[]).map(x=>x.trim().replace(/^\uFEFF/,""));
+  const headers=original.map(h=>{const key=h.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");return aliases[key]||key;});
+  const missing=["title","price","category"].filter(x=>!headers.includes(x));
+  if(missing.length||new Set(headers).size!==headers.length)throw Error("CSV columns detected: "+(original.join(", ")||"(none)")+". "+(missing.length?"Missing required fields: "+missing.join(", ")+". ":"")+"Use title, price, category (or equivalent headings). Each heading must be unique.");
   if(rows.length>100)throw Error("Maximum 100 rows per admin import");
+  if(!rows.length)throw Error("CSV has headings but no product rows");
   return rows.map(cells=>Object.fromEntries(headers.map((h,i)=>[h,(cells[i]||"").trim()])));
  }
  async function load(file?:File){
@@ -88,7 +94,7 @@ export function AdminCsvImporterPage(){
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(seller.trim()))throw Error("Enter a seller email");
    const response=await authFetch("/api/admin/products/csv-listings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rows,sellerEmail:seller.trim(),region})});
    const data=await response.json();if(!response.ok)throw Error(data.error||"Import failed");
-   setResult(data.created+" drafts created; "+data.skipped+" duplicates skipped. "+data.results.filter((x:{status:string})=>x.status==="error").length+" errors.");
+   const failed=(data.results||[]).filter((x:{status:string})=>x.status==="error");setResult(data.created+" drafts created; "+data.skipped+" duplicates skipped. "+failed.length+" errors.");if(failed.length)setError(failed.slice(0,5).map((x:{line:number;message?:string})=>"Row "+x.line+": "+(x.message||"Import failed")).join(" | "));
   }catch(e){setError(e instanceof Error?e.message:"Import failed");}
   finally{setBusy(false);}
  }
