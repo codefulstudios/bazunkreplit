@@ -120,3 +120,26 @@
 [data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card h2{color:#101b39!important;}
 [data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card :is(button,a):hover{filter:brightness(.96);}
 @media(max-width:640px){[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{min-height:95px;padding:12px!important}[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-v2{padding:15px!important;min-height:95px!important}}
+
+
+/* Neon Arcade layout v3: match the approved mockup's top toolbar and card rhythm. */
+.bz-arcade-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:0 0 19px;padding:4px 0 0;}
+.bz-arcade-title h1{margin:0;color:#0b1432!important;font-size:clamp(26px,2.4vw,38px);font-weight:900;letter-spacing:-.045em;line-height:1.1;}
+.bz-arcade-title p{margin:7px 0 0;color:#28395a;font-size:15px;}
+.bz-arcade-title strong{color:#111b37;}
+.bz-arcade-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.bz-arcade-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 17px;border-radius:13px;font-size:13px;font-weight:850;white-space:nowrap;text-decoration:none;box-shadow:0 5px 10px #0a286c22;transition:transform .18s ease,box-shadow .18s ease;}
+.bz-arcade-action:hover{transform:translateY(-2px);box-shadow:0 9px 16px #0a286c33;}
+.bz-arcade-blue{background:linear-gradient(120deg,#0097ff,#0649d2);color:#fff!important;}
+.bz-arcade-red{background:linear-gradient(120deg,#ff3454,#e90038);color:#fff!important;}
+.bz-arcade-orange{background:linear-gradient(120deg,#ffab00,#ff5b00);color:#fff!important;}
+.bz-arcade-light{background:#e9f6ff;color:#133d75!important;border:1px solid #83caff;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{position:relative;overflow:hidden;min-height:126px!important;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div p:first-child{font-size:12px!important;font-weight:800!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div p[class*="text-2xl"]{font-size:clamp(22px,2vw,31px)!important;font-weight:950!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+1) .rounded-full{background:#ffffff35!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div .mt-2.flex.justify-end{position:absolute;right:14px;top:12px;margin:0!important;opacity:.9;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-showcase-panel{border-radius:18px!important;box-shadow:0 6px 17px #123d7819!important;}
+@media(max-width:1200px){.bz-arcade-heading{align-items:flex-start;flex-direction:column}.bz-arcade-actions{width:100%}}
+@media(max-width:600px){.bz-arcade-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bz-arcade-action{padding:9px;font-size:12px}.bz-arcade-title h1{font-size:27px}}
+@media(prefers-reduced-motion:reduce){.bz-arcade-action{transition:none}.bz-arcade-action:hover{transform:none}}
