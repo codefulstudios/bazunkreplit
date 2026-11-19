@@ -120,43 +120,18 @@ export function LiveHubPage() {
 
       <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
         <LiveHubCreatorSection live={live} upcoming={upcoming} />
-        <div className="bz-live-tabs"><a href="#bz-live-list">Live Streams ({live.length})</a><a href="#bz-upcoming">Upcoming ({upcoming.length})</a><Link href="/dashboard?section=go-live">Start Streaming</Link></div>
-        <div id="bz-live-list" />
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="relative">
-            <span className="flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500" />
-            </span>
-          </div>
-          <h1 className="text-2xl font-black text-white">Live Now</h1>
-          <span className="text-sm font-bold text-gray-500">{live.length} stream{live.length !== 1 ? "s" : ""} active</span>
+        <div id="bz-live-list" className="flex items-center justify-between gap-3 mb-5 mt-7">
+          <h2 className="text-xl font-black text-white">Live broadcasts <span className="text-[#ff7900]">({live.length})</span></h2>
+          <a href="#bz-external-discovery" className="text-sm font-semibold text-[#5cb5ff] hover:underline">Explore external channels</a>
         </div>
-
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           <aside className="w-full lg:w-[180px] xl:w-[220px] lg:sticky lg:top-24 order-2 lg:order-1 empty:hidden">
             <AdSlot slotKey="live_left" />
           </aside>
           <div className="flex-1 min-w-0 order-1 lg:order-2">
-
         {/* Live streams */}
         {live.length === 0 ? (
-          <div className="bz-live-empty flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-              <Radio className="w-10 h-10 text-red-400" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">No streams live right now</h2>
-            <p className="text-gray-500 text-sm max-w-sm">Check back soon — sellers go live every day. You can also watch past streams or browse listings.</p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/browse" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#ff7900] text-white font-bold text-sm hover:opacity-90 transition-opacity">
-                Browse Listings <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link href="/dashboard?section=go-live" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors">
-                <Radio className="w-4 h-4" /> Go Live
-              </Link>
-            </div>
-          </div>
+          <p className="text-slate-300 text-sm py-5">No broadcasts are live right now. You can schedule a show above or explore approved external channels below.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
             {live.map((session) => {
