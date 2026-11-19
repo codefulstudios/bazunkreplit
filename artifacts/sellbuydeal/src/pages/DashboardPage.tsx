@@ -5704,7 +5704,7 @@ export function DashboardPage() {
     );
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(() => { const section = new URLSearchParams(window.location.search).get("section"); return SIDEBAR_CATEGORIES.find(c => c.items.some(i=>i.id===section))?.id ?? null; });
   const [flyoutY, setFlyoutY] = useState(0);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(() => {
@@ -5799,16 +5799,19 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Mobile sticky sub-header */}
-      <div className="lg:hidden relative z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
+      {/* Dashboard drawer toggle — available on every dashboard section */}
+      <div className="relative z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <button
           onClick={() => {
-            setSidebarOpen(true);
+            setSidebarOpen(open => !open);
             const activeCat = SIDEBAR_CATEGORIES.find(c =>
               c.id === activeSection || c.items.some(i => i.id === activeSection)
             );
             if (activeCat) setMobileExpandedCat(activeCat.id);
           }}
+          aria-label={sidebarOpen ? "Hide dashboard menu" : "Show dashboard menu"}
+          aria-expanded={sidebarOpen}
+          aria-controls="bazunk-dashboard-drawer"
           className="flex items-center gap-2 text-gray-700 font-semibold text-sm"
         >
           <Menu className="w-5 h-5 text-gray-500" />
@@ -5827,27 +5830,27 @@ export function DashboardPage() {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/50 lg:hidden"
+          className="fixed inset-0 z-[60] bg-black/50"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div className="flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
 
-        {/* Sidebar — fixed drawer on mobile, static on desktop */}
-        <aside className={`
-          fixed lg:static inset-y-0 left-0 z-[70] lg:z-40
-          w-72 max-w-[100vw] lg:w-[270px] flex-shrink-0
+        {/* Dashboard categories-style slide-out drawer */}
+        <aside id="bazunk-dashboard-drawer" aria-label="Dashboard navigation" aria-hidden={!sidebarOpen} inert={!sidebarOpen} className={`
+          fixed inset-y-0 left-0 z-[70]
+          w-72 max-w-[100vw] lg:w-[294px] flex-shrink-0
           flex flex-col
-          bg-gray-100 lg:bg-[#071b38] lg:rounded-[22px] lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-24px)]
+          bg-[#071b38] max-h-screen
           transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full pointer-events-none"}
         `}>
           {/* Scrollable inner container */}
           <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-y-auto">
 
             {/* Mobile close row */}
-            <div className="lg:hidden flex items-center justify-between pb-1 flex-shrink-0">
+            <div className="flex items-center justify-between pb-1 flex-shrink-0">
               <span className="font-bold text-gray-900 text-sm">My Dashboard</span>
               <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-700 p-1">
                 <X className="w-5 h-5" />
