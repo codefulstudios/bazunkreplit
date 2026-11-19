@@ -4732,7 +4732,7 @@ function GoLiveSection() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
+    <div className="bz-studio-control bz-studio-setup rounded-2xl p-6" style={{ minHeight: 400 }}>
       <div className="mb-6">
         <h2 className="font-black text-white text-2xl">Creator Studio <span className="text-[#ff7900]">/ Go Live</span></h2>
         <p className="text-sm text-gray-400 mt-1">Stream on your favourite platform and sell directly on Bazunk.</p>
