@@ -5700,15 +5700,6 @@ export function DashboardPage() {
     // A full navigation also avoids stale state when moving between independent dashboard tools.
     const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
     window.location.assign(target);
-    return;
-    setActiveSectionRaw(id);
-    setSidebarOpen(false);
-    setTileMenuOpen(false);
-    setActiveCategory(SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null);
-    setSectionNavigation(value => value + 1);
-    setMobileExpandedCat(
-      SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null
-    );
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
