@@ -36,7 +36,7 @@ router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
   await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
   const id=randomUUID();
   await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
-  res.status(201).json({url:"/api/listing-media/"+id});
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
  }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
 });
 router.use("/admin/products", requireAdmin);
