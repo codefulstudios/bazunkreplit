@@ -4352,6 +4352,7 @@ function GoLiveSection() {
   const { getToken } = useClerkAuth();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [error, setError] = useState("");
+  const [startingLive, setStartingLive] = useState(false);
   const [, navigate] = useLocation();
   const [featureSettings, setFeatureSettings] = useState<Record<number, { discount?: number; stock?: string }>>({});
   const [myListings, setMyListings] = useState<GoLiveListing[]>([]);
@@ -4383,7 +4384,8 @@ function GoLiveSection() {
     );
   }
 
-  function handleGoLive() {
+  async function handleGoLive() {
+    if (startingLive) return;
     if (!title.trim()) { setError("Please add a session title."); return; }
     if (platform === "youtube") {
       if (!streamUrl.trim()) { setError("Paste the YouTube watch/live URL buyers will see."); return; }
@@ -4396,7 +4398,9 @@ function GoLiveSection() {
     const name = user?.name ?? user?.email ?? "Seller";
     const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const broadcastRoom = platform === "youtube" ? `bazunk-youtube-${Date.now()}` : undefined;
-    const session = goLive({
+    setStartingLive(true);
+    try {
+    const session = await goLive({
       sellerId: user?.email ?? "me",
       sellerName: name,
       sellerInitials: initials,
@@ -4410,6 +4414,11 @@ function GoLiveSection() {
     // YouTube sellers stay in the Bazunk control room. Their browser camera/mic
     // publishes to LiveKit, which relays the encoded stream to YouTube.
     if (platform !== "youtube") navigate(`/live/${session.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the live stream. Please try again.");
+    } finally {
+      setStartingLive(false);
+    }
   }
 
   async function handleEndLive() {
