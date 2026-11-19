@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { useAuth } from "@clerk/react";
-import { MOCK_LIVE_SESSIONS, type LiveSession, type FeaturedItem, FEATURED_KEY } from "@/data/livestreams";
+import { type LiveSession, type FeaturedItem, FEATURED_KEY } from "@/data/livestreams";
 import { useFeature } from "@/components/FeatureGate";
 
 interface LiveStreamContextValue {
@@ -78,10 +78,12 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; clearInterval(timer); };
   }, [liveEnabled]);
 
+  // The server is authoritative for active streams. Never advertise mock or stale
+  // browser-local sessions as live to other buyers.
+  const remoteIds = new Set(remoteSessions.map(s => s.id));
   const sessions: LiveSession[] = liveEnabled ? [
-    ...MOCK_LIVE_SESSIONS,
-    ...userSessions.filter((u) => !MOCK_LIVE_SESSIONS.find((m) => m.id === u.id)),
-    ...remoteSessions.filter((r) => !userSessions.some((u) => u.id === r.id) && !MOCK_LIVE_SESSIONS.some((m) => m.id === r.id)),
+    ...remoteSessions,
+    ...userSessions.filter(s => !s.isLive && !remoteIds.has(s.id)),
   ] : [];
 
   const liveSessions = sessions.filter((s) => s.isLive);
