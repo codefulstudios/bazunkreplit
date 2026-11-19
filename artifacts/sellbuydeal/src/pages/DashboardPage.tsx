@@ -4165,7 +4165,7 @@ function DisputesSection() {
   }
 
   return (
-    <div className="bz-studio-control bz-studio-setup rounded-2xl p-6" style={{ minHeight: 400 }}>
+    <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="font-black text-gray-900 text-lg">Disputes</h2>
@@ -4738,6 +4738,7 @@ function GoLiveSection() {
         <p className="text-sm text-gray-400 mt-1">Stream on your favourite platform and sell directly on Bazunk.</p>
       </div>
 
+      {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#173650] p-3 text-white text-sm mb-4">{endError}</div>}
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
