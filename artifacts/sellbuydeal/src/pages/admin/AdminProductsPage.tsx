@@ -713,7 +713,7 @@ function ProductDrawer({
             <div className="space-y-2">
               {form.images.map((url, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  {url && <img src={url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                  {url && <img src={url.startsWith("/api/listing-media/") ? `https://bazunk-api-ifqs.onrender.com${url}` : url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
                   {!url && <div className="w-8 h-8 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center"><ImageIcon className="w-3 h-3 text-gray-300" /></div>}
                   <input value={url} onChange={e => setImage(i, e.target.value)}
                     placeholder="https://example.com/image.jpg"
