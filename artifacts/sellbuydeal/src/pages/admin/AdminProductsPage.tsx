@@ -478,6 +478,33 @@ function ProductDrawer({
         dialog#bazunk-listing-editor .editor-body input[type="file"] { color: #fff !important; }
         dialog#bazunk-listing-editor .editor-body select option { background: #fff !important; color: #111827 !important; }
 
+        /* Unified dark editor: every field and select uses white text on opaque navy. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #203653 !important; background-color: #203653 !important;
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+          border: 2px solid #8098b6 !important; caret-color: #ffffff !important;
+          opacity: 1 !important; color-scheme: dark !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #d1dce9 !important; -webkit-text-fill-color: #d1dce9 !important; opacity: 1 !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select option {
+          background: #203653 !important; color: #ffffff !important;
+        }
+        dialog#bazunk-listing-editor .editor-body label,
+        dialog#bazunk-listing-editor .editor-body label span,
+        dialog#bazunk-listing-editor .editor-body h3,
+        dialog#bazunk-listing-editor .editor-body p,
+        dialog#bazunk-listing-editor .editor-body .text-gray-400,
+        dialog#bazunk-listing-editor .editor-body .text-gray-500,
+        dialog#bazunk-listing-editor .editor-body .text-gray-600,
+        dialog#bazunk-listing-editor .editor-body .text-gray-700,
+        dialog#bazunk-listing-editor .editor-body .text-gray-800 {
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+        }
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
           background: #263b57 !important;
