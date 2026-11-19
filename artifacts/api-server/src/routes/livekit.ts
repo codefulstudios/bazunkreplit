@@ -292,7 +292,18 @@ router.get("/live/session/:id/product/:productId/quote",async(req,res)=>{
     const quantity=Math.max(0,Number(p.quantity??0));
     const available=quantity>0 && ["active","approved","published"].includes(String(p.status).toLowerCase());
     res.setHeader("Cache-Control","no-store");
-    res.json({id:Number(p.id),title:p.title,price:Number(p.price),quantity,available});
+    let price=Number(p.price),discountPercent=0;
+    const eventsTable=(await db.execute(sql`SELECT to_regclass('public.live_sale_events') AS name`)).rows[0]?.name;
+    if(eventsTable){
+      const promotion:any=await db.execute(sql`SELECT discount_percent FROM live_sale_events
+        WHERE session_id=${req.params.id} AND product_id=${productId} AND kind='flash'
+        AND cancelled_at IS NULL AND ends_at>NOW() ORDER BY created_at DESC LIMIT 1`);
+      const pct=Number(promotion.rows?.[0]?.discount_percent??0);
+      if(Number.isInteger(pct)&&pct>=1&&pct<=70){
+        discountPercent=pct;price=Math.max(0.01,Math.round(price*(100-pct))/100);
+      }
+    }
+    res.json({id:Number(p.id),title:p.title,price,quantity,available,discountPercent});
   }catch(err){logger.error({err},"Failed to quote live product");res.status(503).json({error:"Could not verify live price and stock."});}
 });
 
