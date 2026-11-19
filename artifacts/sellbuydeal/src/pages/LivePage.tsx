@@ -37,11 +37,12 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
-function LiveHubCreatorSection(){
+function LiveHubCreatorSection({live,upcoming}:{live:Array<{id:string;title:string;viewerCount?:number;productIds:string[]}>;upcoming:Array<{id:string;title:string}>}){
   const {user}=useUser();const {getToken}=useAuth();
   const [schedules,setSchedules]=useState<{id:number;title:string;scheduledAt:string;sellerEmail:string}[]>([]);
   const [notifications,setNotifications]=useState<{id:number;content:string;createdAt:string}[]>([]);
   const [title,setTitle]=useState("");const [date,setDate]=useState("");const [message,setMessage]=useState("");
+  const [tab,setTab]=useState<"shop"|"auction"|"flash">("shop");
   useEffect(()=>{let active=true;const load=async()=>{
     try{
       const r=await fetch("/api/live/creator/schedules",{cache:"no-store"});
@@ -53,45 +54,35 @@ function LiveHubCreatorSection(){
   async function schedule(){
     setMessage("");
     try{
+      if(!title.trim()||!date||!Number.isFinite(new Date(date).getTime()))throw Error("Enter a title and a valid date.");
       const token=await getToken();const r=await fetch("/api/live/creator/schedules",{
         method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
         body:JSON.stringify({title,scheduledAt:new Date(date).toISOString()})});
       const d=await r.json();if(!r.ok)throw Error(d.error||"Could not schedule stream");
-      setMessage("Stream scheduled. Followers will receive an in-app notification record.");
+      setMessage("Stream scheduled. Your followers can see their in-app notification.");
       setTitle("");setDate("");
       const fresh=await fetch("/api/live/creator/schedules",{cache:"no-store"});
       if(fresh.ok)setSchedules((await fresh.json()).schedules||[]);
     }catch(e){setMessage(e instanceof Error?e.message:"Could not schedule stream");}
   }
-  return <section className="mt-7 mb-8 rounded-2xl border border-orange-500/30 bg-gray-900 p-5 text-white space-y-4">
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <div><h2 className="text-xl font-black text-white">Live Creator Studio</h2><p className="text-gray-300 text-sm">Schedule broadcasts, manage your audience and discover upcoming live events.</p></div>
-      <Link href="/dashboard?section=go-live" className="rounded-xl bg-orange-500 px-4 py-2 font-bold text-black">Start broadcasting</Link>
+  const nav=[["Go Live Now","/dashboard?section=go-live","📹"],["Schedule Stream","#bz-schedule","▦"],["My Streams & Replays","#bz-live-list","▶"],["Followers","#bz-notifications","♟"],["Moderation","/dashboard?section=go-live","⬡"],["Analytics","/dashboard?section=go-live","▥"],["Monetisation","/credits","◉"],["Live Channels","#bz-external-live","↗"]];
+  const featureCards=[["Schedule Stream","#bz-schedule","▦","Plan and promote your next live"],["Live Auctions","/auctions","⚒","Real-time bidding on exclusive items"],["Flash Deals","/flash-sales","ϟ","Limited-time offers with countdowns"],["Shop the Stream","#bz-live-list","♧","Buy products as you watch"],["Replays","#bz-live-list","▷","Watch saved broadcasts"],["Analytics","/dashboard?section=go-live","▥","Track views and engagement"]];
+  const featured=live[0];
+  return <section className="bz-studio-mock mt-4 mb-8 text-white">
+    <div className="bz-studio-heading"><div className="flex items-center gap-3"><span className="bz-studio-broadcast"><Radio size={29}/></span><div><h1 className="text-3xl font-black">Bazunk <span className="text-[#ff7300]">Live</span></h1><p className="text-slate-300 text-sm">Live shopping, auctions, flash deals and creator streams</p></div></div><div className="bz-studio-numbers"><span><Radio size={17}/> <b>{live.length}</b> Live Now</span><span><Users size={17}/> <b>{live.reduce((n,s)=>n+(Number(s.viewerCount)||0),0).toLocaleString()}</b> Watching</span><span><Tag size={17}/> <b>{live.reduce((n,s)=>n+s.productIds.length,0)}</b> Live Items</span></div></div>
+    <div className="bz-studio-main">
+      <aside className="bz-studio-side"><h2 className="font-black text-lg mb-3 text-white">♛ Creator Studio</h2>{nav.map(([label,url,ico],i)=><a key={label} href={url} className={i===0?"bz-studio-nav active":"bz-studio-nav"}><span>{ico}</span>{label}</a>)}<div className="bz-studio-go"><strong>Go Live Now</strong><p>Start a live shopping stream with products, auctions and flash deals.</p><Link href="/dashboard?section=go-live" className="bz-studio-btn-orange">Go Live</Link></div></aside>
+      <div className="bz-studio-preview">{featured?<Link href={`/live/${featured.id}`} className="bz-studio-preview-inner"><div className="bz-studio-live-pill">● LIVE</div><Radio size={70} className="text-[#ff7300]"/><h2 className="text-2xl font-black">{featured.title}</h2><p>{Number(featured.viewerCount)||0} viewers · Open broadcast to watch and shop</p><span className="bz-studio-btn-orange">Watch live stream →</span></Link>:<div className="bz-studio-preview-inner"><Radio size={70} className="text-[#ff7300]"/><h2 className="text-2xl font-black">Your next live show starts here</h2><p>No broadcasts are live at the moment. Start streaming to appear here.</p><Link href="/dashboard?section=go-live" className="bz-studio-btn-orange">Go Live Now</Link></div>}</div>
+      <div className="bz-studio-shop"><div className="bz-studio-tabs">{([["shop","Shop the Stream"],["auction","Auction"],["flash","Flash Deal"]] as const).map(([key,label])=><button key={key} onClick={()=>setTab(key)} className={tab===key?"selected":""}>{label}</button>)}</div><div className="bz-studio-shop-content"><span className="text-4xl">{tab==="shop"?"🛍":tab==="auction"?"⚒":"⚡"}</span><h3>{tab==="shop"?"Shop the Stream":tab==="auction"?"Live Auctions":"Flash Deals"}</h3><p>{tab==="shop"?"Open an active stream to see the seller's products, live stock and checkout.":tab==="auction"?"Open a live stream to view timed auctions and place bids.":"Open a live stream to discover active time-limited discounts."}</p>{featured?<Link href={`/live/${featured.id}`} className="bz-studio-btn-blue">Explore live products</Link>:<a href="#bz-live-list" className="bz-studio-btn-blue">Browse streams</a>}</div></div>
+      <div className="bz-studio-chat"><h3 className="font-bold">◉ Live Chat</h3><div className="bz-studio-chat-content"><MessageSquare size={34} className="text-[#009dff]"/><p>Chat opens when you enter an active livestream.</p>{featured?<Link href={`/live/${featured.id}`} className="bz-studio-btn-blue">Join chat</Link>:<p className="text-xs text-slate-400">Waiting for a live broadcast</p>}</div></div>
     </div>
-    <div className="grid gap-3 md:grid-cols-3">
-      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Live auctions</strong><p className="text-sm text-gray-300 mt-1">Timed bids and seller controls inside active streams.</p></div>
-      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Flash deals</strong><p className="text-sm text-gray-300 mt-1">Limited-time promotional events. Checkout discounts are not enabled yet.</p></div>
-      <div className="rounded-xl bg-gray-800 p-4"><strong className="text-orange-300">Shop the Stream</strong><p className="text-sm text-gray-300 mt-1">Pinned products, stock checks and the Bazunk basket.</p></div>
+    <div className="bz-studio-features"><Link href="/dashboard?section=go-live" className="bz-studio-feature primary"><Radio size={24}/><span><b>Go Live Now</b><small>Start your live shopping stream</small></span></Link>{featureCards.map(([label,url,ico,desc])=><a href={url} key={label} className="bz-studio-feature"><span className="text-2xl text-[#ff7900]">{ico}</span><span><b>{label}</b><small>{desc}</small></span></a>)}</div>
+    <div className="bz-studio-bottom">
+      <div id="bz-schedule" className="bz-studio-panel"><h2>▦ Scheduled Live Streams</h2>{schedules.length?schedules.slice(0,4).map(s=><div className="bz-studio-schedule" key={s.id}><span className="text-[#ff7900]">▦</span><span><b>{s.title}</b><small>{new Date(s.scheduledAt).toLocaleString("en-GB",{dateStyle:"medium",timeStyle:"short"})}</small></span></div>):<p className="text-slate-400 text-sm py-3">No upcoming broadcasts scheduled yet.</p>}{user?<div className="space-y-2 mt-3"><input className="bz-studio-input" aria-label="Stream title" placeholder="Stream title" value={title} onChange={e=>setTitle(e.target.value)}/><input className="bz-studio-input" aria-label="Stream date and time" type="datetime-local" value={date} onChange={e=>setDate(e.target.value)}/><button className="bz-studio-btn-blue w-full" disabled={!title||!date} onClick={()=>void schedule()}>+ Schedule a Live Stream</button>{message&&<p role="status" className="text-xs text-orange-300">{message}</p>}</div>:<Link href="/sign-in" className="bz-studio-btn-blue mt-3">Sign in to schedule</Link>}</div>
+      <div id="bz-external-live" className="bz-studio-panel"><h2>↗ External Platform Discovery</h2><p className="text-slate-300 text-sm mb-4">Explore approved creators and streams from other platforms.</p><div className="bz-studio-platforms"><a href="#bz-external-discovery">TikTok</a><a href="#bz-external-discovery">eBay</a><a href="#bz-external-discovery">YouTube</a><a href="#bz-external-discovery">Twitch</a></div><a href="#bz-external-discovery" className="bz-studio-btn-blue mt-5">View external channels →</a></div>
+      <div className="bz-studio-panel"><h2>◉ Monetisation & Promotions</h2>{[["Featured Placement","Get higher visibility in Live and Discovery","/promotions"],["Seller Upgrades","Unlock advanced tools and analytics","/dashboard"],["Bazunk Credits","Top up credits for promotions and features","/credits"],["Affiliate Referrals","Approved partner referrals only","#bz-external-discovery"]].map(([label,desc,url])=><a key={label} href={url} className="bz-studio-money"><span><b>{label}</b><small>{desc}</small></span><ArrowRight size={17}/></a>)}</div>
     </div>
-    {user&&<div className="rounded-xl border border-gray-700 p-4 space-y-2">
-      <h3 className="font-bold">Schedule your next stream</h3>
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-        <input aria-label="Stream title" placeholder="Stream title" value={title} onChange={e=>setTitle(e.target.value)} className="rounded bg-gray-800 p-2 text-white"/>
-        <input aria-label="Stream date" type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} className="rounded bg-gray-800 p-2 text-white"/>
-        <button disabled={!title||!date} onClick={()=>void schedule()} className="rounded bg-orange-500 px-4 py-2 font-bold text-black disabled:opacity-50">Schedule</button>
-      </div>
-      {message&&<p role="status" className="text-sm text-orange-300">{message}</p>}
-    </div>}
-    <div className="grid gap-4 md:grid-cols-2">
-      <div><h3 className="font-bold mb-2">Upcoming scheduled streams</h3>
-        {schedules.length===0?<p className="text-sm text-gray-400">No upcoming broadcasts scheduled yet.</p>:
-        schedules.slice(0,6).map(s=><div key={s.id} className="rounded bg-gray-800 p-3 mb-2 text-sm"><strong>{s.title}</strong><p className="text-gray-300">{new Date(s.scheduledAt).toLocaleString()}</p></div>)}
-      </div>
-      {user&&<div><h3 className="font-bold mb-2">Follower notifications</h3>
-        {notifications.length===0?<p className="text-sm text-gray-400">No notifications yet.</p>:
-        notifications.slice(0,5).map(n=><p key={n.id} className="rounded bg-gray-800 p-3 mb-2 text-sm">{n.content}</p>)}
-      </div>}
-    </div>
+    {user&&<div id="bz-notifications" className="bz-studio-panel mt-4"><h2><Bell size={18}/> Follower notifications</h2>{notifications.length?notifications.slice(0,4).map(n=><p key={n.id} className="text-sm text-slate-300 py-2 border-b border-white/10">{n.content}</p>):<p className="text-sm text-slate-400">No new notifications.</p>}</div>}
   </section>;
 }
 
@@ -108,21 +99,7 @@ export function LiveHubPage() {
       </div>
 
       <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1">
-        <section className="bz-live-hero bz-market-hero">
-          <div className="bz-live-hero-copy"><span className="bz-live-label"><Radio size={17}/> LIVE SHOPPING</span>
-            <h1>Bazunk <em>Live</em></h1><h2>Watch, shop and buy in real time!</h2>
-            <p>Live auctions, product demos, exclusive deals and special offers from real sellers.</p>
-            <div className="bz-live-hero-actions"><a href="#bz-live-list"><Radio size={17}/> Watch Live Now</a><Link href="/dashboard?section=go-live"><Zap size={17}/> Go Live</Link></div>
-          </div>
-          <div className="bz-live-hero-art bz-market-hero-art" aria-hidden="true"><div className="bz-live-screen"><span>● LIVE</span><Radio size={85}/><strong>BAZUNK LIVE</strong></div><span className="bz-live-bag">B</span></div>
-        </section>
-        <LiveHubCreatorSection />
-        <div className="bz-market-stats">
-          <div className="bz-market-stat blue"><Radio/><strong>{live.length}</strong><span>Live Now<small>Shop with sellers in real time</small></span></div>
-          <div className="bz-market-stat orange"><Clock/><strong>{upcoming.length}</strong><span>Upcoming Streams<small>Don't miss the next event</small></span></div>
-          <div className="bz-market-stat green"><Users/><strong>{live.reduce((n,s)=>n+(Number(s.viewerCount)||0),0).toLocaleString()}</strong><span>Viewers Now<small>Across active streams</small></span></div>
-          <div className="bz-market-stat pink"><Tag/><strong>{live.reduce((n,s)=>n+s.productIds.length,0)}</strong><span>Live Items<small>Products featured in streams</small></span></div>
-        </div>
+        <LiveHubCreatorSection live={live} upcoming={upcoming} />
         <div className="bz-live-tabs"><a href="#bz-live-list">Live Streams ({live.length})</a><a href="#bz-upcoming">Upcoming ({upcoming.length})</a><Link href="/dashboard?section=go-live">Start Streaming</Link></div>
         <div id="bz-live-list" />
         {/* Header */}
@@ -236,7 +213,7 @@ export function LiveHubPage() {
           </div>
         </div>
 
-        <LiveCommerceDiscovery />
+        <div id="bz-external-discovery"><LiveCommerceDiscovery /></div>
         <AdSlot slotKey="live_bottom" className="mt-8" />
       </main>
     </div>
