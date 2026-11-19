@@ -5696,6 +5696,11 @@ export function DashboardPage() {
       setLocation(destination);
       return;
     }
+    // Keep the URL in sync so each tile opens a real, reloadable dashboard destination.
+    // A full navigation also avoids stale state when moving between independent dashboard tools.
+    const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
+    window.location.assign(target);
+    return;
     setActiveSectionRaw(id);
     setSidebarOpen(false);
     setTileMenuOpen(false);
@@ -5966,7 +5971,7 @@ export function DashboardPage() {
             <div className="bz-hub-top"><div><span className="bz-hub-eyebrow">BAZUNK / DASHBOARD</span><h2>{tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.label : "Where would you like to go?"}</h2><p>{tileCategory ? "Choose a destination within this section." : "Explore your store, sales, buying and account tools."}</p></div><button type="button" onClick={()=>setTileMenuOpen(false)} aria-label="Close dashboard navigation"><X size={23}/></button></div>
             {tileCategory && <button type="button" className="bz-hub-back" onClick={()=>setTileCategory(null)}><ArrowLeft size={17}/> All dashboard sections</button>}
             <div className="bz-hub-tiles">
-              {tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.items.map(item=>{const Icon=item.icon;return <button type="button" key={item.id} className={`bz-hub-tile ${item.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>setActiveSection(item.id)}><Icon size={29}/><strong>{item.label}</strong><span>Open {item.label.toLowerCase()}</span></button>}) : visibleSidebarCategories.map(cat=>{const Icon=cat.icon;return <button type="button" key={cat.id} className={`bz-hub-tile ${cat.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>cat.items.length ? setTileCategory(cat.id) : setActiveSection(cat.id)}><Icon size={31}/><strong>{cat.label}</strong><span>{cat.items.length ? `${cat.items.length} tools and pages` : "Dashboard overview"}</span></button>})}
+              {tileCategory ? visibleSidebarCategories.find(c=>c.id===tileCategory)?.items.map(item=>{const Icon=item.icon;return <button type="button" key={item.id} className={`bz-hub-tile ${item.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>setActiveSection(item.id)}><Icon size={29}/><strong>{item.label}</strong><span>Open {item.label.toLowerCase()}</span></button>}) : visibleSidebarCategories.map(cat=>{const Icon=cat.icon;return <button type="button" key={cat.id} className={`bz-hub-tile ${cat.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>cat.items.length ? setTileCategory(cat.id) : setActiveSection(cat.id)}><Icon size={31}/><strong>{cat.label}</strong><span>{cat.items.length ? `${cat.items.length} tools and pages` : "Dashboard overview"}</span></button>})}
             </div>
           </div>
         </div>}
