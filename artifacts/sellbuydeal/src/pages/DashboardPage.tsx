@@ -5705,7 +5705,7 @@ export function DashboardPage() {
     }
     setActiveSectionRaw(id);
     setSidebarOpen(false);
-    setActiveCategory(null);
+    setActiveCategory(SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null);
     setSectionNavigation(value => value + 1);
     setMobileExpandedCat(
       SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null
