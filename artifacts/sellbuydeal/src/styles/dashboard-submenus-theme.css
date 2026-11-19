@@ -396,3 +396,27 @@ body:has(#bz-dashboard-main) .bz-glass-workspace #bz-dashboard-main{display:bloc
 .bz-glass-link-icon{width:37px;height:37px;flex:none;display:grid;place-items:center;border-radius:10px;background:linear-gradient(135deg,#e5f2ff,#cce5ff);color:#0666c8;}
 @media(max-width:650px){.bz-glass-backdrop{padding:8px}.bz-glass-dialog{padding:15px;border-radius:18px;max-height:calc(100dvh - 16px)}.bz-glass-layout{grid-template-columns:1fr;gap:10px}.bz-glass-categories{display:flex;flex-direction:row;overflow-x:auto;gap:5px;padding:7px}.bz-glass-category{width:auto;min-width:max-content;min-height:38px;padding:8px 10px}.bz-glass-category svg:last-child{display:none}.bz-glass-destinations{min-height:200px;padding:12px}.bz-glass-links{grid-template-columns:1fr}.bz-glass-link{min-height:54px}.bz-glass-heading{margin-bottom:12px}.bz-glass-current{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.bz-glass-category{transition:none}}
+
+
+/* Permanent Option 8 glass sidebar: replaces the former dialog entirely. */
+body:has(#bz-dashboard-main) .bz-dashboard-workspace.bz-glass-sidebar-workspace.container{display:grid!important;grid-template-columns:236px minmax(0,1fr)!important;align-items:start!important;gap:17px!important;max-width:1560px!important;width:100%!important;padding:16px clamp(12px,2.3vw,28px)!important;}
+body:has(#bz-dashboard-main) .bz-glass-sidebar-workspace #bz-dashboard-main{display:block!important;width:100%!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0!important;}
+.bz-glass-sidebar{position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow:auto;scrollbar-width:thin;padding:13px;background:linear-gradient(150deg,#ffffffd9,#e1f0ffce 55%,#f3f9ffe0);border:1px solid #ffffffef;border-radius:19px;box-shadow:0 9px 28px #1c539321,inset 0 1px #fff;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#18395f;}
+.bz-glass-sidebar-heading{padding:7px 9px 12px;border-bottom:1px solid #c7dcf0;margin-bottom:9px;}
+.bz-glass-sidebar-heading>span{font-size:9px;letter-spacing:1.4px;color:#e56b13;font-weight:900;}
+.bz-glass-sidebar-heading h2{font-size:21px;font-weight:950;color:#133c70;margin:3px 0;}
+.bz-glass-sidebar-heading p{font-size:11px;color:#627f9c;}
+.bz-glass-sidebar-nav{display:flex;flex-direction:column;gap:3px;}
+.bz-glass-sidebar-category{display:flex;align-items:center;gap:10px;width:100%;min-height:35px;padding:7px 9px;text-align:left;border-radius:10px;color:#244e7b;font-size:12px;font-weight:850;}
+.bz-glass-sidebar-category>span{flex:1;}
+.bz-glass-sidebar-category>svg:first-child{color:#0877d9;}
+.bz-glass-sidebar-category.is-active,.bz-glass-sidebar-category:hover{background:linear-gradient(115deg,#0576dc,#1453a7);color:white;box-shadow:0 3px 11px #125fa52c;}
+.bz-glass-sidebar-category.is-active svg,.bz-glass-sidebar-category:hover svg{color:white;}
+.bz-glass-sidebar-category>svg:last-child{transition:transform .15s;}
+.bz-glass-rotated{transform:rotate(180deg);}
+.bz-glass-sidebar-subpages{display:flex;flex-direction:column;gap:2px;margin:3px 0 5px 15px;padding-left:8px;border-left:2px solid #b6d7f5;}
+.bz-glass-sidebar-subpage{display:flex;align-items:center;gap:8px;text-align:left;width:100%;min-height:29px;padding:6px 8px;border-radius:8px;font-size:11px;font-weight:750;color:#365d84;}
+.bz-glass-sidebar-subpage>span{flex:1;}
+.bz-glass-sidebar-subpage.is-active,.bz-glass-sidebar-subpage:hover{background:#d5ebff;color:#0955a3;}
+.bz-glass-sidebar-signout{display:flex;align-items:center;gap:9px;width:100%;margin-top:11px;padding:9px;border-top:1px solid #c7dcf0;font-size:12px;font-weight:800;color:#315a80;}
+@media(max-width:760px){body:has(#bz-dashboard-main) .bz-dashboard-workspace.bz-glass-sidebar-workspace.container{display:flex!important;flex-direction:column!important;gap:12px!important}.bz-glass-sidebar{position:static;width:100%;max-height:none}.bz-glass-sidebar-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.bz-glass-sidebar-group{min-width:0}.bz-glass-sidebar-category{font-size:11px}.bz-glass-sidebar-subpages{margin-left:3px}.bz-glass-sidebar-signout{margin-top:5px}}
