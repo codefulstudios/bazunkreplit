@@ -4353,6 +4353,8 @@ function GoLiveSection() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [error, setError] = useState("");
   const [startingLive, setStartingLive] = useState(false);
+  const [endingLive, setEndingLive] = useState(false);
+  const [endError, setEndError] = useState("");
   const [, navigate] = useLocation();
   const [featureSettings, setFeatureSettings] = useState<Record<number, { discount?: number; stock?: string }>>({});
   const [myListings, setMyListings] = useState<GoLiveListing[]>([]);
@@ -4422,18 +4424,34 @@ function GoLiveSection() {
   }
 
   async function handleEndLive() {
-    if (!mySession) return;
-    if (mySession.platform === "youtube" && mySession.broadcastRoom) {
-      try {
-        const token = await getToken();
-        await fetch("/api/livekit/youtube/stop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ roomName: mySession.broadcastRoom }),
-        });
-      } catch {}
+    if (!mySession || endingLive) return;
+    setEndError("");
+    setEndingLive(true);
+    try {
+      // First end the authoritative public session; preserve the controls if this fails.
+      await endSession(mySession.id);
+      if (mySession.platform === "youtube" && mySession.broadcastRoom) {
+        try {
+          const token = await getToken();
+          if (!token) throw new Error("Sign-in expired.");
+          const response = await fetch("/api/livekit/youtube/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ roomName: mySession.broadcastRoom }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error(data?.error || "YouTube relay could not be stopped.");
+          }
+        } catch (err) {
+          setEndError("Bazunk stream ended, but the YouTube relay could not be confirmed stopped. Check YouTube Studio and stop it there if necessary. " + (err instanceof Error ? err.message : ""));
+        }
+      }
+    } catch (err) {
+      setEndError(err instanceof Error ? err.message : "Could not end the stream. Please retry.");
+    } finally {
+      setEndingLive(false);
     }
-    endSession(mySession.id);
   }
 
   if (mySession) {
@@ -4455,7 +4473,7 @@ function GoLiveSection() {
     return (
       <div className="space-y-4">
         {/* Status bar */}
-        <div className="bg-gradient-to-r from-red-600 via-red-500 to-[#F26B21] rounded-2xl p-5 text-white">
+        <div className="bz-studio-control-header rounded-2xl p-5 text-white">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               <span className="relative flex h-4 w-4 flex-shrink-0">
@@ -4481,9 +4499,9 @@ function GoLiveSection() {
                   <Link2 className="w-3.5 h-3.5" /> My Stream
                 </a>
               )}
-              <button onClick={() => { void handleEndLive(); }}
+              <button disabled={endingLive} aria-busy={endingLive} onClick={() => { void handleEndLive(); }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/25 text-white font-bold text-xs hover:bg-black/35 transition-colors">
-                <X className="w-3.5 h-3.5" /> End
+                <X className="w-3.5 h-3.5" /> {endingLive ? "Ending…" : "End Broadcast"}
               </button>
             </div>
           </div>
@@ -4494,7 +4512,7 @@ function GoLiveSection() {
           </p>
         </div>
 
-        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
+        {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#172f49] p-4 text-white text-sm"><p>{endError}</p><button type="button" disabled={endingLive} onClick={() => void handleEndLive()} className="mt-2 rounded-lg bg-[#008fff] px-4 py-2 font-bold">Retry ending broadcast</button></div>}\n        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
         {mySession.platform === "youtube" && mySession.broadcastRoom && (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
