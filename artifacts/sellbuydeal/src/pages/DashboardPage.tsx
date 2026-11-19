@@ -5821,170 +5821,25 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Dashboard navigation controls remain visible on all dashboard subpages. */}
-      <div className="bz-hub-toolbar">
-        <button type="button" className="bz-hub-menu-button" onClick={() => {setTileCategory(null);setTileMenuOpen(true);}} aria-label="Open dashboard navigation" aria-expanded={tileMenuOpen} aria-controls="bz-dashboard-hub"><Menu size={21}/><span>Dashboard Menu</span></button>
-        <span className="bz-hub-toolbar-title">Dashboard <span>Navigation &amp; tools</span></span>
-        <button type="button" className="bz-hub-mobile-nav" onClick={()=>setSidebarOpen(v=>!v)} aria-label="Toggle sidebar navigation"><LayoutDashboard size={18}/> Sections</button>
+      {/* Single glassmorphism navigation replaces the old sidebar and tile modal. */}
+      <div className="bz-glass-toolbar">
+        <button type="button" className="bz-glass-open" onClick={() => { setTileCategory(null); setTileMenuOpen(true); }} aria-expanded={tileMenuOpen} aria-controls="bz-glass-navigation"><Menu size={20}/><span>Dashboard Menu</span></button>
+        <div className="bz-glass-current"><LayoutDashboard size={18}/><span>{SIDEBAR_CATEGORIES.flatMap(cat => [{id:cat.id,label:cat.label},...cat.items.map(item=>({id:item.id,label:item.label}))]).find(item=>item.id===activeSection)?.label || "Overview"}</span></div>
       </div>
-      <div className="bz-dashboard-workspace flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
-
-        {/* Persistent neon navigation sidebar */}
-        <aside id="bazunk-dashboard-drawer" aria-label="Dashboard navigation" className={`
-          bz-hub-sidebar
-          w-72 max-w-[100vw] lg:w-[294px] flex-shrink-0
-          flex flex-col
-          bg-[#071b38]
-          transition-transform duration-200
-          ${sidebarOpen ? "bz-hub-sidebar-mobile-open" : ""}
-        `}>
-          {/* Scrollable inner container */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-y-auto">
-
-            {/* Sidebar heading */}
-            <div className="flex items-center justify-between pb-1 flex-shrink-0">
-              <span className="font-bold text-white text-sm">Navigation</span>
-              <button onClick={() => setSidebarOpen(false)} aria-label="Close mobile navigation" className="lg:hidden text-white p-1">
-                <X className="w-5 h-5" />
-              </button>
+      <div className="bz-dashboard-workspace bz-glass-workspace flex-1 container mx-auto px-4 py-6 max-w-6xl">
+        {tileMenuOpen && <div className="bz-glass-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setTileMenuOpen(false);}}>
+          <div id="bz-glass-navigation" className="bz-glass-dialog" role="dialog" aria-modal="true" aria-label="Dashboard navigation" onKeyDown={event=>{if(event.key==="Escape")setTileMenuOpen(false);}}>
+            <div className="bz-glass-heading">
+              <div><span className="bz-glass-eyebrow">BAZUNK / YOUR SPACE</span><h2>Dashboard Menu</h2><p>All your marketplace tools, in one place.</p></div>
+              <button type="button" className="bz-glass-close" aria-label="Close dashboard menu" onClick={()=>setTileMenuOpen(false)}><X size={22}/></button>
             </div>
-
-            <div className="bz-neon-brand hidden lg:flex" aria-label="Bazunk dashboard"><span className="bz-neon-brand-icon">B</span><span><strong>Bazunk</strong><small>Buy · Sell · Live · Trade</small></span></div>
-            {/* User card */}
-            <div className="bz-dashboard-user bz-dashboard-profile bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
-              <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
-                {initial}
+            <div className="bz-glass-layout">
+              <nav className="bz-glass-categories" aria-label="Dashboard categories">
+                {visibleSidebarCategories.map(cat=>{const Icon=cat.icon;const selected=tileCategory===cat.id || (!tileCategory && (cat.id===activeSection || cat.items.some(item=>item.id===activeSection)));return <button key={cat.id} type="button" className={`bz-glass-category ${selected?"is-selected":""}`} onClick={()=>{if(cat.items.length)setTileCategory(cat.id);else setActiveSection(cat.id);}} aria-current={selected?"page":undefined}><Icon size={19}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronRight size={16}/>}</button>})}
+              </nav>
+              <div className="bz-glass-destinations">
+                {(()=>{const cat=visibleSidebarCategories.find(c=>c.id===(tileCategory||SIDEBAR_CATEGORIES.find(c=>c.items.some(item=>item.id===activeSection))?.id)) || visibleSidebarCategories.find(c=>c.id==="store");if(!cat)return null;return <><div className="bz-glass-section-heading"><h3>{cat.label}</h3><p>Select a page to open it in your dashboard.</p></div><div className="bz-glass-links">{cat.items.map(item=>{const Icon=item.icon;return <button key={item.id} type="button" className={`bz-glass-link ${activeSection===item.id?"is-active":""}`} onClick={()=>setActiveSection(item.id)}><span className="bz-glass-link-icon"><Icon size={21}/></span><span>{item.label}</span><ChevronRight size={16}/></button>})}</div></>})()}
               </div>
-              <p className="font-bold text-gray-900">{user.username}</p>
-            </div>
-
-            {/* Nav menu — icon rail + flyout (desktop only hint) */}
-            <div className="hidden items-center justify-end px-1 -mb-1">
-              <div className="group relative">
-                <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center cursor-default select-none">?</span>
-                <div className="absolute right-0 top-5 z-50 hidden group-hover:block w-52 bg-gray-900 text-white text-[11px] leading-snug rounded-xl px-3 py-2 shadow-lg pointer-events-none">
-                  Click a menu icon to open options · click anywhere to close
-                </div>
-              </div>
-            </div>
-
-            {/* ── Mobile nav: accordion list (no flyout) ── */}
-            <nav className="lg:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden flex-shrink-0">
-              {visibleSidebarCategories.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = cat.items.length === 0
-                  ? activeSection === cat.id
-                  : cat.items.some(i => i.id === activeSection);
-                const isExpanded = mobileExpandedCat === cat.id;
-
-                if (cat.items.length === 0) {
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setActiveSection(cat.id); setSidebarOpen(false); setMobileExpandedCat(null); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left border-b border-gray-100 transition-colors ${isActive ? "bg-[#3B4FD8]/8" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 text-[#3B4FD8]" />}
-                    </button>
-                  );
-                }
-
-                return (
-                  <div key={cat.id} className="border-b border-gray-100 last:border-0">
-                    <button
-                      onClick={() => setMobileExpandedCat(isExpanded ? null : cat.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${isActive ? "bg-[#3B4FD8]/5" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && !isExpanded && <span className="w-2 h-2 rounded-full bg-[#3B4FD8] mr-1 flex-shrink-0" />}
-                      <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                    </button>
-                    {isExpanded && (
-                      <div className="bg-gray-50/80 border-t border-gray-100">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                setActiveSection(item.id);
-                                setSidebarOpen(false);
-                                setMobileExpandedCat(null);
-                              }}
-                              className={`w-full flex items-center gap-3 pl-6 pr-4 py-3 text-left border-b border-gray-100 last:border-0 transition-colors ${isItemActive ? "bg-white" : "hover:bg-white/60"}`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className={`flex-1 text-sm ${isItemActive ? "font-semibold text-[#3B4FD8]" : "text-gray-600"}`}>{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 text-[#3B4FD8] flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-red-50 transition-colors border-t border-gray-100"
-                data-testid="button-logout"
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50">
-                  <LogOut className="w-4 h-4 text-red-400" />
-                </div>
-                <span className="text-sm font-semibold text-red-500">Sign Out</span>
-              </button>
-            </nav>
-
-            {/* Desktop accordion: one expanded group, keyboard accessible, no flyouts */}
-            <nav className="bz-dashboard-accordion hidden lg:flex flex-col gap-2" aria-label="Dashboard sections">
-              {visibleSidebarCategories.map(cat => {
-                const Icon=cat.icon;
-                const selected=cat.id===activeSection || cat.items.some(item=>item.id===activeSection);
-                const open=activeCategory===cat.id;
-                return <div key={cat.id} className={`bz-dashboard-group ${open?"is-open":""} ${selected?"is-selected":""}`}>
-                  <button type="button" className={`bz-dashboard-group-trigger ${cat.id==="overview"&&selected?"is-active":""}`}
-                    onClick={() => cat.items.length===0 ? (setActiveSection(cat.id),setActiveCategory(null)) : setActiveCategory(open?null:cat.id)}
-                    aria-expanded={cat.items.length?open:undefined} aria-controls={cat.items.length?`bz-dashboard-group-${cat.id}`:undefined}
-                    data-testid={`cat-${cat.id}`}>
-                    <Icon size={20}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronDown size={17} className={`bz-dashboard-chevron ${open?"rotate-180":""}`}/>}
-                  </button>
-                  {cat.items.length>0&&<div id={`bz-dashboard-group-${cat.id}`} className="bz-dashboard-group-content" inert={!open}>
-                    <div className="bz-dashboard-group-items">
-                      {cat.items.map(item=>{const ItemIcon=item.icon;return <button key={item.id} type="button"
-                        className={`bz-dashboard-subitem ${activeSection===item.id?"is-active":""}`}
-                        onClick={()=>{setActiveSection(item.id);setActiveCategory(cat.id)}} data-testid={`sidebar-${item.id}`}>
-                        <ItemIcon size={16}/><span>{item.label}</span>{activeSection===item.id&&<ChevronRight size={15}/>}
-                      </button>})}
-                    </div>
-                  </div>}
-                </div>;
-              })}
-              <button className="bz-dashboard-signout" type="button" onClick={handleLogout}><LogOut size={18}/> Sign Out</button>
-            </nav>
-          </div>
-        </aside>
-
-        {tileMenuOpen && <div id="bz-dashboard-hub" className="bz-hub-overlay" role="dialog" aria-modal="true" aria-label="Dashboard navigation menu" tabIndex={-1} onKeyDown={e=>{if(e.key==="Escape")setTileMenuOpen(false);}}>
-          <div className="bz-hub-panel">
-            <div className="bz-hub-top"><div><span className="bz-hub-eyebrow">BAZUNK / DASHBOARD</span><h2>{tileCategory ? SIDEBAR_CATEGORIES.find(c=>c.id===tileCategory)?.label : "Where would you like to go?"}</h2><p>{tileCategory ? "Choose a destination within this section." : "Explore your store, sales, buying and account tools."}</p></div><button type="button" onClick={()=>setTileMenuOpen(false)} aria-label="Close dashboard navigation"><X size={23}/></button></div>
-            {tileCategory && <button type="button" className="bz-hub-back" onClick={()=>setTileCategory(null)}><ArrowLeft size={17}/> All dashboard sections</button>}
-            <div className="bz-hub-tiles">
-              {tileCategory ? visibleSidebarCategories.find(c=>c.id===tileCategory)?.items.map(item=>{const Icon=item.icon;return <button type="button" key={item.id} className={`bz-hub-tile ${item.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>setActiveSection(item.id)}><Icon size={29}/><strong>{item.label}</strong><span>Open {item.label.toLowerCase()}</span></button>}) : visibleSidebarCategories.map(cat=>{const Icon=cat.icon;return <button type="button" key={cat.id} className={`bz-hub-tile ${cat.id===activeSection?"bz-hub-tile-active":""}`} onClick={()=>cat.items.length ? setTileCategory(cat.id) : setActiveSection(cat.id)}><Icon size={31}/><strong>{cat.label}</strong><span>{cat.items.length ? `${cat.items.length} tools and pages` : "Dashboard overview"}</span></button>})}
             </div>
           </div>
         </div>}
