@@ -198,3 +198,15 @@
   body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) #bazunk-dashboard-drawer .bz-dashboard-user{padding:8px!important;}
   body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) #bazunk-dashboard-drawer .bz-dashboard-accordion{gap:4px!important;}
 }
+
+
+/* Dashboard density controls apply on ordinary laptop screens too. */
+@media(min-width:1024px){
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bazunk-overview-v2{padding:4px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-heading{margin-bottom:9px!important;gap:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid{gap:8px!important;margin-block:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid>div{min-height:84px!important;padding:10px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action{min-height:74px!important;padding:8px 6px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo{padding:11px!important;margin-top:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-items button{padding:8px!important;}
+}
