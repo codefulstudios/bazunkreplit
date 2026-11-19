@@ -190,7 +190,7 @@ export function LivePage() {
   const { formatPrice, currency } = useCurrency();
   const { id } = useParams<{ id: string }>();
   const { sessions, getFeatured } = useLiveStream();
-  const { addToCart: addItem } = useCart();
+  const { addToCart: addItem, openCart } = useCart();
 
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
@@ -219,15 +219,21 @@ export function LivePage() {
 
 
   useEffect(() => {
-    if (!session || session.productIds.length === 0) return;
-    fetch(`/api/listings?ids=${session.productIds.join(",")}`)
-      .then((r) => r.json())
-      .then((data) => {
-        const items: LiveProduct[] = Array.isArray(data) ? data : (data.listings ?? []);
-        setLiveListings(items.filter((p) => session.productIds.includes(p.id)));
-      })
-      .catch(() => {});
-  }, [session?.id]);
+    if (!session || session.productIds.length === 0) { setLiveListings([]); return; }
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const response = await fetch(`/api/listings?ids=${session.productIds.join(",")}`, {cache:"no-store"});
+        if (!response.ok) return;
+        const data = await response.json();
+        const items:LiveProduct[] = Array.isArray(data) ? data : (data.listings ?? []);
+        if (!cancelled) setLiveListings(items.filter(p => session.productIds.some(id=>Number(id)===Number(p.id))));
+      } catch { /* Keep last known listing data until next refresh. */ }
+    };
+    void refresh();
+    const timer = setInterval(()=>void refresh(),10000);
+    return ()=>{cancelled=true;clearInterval(timer);};
+  }, [session?.id, session?.productIds.join(",")]);
 
   const featuredItem = session ? getFeatured(session.id) : null;
   const featuredProduct = featuredItem
@@ -280,6 +286,7 @@ export function LivePage() {
   function handleAddToCart(product: LiveProduct) {
     addItem({ id: product.id, title: product.title, price: Number(product.price), image: product.images?.[0] ?? "" } as never, 1);
     setAddedIds((prev) => new Set(prev).add(product.id));
+    openCart();
   }
 
   function handleShare() {
