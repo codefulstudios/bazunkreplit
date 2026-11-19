@@ -2840,9 +2840,9 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── SETUP ─── */
   if (view === "setup") {
     return (
-      <div className="space-y-5 p-4 sm:p-6">
+      <div className="bz-store-setup space-y-5 p-4 sm:p-6">
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(120deg,#6d28d9,#4338ca 55%,#ec4899)" }}>
+        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(115deg,#0c75db,#0953aa 58%,#f5821b)" }}>
           <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/5" />
           <div className="absolute right-16 bottom-0 w-28 h-28 rounded-full bg-white/5" />
           <div className="relative">
@@ -2917,7 +2917,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── EDIT ─── */
   if (view === "edit") {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bz-store-edit bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <button onClick={() => setView("overview")} className="flex items-center gap-1.5 text-sm text-[#4A5CE8] font-semibold mb-1 hover:underline">
@@ -3111,7 +3111,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-5">Store Settings</h3>
                 <p className="text-sm text-muted-foreground mb-4">Manage your selling preferences through the connected account tools.</p>
-                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-violet-400"><Icon className="w-5 h-5 text-violet-500"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
+                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-blue-400"><Icon className="w-5 h-5 text-blue-600"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
 
                 {/* Danger Zone */}
                 <div>
