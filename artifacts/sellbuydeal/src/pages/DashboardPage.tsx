@@ -5696,10 +5696,19 @@ export function DashboardPage() {
       setLocation(destination);
       return;
     }
-    // Keep the URL in sync so each tile opens a real, reloadable dashboard destination.
-    // A full navigation also avoids stale state when moving between independent dashboard tools.
+    // Switch dashboard sections in-place; a full page reload can lose the
+    // authenticated SPA state and display an empty destination.
     const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
-    window.location.assign(target);
+    window.history.pushState({ dashboardSection: id }, "", target);
+    setActiveSectionRaw(id);
+    setTileMenuOpen(false);
+    setTileCategory(null);
+    setSidebarOpen(false);
+    const parent = SIDEBAR_CATEGORIES.find(c => c.items.some(item => item.id === id));
+    setActiveCategory(parent?.id ?? null);
+    setMobileExpandedCat(parent?.id ?? null);
+    setSectionNavigation(value => value + 1);
+    requestAnimationFrame(() => dashboardContentRef.current?.focus());
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
