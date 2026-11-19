@@ -184,7 +184,7 @@ export function FlashSalesPage() {
       {showIntro && (
         <section aria-label="Flash Sales introduction" className="relative isolate flex min-h-[calc(100svh-80px)] items-center overflow-hidden bg-[#0c090a] text-white">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_85%_40%,#8b2c0b_0%,#32140d_36%,#09090b_80%)]" />
-          <img src="/images/flash-sales-intro.webp" alt="Model dramatically opening his jacket to reveal a shirtless torso" className="absolute inset-0 h-full w-full object-cover object-[65%_center]" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+          <img src="/images/flash-sales-intro.png" alt="Model dramatically opening his jacket to reveal a shirtless torso" className="absolute inset-0 h-full w-full object-cover object-[65%_center]" onError={(event) => { event.currentTarget.style.display = "none"; }} />
           <div className="absolute inset-0 bg-gradient-to-r from-[#08090b]/95 via-[#08090b]/80 to-transparent" />
           <div className="relative mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 lg:px-14">
             <div className="max-w-2xl">
