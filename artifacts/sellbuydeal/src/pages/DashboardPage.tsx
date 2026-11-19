@@ -5862,6 +5862,7 @@ export function DashboardPage() {
               </button>
             </div>
 
+            <div className="bz-neon-brand hidden lg:flex" aria-label="Bazunk dashboard"><span className="bz-neon-brand-icon">B</span><span><strong>Bazunk</strong><small>Buy · Sell · Live · Trade</small></span></div>
             {/* User card */}
             <div className="bz-dashboard-user bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
               <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
