@@ -5841,28 +5841,18 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Single glassmorphism navigation replaces the old sidebar and tile modal. */}
-      <div className="bz-glass-toolbar">
-        <button type="button" className="bz-glass-open" onClick={() => { setTileCategory(null); setTileMenuOpen(true); }} aria-expanded={tileMenuOpen} aria-controls="bz-glass-navigation"><Menu size={20}/><span>Dashboard Menu</span></button>
-        <div className="bz-glass-current"><LayoutDashboard size={18}/><span>{SIDEBAR_CATEGORIES.flatMap(cat => [{id:cat.id,label:cat.label},...cat.items.map(item=>({id:item.id,label:item.label}))]).find(item=>item.id===activeSection)?.label || "Overview"}</span></div>
-      </div>
-      <div className="bz-dashboard-workspace bz-glass-workspace flex-1 container mx-auto px-4 py-6 max-w-6xl">
-        {tileMenuOpen && <div className="bz-glass-backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setTileMenuOpen(false);}}>
-          <div id="bz-glass-navigation" className="bz-glass-dialog" role="dialog" aria-modal="true" aria-label="Dashboard navigation" onKeyDown={event=>{if(event.key==="Escape")setTileMenuOpen(false);}}>
-            <div className="bz-glass-heading">
-              <div><span className="bz-glass-eyebrow">BAZUNK / YOUR SPACE</span><h2>Dashboard Menu</h2><p>All your marketplace tools, in one place.</p></div>
-              <button type="button" className="bz-glass-close" aria-label="Close dashboard menu" onClick={()=>setTileMenuOpen(false)}><X size={22}/></button>
-            </div>
-            <div className="bz-glass-layout">
-              <nav className="bz-glass-categories" aria-label="Dashboard categories">
-                {visibleSidebarCategories.map(cat=>{const Icon=cat.icon;const selected=tileCategory===cat.id || (!tileCategory && (cat.id===activeSection || cat.items.some(item=>item.id===activeSection)));return <button key={cat.id} type="button" className={`bz-glass-category ${selected?"is-selected":""}`} onClick={()=>{if(cat.items.length)setTileCategory(cat.id);else setActiveSection(cat.id);}} aria-current={selected?"page":undefined}><Icon size={19}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronRight size={16}/>}</button>})}
-              </nav>
-              <div className="bz-glass-destinations">
-                {(()=>{const cat=visibleSidebarCategories.find(c=>c.id===(tileCategory||SIDEBAR_CATEGORIES.find(c=>c.items.some(item=>item.id===activeSection))?.id)) || visibleSidebarCategories.find(c=>c.id==="store");if(!cat)return null;return <><div className="bz-glass-section-heading"><h3>{cat.label}</h3><p>Select a page to open it in your dashboard.</p></div><div className="bz-glass-links">{cat.items.map(item=>{const Icon=item.icon;return <button key={item.id} type="button" className={`bz-glass-link ${activeSection===item.id?"is-active":""}`} onClick={()=>setActiveSection(item.id)}><span className="bz-glass-link-icon"><Icon size={21}/></span><span>{item.label}</span><ChevronRight size={16}/></button>})}</div></>})()}
-              </div>
-            </div>
-          </div>
-        </div>}
+      {/* Permanent glassmorphism sidebar: no pop-up navigation. */}
+      <div className="bz-dashboard-workspace bz-glass-workspace bz-glass-sidebar-workspace flex-1 container mx-auto px-4 py-6 max-w-6xl">
+        <aside className="bz-glass-sidebar" aria-label="Dashboard navigation">
+          <div className="bz-glass-sidebar-heading"><span>BAZUNK / YOUR SPACE</span><h2>Dashboard</h2><p>Manage your marketplace</p></div>
+          <nav className="bz-glass-sidebar-nav">
+            {visibleSidebarCategories.map(cat=>{const Icon=cat.icon;const expanded=activeCategory===cat.id;const active=cat.id===activeSection||cat.items.some(item=>item.id===activeSection);return <div className="bz-glass-sidebar-group" key={cat.id}>
+              <button type="button" className={`bz-glass-sidebar-category ${active?"is-active":""}`} aria-expanded={cat.items.length?expanded:undefined} onClick={()=>cat.items.length?setActiveCategory(expanded?null:cat.id):setActiveSection(cat.id)}><Icon size={18}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronDown size={16} className={expanded?"bz-glass-rotated":""}/>}</button>
+              {expanded&&cat.items.length>0&&<div className="bz-glass-sidebar-subpages">{cat.items.map(item=>{const ItemIcon=item.icon;return <button key={item.id} type="button" className={`bz-glass-sidebar-subpage ${activeSection===item.id?"is-active":""}`} onClick={()=>setActiveSection(item.id)}><ItemIcon size={15}/><span>{item.label}</span></button>})}</div>}
+            </div>})}
+          </nav>
+          <button type="button" className="bz-glass-sidebar-signout" onClick={handleLogout}><LogOut size={17}/> Sign Out</button>
+        </aside>
         {/* Main content */}
         <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
