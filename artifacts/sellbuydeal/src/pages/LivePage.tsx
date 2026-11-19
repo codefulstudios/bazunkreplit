@@ -1,3 +1,4 @@
+import { useUser, useAuth } from "@clerk/react";
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { AnimatePresence, motion } from "framer-motion";
@@ -186,6 +187,63 @@ export function LiveHubPage() {
 type LiveProduct = { id: number; title: string; price: number | string; images: string[]; condition?: string; public_id?: string };
 
 /* ─── Live Room — /live/:id ─── */
+type LiveSaleEvent={id:number;productId:number;kind:"auction"|"flash";startingPrice:string;currentBid:string|null;discountPercent:number|null;endsAt:string;cancelled:boolean;status:string};
+function LiveSalePanel({sessionId,sellerEmail,productIds}:{sessionId:string;sellerEmail:string;productIds:number[]}){
+  const {user}=useUser();const {getToken}=useAuth();
+  const email=user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+  const isSeller=!!email&&email===sellerEmail?.toLowerCase();
+  const [events,setEvents]=useState<LiveSaleEvent[]>([]);
+  const [productId,setProductId]=useState("");
+  const [kind,setKind]=useState<"auction"|"flash">("auction");
+  const [value,setValue]=useState("10");
+  const [minutes,setMinutes]=useState("10");
+  const [bids,setBids]=useState<Record<number,string>>({});
+  const [error,setError]=useState("");
+  const [now,setNow]=useState(Date.now());
+  useEffect(()=>{
+    let cancelled=false;
+    const refresh=async()=>{
+      try{const r=await fetch(`/api/live/session/${encodeURIComponent(sessionId)}/events`,{cache:"no-store"});
+        if(!r.ok)return;const d=await r.json();if(!cancelled)setEvents(d.events||[]);
+      }catch{}
+    };
+    void refresh();const timer=setInterval(()=>{setNow(Date.now());void refresh();},2000);
+    return ()=>{cancelled=true;clearInterval(timer);};
+  },[sessionId]);
+  async function action(url:string,body?:object){
+    setError("");
+    try{
+      const token=await getToken();
+      const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body||{})});
+      const d=await r.json();
+      if(!r.ok)throw new Error(d.error||"Request failed");
+      const refresh=await fetch(`/api/live/session/${encodeURIComponent(sessionId)}/events`,{cache:"no-store"});
+      if(refresh.ok)setEvents((await refresh.json()).events||[]);
+    }catch(e){setError(e instanceof Error?e.message:"Could not complete request");}
+  }
+  return <section className="rounded-2xl border border-gray-700 bg-gray-900 p-4 space-y-3">
+    <h2 className="font-bold text-white">Live Auctions & Flash Deals</h2>
+    <p className="text-xs text-amber-300">Bids and promotions are previews. Payments, auction winner checkout and discounted checkout are not yet enabled.</p>
+    {error&&<p role="alert" className="text-red-300 text-xs">{error}</p>}
+    {isSeller&&<div className="grid grid-cols-2 gap-2">
+      <select aria-label="Product" value={productId} onChange={e=>setProductId(e.target.value)} className="bg-gray-800 text-white rounded p-2"><option value="">Select product</option>{productIds.map(id=><option key={id} value={id}>Product #{id}</option>)}</select>
+      <select aria-label="Event type" value={kind} onChange={e=>setKind(e.target.value as "auction"|"flash")} className="bg-gray-800 text-white rounded p-2"><option value="auction">Auction</option><option value="flash">Flash deal</option></select>
+      <input aria-label={kind==="auction"?"Starting price":"Discount percent"} type="number" min="1" max={kind==="flash"?70:undefined} step={kind==="auction"?"0.01":"1"} value={value} onChange={e=>setValue(e.target.value)} className="bg-gray-800 text-white rounded p-2"/>
+      <select aria-label="Duration" value={minutes} onChange={e=>setMinutes(e.target.value)} className="bg-gray-800 text-white rounded p-2"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select>
+      <button disabled={!productId} className="col-span-2 rounded bg-orange-500 text-black font-bold p-2 disabled:opacity-50" onClick={()=>void action(`/api/live/session/${encodeURIComponent(sessionId)}/events`,{productId:Number(productId),kind,minutes:Number(minutes),...(kind==="auction"?{startingPrice:Number(value)}:{discountPercent:Number(value)})})}>Start {kind==="auction"?"auction":"flash deal"}</button>
+    </div>}
+    {events.filter(e=>!e.cancelled).slice(0,8).map(e=>{
+      const seconds=Math.max(0,Math.ceil((new Date(e.endsAt).getTime()-now)/1000));
+      return <div key={e.id} className="border border-gray-700 rounded-xl p-3 text-white text-sm space-y-2">
+        <div className="flex justify-between"><strong>{e.kind==="auction"?"Live auction":"Flash deal"} · Product #{e.productId}</strong><span className="text-orange-300">{seconds?Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0"):"Ended"}</span></div>
+        <p>{e.kind==="auction"?`Current bid: £${Number(e.currentBid??e.startingPrice).toFixed(2)}`:`${e.discountPercent}% promotional discount (not applied at checkout)`}</p>
+        {e.kind==="auction"&&seconds>0&&!isSeller&&<div className="flex gap-2"><input aria-label="Bid amount" type="number" min="0.01" step="0.01" value={bids[e.id]??""} onChange={ev=>setBids(v=>({...v,[e.id]:ev.target.value}))} placeholder="Your bid £" className="min-w-0 flex-1 rounded bg-gray-800 text-white p-2"/><button className="rounded bg-orange-500 px-3 font-bold text-black" onClick={()=>void action(`/api/live/session/${encodeURIComponent(sessionId)}/events/${e.id}/bids`,{amount:Number(bids[e.id])})}>Bid</button></div>}
+        {isSeller&&seconds>0&&<button className="text-red-300 underline text-xs" onClick={()=>void action(`/api/live/session/${encodeURIComponent(sessionId)}/events/${e.id}/cancel`)}>Cancel event</button>}
+      </div>;
+    })}
+  </section>;
+}
+
 export function LivePage() {
   const { formatPrice, currency } = useCurrency();
   const { id } = useParams<{ id: string }>();
@@ -485,6 +543,7 @@ export function LivePage() {
         <div className="flex flex-col gap-4">
 
           {shoppingError && <p role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-200">{shoppingError}</p>}
+          {session.isLive && <LiveSalePanel sessionId={session.id} sellerEmail={session.sellerId} productIds={session.productIds} />}
           {/* Featured Product Spotlight */}
           <AnimatePresence mode="wait">
             {featuredProduct && featuredItem && (
