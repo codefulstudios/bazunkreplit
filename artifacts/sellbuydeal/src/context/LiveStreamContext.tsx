@@ -8,7 +8,7 @@ interface LiveStreamContextValue {
   liveSessions: LiveSession[];
   mySession: LiveSession | null;
   goLive: (session: Omit<LiveSession, "id" | "startedAt" | "viewerCount">) => Promise<LiveSession>;
-  endSession: (id: string) => void;
+  endSession: (id: string) => Promise<void>;
   featureProduct: (sessionId: string, productId: number, opts?: { discount?: number; stockAlert?: number; flashDeal?: boolean }) => void;
   clearFeatured: (sessionId: string) => void;
   getFeatured: (sessionId: string) => FeaturedItem | null;
@@ -147,15 +147,38 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
     return session;
   }
 
-  function endSession(id: string) {
-    setUserSessions((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, isLive: false } : s))
-    );
-    setMySession(null);
-    void getToken().then((token) => fetch(`/api/live/session/${encodeURIComponent(id)}/end`, {
-      method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })).catch(() => {});
-    setFeaturedMap((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  async function endSession(id: string): Promise<void> {
+    const token = await getToken();
+    if (!token) throw new Error("Please sign in to end your broadcast.");
+    let response: Response;
+    try {
+      response = await fetch(`/api/live/session/${encodeURIComponent(id)}/end`, {
+        method: "POST", headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      throw new Error("Could not reach the server to end your stream. It may still be live; please retry.");
+    }
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.ok !== true) {
+      // A timed-out earlier request may already have ended the stream.
+      // Only treat that as success after independently verifying server state.
+      if (response.status === 404) {
+        try {
+          const check = await fetch(`/api/live/session/${encodeURIComponent(id)}`, {cache:"no-store"});
+          if (check.ok && (await check.json())?.isLive === false) {
+            setUserSessions(prev => prev.map(s => s.id === id ? {...s,isLive:false} : s));
+            setRemoteSessions(prev => prev.filter(s => s.id !== id));
+            setMySession(prev => prev?.id === id ? null : prev);
+            return;
+          }
+        } catch {}
+      }
+      throw new Error(typeof result?.error === "string" ? result.error : "Could not confirm the broadcast ended. Please retry.");
+    }
+    setUserSessions(prev => prev.map(s => s.id === id ? {...s,isLive:false} : s));
+    setRemoteSessions(prev => prev.filter(s => s.id !== id));
+    setMySession(prev => prev?.id === id ? null : prev);
+    setFeaturedMap(prev => {const next={...prev};delete next[id];return next;});
   }
 
   function featureProduct(
