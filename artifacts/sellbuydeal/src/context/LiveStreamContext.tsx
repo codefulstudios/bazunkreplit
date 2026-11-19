@@ -38,6 +38,7 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
   const [remoteSessions, setRemoteSessions] = useState<LiveSession[]>([]);
   const [mySession, setMySession] = useState<LiveSession | null>(loadMySession);
   const [featuredMap, setFeaturedMap] = useState<Record<string, FeaturedItem>>(loadFeaturedMap);
+  const [serverFeatured, setServerFeatured] = useState<Record<string, FeaturedItem>>({});
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userSessions));
@@ -86,6 +87,33 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
     ...userSessions.filter(s => !s.isLive && !remoteIds.has(s.id)),
   ] : [];
 
+  // Poll the shared spotlight for all active sessions. Local state is only
+  // an immediate seller preview; buyers use the server's persisted selection.
+  useEffect(() => {
+    if (!liveEnabled) { setServerFeatured({}); return; }
+    let cancelled = false;
+    const refresh = async () => {
+      const active = remoteSessions.filter(s => s.isLive).slice(0, 30);
+      const entries = await Promise.all(active.map(async s => {
+        try {
+          const r = await fetch(`/api/live/session/${encodeURIComponent(s.id)}/featured`);
+          if (!r.ok) return [s.id, null] as const;
+          const d = await r.json();
+          const f = d.featured;
+          return [s.id, f ? {productId:Number(f.productId),featuredAt:new Date(f.featuredAt).getTime()} as FeaturedItem : null] as const;
+        } catch { return [s.id, null] as const; }
+      }));
+      if (!cancelled) {
+        const next:Record<string,FeaturedItem> = {};
+        for (const [id,featured] of entries) if(featured) next[id]=featured;
+        setServerFeatured(next);
+      }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 5000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [liveEnabled, remoteSessions.map(s=>s.id).join(",")]);
+
   const liveSessions = sessions.filter((s) => s.isLive);
 
   function goLive(data: Omit<LiveSession, "id" | "startedAt" | "viewerCount">): LiveSession {
@@ -126,14 +154,22 @@ export function LiveStreamProvider({ children }: { children: ReactNode }) {
       ...prev,
       [sessionId]: { productId, ...opts, featuredAt: Date.now() },
     }));
+    void getToken().then(async token => {
+      const r = await fetch(`/api/live/session/${encodeURIComponent(sessionId)}/featured`, {
+        method:"PUT",headers:{"Content-Type":"application/json",...(token?{Authorization:`Bearer ${token}`}:{})},
+        body:JSON.stringify({productId}),
+      });
+      if(!r.ok) console.error("Could not persist featured live product", await r.text());
+    }).catch(err=>console.error("Could not persist featured live product",err));
   }
 
   function clearFeatured(sessionId: string) {
     setFeaturedMap((prev) => { const n = { ...prev }; delete n[sessionId]; return n; });
+    void getToken().then(token=>fetch(`/api/live/session/${encodeURIComponent(sessionId)}/featured`,{method:"DELETE",headers:token?{Authorization:`Bearer ${token}`}:{}})).catch(console.error);
   }
 
   function getFeatured(sessionId: string): FeaturedItem | null {
-    return featuredMap[sessionId] ?? null;
+    return serverFeatured[sessionId] ?? (mySession?.id===sessionId ? featuredMap[sessionId] ?? null : null);
   }
 
   return (
