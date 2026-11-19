@@ -220,5 +220,57 @@ router.post("/live/session/:id/messages", async (req,res) => {
   res.json({message:r.rows?.[0]});
 });
 
+
+// Persistent Shop-the-Stream spotlight. The server owns the pinned product,
+// not browser localStorage, so all viewers see the same product.
+async function ensureLiveSpotlights() {
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS live_stream_spotlights (
+    session_id TEXT PRIMARY KEY,
+    product_id INTEGER NOT NULL,
+    featured_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`);
+}
+router.get("/live/session/:id/featured", async (req,res) => {
+  try {
+    await ensureLiveSpotlights();
+    const r:any = await db.execute(sql`SELECT p.product_id AS "productId", p.featured_at AS "featuredAt"
+      FROM live_stream_spotlights p JOIN live_stream_sessions s ON s.id=p.session_id
+      WHERE p.session_id=${req.params.id} AND s.is_live=TRUE LIMIT 1`);
+    res.json({featured:r.rows?.[0] ?? null});
+  } catch(err) { logger.error({err},"Failed to load live spotlight"); res.status(503).json({error:"Unable to load featured product."}); }
+});
+router.put("/live/session/:id/featured", async (req,res) => {
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in as the seller."});return;}
+  const productId=Number(req.body?.productId);
+  if(!Number.isSafeInteger(productId)||productId<=0){res.status(400).json({error:"Valid product ID required."});return;}
+  try {
+    const owned:any=await db.execute(sql`SELECT product_ids FROM live_stream_sessions
+      WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email}) AND is_live=TRUE LIMIT 1`);
+    if(!owned.rows?.length){res.status(403).json({error:"You do not own an active stream."});return;}
+    const ids=owned.rows[0].product_ids;
+    if(!Array.isArray(ids)||!ids.some((id:unknown)=>Number(id)===productId)){
+      res.status(400).json({error:"Product must be part of this stream."});return;
+    }
+    await ensureLiveSpotlights();
+    await db.execute(sql`INSERT INTO live_stream_spotlights(session_id,product_id,featured_at)
+      VALUES(${req.params.id},${productId},NOW())
+      ON CONFLICT(session_id) DO UPDATE SET product_id=EXCLUDED.product_id,featured_at=NOW()`);
+    res.json({ok:true,featured:{productId,featuredAt:new Date().toISOString()}});
+  } catch(err){logger.error({err},"Failed to pin live product");res.status(503).json({error:"Unable to pin product."});}
+});
+router.delete("/live/session/:id/featured", async(req,res)=>{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in as the seller."});return;}
+  try {
+    const owned:any=await db.execute(sql`SELECT 1 FROM live_stream_sessions
+      WHERE id=${req.params.id} AND LOWER(seller_email)=LOWER(${email}) AND is_live=TRUE LIMIT 1`);
+    if(!owned.rows?.length){res.status(403).json({error:"You do not own an active stream."});return;}
+    await ensureLiveSpotlights();
+    await db.execute(sql`DELETE FROM live_stream_spotlights WHERE session_id=${req.params.id}`);
+    res.json({ok:true});
+  }catch(err){logger.error({err},"Failed to clear live spotlight");res.status(503).json({error:"Unable to clear spotlight."});}
+});
+
 export default router;
 
