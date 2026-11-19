@@ -1,38 +1,56 @@
-import { ArrowUpRight, Code2, Database, Store, Ticket } from "lucide-react";
+import { ArrowUpRight, Code2, Database, Store, Ticket, Layers3, Sparkles, Globe2, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
 const sites = [
-  { name: "Data Platform", description: "Product data, search, and marketplace import tools for connected commerce.", url: "https://data.bazunk.com", Icon: Database },
-  { name: "Nexvenue", description: "Event and venue technology, bringing experiences and audiences together.", url: "https://nexvenue.bazunk.com", Icon: Ticket },
-  { name: "MarketNexa", description: "Modern marketplace and commerce solutions for growing businesses.", url: "https://marketnexa.bazunk.com", Icon: Store },
-  { name: "Digital Origin Studios", description: "Digital design and development for websites, applications, and software.", url: "https://digitaloriginstudios.bazunk.com", Icon: Code2 },
+  { name: "Data Platform", eyebrow: "DATA & INTELLIGENCE", description: "Product data, intelligent search and powerful import tools built for connected commerce.", url: "https://data.bazunk.com", Icon: Database, accent: "blue", number: "01" },
+  { name: "Nexvenue", eyebrow: "EVENT TECHNOLOGY", description: "Digital experiences that connect venues, events and audiences in one seamless ecosystem.", url: "https://nexvenue.bazunk.com", Icon: Ticket, accent: "violet", number: "02" },
+  { name: "MarketNexa", eyebrow: "COMMERCE TECHNOLOGY", description: "Modern marketplace technology and commerce solutions designed to grow with businesses.", url: "https://marketnexa.bazunk.com", Icon: Store, accent: "cyan", number: "03" },
+  { name: "Digital Origin Studios", eyebrow: "DESIGN & DEVELOPMENT", description: "Distinctive websites, applications and software crafted with creativity and technical precision.", url: "https://digitaloriginstudios.bazunk.com", Icon: Code2, accent: "orange", number: "04" },
 ];
 
 export function OurSitesPage() {
   return (
-    <div className="min-h-screen flex flex-col !bg-[#0D1425] !text-white" style={{ backgroundColor: "#0D1425", color: "#ffffff" }}>
+    <div className="dos-network-page min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-5 py-14 sm:py-20 !text-white" style={{ color: "#ffffff" }}>
-        <div className="max-w-2xl">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] !text-[#ffba75]" style={{ color: "#ffba75" }}>The Bazunk network</p>
-          <h1 className="mt-3 text-4xl sm:text-5xl font-black tracking-tight !text-white" style={{ color: "#ffffff" }}>Our Sites</h1>
-          <p className="mt-5 text-lg leading-relaxed !text-[#e2e8f0]" style={{ color: "#e2e8f0" }}>Explore our connected platforms, products and digital services.</p>
-        </div>
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
-          {sites.map(({name, description, url, Icon}) => (
-            <article key={name} className="group rounded-2xl border border-white/25 !bg-[#18243A] !text-white p-6 sm:p-8 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:border-orange-400/70 hover:shadow-orange-950/30" style={{ backgroundColor: "#18243A", color: "#ffffff" }}>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/30 !bg-[#402b24] !text-[#ffd19d]" style={{ backgroundColor: "#402b24", color: "#ffd19d" }}>
-                <Icon size={29} aria-hidden="true" />
-              </div>
-              <h2 className="mt-6 text-2xl font-extrabold !text-white" style={{ color: "#ffffff" }}>{name}</h2>
-              <p className="mt-3 min-h-14 leading-relaxed !text-[#e2e8f0]" style={{ color: "#e2e8f0" }}>{description}</p>
-              <a href={url} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-lg !bg-[#fb923c] px-4 py-2.5 font-bold !text-[#111827] transition-colors hover:!bg-[#fdba74] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400" style={{ backgroundColor: "#fb923c", color: "#111827" }} aria-label={`Visit ${name} (opens in a new tab)`}>
-                Visit website <ArrowUpRight size={18} aria-hidden="true" />
-              </a>
-            </article>
-          ))}
-        </div>
+      <main className="flex-1">
+        <section className="dos-network-hero" aria-labelledby="network-title">
+          <div className="dos-network-hero-image" aria-hidden="true" />
+          <div className="dos-network-hero-shade" aria-hidden="true" />
+          <div className="dos-network-hero-inner">
+            <div className="dos-network-eyebrow"><Sparkles size={17}/> DIGITAL ORIGIN STUDIOS <span className="dos-network-eyebrow-line"/></div>
+            <h1 id="network-title">Different ideas.<br/><em>One digital universe.</em></h1>
+            <p>Explore the platforms, products and digital experiences shaping our connected network. Thoughtful design meets ambitious technology.</p>
+            <a href="#explore-network" className="dos-network-primary">Explore our platforms <ArrowUpRight size={19}/></a>
+            <div className="dos-network-hero-foot"><span><Globe2 size={16}/> Connected digital ventures</span><span><ShieldCheck size={16}/> Built for what's next</span></div>
+          </div>
+        </section>
+
+        <section className="dos-network-work" id="explore-network" aria-labelledby="network-work-title">
+          <div className="dos-network-work-inner">
+            <div className="dos-network-section-heading">
+              <div><p className="dos-network-kicker"><span/> OUR ECOSYSTEM</p><h2 id="network-work-title">Explore the <em>network.</em></h2></div>
+              <p>Four distinct ventures. One commitment to creating better digital experiences.</p>
+            </div>
+            <div className="dos-network-grid">
+              {sites.map(({name,eyebrow,description,url,Icon,accent,number})=>(
+                <article key={name} className={`dos-network-card dos-network-card-${accent}`}>
+                  <div className="dos-network-card-top"><span className="dos-network-card-number">{number} / 04</span><span className="dos-network-card-mark"><Icon size={27} strokeWidth={1.8}/></span></div>
+                  <div className="dos-network-card-content">
+                    <p className="dos-network-card-eyebrow">{eyebrow}</p>
+                    <h3>{name}</h3>
+                    <p className="dos-network-card-description">{description}</p>
+                    <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Explore ${name} (opens in a new tab)`}>Explore platform <span><ArrowUpRight size={19}/></span></a>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+        <section className="dos-network-outro">
+          <div><Layers3 size={28}/><div><h2>Built with purpose. Designed to stand apart.</h2><p>Discover what's possible across the Bazunk digital ecosystem.</p></div></div>
+          <a href="https://digitaloriginstudios.bazunk.com" target="_blank" rel="noopener noreferrer">Discover Digital Origin Studios <ArrowUpRight size={19}/></a>
+        </section>
       </main>
       <Footer />
     </div>
