@@ -367,6 +367,8 @@ function ProductDrawer({
   } : { ...EMPTY_FORM });
 
   const [saving, setSaving] = useState(false);
+  const editorScrollRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow="hidden";return ()=>{document.body.style.overflow=previous;};},[]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [section,setSection] = useState("details");
@@ -405,13 +407,14 @@ function ProductDrawer({
   }
   function removeVariant(i: number) { set("variants", form.variants.filter((_, idx) => idx !== i)); }
 
-  async function save() {
+  async function save(publish=false) {
     if (!form.title.trim()) { setError("Title is required"); return; }
     if(uploading)return;
     setSaving(true);
     setError("");
     const body = {
       ...form,
+      status: publish ? "approved" : form.status,
       price: parseFloat(form.price) || 0,
       inventory: parseInt(form.inventory) || 0,
       category_id: form.category_id || null,
@@ -477,7 +480,7 @@ function ProductDrawer({
           border:1px solid #566c87 !important;
         }
       `}</style>
-      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[9999] flex h-[min(90dvh,780px)] w-[min(94vw,900px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
+      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[9999] flex h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
           <div>
@@ -491,10 +494,10 @@ function ProductDrawer({
 
         <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-600 bg-slate-100 px-4 py-3 dark:bg-[#172943]">
           {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
-            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
+            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);const target=document.getElementById("product-editor-"+t.id);const scroller=editorScrollRef.current;if(target&&scroller)scroller.scrollTo({top:target.offsetTop-scroller.offsetTop,behavior:"smooth"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
         </nav>
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
+        <div ref={editorScrollRef} className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -568,7 +571,8 @@ function ProductDrawer({
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Status</span>
                 <select value={form.status} onChange={e => set("status", e.target.value)}
                   className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 bg-white">
-                  <option value="pending">Pending</option>
+                  <option value="pending">Draft / Pending</option>
+                  <option value="draft">Draft</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                   <option value="inactive">Hidden</option>
@@ -738,7 +742,8 @@ function ProductDrawer({
           <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 !bg-[#334155] py-2.5 text-sm font-black !text-white hover:!bg-[#475569] transition-colors">
             Cancel
           </button>
-          <button onClick={save} disabled={saving||uploading}
+          {isEdit&&["pending","draft","rejected","inactive"].includes(form.status)&&<button type="button" onClick={()=>void save(true)} disabled={saving||uploading} className="flex-1 rounded-xl border-2 border-emerald-300 !bg-emerald-700 px-3 py-2.5 text-sm font-black !text-white hover:!bg-emerald-600 disabled:opacity-50">Publish Listing</button>}
+          <button onClick={()=>void save(false)} disabled={saving||uploading}
             data-editor-tone="primary" className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
