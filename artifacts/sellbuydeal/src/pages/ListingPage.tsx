@@ -6,7 +6,7 @@ import { TrustProofBuyerPanel } from "@/components/listing/TrustProofBuyerPanel"
 import { useFeature } from "@/components/FeatureGate";
 import { useRawSettings } from "@/context/SiteSettingsContext";
 import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
-import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection, ListingRelatedSection } from "@/components/listing/ListingSections";
+import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection } from "@/components/listing/ListingSections";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
@@ -585,6 +585,9 @@ export function ListingPage() {
                       </p>
                     </div>
 
+                    {/* Promotional related listings directly beneath the description. */}
+                    <RelatedListingsBox category={product.category} excludeId={product.id} />
+
                     {/* Specifications */}
                     {specs.length > 0 && (
                       <div>
@@ -843,11 +846,7 @@ export function ListingPage() {
               );
             })()}
 
-            {/* Related listings sidebar — randomly rotated featured listings in same category */}
-            <ListingRelatedSection><RelatedListingsBox
-              category={product.category}
-              excludeId={product.id}
-            /></ListingRelatedSection>
+
           </div>
         </div>
 
