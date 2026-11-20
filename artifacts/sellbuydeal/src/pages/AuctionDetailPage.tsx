@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 
 type Bid = { id: string; bidder_name: string; bidder_email: string; amount: string; created_at: string };
 type Auction = {
@@ -15,7 +16,7 @@ type Auction = {
   category: string | null; condition: string; seller_name: string; seller_email: string;
   starting_bid: string; current_bid: string | null; bid_count: number;
   bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; extend_enabled?: boolean; end_time: string;
-  status: string; winner_name: string | null; winner_email: string | null;
+  marketplace_region?: "uk" | "us"; status: string; winner_name: string | null; winner_email: string | null;
   winner_bid: string | null; created_at: string; bids: Bid[];
 };
 
@@ -73,11 +74,16 @@ export function AuctionDetailPage() {
   const [, setLocation] = useLocation();
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState("");
   const [bidding, setBidding] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [canPay, setCanPay] = useState(false);
   const [bidError, setBidError] = useState<string | null>(null);
   const [bidSuccess, setBidSuccess] = useState(false);
 
@@ -96,6 +102,33 @@ export function AuctionDetailPage() {
       if (!silent) setLoading(false);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!auction || auction.status !== "ended" || !user) { setCanPay(false); return; }
+    void (async () => { try { const token=await getToken(); if (!token) return; const r=await fetch(`/api/auctions/${id}/payment-eligibility`,{headers:{Authorization:`Bearer ${token}`}}); const d=await r.json(); setCanPay(r.ok && d.eligible === true); } catch { setCanPay(false); } })();
+  },[auction?.status,auction?.id,user,getToken,id]);
+
+  async function payForAuction() {
+    setPaying(true); setPaymentError(null);
+    try { const token=await getToken(); if(!token) throw new Error("Sign in to pay.");
+      const response=await fetch("/api/stripe/checkout-auction",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({auctionId:id})});
+      const data=await response.json(); if(!response.ok || !data.url) throw new Error(data.error || "Checkout unavailable");
+      window.location.assign(data.url);
+    } catch(e) { setPaymentError(e instanceof Error ? e.message : "Unable to start payment"); setPaying(false); }
+  }
+
+  useEffect(() => {
+    const sessionId = new URLSearchParams(window.location.search).get("session_id");
+    if (!sessionId || !user) return;
+    void (async () => {
+      try { const token=await getToken(); if(!token) return;
+        const response=await fetch("/api/stripe/confirm-auction-payment",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({sessionId})});
+        const data=await response.json(); if(!response.ok) throw new Error(data.error || "Payment confirmation pending");
+        setPaymentConfirmed(true); setCanPay(false);
+        window.history.replaceState(null,"",window.location.pathname);
+      } catch(e) {setPaymentError(e instanceof Error ? e.message : "Payment confirmation pending");}
+    })();
+  },[user,getToken]);
 
   // Initial load
   useEffect(() => { load(); }, [load]);
@@ -117,10 +150,12 @@ export function AuctionDetailPage() {
     setBidding(true);
     setBidError(null);
     try {
+      const token = await getToken();
+      if (!token) { setBidError("Please sign in again to place a bid."); return; }
       const res = await fetch(`/api/auctions/${id}/bid`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bidderEmail: user.email, bidderName: user.name ?? user.username, amount }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bidderName: user.name ?? user.username, amount }),
       });
       const data = await res.json();
       if (!res.ok) { setBidError(data.error ?? "Bid failed"); return; }
@@ -224,6 +259,9 @@ export function AuctionDetailPage() {
               </div>
             </div>
 
+            {paymentConfirmed && <div className="rounded-xl border border-green-200 bg-green-50 p-4 mb-4 font-semibold text-green-900">Payment confirmed. Your auction order is now in your Orders dashboard.</div>}
+            {canPay && !paymentConfirmed && <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 mb-4"><p className="font-bold text-indigo-900">You won this auction</p><p className="text-sm text-indigo-700 mb-3">Complete your secure payment to confirm your order.</p><button type="button" onClick={payForAuction} disabled={paying} className="rounded-lg bg-indigo-600 text-white px-5 py-2 font-bold disabled:opacity-50">{paying ? "Opening checkout…" : "Pay for winning auction"}</button>{paymentError && <p className="text-red-600 text-sm mt-2">{paymentError}</p>}</div>}
+            {auction.marketplace_region === "us" && <p className="text-xs text-gray-500 mb-3">Bids are settled in GBP; displayed USD estimates depend on the current exchange rate.</p>}
             {/* Ended / winner */}
             {auction.status === "ended" && auction.winner_name && (
               <div className="bg-amber-50 rounded-2xl border border-amber-200 p-5 flex items-center gap-4">

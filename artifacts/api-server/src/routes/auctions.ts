@@ -1,8 +1,10 @@
+import { minimumBid, canAcceptBid } from "../lib/auctionRules.js";
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { randomUUID } from "crypto";
 import {
   sendNewBidNotification,
@@ -25,7 +27,11 @@ const EXTEND_WINDOW_MS = 2 * 60 * 1000;
  * one exists and (once there are bids) whether it has been met.
  */
 function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
-  const { reserve_price, ...rest } = a;
+  const {
+    reserve_price,
+    winner_email,
+    ...rest
+  } = a;
   const hasReserve = reserve_price !== null && reserve_price !== undefined && reserve_price !== "";
   const current = rest["current_bid"] ? parseFloat(rest["current_bid"] as string) : null;
   return {
@@ -34,6 +40,49 @@ function publicAuction(a: Record<string, unknown>): Record<string, unknown> {
     reserve_met: hasReserve ? current !== null && current >= parseFloat(reserve_price as string) : null,
   };
 }
+
+/** Public auction detail never reveals bidder email addresses. */
+function publicBid(bid: Record<string, unknown>): Record<string, unknown> {
+  const { bidder_email, ...rest } = bid;
+  return rest;
+}
+
+/** Finalize an expired auction once, regardless of how many workers check it. */
+async function finalizeAuction(id: string): Promise<void> {
+  const result = await db.execute(sql`
+    UPDATE auctions
+    SET status = 'ended',
+        winner_email = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_email END,
+        winner_name = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_name END,
+        winner_bid = CASE WHEN reserve_price IS NOT NULL AND (winner_bid IS NULL OR winner_bid < reserve_price) THEN NULL ELSE winner_bid END,
+        updated_at = NOW()
+    WHERE id = ${id} AND status = 'active' AND end_time <= NOW()
+    RETURNING *
+  `);
+  if (!result.rows.length) return;
+  const a = result.rows[0] as Record<string, unknown>;
+  const winningBid = a["winner_bid"] == null ? null : Number(a["winner_bid"]);
+  const sellerEmail = String(a["seller_email"]);
+  const title = String(a["title"]);
+  if (winningBid !== null && a["winner_email"]) {
+    const winnerEmail = String(a["winner_email"]);
+    void sendSystemMessage(winnerEmail, { category: "Auctions", subject: `You won "${title}"!`, body: `Your winning bid was GBP £${winningBid.toFixed(2)}.` });
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" has ended`, body: `Winning bid: GBP £${winningBid.toFixed(2)}.` });
+    void sendAuctionWonNotification({ winnerEmail, winnerName: String(a["winner_name"] ?? winnerEmail), auctionTitle: title, auctionId: id, winningBid, sellerName: String(a["seller_name"]) });
+    void sendAuctionEndedSellerNotification({ sellerEmail, sellerName: String(a["seller_name"]), auctionTitle: title, auctionId: id, winnerName: String(a["winner_name"] ?? winnerEmail), winnerEmail, winningBid });
+  } else {
+    void sendSystemMessage(sellerEmail, { category: "Auctions", subject: `Your auction "${title}" ended without a sale`, body: "No qualifying winning bid was received." });
+  }
+}
+
+/** Periodic closeout works even if nobody opens the auction page. */
+const auctionCloseTimer = setInterval(() => {
+  void (async () => {
+    const expired = await db.execute(sql`SELECT id FROM auctions WHERE status = 'active' AND end_time <= NOW() ORDER BY end_time LIMIT 50`);
+    for (const row of expired.rows) await finalizeAuction(String(row["id"]));
+  })().catch(err => console.error("Auction closeout failed", err));
+}, 60_000);
+auctionCloseTimer.unref();
 
 const VALID_STATUSES = ["active", "ended", "cancelled"];
 
@@ -58,13 +107,16 @@ router.get("/auctions", async (req, res) => {
 });
 
 router.get("/auctions/my-bids", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`
-    SELECT DISTINCT a.*, b.amount AS my_latest_bid
+    SELECT a.*, b.amount AS my_latest_bid
     FROM auctions a
-    JOIN bids b ON b.auction_id = a.id
-    WHERE b.bidder_email = ${email}
+    JOIN LATERAL (
+      SELECT amount FROM bids
+      WHERE auction_id = a.id AND LOWER(bidder_email) = LOWER(${email})
+      ORDER BY created_at DESC, id DESC LIMIT 1
+    ) b ON TRUE
     ORDER BY a.end_time DESC
     LIMIT 50
   `);
@@ -72,87 +124,60 @@ router.get("/auctions/my-bids", async (req, res) => {
 });
 
 router.get("/auctions/my-listings", async (req, res) => {
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`SELECT * FROM auctions WHERE seller_email = ${email} ORDER BY created_at DESC LIMIT 50`);
   res.json(rows.rows);
+});
+
+router.get("/auctions/:id/payment-eligibility", async (req,res) => {
+  const email = await authenticatedSellerEmail(req,res);
+  if (!email) return;
+  const id = String(req.params.id);
+  const result = await db.execute(sql`SELECT status,winner_email,winner_bid FROM auctions WHERE id=${id}`);
+  const a = result.rows[0] as Record<string,unknown> | undefined;
+  if (!a) { res.status(404).json({error:"Auction not found"}); return; }
+  const eligible = a.status === "ended" && !!a.winner_bid && String(a.winner_email ?? "").toLowerCase() === email;
+  const orders = eligible ? await db.execute(sql`SELECT id FROM orders WHERE notes=${"auction:"+id} LIMIT 1`) : null;
+  res.setHeader("Cache-Control","no-store");
+  res.json({eligible:eligible && !orders?.rows.length});
 });
 
 router.get("/auctions/:id", async (req, res) => {
   const { id } = req.params;
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
-  const auction = auctionRes.rows[0];
-  // Auto-end if past end_time
-  const a = auction as Record<string, unknown>;
-  if (a["status"] === "active" && new Date(a["end_time"] as string) < new Date()) {
-    const reserve = a["reserve_price"] ? parseFloat(a["reserve_price"] as string) : null;
-    const topBid = a["winner_bid"] ? parseFloat(a["winner_bid"] as string) : null;
-    const reserveMissed = reserve !== null && (topBid === null || topBid < reserve);
-    if (reserveMissed) {
-      // Highest bid didn't reach the hidden reserve: no sale, nobody wins.
-      const bidder = a["winner_email"] as string | null;
-      await db.execute(sql`
-        UPDATE auctions SET status = 'ended', winner_email = NULL, winner_name = NULL, winner_bid = NULL, updated_at = NOW() WHERE id = ${id}
-      `);
-      a["status"] = "ended"; a["winner_email"] = null; a["winner_name"] = null; a["winner_bid"] = null;
-      if (topBid !== null) {
-        void sendSystemMessage(a["seller_email"] as string, {
-          category: "Auctions",
-          subject: `Auction ended — reserve not met`,
-          body: `Your auction "${a["title"]}" ended with a top bid of £${topBid.toFixed(2)}, which didn't reach your reserve price, so it hasn't sold. You can relist it any time.`,
-        });
-        if (bidder) {
-          void sendSystemMessage(bidder, {
-            category: "Auctions",
-            subject: `Auction ended — reserve not met`,
-            body: `The auction "${a["title"]}" ended without meeting the seller's reserve price, so there is no winner this time.`,
-          });
-        }
-      }
-    } else {
-      await db.execute(sql`UPDATE auctions SET status = 'ended', updated_at = NOW() WHERE id = ${id}`);
-      a["status"] = "ended";
-    }
-    // Send winner/seller end notifications (fire-and-forget)
-    if (!reserveMissed && a["winner_email"] && a["winner_name"] && a["winner_bid"]) {
-      void sendSystemMessage(a["winner_email"] as string,{category:"Auctions",subject:`You won "${a["title"]}"!`,body:`Congratulations — your winning bid was £${parseFloat(a["winner_bid"] as string).toFixed(2)}.`});
-      void sendSystemMessage(a["seller_email"] as string,{category:"Auctions",subject:`Your auction "${a["title"]}" has ended`,body:`Winner: ${a["winner_name"]}. Winning bid: £${parseFloat(a["winner_bid"] as string).toFixed(2)}.`});
-      void sendAuctionWonNotification({
-        winnerEmail: a["winner_email"] as string,
-        winnerName: a["winner_name"] as string,
-        auctionTitle: a["title"] as string,
-        auctionId: id,
-        winningBid: parseFloat(a["winner_bid"] as string),
-        sellerName: a["seller_name"] as string,
-      });
-      void sendAuctionEndedSellerNotification({
-        sellerEmail: a["seller_email"] as string,
-        sellerName: a["seller_name"] as string,
-        auctionTitle: a["title"] as string,
-        auctionId: id,
-        winnerName: a["winner_name"] as string,
-        winnerEmail: a["winner_email"] as string,
-        winningBid: parseFloat(a["winner_bid"] as string),
-      });
-    }
-  }
+  await finalizeAuction(id);
+  const refreshed = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
+  const a = refreshed.rows[0] as Record<string, unknown>;
   const bidsRes = await db.execute(sql`SELECT * FROM bids WHERE auction_id = ${id} ORDER BY created_at DESC LIMIT 30`);
-  res.json({ ...publicAuction(a), bids: bidsRes.rows });
+  res.json({ ...publicAuction(a), bids: bidsRes.rows.map(b => publicBid(b as Record<string, unknown>)) });
 });
 
 router.post("/auctions", async (req, res) => {
+  const authenticatedEmail = await authenticatedSellerEmail(req, res);
+  if (!authenticatedEmail) return;
   const body = req.body as Record<string, unknown>;
   const marketplaceRegion = body.marketplaceRegion;
   if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   const { title, description, category, condition, sellerEmail, sellerName, startingBid, reservePrice, bidIncrement, endTime } = body as Record<string, string>;
+  if (typeof sellerEmail !== "string" || sellerEmail.trim().toLowerCase() !== authenticatedEmail) {
+    res.status(403).json({ error: "Seller account mismatch" }); return;
+  }
   const images = (body["images"] as string[]) ?? [];
   if (!title || !sellerEmail || !sellerName || !startingBid || !endTime) {
     res.status(400).json({ error: "title, sellerEmail, sellerName, startingBid, endTime are required" });
     return;
   }
+  const startAmount = Number(startingBid);
+  const incrementAmount = bidIncrement == null || bidIncrement === "" ? 1 : Number(bidIncrement);
+  const reserveAmount = reservePrice == null || reservePrice === "" ? null : Number(reservePrice);
+  const endDate = new Date(endTime);
+  if (!Number.isFinite(startAmount) || startAmount <= 0 || !Number.isFinite(incrementAmount) || incrementAmount <= 0 || (reserveAmount !== null && (!Number.isFinite(reserveAmount) || reserveAmount <= 0)) || !Number.isFinite(endDate.getTime()) || endDate.getTime() <= Date.now()) {
+    res.status(400).json({ error: "Enter positive starting bid, increment and reserve values, and a future end time" }); return;
+  }
   const wantsExtension = body["extendEnabled"] === true || body["extendEnabled"] === "true";
-  const wantsReserve = !!reservePrice && parseFloat(reservePrice) > 0;
+  const wantsReserve = reserveAmount !== null;
 
   // Optional paid add-ons (prices and availability are set in Admin → Promotions)
   const reserveCfg = await getPromoConfig("reserve-auction");
@@ -176,9 +201,9 @@ router.post("/auctions", async (req, res) => {
     VALUES (
       ${id}, ${title}, ${description ?? null}, ${JSON.stringify(images)},
       ${category ?? null}, ${condition ?? "used"}, ${sellerEmail}, ${sellerName},
-      ${parseFloat(startingBid)},
-      ${wantsReserve ? parseFloat(reservePrice) : null},
-      ${bidIncrement ? parseFloat(bidIncrement) : 1.0},
+      ${startAmount},
+      ${reserveAmount},
+      ${incrementAmount},
       ${endTime}, ${wantsExtension}, 'active', ${marketplaceRegion}, NOW(), NOW()
     )
   `);
@@ -197,57 +222,67 @@ router.post("/auctions", async (req, res) => {
 });
 
 router.post("/auctions/:id/bid", async (req, res) => {
+  const bidderEmail = await authenticatedSellerEmail(req, res);
+  if (!bidderEmail) return;
   const { id } = req.params;
-  const { bidderEmail, bidderName, amount } = req.body as Record<string, string>;
-  if (!bidderEmail || !bidderName || !amount) {
-    res.status(400).json({ error: "bidderEmail, bidderName, amount are required" });
+  const { bidderName, amount } = req.body as Record<string, string>;
+  if (!bidderName || !amount) {
+    res.status(400).json({ error: "bidderName and amount are required" });
     return;
   }
-  const bidAmount = parseFloat(amount);
-  const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
-  if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
-  const auction = auctionRes.rows[0] as Record<string, unknown>;
-  if (auction["status"] !== "active") { res.status(400).json({ error: "Auction is not active" }); return; }
-  if (new Date(auction["end_time"] as string) < new Date()) { res.status(400).json({ error: "Auction has ended" }); return; }
-  if (auction["seller_email"] === bidderEmail) { res.status(400).json({ error: "You cannot bid on your own auction" }); return; }
-  const currentBid = auction["current_bid"] ? parseFloat(auction["current_bid"] as string) : null;
-  const startingBid = parseFloat(auction["starting_bid"] as string);
-  const increment = parseFloat(auction["bid_increment"] as string);
-  const minBid = currentBid !== null ? currentBid + increment : startingBid;
-  if (bidAmount < minBid) {
-    res.status(400).json({ error: `Minimum bid is £${minBid.toFixed(2)}`, minBid });
-    return;
-  }
-  const prevWinnerEmail = auction["winner_email"] as string | null ?? null;
-  const prevWinnerName = auction["winner_name"] as string | null ?? null;
+  const bidAmount = Number(amount);
+  if (!Number.isFinite(bidAmount) || bidAmount <= 0) { res.status(400).json({ error: "Enter a valid positive bid" }); return; }
   const bidId = `BID-${randomUUID().slice(0, 8).toUpperCase()}`;
-  await db.execute(sql`
-    INSERT INTO bids (id, auction_id, bidder_email, bidder_name, amount, created_at)
-    VALUES (${bidId}, ${id}, ${bidderEmail}, ${bidderName}, ${bidAmount}, NOW())
-  `);
-  await db.execute(sql`
-    UPDATE auctions
-    SET current_bid = ${bidAmount}, bid_count = bid_count + 1,
-        winner_email = ${bidderEmail}, winner_name = ${bidderName}, winner_bid = ${bidAmount},
-        updated_at = NOW()
-    WHERE id = ${id}
-  `);
-  // Auction Extensions: a bid in the final minutes pushes the end time out
-  let extended = false;
-  let newEndTime: string | null = null;
-  if (auction["extend_enabled"] === true) {
-    const endMs = new Date(auction["end_time"] as string).getTime();
-    if (endMs - Date.now() <= EXTEND_WINDOW_MS) {
-      const target = new Date(Date.now() + EXTEND_WINDOW_MS);
-      await db.execute(sql`UPDATE auctions SET end_time = ${target.toISOString()} WHERE id = ${id} AND end_time < ${target.toISOString()}`);
-      extended = true;
-      newEndTime = target.toISOString();
+  // Lock the auction row for the entire read/validate/insert/update sequence.
+  // Competing bids wait for this transaction, then see the updated minimum.
+  const outcome = await db.transaction(async (tx) => {
+    const auctionRes = await tx.execute(sql`SELECT * FROM auctions WHERE id = ${id} FOR UPDATE`);
+    if (auctionRes.rows.length === 0) return { error: "Auction not found", status: 404 } as const;
+    const auction = auctionRes.rows[0] as Record<string, unknown>;
+    if (auction["status"] !== "active") return { error: "Auction is not active", status: 400 } as const;
+    if (new Date(auction["end_time"] as string).getTime() <= Date.now()) return { error: "Auction has ended", status: 400 } as const;
+    if (String(auction["seller_email"]).toLowerCase() === bidderEmail) return { error: "You cannot bid on your own auction", status: 400 } as const;
+    const currentBid = auction["current_bid"] == null ? null : Number(auction["current_bid"]);
+    const increment = Number(auction["bid_increment"]);
+    const minBid = minimumBid(Number(auction["starting_bid"]), currentBid, increment);
+    if (!canAcceptBid({status:String(auction["status"]),endTime:new Date(auction["end_time"] as string).getTime(),now:Date.now(),seller:String(auction["seller_email"]),bidder:bidderEmail,amount:bidAmount,start:Number(auction["starting_bid"]),current:currentBid,increment})) return { error: `Minimum bid is GBP £${minBid.toFixed(2)}`, status: 400, minBid } as const;
+
+    const prevWinnerEmail = (auction["winner_email"] as string | null) ?? null;
+    const prevWinnerName = (auction["winner_name"] as string | null) ?? null;
+    await tx.execute(sql`
+      INSERT INTO bids (id, auction_id, bidder_email, bidder_name, amount, created_at)
+      VALUES (${bidId}, ${id}, ${bidderEmail}, ${bidderName}, ${bidAmount}, NOW())
+    `);
+    let extended = false;
+    let newEndTime: string | null = null;
+    if (auction["extend_enabled"] === true) {
+      const endMs = new Date(auction["end_time"] as string).getTime();
+      if (endMs - Date.now() <= EXTEND_WINDOW_MS) {
+        newEndTime = new Date(Date.now() + EXTEND_WINDOW_MS).toISOString();
+        extended = true;
+      }
     }
+    await tx.execute(sql`
+      UPDATE auctions SET current_bid = ${bidAmount}, bid_count = COALESCE(bid_count, 0) + 1,
+        winner_email = ${bidderEmail}, winner_name = ${bidderName}, winner_bid = ${bidAmount},
+        end_time = CASE WHEN ${newEndTime}::timestamptz IS NOT NULL
+          AND end_time < ${newEndTime}::timestamptz THEN ${newEndTime}::timestamptz ELSE end_time END,
+        updated_at = NOW()
+      WHERE id = ${id}
+    `);
+    return {
+      auction, prevWinnerEmail, prevWinnerName, extended, newEndTime,
+      newBidCount: Number(auction["bid_count"] ?? 0) + 1,
+      nextMinBid: bidAmount + increment,
+    };
+  });
+  if ("error" in outcome) {
+    res.status(outcome.status ?? 400).json({ error: outcome.error, ...("minBid" in outcome ? { minBid: outcome.minBid } : {}) });
+    return;
   }
-  const newBidCount = (auction["bid_count"] as number ?? 0) + 1;
-  const nextMinBid = bidAmount + increment;
+  const { auction, prevWinnerEmail, prevWinnerName, extended, newEndTime, newBidCount, nextMinBid } = outcome;
   // Notify seller by email and in-app inbox.
-  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
+  void sendSystemMessage(auction["seller_email"] as string,{category:"Auctions",subject:`New bid on "${auction["title"]}"`,body:`${bidderName} bid GBP £${bidAmount.toFixed(2)}. Open the auction to review the latest bid.`});
   void sendNewBidNotification({
     sellerEmail: auction["seller_email"] as string,
     sellerName: auction["seller_name"] as string,
@@ -273,13 +308,18 @@ router.post("/auctions/:id/bid", async (req, res) => {
 });
 
 router.patch("/auctions/:id/cancel", async (req, res) => {
+  const authenticatedEmail = await authenticatedSellerEmail(req, res);
+  if (!authenticatedEmail) return;
   const { id } = req.params;
   const { email } = req.body as Record<string, string>;
   const auctionRes = await db.execute(sql`SELECT * FROM auctions WHERE id = ${id}`);
   if (auctionRes.rows.length === 0) { res.status(404).json({ error: "Auction not found" }); return; }
   const auction = auctionRes.rows[0] as Record<string, unknown>;
-  if (auction["seller_email"] !== email) { res.status(403).json({ error: "Forbidden" }); return; }
-  await db.execute(sql`UPDATE auctions SET status = 'cancelled', updated_at = NOW() WHERE id = ${id}`);
+  if (typeof email !== "string" || email.trim().toLowerCase() !== authenticatedEmail || String(auction["seller_email"]).toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (auction["status"] !== "active") { res.status(409).json({ error: "Only active auctions can be cancelled" }); return; }
+  if (Number(auction["bid_count"] ?? 0) > 0) { res.status(409).json({ error: "Auctions with bids cannot be cancelled by the seller; contact support" }); return; }
+  const changed = await db.execute(sql`UPDATE auctions SET status = 'cancelled', updated_at = NOW() WHERE id = ${id} AND status = 'active' AND COALESCE(bid_count, 0) = 0 RETURNING id`);
+  if (!changed.rows.length) { res.status(409).json({ error: "Auction has changed and can no longer be cancelled" }); return; }
   res.json({ ok: true });
 });
 
