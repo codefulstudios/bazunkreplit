@@ -30,3 +30,61 @@
 .bz-studio-control.bz-studio-setup .text-gray-500,.bz-studio-control.bz-studio-setup .text-gray-400{color:#bdd1e7}
 .bz-studio-control.bz-studio-setup .border-gray-100,.bz-studio-control.bz-studio-setup .border-gray-200{border-color:#45627e}
 .bz-studio-control.bz-studio-setup button:disabled{opacity:.6;cursor:wait}
+
+
+/* Flash Sales-inspired Live hub: bright cards, compact panels and readable ink. */
+.bz-studio-flash-theme{color:#143354!important}
+.bz-studio-flash-theme .bz-studio-hero{position:relative;isolation:isolate;display:flex;justify-content:space-between;align-items:center;gap:25px;min-height:270px;padding:28px 32px;margin-bottom:17px;border-radius:24px;overflow:hidden;background:linear-gradient(112deg,#a9e2ff 0%,#90c8ff 30%,#b8b2fa 65%,#f28de0 100%);border:1px solid #b7cafa;box-shadow:0 9px 25px #3177b321}
+.bz-studio-flash-theme .bz-studio-hero:before{content:"";position:absolute;right:-80px;top:-125px;width:360px;height:340px;border-radius:50%;background:#e92dc440;z-index:-1}
+.bz-studio-flash-theme .bz-studio-hero:after{content:"";position:absolute;left:28%;bottom:-170px;width:310px;height:200px;border-radius:50%;background:#0bb2fc50;z-index:-1}
+.bz-studio-flash-theme .bz-studio-hero-copy{position:relative;z-index:2;max-width:640px}
+.bz-studio-flash-theme .bz-studio-hero-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 15px;background:#ff3566;color:#fff;font-weight:900;border-radius:12px;box-shadow:0 6px 15px #d52b6e36;font-size:13px;letter-spacing:.06em}
+.bz-studio-flash-theme .bz-studio-hero h1{font-size:clamp(27px,3.2vw,42px);font-weight:900;line-height:1.14;margin:14px 0 12px;color:#12375a!important}
+.bz-studio-flash-theme .bz-studio-hero h1 em{font-style:normal;color:#f15e11}
+.bz-studio-flash-theme .bz-studio-hero p{font-size:15px;line-height:1.5;color:#214a6e!important;max-width:520px}
+.bz-studio-flash-theme .bz-studio-hero-actions{display:flex;flex-wrap:wrap;gap:11px;margin-top:18px}
+.bz-studio-flash-theme .bz-studio-hero-secondary{display:inline-flex;align-items:center;gap:8px;background:#fff!important;border:2px solid #0b7add;color:#0a4d88!important;padding:10px 15px;border-radius:10px;font-size:13px;font-weight:900}
+.bz-studio-flash-theme .bz-studio-hero-art{width:215px;min-width:175px;height:190px;position:relative;display:grid;place-items:center}
+.bz-studio-flash-theme .bz-studio-hero-orbit{display:grid;place-items:center;width:155px;height:155px;border-radius:30px;transform:rotate(-12deg);background:linear-gradient(140deg,#ffb728,#ff7a14);border:5px solid #ffdf7a;box-shadow:0 18px 25px #7a42804a;color:#0a3860}
+.bz-studio-flash-theme .bz-studio-hero-orbit svg{transform:rotate(12deg)}
+.bz-studio-flash-theme .bz-studio-hero-spark{position:absolute;font-size:28px;color:#ffef58}.bz-studio-flash-theme .bz-studio-hero-spark.one{top:5px;left:0}.bz-studio-flash-theme .bz-studio-hero-spark.two{right:0;bottom:4px}
+.bz-studio-flash-theme .bz-studio-hero-live{position:absolute;right:-4px;top:12px;padding:7px 12px;background:#fa3161;color:#fff;border-radius:999px;font-size:12px;font-weight:900;transform:rotate(9deg)}
+.bz-studio-flash-theme .bz-studio-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 19px}
+.bz-studio-flash-theme .bz-studio-stat{display:grid;grid-template-columns:40px 1fr;column-gap:10px;align-items:center;padding:16px;border-radius:15px;color:#fff;box-shadow:0 6px 14px #1d4b8421;min-height:98px}
+.bz-studio-flash-theme .bz-studio-stat svg{grid-row:1/4;background:#ffffff2e;border-radius:12px;padding:8px;width:40px;height:40px}
+.bz-studio-flash-theme .bz-studio-stat strong{font-size:28px;line-height:1;font-weight:900;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-stat span{font-size:13px;font-weight:800;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-stat small{font-size:11px;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-stat.orange{background:linear-gradient(120deg,#ff9510,#f36b00)}
+.bz-studio-flash-theme .bz-studio-stat.blue{background:linear-gradient(120deg,#168fff,#0651cb)}
+.bz-studio-flash-theme .bz-studio-stat.green{background:linear-gradient(120deg,#00b998,#00816a)}
+.bz-studio-flash-theme .bz-studio-stat.pink{background:linear-gradient(120deg,#db48d9,#8e28d7)}
+.bz-studio-flash-theme .bz-studio-main{gap:12px}
+.bz-studio-flash-theme .bz-studio-side,.bz-studio-flash-theme .bz-studio-preview,.bz-studio-flash-theme .bz-studio-shop,.bz-studio-flash-theme .bz-studio-chat{background:linear-gradient(155deg,#fff,#eaf6ff)!important;border:2px solid #b9d9f3!important;box-shadow:0 5px 18px #1b64a018!important;color:#173654!important}
+.bz-studio-flash-theme .bz-studio-side h2,.bz-studio-flash-theme .bz-studio-chat h3,.bz-studio-flash-theme .bz-studio-shop h3,.bz-studio-flash-theme .bz-studio-preview h2{color:#153c63!important}
+.bz-studio-flash-theme .bz-studio-nav{color:#17476d!important;border:1px solid transparent}
+.bz-studio-flash-theme .bz-studio-nav:hover,.bz-studio-flash-theme .bz-studio-nav.active{background:linear-gradient(100deg,#077ce6,#0652c2)!important;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-go{background:linear-gradient(130deg,#fff2df,#ffe1c0)!important;border-color:#ffb96b!important;color:#173654!important}
+.bz-studio-flash-theme .bz-studio-go :is(p,strong){color:#173654!important}
+.bz-studio-flash-theme .bz-studio-preview-inner{color:#173654!important}
+.bz-studio-flash-theme .bz-studio-preview-inner :is(h2,p){color:#173654!important}
+.bz-studio-flash-theme .bz-studio-tabs{border-color:#bdd9f2!important;background:#e6f4ff!important}
+.bz-studio-flash-theme .bz-studio-tabs button{color:#17466e!important}
+.bz-studio-flash-theme .bz-studio-tabs button.selected{background:#086bdb!important;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-shop-content,.bz-studio-flash-theme .bz-studio-chat-content{color:#173654!important}
+.bz-studio-flash-theme .bz-studio-shop-content :is(p,h3),.bz-studio-flash-theme .bz-studio-chat-content p{color:#234b6d!important}
+.bz-studio-flash-theme .bz-studio-feature{background:linear-gradient(135deg,#fff,#eaf6ff)!important;border:1px solid #b8d9f4!important;color:#173654!important}
+.bz-studio-flash-theme .bz-studio-feature:nth-child(3n){background:linear-gradient(135deg,#fff5e9,#ffe8cf)!important;border-color:#ffd1a0!important}
+.bz-studio-flash-theme .bz-studio-feature:nth-child(3n+2){background:linear-gradient(135deg,#e9fbf4,#dff7f1)!important;border-color:#b0e5cf!important}
+.bz-studio-flash-theme .bz-studio-feature :is(b,small){color:#173654!important}
+.bz-studio-flash-theme .bz-studio-feature.primary{background:linear-gradient(120deg,#ff9510,#f36b00)!important;border-color:#ffad4b!important;color:#fff!important}
+.bz-studio-flash-theme .bz-studio-feature.primary :is(b,small){color:#fff!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel{background:linear-gradient(140deg,#fff,#eff8ff)!important;border:1px solid #b9d9f3!important;color:#173654!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel :is(h2,b,p,span){color:#173654!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel .bz-studio-schedule,.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel .bz-studio-money{background:#eaf6ff!important;border-color:#b8d9f3!important;color:#173654!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel :is(small,.text-slate-400){color:#456785!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-panel .bz-studio-input{background:#fff!important;color:#173654!important;border-color:#a6cbe9!important}
+.bz-studio-flash-theme .bz-studio-bottom .bz-studio-platforms a{background:#e9f5ff!important;color:#135387!important;border-color:#a9d3f4!important}
+.bz-studio-flash-theme .bz-studio-btn-orange,.bz-studio-flash-theme .bz-studio-btn-blue{color:#fff!important}
+@media(max-width:900px){.bz-studio-flash-theme .bz-studio-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bz-studio-flash-theme .bz-studio-hero{padding:22px}.bz-studio-flash-theme .bz-studio-hero-art{width:140px;min-width:125px}}
+@media(max-width:560px){.bz-studio-flash-theme .bz-studio-hero{padding:18px}.bz-studio-flash-theme .bz-studio-hero-art{display:none}.bz-studio-flash-theme .bz-studio-stats{gap:8px}.bz-studio-flash-theme .bz-studio-stat{padding:11px;grid-template-columns:30px 1fr}.bz-studio-flash-theme .bz-studio-stat svg{width:30px;height:30px;padding:5px}}
