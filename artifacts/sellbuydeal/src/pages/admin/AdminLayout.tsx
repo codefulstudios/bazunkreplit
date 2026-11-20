@@ -10,7 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 let savedAdminNavScrollTop = 0;
 let savedSidebarCollapsed = false;
 import { useLocation } from "wouter";
-import { FolderTree, Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays, Store, BarChart3, Palette } from "lucide-react";
+import { FolderTree, Radio, Camera, CircleDollarSign, LayoutDashboard, Users, Settings, CreditCard, ShoppingCart, LogOut, ShieldCheck, Package, Shield, RotateCcw, Gavel, Zap, LifeBuoy, Gift, Megaphone, List, ArrowDownToLine, FileText, Star, Activity, ScrollText, ServerCog, Flag, Mail, Menu, X, Sun, Moon, Search, ChevronDown, ChevronLeft, ChevronRight, Bell, CalendarDays, Store, BarChart3, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminGlobalSearch } from "@/components/admin/AdminGlobalSearch";
 import { AdminAlertsPopover } from "@/components/admin/AdminAlertsPopover";
