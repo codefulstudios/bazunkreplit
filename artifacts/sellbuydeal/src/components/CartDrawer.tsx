@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   X, Minus, Plus, Trash2, ShoppingBag, ArrowRight,
@@ -24,6 +24,8 @@ export function CartDrawer() {
   const { formatPrice } = useCurrency();
 
   const [protectionOpen, setProtectionOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
   const [quote, setQuote] = useState<{ buyerProtectionFee: number; delivery: number; total: number } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState(false);
@@ -42,11 +44,22 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!isOpen) return;
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !protectionOpen) closeCart(); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (protectionOpen) return;
+      if (event.key === "Escape") { event.preventDefault(); closeCart(); return; }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+      if (!focusable.length) { event.preventDefault(); drawerRef.current?.focus(); return; }
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !drawerRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !drawerRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    };
+    const focusFrame = requestAnimationFrame(() => drawerRef.current?.querySelector<HTMLElement>('[data-testid="button-close-cart"]')?.focus());
     document.addEventListener("keydown", onKeyDown);
-    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); };
+    return () => { cancelAnimationFrame(focusFrame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); returnFocusRef.current?.focus(); };
   }, [isOpen, closeCart, protectionOpen]);
 
   function goToCheckout() {
@@ -82,6 +95,8 @@ export function CartDrawer() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
             className="bz-cart-drawer flex flex-col shadow-2xl overflow-hidden"
+            ref={drawerRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label="Shopping cart"
