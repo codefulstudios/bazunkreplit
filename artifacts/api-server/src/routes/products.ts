@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { db } from "@workspace/db";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { logger } from "../lib/logger.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
@@ -21,6 +22,27 @@ router.get("/listing-media/:id", async (req,res)=>{
  } catch(err){logger.warn({err},"Listing media unavailable");res.status(404).end();}
 });
 router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
+ const {filename,dataUrl}=req.body||{};
+ if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
+ const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
+ if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
+ const bytes=Buffer.from(matched[2],"base64");
+ if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
+ const mime=matched[1];
+ const correct=mime==="image/png"&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||
+ mime==="image/jpeg"&&bytes[0]===255&&bytes[1]===216||
+ mime==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!correct){res.status(400).json({error:"Invalid image file"});return;}
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  const id=randomUUID();
+  await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
+ }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
+});
+router.post("/seller/products/media-upload",async(req,res)=>{
+ const sellerEmail=await authenticatedSellerEmail(req,res);
+ if(!sellerEmail)return;
  const {filename,dataUrl}=req.body||{};
  if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
  const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
