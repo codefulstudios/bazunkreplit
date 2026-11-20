@@ -72,6 +72,12 @@ router.post("/orders/:id/postage/checkout",async(req,res)=>{
   const amount=Math.round(Number(rate.amount)*100);
   if(!Number.isSafeInteger(amount)||amount<50||amount>100000){res.status(400).json({error:"Invalid postage amount"});return;}
   await table();
+  // Do not sell a second label while an earlier paid or pending label exists.
+  const prior=await db.execute(sql`SELECT id,status FROM shippo_label_orders
+    WHERE order_id=${String(order.id)} AND LOWER(seller_email)=LOWER(${seller})
+      AND status IN ('checkout','purchasing','purchased','needs_review')
+    ORDER BY created_at DESC LIMIT 1`);
+  if(prior.rows.length){res.status(409).json({error:"An existing postage checkout or label requires completion or review before another can be purchased.",labelOrderId:prior.rows[0].id,status:prior.rows[0].status});return;}
   const id=randomUUID();
   await db.execute(sql`INSERT INTO shippo_label_orders(id,order_id,seller_email,shipment_id,rate_id,amount_pence,status)
    VALUES(${id},${order.id},${seller},${shipmentId},${rateId},${amount},'quoted')`);
