@@ -75,3 +75,11 @@ test("Phase 4 seller bulk actions enforce ownership and expose auditable history
  assert.match(route,/batchId=randomUUID\(\)/);
  assert.match(route,/\/listings\/seller-tools\/history/);
 });
+
+test("Phase 5 wishlists are authenticated, deduplicated and removable",()=>{
+ const discovery=read(root+"routes/discovery.ts");
+ assert.match(discovery,/authenticatedSellerEmail\(req,res\)/);
+ assert.match(discovery,/PRIMARY KEY \(user_email,listing_id\)/);
+ assert.match(discovery,/ON CONFLICT\(user_email,listing_id\) DO NOTHING/);
+ assert.match(discovery,/router\.delete\("\/discovery\/wishlist\/:listingId"/);
+});
