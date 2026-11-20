@@ -93,7 +93,8 @@ function validate(source:string):Checked[]{
     if(row.quantity&&(!/^\d+$/.test(row.quantity)||Number(row.quantity)>100000))errors.push("Invalid quantity");
     if(row.currency&&!["USD","GBP","EUR"].includes(row.currency.toUpperCase()))errors.push("Currency must be USD, GBP or EUR");
     if(row.image_url&&!/^https:\/\//i.test(row.image_url)&&!/^[^/\\\\]+\.(jpg|jpeg|png|webp)$/i.test(row.image_url))errors.push("Image must be an HTTPS URL or image filename");
-    if(row.sku){if(skus.has(row.sku))errors.push("Duplicate SKU in CSV");skus.add(row.sku);}
+    const skuKey=row.sku.trim().toLowerCase();
+    if(skuKey){if(skus.has(skuKey))errors.push("Duplicate SKU in CSV");skus.add(skuKey);}
     for(const key of ["shipping_price","handling_charge"])if(row[key]&&(!/^\d+(\.\d{1,2})?$/.test(row[key])||Number(row[key])>100000))errors.push("Invalid "+key);
     return {row,line:i+2,errors};
   });
@@ -142,7 +143,16 @@ export default function BulkImportPage(){
             sku:r.sku||undefined,shipOrigin:r.ship_origin||"USA",shipZone:r.ship_zone||"international",
             shippingPrice:r.shipping_price||"0",handlingCharge:r.handling_charge||"0",tags:r.tags||undefined
           })});
-          if(!response.ok){const body=await response.json().catch(()=>({}));throw Error(body.message||body.error||"HTTP "+response.status);}
+          if(!response.ok){
+            const body=await response.json().catch(()=>({}));
+            if(response.status===409 && body.error==="duplicate_sku"){
+              const existing=Number(body.existingListingId);
+              messages.push(`Row ${item.line}: SKIPPED — seller SKU already exists${Number.isSafeInteger(existing)&&existing>0?` (#${existing})`:""}`);
+              setResults([...messages]);
+              continue;
+            }
+            throw Error(body.message||body.error||"HTTP "+response.status);
+          }
           messages.push("Row "+item.line+": created");
         }catch(e){messages.push("Row "+item.line+": FAILED — "+(e instanceof Error?e.message:"Unknown error"));}
         setResults([...messages]);
