@@ -76,6 +76,8 @@ export function AdminUsersPage() {
 
   // Add user modal
   const [addOpen, setAddOpen] = useState(false);
+  const [demoBusy,setDemoBusy]=useState(false);
+  const [demoMessage,setDemoMessage]=useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addName, setAddName] = useState("");
   const [addCredits, setAddCredits] = useState("");
@@ -220,6 +222,31 @@ export function AdminUsersPage() {
     } finally { setSyncing(false); }
   }
 
+  async function createDemoSellers() {
+    if (!window.confirm("Create 20 admin-managed demo seller profiles? These are fictional sellers without logins or verification.")) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch("/api/admin/users/demo-sellers/bulk",{method:"POST",body:JSON.stringify({confirm:"CREATE_20_DEMO_SELLERS"})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Could not create demo sellers");
+      setDemoMessage(`Created ${data.created?.length??20} demo sellers. Search demo-seller- to find them.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
+  }
+  async function deleteDemoSeller(user: User) {
+    if (!window.confirm(`Permanently delete ${user.name||user.email} AND all its listings? This cannot be undone. Deletion is blocked if orders exist.`)) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch(`/api/admin/users/demo-sellers/${encodeURIComponent(user.email)}/with-listings`,{method:"DELETE",body:JSON.stringify({confirm:user.email})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Deletion failed");
+      setDemoMessage(`Deleted ${user.email} and ${data.deletedListings} listings.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
+  }
+
   async function saveNewUser() {
     setAddSaving(true); setAddError("");
     try {
@@ -294,6 +321,8 @@ export function AdminUsersPage() {
     <AdminLayout>
       <AdminManagementHeader title="Customers" description="Manage marketplace accounts, seller access, credits and customer activity." meta={<span>{total.toLocaleString("en-GB")} matching accounts</span>} actions={<>
         <button type="button" onClick={syncUsers} disabled={syncing} title="Synchronise users from Clerk and marketplace activity" className="wp-action wp-action-secondary">{syncing?<Loader2 className="h-4 w-4 animate-spin"/>:<Download className="h-4 w-4"/>}Sync users</button>
+        <button type="button" onClick={createDemoSellers} disabled={demoBusy} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/> {demoBusy?"Working…":"Create 20 demo sellers"}</button>
+        
         <button type="button" onClick={()=>{setAddOpen(true);setAddError("")}} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/>Add customer</button>
         <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-secondary" aria-label="Refresh customers"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/></button>
       </>}/>
@@ -416,6 +445,7 @@ export function AdminUsersPage() {
                           <button type="button" className="admin-users-action" aria-expanded={expandedEmail===u.email} onClick={()=>toggleMilestones(u.email)}>
                             <Trophy size={14}/> Milestones
                           </button>
+                          {/^demo-seller-[a-f0-9]{8}-\d{2}@example\.com$/.test(u.email) && <button type="button" disabled={demoBusy} onClick={()=>deleteDemoSeller(u)} className="admin-users-action admin-users-danger">Delete demo + listings</button>}
                           <button type="button" onClick={()=>setDeleteUser(u)} className="admin-users-action admin-users-danger">
                             <Trash2 size={14}/> Delete
                           </button>
@@ -511,6 +541,7 @@ export function AdminUsersPage() {
           </table>
       </div>
 
+      {demoMessage && <div role="status" className="mb-4 rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm font-semibold text-gray-900">{demoMessage}</div>}
       {/* ── Add User Modal ── */}
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setAddOpen(false)}>
