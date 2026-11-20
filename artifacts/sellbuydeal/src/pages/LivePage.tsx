@@ -38,7 +38,7 @@ function PlatformBadge({ platform }: { platform: string }) {
   );
 }
 
-function LiveHubCreatorSection({live,upcoming}:{live:Array<{id:string;title:string;viewerCount?:number;productIds:string[]}>;upcoming:Array<{id:string;title:string}>}){
+function LiveHubCreatorSection({live,upcoming}:{live:Array<{id:string;title:string;viewerCount?:number;productIds:number[]}>;upcoming:Array<{id:string;title:string}>}){
   const {user}=useUser();const {getToken}=useAuth();
   const [schedules,setSchedules]=useState<{id:number;title:string;scheduledAt:string;sellerEmail:string}[]>([]);
   const [notifications,setNotifications]=useState<{id:number;content:string;createdAt:string}[]>([]);
@@ -641,7 +641,7 @@ export function LivePage() {
                   <span className="text-white text-xs font-black uppercase tracking-widest flex-1">
                     Now Featured
                   </span>
-                  {false && featuredItem.flashDeal && (
+                  {false && featuredItem?.flashDeal && (
                     <span className="text-[10px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full animate-pulse">
                       FLASH DEAL
                     </span>
@@ -661,7 +661,7 @@ export function LivePage() {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                    {false && featuredItem.discount && (
+                    {false && featuredItem?.discount && (
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full shadow-lg">
                         -{featuredItem.discount}% OFF
                       </div>
