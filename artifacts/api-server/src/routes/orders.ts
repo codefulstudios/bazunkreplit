@@ -122,7 +122,11 @@ router.post("/orders/:id/tracking/refresh", async(req,res)=>{
   try{
     const track:any=await getTracking(String(o.carrier),String(o.tracking_number));
     const latest=track?.tracking_status||{}; const mapped=mapShippoStatus(latest.status);
-    const nextStatus=mapped==="delivered"?"delivered":(mapped==="shipped"&&!["delivered","out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
+    // A late carrier event must never reopen delivered orders or change cancelled/refunded orders.
+    if (["cancelled","refunded"].includes(String(o.status))) {
+      res.status(409).json({error:"Tracking cannot update a cancelled or refunded order"});return;
+    }
+    const nextStatus=String(o.status)==="delivered"?"delivered":mapped==="delivered"?"delivered":(mapped==="shipped"&&!["out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
     await db.execute(sql`UPDATE orders SET status=${nextStatus},tracking_status=${latest.status??null},
       tracking_eta=${track?.eta??null},estimated_delivery=COALESCE(${track?.eta??null},estimated_delivery),
       tracking_last_event=${latest.status_details??null},tracking_updated_at=NOW(),
