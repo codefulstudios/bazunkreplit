@@ -19,6 +19,20 @@ export function SellerListingBulkToolbar({ selectedIds, onFinished, onClear }:{
   const [condition,setCondition]=useState("");
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
+  const [historyOpen,setHistoryOpen]=useState(false);
+  const [history,setHistory]=useState<Array<{batch_id:string;listing_id:number;action:string;result:string;detail:string|null;created_at:string}>>([]);
+  const [historyError,setHistoryError]=useState("");
+  const [historyLoading,setHistoryLoading]=useState(false);
+  async function loadHistory(){
+    setHistoryLoading(true);setHistoryError("");
+    try {
+      const token=await getToken();if(!token)throw new Error("Please sign in");
+      const response=await fetch("/api/listings/seller-tools/history",{headers:{Authorization:`Bearer ${token}`}});
+      if(!response.ok)throw new Error("Could not load action history");
+      const data=await response.json();setHistory(Array.isArray(data)?data:[]);setHistoryOpen(true);
+    }catch(e){setHistoryError(e instanceof Error?e.message:"History unavailable");}
+    finally{setHistoryLoading(false);}
+  }
   const count=selectedIds.length;
   async function run(action:SellerToolAction){
     if(!count || busy)return;
@@ -85,6 +99,9 @@ export function SellerListingBulkToolbar({ selectedIds, onFinished, onClear }:{
       </label>
       <button type="button" disabled={!!busy} onClick={()=>void run("edit")} className="min-h-10 rounded-lg bg-orange-600 px-4 py-2 font-bold text-white hover:bg-orange-700 disabled:opacity-50">{busy==="edit"?"Saving…":"Apply edits"}</button>
     </div>}
+    <button type="button" onClick={()=>historyOpen?setHistoryOpen(false):void loadHistory()} disabled={historyLoading} aria-expanded={historyOpen} className={buttonClass}>{historyLoading?"Loading history…":historyOpen?"Hide bulk history":"View bulk action history"}</button>
+    {historyError&&<p role="alert" className="text-sm font-semibold text-red-700">{historyError}</p>}
+    {historyOpen&&<div className="max-h-64 overflow-auto rounded-xl border border-slate-200 bg-white p-3 text-slate-900" aria-label="Bulk action history"><h3 className="mb-2 font-bold">Recent bulk changes</h3>{history.length===0?<p className="text-sm text-slate-600">No recent bulk actions.</p>:<ul className="space-y-1 text-xs">{history.map((entry,i)=><li key={`${entry.batch_id}-${entry.listing_id}-${i}`} className="border-b border-slate-100 py-2"><span className="font-bold">#{entry.listing_id} · {entry.action} · {entry.result}</span><span className="ml-2 text-slate-600">{new Date(entry.created_at).toLocaleString()}</span>{entry.detail&&<p className="text-red-700">{entry.detail}</p>}</li>)}</ul>}</div>}
     {busy&&<p role="status" className="text-sm font-semibold text-blue-700 dark:text-blue-200">Processing selected listings…</p>}
     {message&&<p role="status" className="text-sm font-bold text-emerald-800 dark:text-emerald-200">{message}</p>}
     {error&&<p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-2 text-sm font-semibold text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-200">{error}</p>}
