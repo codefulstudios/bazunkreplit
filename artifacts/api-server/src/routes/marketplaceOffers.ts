@@ -20,9 +20,11 @@ export async function ensureMarketplaceOffers() {
       counter_price numeric(12,2),
       counter_message text,
       created_at timestamptz NOT NULL DEFAULT NOW(),
-      updated_at timestamptz NOT NULL DEFAULT NOW()
+      updated_at timestamptz NOT NULL DEFAULT NOW(),
+      expires_at timestamptz NOT NULL DEFAULT (NOW() + INTERVAL '7 days')
     )
   `);
+  await db.execute(sql`ALTER TABLE marketplace_offers ADD COLUMN IF NOT EXISTS expires_at timestamptz`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS marketplace_offers_buyer_idx ON marketplace_offers (LOWER(buyer_email),created_at DESC)`);
   await db.execute(sql`CREATE INDEX IF NOT EXISTS marketplace_offers_seller_idx ON marketplace_offers (LOWER(seller_email),created_at DESC)`);
 }
@@ -34,7 +36,7 @@ router.get("/offers", async (req, res) => {
     await ensureMarketplaceOffers();
     const r=await db.execute(sql`
       SELECT o.id, o.listing_id, o.buyer_email, o.seller_email, o.offer_price, o.listing_price,
-             o.message, o.status, o.counter_price, o.counter_message, o.created_at, o.updated_at,
+             o.message, o.status, o.counter_price, o.counter_message, o.created_at, o.updated_at, o.expires_at,
              l.title AS product_title, l.image AS product_image, l.public_id AS public_id,
              COALESCE(l.seller_username,l.seller_name,'Bazunk seller') AS seller_name
       FROM marketplace_offers o JOIN listings l ON l.id=o.listing_id
@@ -85,6 +87,7 @@ router.patch("/offers/:id", async(req,res)=>{
     const isBuyer=String(offer.buyer_email).toLowerCase()===email;
     if(!isSeller&&!isBuyer){res.status(403).json({error:"Not your offer"});return;}
     let status:string;
+    if(offer.expires_at && new Date(offer.expires_at).getTime() <= Date.now()) { res.status(409).json({error:"Offer has expired"}); return; }
     if(isSeller&&offer.status==="pending"&&["accept","decline","counter"].includes(action)){
       status=action==="accept"?"accepted":action==="decline"?"declined":"countered";
     }else if(isBuyer&&offer.status==="countered"&&["accept-counter","decline-counter"].includes(action)){
@@ -100,9 +103,11 @@ router.patch("/offers/:id", async(req,res)=>{
       counter_message=CASE WHEN ${action==="counter"} THEN ${String(req.body?.counterMessage||"").slice(0,200)} ELSE counter_message END,
       updated_at=NOW()
       WHERE id=${req.params.id} AND status=${String(offer.status)}
+        AND (expires_at IS NULL OR expires_at > NOW())
+        AND EXISTS (SELECT 1 FROM listings l WHERE l.id=marketplace_offers.listing_id AND l.status='active' AND LOWER(l.seller_email)=LOWER(marketplace_offers.seller_email))
       RETURNING id,status,updated_at
     `);
-    if(!result.rows.length){res.status(409).json({error:"Offer updated elsewhere, refresh"});return;}
+    if(!result.rows.length){res.status(409).json({error:"Offer changed, expired or listing unavailable; refresh"});return;}
     res.json(result.rows[0]);
   }catch(err){console.error("Offer response error",err);res.status(500).json({error:"Could not respond to offer"});}
 });

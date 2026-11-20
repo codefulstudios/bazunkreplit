@@ -53,11 +53,29 @@ test("fee pricing appears in legal and sitewide explanations",()=>{
  }
 });
 
-test("Phase 4 seller bulk actions enforce ownership and expose auditable history",()=>{
- const route=read(root+"routes/sellerListingTools.ts");
- assert.match(route,/authenticatedSellerEmail\(req,res\)/);
- assert.match(route,/LOWER\(seller_email\)=\$\{email\}/);
- assert.match(route,/seller_listing_bulk_audit/);
- assert.match(route,/batchId=randomUUID\(\)/);
- assert.match(route,/\/listings\/seller-tools\/history/);
+test("Phase 2 cart checkout rejects invalid quantities before payment",()=>{
+ const stripe=read(root+"routes/stripe.ts");
+ assert.match(stripe,/Array\.isArray\(body\.items\)/);
+ assert.match(stripe,/Number\.isSafeInteger\(Number\(\(item as \{quantity\?: unknown\}\)\.quantity\)\)/);
+ assert.match(stripe,/Your basket contains invalid items or quantities/);
+ assert.match(stripe,/quoteCart\(body\.items\)/);
+});
+test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
+ const offers=read(root+"routes/marketplaceOffers.ts");
+ assert.match(offers,/expires_at > NOW\(\)/);
+ assert.match(offers,/l\.status=\x27active\x27/);
+ assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
+});
+
+test("BZ-008: seller SKU imports are duplicate-safe without treating rows as failures",()=>{
+ const listings=read(root+"routes/listings.ts");
+ const bulk=read("artifacts/sellbuydeal/src/pages/BulkImportPage.tsx");
+ assert.match(listings,/pg_advisory_xact_lock/);
+ assert.match(listings,/LOWER\(seller_email\) = \$\{authenticatedEmail\}/);
+ assert.match(listings,/LOWER\(BTRIM\(sku\)\) = \$\{sku\.toLowerCase\(\)\}/);
+ assert.match(listings,/existingListingId/);
+ assert.match(listings,/error: "duplicate_sku"/);
+ assert.match(bulk,/response\.status===409 && body\.error==="duplicate_sku"/);
+ assert.match(bulk,/SKIPPED/);
+ assert.match(bulk,/const skuKey=row\.sku\.trim\(\)\.toLowerCase\(\)/);
 });

@@ -283,6 +283,13 @@ router.post("/stripe/checkout-cart", async (req, res) => {
       throw new QuoteError("Enter a valid full delivery address before payment.");
     // Check destination against each seller's stated zone. Missing shipping rules
     // cannot be interpreted as free or worldwide shipping.
+    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 100 ||
+        !body.items.every((item: unknown) => item !== null && typeof item === "object" &&
+          Number.isSafeInteger(Number((item as {id?: unknown}).id)) && Number((item as {id?: unknown}).id) > 0 &&
+          Number.isSafeInteger(Number((item as {quantity?: unknown}).quantity)) && Number((item as {quantity?: unknown}).quantity) > 0 &&
+          Number((item as {quantity?: unknown}).quantity) <= 100)) {
+      throw new QuoteError("Your basket contains invalid items or quantities.", 400);
+    }
     const cartIds=(body.items as Array<{id:number}>).map(x=>Number(x.id));
     const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(cartIds.map(id=>sql`${id}`),sql`, `)})`)).rows as Array<Record<string,unknown>>;
     if(shippingRows.length!==new Set(cartIds).size)throw new QuoteError("A listing is no longer available.",409);

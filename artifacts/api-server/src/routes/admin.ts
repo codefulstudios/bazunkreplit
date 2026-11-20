@@ -1932,7 +1932,6 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     const richTitle = p.title;
     const description = [p.title, "", `Product sourced from ${source}.`, "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = p.image ?? null;
-    const ecoFriendly = req.body.ecoFriendly === true || category === 'eco-friendly' || /\beco[ -]?friendly\b/i.test(richTitle);
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
