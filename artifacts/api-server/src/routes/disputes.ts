@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import { getUncachableStripeClient } from "../stripeClient.js";
 import { recordAdminAudit } from "../lib/adminAudit.js";
 import { recordCreditEconomy } from "../lib/creditEconomy.js";
+import { logger } from "../lib/logger.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
 const router = Router();
