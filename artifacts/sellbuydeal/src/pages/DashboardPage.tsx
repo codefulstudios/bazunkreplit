@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Bell, ShoppingBag, BarChart2, BarChart3, Video, Heart, Search, MessageSquare,
   ArrowUp, Home as HomeIcon, Crown,
-  Coins, Megaphone, User, Shield, ShieldCheck, MapPin, CreditCard, Banknote, Zap, Store,
+  Coins, Megaphone, User, Shield, ShieldCheck, Lock, MapPin, CreditCard, Banknote, Zap, Store,
   Tag, Eye, Plus, TrendingUp, Trophy, Gift, ChevronRight, LogOut,
   ShoppingCart, Trash2, TrendingDown, Bell as BellIcon, BellOff, ExternalLink,
   ArrowRight, CheckCheck, Check, CheckCircle, CheckCircle2, Flame, Star,
