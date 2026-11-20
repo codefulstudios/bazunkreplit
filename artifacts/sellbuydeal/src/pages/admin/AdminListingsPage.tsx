@@ -97,6 +97,41 @@ export function AdminListingsPage() {
   const [offset, setOffset] = useState(0);
   const [statusFilter,setStatusFilter]=useState("all");
   const [selectedIds,setSelectedIds]=useState<string[]>([]);
+  const [bulkPromoOpen,setBulkPromoOpen]=useState(false);
+  const [bulkPromoOptions,setBulkPromoOptions]=useState<{type:string;label:string;daysValid:number}[]>([]);
+  const [bulkPromoType,setBulkPromoType]=useState("");
+  const [bulkPromoDays,setBulkPromoDays]=useState("7");
+  const [bulkPromoBusy,setBulkPromoBusy]=useState(false);
+  const [bulkPromoMessage,setBulkPromoMessage]=useState("");
+  async function openBulkPromotions(){
+    if (!selectedIds.length)return;
+    setBulkPromoOpen(true);setBulkPromoBusy(true);setBulkPromoMessage("");
+    try{
+      const res=await authFetch(`/api/admin/listings/${selectedIds[0]}/promotions`);
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||!Array.isArray(data.options))throw Error(data.error||"Cannot load promotion options");
+      setBulkPromoOptions(data.options);setBulkPromoType(data.options[0]?.type||"");setBulkPromoDays(String(data.options[0]?.daysValid||7));
+    }catch(e){setBulkPromoMessage(e instanceof Error?e.message:"Cannot load promotions");}
+    finally{setBulkPromoBusy(false);}
+  }
+  async function applyBulkPromotions(){
+    const days=Number(bulkPromoDays),ids=[...selectedIds];
+    if(!bulkPromoOptions.some(o=>o.type===bulkPromoType)||!Number.isInteger(days)||days<1||days>365){setBulkPromoMessage("Choose a valid promotion and 1–365 days.");return;}
+    if(!window.confirm(`Apply ${bulkPromoType} for ${days} days to ${ids.length} selected listings? No seller credits are charged. Existing promotions of this type will have their expiry reset.`))return;
+    setBulkPromoBusy(true);setBulkPromoMessage("");
+    let ok=0;const failed:string[]=[];
+    for(const id of ids){
+      try{
+        const res=await authFetch(`/api/admin/listings/${encodeURIComponent(id)}/promotions`,{method:"POST",body:JSON.stringify({type:bulkPromoType,days})});
+        const data=await res.json().catch(()=>({}));
+        if(!res.ok||data.ok!==true)throw Error(data.error||`HTTP ${res.status}`);
+        ok++;
+      }catch(e){failed.push(`${id}: ${e instanceof Error?e.message:"Network error"}`);}
+    }
+    setBulkPromoMessage(`Applied to ${ok}/${ids.length} listings. ${failed.length?`Failed: ${failed.slice(0,10).join("; ")}`:"All promotions saved."}`);
+    setSelectedIds(failed.map(x=>x.split(":")[0]));
+    setBulkPromoBusy(false);
+  }
   const visibleIds=listings.map(l=>String(l.id));
   const [imageEditing, setImageEditing] = useState<number | null>(null);
   const [imageDraft, setImageDraft] = useState("");
@@ -311,6 +346,17 @@ export function AdminListingsPage() {
       <div className="mb-3"><AdminBulkSelection selected={selectedIds}
         rows={listings.map(l=>({id:String(l.id),cells:[l.public_id??"",l.title,l.status,l.category,l.price,l.currency,l.seller_email]}))}
         columns={["Public ID","Title","Status","Category","Price","Currency","Seller"]} filename="bazunk-admin-selected-listings" onClear={()=>setSelectedIds([])}/></div>
+      {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>void openBulkPromotions()} className="mr-2 rounded-lg bg-orange-600 px-3 py-2 text-xs font-bold text-white">Bulk promote {selectedIds.length} listings</button></div>}
+      {bulkPromoOpen&&<div className="mb-4 rounded-xl border-2 border-orange-400 bg-white p-4 text-gray-900">
+        <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">Bulk listing promotions · {selectedIds.length} selected</h3><button type="button" onClick={()=>setBulkPromoOpen(false)} disabled={bulkPromoBusy} className="text-sm font-bold text-blue-700">Close</button></div>
+        <p className="mb-3 text-sm">Admin-sponsored promotions: no seller credits charged. Only selected listings on the current page are affected. Promotions do not publish inactive listings.</p>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="text-sm font-bold">Promotion type<select value={bulkPromoType} onChange={e=>{setBulkPromoType(e.target.value);setBulkPromoDays(String(bulkPromoOptions.find(o=>o.type===e.target.value)?.daysValid||7));}} className="mt-1 block rounded-lg border border-gray-400 bg-white p-2 text-gray-900">{bulkPromoOptions.map(o=><option key={o.type} value={o.type}>{o.label}</option>)}</select></label>
+          <label className="text-sm font-bold">Duration (days)<input type="number" min="1" max="365" step="1" value={bulkPromoDays} onChange={e=>setBulkPromoDays(e.target.value)} className="mt-1 block w-28 rounded-lg border border-gray-400 bg-white p-2 text-gray-900"/></label>
+          <button type="button" disabled={bulkPromoBusy||!bulkPromoType} onClick={()=>void applyBulkPromotions()} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkPromoBusy?"Working…":"Apply promotions"}</button>
+        </div>
+        {bulkPromoMessage&&<p role="status" className="mt-3 text-sm font-semibold">{bulkPromoMessage}</p>}
+      </div>}
       {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>beginCategoryEdit()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Change category for {selectedIds.length} selected</button></div>}
       {categoryEditing==="bulk"&&<div className="mb-3 rounded-xl border border-blue-400 bg-blue-50 p-3 text-slate-950 dark:bg-slate-900 dark:text-white"><p className="mb-2 text-xs font-bold">Change category for {selectedIds.length} selected listings</p>{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
       {/* Table */}
