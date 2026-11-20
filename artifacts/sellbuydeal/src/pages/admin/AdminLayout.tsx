@@ -73,11 +73,12 @@ const NAV_GROUPS = [
  {id:"sellers",label:"Sellers",href:"/admin/seller-compliance",icon:Store,pages:["Seller Compliance","TrustProof","Reviews"]},
  {id:"payments",label:"Payments",href:"/admin/payments",icon:CreditCard,pages:["Payments"]},
  {id:"marketing",label:"Marketing",href:"/admin/marketing",icon:Megaphone,pages:["Marketing","Live Commerce","Promotions","Cashback","Rewards","Referrals","Credits Economy"]},
+ {id:"advertising",label:"Advertising",href:"/admin/advertising",icon:Megaphone,pages:["Advertising"]},
  {id:"content",label:"Content",href:"/admin/content",icon:FileText,pages:["Content","Email Templates"]},
  {id:"design",label:"Design Center",href:"/admin/design-system",icon:Palette,pages:["Design Center"]},
  {id:"importers",label:"Importers",href:"/admin/imports",icon:ArrowDownToLine,pages:["Importers","Amazon","eBay","AliExpress","Gumtree","General Settings","Apply Update to All","Importer Control"]},
  {id:"analytics",label:"Analytics",href:"/admin/analytics",icon:BarChart3,pages:["Analytics"]},
- {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Advertising","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
+ {id:"settings",label:"Settings",href:"/admin/settings-overview",icon:Settings,pages:["Settings Overview","Settings","Feature Toggles","System Status","Audit Log","Support","Chatwoot Settings"]}
 ] as const;
 
 let savedAdminExpandedGroups: Record<string,boolean> = {};
