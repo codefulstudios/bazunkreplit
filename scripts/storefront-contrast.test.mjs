@@ -40,3 +40,13 @@ test("Admin listing promotion uses a native top-layer modal with readable colour
  assert.match(promotion,/bg-white p-4 sm:p-6 text-slate-900/);
  assert.doesNotMatch(promotion,/bg-purple-/);
 });
+
+test("Phase 3 search suggestions use region-safe server results and keyboard-accessible controls",()=>{
+ const nav=read("components/Navbar.tsx");
+ const api=readFileSync("artifacts/api-server/src/routes/listings.ts","utf8");
+ assert.match(nav,/\/api\/listings\/search-suggestions\?region=/);
+ assert.match(nav,/searchSuggestions\.map\(/);
+ assert.match(nav,/focus-visible:outline/);
+ assert.match(api,/const allowed = new Set\(safe\.map/);
+ assert.match(api,/listingRegionFilter\(req\.query\.region\)/);
+});
