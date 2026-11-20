@@ -65,20 +65,41 @@ router.post("/promotions/apply", async (req, res) => {
       if (followers.length === 0) { res.status(400).json({ error: "You don't have any followers yet — nobody to notify." }); return; }
     }
 
-    const balance = await storage.getCredits(email);
-    if (balance < config.cost) {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + config.daysValid);
+    if (publishDate) expiresAt.setTime(publishDate.getTime() + 24 * 3600 * 1000);
+
+    // Lock and debit the balance conditionally in the SAME transaction as activation.
+    // Concurrent promotions cannot spend the same credits and failed activation rolls back the debit.
+    const applied = await db.transaction(async tx => {
+      const debit = await tx.execute(sql`
+        UPDATE users SET credits = credits - ${config.cost}
+        WHERE LOWER(email) = LOWER(${email}) AND credits >= ${config.cost}
+        RETURNING credits
+      `);
+      if (!debit.rows.length) return null;
+      await tx.insert(listingPromotionsTable).values({ listingId, type, expiresAt });
+      if (publishDate) {
+        const scheduled = await tx.execute(sql`
+          UPDATE listings SET status = 'scheduled', publish_at = ${publishDate.toISOString()}, updated_at = NOW()
+          WHERE id = ${listingId} AND LOWER(seller_email) = LOWER(${email}) AND status = 'active'
+          RETURNING id
+        `);
+        if (!scheduled.rows.length) throw new Error("Listing is no longer eligible for scheduling");
+      }
+      return Number(debit.rows[0].credits);
+    });
+    if (applied === null) {
+      const balance = await storage.getCredits(email);
       res.status(402).json({ error: "Insufficient credits", balance, required: config.cost });
       return;
     }
-
-    const newBalance = await storage.addCredits(email, -config.cost);
-    await recordCreditEconomy({ email, kind: "spent", credits: -config.cost, reason: `Promotion: ${config.label}`, referenceType: "promotion", metadata: { promotionType: type } });
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + config.daysValid);
-    if (publishDate) { expiresAt.setTime(publishDate.getTime() + 24 * 3600 * 1000); }
-
-    await db.insert(listingPromotionsTable).values({ listingId, type, expiresAt });
+    const newBalance = applied;
+    try {
+      await recordCreditEconomy({ email, kind: "spent", credits: -config.cost, reason: `Promotion: ${config.label}`, referenceType: "promotion", metadata: { promotionType: type, listingId } });
+    } catch (ledgerError) {
+      logger.error({ ledgerError, email, listingId }, "Promotion activated but auxiliary credit ledger logging failed");
+    }
 
     let extra: Record<string, unknown> = {};
     if (type === "scheduled-listing" && publishDate) {
