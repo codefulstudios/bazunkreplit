@@ -109,8 +109,8 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
         <div className="border-t border-blue-100 bg-blue-50 p-4 space-y-2">
           <p className="text-sm font-bold text-slate-900">Respond to this buyer's offer</p>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => void onRespond(offer.id,"accept")} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Accept</button>
-            <button onClick={() => void onRespond(offer.id,"decline")} className="rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white">Decline</button>
+            <button onClick={() => void onRespond(offer.id,"accept")} className="rounded-lg bg-gradient-to-r from-[#065f46] to-emerald-700 px-3 py-2 text-sm font-bold text-white">Accept</button>
+            <button onClick={() => void onRespond(offer.id,"decline")} className="rounded-lg bg-gradient-to-r from-[#9a3412] to-red-800 px-3 py-2 text-sm font-bold text-white">Decline</button>
             <input aria-label="Counter-offer price" type="number" min="0.01" step="0.01" value={counterInput} onChange={e=>setCounterInput(e.target.value)} placeholder="Counter price" className="w-32 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-900"/>
             <button disabled={Number(counterInput)<=0} onClick={() => void onRespond(offer.id,"counter",Number(counterInput))}
               className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-40">Counter</button>
