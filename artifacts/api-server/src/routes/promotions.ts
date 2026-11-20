@@ -324,6 +324,23 @@ router.get("/promotions/related", async (req, res) => {
   }
 });
 
+// Public sponsored carousel: only paid or admin-granted active browse sponsorships.
+router.get("/promotions/browse-sponsored", async (req,res)=>{
+  const category=typeof req.query.category==="string"?req.query.category.trim().slice(0,120):"";
+  try{
+    const rows=await db.execute(sql`
+      SELECT l.id,l.public_id,l.title,l.price,l.price_gbp,l.currency,l.image,l.category,TRUE AS sponsored
+      FROM listings l
+      WHERE l.status='active'
+        AND EXISTS (SELECT 1 FROM listing_promotions lp WHERE lp.listing_id=l.id AND lp.type='browse-sponsored-5d' AND lp.expires_at>NOW())
+        ${category?sql`AND LOWER(l.category)=LOWER(${category})`:sql``}
+      ORDER BY RANDOM() LIMIT 24
+    `);
+    res.setHeader("Cache-Control","public, max-age=30");
+    res.json(rows.rows);
+  }catch(err){logger.error({err},"Failed to load browse sponsored listings");res.status(500).json({error:"Unable to load sponsored listings"});}
+});
+
 // Admin grants use the existing listing promotion records without debiting credits.
 router.get("/admin/listings/:id/promotions", requireAdmin, async (req, res) => {
   res.setHeader("Cache-Control", "no-store");

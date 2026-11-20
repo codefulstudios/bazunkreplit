@@ -1,3 +1,4 @@
+import { BrowseSponsoredListings } from "@/components/BrowseSponsoredListings";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
@@ -1061,6 +1062,7 @@ export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
               ))}
             </div>
           )}
+          {!loadingListings && !listingError && collection===undefined && <BrowseSponsoredListings category={selectedCategories.length===1?selectedCategories[0]:undefined} />}
           {!loadingListings && !listingError && (currentPage>1 || hasMoreListings) && (
             <nav className="bz-browse-pagination" aria-label="Listing pages">
               <button type="button" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)} aria-label="Previous page">‹ <span>Previous</span></button>
