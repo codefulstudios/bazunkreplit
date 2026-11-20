@@ -803,6 +803,30 @@ router.patch("/admin/users/:email/credits", async (req, res) => {
   }
 });
 
+// Reset a customer's entire current credit balance atomically, including concurrent adjustments.
+router.patch("/admin/users/:email/credits/clear", async (req,res) => {
+  const email=String(req.params.email||"").trim().toLowerCase();
+  const reason=typeof req.body?.reason==="string"?req.body.reason.trim().slice(0,500):"";
+  if(reason.length<8){res.status(400).json({error:"A reason of at least eight characters is required"});return;}
+  try {
+    const result=await db.transaction(async tx=>{
+      const rows=await tx.execute(sql`SELECT email,credits FROM users WHERE LOWER(email)=${email} FOR UPDATE`);
+      const user=rows.rows[0] as any;
+      if(!user)return null;
+      const previous=Number(user.credits);
+      if(previous>0)await tx.execute(sql`UPDATE users SET credits=0 WHERE LOWER(email)=${email}`);
+      return {email:user.email,previous};
+    });
+    if(!result){res.status(404).json({error:"User not found"});return;}
+    if(result.previous>0){
+      try{await recordCreditEconomy({email:result.email,kind:"admin_adjustment",credits:-result.previous,reason,referenceType:"admin_adjustment"});}
+      catch(ledgerError){logger.error({ledgerError,email},"Credit reset succeeded but economy logging failed");}
+    }
+    await recordAdminAudit({req,category:"credits",action:"credits.clear",targetType:"user",targetId:result.email,summary:`Admin cleared ${result.previous} credit balance for ${result.email}: ${reason}`,before:{credits:result.previous},after:{credits:0},metadata:{reason}});
+    res.json({success:true,email:result.email,removedCredits:Math.round(result.previous*100),newBalance:0});
+  }catch(err){logger.error({err,email},"Failed to clear credits");res.status(500).json({error:"Unable to clear credits"});}
+});
+
 // Edit user (name)
 
 router.patch("/admin/users/:email", async (req, res) => {
