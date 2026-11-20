@@ -787,7 +787,10 @@ router.delete("/admin/users/:email", async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);
     const [beforeUser] = await db.execute(sql`SELECT email, name, seller_type, credits, banned FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
-    await db.execute(sql`DELETE FROM users WHERE email = ${email}`);
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
+    if (Number(beforeUser.credits) > 0) { res.status(409).json({ error: "Account has a credit balance. Resolve the balance before deletion." }); return; }
+    const deleted = await db.execute(sql`DELETE FROM users WHERE email = ${email} AND credits <= 0 RETURNING email`);
+    if (!deleted.rows.length) { res.status(409).json({ error: "Account balance changed; refresh before deletion" }); return; }
     logger.info({ email }, "Admin deleted user");
     await recordAdminAudit({ req, category: "users", action: "user.delete", targetType: "user", targetId: email, summary: `Admin deleted user ${email}`, before: beforeUser });
     res.json({ success: true });
