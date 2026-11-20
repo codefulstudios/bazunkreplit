@@ -25,7 +25,11 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
   useEffect(() => {
     const dialog=dialogRef.current;
     if(!dialog)return;
-    if(open&&!dialog.open)dialog.showModal();
+    if(open&&!dialog.open){
+      // Native showModal promotes this dialog above the listing editor in the top layer.
+      // Defer until after React commits the portal so the parent editor cannot cover it.
+      dialog.showModal();
+    }
     else if(!open&&dialog.open)dialog.close();
   },[open]);
   useEffect(() => {
@@ -63,11 +67,11 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
   }
 
   return <>
-    <button type="button" onClick={() => setOpen(true)} title={`Promote ${title}`} aria-label={`Promote ${title}`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 px-2 h-7 text-xs font-semibold"><Megaphone className="w-3.5 h-3.5" /> Promote</button>
-    {createPortal(<dialog ref={dialogRef} onClose={()=>setOpen(false)} onCancel={e=>{if(busy)e.preventDefault();}} className="fixed inset-0 m-auto w-[min(94vw,34rem)] max-h-[85dvh] overflow-y-auto rounded-2xl border-2 border-orange-400 bg-white p-6 text-slate-900 shadow-2xl backdrop:bg-slate-950/75">
+    <button type="button" onClick={() => setOpen(true)} title={`Promote ${title}`} aria-label={`Promote ${title}`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 px-2 h-7 text-xs font-semibold"><Megaphone className="w-3.5 h-3.5" /> Promote</button>
+    {createPortal(<dialog ref={dialogRef} onClose={()=>setOpen(false)} onCancel={e=>{if(busy)e.preventDefault();}} className="fixed inset-0 m-auto w-[min(94vw,34rem)] max-h-[85dvh] overflow-y-auto overscroll-contain rounded-2xl border-2 border-orange-400 bg-white p-4 sm:p-6 text-slate-900 shadow-2xl backdrop:bg-slate-950/75">
         <div className="flex items-start justify-between gap-3"><h2 className="text-xl font-bold">Promote listing</h2><button type="button" onClick={()=>setOpen(false)} disabled={busy} aria-label="Close promotion dialog" className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-bold">Close</button></div>
         <p className="mt-1 mb-3 text-sm text-slate-600">{title}</p>
-        <p className="text-sm rounded-xl bg-purple-50 p-3 text-purple-800">Admin promotion · No seller credits charged. Duration starts immediately. Applying the same type again resets its expiry; other promotions stay active.</p>
+        <p className="text-sm rounded-xl bg-blue-50 p-3 text-blue-900">Admin promotion · No seller credits charged. Duration starts immediately. Applying the same type again resets its expiry; other promotions stay active.</p>
         {status !== "active" && status !== "approved" && <p className="text-sm text-amber-800 bg-amber-50 p-3 rounded-xl">This listing is {status}. Promotion does not publish it or change its status, and its duration still starts now.</p>}
         {loading ? <p className="flex gap-2 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading promotions…</p> : <>
           {active.length > 0 && <div className="text-sm"><h3 className="font-semibold mb-2">Active promotions</h3><ul className="space-y-2">{active.map(a => <li key={a.id}>{options.find(o => o.type === a.type)?.label || a.type} <span className="text-gray-500">· until {new Date(a.expires_at).toLocaleString()}</span></li>)}</ul></div>}
@@ -79,7 +83,7 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
               </select>
             </div>
             <label className="text-sm font-semibold">Duration in days<input type="number" min={1} max={365} step={1} value={days} disabled={busy} onChange={e => { setDays(e.target.value); setSuccess(""); }} className="block w-full border rounded-lg p-2 mt-1" /></label>
-            <button type="button" onClick={apply} disabled={busy} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl p-3 font-bold disabled:opacity-50">{busy ? "Applying…" : "Apply promotion"}</button>
+            <button type="button" onClick={apply} disabled={busy} className="bg-blue-700 hover:bg-blue-800 text-white rounded-xl p-3 font-bold disabled:opacity-50">{busy ? "Applying…" : "Apply promotion"}</button>
           </> : !error && <p className="text-sm text-gray-500">No timed listing promotions are currently enabled.</p>}
         </>}
         {error && <div role="alert" className="text-sm text-red-700">{error}{!options.length && !loading && <button type="button" onClick={() => setRetry(v => v + 1)} className="ml-2 underline">Retry</button>}</div>}
