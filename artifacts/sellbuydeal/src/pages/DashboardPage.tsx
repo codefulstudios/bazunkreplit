@@ -5854,7 +5854,7 @@ export function DashboardPage() {
           <button type="button" className="bz-glass-sidebar-signout" onClick={handleLogout}><LogOut size={17}/> Sign Out</button>
         </aside>
         {/* Main content */}
-        <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
+        <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${["orders","my-bids","offers","watchlist","saved-searches","deal-pilot"].includes(activeSection) ? "bz-buying-light" : ""} ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 10 }}
