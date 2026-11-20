@@ -105,7 +105,7 @@ export default function VideoTemplate({ volume = 0.6, muted = false, resumeAudio
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#1A1D2E] font-sans select-none"
-      style={{ fontFamily: '"Outfit", "Inter", sans-serif' }}>
+      style={{ fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif' }}>
 
       {/* Ambient background orbs */}
       <div className="absolute inset-0 pointer-events-none">

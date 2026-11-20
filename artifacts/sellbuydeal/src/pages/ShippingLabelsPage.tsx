@@ -1,401 +1,83 @@
-import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
-import {
-  Package, QrCode, MapPin, Truck, RotateCcw, CheckCircle2,
-  Clock, AlertCircle, ChevronLeft, Download, ExternalLink, RefreshCw,
-  X, Printer,
-} from "lucide-react";
-import { useUser } from "@clerk/react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { useAuth } from "@/context/AuthContext";
-import { useCurrency } from "@/context/CurrencyContext";
+import { Truck, RefreshCw, ExternalLink } from "lucide-react";
 
-type CarrierId = "inpost" | "evri" | "royal-mail";
-type ShipmentStatus =
-  | "pending_label"
-  | "label_generated"
-  | "dropped_off"
-  | "in_transit"
-  | "delivered"
-  | "return_requested"
-  | "return_label_generated"
-  | "return_received";
-
-interface Shipment {
-  id: string;
-  listingTitle: string;
-  buyerName: string;
-  buyerPostcode: string;
-  carrier: CarrierId;
-  status: ShipmentStatus;
-  trackingNumber?: string;
-  createdAt: string;
-  saleAmount: number;
-  direction: "outbound" | "return";
-}
-
-const CARRIER_META: Record<CarrierId, { name: string; color: string; bg: string; border: string; badge: string }> = {
-  inpost:      { name: "InPost",      color: "#FFD100", bg: "bg-yellow-50",  border: "border-yellow-200", badge: "bg-[#FFD100] text-yellow-900" },
-  evri:        { name: "Evri",        color: "#9B1FAE", bg: "bg-purple-50",  border: "border-purple-200", badge: "bg-[#9B1FAE] text-white" },
-  "royal-mail":{ name: "Royal Mail",  color: "#CC0000", bg: "bg-red-50",     border: "border-red-200",    badge: "bg-[#CC0000] text-white" },
+type Shipment = {
+ id: string; item_title: string; status: string; tracking_number: string | null;
+ carrier: string | null; tracking_status: string | null; tracking_last_event: string | null;
+ label_status: string | null; label_url: string | null; label_error: string | null;
 };
-
-const STATUS_META: Record<ShipmentStatus, { label: string; color: string; icon: React.ElementType }> = {
-  pending_label:          { label: "Needs label",      color: "bg-orange-100 text-orange-700",   icon: AlertCircle },
-  label_generated:        { label: "Label ready",      color: "bg-blue-100 text-blue-700",       icon: QrCode },
-  dropped_off:            { label: "Dropped off",      color: "bg-indigo-100 text-indigo-700",   icon: Package },
-  in_transit:             { label: "In transit",       color: "bg-purple-100 text-purple-700",   icon: Truck },
-  delivered:              { label: "Delivered",        color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
-  return_requested:       { label: "Return requested", color: "bg-red-100 text-red-700",         icon: RotateCcw },
-  return_label_generated: { label: "Return label",     color: "bg-blue-100 text-blue-700",       icon: QrCode },
-  return_received:        { label: "Return received",  color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
-};
-
-function generateTrackingNumber(carrier: CarrierId): string {
-  const prefix = carrier === "inpost" ? "IN" : carrier === "evri" ? "EV" : "RM";
-  const digits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join("");
-  return `${prefix}${digits}GB`;
-}
-
-function shipmentsKey(userId: string | null | undefined) {
-  return userId ? `sbd_shipments_${userId}` : null;
-}
-
-function loadShipments(userId: string | null | undefined): Shipment[] {
-  const key = shipmentsKey(userId);
-  if (!key) return [];
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as Shipment[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveShipments(data: Shipment[], userId: string | null | undefined) {
-  const key = shipmentsKey(userId);
-  if (!key) return;
-  localStorage.setItem(key, JSON.stringify(data));
-}
-
-interface LabelModalProps {
-  shipment: Shipment;
-  onClose: () => void;
-}
-
-function LabelModal({ shipment, onClose }: LabelModalProps) {
-  const cm = CARRIER_META[shipment.carrier];
-  const tracking = shipment.trackingNumber ?? generateTrackingNumber(shipment.carrier);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        {/* Label header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-black text-gray-900">Shipping Label</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-gray-400" /></button>
-        </div>
-
-        {/* Simulated label */}
-        <div className="p-5">
-          <div className="border-2 border-gray-900 rounded-2xl overflow-hidden font-mono">
-            {/* Carrier banner */}
-            <div className="px-4 py-2 flex items-center justify-between" style={{ backgroundColor: cm.color }}>
-              <span className="text-sm font-black tracking-wider" style={{ color: shipment.carrier === "inpost" ? "#111" : "white" }}>
-                {cm.name.toUpperCase()}
-              </span>
-              <span className="text-xs font-bold" style={{ color: shipment.carrier === "inpost" ? "#111" : "white" }}>
-                TRACKED DELIVERY
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3">
-              {/* QR placeholder */}
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 border-2 border-gray-900 rounded-lg flex-shrink-0 p-1 grid grid-cols-5 gap-0.5">
-                  {Array.from({ length: 25 }).map((_, i) => (
-                    <div key={i} className={`rounded-sm ${Math.random() > 0.45 ? "bg-gray-900" : "bg-white"}`} />
-                  ))}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-gray-500 uppercase font-bold mb-0.5">Tracking No.</p>
-                  <p className="text-sm font-black tracking-widest text-gray-900">{tracking}</p>
-                </div>
-              </div>
-
-              {/* Barcode */}
-              <div className="flex justify-center gap-px h-10">
-                {Array.from({ length: 60 }).map((_, i) => (
-                  <div key={i} className="bg-gray-900 rounded-sm flex-1" style={{ opacity: Math.random() > 0.4 ? 1 : 0 }} />
-                ))}
-              </div>
-              <p className="text-center text-[9px] tracking-[0.3em] text-gray-700">{tracking}</p>
-
-              {/* Addresses */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-gray-300">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-gray-400 mb-0.5">From</p>
-                  <p className="text-[11px] font-semibold text-gray-900">Seller (SBD)</p>
-                  <p className="text-[10px] text-gray-500">Via Locker Network</p>
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-gray-400 mb-0.5">To</p>
-                  <p className="text-[11px] font-semibold text-gray-900">{shipment.buyerName}</p>
-                  <p className="text-[10px] text-gray-500">{shipment.buyerPostcode}</p>
-                </div>
-              </div>
-
-              <div className="text-center border-t border-dashed border-gray-300 pt-2">
-                <p className="text-[9px] text-gray-400">Bazunk · bazunk.co.uk · Order ID: {shipment.id}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="px-5 pb-5 flex gap-2">
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#1A1D2E] text-white text-sm font-bold hover:opacity-90">
-            <Printer className="w-4 h-4" /> Print Label
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50">
-            <Download className="w-4 h-4" /> Save PDF
-          </button>
-        </div>
-
-        {/* Find locker */}
-        <div className="px-5 pb-5">
-          <a
-            href={
-              shipment.carrier === "inpost"
-                ? "https://inpost.co.uk/lockers"
-                : shipment.carrier === "evri"
-                ? "https://www.evri.com/find-a-parcelshop"
-                : "https://www.royalmail.com/sending/uk/find-a-postbox-branch"
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors ${cm.border} ${cm.bg}`}
-          >
-            <MapPin className="w-4 h-4" /> Find nearest {cm.name} drop-off
-            <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type TabId = "pending" | "active" | "returns" | "history";
-
+type Rate = { id: string; provider: string; service: string; amount: string; currency: string; days?: number };
+type Quote = { shipmentId: string; rates: Rate[] };
+const emptyAddress = { name:"",street1:"",city:"",zip:"",country:"GB",phone:"",email:"" };
 export function ShippingLabelsPage() {
-  const { formatPrice, currency } = useCurrency();
-  const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const { user: clerkUser } = useUser();
-  const userId = clerkUser?.id ?? null;
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [tab, setTab] = useState<TabId>("pending");
-  const [labelModal, setLabelModal] = useState<Shipment | null>(null);
-
-  useEffect(() => {
-    if (!user) { setLocation("/login"); return; }
-  }, [user, setLocation]);
-
-  useEffect(() => {
-    setShipments(loadShipments(userId));
-  }, [userId]);
-
-  function generateLabel(id: string) {
-    setShipments((prev) => {
-      const updated = prev.map((s) =>
-        s.id === id
-          ? { ...s, status: "label_generated" as ShipmentStatus, trackingNumber: generateTrackingNumber(s.carrier) }
-          : s
-      );
-      saveShipments(updated, userId);
-      return updated;
-    });
-  }
-
-  function generateReturnLabel(id: string) {
-    setShipments((prev) => {
-      const updated = prev.map((s) =>
-        s.id === id
-          ? { ...s, status: "return_label_generated" as ShipmentStatus, trackingNumber: generateTrackingNumber(s.carrier) }
-          : s
-      );
-      saveShipments(updated, userId);
-      return updated;
-    });
-  }
-
-  function advanceStatus(id: string) {
-    const flow: ShipmentStatus[] = ["label_generated", "dropped_off", "in_transit", "delivered"];
-    setShipments((prev) => {
-      const updated = prev.map((s) => {
-        if (s.id !== id) return s;
-        const i = flow.indexOf(s.status as ShipmentStatus);
-        const next = i >= 0 && i < flow.length - 1 ? flow[i + 1] : s.status;
-        return { ...s, status: next };
-      });
-      saveShipments(updated, userId);
-      return updated;
-    });
-  }
-
-  const pending  = shipments.filter((s) => s.status === "pending_label");
-  const active   = shipments.filter((s) => ["label_generated", "dropped_off", "in_transit"].includes(s.status));
-  const returns  = shipments.filter((s) => ["return_requested", "return_label_generated", "return_received"].includes(s.status));
-  const history  = shipments.filter((s) => s.status === "delivered" || s.status === "return_received");
-
-  const tabData: Record<TabId, { label: string; items: Shipment[]; emptyMsg: string }> = {
-    pending: { label: `Needs Label (${pending.length})`,  items: pending,  emptyMsg: "No shipments waiting for a label." },
-    active:  { label: `In Progress (${active.length})`,   items: active,   emptyMsg: "No active shipments." },
-    returns: { label: `Returns (${returns.length})`,       items: returns,  emptyMsg: "No return requests." },
-    history: { label: `History (${history.length})`,       items: history,  emptyMsg: "No completed shipments yet." },
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <main className="flex-1 container mx-auto max-w-3xl px-4 py-8">
-        <Link href="/shipping/lockers" className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4A5CE8] mb-6 w-fit">
-          <ChevronLeft className="w-4 h-4" /> Locker Shipping
-        </Link>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">My Shipments</h1>
-            <p className="text-sm text-gray-400">Manage labels, tracking, and returns</p>
-          </div>
-          <button
-            onClick={() => setShipments(loadShipments(userId))}
-            className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
-            title="Refresh"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-2xl mb-6 overflow-x-auto">
-          {(Object.keys(tabData) as TabId[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                tab === t ? "bg-white shadow-sm text-[#1A1D2E]" : "text-gray-500 hover:text-gray-700"
-              }`}>
-              {tabData[t].label}
-            </button>
-          ))}
-        </div>
-
-        {/* Shipment list */}
-        <div className="space-y-3">
-          {tabData[tab].items.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-              <Package className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">{tabData[tab].emptyMsg}</p>
-              {tab === "pending" && (
-                <Link href="/sell/direct" className="inline-block mt-4 px-4 py-2 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90">
-                  List an item
-                </Link>
-              )}
-            </div>
-          ) : (
-            tabData[tab].items.map((shipment) => {
-              const cm = CARRIER_META[shipment.carrier];
-              const sm = STATUS_META[shipment.status];
-              const StatusIcon = sm.icon;
-              return (
-                <div key={shipment.id} className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center border ${cm.border} ${cm.bg}`}>
-                      <Truck className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{shipment.listingTitle}</p>
-                      <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cm.badge}`}>{cm.name}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${sm.color} flex items-center gap-1`}>
-                          <StatusIcon className="w-2.5 h-2.5" /> {sm.label}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                        <span>→ {shipment.buyerName} · {shipment.buyerPostcode}</span>
-                        <span>{formatPrice(shipment.saleAmount)}</span>
-                      </div>
-                      {shipment.trackingNumber && (
-                        <p className="text-xs font-mono text-[#4A5CE8] mt-1">
-                          <Clock className="w-3 h-3 inline mr-1" />{shipment.trackingNumber}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-2 flex-shrink-0">
-                      {shipment.status === "pending_label" && (
-                        <button
-                          onClick={() => generateLabel(shipment.id)}
-                          className="px-3 py-2 rounded-xl bg-[#F26B21] text-white text-xs font-bold hover:opacity-90 flex items-center gap-1.5">
-                          <QrCode className="w-3.5 h-3.5" /> Get Label
-                        </button>
-                      )}
-                      {(shipment.status === "label_generated" || shipment.status === "dropped_off" || shipment.status === "in_transit") && (
-                        <>
-                          <button
-                            onClick={() => setLabelModal(shipment)}
-                            className="px-3 py-2 rounded-xl bg-[#1A1D2E] text-white text-xs font-bold hover:opacity-90 flex items-center gap-1.5">
-                            <Printer className="w-3.5 h-3.5" /> Label
-                          </button>
-                          {shipment.status !== "in_transit" && (
-                            <button
-                              onClick={() => advanceStatus(shipment.id)}
-                              className="px-3 py-2 rounded-xl border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 flex items-center gap-1.5">
-                              <RefreshCw className="w-3 h-3" /> Advance
-                            </button>
-                          )}
-                        </>
-                      )}
-                      {shipment.status === "return_requested" && (
-                        <button
-                          onClick={() => generateReturnLabel(shipment.id)}
-                          className="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-bold hover:opacity-90 flex items-center gap-1.5">
-                          <RotateCcw className="w-3.5 h-3.5" /> Return Label
-                        </button>
-                      )}
-                      {shipment.status === "return_label_generated" && (
-                        <button
-                          onClick={() => setLabelModal(shipment)}
-                          className="px-3 py-2 rounded-xl border border-red-200 text-red-700 text-xs font-semibold hover:bg-red-50 flex items-center gap-1.5">
-                          <Printer className="w-3.5 h-3.5" /> View Label
-                        </button>
-                      )}
-                      {(shipment.status === "delivered" || shipment.status === "return_received") && (
-                        <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Done
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Locker finder promo */}
-        <div className="mt-8 bg-[#1A1D2E] rounded-2xl p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-white text-sm">Find your nearest locker</p>
-            <p className="text-gray-400 text-xs mt-0.5">20,000+ InPost, Evri & Royal Mail points across the UK</p>
-          </div>
-          <a href="/shipping/lockers#find-locker"
-            className="px-4 py-2 rounded-xl bg-[#F26B21] text-white text-xs font-bold whitespace-nowrap hover:opacity-90">
-            Find a Locker
-          </a>
-        </div>
-      </main>
-      <Footer />
-      {labelModal && <LabelModal shipment={labelModal} onClose={() => setLabelModal(null)} />}
-    </div>
-  );
+ const { getToken, isSignedIn, isLoaded } = useClerkAuth();
+ const [orders,setOrders] = useState<Shipment[]>([]);
+ const [selected,setSelected] = useState<string | null>(null);
+ const [from,setFrom] = useState({...emptyAddress});
+ const [to,setTo] = useState({...emptyAddress});
+ const [parcel,setParcel] = useState({length:20,width:15,height:10,weight:500});
+ const [quote,setQuote] = useState<Quote | null>(null);
+ const [busy,setBusy] = useState(false);
+ const [error,setError] = useState("");
+ const [notice,setNotice] = useState("");
+ const api = useCallback(async (path:string, init:RequestInit={})=>{
+  const token=await getToken();
+  if(!token) throw new Error("Sign in to manage shipping");
+  const response=await fetch("/api"+path,{...init,headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json",...init.headers}});
+  const body=await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error(body.error||"Shipping request failed");
+  return body;
+ },[getToken]);
+ const refresh=useCallback(async ()=>{
+  if(!isSignedIn)return;
+  try { setOrders(await api("/shipping/seller")); setError(""); }
+  catch(e){setError(e instanceof Error?e.message:"Could not load shipments");}
+ },[api,isSignedIn]);
+ useEffect(()=>{void refresh();},[refresh]);
+ const run=async(action:()=>Promise<void>)=>{
+  setBusy(true);setError("");setNotice("");
+  try{await action();}catch(e){setError(e instanceof Error?e.message:"Shipping operation failed");}
+  finally{setBusy(false);}
+ };
+ const createQuote=()=>run(async()=>{
+  if(!selected)return;
+  const data=await api("/orders/"+encodeURIComponent(selected)+"/postage/quote",{method:"POST",body:JSON.stringify({from,to,parcel})});
+  setQuote(data);
+  if(!data.rates?.length)setNotice("No GBP carrier rates available for these addresses and parcel.");
+ });
+ const checkout=(rateId:string)=>run(async()=>{
+  if(!selected||!quote)return;
+  const data=await api("/orders/"+encodeURIComponent(selected)+"/postage/checkout",{method:"POST",body:JSON.stringify({shipmentId:quote.shipmentId,rateId})});
+  if(!data.url||!/^https:\/\/checkout\.stripe\.com\//.test(data.url))throw new Error("Invalid checkout URL");
+  window.location.assign(data.url);
+ });
+ const refreshTracking=(id:string)=>run(async()=>{
+  await api("/orders/"+encodeURIComponent(id)+"/tracking/refresh",{method:"POST"});
+  await refresh();setNotice("Tracking refreshed from Shippo");
+ });
+ if(!isLoaded)return <div className="p-8 text-gray-900">Loading shipping…</div>;
+ return <div className="min-h-screen bg-slate-50 text-slate-900"><Navbar/><main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+  <div className="flex justify-between items-center"><div><h1 className="text-3xl font-black">Shipping & labels</h1><p className="text-slate-600">Real Shippo rates, Stripe checkout and carrier tracking. No simulated labels.</p></div><button onClick={()=>void refresh()} className="rounded-xl border border-blue-300 px-4 py-2 bg-white text-blue-800 flex gap-2"><RefreshCw size={16}/> Refresh</button></div>
+  {!isSignedIn?<p className="bg-white p-5 rounded-xl">Sign in to view your orders and buy labels.</p>:null}
+  {error?<p role="alert" className="bg-red-50 border border-red-300 text-red-800 rounded-xl p-4">{error}</p>:null}
+  {notice?<p className="bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-4">{notice}</p>:null}
+  <section className="space-y-3">{orders.map(o=><div key={o.id} className="bg-white border border-blue-100 rounded-2xl p-5 flex flex-wrap gap-4 justify-between items-center">
+   <div><h2 className="font-bold">{o.item_title}</h2><p className="text-sm text-slate-600">Order {o.id} · {o.status} · Label: {o.label_status||"not purchased"}</p>
+   {o.tracking_number?<p className="text-sm">Tracking: <strong>{o.tracking_number}</strong> ({o.carrier||"carrier pending"}) · {o.tracking_status||"awaiting update"}</p>:null}
+   {o.tracking_last_event?<p className="text-sm text-slate-600">{o.tracking_last_event}</p>:null}
+   {o.label_error?<p className="text-sm text-red-700">Requires review: {o.label_error}</p>:null}</div>
+   <div className="flex flex-wrap gap-2">{o.label_url&&o.label_status==="purchased"?<a href={o.label_url} target="_blank" rel="noopener noreferrer" className="rounded-lg bg-blue-700 text-white px-3 py-2 flex gap-2 items-center">Open real PDF <ExternalLink size={14}/></a>:null}
+   {["confirmed","preparing"].includes(o.status)&&!["purchased","purchasing","needs_review","checkout"].includes(o.label_status||"")?<button onClick={()=>{setSelected(o.id);setQuote(null);}} className="rounded-lg bg-orange-600 text-white px-3 py-2">Get postage quote</button>:null}
+   {o.tracking_number?<button disabled={busy} onClick={()=>void refreshTracking(o.id)} className="rounded-lg border border-blue-300 text-blue-800 px-3 py-2">Refresh tracking</button>:null}</div>
+  </div>)}{isSignedIn&&orders.length===0?<p className="bg-white rounded-xl p-6 text-slate-600">No seller orders to ship.</p>:null}</section>
+  {selected?<section className="bg-white border border-orange-200 rounded-2xl p-6 space-y-4"><h2 className="font-bold text-xl">Quote for order {selected}</h2>
+  <div className="grid md:grid-cols-2 gap-4">{([{title:"Sender address",value:from,set:setFrom},{title:"Recipient address",value:to,set:setTo}] as const).map(group=><fieldset key={group.title} className="space-y-2"><legend className="font-bold mb-2">{group.title}</legend>{(Object.keys(emptyAddress) as (keyof typeof emptyAddress)[]).map(key=><label key={key} className="block text-sm capitalize">{key}<input className="block w-full border border-slate-300 rounded-lg p-2 text-slate-900" value={group.value[key]} onChange={e=>group.set(v=>({...v,[key]:e.target.value}))}/></label>)}</fieldset>)}</div>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{(Object.keys(parcel) as (keyof typeof parcel)[]).map(key=><label key={key} className="text-sm capitalize">{key} ({key==="weight"?"g":"cm"})<input type="number" min="1" className="block w-full border border-slate-300 rounded-lg p-2" value={parcel[key]} onChange={e=>setParcel(v=>({...v,[key]:Number(e.target.value)}))}/></label>)}</div>
+  <div className="flex gap-3"><button disabled={busy} onClick={()=>void createQuote()} className="rounded-xl bg-blue-700 text-white px-5 py-3 disabled:opacity-50">Get live rates</button><button onClick={()=>{setSelected(null);setQuote(null);}} className="rounded-xl border px-5 py-3">Cancel</button></div>
+  {quote?<div className="space-y-2"><h3 className="font-bold">Available rates</h3>{quote.rates.map(r=><div key={r.id} className="border rounded-xl p-3 flex justify-between items-center"><span>{r.provider} · {r.service} · £{r.amount}</span><button disabled={busy} onClick={()=>void checkout(r.id)} className="rounded-lg bg-orange-600 text-white px-4 py-2">Pay with Stripe</button></div>)}</div>:null}</section>:null}
+  <p className="text-sm text-slate-600 flex gap-2"><Truck size={16}/> A label is only available after Stripe payment and successful carrier purchase. Failed or uncertain purchases require review.</p>
+ </main><Footer/></div>;
 }

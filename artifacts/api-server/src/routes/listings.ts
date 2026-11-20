@@ -3,6 +3,7 @@ import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
+import { ensureTrustProofTables, auditProof } from "../lib/trustProof.js";
 import { db, listingsTable, listingPromotionsTable } from "@workspace/db";
 import { eq, desc, and, gt, sql, inArray } from "drizzle-orm";
 import { toGbp } from "../fxRates.js";
@@ -14,10 +15,22 @@ import { awardReferralMilestone } from "../lib/referrals.js";
 import { getPromoConfig } from "../lib/promoConfig.js";
 
 const router = Router();
+const listingMediaUrl=(value:unknown):unknown=>typeof value==="string"&&value.startsWith("/api/listing-media/")?"https://bazunk-api-ifqs.onrender.com"+value:value;
+const normalizeListingMedia=<T extends Record<string,any>>(item:T):T=>({...item,image:listingMediaUrl(item.image)});
+
 
 // Server-side visibility: missing setting means visible; parent OFF overrides children.
 async function categoryVisibility() {
- return sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${listingsTable.category} OR cv.key='category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`;
+ await db.execute(sql`CREATE TABLE IF NOT EXISTS demo_creator_settings (key TEXT PRIMARY KEY, enabled BOOLEAN NOT NULL DEFAULT FALSE)`);
+ await db.execute(sql`CREATE TABLE IF NOT EXISTS demo_listing_registry (
+ listing_id INTEGER PRIMARY KEY REFERENCES listings(id) ON DELETE CASCADE,
+ seller_email TEXT NOT NULL, region TEXT NOT NULL CHECK(region IN ('uk','us')),
+ enabled BOOLEAN NOT NULL DEFAULT TRUE, source_url TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+ return sql`NOT EXISTS (SELECT 1 FROM demo_listing_registry d WHERE d.listing_id=${listingsTable.id}
+ AND (NOT d.enabled OR NOT COALESCE((SELECT enabled FROM demo_creator_settings WHERE key='master'),FALSE)
+ OR NOT COALESCE((SELECT enabled FROM demo_creator_settings WHERE key='listings'),FALSE)))
+ AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${listingsTable.category} OR cv.key='category_visible_' || ${listingsTable.category} || '__' || COALESCE(${listingsTable.subcategory},'')))`;
 }
 
 // Region is a browsing scope, not an account or permissions boundary.
@@ -77,21 +90,46 @@ function promoRank(promotions: string[]): number {
   return 0;
 }
 
+// Lightweight, region-aware autocomplete. Uses the same visibility rules as browse.
+router.get("/listings/search-suggestions", async (req, res) => {
+  try {
+    const q = String(req.query.q ?? "").trim().slice(0, 80);
+    if (q.length < 2) { res.json({ suggestions: [] }); return; }
+    if (req.query.region !== undefined && !["uk", "us"].includes(String(req.query.region))) {
+      res.status(400).json({ error: "Invalid region" }); return;
+    }
+    const visible = await categoryVisibility();
+    const region = listingRegionFilter(req.query.region);
+    const rows = await db.select({ title: listingsTable.title })
+      .from(listingsTable)
+      .where(and(eq(listingsTable.status, "active"), visible, region,
+        sql`STRPOS(LOWER(${listingsTable.title}), ${q.toLowerCase()}) > 0`))
+      .groupBy(listingsTable.title)
+      .orderBy(sql`CASE WHEN LOWER(${listingsTable.title}) LIKE ${q.toLowerCase() + "%"} THEN 0 ELSE 1 END`, listingsTable.title)
+      .limit(8);
+    res.setHeader("Cache-Control", "public, max-age=30");
+    res.json({ suggestions: rows.map(r => r.title) });
+  } catch (err) {
+    console.error("Search suggestions failed", err);
+    res.status(500).json({ error: "Search suggestions unavailable" });
+  }
+});
+
 router.get("/listings", async (req, res) => {
   try {
     if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {
       res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
       return;
     }
-    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin, collection } = req.query as Record<string, string>;
 
     if (ids) {
       const regionalVisibility = listingRegionFilter(req.query.region);
       const idList = ids.split(",").map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n));
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
-      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), visible, regionalVisibility));
-      res.json(rows);
+      const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), eq(listingsTable.status, "active"), visible, regionalVisibility));
+      res.json(rows.map(normalizeListingMedia));
       return;
     }
 
@@ -99,6 +137,38 @@ router.get("/listings", async (req, res) => {
     const parsedLimit = Math.min(isNaN(parseInt(limit)) ? 40 : parseInt(limit), 100);
     const parsedOffset = isNaN(parseInt(offset)) ? 0 : parseInt(offset);
     const regionalVisibility = listingRegionFilter(req.query.region);
+
+    // Apply browsing criteria before LIMIT/OFFSET, across the complete database.
+    const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
+    // Apply collection criteria in SQL before pagination.
+    if (collection === "eco") clauses.push(sql`(COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%' OR ${listingsTable.category} = 'eco-friendly')`);
+    if (collection === "deals") clauses.push(sql`EXISTS (SELECT 1 FROM ${listingPromotionsTable} lp WHERE lp.listing_id = ${listingsTable.id} AND lp.expires_at > NOW() AND lp.type IN ('homepage-spotlight','spotlight','premium-placement','featured-badge','featured','visibility-boost','move-to-top','flash'))`);
+    if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
+    if (q?.trim()) {
+      const term = q.trim().slice(0, 150).toLowerCase();
+      clauses.push(sql`(STRPOS(LOWER(${listingsTable.title}), ${term}) > 0 OR STRPOS(LOWER(${listingsTable.category}), ${term}) > 0)`);
+    }
+    const csv = (value?: string) => value?.split(",").map(x => x.trim()).filter(Boolean).slice(0, 30) ?? [];
+    const categoryValues = csv(categories).length ? csv(categories) : category && category !== "all" ? [category] : [];
+    const subValues = csv(subcategories).length ? csv(subcategories) : sub ? [sub] : [];
+    const thirdValues = csv(thirdLevels).length ? csv(thirdLevels) : subsub ? [subsub] : [];
+    if (categoryValues.length) clauses.push(sql`LOWER(${listingsTable.category}) IN (${sql.join(categoryValues.map(x=>sql`${x.toLowerCase()}`),sql`, `)})`);
+    if (subValues.length) clauses.push(sql`LOWER(${listingsTable.subcategory}) IN (${sql.join(subValues.map(x=>sql`${x.toLowerCase()}`),sql`, `)})`);
+    if (thirdValues.length) clauses.push(inArray(listingsTable.subsubcategory, thirdValues));
+    const conditionValues = csv(conditions);
+    if (conditionValues.length) clauses.push(inArray(listingsTable.condition, conditionValues));
+    if (minPrice && Number.isFinite(Number(minPrice))) clauses.push(sql`${listingsTable.price}::numeric >= ${Number(minPrice)}`);
+    if (maxPrice && Number.isFinite(Number(maxPrice))) clauses.push(sql`${listingsTable.price}::numeric <= ${Number(maxPrice)}`);
+    const shippingOrigins = csv(shipFrom);
+    if (shippingOrigins.length) clauses.push(inArray(listingsTable.shipOrigin, shippingOrigins));
+    const shippingZones = csv(shipTo);
+    if (shippingZones.length) clauses.push(sql`(${sql.join(shippingZones.map(z => sql`${listingsTable.shipZone} ILIKE ${"%" + z + "%"}`), sql` OR `)})`);
+    if (freeShipping === "true") clauses.push(sql`COALESCE(${listingsTable.shippingPrice}::numeric, 0) = 0`);
+    const days = listedWithin === "today" ? 1 : listedWithin === "week" ? 7 : listedWithin === "month" ? 30 : null;
+    if (days) clauses.push(sql`${listingsTable.createdAt} >= NOW() - ${days} * INTERVAL '1 day'`);
+    const ordering = sort === "price-asc" || sort === "price-lowest" ? sql`${listingsTable.price}::numeric ASC`
+      : sort === "price-desc" ? sql`${listingsTable.price}::numeric DESC`
+      : sort === "views" ? sql`${listingsTable.views} DESC` : desc(listingsTable.createdAt);
 
     // Browse/list views only need card fields. Avoid sending large description, tags,
     // specifications and other detail-only columns for every listing.
@@ -120,22 +190,15 @@ router.get("/listings", async (req, res) => {
         sellerName: listingsTable.sellerName,
         sellerUsername: listingsTable.sellerUsername,
         extraCategories: listingsTable.extraCategories,
+        ecoFriendly: sql<boolean>`COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%'`,
         currency: listingsTable.currency,
         marketplaceRegion: sql<string | null>`CASE WHEN COALESCE(${listingsTable.specifications}, '') ~ '^\\s*\\{' THEN ${listingsTable.specifications}::jsonb->>'marketplace_region' ELSE NULL END`,
         priceGbp: listingsTable.priceGbp,
         createdAt: listingsTable.createdAt,
       })
       .from(listingsTable)
-      .where(
-        sellerEmail
-          ? and(visible,regionalVisibility,eq(listingsTable.status, "active"), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`)
-          : category && category !== "all"
-            ? sub
-              ? and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`, sql`LOWER(TRIM(COALESCE(${listingsTable.subcategory}, ''))) = LOWER(TRIM(${sub}))`, ...(subsub ? [eq(listingsTable.subsubcategory, subsub)] : []))
-              : and(visible, regionalVisibility, eq(listingsTable.status, "active"), sql`LOWER(TRIM(${listingsTable.category})) = LOWER(TRIM(${category}))`)
-            : and(visible,regionalVisibility,eq(listingsTable.status, "active"))
-      )
-      .orderBy(desc(listingsTable.createdAt))
+      .where(and(...clauses))
+      .orderBy(ordering)
       .limit(parsedLimit)
       .offset(parsedOffset);
 
@@ -144,7 +207,7 @@ router.get("/listings", async (req, res) => {
     // Public browse cards change relatively infrequently; a tiny cache removes repeated
     // database work while keeping new/edited listings fresh within seconds.
     res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=45");
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -159,13 +222,14 @@ router.get("/listings/category-counts", async (req, res) => {
     }
     res.setHeader("Cache-Control", "public, max-age=120");
     const regionFilter = listingRegionFilter(req.query.region);
+    const demoVisibility = await categoryVisibility();
     const rows = await db.execute(sql`
       SELECT category, subcategory, COUNT(*)::int AS count
       FROM listings
-      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
+      WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND ${demoVisibility} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
-    res.json(rows.rows);
+    res.json(rows.rows.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching category counts:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -201,7 +265,7 @@ router.get("/listings/spotlight", async (req, res) => {
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching spotlight listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -210,10 +274,10 @@ router.get("/listings/spotlight", async (req, res) => {
 
 router.get("/listings/mine", async (req, res) => {
   try {
-    const { email } = req.query as Record<string, string>;
-    if (!email) {
-      res.status(400).json({ error: "email required" });
-      return;
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
+    if (req.query.email && String(req.query.email).trim().toLowerCase() !== email) {
+      res.status(403).json({ error: "Seller account mismatch" }); return;
     }
 
     // Prevent 304 Caching Issues on newly posted items
@@ -232,6 +296,10 @@ router.get("/listings/mine", async (req, res) => {
         price: listingsTable.price,
         category: listingsTable.category,
         subcategory: listingsTable.subcategory,
+        subsubcategory: listingsTable.subsubcategory,
+        quantity: listingsTable.quantity,
+        shippingPrice: listingsTable.shippingPrice,
+        carrier: listingsTable.carrier,
         description: listingsTable.description,
         condition: listingsTable.condition,
         image: listingsTable.image,
@@ -254,7 +322,7 @@ router.get("/listings/mine", async (req, res) => {
       .orderBy(desc(listingsTable.createdAt))
       .limit(100);
     const withPromos = await attachPromotions(rows);
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching my listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -276,7 +344,7 @@ router.get("/listings/:id", async (req, res) => {
       tags: listingsTable.tags, extraCategories: listingsTable.extraCategories, specifications: listingsTable.specifications,
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
-    }).from(listingsTable).where(eq(listingsTable.publicId, rawId)).limit(1);
+    }).from(listingsTable).where(sql`public_url_token = ${rawId} OR public_id = ${rawId}`).limit(1);
     if (!row && /^\\d+$/.test(rawId)) {
       [row] = await db.select({
       id: listingsTable.id, publicId: listingsTable.publicId, title: listingsTable.title,
@@ -293,8 +361,9 @@ router.get("/listings/:id", async (req, res) => {
     const visibility = await categoryVisibility();
     const publicRow = await db.select({id:listingsTable.id}).from(listingsTable).where(and(eq(listingsTable.id,row.id),visibility)).limit(1);
     if (!publicRow.length) { res.status(404).json({ error: "Listing temporarily unavailable" }); return; }
-    if (row.status === "scheduled") {
-      const viewer = typeof req.query.email === "string" ? req.query.email.toLowerCase() : "";
+    if (row.status !== "active") {
+      const viewer = await authenticatedSellerEmail(req, res);
+      if (!viewer) return;
       if (viewer !== String(row.sellerEmail).toLowerCase()) { res.status(404).json({ error: "not found" }); return; }
     }
     const [withPromo] = await attachPromotions([row]);
@@ -309,7 +378,8 @@ router.get("/listings/:id", async (req, res) => {
       console.error("Error checking seller verification, defaulting to unverified:", err);
     }
 
-    res.json({ ...withPromo, sellerVerified });
+    const tokenResult=await db.execute(sql`SELECT public_url_token FROM listings WHERE id=${row.id}`);
+    res.json(normalizeListingMedia({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified }));
   } catch (err) {
     console.error("Error fetching listing:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -355,12 +425,15 @@ router.post("/listings", async (req, res) => {
     const subcategory = typeof body.subcategory === "string" && body.subcategory ? body.subcategory : null;
     const subsubcategory = subcategory && typeof body.subsubcategory === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory) && body.subsubcategory.length <= 100 ? body.subsubcategory : null;
     const tags = typeof body.tags === "string" ? body.tags : null;
-    const specifications = Array.isArray(body.specifications) ? JSON.stringify(body.specifications) : null;
+    const region = body.marketplaceRegion ?? body.marketplace_region;
+    if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Select UK or USA marketplace region" }); return; }
+    const gallery = Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string" && p.length > 0).slice(0, 10) : [];
+    const specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: gallery, draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
     const extraCategories = Array.isArray(body.extra_categories) && body.extra_categories.length
       ? JSON.stringify(body.extra_categories)
       : null;
     const currency = typeof body.currency === "string" && body.currency ? body.currency.toUpperCase() : "GBP";
-    const status = typeof body.status === "string" ? body.status : "active";
+    const status = body.status === "draft" ? "draft" : "active";
     const premiumVideo = body.premiumVideo === true;
     const shipOrigin = typeof body.shipOrigin === "string" ? body.shipOrigin.slice(0, 80) : null;
     const shipOriginOther = typeof body.shipOriginOther === "string" ? body.shipOriginOther.slice(0, 120) : null;
@@ -369,12 +442,13 @@ router.post("/listings", async (req, res) => {
     const shippingPrice = body.shippingPrice != null && Number.isFinite(Number(body.shippingPrice)) ? String(body.shippingPrice) : null;
     const handlingCharge = body.handlingCharge != null && Number.isFinite(Number(body.handlingCharge)) ? String(body.handlingCharge) : null;
     const quantity = body.quantity != null && Number.isFinite(Number(body.quantity)) ? Math.max(0, Math.floor(Number(body.quantity))) : null;
-    const sku = typeof body.sku === "string" ? body.sku.slice(0, 120) : null;
+    // Canonicalise the submitted SKU before storage and duplicate matching.
+    const sku = typeof body.sku === "string" ? body.sku.trim().slice(0, 120) || null : null;
 
     // Product Video is priced in credits and controlled by Admin → Promotions.
     // Validate the balance before creating the listing so a failed add-on cannot create duplicates.
     let productVideoConfig: Awaited<ReturnType<typeof getPromoConfig>> = null;
-    if (premiumVideo) {
+    if (premiumVideo && status === "active") {
       productVideoConfig = await getPromoConfig("product-video");
       if (!productVideoConfig || !productVideoConfig.enabled) {
         res.status(400).json({ error: "Product Video is not currently available." });
@@ -394,7 +468,21 @@ router.post("/listings", async (req, res) => {
       priceGbp = String(price);
     }
 
-    const [inserted] = await db
+    // Keep the check and insert inside one transaction. The per-seller/SKU
+    // transaction lock makes simultaneous retries of this API endpoint serial,
+    // preventing both requests from passing the duplicate check.
+    const created = await db.transaction(async (tx) => {
+      if (sku) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${authenticatedEmail}), hashtext(${sku.toLowerCase()}))`);
+        const existing = await tx.execute(sql`
+          SELECT id FROM listings
+          WHERE LOWER(seller_email) = ${authenticatedEmail}
+            AND LOWER(BTRIM(sku)) = ${sku.toLowerCase()}
+          ORDER BY id LIMIT 1
+        `);
+        if (existing.rows.length) return { listing: null, existingListingId: Number(existing.rows[0].id) };
+      }
+    const [inserted] = await tx
       .insert(listingsTable)
       .values({ 
         title, 
@@ -426,15 +514,28 @@ router.post("/listings", async (req, res) => {
       .returning();
 
     const publicId = makePublicId(inserted.id);
-    const [listing] = await db
+    const [listing] = await tx
       .update(listingsTable)
       .set({ publicId })
       .where(eq(listingsTable.id, inserted.id))
       .returning();
 
+      return { listing, existingListingId: null };
+    });
+    if (created.existingListingId !== null) {
+      res.status(409).json({
+        error: "duplicate_sku",
+        message: "A listing with this SKU already exists in your seller account.",
+        existingListingId: created.existingListingId,
+      });
+      return;
+    }
+    const listing = created.listing;
+    if (!listing) throw new Error("Listing insert returned no result");
+
     console.log("Listing successfully created:", listing.id);
 
-    if (premiumVideo && productVideoConfig) {
+    if (status === "active" && premiumVideo && productVideoConfig) {
       const newBalance = await storage.addCredits(sellerEmail, -productVideoConfig.cost);
       await recordCreditEconomy({ email: sellerEmail, kind: "spent", credits: -productVideoConfig.cost, reason: "Product Video", referenceType: "product_video" });
       const expiresAt = new Date();
@@ -446,13 +547,13 @@ router.post("/listings", async (req, res) => {
     // First listing ever posted by this seller completes the "First
     // Listing" milestone. Safe to call on every post — completeMilestone()
     // never un-completes it.
-    storage.completeMilestone(sellerEmail, "first-listing").catch((err) => {
+    if (status === "active") storage.completeMilestone(sellerEmail, "first-listing").catch((err) => {
       console.error("Failed to record first-listing milestone:", err);
     });
 
     // Active Lister (5/month) and Inventory Master (20/month)
-    void refreshSellerMilestones(sellerEmail);
-    void sendSystemMessage(sellerEmail, {
+    if (status === "active") void refreshSellerMilestones(sellerEmail);
+    if (status === "active") void sendSystemMessage(sellerEmail, {
       category: "Listings",
       subject: "Your listing is live",
       body:
@@ -477,10 +578,32 @@ router.patch("/listings/:id", async (req, res) => {
     const { email } = req.query as Record<string, string>;
     if (!email || email.trim().toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Seller account mismatch" }); return; }
     const body = req.body as Record<string, unknown>;
-    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency"] as const;
-    const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
+    const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency", "specifications", "tags"] as const;
+    const updates: Partial<typeof listingsTable.$inferInsert> = {};
     for (const key of allowed) {
-      if (typeof body[key] === "string") updates[key] = body[key] as string;
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = body[key];
+    }
+    // Mobile and desktop draft publication share this API. Persist the fields
+    // buyers use to choose delivery, including when publishing a saved draft.
+    if (body.image === null) updates.image = null;
+    for (const key of ["shipOrigin", "shipOriginOther", "shipZone", "carrier", "sku", "sellerName", "sellerUsername"] as const) {
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = (body[key] as string).slice(0, key==="shipOriginOther"||key==="sku"?120:80);
+    }
+    for (const key of ["shippingPrice", "handlingCharge"] as const) {
+      if (body[key] !== undefined) {
+        const amount=Number(body[key]);
+        if (!Number.isFinite(amount) || amount<0 || amount>100000) {
+          res.status(400).json({error:"Shipping and handling must be valid non-negative amounts"});return;
+        }
+        updates[key]=amount.toFixed(2);
+      }
+    }
+    if (body.quantity !== undefined) {
+      const quantity=Number(body.quantity);
+      if (!Number.isSafeInteger(quantity) || quantity<1 || quantity>10000) {
+        res.status(400).json({error:"Quantity must be between 1 and 10000"});return;
+      }
+      updates.quantity=quantity;
     }
 
     if (typeof body.subsubcategory === "string" && body.subsubcategory !== "" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory)) { res.status(400).json({ error: "Invalid third-level category slug" }); return; }
@@ -488,6 +611,12 @@ router.patch("/listings/:id", async (req, res) => {
     if (Array.isArray(body.extra_categories)) {
       updates.extraCategories = body.extra_categories.length ? JSON.stringify(body.extra_categories) : "";
     }
+    if (body.marketplaceRegion !== undefined || body.marketplace_region !== undefined || body.draftForm !== undefined) {
+      const region = body.marketplaceRegion ?? body.marketplace_region;
+      if (region !== "uk" && region !== "us") { res.status(400).json({ error: "Invalid region" }); return; }
+      updates.specifications = JSON.stringify({ marketplace_region: region, details: Array.isArray(body.specifications) ? body.specifications : [], photos: Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string").slice(0, 10) : [], draftForm: body.draftForm && typeof body.draftForm === "object" ? body.draftForm : undefined });
+    }
+    if (updates.status && !["draft", "active", "inactive", "suspended", "sold"].includes(updates.status)) { res.status(400).json({ error: "Invalid listing status" }); return; }
     if (Object.keys(updates).length === 0) { res.status(400).json({ error: "no fields to update" }); return; }
 
     if (updates.price || updates.currency) {
@@ -508,6 +637,19 @@ router.patch("/listings/:id", async (req, res) => {
       .where(and(eq(listingsTable.id, id), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${email})`))
       .returning();
     if (updated.length === 0) { res.status(404).json({ error: "Listing not found or not yours" }); return; }
+    // Proof belongs to the specific photographed item and description. Any
+    // material change revokes prior human review and third-party authentication.
+    if (["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].some(k=>body[k]!==undefined)) {
+      try{
+        await ensureTrustProofTables();
+        const revoked=await db.execute(sql`UPDATE marketplace_trust_proofs SET status='revoked',
+          reviewed_at=NULL,reviewed_by=NULL,external_provider=NULL,external_reference=NULL,
+          external_checked_at=NULL,external_admin=NULL,updated_at=NOW()
+          WHERE listing_id=${id} AND status IN ('collecting','submitted','approved','rejected')
+          RETURNING listing_id`);
+        if(revoked.rows.length)await auditProof(id,authenticatedEmail,"listing_changed",{fields:Object.keys(body).filter(k=>["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].includes(k))});
+      }catch(err){console.error("TrustProof revocation failed; public fingerprint still blocks stale evidence",err);}
+    }
     res.json(updated[0]);
   } catch (err) {
     console.error("Error updating listing:", err);
@@ -577,6 +719,35 @@ async function authenticatedEmail(req: any): Promise<string | null> {
   const clerkUser = await clerkClient.users.getUser(auth.userId);
   return clerkUser.primaryEmailAddress?.emailAddress?.toLowerCase() ?? null;
 }
+
+// Only seller-visible events and appeal decisions are returned; private admin
+// reviewer notes and risk-scan internals are never exposed to the seller.
+router.get("/listings/seller-compliance/:id/history",async(req,res)=>{
+ try{
+  const email=await authenticatedEmail(req);
+  if(!email){res.status(401).json({error:"Sign in required"});return;}
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid case"});return;}
+  const owned=await db.execute(sql`SELECT id,status,opened_at FROM seller_compliance_cases
+   WHERE id=${id} AND LOWER(seller_email)=LOWER(${email}) LIMIT 1`);
+  if(!owned.rows.length){res.status(404).json({error:"Case not found"});return;}
+  const [events,appeals]=await Promise.all([
+   db.execute(sql`SELECT id,action,details,created_at FROM seller_compliance_events WHERE case_id=${id}
+     AND action IN ('evidence_submitted','appeal_decided','status_updated') ORDER BY created_at DESC LIMIT 40`),
+   db.execute(sql`SELECT id,status,explanation,decision_reason,created_at,decided_at
+     FROM seller_compliance_appeals WHERE case_id=${id} AND LOWER(seller_email)=LOWER(${email})
+     ORDER BY created_at DESC LIMIT 20`)
+  ]);
+  const filtered=(events.rows as any[]).map(e=>({
+   id:e.id,action:e.action,created_at:e.created_at,
+   details:e.action==='evidence_submitted' ? {explanation:e.details?.explanation||""}
+     :e.action==='appeal_decided'?{decision:e.details?.decision||""}
+     :{status:e.details?.status||""}
+  }));
+  res.setHeader("Cache-Control","private,no-store");
+  res.json({case:owned.rows[0],events:filtered,appeals:appeals.rows});
+ }catch(e){console.error("Seller case history failed",e);res.status(503).json({error:"Could not load your case history"});}
+});
 
 // Seller-owned compliance cases and text evidence; identity is always taken from Clerk.
 router.get("/listings/seller-compliance/me", async(req,res)=>{
@@ -699,7 +870,7 @@ router.patch("/listings/profile/me", async (req, res) => {
         VALUES(${email},${sellerType},${"2026-10-11-v1"},${"seller_onboarding"})`);
     }
     const step = Number.isInteger(b.onboardingStep) ? Math.max(1,Math.min(6,b.onboardingStep)) : null;
-    const completed = b.onboardingCompleted === true ? true : null;
+    const completed = null; // Completion is validated server-side after profile fields are saved.
     const prefs = b.notificationPreferences && typeof b.notificationPreferences === "object" ? b.notificationPreferences : null;
 
     // JSON is stringified and cast server-side so it is never interpolated as SQL text.
@@ -716,6 +887,24 @@ router.patch("/listings/profile/me", async (req, res) => {
       notification_preferences=COALESCE(${prefsJson}::jsonb,notification_preferences),
       onboarding_step=COALESCE(${step},onboarding_step), onboarding_completed=COALESCE(${completed},onboarding_completed)
       WHERE LOWER(email)=LOWER(${email})`);
+    if (b.onboardingCompleted === true) {
+      // The browser cannot make itself payout-eligible by simply setting a boolean.
+      const candidate=(await db.execute(sql`SELECT name,username,address_line1,city,postcode,country,seller_type,notification_preferences
+        FROM users WHERE LOWER(email)=LOWER(${email}) LIMIT 1`)).rows[0] as any;
+      const required=[candidate?.name,candidate?.username,candidate?.address_line1,candidate?.city,candidate?.postcode,candidate?.country,candidate?.seller_type];
+      if(required.some(x=>!String(x||"").trim()) || !/^[A-Za-z0-9._-]{3,30}$/.test(String(candidate?.username||"")) ||
+          !["private","sole_trader","business"].includes(String(candidate?.seller_type)) ||
+          !candidate?.notification_preferences || typeof candidate.notification_preferences!=="object"){
+        res.status(409).json({error:"Complete your profile, address, seller classification and notification preferences before finishing account setup."});return;
+      }
+      const declarations=await db.execute(sql`SELECT 1 FROM seller_declarations
+        WHERE LOWER(seller_email)=LOWER(${email}) AND declared_type=${candidate.seller_type}
+        AND declaration_version='2026-10-11-v1' LIMIT 1`);
+      if(!declarations.rows.length){
+        res.status(409).json({error:"Accept the current seller compliance declaration before completing setup."});return;
+      }
+      await db.execute(sql`UPDATE users SET onboarding_completed=TRUE,onboarding_step=6 WHERE LOWER(email)=LOWER(${email})`);
+    }
     // The profile update above is authoritative. Older deployments can have
     // different optional seller-name columns on individual selling surfaces.
     // Propagate retrospectively where supported, but never make onboarding fail
@@ -742,3 +931,4 @@ router.patch("/listings/profile/me", async (req, res) => {
 });
 
 export default router;
+

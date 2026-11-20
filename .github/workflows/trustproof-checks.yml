@@ -1,0 +1,52 @@
+name: TrustProof trust and privacy checks
+on:
+  pull_request:
+    paths:
+      - 'artifacts/api-server/src/lib/trustProof.ts'
+      - 'artifacts/api-server/src/routes/trustProof.ts'
+      - 'artifacts/api-server/src/routes/listings.ts'
+      - 'artifacts/api-server/src/routes/index.ts'
+      - 'artifacts/api-server/src/middlewares/featureGate.ts'
+      - 'artifacts/api-server/src/lib/featureFlags.ts'
+      - 'artifacts/sellbuydeal/src/pages/TrustProofPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminTrustProofPage.tsx'
+      - 'artifacts/sellbuydeal/src/components/listing/TrustProofBuyerPanel.tsx'
+      - 'artifacts/sellbuydeal/src/pages/PrivacyPage.tsx'
+      - 'scripts/trustproof-contract.test.mjs'
+      - '.github/workflows/trustproof-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/api-server/src/lib/trustProof.ts'
+      - 'artifacts/api-server/src/routes/trustProof.ts'
+      - 'artifacts/sellbuydeal/src/pages/TrustProofPage.tsx'
+      - 'artifacts/sellbuydeal/src/components/listing/TrustProofBuyerPanel.tsx'
+      - 'scripts/trustproof-contract.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trustproof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: TrustProof security and privacy contracts
+        run: node --test scripts/trustproof-contract.test.mjs
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile --prod=false
+      - name: Typecheck shared libraries
+        run: pnpm run typecheck:libs
+      - name: Typecheck API
+        run: pnpm --filter @workspace/api-server typecheck
+      - name: Typecheck storefront
+        run: pnpm --filter @workspace/sellbuydeal typecheck
+      - name: Build API and storefront
+        run: pnpm build

@@ -1,4 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   X, Minus, Plus, Trash2, ShoppingBag, ArrowRight,
@@ -6,6 +8,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
+import { BuyerProtectionModal } from "@/components/BuyerProtectionModal";
 
 const CONDITION_COLORS: Record<string, string> = {
   "new":      "bg-emerald-100 text-emerald-700",
@@ -20,17 +23,59 @@ export function CartDrawer() {
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
 
+  const [protectionOpen, setProtectionOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const protectionOpenRef = useRef(false);
+  protectionOpenRef.current = protectionOpen;
+  const [quote, setQuote] = useState<{ buyerProtectionFee: number; delivery: number; total: number } | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(false);
+  const cartKey = JSON.stringify(items.map(item => ({ id: item.product.id, quantity: item.quantity })));
+  useEffect(() => {
+    if (!isOpen || !items.length) { setQuote(null); return; }
+    const controller = new AbortController();
+    setQuote(null); setQuoteError(false); setQuoteLoading(true);
+    fetch("/api/stripe/quote-cart", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: JSON.parse(cartKey) }), signal: controller.signal })
+      .then(async response => { if (!response.ok) throw new Error("Quote unavailable"); return response.json(); })
+      .then(data => { if (!controller.signal.aborted) setQuote({ buyerProtectionFee: Number(data.buyerProtectionFee), delivery: Number(data.delivery), total: Number(data.total) }); })
+      .catch(() => { if (!controller.signal.aborted) setQuoteError(true); })
+      .finally(() => { if (!controller.signal.aborted) setQuoteLoading(false); });
+    return () => controller.abort();
+  }, [cartKey, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!returnFocusRef.current) returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (protectionOpenRef.current) return;
+      if (event.key === "Escape") { event.preventDefault(); closeCart(); return; }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+      if (!focusable.length) { event.preventDefault(); drawerRef.current?.focus(); return; }
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !drawerRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || !drawerRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+    };
+    const focusFrame = requestAnimationFrame(() => drawerRef.current?.querySelector<HTMLElement>('[data-testid="button-close-cart"]')?.focus());
+    document.addEventListener("keydown", onKeyDown);
+    return () => { cancelAnimationFrame(focusFrame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); returnFocusRef.current?.focus(); returnFocusRef.current = null; };
+  }, [isOpen, closeCart]);
+
   function goToCheckout() {
     closeCart();
     setLocation("/checkout");
   }
 
-  const delivery = subtotal >= 50 ? 0 : 3.99;
-  const total = subtotal + delivery;
+  const delivery = quote?.delivery;
+  const total = quote?.total;
 
-  return (
+  return typeof document === "undefined" ? null : createPortal(
+    <>
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && !protectionOpen && (
         <>
           {/* Backdrop */}
           <motion.div
@@ -39,7 +84,8 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-[60]"
+            className="bz-cart-overlay"
+            style={{ position: "fixed", inset: 0, width: "100vw", height: "100dvh", backgroundColor: "rgba(3, 12, 29, 0.68)", zIndex: 2147483000 }}
             onClick={closeCart}
           />
 
@@ -50,7 +96,13 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 220 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white z-[60] flex flex-col shadow-2xl"
+            className="bz-cart-drawer flex flex-col shadow-2xl overflow-hidden"
+            ref={drawerRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Shopping cart"
+            style={{ position: "fixed", top: 0, right: 0, bottom: 0, left: "auto", width: "min(400px, 100vw)", maxWidth: "100vw", height: "100dvh", backgroundColor: "#ffffff", color: "#14243d", zIndex: 2147483001, opacity: 1, isolation: "isolate" }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
@@ -89,7 +141,7 @@ export function CartDrawer() {
             {subtotal > 0 && (
               <div className="mx-4 mt-3 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl">
                 <p className="text-xs text-blue-700 font-medium text-center">
-                  🔒 Payments go through Bazunk — never directly to the seller
+                  🔒 Payments secured by Bazunk/Stripe
                 </p>
               </div>
             )}
@@ -212,23 +264,24 @@ export function CartDrawer() {
                   <div className="flex justify-between text-gray-600">
                     <span>Delivery</span>
                     <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
-                      {delivery === 0 ? "FREE" : formatPrice(delivery)}
+                      {quoteLoading ? "Calculating…" : delivery == null ? "At checkout" : delivery === 0 ? "FREE" : formatPrice(delivery)}
                     </span>
-                  </div>
-                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
-                    <span>Total before Buyer Protection</span>
-                    <span>{formatPrice(total)}</span>
                   </div>
                   <div className="flex justify-between gap-3 text-gray-600">
                     <span>Buyer Protection</span>
-                    <span className="text-right">Calculated at checkout</span>
+                    <span className="text-right font-semibold text-gray-900">{quoteLoading ? "Calculating…" : quote ? formatPrice(quote.buyerProtectionFee) : "At checkout"}</span>
                   </div>
+                  <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100">
+                    <span>Estimated total</span>
+                    <span>{quoteLoading ? "Calculating…" : total == null ? "At checkout" : formatPrice(total)}</span>
+                  </div>
+                  {quoteError && <p role="status" className="text-xs text-amber-800">Live fees are temporarily unavailable. Your final charges will be calculated at checkout.</p>}
                   <p className="rounded-xl bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
-                    Buyer Protection is added at checkout for personal-seller items
-                    (5% + 70p by default, with one fixed fee per checkout).
-                    Business-seller purchases include protection with no extra buyer fee.
-                    Your final total is shown before payment.
+                    Buyer Protection applies to eligible purchases from both personal and business sellers. The fee is shown above when available. The final amount is confirmed at checkout.
                   </p>
+                  <button type="button" onClick={() => setProtectionOpen(true)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-bold text-blue-800 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700" data-testid="button-cart-buyer-protection">
+                    <Shield className="h-4 w-4" /> Buyer Protection <ArrowRight className="h-4 w-4" />
+                  </button>
                 </div>
 
                 {/* Checkout button */}
@@ -253,5 +306,8 @@ export function CartDrawer() {
         </>
       )}
     </AnimatePresence>
+    <BuyerProtectionModal open={protectionOpen && isOpen} onClose={() => setProtectionOpen(false)} />
+    </>,
+    document.body
   );
 }

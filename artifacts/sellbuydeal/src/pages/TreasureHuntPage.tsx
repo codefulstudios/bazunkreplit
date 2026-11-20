@@ -109,8 +109,8 @@ export function TreasureHuntPage() {
             <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mb-5">
               <Gem className="w-10 h-10 text-amber-400" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900 mb-2">Sign in to join the hunt</h2>
-            <p className="text-gray-500 text-sm mb-6 max-w-sm">Create an account or sign in to find hidden tokens and earn credits every day.</p>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Sign in to join the hunt</h2>
+            <p className="text-gray-500 dark:text-slate-300 text-sm mb-6 max-w-sm">Create an account or sign in to find hidden tokens and earn credits every day.</p>
             <div className="flex gap-3">
               <Link href="/login" className="px-6 py-3 rounded-xl bg-[#1A1D2E] text-white font-bold hover:opacity-90 transition-opacity">Sign In</Link>
               <Link href="/register" className="px-6 py-3 rounded-xl bg-amber-500 text-white font-bold hover:opacity-90 transition-opacity">Join Free</Link>
@@ -123,14 +123,14 @@ export function TreasureHuntPage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <MapPin className="w-5 h-5 text-amber-500" />
-                <h2 className="text-lg font-black text-gray-900">Today's Clues</h2>
-                <span className="text-xs text-gray-400 ml-auto">Resets midnight UTC</span>
+                <h2 className="text-lg font-black text-gray-900 dark:text-white">Today's Clues</h2>
+                <span className="text-xs text-gray-500 dark:text-slate-300 ml-auto">Resets midnight UTC</span>
               </div>
 
               {loading ? (
                 <div className="flex items-center justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-amber-500" /></div>
               ) : tokens.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
+                <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 dark:text-slate-300">
                   <Gem className="w-10 h-10 mx-auto mb-3 text-gray-200" />
                   <p>No tokens available yet — check back soon!</p>
                 </div>
@@ -148,11 +148,11 @@ export function TreasureHuntPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold text-gray-900 text-sm">{t.label}</p>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{t.label}</p>
                         <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">+{t.creditValue} credits</span>
                         {t.claimed && <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Found!</span>}
                       </div>
-                      <p className="text-sm text-gray-500 italic">"{t.hint}"</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-300 italic">"{t.hint}"</p>
                     </div>
                     <div className="shrink-0">
                       {t.claimed ? (
@@ -184,15 +184,15 @@ export function TreasureHuntPage() {
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Star className="w-4 h-4 text-amber-500" />
-                  <h3 className="font-black text-gray-900 text-sm">My Credits</h3>
+                  <h3 className="font-black text-gray-900 dark:text-white text-sm">My Credits</h3>
                 </div>
                 <p className="text-4xl font-black text-amber-500 mb-1">{myCredits}</p>
-                <p className="text-xs text-gray-400">credits earned lifetime</p>
+                <p className="text-xs text-gray-500 dark:text-slate-300">credits earned lifetime</p>
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="text-xs text-gray-400 mb-1">Today's haul</p>
-                  <p className="text-lg font-black text-gray-900">
+                  <p className="text-xs text-gray-500 dark:text-slate-300 mb-1">Today's haul</p>
+                  <p className="text-lg font-black text-gray-900 dark:text-white">
                     {tokens.filter(t => t.claimed).reduce((sum, t) => sum + t.creditValue, 0)} credits
-                    <span className="text-sm font-normal text-gray-400 ml-1">({todayFound}/{totalTokens} tokens)</span>
+                    <span className="text-sm font-normal text-gray-500 dark:text-slate-300 ml-1">({todayFound}/{totalTokens} tokens)</span>
                   </p>
                 </div>
                 <Link href="/credits" className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#4A5CE8] hover:underline">
@@ -203,12 +203,12 @@ export function TreasureHuntPage() {
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-4 h-4 text-amber-500" />
-                  <h3 className="font-black text-gray-900 text-sm">Leaderboard</h3>
+                  <h3 className="font-black text-gray-900 dark:text-white text-sm">Leaderboard</h3>
                 </div>
                 {lbLoading ? (
                   <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-amber-500" /></div>
                 ) : leaderboard.length === 0 ? (
-                  <p className="text-sm text-gray-400 text-center py-4">No hunters yet — be the first!</p>
+                  <p className="text-sm text-gray-500 dark:text-slate-300 text-center py-4">No hunters yet — be the first!</p>
                 ) : (
                   <div className="space-y-2">
                     {leaderboard.map((entry, i) => {

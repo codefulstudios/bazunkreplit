@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { Film, Play } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Film, Play, Clapperboard, X, Volume2, ShieldCheck } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import "./VideoPage.css";
 
 const videos = [
   { title: "Bazunk Promo", file: "bazunk-promo", description: "Discover buying, selling and rewards on Bazunk." },
@@ -11,51 +11,94 @@ const videos = [
   { title: "Bazunk Desert Island", file: "bazunk-desertislandadvert", poster: "bazunk-desertislandposter.png", description: "Two castaways. Five hundred iPhones. Absolutely nowhere sensible to sell them." },
 ];
 const posterFor = (video: typeof videos[number]) => "poster" in video && video.poster ? video.poster : `${video.file}-poster.${video.file === "bazunk-chainsaw" ? "png" : "jpg"}`;
+  { title: "Bazunk Promo", file: "bazunk-promo", description: "Discover buying, selling and rewards on Bazunk.", category: "Platform Updates" },
+  { title: "Bazunk, RIP Fluffy Advert", file: "bazunk-fluffy-advert", description: "Our first advert: a very special send-off for Fluffy.", category: "Announcements" },
+  { title: "The Bazunk Chainsaw", file: "bazunk-chainsaw", description: "One branch. One chainsaw. Several extremely expensive consequences.", category: "Buying & Selling" },
+  { title: "Bazunk Desert Island", file: "bazunk-desertislandadvert", poster: "bazunk-desertislandposter.png", description: "Two castaways. Five hundred iPhones. Absolutely nowhere sensible to sell them.", category: "Buying & Selling" },
+] as const;
+type Video = (typeof videos)[number];
+const categories = ["All Videos", "Platform Updates", "Buying & Selling", "Tips & Guides", "Announcements"] as const;
+const posterFor = (video: Video) => "poster" in video ? video.poster : `${video.file}-poster.${video.file === "bazunk-chainsaw" ? "png" : "jpg"}`;
 const asset = (name: string) => `${import.meta.env.BASE_URL}${name}`;
 
 export default function VideoPage() {
-  const [selected, setSelected] = useState<typeof videos[number] | null>(null);
+  const [selected, setSelected] = useState<Video | null>(null);
+  const [category, setCategory] = useState<string>("All Videos");
   const [failed, setFailed] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const player = useRef<HTMLVideoElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const visible = category === "All Videos" ? videos : videos.filter(video => video.category === category);
+  function open(video: Video) {
+    previousFocus.current = document.activeElement as HTMLElement;
+    setFailed(false); setPlaying(false); setSelected(video);
+  }
+  function close() { player.current?.pause(); setSelected(null); setPlaying(false); previousFocus.current?.focus(); }
+  useEffect(() => {
+    if (!selected) return;
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); close(); }
+      if (event.key === "Tab") {
+        const modal = document.querySelector<HTMLElement>(".bz-video-dialog");
+        const controls = modal?.querySelectorAll<HTMLElement>('button:not([disabled]),video[controls],a[href]');
+        if (!controls?.length) return;
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener("keydown", keydown);
+    return () => { document.body.style.overflow = oldOverflow; document.removeEventListener("keydown", keydown); };
+  }, [selected]);
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="bz-video-page min-h-screen flex flex-col">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 py-12 sm:py-16">
-        <div className="relative isolate overflow-hidden rounded-[1.7rem] bg-gradient-to-r from-fuchsia-600 via-indigo-700 to-sky-500 px-6 py-7 sm:px-9 sm:py-8 text-white mb-8 shadow-lg">
-          <div aria-hidden="true" className="pointer-events-none absolute -left-16 -top-28 h-56 w-72 rounded-full bg-pink-400/50 blur-2xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute right-0 -bottom-24 h-48 w-72 rounded-full bg-cyan-300/50 blur-2xl" />
-          <div aria-hidden="true" className="pointer-events-none absolute left-1/2 -top-24 h-40 w-56 rounded-full bg-blue-400/30 blur-3xl" />
-          <div className="relative flex items-center gap-5 sm:gap-7">
-            <div className="shrink-0 rounded-2xl border border-white/30 bg-white/15 p-3 shadow-lg backdrop-blur-sm"><Film className="h-8 w-8 text-white" aria-hidden="true" /></div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">Bazunk <span className="text-amber-300">Promo Videos</span></h1>
-              <p className="mt-1 text-sm sm:text-base text-white/90">Meet the marketplace. Enjoy the adverts.</p>
-            </div>
-            <div aria-hidden="true" className="hidden sm:flex shrink-0 h-20 w-20 rotate-[-9deg] items-center justify-center rounded-3xl bg-slate-950/65 ring-4 ring-white/20 shadow-xl"><Play className="h-10 w-10 fill-white text-white" /></div>
+      <header className="bz-video-hero">
+        <div className="bz-video-hero-inner">
+          <div>
+            <span className="bz-video-eyebrow"><span className="bz-video-eyebrow-icon"><Play size={17} fill="currentColor" /></span> Promotional Videos</span>
+            <h1>Bazunk Promotional Videos</h1>
+            <p>Watch the latest videos, discover new features, and see what's happening on Bazunk.</p>
           </div>
+          <div className="bz-video-hero-art" aria-hidden="true"><Clapperboard size={148} strokeWidth={1.35}/><span><Play size={54} fill="currentColor"/></span></div>
         </div>
-        <div className="grid gap-8 md:grid-cols-2">
-          {videos.map(video => (
-            <article key={video.file} className="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
-              <button type="button" aria-label={`Play ${video.title}`} onClick={() => { setFailed(false); setSelected(video); }} className="relative block w-full aspect-video group focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-600">
-                <img src={asset(posterFor(video))} alt={`Preview of ${video.title}`} width={960} height={540} className="w-full h-full object-cover" loading="lazy" />
-                <span className="absolute inset-0 bg-black/15 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                  <span className="rounded-full bg-white text-blue-700 p-5 shadow-xl group-hover:scale-110 transition-transform"><Play className="w-7 h-7 fill-current" aria-hidden="true" /></span>
-                </span>
-              </button>
-              <div className="p-6"><h2 className="text-xl font-bold text-slate-900">{video.title}</h2><p className="text-slate-500 mt-2">{video.description}</p></div>
-            </article>
-          ))}
-        </div>
+      </header>
+      <main className="bz-video-main">
+        <nav className="bz-video-filters" aria-label="Video categories">
+          {categories.map(item => <button key={item} type="button" aria-pressed={category === item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}
+        </nav>
+        {visible.length ? <div className="bz-video-grid">
+          {visible.map(video => <article key={video.file} className="bz-video-card">
+            <button className="bz-video-thumb" type="button" onClick={() => open(video)} aria-label={`Play ${video.title}`}>
+              <img src={asset(posterFor(video))} alt={`Preview of ${video.title}`} loading="lazy" />
+              <span className="bz-video-play"><Play size={28} fill="currentColor"/></span>
+              <span className="bz-video-duration"><Film size={13}/> Video</span>
+            </button>
+            <div className="bz-video-card-body">
+              <h2>{video.title}</h2>
+              <p>{video.description}</p>
+              <span className="bz-video-category">{video.category}</span>
+            </div>
+          </article>)}
+        </div> : <div className="bz-video-empty"><Film size={32}/><h2>More videos coming soon</h2><p>There aren't any videos in this category yet.</p><button type="button" onClick={() => setCategory("All Videos")}>View all videos</button></div>}
       </main>
       <Footer />
-      <Dialog open={selected !== null} onOpenChange={open => { if (!open) setSelected(null); }}>
-        <DialogContent className="w-[calc(100%_-_2rem)] max-w-5xl bg-slate-950 border-slate-700 text-white p-4 sm:p-6 rounded-2xl max-h-[90dvh] overflow-y-auto">
-          <DialogTitle className="pr-8">{selected?.title}</DialogTitle>
-          <DialogDescription className="sr-only">Video player with playback, volume and fullscreen controls. Close with the close button or Escape.</DialogDescription>
-          {selected && <video key={selected.file} src={asset(`${selected.file}.mp4`)} poster={asset(posterFor(selected))} controls autoPlay playsInline preload="metadata" aria-label={selected.title} onError={() => setFailed(true)} className="w-full max-h-[70dvh] aspect-video object-contain bg-black rounded-lg">Your browser does not support video playback.</video>}
-          {failed && <p role="alert" className="text-red-300">The video could not load. Please close the player and try again.</p>}
-        </DialogContent>
-      </Dialog>
+      {selected && <div className="bz-video-overlay" onMouseDown={event => { if (event.target === event.currentTarget) close(); }}>
+        <section className="bz-video-dialog" role="dialog" aria-modal="true" aria-labelledby="bz-video-dialog-title" aria-describedby="bz-video-dialog-description">
+          <div className="bz-video-dialog-header"><div><span className="bz-video-dialog-kicker"><ShieldCheck size={14}/> Bazunk Originals</span><h2 id="bz-video-dialog-title">{selected.title}</h2></div><button ref={closeButton} className="bz-video-close" type="button" onClick={close} aria-label="Close video player"><X size={27}/></button></div>
+          <p id="bz-video-dialog-description" className="sr-only">Video player with native playback, sound, captions where available and fullscreen controls.</p>
+          <div className="bz-video-player-wrap">
+            <video ref={player} key={selected.file} src={asset(`${selected.file}.mp4`)} poster={asset(posterFor(selected))} controls autoPlay playsInline preload="metadata" aria-label={selected.title} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => setFailed(true)}>Your browser does not support video playback.</video>
+            {!failed && !playing && <button type="button" className="bz-video-center-play" aria-label="Play video" onClick={() => player.current?.play().catch(() => setFailed(true))}><Play size={36} fill="currentColor"/></button>}
+          </div>
+          {failed && <p className="bz-video-error" role="alert">This video couldn't load. Please try again later.</p>}
+          <div className="bz-video-dialog-footer"><span><Volume2 size={16}/> Use the player controls for sound and fullscreen.</span><button type="button" onClick={close}>Close player</button></div>
+        </section>
+      </div>}
     </div>
   );
 }

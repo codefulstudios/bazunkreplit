@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import {
   Search, Plus, Pencil, Trash2, RefreshCw, Package, CheckCircle, XCircle,
@@ -7,7 +8,7 @@ import {
 import { AdminListingPromotion } from "@/components/AdminListingPromotion";
 import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
-import { ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelSlug } from "@/data/categories";
+import { CATEGORIES, ACTIVE_CATEGORIES, resolveCategory, suggestedThirdLevel, thirdLevelProposals, thirdLevelSlug } from "@/data/categories";
 
 const SITE_CATEGORIES = ACTIVE_CATEGORIES;
 
@@ -27,7 +28,7 @@ interface Product {
   images: string[]; variants: Variant[]; seller_email: string | null;
   category_id: string | null; category_name: string | null; subcategory?: string | null; subsubcategory?: string | null; created_at: string;
   currency?: string; brand?: string; sku?: string; ships_from?: string; ships_from_location?: string;
-  ships_to?: string; shipping_price?: string | number; free_shipping?: boolean; dispatch_time?: string;
+  ships_to?: string; shipping_price?: string | number; handling_charge?: string | number; free_shipping?: boolean; dispatch_time?: string;
   delivery_estimate?: string; source?: string | null; source_url?: string | null; source_item_id?: string | null;
   source_condition?: string | null; source_price?: string | number | null; source_postage?: string | number | null;
   last_source_check?: string | null; markup_pct?: string | number | null; minimum_profit?: string | number | null;
@@ -38,14 +39,14 @@ interface ProductForm {
   condition: string; status: string; inventory: string; tags: string;
   seller_email: string; images: string[]; variants: Variant[]; subcategory: string; subsubcategory: string; currency: string;
   brand: string; sku: string; ships_from: string; ships_from_location: string; ships_to: string;
-  shipping_price: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
+  shipping_price: string; handling_charge: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
 }
 
 const EMPTY_FORM: ProductForm = {
   title: "", description: "", price: "0", category_id: "", condition: "new",
   status: "pending", inventory: "0", tags: "", seller_email: "", images: [], variants: [],
   subcategory: "", subsubcategory: "", currency: "GBP", brand: "", sku: "", ships_from: "", ships_from_location: "",
-  ships_to: "", shipping_price: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
+  ships_to: "", shipping_price: "", handling_charge: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -361,18 +362,46 @@ function ProductDrawer({
     variants: Array.isArray(product.variants) ? product.variants.map(v => ({ ...v, priceModifier: String(v.priceModifier), inventory: String(v.inventory) })) : [],
     subcategory: product.subcategory ?? "", subsubcategory: product.subsubcategory ?? "", currency: product.currency ?? "GBP", brand: product.brand ?? "", sku: product.sku ?? "",
     ships_from: product.ships_from ?? "", ships_from_location: product.ships_from_location ?? "", ships_to: product.ships_to ?? "",
-    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), free_shipping: Boolean(product.free_shipping),
+    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), handling_charge: product.handling_charge == null ? "" : String(product.handling_charge), free_shipping: Boolean(product.free_shipping),
     dispatch_time: product.dispatch_time ?? "", delivery_estimate: product.delivery_estimate ?? "",
   } : { ...EMPTY_FORM });
 
   const [saving, setSaving] = useState(false);
+  const editorScrollRef=useRef<HTMLDivElement>(null);
+  const dialogRef=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{const dialog=dialogRef.current;if(!dialog)return;if(!dialog.open)dialog.showModal();return ()=>{if(dialog.open)dialog.close();};},[]);
+  useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow="hidden";return ()=>{document.body.style.overflow=previous;};},[]);
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [section,setSection] = useState("details");
+  const [dirty,setDirty] = useState(false);
+  const tryClose=()=>{if(!dirty||window.confirm("Discard unsaved listing changes?"))onClose();};
+  async function uploadFiles(files:FileList|null){
+    if(!files?.length)return;
+    setUploading(true);setError("");
+    try{
+      const next:string[]=[];
+      for(const file of Array.from(files).slice(0,Math.max(0,12-form.images.filter(Boolean).length))){
+        if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>3145728)throw Error("Choose JPG, PNG or WebP files under 3 MB");
+        const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Could not read image"));reader.readAsDataURL(file);});
+        const response=await authFetch("/api/admin/products/media-upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({filename:file.name,dataUrl})});
+        const data=await response.json().catch(()=>null);
+        if(!response.ok)throw Error(data?.error||"Could not upload image");
+        next.push(data.url);
+      }
+      setForm(f=>({...f,images:[...f.images.filter(Boolean),...next].slice(0,12)}));
+      setDirty(true);
+      setSection("images");
+    }catch(e){setError(e instanceof Error?e.message:"Upload failed");}
+    finally{setUploading(false);}
+  }
 
-  const set = (key: keyof ProductForm, val: any) => setForm(f => ({ ...f, [key]: val }));
+  const set = (key: keyof ProductForm, val: any) => {setDirty(true);setForm(f => ({ ...f, [key]: val }));};
 
-  function addImage() { set("images", [...form.images, ""]); }
+  function addImage() { if(form.images.length<12)set("images", [...form.images, ""]); }
   function setImage(i: number, val: string) { const imgs = [...form.images]; imgs[i] = val; set("images", imgs); }
   function removeImage(i: number) { set("images", form.images.filter((_, idx) => idx !== i)); }
+  function makeCover(i:number){const copy=[...form.images];const [chosen]=copy.splice(i,1);set("images",[chosen,...copy]);}
 
   function addVariant() { set("variants", [...form.variants, { type: "size", value: "", priceModifier: "0", inventory: "0" }]); }
   function setVariant(i: number, key: keyof Variant, val: string) {
@@ -380,12 +409,14 @@ function ProductDrawer({
   }
   function removeVariant(i: number) { set("variants", form.variants.filter((_, idx) => idx !== i)); }
 
-  async function save() {
+  async function save(publish=false) {
     if (!form.title.trim()) { setError("Title is required"); return; }
+    if(uploading)return;
     setSaving(true);
     setError("");
     const body = {
       ...form,
+      status: publish ? "approved" : form.status,
       price: parseFloat(form.price) || 0,
       inventory: parseInt(form.inventory) || 0,
       category_id: form.category_id || null,
@@ -398,34 +429,161 @@ function ProductDrawer({
     };
     const url = isEdit ? `/api/admin/products/${product!.id}` : "/api/admin/products";
     const res = await authFetch(url, { method: isEdit ? "PUT" : "POST", body: JSON.stringify(body) });
-    if (res.ok) { onSaved(); }
+    if (res.ok) { setDirty(false);onSaved(); }
     else { const d = await res.json(); setError(d.error ?? "Failed to save"); }
     setSaving(false);
   }
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white z-50 flex flex-col shadow-2xl">
+
+      <style>{`
+        dialog#bazunk-listing-editor#bazunk-listing-editor { background: #101c30 !important; background-color: #101c30 !important; color: #fff !important; opacity: 1 !important; isolation: isolate !important; }
+        dialog#bazunk-listing-editor::backdrop { background: rgba(0,0,0,.88) !important; opacity: 1 !important; }
+        #bazunk-listing-editor .editor-header { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body { background: #101c30 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-footer { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body label span, #bazunk-listing-editor .editor-body h3, #bazunk-listing-editor .editor-body p { color: #f8fafc !important; }
+        #bazunk-listing-editor .editor-body input:not([type=checkbox]):not([type=file]), #bazunk-listing-editor .editor-body textarea, #bazunk-listing-editor .editor-body select { background: #fff !important; color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; border: 1px solid #94a3b8 !important; }
+        #bazunk-listing-editor .editor-body option { background: #fff !important; color: #0f172a !important; }
+        /* Maximum specificity to defeat site-wide admin input overrides. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; opacity: 1 !important;
+          caret-color: #111827 !important; text-shadow: none !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
+        /* The global admin theme forces transparent inputs and white text; override both together. */
+        dialog#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        dialog#bazunk-listing-editor .editor-body textarea,
+        dialog#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          opacity: 1 !important; caret-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; box-shadow: none !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input::placeholder,
+        dialog#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input:disabled {
+          background: #e2e8f0 !important; color: #334155 !important; -webkit-text-fill-color: #334155 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input[type="file"] { color: #fff !important; }
+        dialog#bazunk-listing-editor .editor-body select option { background: #fff !important; color: #111827 !important; }
+
+        /* Unified dark editor: every field and select uses white text on opaque navy. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #203653 !important; background-color: #203653 !important;
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+          border: 2px solid #8098b6 !important; caret-color: #ffffff !important;
+          opacity: 1 !important; color-scheme: dark !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #d1dce9 !important; -webkit-text-fill-color: #d1dce9 !important; opacity: 1 !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select option {
+          background: #203653 !important; color: #ffffff !important;
+        }
+        dialog#bazunk-listing-editor .editor-body label,
+        dialog#bazunk-listing-editor .editor-body label span,
+        dialog#bazunk-listing-editor .editor-body h3,
+        dialog#bazunk-listing-editor .editor-body p,
+        dialog#bazunk-listing-editor .editor-body .text-gray-400,
+        dialog#bazunk-listing-editor .editor-body .text-gray-500,
+        dialog#bazunk-listing-editor .editor-body .text-gray-600,
+        dialog#bazunk-listing-editor .editor-body .text-gray-700,
+        dialog#bazunk-listing-editor .editor-body .text-gray-800 {
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
+          background: #263b57 !important;
+          background-color: #263b57 !important;
+          color: #ffffff !important;
+          -webkit-text-fill-color: #ffffff !important;
+          border: 2px solid #8195ad !important;
+          box-shadow: none !important;
+          opacity: 1 !important;
+          font-weight: 800 !important;
+          text-shadow: none !important;
+          filter: none !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button *,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action * {
+          color: #fff !important;
+          -webkit-text-fill-color: #fff !important;
+          opacity: 1 !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button:hover:not(:disabled),
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action:hover {
+          background: #405c80 !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button:disabled {opacity:.55 !important;cursor:not-allowed;}
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="primary"],
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tab="selected"] {
+          background: #1748bb !important;
+          border-color: #93c5fd !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="danger"] {
+          background: #9f1d28 !important;border-color:#fca5a5 !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button[data-editor-tone="warning"] {
+          background: #92500c !important;border-color:#fcd34d !important;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor button:focus-visible,
+        #bazunk-listing-editor#bazunk-listing-editor a.editor-action:focus-visible {
+          outline: 3px solid #fbbf24 !important;outline-offset:2px;
+        }
+        #bazunk-listing-editor#bazunk-listing-editor .editor-panel {
+          background: #1b304d !important;color:#ffffff !important;
+          border:1px solid #566c87 !important;
+        }
+      `}</style>
+      <dialog ref={dialogRef} id="bazunk-listing-editor" aria-label="Edit listing" onCancel={e=>{e.preventDefault();tryClose();}} onClick={e=>{if(e.target===dialogRef.current)tryClose();}} className="m-auto h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-black/85 dark:border-slate-600 dark:bg-[#101c30] dark:text-white" style={{position:"fixed",inset:0,margin:"auto",display:"flex",flexDirection:"column",zIndex:2147483647,backgroundColor:"#101c30",color:"#ffffff",opacity:1}}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="editor-header flex shrink-0 items-center justify-between border-b border-slate-600 bg-[#172943] px-5 py-4">
           <div>
-            <h2 className="font-black text-gray-900">{isEdit ? "Edit Product" : "New Product"}</h2>
+            <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Listing" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-            <X className="w-4 h-4 text-gray-500" />
+          <button onClick={tryClose} className="w-9 h-9 rounded-lg bg-slate-700 text-white hover:bg-slate-600 flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
+        <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-600 bg-slate-100 px-4 py-3 dark:bg-[#172943]">
+          {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
+            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);const target=document.getElementById("product-editor-"+t.id);const scroller=editorScrollRef.current;if(target&&scroller)scroller.scrollTo({top:target.offsetTop-scroller.offsetTop,behavior:"smooth"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
+        </nav>
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div ref={editorScrollRef} className="editor-body min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
             </div>
           )}
 
+          <div id="product-editor-details" />
+          {isEdit&&<div className="editor-panel flex flex-wrap gap-2 rounded-xl p-3">
+            <a href={`/listing/${product!.id}`} target="_blank" rel="noopener noreferrer" className="editor-action rounded-lg border border-slate-500 !bg-[#334155] px-3 py-2 text-xs font-black !text-white hover:!bg-[#475569]">View on Bazunk ↗</a>
+            <button type="button" onClick={async()=>{if(!window.confirm("Hide this listing from the storefront?"))return;const response=await authFetch(`/api/admin/listings/${product!.id}/visibility`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({hidden:true})});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not hide listing");}} data-editor-tone="warning" className="rounded-lg border border-amber-500 !bg-[#92400e] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b45309]">Hide listing</button>
+            <button type="button" onClick={async()=>{if(!window.confirm("Permanently delete this listing? Associated orders and protected records cannot be deleted."))return;const response=await authFetch(`/api/admin/listings/${product!.id}/safe-delete`,{method:"DELETE"});if(response.ok)onSaved();else setError((await response.json().catch(()=>({}))).error||"Could not delete listing");}} data-editor-tone="danger" className="rounded-lg border border-red-500 !bg-[#991b1b] px-3 py-2 text-xs font-black !text-white hover:!bg-[#b91c1c]">Delete listing</button>
+          </div>}
+          {isEdit&&<div className="editor-panel rounded-xl p-3">
+            <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
+            <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
+          </div>}
+          <p className="rounded-lg border border-blue-400 bg-blue-50 p-3 text-sm font-semibold text-blue-950 dark:bg-blue-950 dark:text-white">Edit imported CSV fields here: title, price, category, SKU, description, currency, quantity (Inventory), condition, image URLs or uploads, shipping origin/destination, postage, handling charge and tags. Select Images or Pricing & Shipping above to jump to those fields.</p>
           {/* Core fields */}
           <div className="space-y-3">
             <label className="block">
@@ -482,9 +640,13 @@ function ProductDrawer({
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Status</span>
                 <select value={form.status} onChange={e => set("status", e.target.value)}
                   className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 bg-white">
-                  <option value="pending">Pending</option>
+                  <option value="pending">Draft / Pending</option>
+                  <option value="draft">Draft</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
+                  <option value="inactive">Hidden</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="sold" disabled>Sold (read-only status)</option>
                 </select>
               </label>
               <label className="block">
@@ -532,7 +694,7 @@ function ProductDrawer({
                 <input value={form.sku} onChange={e => set("sku", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" /></label>
             </div>
 
-            <div className="rounded-xl border border-gray-200 p-4 space-y-3">
+            <div id="product-editor-pricing" className="rounded-xl border border-gray-200 p-4 space-y-3">
               <div><h3 className="text-sm font-black text-gray-800">Shipping & fulfilment</h3><p className="text-xs text-gray-400">Customer-facing delivery information for this listing.</p></div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Ships from country</span>
@@ -543,6 +705,7 @@ function ProductDrawer({
                   <input value={form.ships_to} onChange={e => set("ships_to", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="United Kingdom" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Postage price</span>
                   <input type="number" min="0" step="0.01" disabled={form.free_shipping} value={form.shipping_price} onChange={e => set("shipping_price", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm disabled:bg-gray-50" /></label>
+                <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Handling charge</span><input type="number" min="0" step="0.01" value={form.handling_charge} onChange={e=>set("handling_charge",e.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Dispatch time</span>
                   <input value={form.dispatch_time} onChange={e => set("dispatch_time", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="1 business day" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Delivery estimate</span>
@@ -551,6 +714,7 @@ function ProductDrawer({
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700"><input type="checkbox" checked={form.free_shipping} onChange={e => set("free_shipping", e.target.checked)} /> Free shipping</label>
             </div>
 
+            <div id="product-editor-more" />
             {isEdit && product?.source && (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-2">
                 <div><h3 className="text-sm font-black text-gray-800">Source & Sync</h3><p className="text-xs text-gray-500">Private sourcing data. Editing the product above does not remove this information.</p></div>
@@ -569,26 +733,33 @@ function ProductDrawer({
             )}
           </div>
 
+          <div id="product-editor-images" />
           {/* Images */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Images</span>
-              <button onClick={addImage} className="flex items-center gap-1 text-xs font-semibold text-[#4A5CE8] hover:underline">
+              <button onClick={addImage} className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-600">
                 <Plus className="w-3 h-3" /> Add URL
               </button>
             </div>
+            <label onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();void uploadFiles(e.dataTransfer.files);}} className="mb-3 flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-blue-500 bg-blue-50 p-4 text-center font-bold text-slate-950 dark:bg-slate-800 dark:text-white">
+              <Upload className="h-5 w-5"/>{uploading?"Uploading images…":"Upload or drop images here"}
+              <span className="text-xs">JPG, PNG, WebP · 3 MB each · up to 12</span>
+              <input type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={uploading} className="max-w-full text-xs" onChange={e=>{void uploadFiles(e.target.files);e.target.value="";}}/>
+            </label>
             {form.images.length === 0 && (
               <p className="text-xs text-gray-400 italic">No images — click "Add URL" to add image links</p>
             )}
             <div className="space-y-2">
               {form.images.map((url, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  {url && <img src={url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                  {url && <img src={url.startsWith("/api/listing-media/") ? `https://bazunk-api-ifqs.onrender.com${url}` : url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
                   {!url && <div className="w-8 h-8 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center"><ImageIcon className="w-3 h-3 text-gray-300" /></div>}
                   <input value={url} onChange={e => setImage(i, e.target.value)}
                     placeholder="https://example.com/image.jpg"
                     className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]" />
-                  <button onClick={() => removeImage(i)} className="w-7 h-7 rounded-lg bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors">
+                  {i===0 ? <span className="rounded bg-emerald-700 px-2 py-1 text-xs font-black text-white">Cover</span> : <button type="button" onClick={()=>makeCover(i)} className="rounded bg-blue-700 px-2 py-1 text-xs font-black text-white">Set cover</button>}
+                  <button onClick={() => removeImage(i)} className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-700 text-white hover:bg-red-600 transition-colors">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -596,6 +767,7 @@ function ProductDrawer({
             </div>
           </div>
 
+          <div id="product-editor-variants" />
           {/* Variants */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -635,17 +807,19 @@ function ProductDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+        <div className="editor-footer flex shrink-0 gap-3 border-t border-slate-500 bg-[#172943] px-5 py-4">
+          <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 !bg-[#334155] py-2.5 text-sm font-black !text-white hover:!bg-[#475569] transition-colors">
             Cancel
           </button>
-          <button onClick={save} disabled={saving}
-            className="flex-1 py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
+          {isEdit&&["pending","draft","rejected","inactive"].includes(form.status)&&<button type="button" onClick={()=>void save(true)} disabled={saving||uploading} className="flex-1 rounded-xl border-2 border-emerald-300 !bg-emerald-700 px-3 py-2.5 text-sm font-black !text-white hover:!bg-emerald-600 disabled:opacity-50">Publish Listing</button>}
+          <button onClick={()=>void save(false)} disabled={saving||uploading}
+            data-editor-tone="primary" className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
-      </div>
-    </>
+      </dialog>
+    </>,
+    document.body
   );
 }
 
@@ -654,10 +828,38 @@ function ProductDrawer({
 function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestInit) => Promise<Response>; categories: Category[]; onRefresh: () => void }) {
   type Entry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
   const [entries, setEntries] = useState<Entry[]>([]);
+  type DisplayEntry={category_slug:string;subcategory_slug:string;name:string;visible:boolean;sort_order:number};
+  const [display,setDisplay]=useState<DisplayEntry[]>([]);
+  const [selectedTop,setSelectedTop]=useState(CATEGORIES[0]?.slug??"");
+  const [displayError,setDisplayError]=useState("");
+  const [displayBusy,setDisplayBusy]=useState(false);
+  useEffect(()=>{
+    authFetch("/api/taxonomy/category-overrides").then(async r=>{
+      if(!r.ok)throw Error("Cannot load saved category display names");
+      const data=await r.json();
+      const overrides=new Map<string,DisplayEntry>((data.overrides??[]).map((x:DisplayEntry)=>[x.category_slug+":"+x.subcategory_slug,x]));
+      const all:DisplayEntry[]=[];
+      CATEGORIES.forEach((c,i)=>{
+        all.push(overrides.get(c.slug+":")??{category_slug:c.slug,subcategory_slug:"",name:c.name,visible:true,sort_order:i});
+        c.subcategories.forEach((sub,j)=>all.push(overrides.get(c.slug+":"+sub.slug)??{category_slug:c.slug,subcategory_slug:sub.slug,name:sub.name,visible:true,sort_order:j}));
+      });
+      setDisplay(all);
+    }).catch(e=>setDisplayError(String(e)));
+  },[authFetch]);
+  const changeDisplay=(key:string,changes:Partial<DisplayEntry>)=>setDisplay(prev=>prev.map(x=>x.category_slug+":"+x.subcategory_slug===key?{...x,...changes}:x));
+  async function saveDisplay(){
+    setDisplayBusy(true);setDisplayError("");
+    try{
+      const response=await authFetch("/api/admin/taxonomy/category-overrides",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({overrides:display})});
+      if(!response.ok)throw Error(((await response.json().catch(()=>({}))).error??"Could not save categories"));
+      setDisplayError("Saved category names, order and visibility. Category slugs and existing listings were retained.");
+    }catch(e){setDisplayError(String(e));}finally{setDisplayBusy(false);}
+  }
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const [category, setCategory] = useState(SITE_CATEGORIES[0]?.slug ?? "");
+  const [category, setCategory] = useState(CATEGORIES[0]?.slug ?? "");
   const [subcategory, setSubcategory] = useState("");
   const [name, setName] = useState("");
   useEffect(() => {
@@ -667,7 +869,24 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       setEntries(data.categories ?? []);
     }).catch(error => setMessage(String(error))).finally(() => setLoading(false));
   }, [authFetch]);
-  const options = SITE_CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
+  type Evidence={category:string;subcategory:string;count:number;titles:string[]};
+  const [evidence,setEvidence]=useState<Evidence[]>([]);
+  const [selectedProposals,setSelectedProposals]=useState<string[]>([]);
+  useEffect(()=>{authFetch("/api/admin/taxonomy/listing-evidence").then(r=>r.ok?r.json():{groups:[]}).then(data=>setEvidence(data.groups??[])).catch(()=>{});},[authFetch]);
+  const proposed=CATEGORIES.find(c=>c.slug===category)?.subcategories.flatMap(sub=>
+   thirdLevelProposals(category,sub.slug,sub.name).map((label,i)=>({
+    category,subcategory:sub.slug,slug:thirdLevelSlug(label),name:label,visible:true,sort_order:i,
+    count:evidence.find(x=>x.category===category&&x.subcategory===sub.slug)?.count??0
+   })))??[];
+  const unadded=proposed.filter(x=>!entries.some(e=>e.category===x.category&&e.subcategory===x.subcategory&&e.slug===x.slug));
+  const proposalKey=(x:{category:string;subcategory:string;slug:string})=>x.category+":"+x.subcategory+":"+x.slug;
+  function addSelectedProposals(){
+   const choices=unadded.filter(x=>selectedProposals.includes(proposalKey(x)));
+   setEntries(old=>[...old,...choices.map(({count,...item})=>item)]);
+   setSelectedProposals([]);
+   setMessage(choices.length+" third-level categories added to draft. Review them and click Save taxonomy to publish.");
+  }
+  const options = CATEGORIES.find(c => c.slug === category)?.subcategories ?? [];
   function add() {
     const clean = name.trim(), slug = thirdLevelSlug(clean);
     if (!clean || !slug || !subcategory) { setMessage("Choose a subcategory and enter a name."); return; }
@@ -683,10 +902,86 @@ function CategoriesTab({ authFetch }: { authFetch: (url: string, opts?: RequestI
       setMessage("Taxonomy saved.");
     } catch (error) { setMessage(String(error)); } finally { setSaving(false); }
   }
-  return <div className="space-y-4">
-    <p className="text-sm text-gray-600">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
+  return <div id="bz-category-editor" className="space-y-4">
+    <style>{`
+      .bazunk-admin-wordpress #bz-category-editor section,
+      .bazunk-admin-wordpress #bz-category-editor section > div,
+      .bazunk-admin-wordpress #bz-category-editor section div.rounded-lg,
+      .bazunk-admin-wordpress #bz-category-editor section label.rounded-lg {
+        background-color:#172941 !important; background-image:none !important;
+        color:#ffffff !important; border-color:#5e7797 !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor section :is(p,strong,h3,span,code,label) {
+        color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;
+        opacity:1 !important;text-shadow:none !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor button {
+        background-color:#1d4ed8 !important;background-image:none !important;
+        color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;
+        border:2px solid #a6cbff !important;opacity:1 !important;
+        box-shadow:none !important;text-shadow:none !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor button:hover {background-color:#1e40af !important;}
+      .bazunk-admin-wordpress #bz-category-editor button[aria-pressed="true"] {background-color:#0f766e !important;border-color:#99f6e4 !important;}
+      .bazunk-admin-wordpress #bz-category-editor :is(input:not([type="checkbox"]),textarea,select) {
+        background-color:#ffffff !important;background-image:none !important;
+        color:#0f172a !important;-webkit-text-fill-color:#0f172a !important;
+        border:2px solid #94a3b8 !important;opacity:1 !important;
+      }
+      .bazunk-admin-wordpress #bz-category-editor :is(input,select,button):focus-visible {outline:3px solid #facc15 !important;outline-offset:2px;}
+      .bazunk-admin-wordpress #bz-category-editor input[type="checkbox"] {accent-color:#f97316 !important;}
+    `}</style>
+    <section className="rounded-xl border-2 border-slate-500 bg-[#172941] p-4 text-white">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div><h3 className="text-lg font-black">Main categories & subcategories</h3>
+        <p className="text-xs text-slate-700 dark:text-slate-200">Rename display labels, change their order or visibility without modifying permanent slugs or existing listings.</p></div>
+        <button type="button" onClick={saveDisplay} disabled={displayBusy||!display.length} className="category-save rounded-lg !bg-blue-700 px-4 py-2 font-black !text-white hover:!bg-blue-600 disabled:opacity-60">{displayBusy?"Saving…":"Save categories"}</button>
+      </div>
+      {displayError&&<p role="status" className="mb-3 rounded bg-slate-700 p-2 text-sm font-bold text-white">{displayError}</p>}
+      <div className="grid gap-3 md:grid-cols-[240px_1fr]">
+        <div className="max-h-[460px] space-y-1 overflow-y-auto">
+          {display.filter(x=>!x.subcategory_slug).sort((a,b)=>a.sort_order-b.sort_order).map(x=>
+            <button key={x.category_slug} type="button" aria-pressed={selectedTop===x.category_slug} onClick={()=>setSelectedTop(x.category_slug)} className={`block w-full rounded-lg border px-3 py-2 text-left text-sm font-bold !text-white ${selectedTop===x.category_slug?"!bg-blue-700 border-blue-300":"!bg-slate-700 border-slate-500 hover:!bg-slate-600"}`}>{x.name}</button>)}
+        </div>
+        <div className="space-y-3">
+          {display.filter(x=>x.category_slug===selectedTop).sort((a,b)=>(!a.subcategory_slug?-1:!b.subcategory_slug?1:a.sort_order-b.sort_order)).map(x=>
+            <div key={x.category_slug+":"+x.subcategory_slug} className="rounded-lg border border-slate-400 bg-slate-100 p-3 dark:border-slate-600 dark:bg-slate-800">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <strong className="text-sm">{x.subcategory_slug?"Subcategory":"Main category"}</strong>
+                <code className="text-xs text-slate-700 dark:text-slate-200">{x.subcategory_slug||x.category_slug}</code>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <input aria-label="Display name" value={x.name} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{name:e.target.value})} className="min-w-36 flex-1 rounded border border-slate-500 bg-white p-2 text-sm font-semibold text-slate-950"/>
+                <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={x.visible} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{visible:e.target.checked})}/> Visible</label>
+                <label className="flex items-center gap-1 text-xs font-bold">Order <input aria-label="Sort order" type="number" min="0" max="9999" value={x.sort_order} onChange={e=>changeDisplay(x.category_slug+":"+x.subcategory_slug,{sort_order:Number(e.target.value)})} className="w-16 rounded border border-slate-500 bg-white p-2 text-slate-950"/></label>
+              </div>
+            </div>)}
+        </div>
+      </div>
+    </section>
+    <section className="rounded-xl border-2 border-slate-500 bg-white p-4 text-slate-950 dark:bg-[#13243b] dark:text-white">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div><h3 className="font-black">Third-level category suggestion library</h3>
+          <p className="text-xs text-slate-700 dark:text-slate-200">Review suggestions for {CATEGORIES.find(c=>c.slug===category)?.name}. Counts show existing listings within each subcategory, not automatically classified matches.</p>
+        </div>
+        <button type="button" disabled={!selectedProposals.length} onClick={addSelectedProposals} className="rounded-lg !bg-blue-700 px-4 py-2 text-sm font-black !text-white disabled:opacity-50">Add {selectedProposals.length} to draft</button>
+      </div>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button type="button" onClick={()=>setSelectedProposals(unadded.map(proposalKey))} className="rounded-lg !bg-slate-700 px-3 py-2 text-xs font-black !text-white">Select all suggestions</button>
+        <button type="button" onClick={()=>setSelectedProposals([])} className="rounded-lg !bg-slate-700 px-3 py-2 text-xs font-black !text-white">Clear selection</button>
+      </div>
+      <div className="max-h-80 space-y-2 overflow-y-auto">
+        {unadded.map(x=><label key={proposalKey(x)} className="flex cursor-pointer flex-wrap items-center gap-3 rounded-lg border border-slate-400 bg-slate-100 p-3 dark:border-slate-600 dark:bg-slate-800">
+          <input type="checkbox" checked={selectedProposals.includes(proposalKey(x))} onChange={e=>setSelectedProposals(prev=>e.target.checked?[...prev,proposalKey(x)]:prev.filter(k=>k!==proposalKey(x)))} />
+          <strong className="flex-1 text-sm">{x.name}</strong>
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{x.subcategory} · {x.count} existing listings</span>
+        </label>)}
+        {!unadded.length&&<p className="text-sm">No remaining suggestions for this main category.</p>}
+      </div>
+    </section>
+    <p className="text-sm text-gray-600 dark:text-white">Manage third-level categories. Existing listings without a third-level category remain valid. Hiding a category does not delete its listings.</p>
     <div className="flex flex-wrap gap-2">
-      <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{SITE_CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
+      <select value={category} onChange={e => { setCategory(e.target.value); setSubcategory(""); }} className="border rounded-lg p-2 bg-white text-gray-900">{CATEGORIES.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}</select>
       <select value={subcategory} onChange={e => setSubcategory(e.target.value)} className="border rounded-lg p-2 bg-white text-gray-900"><option value="">Choose subcategory</option>{options.map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}</select>
       <input value={name} onChange={e => setName(e.target.value)} placeholder="New third-level category" className="border rounded-lg p-2 text-gray-900" />
       <button onClick={add} className="bg-indigo-600 text-white px-4 rounded-lg">Add</button>
@@ -848,4 +1143,30 @@ function ImportExportTab({ authFetch, categories }: {
       </div>
     </div>
   );
+}
+
+export function AdminListingEditor({listingId,onClose,onSaved}:{listingId:number|null;onClose:()=>void;onSaved:()=>void}) {
+  const {authFetch}=useAdmin();
+  const [product,setProduct]=useState<Product|null>(null);
+  const [loading,setLoading]=useState(true);
+  const categories=SITE_CATEGORIES.map(c=>({id:c.slug,name:c.name,slug:c.slug,description:null,product_count:0}));
+  useEffect(()=>{
+    let cancelled=false;
+    if(listingId===null){setProduct(null);setLoading(false);return;}
+    setLoading(true);
+    void authFetch(`/api/admin/products/${listingId}`).then(async r=>{
+      if(!r.ok)throw new Error("Could not load listing for editing");
+      const value=await r.json();if(!cancelled)setProduct(value);
+    }).catch(()=>{if(!cancelled)onClose();}).finally(()=>{if(!cancelled)setLoading(false);});
+    return ()=>{cancelled=true;};
+  },[listingId]);
+  if(loading)return <p role="status" className="p-4 text-white">Loading listing editor…</p>;
+  return <ProductDrawer product={product} categories={categories} authFetch={authFetch} onClose={onClose} onSaved={onSaved}/>;
+}
+export function AdminListingCatalogueTools({section}:{section:"categories"|"import-export"}) {
+  const {authFetch}=useAdmin();
+  const categories=SITE_CATEGORIES.map(c=>({id:c.slug,name:c.name,slug:c.slug,description:null,product_count:0}));
+  return section==="categories"
+    ? <CategoriesTab authFetch={authFetch} categories={categories} onRefresh={()=>{}}/>
+    : <ImportExportTab authFetch={authFetch} categories={categories}/>;
 }

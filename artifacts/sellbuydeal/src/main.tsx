@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { loadCategoryPresentation } from "./data/categories";
 import "./index.css";
+import "./design-system/brand-tokens.css";
+import "./design-system/protected.css";
 
 // The production frontend is a static Render site, so Vite's dev /api proxy
 // does not exist after deployment. Keep all legacy and future relative API
@@ -22,4 +25,19 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   return nativeFetch(input, init);
 }) as typeof window.fetch;
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Clerk production keys are restricted to bazunk.com. Render's default
+// hostname is not an authorized authentication origin; preserve the path,
+// query and hash while directing visitors to the canonical site.
+if (window.location.hostname === "bazunk-web.onrender.com") {
+  window.location.replace(`https://bazunk.com${window.location.pathname}${window.location.search}${window.location.hash}`);
+} else {
+  // Do not hold the entire storefront behind a potentially sleeping free-tier API.
+  // Keep a short window for category presentation settings, then render using
+  // the bundled taxonomy if the API is slow or unavailable.
+  const categoryController = new AbortController();
+  const categoryTimeout = window.setTimeout(() => categoryController.abort(), 1000);
+  void loadCategoryPresentation(categoryController.signal).finally(() => {
+    window.clearTimeout(categoryTimeout);
+    createRoot(document.getElementById("root")!).render(<App />);
+  });
+}

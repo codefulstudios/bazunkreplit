@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { randomUUID } from "crypto";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
@@ -11,7 +12,14 @@ const VALID_CONDITIONS = ["unopened", "like_new", "used", "damaged"];
 const VALID_STATUSES = ["requested", "approved", "declined", "return_shipped", "received", "refund_issued", "closed"];
 
 router.post("/returns", async (req, res) => {
-  const { orderId, buyerEmail, sellerEmail, itemTitle, reason, condition, description } = req.body as Record<string, string>;
+  const identity = await authenticatedSellerEmail(req, res);
+  if (!identity) return;
+  const { orderId, reason, condition, description } = req.body as Record<string, string>;
+  const order = await db.execute(sql`SELECT buyer_email, seller_email, item_title FROM orders WHERE id::text = ${String(orderId ?? "")} AND LOWER(buyer_email) = ${identity} LIMIT 1`);
+  if (!order.rows.length) { res.status(404).json({ error: "Order not found for your account" }); return; }
+  const buyerEmail = identity;
+  const sellerEmail = String(order.rows[0].seller_email);
+  const itemTitle = String(order.rows[0].item_title);
   if (!orderId || !buyerEmail || !itemTitle || !reason || !condition || !description) {
     res.status(400).json({ error: "orderId, buyerEmail, itemTitle, reason, condition, and description are required" });
     return;
@@ -38,11 +46,8 @@ router.post("/returns", async (req, res) => {
 });
 
 router.get("/returns", async (req, res) => {
-  const email = req.query["email"] as string | undefined;
-  if (!email) {
-    res.status(400).json({ error: "email query param required" });
-    return;
-  }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`
     SELECT * FROM returns WHERE buyer_email = ${email} OR seller_email = ${email} ORDER BY created_at DESC
   `);
@@ -51,18 +56,19 @@ router.get("/returns", async (req, res) => {
 
 router.patch("/returns/:id/ship", async (req, res) => {
   const { id } = req.params;
-  const { buyerEmail, returnTracking } = req.body as Record<string, string>;
-  if (!buyerEmail) {
-    res.status(400).json({ error: "buyerEmail required" });
-    return;
-  }
-  await db.execute(sql`
+  const buyerEmail = await authenticatedSellerEmail(req, res);
+  if (!buyerEmail) return;
+  const returnTracking = req.body?.returnTracking;
+  if (typeof returnTracking !== "string" || !returnTracking.trim() || returnTracking.length > 180) { res.status(400).json({ error: "Valid tracking required" }); return; }
+  const updated = await db.execute(sql`
     UPDATE returns
     SET status = 'return_shipped',
         return_tracking = ${returnTracking ?? null},
         updated_at = NOW()
-    WHERE id = ${id} AND buyer_email = ${buyerEmail} AND status = 'approved'
+    WHERE id = ${id} AND LOWER(buyer_email) = ${buyerEmail} AND status = 'approved'
+    RETURNING id
   `);
+  if (!updated.rows.length) { res.status(404).json({ error: "Approved return not found for your account" }); return; }
   res.json({ ok: true });
 });
 

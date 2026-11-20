@@ -58,6 +58,10 @@ catalog:
 
 autoInstallPeers: false
 
+allowBuilds:
+  "@clerk/shared": true
+  esbuild: true
+
 onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
