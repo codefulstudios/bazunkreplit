@@ -1,23 +1,27 @@
 import type { Request, Response, NextFunction } from "express";
 import { createHmac, timingSafeEqual } from "crypto";
 
-const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-secret";
+const SESSION_SECRET = process.env.SESSION_SECRET?.trim() || "";
+const secureSessionConfigured = SESSION_SECRET.length >= 32;
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export function createAdminToken(): string {
+  if (!secureSessionConfigured) throw new Error("SESSION_SECRET must be configured with at least 32 characters");
   const ts = Date.now().toString();
   const sig = createHmac("sha256", SESSION_SECRET).update(`admin:${ts}`).digest("hex");
   return Buffer.from(`${ts}:${sig}`).toString("base64url");
 }
 
 export function verifyAdminToken(token: string): boolean {
+  if (!secureSessionConfigured) return false;
   try {
     const decoded = Buffer.from(token, "base64url").toString();
     const colonIdx = decoded.indexOf(":");
     if (colonIdx < 0) return false;
     const ts = decoded.slice(0, colonIdx);
     const sig = decoded.slice(colonIdx + 1);
-    if (Date.now() - parseInt(ts) > TOKEN_TTL_MS) return false;
+    const issuedAt = Number(ts);
+    if (!Number.isSafeInteger(issuedAt) || issuedAt > Date.now() || Date.now() - issuedAt > TOKEN_TTL_MS) return false;
     const expected = createHmac("sha256", SESSION_SECRET).update(`admin:${ts}`).digest("hex");
     const sigBuf = Buffer.from(sig);
     const expBuf = Buffer.from(expected);

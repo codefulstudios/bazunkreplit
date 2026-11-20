@@ -10,6 +10,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useCurrency } from "@/context/CurrencyContext";
 import { ShareCardModal, type ShareListing } from "@/components/ShareCardModal";
 import { ListingAnalyticsModal } from "@/components/ListingAnalyticsModal";
@@ -265,6 +266,7 @@ const PROMOTIONS: Promotion[] = [
 export function PromotionsPage() {
   const { formatPrice } = useCurrency();
   const { user, refreshBalance } = useAuth();
+  const { getToken } = useClerkAuth();
   const [, setLocation] = useLocation();
 
   const [balanceCredits, setBalanceCredits] = useState(0);
@@ -310,11 +312,11 @@ export function PromotionsPage() {
 
   const loadTools = useCallback(() => {
     if (!user?.email) return;
-    fetch(`/api/promotions/mine?email=${encodeURIComponent(user.email)}`)
-      .then(r => (r.ok ? r.json() : []))
+    void getToken().then(token => token ? fetch("/api/promotions/mine", { headers: { Authorization: `Bearer ${token}` } }) : null)
+      .then(r => r?.ok ? r.json() : [])
       .then(setTools)
       .catch(() => {});
-  }, [user?.email]);
+  }, [user?.email, getToken]);
 
   useEffect(() => {
     fetch("/api/promotions/config").then(r => (r.ok ? r.json() : null)).then(setConfig).catch(() => {});
@@ -363,9 +365,11 @@ export function PromotionsPage() {
     setApplying(true);
     setApplyResult(null);
     try {
+      const token = await getToken();
+      if (!token) throw Error("Sign in required");
       const res = await fetch("/api/promotions/apply", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           email: user.email,
           type: selectedPromo.id,

@@ -37,7 +37,7 @@ const isPrivateSetting = (k: string) =>
 
 const router = Router();
 
-const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-secret";
+const SESSION_SECRET = process.env.SESSION_SECRET?.trim() || "";
 
 function hashPassword(password: string): string {
   return createHmac("sha256", SESSION_SECRET).update(password).digest("hex");
@@ -54,12 +54,12 @@ async function getAdminCredentials(): Promise<{ email: string; passwordHash: str
     if (map.admin_email && map.admin_password_hash) {
       return { email: map.admin_email, passwordHash: map.admin_password_hash, isHashed: true };
     }
-  } catch { /* DB not ready */ }
-  return {
-    email: process.env.ADMIN_EMAIL ?? "admin@example.com",
-    passwordHash: process.env.ADMIN_PASSWORD ?? "admin123",
-    isHashed: false,
-  };
+  } catch (error) {
+    logger.error({ error }, "Admin credential lookup unavailable");
+    throw new Error("Admin credentials unavailable");
+  }
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) throw new Error("Admin credentials not configured");
+  return { email: process.env.ADMIN_EMAIL, passwordHash: process.env.ADMIN_PASSWORD, isHashed: false };
 }
 
 // ── Public: login ─────────────────────────────────────────────────────────────
@@ -68,18 +68,14 @@ router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) { res.status(400).json({ error: "Email and password required" }); return; }
 
-  const creds = await getAdminCredentials();
+  if (SESSION_SECRET.length < 32) { res.status(503).json({ error: "Admin authentication not configured" }); return; }
+  let creds: Awaited<ReturnType<typeof getAdminCredentials>>;
+  try { creds = await getAdminCredentials(); }
+  catch { res.status(503).json({ error: "Admin authentication unavailable" }); return; }
   const emailMatch = email.toLowerCase() === creds.email.toLowerCase();
   let passwordMatch = creds.isHashed
     ? hashPassword(password) === creds.passwordHash
     : password === creds.passwordHash;
-
-  // Recovery path: a DB-stored admin hash is tied to SESSION_SECRET. If that
-  // secret changes during infrastructure work, the correct configured admin
-  // password must still be able to restore access.
-  if (!passwordMatch && creds.isHashed && process.env.ADMIN_PASSWORD) {
-    passwordMatch = password === process.env.ADMIN_PASSWORD;
-  }
 
   if (!emailMatch || !passwordMatch) {
     res.status(401).json({ error: "Invalid email or password" });
