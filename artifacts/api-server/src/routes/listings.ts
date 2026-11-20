@@ -108,7 +108,36 @@ router.get("/listings/search-suggestions", async (req, res) => {
       .orderBy(sql`CASE WHEN LOWER(${listingsTable.title}) LIKE ${q.toLowerCase() + "%"} THEN 0 ELSE 1 END`, listingsTable.title)
       .limit(8);
     res.setHeader("Cache-Control", "public, max-age=30");
-    res.json({ suggestions: rows.map(r => r.title) });
+    // Keep suggestions limited to visible, active listings in the selected region.
+    // For misspellings, PostgreSQL pg_trgm provides ranked alternatives without
+    // changing the exact-match browse results or disclosing hidden listings.
+    let suggestions = rows.map(r => r.title);
+    if (suggestions.length === 0 && q.length >= 3) {
+      try {
+        const fuzzy = await db.execute(sql`
+          SELECT DISTINCT l.title, similarity(LOWER(l.title), ${q.toLowerCase()}) AS score
+          FROM listings l
+          WHERE l.status = 'active'
+            AND similarity(LOWER(l.title), ${q.toLowerCase()}) >= 0.3
+          ORDER BY score DESC, l.title ASC LIMIT 5
+        `);
+        // Do not serve unscoped suggestions: fuzzy results must also pass the
+        // existing category and marketplace-region visibility filters.
+        const candidates = fuzzy.rows.map(r => String(r.title));
+        if (candidates.length) {
+          const safe = await db.select({ title: listingsTable.title }).from(listingsTable)
+            .where(and(eq(listingsTable.status, "active"), visible, region,
+              sql`${listingsTable.title} IN (${sql.join(candidates.map(t => sql`${t}`), sql`, `)})`))
+            .groupBy(listingsTable.title).limit(5);
+          const allowed = new Set(safe.map(r => r.title));
+          suggestions = candidates.filter(t => allowed.has(t));
+        }
+      } catch (error) {
+        // pg_trgm may not yet be installed; exact-match autocomplete still works.
+        console.warn("Typo suggestions unavailable", error);
+      }
+    }
+    res.json({ suggestions });
   } catch (err) {
     console.error("Search suggestions failed", err);
     res.status(500).json({ error: "Search suggestions unavailable" });
