@@ -442,7 +442,8 @@ router.post("/listings", async (req, res) => {
     const shippingPrice = body.shippingPrice != null && Number.isFinite(Number(body.shippingPrice)) ? String(body.shippingPrice) : null;
     const handlingCharge = body.handlingCharge != null && Number.isFinite(Number(body.handlingCharge)) ? String(body.handlingCharge) : null;
     const quantity = body.quantity != null && Number.isFinite(Number(body.quantity)) ? Math.max(0, Math.floor(Number(body.quantity))) : null;
-    const sku = typeof body.sku === "string" ? body.sku.slice(0, 120) : null;
+    // Canonicalise the submitted SKU before storage and duplicate matching.
+    const sku = typeof body.sku === "string" ? body.sku.trim().slice(0, 120) || null : null;
 
     // Product Video is priced in credits and controlled by Admin → Promotions.
     // Validate the balance before creating the listing so a failed add-on cannot create duplicates.
@@ -467,7 +468,21 @@ router.post("/listings", async (req, res) => {
       priceGbp = String(price);
     }
 
-    const [inserted] = await db
+    // Keep the check and insert inside one transaction. The per-seller/SKU
+    // transaction lock makes simultaneous retries of this API endpoint serial,
+    // preventing both requests from passing the duplicate check.
+    const created = await db.transaction(async (tx) => {
+      if (sku) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${authenticatedEmail}), hashtext(${sku.toLowerCase()}))`);
+        const existing = await tx.execute(sql`
+          SELECT id FROM listings
+          WHERE LOWER(seller_email) = ${authenticatedEmail}
+            AND LOWER(BTRIM(sku)) = ${sku.toLowerCase()}
+          ORDER BY id LIMIT 1
+        `);
+        if (existing.rows.length) return { listing: null, existingListingId: Number(existing.rows[0].id) };
+      }
+    const [inserted] = await tx
       .insert(listingsTable)
       .values({ 
         title, 
@@ -499,11 +514,24 @@ router.post("/listings", async (req, res) => {
       .returning();
 
     const publicId = makePublicId(inserted.id);
-    const [listing] = await db
+    const [listing] = await tx
       .update(listingsTable)
       .set({ publicId })
       .where(eq(listingsTable.id, inserted.id))
       .returning();
+
+      return { listing, existingListingId: null };
+    });
+    if (created.existingListingId !== null) {
+      res.status(409).json({
+        error: "duplicate_sku",
+        message: "A listing with this SKU already exists in your seller account.",
+        existingListingId: created.existingListingId,
+      });
+      return;
+    }
+    const listing = created.listing;
+    if (!listing) throw new Error("Listing insert returned no result");
 
     console.log("Listing successfully created:", listing.id);
 
