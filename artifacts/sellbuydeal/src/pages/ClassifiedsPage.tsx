@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useSearch } from "wouter";
 import { useAuth as useClerkAuth } from "@clerk/react";
@@ -541,16 +542,16 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
     }
   }
 
-  if (submitted) return (
+  if (submitted) return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="classified-post-overlay fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
           initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-10 text-center"
+          role="dialog" aria-modal="true" aria-label="Classified ad posted" className="classified-post-dialog bg-white rounded-2xl shadow-2xl w-full max-w-md p-10 text-center text-slate-900"
         >
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 14 }}
             className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
@@ -563,23 +564,23 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
           </button>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>, document.body
   );
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="classified-post-overlay fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6"
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
           initial={{ scale: 0.95, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.95, y: 20 }}
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[92vh] overflow-y-auto"
+          role="dialog" aria-modal="true" aria-label="Post a Classified Ad" className="classified-post-dialog bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto overscroll-contain text-slate-900"
         >
           {/* Gradient header */}
           <div className={`rounded-t-3xl px-6 pt-6 pb-5 flex items-start justify-between ${
@@ -951,7 +952,7 @@ function PostAdModal({ onClose, onPost }: { onClose: () => void; onPost: (ad: Cl
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>, document.body
   );
 }
 
@@ -1046,6 +1047,7 @@ export function ClassifiedsPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
+      <div className="border-b border-orange-300 bg-orange-50 px-4 py-3 text-center text-sm font-bold text-slate-900"><a href="/find-it" className="font-black text-orange-800 underline">Try Bazunk Find It →</a> Describe an item, set your budget and let sellers compete with offers.</div>
 
       {/* Hero */}
       <div className="bg-gradient-to-br from-[#F26B21]/10 via-orange-50 to-white border-b border-orange-100">

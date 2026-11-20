@@ -87,3 +87,126 @@
 .dark .bazunk-overview-v2 .overview-placeholder-panel{background:linear-gradient(140deg,#0d3457,#231a58);border-color:#2d7ed1}
 .dark .bazunk-overview-v2 .overview-placeholder-panel h3,.dark .bazunk-overview-v2 .overview-placeholder-panel p{color:white}
 @media(max-width:1000px){.bazunk-overview-v2 .overview-below-grid{grid-template-columns:1fr}}
+
+/* Dashboard overview: clean, condensed control-centre presentation */
+.bazunk-overview-v2{background:#f2f7ff!important;color:#102749!important}
+.bazunk-overview-v2 .overview-section-card,.bazunk-overview-v2 .overview-showcase-panel{background:#fff!important;border:1px solid #d8e4f1!important;box-shadow:0 4px 15px #14375c12!important;border-radius:18px!important}
+.bazunk-overview-v2 .overview-section-card h2,.bazunk-overview-v2 .overview-showcase-head h2{color:#102749!important}
+.bazunk-overview-v2 .overview-section-card .text-gray-400,.bazunk-overview-v2 .overview-section-card .text-gray-500{color:#526b87!important}
+.bazunk-overview-v2 .overview-section-card .text-\[\#4A5CE8\]{color:#e96300!important}
+.bazunk-overview-v2 .overview-section-card button:hover{color:#e96300}
+.bazunk-overview-v2 .overview-new-action{min-height:64px}
+.bazunk-overview-v2 .overview-new-promo{background:linear-gradient(110deg,#123f7b,#0b2d58)!important}
+.bazunk-overview-v2 .overview-hero-v2{border-radius:18px!important}
+
+
+/* Neon Arcade overview: clean white dashboard and vivid metric tiles. */
+[data-testid="dashboard-content"] .bazunk-overview-v2{background:#fff!important;color:#111c39!important;padding:10px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-v2{min-height:108px!important;padding:17px 23px!important;background:linear-gradient(105deg,#006de8,#0649bd 60%,#ff7900)!important;border:0!important;border-radius:17px!important;box-shadow:0 8px 21px #0762c42c!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-copy h1{font-size:clamp(21px,2vw,30px)!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-copy p{color:#f4f9ff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-art{font-size:36px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-original-heading{padding:6px 2px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid{gap:11px!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{border:0!important;border-radius:15px!important;box-shadow:0 5px 12px #14316d22!important;padding:16px!important;min-height:112px;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+1){background:linear-gradient(135deg,#0796ff,#004ac4)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+2){background:linear-gradient(135deg,#ffa600,#ff5800)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+3){background:linear-gradient(135deg,#0ccf73,#008e41)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+4){background:linear-gradient(135deg,#ff5360,#e90030)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+5){background:linear-gradient(135deg,#168fff,#084bd4)!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div :is(p,span,strong,svg){color:#fff!important;-webkit-text-fill-color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div :is(.bg-white,.bg-gray-100){background:#ffffff29!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card{border:1px solid #dce6f7!important;border-radius:17px!important;box-shadow:0 5px 14px #173b7816!important;background:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card h2{color:#101b39!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-section-card :is(button,a):hover{filter:brightness(.96);}
+@media(max-width:640px){[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{min-height:95px;padding:12px!important}[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-hero-v2{padding:15px!important;min-height:95px!important}}
+
+
+/* Neon Arcade layout v3: match the approved mockup's top toolbar and card rhythm. */
+.bz-arcade-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin:0 0 19px;padding:4px 0 0;}
+.bz-arcade-title h1{margin:0;color:#0b1432!important;font-size:clamp(26px,2.4vw,38px);font-weight:900;letter-spacing:-.045em;line-height:1.1;}
+.bz-arcade-title p{margin:7px 0 0;color:#28395a;font-size:15px;}
+.bz-arcade-title strong{color:#111b37;}
+.bz-arcade-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.bz-arcade-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 17px;border-radius:13px;font-size:13px;font-weight:850;white-space:nowrap;text-decoration:none;box-shadow:0 5px 10px #0a286c22;transition:transform .18s ease,box-shadow .18s ease;}
+.bz-arcade-action:hover{transform:translateY(-2px);box-shadow:0 9px 16px #0a286c33;}
+.bz-arcade-blue{background:linear-gradient(120deg,#0097ff,#0649d2);color:#fff!important;}
+.bz-arcade-red{background:linear-gradient(120deg,#ff3454,#e90038);color:#fff!important;}
+.bz-arcade-orange{background:linear-gradient(120deg,#ffab00,#ff5b00);color:#fff!important;}
+.bz-arcade-light{background:#e9f6ff;color:#133d75!important;border:1px solid #83caff;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div{position:relative;overflow:hidden;min-height:126px!important;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div p:first-child{font-size:12px!important;font-weight:800!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div p[class*="text-2xl"]{font-size:clamp(22px,2vw,31px)!important;font-weight:950!important;color:#fff!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div:nth-child(5n+1) .rounded-full{background:#ffffff35!important;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-stat-grid>div .mt-2.flex.justify-end{position:absolute;right:14px;top:12px;margin:0!important;opacity:.9;}
+[data-testid="dashboard-content"] .bazunk-overview-v2 .overview-showcase-panel{border-radius:18px!important;box-shadow:0 6px 17px #123d7819!important;}
+@media(max-width:1200px){.bz-arcade-heading{align-items:flex-start;flex-direction:column}.bz-arcade-actions{width:100%}}
+@media(max-width:600px){.bz-arcade-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bz-arcade-action{padding:9px;font-size:12px}.bz-arcade-title h1{font-size:27px}}
+@media(prefers-reduced-motion:reduce){.bz-arcade-action{transition:none}.bz-arcade-action:hover{transform:none}}
+
+
+/* Neon Arcade quick-action grid and live account checklist */
+[data-testid="dashboard-content"] .overview-new-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;}
+[data-testid="dashboard-content"] .overview-new-action{min-width:0;min-height:100px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;gap:6px!important;padding:12px 8px!important;border-radius:15px!important;border:1px solid #dce8f7!important;box-shadow:0 4px 12px #17418c14!important;}
+[data-testid="dashboard-content"] .overview-new-action>svg:last-child{display:none!important;}
+[data-testid="dashboard-content"] .overview-new-action span{display:flex;flex-direction:column;gap:2px;min-width:0;}
+[data-testid="dashboard-content"] .overview-new-action b{font-size:12px;font-weight:900;}
+[data-testid="dashboard-content"] .overview-new-action small{font-size:10px;line-height:1.3;}
+[data-testid="dashboard-content"] .overview-new-action.action-blue{background:#e1f3ff!important;color:#064eb5!important;}
+[data-testid="dashboard-content"] .overview-new-action.action-orange{background:#fff0e2!important;color:#d95305!important;}
+[data-testid="dashboard-content"] .overview-new-action.action-pink{background:#ffe4ef!important;color:#d51350!important;}
+[data-testid="dashboard-content"] .overview-new-action.action-turquoise{background:#e1fff4!important;color:#007c5a!important;}
+.bz-arcade-todo{margin-top:14px;padding:18px 20px;background:#fff;border:1px solid #dce6f7;border-radius:17px;box-shadow:0 5px 14px #173b7816;}
+.bz-arcade-todo-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.bz-arcade-todo-header h2{display:flex;align-items:center;gap:8px;font-size:19px;font-weight:900;color:#142043!important;}
+.bz-arcade-todo-header h2 svg{color:#ff7400;}
+.bz-arcade-todo-header>span{font-size:12px;color:#64748b;}
+.bz-arcade-todo-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.bz-arcade-todo-items button{display:flex;align-items:center;gap:10px;min-width:0;text-align:left;padding:12px;border-radius:12px;border:1px solid #e2eaf5;background:#f9fbff;color:#182b4b;font-size:13px;font-weight:700;}
+.bz-arcade-todo-items button:hover{background:#eaf5ff;border-color:#91c9fa;}
+.bz-arcade-todo-items button svg:first-child{color:#ff7900;flex:none;}
+.bz-arcade-todo-items button span{flex:1;}
+.bz-arcade-todo-items button svg:last-child{color:#2366b8;flex:none;}
+@media(max-width:700px){[data-testid="dashboard-content"] .overview-new-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bz-arcade-todo-items{grid-template-columns:1fr}}
+
+
+/* Compact desktop overview: minimise page scrolling without clipping data. */
+@media(min-width:1200px) and (min-height:760px){
+  body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) .bz-dashboard-workspace.container{padding-top:8px!important;padding-bottom:8px!important;gap:12px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"]{padding:0!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bazunk-overview-v2{padding:4px!important;gap:9px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-heading{margin-bottom:8px!important;gap:10px!important;padding:0!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-title h1{font-size:27px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-title p{margin-top:2px!important;font-size:12px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-action{min-height:34px!important;padding:7px 11px!important;font-size:12px!important;border-radius:9px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid{gap:8px!important;margin-block:7px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid>div{min-height:79px!important;padding:10px 12px!important;border-radius:12px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid>div p[class*="text-2xl"]{font-size:23px!important;line-height:1.1!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-section-card{padding:12px!important;border-radius:13px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-section-card h2{font-size:16px!important;line-height:1.2!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-actions{gap:7px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action{min-height:69px!important;padding:8px 5px!important;gap:3px!important;border-radius:10px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action>svg:first-child{width:19px!important;height:19px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action b{font-size:11px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action small{font-size:9px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo{margin-top:8px!important;padding:10px 12px!important;border-radius:12px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-header{margin-bottom:6px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-header h2{font-size:16px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-items{gap:5px!important;}
+  #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-items button{padding:7px 9px!important;font-size:11px!important;border-radius:8px!important;}
+  body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) #bazunk-dashboard-drawer.bz-hub-sidebar{top:8px!important;max-height:calc(100dvh - 16px)!important;}
+  body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) #bazunk-dashboard-drawer .bz-dashboard-user{padding:8px!important;}
+  body:has(#bz-dashboard-main[data-active-dashboard-section="overview"]) #bazunk-dashboard-drawer .bz-dashboard-accordion{gap:4px!important;}
+}
+
+
+/* Dashboard density controls apply on ordinary laptop screens too. */
+@media(min-width:1024px){
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bazunk-overview-v2{padding:4px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-heading{margin-bottom:9px!important;gap:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid{gap:8px!important;margin-block:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-stat-grid>div{min-height:84px!important;padding:10px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .overview-new-action{min-height:74px!important;padding:8px 6px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo{padding:11px!important;margin-top:8px!important;}
+ #bz-dashboard-main[data-active-dashboard-section="overview"] .bz-arcade-todo-items button{padding:8px!important;}
+}

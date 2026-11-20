@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   Search, Ban, CheckCircle, RefreshCw, Trophy,
@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
+import { AdminManagementHeader, AdminStatusTabs, AdminMetric } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
 
 interface User {
@@ -43,6 +44,11 @@ export function AdminUsersPage() {
   const [accountFilter,setAccountFilter]=useState<"all"|"active"|"suspended">("all");
   const [sellerFilter,setSellerFilter]=useState<"all"|"private"|"business">("all");
   const [selectedUserIds,setSelectedUserIds]=useState<string[]>([]);
+  const [bulkAction,setBulkAction]=useState("credit");
+  const [bulkAmount,setBulkAmount]=useState("");
+  const [bulkReason,setBulkReason]=useState("");
+  const [bulkBusy,setBulkBusy]=useState(false);
+  const [bulkResult,setBulkResult]=useState("");
   const visibleUsers=users.filter(u=>(accountFilter==="all"||(accountFilter==="suspended"?u.banned:!u.banned))
     &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):(u.seller_type==="business"||u.seller_type==="sole_trader"))));
   const visibleUserIds=visibleUsers.map(u=>u.email);
@@ -75,6 +81,8 @@ export function AdminUsersPage() {
 
   // Add user modal
   const [addOpen, setAddOpen] = useState(false);
+  const [demoBusy,setDemoBusy]=useState(false);
+  const [demoMessage,setDemoMessage]=useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addName, setAddName] = useState("");
   const [addCredits, setAddCredits] = useState("");
@@ -90,6 +98,7 @@ export function AdminUsersPage() {
 
   // Milestones
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
+  const [expandedManageEmail,setExpandedManageEmail]=useState<string|null>(null);
   const [milestoneData, setMilestoneData] = useState<Record<string, { progress: number; completed: boolean }>>({});
   const [milestoneInputs, setMilestoneInputs] = useState<Record<string, string>>({});
   const [milestoneLoading, setMilestoneLoading] = useState(false);
@@ -148,11 +157,21 @@ export function AdminUsersPage() {
 
   async function toggleBan(email: string, banned: boolean) {
     setBanSaving(email);
-    await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
-      method: "PATCH", body: JSON.stringify({ banned: !banned }),
-    });
-    await load();
-    setBanSaving(null);
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
+        method: "PATCH", body: JSON.stringify({ banned: !banned }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to update account status (HTTP ${res.status}).`);
+      }
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to update account status.");
+    } finally {
+      setBanSaving(null);
+    }
   }
 
   async function saveEdit() {
@@ -177,10 +196,20 @@ export function AdminUsersPage() {
   async function confirmDelete() {
     if (!deleteUser) return;
     setDeleteSaving(true);
-    await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
-    setDeleteUser(null);
-    setDeleteSaving(false);
-    await load();
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to delete account (HTTP ${res.status}).`);
+      }
+      setDeleteUser(null);
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to delete account.");
+    } finally {
+      setDeleteSaving(false);
+    }
   }
 
   async function syncUsers() {
@@ -196,6 +225,55 @@ export function AdminUsersPage() {
     } catch {
       setSyncMsg({ ok: false, text: "Network error — try again" });
     } finally { setSyncing(false); }
+  }
+
+  async function runBulkAction() {
+    const emails=selectedUserIds.filter(email=>visibleUsers.some(u=>u.email===email));
+    if (!emails.length) {setBulkResult("Select customers first.");return;}
+    const credits=Number(bulkAmount);
+    if (bulkAction==="credit" && (!Number.isInteger(credits)||credits<=0||credits>100000)) {setBulkResult("Enter 1–100,000 whole credits.");return;}
+    if ((bulkAction==="credit"||bulkAction==="clear") && bulkReason.trim().length<8) {setBulkResult("A reason is required for bulk credit changes.");return;}
+    const description=bulkAction==="clear"?`REMOVE ALL CURRENT CREDITS from each of ${emails.length} selected customers`:bulkAction==="credit"?`ADD ${credits} credits to each of ${emails.length} customers (${credits*emails.length} credits total)`:bulkAction==="suspend"?"SUSPEND":"REACTIVATE";
+    if (!window.confirm(`${description} for ${emails.length} selected customers? This changes live customer accounts.`)) return;
+    setBulkBusy(true);setBulkResult("");
+    let succeeded=0;const failed:string[]=[];
+    for (const email of emails) {
+      try {
+        const path=bulkAction==="clear"?`/api/admin/users/${encodeURIComponent(email)}/credits/clear`:bulkAction==="credit"?`/api/admin/users/${encodeURIComponent(email)}/credits`:`/api/admin/users/${encodeURIComponent(email)}/ban`;
+        const response=await authFetch(path,{method:"PATCH",body:JSON.stringify(bulkAction==="clear"?{reason:bulkReason.trim()}:bulkAction==="credit"?{amount:credits/100,reason:bulkReason.trim()}:{banned:bulkAction==="suspend"})});
+        if (!response.ok) {const data=await response.json().catch(()=>({}));throw new Error(data.error||`HTTP ${response.status}`);}
+        succeeded++;
+      } catch(err) {failed.push(`${email}: ${err instanceof Error?err.message:"Network error"}`);}
+    }
+    setBulkResult(`Completed ${succeeded}/${emails.length}. ${failed.length?`Failed: ${failed.slice(0,8).join("; ")}`:"All changes saved."}`);
+    setSelectedUserIds(failed.map(x=>x.split(":")[0]));
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function createDemoSellers() {
+    if (!window.confirm("Create 20 admin-managed demo seller profiles? These are fictional sellers without logins or verification.")) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch("/api/admin/users/demo-sellers/bulk",{method:"POST",body:JSON.stringify({confirm:"CREATE_20_DEMO_SELLERS"})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Could not create demo sellers");
+      setDemoMessage(`Created ${data.created?.length??20} demo sellers. Search demo-seller- to find them.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
+  }
+  async function deleteDemoSeller(user: User) {
+    if (!window.confirm(`Permanently delete ${user.name||user.email} AND all its listings? This cannot be undone. Deletion is blocked if orders exist.`)) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch(`/api/admin/users/demo-sellers/${encodeURIComponent(user.email)}/with-listings`,{method:"DELETE",body:JSON.stringify({confirm:user.email})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Deletion failed");
+      setDemoMessage(`Deleted ${user.email} and ${data.deletedListings} listings.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
   }
 
   async function saveNewUser() {
@@ -270,28 +348,21 @@ export function AdminUsersPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Users Management</h1>
-          <p className="text-sm text-gray-400 mt-0.5">{total} registered users</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={syncUsers} disabled={syncing}
-            title="Import everyone from Clerk and from past listings, purchases and tickets"
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Sync users
-          </button>
-          <button onClick={() => { setAddOpen(true); setAddError(""); }}
-            className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl bg-[#4A5CE8] text-white hover:opacity-90">
-            <UserPlus className="w-3.5 h-3.5" /> Add user
-          </button>
-          <button onClick={load} disabled={loading}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 font-medium disabled:opacity-40 p-2">
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
-
+      <AdminManagementHeader title="Customers" description="Manage marketplace accounts, seller access, credits and customer activity." meta={<span>{total.toLocaleString("en-GB")} matching accounts</span>} actions={<>
+        <button type="button" onClick={syncUsers} disabled={syncing} title="Synchronise users from Clerk and marketplace activity" className="wp-action wp-action-secondary">{syncing?<Loader2 className="h-4 w-4 animate-spin"/>:<Download className="h-4 w-4"/>}Sync users</button>
+        <button type="button" onClick={createDemoSellers} disabled={demoBusy} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/> {demoBusy?"Working…":"Create 20 demo sellers"}</button>
+        
+        <button type="button" onClick={()=>{setAddOpen(true);setAddError("")}} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/>Add customer</button>
+        <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-secondary" aria-label="Refresh customers"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/></button>
+      </>}/>
+      <section aria-label="Account summary" className="wp-management-metrics grid gap-3 sm:grid-cols-3">
+        <AdminMetric label="Accounts loaded" value={users.length} icon={UserPlus} tone="blue"/>
+        <AdminMetric label="Active in current results" value={users.filter(u=>!u.banned).length} icon={CheckCircle} tone="green"/>
+        <AdminMetric label="Suspended in current results" value={users.filter(u=>u.banned).length} icon={Ban} tone="orange"/>
+      </section>
+      <AdminStatusTabs label="Customer account status" value={accountFilter} onChange={x=>{setAccountFilter(x as typeof accountFilter);setSelectedUserIds([])}} options={[
+        {value:"all",label:"All customers"},{value:"active",label:"Active"},{value:"suspended",label:"Suspended"}
+      ]}/>
       {loadError && (
         <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" /> {loadError}
@@ -313,11 +384,6 @@ export function AdminUsersPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <label className="text-sm font-bold text-slate-800 dark:text-white">Account
-          <select value={accountFilter} onChange={e=>{setAccountFilter(e.target.value as typeof accountFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
-            <option value="all">All accounts</option><option value="active">Active</option><option value="suspended">Suspended</option>
-          </select>
-        </label>
         <label className="text-sm font-bold text-slate-800 dark:text-white">Seller
           <select value={sellerFilter} onChange={e=>{setSellerFilter(e.target.value as typeof sellerFilter);setSelectedUserIds([]);}} className="ml-2 min-h-10 rounded-lg border border-slate-400 bg-white px-3 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white">
             <option value="all">All types</option><option value="private">Private</option><option value="business">Business / trader</option>
@@ -325,183 +391,117 @@ export function AdminUsersPage() {
         </label>
         <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">{visibleUsers.length} shown (up to 200 loaded)</span>
       </div>
+      <div className="mb-3 rounded-xl border-2 border-orange-300 bg-white p-3 text-gray-900">
+        <div className="flex flex-wrap items-center gap-2">
+          <strong className="text-sm">{selectedUserIds.length} selected</strong>
+          <select aria-label="Bulk action" value={bulkAction} onChange={e=>setBulkAction(e.target.value)} className="rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900">
+            <option value="credit">Add credits</option><option value="clear">Remove all credits</option><option value="suspend">Suspend accounts</option><option value="reactivate">Reactivate accounts</option>
+          </select>
+          {(bulkAction==="credit"||bulkAction==="clear")&&<>
+            {bulkAction==="credit"&&<input aria-label="Credits per customer" type="number" min="1" max="100000" step="1" placeholder="Credits per customer" value={bulkAmount} onChange={e=>setBulkAmount(e.target.value)} className="w-40 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>}
+            <input aria-label="Bulk credit reason" placeholder="Reason (at least 8 characters)" value={bulkReason} onChange={e=>setBulkReason(e.target.value)} className="min-w-40 flex-1 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
+          </>}
+          <button type="button" disabled={bulkBusy||!selectedUserIds.length} onClick={runBulkAction} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkBusy?"Applying…":"Apply to selected"}</button>
+        </div>
+        <p className="mt-2 text-xs text-gray-600">Selection applies to visible customers on this page. Changes are audited per account; failures are reported individually.</p>
+        {bulkResult&&<p role="status" className="mt-2 text-sm font-semibold text-gray-900">{bulkResult}</p>}
+      </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
-      <div className="admin-users-table bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto bz-table-scroll">
-          <table className="w-full text-sm bz-data-table">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="px-3 py-2"><input type="checkbox" aria-label="Select all visible users" className="h-4 w-4"
-                  checked={visibleUserIds.length>0&&visibleUserIds.every(id=>selectedUserIds.includes(id))}
-                  onChange={e=>setSelectedUserIds(e.target.checked?visibleUserIds:[])}/></th>
-                {["User", "Selling", "Buying", "Messages", "Reputation / Risk", "Credits", "Last activity", "Adjust Credits", "Actions"].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading && (
-                <tr><td colSpan={10} className="text-center text-gray-400 py-10">Loading…</td></tr>
-              )}
-              {!loading && users.length === 0 && (
-                <tr><td colSpan={10} className="text-center text-gray-400 py-10">
-                  No users found{!search && " — press “Sync users” above to import your existing accounts."}
-                </td></tr>
-              )}
-              {visibleUsers.map((u) => (
-                <>
-                  <tr key={u.email} className={`border-t border-gray-50 ${u.banned ? "bg-red-50/40" : "hover:bg-gray-50/40"}`}>
-                    <td className="px-3 py-2"><input type="checkbox" className="h-4 w-4" aria-label={`Select user ${u.email}`}
+      <div className="admin-users-compact wp-management-table-card rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-600 dark:bg-[#152239]">
+        <table className="admin-users-compact-table w-full table-fixed text-sm" aria-label="Customers management">
+          <colgroup><col style={{width:"4%"}}/><col style={{width:"24%"}}/><col style={{width:"29%"}}/><col style={{width:"21%"}}/><col style={{width:"22%"}}/></colgroup>
+          <thead><tr>
+            <th scope="col" className="px-2 py-3"><input type="checkbox" aria-label="Select all visible users"
+              checked={visibleUserIds.length>0&&visibleUserIds.every(id=>selectedUserIds.includes(id))}
+              onChange={e=>setSelectedUserIds(e.target.checked?visibleUserIds:[])}/></th>
+            {["Customer","Marketplace activity","Account & credits","Actions"].map(label=><th scope="col" key={label} className="px-3 py-3 text-left text-xs font-bold">{label}</th>)}
+          </tr></thead>
+          <tbody>
+            {loading&&<tr><td colSpan={5} className="px-4 py-10 text-center">Loading customers…</td></tr>}
+            {!loading&&visibleUsers.length===0&&<tr><td colSpan={5} className="px-4 py-10 text-center">No matching customers. Adjust your search or filters.</td></tr>}
+            {!loading&&visibleUsers.map(u=>(
+              <Fragment key={u.email}>
+                <tr className={"admin-users-compact-row "+(u.banned?"admin-users-suspended":"")}>
+                  <td className="admin-users-select px-2 py-3 text-center align-middle">
+                    <input type="checkbox" aria-label={`Select user ${u.email}`}
                       checked={selectedUserIds.includes(u.email)}
-                      onChange={e=>setSelectedUserIds(p=>e.target.checked?[...new Set([...p,u.email])]:p.filter(id=>id!==u.email))}/></td>
-                    {/* User */}
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-gray-800 text-xs">{u.email}</p>
-                      <p className="text-gray-400 text-[11px] mt-0.5">{u.name ?? <span className="italic">No name</span>}</p>
-                      {u.banned && <span className="inline-block mt-1 text-[9px] font-bold text-red-500 bg-red-100 px-1.5 py-0.5 rounded-full">SUSPENDED</span>}
-                    </td>
-
-                    {/* Marketplace activity */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{Number(u.listings_total ?? 0)} listed · {Number(u.sold ?? 0)} sold</p>
-                      <p className="text-[10px] text-gray-400">{u.listings_active} active · £{Number(u.sales_value || 0).toFixed(2)} sales</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{Number(u.bought ?? 0)} bought</p>
-                      <p className="text-[10px] text-gray-400">£{Number(u.spent || 0).toFixed(2)} spent</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">↑ {Number(u.messages_sent ?? 0)} · ↓ {Number(u.messages_received ?? 0)}</p>
-                      <p className="text-[10px] text-gray-400">{Number(u.conversations ?? 0)} conversations</p>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-gray-800 text-xs">{u.reviews_received ? `${Number(u.rating || 0).toFixed(1)}★ · ${u.reviews_received} reviews` : "No reviews"}</p>
-                      <p className={`text-[10px] ${u.disputes_open ? "text-red-600 font-bold" : "text-gray-400"}`}>{u.disputes_open} open · {u.disputes_total} disputes</p>
-                      {u.live_streams > 0 && <p className="text-[10px] text-violet-500">{u.live_streams} live streams · {u.live_viewers} viewers recorded</p>}
-                    </td>
-
-                    {/* Credits */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <p className="font-bold text-[#4A5CE8] text-xs">{Math.round(parseFloat(u.credits) * 100).toLocaleString()} cr</p>
-                      <p className="text-[10px] text-gray-400">£{parseFloat(u.credits).toFixed(2)}</p>
-                    </td>
-
-                    {/* Last activity */}
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                      <p>{u.last_activity ? new Date(u.last_activity).toLocaleDateString() : "—"}</p>
-                      <p className="text-[10px]">Joined {new Date(u.created_at).toLocaleDateString()}</p>
-                      <p className="text-[10px] capitalize">{(u.seller_type ?? "private").replace("_", " ")}</p>
-                    </td>
-
-                    {/* Adjust Credits */}
-                    <td className="px-4 py-3">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number" min="0" step="1"
-                            value={creditInput[u.email] ?? ""}
-                            onChange={(e) => setCreditInput(prev => ({ ...prev, [u.email]: e.target.value }))}
-                            placeholder="Credits"
-                            className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-1 focus:ring-[#4A5CE8]"
-                          />
-                          <button
-                            onClick={() => saveCredits(u.email, 1)}
-                            disabled={creditSaving === u.email}
-                            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-40 whitespace-nowrap"
-                          >
-                            {creditSaving === u.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                            Add
+                      onChange={e=>setSelectedUserIds(previous=>e.target.checked?[...new Set([...previous,u.email])]:previous.filter(id=>id!==u.email))}/>
+                  </td>
+                  <td className="admin-users-customer px-3 py-3 align-middle">
+                    <strong className="admin-users-main block text-xs font-bold">{u.name||"Unnamed customer"}</strong>
+                    <span className="admin-users-muted block break-all text-xs" title={u.email}>{u.email}</span>
+                    <span className="admin-users-muted block text-[11px] capitalize">{(u.seller_type??"private").replace("_"," ")} seller</span>
+                  </td>
+                  <td className="admin-users-activity px-3 py-3 align-middle">
+                    <span className="admin-users-main block text-xs font-semibold">{Number(u.listings_total||0)} listed · {Number(u.sold||0)} sold · {Number(u.bought||0)} bought</span>
+                    <span className="admin-users-muted block text-[11px]">{u.listings_active} active · £{Number(u.sales_value||0).toFixed(2)} sales · £{Number(u.spent||0).toFixed(2)} spent</span>
+                    <span className="admin-users-muted block text-[11px]">{Number(u.conversations||0)} conversations · {u.reviews_received?Number(u.rating||0).toFixed(1)+"★ / "+u.reviews_received+" reviews":"No reviews"} · {u.disputes_open} open disputes</span>
+                  </td>
+                  <td className="admin-users-account px-3 py-3 align-middle">
+                    <span className="admin-users-main block text-xs font-bold">{Math.round(Number(u.credits||0)*100).toLocaleString()} credits</span>
+                    <span className="admin-users-muted block text-[11px]">£{Number(u.credits||0).toFixed(2)} · Last active {u.last_activity?new Date(u.last_activity).toLocaleDateString("en-GB"):"—"}</span>
+                    <span className={"admin-users-status mt-1 inline-flex text-[11px] font-bold "+(u.banned?"admin-users-status-suspended":"admin-users-status-active")}>{u.banned?"Suspended":"Active"}</span>
+                  </td>
+                  <td className="admin-users-actions px-3 py-3 align-middle">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <button type="button" onClick={()=>{setEditUser(u);setEditName(u.name??"");setEditSellerType(u.seller_type??"private");setEditReviewReason("");setEditError("")}}
+                        className="admin-users-action" title="Edit customer"><Pencil size={14}/> Edit</button>
+                      <button type="button" onClick={()=>{setMsgUser(u);setMsgSubject("");setMsgBody("");setMsgResult(null)}}
+                        className="admin-users-action" title="Message customer"><Mail size={14}/> Message</button>
+                      <button type="button" className="admin-users-action admin-users-action-primary" aria-expanded={expandedManageEmail===u.email}
+                        aria-controls={`customer-manage-${u.id}`}
+                        onClick={()=>setExpandedManageEmail(current=>current===u.email?null:u.email)}>
+                        Manage {expandedManageEmail===u.email?<ChevronUp size={14}/>:<ChevronDown size={14}/>}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {expandedManageEmail===u.email&&<tr className="admin-users-details-row">
+                  <td colSpan={5} id={`customer-manage-${u.id}`} className="px-4 py-4">
+                    <div className="admin-users-details-grid">
+                      <section className="min-w-0">
+                        <h3 className="mb-2 text-sm font-bold">Adjust credits · {u.email}</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="sr-only" htmlFor={`customer-credit-${u.id}`}>Credit amount</label>
+                          <input id={`customer-credit-${u.id}`} type="number" min="0" step="1" placeholder="Credits"
+                            value={creditInput[u.email]??""}
+                            onChange={e=>setCreditInput(previous=>({...previous,[u.email]:e.target.value}))}
+                            className="admin-users-detail-input w-28"/>
+                          <button type="button" disabled={creditSaving===u.email} className="admin-users-action admin-users-positive"
+                            onClick={()=>saveCredits(u.email,1)}>{creditSaving===u.email?<Loader2 size={14} className="animate-spin"/>:<Save size={14}/>} Add</button>
+                          <button type="button" disabled={creditSaving===u.email} className="admin-users-action"
+                            onClick={()=>saveCredits(u.email,-1)}>Deduct</button>
+                        </div>
+                        <label className="sr-only" htmlFor={`customer-reason-${u.id}`}>Credit adjustment reason</label>
+                        <input id={`customer-reason-${u.id}`} type="text" placeholder="Reason (optional)" value={creditReason[u.email]??""}
+                          onChange={e=>setCreditReason(previous=>({...previous,[u.email]:e.target.value}))}
+                          className="admin-users-detail-input mt-2 w-full max-w-md"/>
+                        {creditResult[u.email]&&<p role="status" className={"mt-1 text-xs font-bold "+(creditResult[u.email].ok?"text-emerald-700 dark:text-emerald-300":"text-red-700 dark:text-red-300")}>{creditResult[u.email].msg}</p>}
+                      </section>
+                      <section>
+                        <h3 className="mb-2 text-sm font-bold">Customer management</h3>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button type="button" onClick={()=>toggleBan(u.email,u.banned)} disabled={banSaving===u.email} className="admin-users-action">
+                            {banSaving===u.email?<Loader2 size={14} className="animate-spin"/>:u.banned?<CheckCircle size={14}/>:<Ban size={14}/>}
+                            {u.banned?"Unsuspend":"Suspend"}
                           </button>
-                          <button
-                            onClick={() => saveCredits(u.email, -1)}
-                            disabled={creditSaving === u.email}
-                            className="flex items-center gap-1 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-40 whitespace-nowrap"
-                          >
-                            {creditSaving === u.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                            Deduct
+                          <button type="button" className="admin-users-action" aria-expanded={expandedEmail===u.email} onClick={()=>toggleMilestones(u.email)}>
+                            <Trophy size={14}/> Milestones
+                          </button>
+                          {/^demo-seller-[a-f0-9]{8}-\d{2}@example\.com$/.test(u.email) && <button type="button" disabled={demoBusy} onClick={()=>deleteDemoSeller(u)} className="admin-users-action admin-users-danger">Delete demo + listings</button>}
+                          <button type="button" onClick={()=>setDeleteUser(u)} className="admin-users-action admin-users-danger">
+                            <Trash2 size={14}/> Delete
                           </button>
                         </div>
-                        <input
-                          type="text"
-                          value={creditReason[u.email] ?? ""}
-                          onChange={(e) => setCreditReason(prev => ({ ...prev, [u.email]: e.target.value }))}
-                          placeholder="Reason (optional)"
-                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[#4A5CE8] text-gray-600"
-                        />
-                        {creditResult[u.email] && (
-                          <p className={`text-[10px] font-semibold ${creditResult[u.email].ok ? "text-emerald-600" : "text-red-500"}`}>
-                            {creditResult[u.email].msg}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {/* Edit */}
-                        <button
-                          onClick={() => { setEditUser(u); setEditName(u.name ?? ""); setEditSellerType(u.seller_type ?? "private"); setEditReviewReason(""); setEditError(""); }}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                          title="Edit user"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Edit
-                        </button>
-
-                        {/* Message */}
-                        <button
-                          onClick={() => { setMsgUser(u); setMsgSubject(""); setMsgBody(""); setMsgResult(null); }}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-100 transition-colors"
-                          title="Send a message to their inbox"
-                        >
-                          <Mail className="w-3.5 h-3.5" /> Message
-                        </button>
-
-                        {/* Suspend / unsuspend */}
-                        <button
-                          onClick={() => toggleBan(u.email, u.banned)}
-                          disabled={banSaving === u.email}
-                          className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 ${
-                            u.banned
-                              ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                              : "bg-red-50 text-red-600 hover:bg-red-100"
-                          }`}
-                        >
-                          {banSaving === u.email
-                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            : u.banned ? <CheckCircle className="w-3.5 h-3.5" /> : <Ban className="w-3.5 h-3.5" />}
-                          {u.banned ? "Unsuspend" : "Suspend"}
-                        </button>
-
-                        {/* Milestones */}
-                        <button
-                          onClick={() => toggleMilestones(u.email)}
-                          className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
-                            expandedEmail === u.email
-                              ? "bg-[#4A5CE8] text-white"
-                              : "bg-[#4A5CE8]/10 text-[#4A5CE8] hover:bg-[#4A5CE8]/20"
-                          }`}
-                        >
-                          <Trophy className="w-3.5 h-3.5" />
-                          {expandedEmail === u.email ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                        </button>
-
-                        {/* Delete */}
-                        <button
-                          onClick={() => setDeleteUser(u)}
-                          className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                          title="Delete user"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-
+                        <p className="admin-users-muted mt-2 text-xs">Joined {new Date(u.created_at).toLocaleDateString("en-GB")} · {u.messages_sent} sent / {u.messages_received} received messages · {u.disputes_total} disputes · {u.live_streams} live streams</p>
+                      </section>
+                    </div>
+                  </td>
+                </tr>}
                   {expandedEmail === u.email && (
                     <tr key={`${u.email}-milestones`} className="bg-[#4A5CE8]/3 border-t border-[#4A5CE8]/10">
-                      <td colSpan={10} className="px-4 py-5">
+                      <td colSpan={5} className="px-4 py-5">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
                             <Trophy className="w-4 h-4 text-[#4A5CE8]" />
@@ -579,14 +579,13 @@ export function AdminUsersPage() {
                         )}
                       </td>
                     </tr>
-                  )}
-                </>
+                  )}                </Fragment>
               ))}
             </tbody>
           </table>
-        </div>
       </div>
 
+      {demoMessage && <div role="status" className="mb-4 rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm font-semibold text-gray-900">{demoMessage}</div>}
       {/* ── Add User Modal ── */}
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setAddOpen(false)}>

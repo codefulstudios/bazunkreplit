@@ -36,3 +36,26 @@ for(const part of ["select","dropdown-menu","popover","dialog"]){
     assert.match(source,/dark:text-/);
   });
 }
+
+const source=(path)=>fs.readFileSync("artifacts/sellbuydeal/src/"+path,"utf8");
+test("front-end categories hero uses the shared contrast-aware compact hero",()=>{
+  assert.match(source("pages/CategoriesPage.tsx"),/return <BrowsePage \/>/);
+  assert.match(source("pages/BrowsePage.tsx"),/bg-white dark:bg-slate-900/);
+  assert.match(source("components/CompactPageHero.tsx"),/bz-compact-hero/);
+  assert.match(css,/\.bz-compact-hero\{[^}]*background:linear-gradient/);
+  assert.match(css,/\.bz-compact-hero h1\{[^}]*color:var\(--bz-hero-text\)!important/);
+  assert.match(css,/\.bz-compact-hero-copy>p\{[^}]*color:var\(--bz-hero-sub\)!important/);
+});
+for(const [name,file] of [["Snap & Sell","AdminSnapSellPage.tsx"],["DealPilot","AdminDealPilotPage.tsx"],["Find It","AdminFindItPage.tsx"]]){
+ test(name+" dark hero uses contrast contract",()=>{
+   assert.match(source("pages/admin/"+file),/bz-contrast-hero rounded-3xl/);
+ });
+}
+test("bright hero colour meets WCAG AA on all text",()=>{
+ assert.ok(ratio("#152344","#fff7dc")>=4.5);
+ assert.ok(ratio("#152344","#ffd9a2")>=4.5);
+ assert.ok(ratio("#152344","#ffba7b")>=4.5);
+});
+test("dark section-heading text meets WCAG AA",()=>{
+ assert.ok(ratio("#ffffff","#17243a")>=4.5);
+});

@@ -7,6 +7,9 @@ import { Store, Heart, Eye, CheckCircle2, Flame, ArrowRight, Zap, Star, Crown, P
 import { Link } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
+import {useTheme} from "next-themes";
+import {useRawSettings} from "@/context/SiteSettingsContext";
+import {readSection,sectionStyle} from "@/design-system/sectionAppearance";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
@@ -63,6 +66,9 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
 
 export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promoted" }) {
   const [marketRegion] = useMarketplaceRegion();
+  const rawDesign=useRawSettings();
+  const {resolvedTheme}=useTheme();
+  const spotlightStyle=readSection(rawDesign,"home_spotlight",resolvedTheme==="dark"?"dark":"light");
   const { formatPrice } = useCurrency();
   const { t } = useLanguage();
   const [spotlightListings, setSpotlightListings] = useState<Listing[]>([]);
@@ -75,35 +81,36 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setLoading(true);
     setLoadError(false);
     setSpotlightListings([]);
     setRecentListings([]);
-    const fetchAll = async () => {
-      try {
-        const [spotlightRes, recentRes] = await Promise.all([
-          fetch(`${API_BASE}/api/listings/spotlight?region=${marketRegion}`),
-          fetch(`${API_BASE}/api/listings?limit=16&region=${marketRegion}`),
-        ]);
-        if (!cancelled && spotlightRes.ok) {
-          const data = await spotlightRes.json();
-          setSpotlightListings(Array.isArray(data) ? data : []);
+    const endpoint = mode === "promoted"
+      ? `${API_BASE}/api/listings/spotlight?region=${marketRegion}`
+      : `${API_BASE}/api/listings?limit=16&region=${marketRegion}`;
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch(endpoint, { signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error(`Homepage listings HTTP ${response.status}`);
+        const listings = await response.json();
+        if (controller.signal.aborted) return;
+        if (!Array.isArray(listings)) throw new Error("Invalid homepage listings");
+        if (mode === "promoted") setSpotlightListings(listings);
+        else setRecentListings(listings);
+      })
+      .catch(error => {
+        if (!controller.signal.aborted || controller.signal.reason?.name === "TimeoutError") {
+          setLoadError(true);
+          console.warn("Homepage listings unavailable:", error);
         }
-        if (!cancelled && recentRes.ok) {
-          const data = await recentRes.json();
-          setRecentListings(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        if (!cancelled) setLoadError(true);
-        console.error("Homepage listings failed to load", error);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-    fetchAll();
-    return () => { cancelled = true; };
-  }, [marketRegion]);
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        if (!controller.signal.aborted || controller.signal.reason?.name === "TimeoutError") setLoading(false);
+      });
+    return () => { clearTimeout(timeout); controller.abort("unmounted"); };
+  }, [marketRegion, mode]);
 
   const hasSpotlight = spotlightListings.length > 0;
   const displayListings = mode === "promoted" ? spotlightListings : recentListings;
@@ -120,15 +127,25 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     if (!el) return;
     updateScrollButtons();
     el.addEventListener("scroll", updateScrollButtons, { passive: true });
+    const observer = new ResizeObserver(updateScrollButtons);
+    observer.observe(el);
+    Array.from(el.children).forEach(child => observer.observe(child));
+    const frame = requestAnimationFrame(updateScrollButtons);
     window.addEventListener("resize", updateScrollButtons);
     return () => {
       el.removeEventListener("scroll", updateScrollButtons);
+      observer.disconnect();
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", updateScrollButtons);
     };
   }, [displayListings]);
 
   function scrollBy(delta: number) {
-    scrollRef.current?.scrollBy({ left: delta, behavior: "smooth" });
+    const el=scrollRef.current;
+    if (!el) return;
+    const amount=Math.min(700,Math.max(220,el.clientWidth*0.8));
+    el.scrollTo({left:Math.max(0,Math.min(el.scrollWidth-el.clientWidth,el.scrollLeft+Math.sign(delta)*amount)),behavior:"smooth"});
+    window.setTimeout(updateScrollButtons,400);
   }
 
   if (delayedLoading) {
@@ -141,7 +158,7 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
     );
   }
 
-  if (displayListings.length === 0) return <section className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 py-10"><div className="max-w-6xl mx-auto px-4"><div className="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center"><Package className="mx-auto h-9 w-9 text-orange-600 dark:text-orange-300" /><h2 className="mt-3 text-xl font-semibold text-slate-900 dark:text-white">{mode === "promoted" ? "Spotlight listings" : "Recently listed"}</h2><p className="mt-2 text-base text-slate-700 dark:text-slate-200">{loadError ? "Listings could not be loaded right now. Please try again shortly." : mode === "promoted" ? "No spotlight listings are available at the moment." : "No listings are available in this region yet."}</p><Link href="/browse" className="mt-4 inline-flex text-sm font-semibold text-orange-700 dark:text-orange-300">Browse the marketplace <ArrowRight className="ml-1 h-4 w-4" /></Link></div></div></section>;
+  if (displayListings.length === 0) return <section className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 py-10"><div className="max-w-6xl mx-auto px-4"><div data-design-spotlight={spotlightStyle?"true":"false"} style={sectionStyle(spotlightStyle)} className="bz-design-spotlight rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center"><Package className="mx-auto h-9 w-9 text-orange-600 dark:text-orange-300" /><h2 className="bz-design-spotlight-heading mt-3 text-xl font-semibold text-slate-900 dark:text-white">{mode === "promoted" ? "Spotlight listings" : "Recently listed"}</h2><p className="bz-design-spotlight-copy mt-2 text-base text-slate-700 dark:text-slate-200">{loadError ? "Listings could not be loaded right now. Please try again shortly." : mode === "promoted" ? "No spotlight listings are available at the moment." : "No listings are available in this region yet."}</p><Link href="/browse" className="bz-design-spotlight-link mt-4 inline-flex text-sm font-semibold text-orange-700 dark:text-orange-300">Browse the marketplace <ArrowRight className="ml-1 h-4 w-4" /></Link></div></div></section>;
 
   return (
     <section className="py-12 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
@@ -149,37 +166,24 @@ export function FeaturedListings({ mode = "recent" }: { mode?: "recent" | "promo
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <motion.p
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-sm font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-widest mb-1"
-            >
-              {mode === "promoted" ? t("promotedListings") : "Latest arrivals"}
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-2xl md:text-3xl font-bold !text-slate-950 dark:!text-white"
-            >
-              {mode === "promoted" ? "Spotlight listings" : "Recently listed"}
-            </motion.h2>
-          </div>
+          <h2 className="text-lg md:text-xl font-bold text-slate-950 dark:text-white">
+            {mode === "promoted" ? "Featured & promoted listings" : "Latest arrivals"}
+          </h2>
 
           <div className="flex items-center gap-2">
             {/* Scroll arrows */}
             <button
               onClick={() => scrollBy(-700)}
-              disabled={!canScrollLeft}
-              className="hidden sm:flex w-9 h-9 rounded-full border border-gray-200 items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              aria-label="Scroll spotlight listings left"
+              aria-disabled={!canScrollLeft}
+              className="hidden sm:flex w-10 h-10 rounded-full border-2 border-slate-400 dark:border-slate-500 items-center justify-center !bg-slate-800 !text-white hover:!bg-blue-700 hover:!border-blue-300 cursor-pointer transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => scrollBy(700)}
-              disabled={!canScrollRight}
+              aria-label="Scroll spotlight listings right"
+              aria-disabled={!canScrollRight}
               className="hidden sm:flex w-9 h-9 rounded-full border border-gray-200 items-center justify-center text-gray-400 hover:border-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             >
               <ChevronRight className="w-4 h-4" />

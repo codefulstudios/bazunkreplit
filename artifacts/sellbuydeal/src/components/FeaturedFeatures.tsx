@@ -66,26 +66,6 @@ export function FeaturedFeatures() {
     <section className="bg-slate-50 dark:bg-slate-950 py-14 border-t border-slate-200 dark:border-slate-800">
       <div className="max-w-6xl mx-auto px-4">
 
-        {/* Section header */}
-        <div className="text-center mb-10">
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-[#F26B21] text-sm font-semibold uppercase tracking-widest mb-2"
-          >
-            Why Bazunk?
-          </motion.p>
-          <motion.h2
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white leading-tight"
-          >
-            Everything in one place
-          </motion.h2>
-        </div>
-
         {/* 3 feature blocks */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
           {blocks.map(({ icon: Icon, iconBg, tag, title, description, cta, href, bg, border, tagColor, ctaColor, glow }, i) => (

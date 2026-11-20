@@ -34,7 +34,7 @@ function StatusBadge({ status }: { status: OfferStatus }) {
   const cfg = STATUS_CONFIG[status];
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.color}`}>
+    <span className={`bz-offer-status bz-offer-status-${status} inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold ${cfg.color}`}>
       <Icon className="w-3 h-3" />
       {cfg.label}
     </span>
@@ -54,10 +54,10 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
   const savingsPct = Math.round((savings / offer.listingPrice) * 100);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="flex flex-col sm:flex-row gap-4 p-4">
+    <div className="bz-offer-card overflow-hidden">
+      <div className="flex flex-col sm:flex-row gap-3 p-3">
         {/* Product image */}
-        <div className="w-20 h-20 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
+        <div className="w-20 h-20 rounded-xl bg-white flex-shrink-0 overflow-hidden">
           {offer.productImage ? (
             <img src={offer.productImage} alt={offer.productTitle} className="w-full h-full object-cover" />
           ) : (
@@ -70,36 +70,36 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
         {/* Details */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-1.5">
-            <h3 className="font-bold text-gray-900 text-sm leading-tight truncate">{offer.productTitle}</h3>
+            <h3 className="font-extrabold text-white text-sm leading-tight">{offer.productTitle}</h3>
             <StatusBadge status={offer.status} />
           </div>
 
-          <p className="text-xs text-slate-600 mb-2">{isSeller ? `Buyer: ${offer.buyerEmail?.split("@")[0] || "Bazunk buyer"}` : `Seller: ${offer.sellerName}`}</p>
+          <p className="text-xs text-blue-100 mb-2">{isSeller ? `Buyer: ${offer.buyerEmail?.split("@")[0] || "Bazunk buyer"}` : `Seller: ${offer.sellerName}`}</p>
 
           <div className="flex flex-wrap gap-3 text-sm">
             <div>
-              <p className="text-xs text-gray-400">Listed at</p>
-              <p className="font-bold text-gray-600 line-through">{formatPrice(offer.listingPrice)}</p>
+              <p className="text-xs text-blue-200">Listed at</p>
+              <p className="font-bold text-blue-100 line-through">{formatPrice(offer.listingPrice)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-600">{isSeller ? "Buyer offered" : "Your offer"}</p>
-              <p className="font-black text-[#F26B21]">{formatPrice(offer.offerPrice)}</p>
+              <p className="text-xs text-blue-100">{isSeller ? "Buyer offered" : "Your offer"}</p>
+              <p className="font-black text-[#fff0a8]">{formatPrice(offer.offerPrice)}</p>
             </div>
             {savings > 0 && (
               <div>
                 <p className="text-xs text-gray-400">Saving</p>
-                <p className="font-bold text-emerald-600">{formatPrice(savings)} ({savingsPct}%)</p>
+                <p className="font-bold text-emerald-300">{formatPrice(savings)} ({savingsPct}%)</p>
               </div>
             )}
           </div>
 
           {offer.message && (
-            <p className="mt-2 text-xs text-gray-500 italic bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-100">
+            <p className="mt-2 text-xs text-blue-100 italic bg-[#0b2b50] rounded-lg px-2.5 py-1.5 border border-[#315275]">
               "{offer.message}"
             </p>
           )}
 
-          <p className="mt-2 text-xs text-gray-300">
+          <p className="mt-2 text-xs text-blue-200">
             {new Date(offer.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
@@ -109,8 +109,8 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
         <div className="border-t border-blue-100 bg-blue-50 p-4 space-y-2">
           <p className="text-sm font-bold text-slate-900">Respond to this buyer's offer</p>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => void onRespond(offer.id,"accept")} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-bold text-white">Accept</button>
-            <button onClick={() => void onRespond(offer.id,"decline")} className="rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white">Decline</button>
+            <button onClick={() => void onRespond(offer.id,"accept")} className="rounded-lg bg-gradient-to-r from-[#065f46] to-emerald-700 px-3 py-2 text-sm font-bold text-white">Accept</button>
+            <button onClick={() => void onRespond(offer.id,"decline")} className="rounded-lg bg-gradient-to-r from-[#9a3412] to-red-800 px-3 py-2 text-sm font-bold text-white">Decline</button>
             <input aria-label="Counter-offer price" type="number" min="0.01" step="0.01" value={counterInput} onChange={e=>setCounterInput(e.target.value)} placeholder="Counter price" className="w-32 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-900"/>
             <button disabled={Number(counterInput)<=0} onClick={() => void onRespond(offer.id,"counter",Number(counterInput))}
               className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-40">Counter</button>
@@ -148,10 +148,10 @@ function OfferCard({ offer, currentEmail, onRespond }: { offer: RemoteOffer; cur
       )}
 
       {/* View listing button */}
-      <div className="border-t border-gray-50 px-4 py-2.5 flex justify-end">
+      <div className="border-t border-white/10 px-4 py-2.5 flex justify-end">
         <button
           onClick={() => setLocation(`/listing/${offer.publicId || offer.productId}`)}
-          className="flex items-center gap-1.5 text-xs font-medium text-[#4A5CE8] hover:text-[#3a4cc8] transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-orange-300 hover:text-orange-200 transition-colors"
         >
           View listing <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -208,7 +208,7 @@ export function OffersPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bazunk-account-page min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-sm">
@@ -245,71 +245,42 @@ export function OffersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06172f] text-white flex flex-col">
+    <div className="bazunk-account-page min-h-screen bg-[#06172f] text-white flex flex-col">
       <Navbar />
-      <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-blue-400/30 bg-gradient-to-r from-[#074af2] via-[#2528e9] to-[#c423e7]">
-          <div className="absolute inset-0 opacity-30" style={{backgroundImage:"radial-gradient(circle at 30% 20%, #4ff9ff 0, transparent 25%), radial-gradient(circle at 82% 70%, #ff3cae 0, transparent 30%)"}} />
-          <div className="relative max-w-7xl mx-auto px-5 py-9 md:py-12 flex items-center justify-between gap-5">
-            <div className="relative z-10">
-              <button onClick={() => setLocation("/dashboard")} className="mb-4 flex items-center gap-2 text-white font-bold text-sm hover:text-yellow-200"><ArrowLeft className="w-4 h-4"/> Back to Dashboard</button>
-              <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight drop-shadow-lg">My <span className="text-[#fff0a8]">Offers</span></h1>
-              <p className="text-base md:text-xl font-semibold mt-3 text-white">Track and manage all your price negotiations</p>
-              <div className="flex gap-2 mt-5 flex-wrap"><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">✨ Make a deal</span><span className="rounded-full bg-white/20 px-3 py-1.5 font-bold text-sm">💸 Save money</span></div>
+      <main className="bz-offers-page flex-1">
+        <div className="bz-offers-wrap">
+          <section className="bz-offers-hero">
+            <div className="bz-offers-hero-copy">
+              <button type="button" onClick={()=>setLocation("/dashboard")} className="bz-offers-back"><ArrowLeft size={17}/> Back to Dashboard</button>
+              <h1>My <span>Offers</span></h1>
+              <p>Track and manage all your price negotiations</p>
+              <div className="bz-offers-hero-perks"><span>🏷️ Make a deal</span><span>🪙 Save money</span></div>
             </div>
-            <div aria-hidden="true" className="hidden sm:flex relative shrink-0 items-center justify-center w-48 h-40 md:w-80 md:h-48">
-              <span className="absolute left-0 top-0 text-5xl rotate-[-22deg] drop-shadow-lg">🏷️</span>
-              <span className="absolute right-0 top-0 text-5xl rotate-[20deg] drop-shadow-lg">💝</span>
-              <span className="text-[110px] md:text-[145px] leading-none drop-shadow-2xl">🧑🏻‍💻</span>
-              <span className="absolute bottom-0 right-1 text-5xl">🛍️</span>
-              <span className="absolute top-3 right-1/3 text-3xl">⭐</span>
-            </div>
-          </div>
-        </section>
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-4">
-          {offerApiError && <p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{offerApiError}</p>}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { label:"Pending Offers", value:counts.pending, detail:"Waiting for a response", icon:Hourglass, cls:"from-[#9a3412] via-[#b45309] to-[#78350f]" },
-              { label:"Accepted Offers", value:counts.accepted, detail:"Great deals!", icon:CheckCircle2, cls:"from-[#065f46] via-[#047857] to-[#064e3b]" },
-              { label:"Declined Offers", value:counts.declined, detail:"Keep trying!", icon:XCircle, cls:"from-[#9d174d] via-[#86198f] to-[#581c87]" },
-            ].map(item => <div key={item.label} className={`flex items-center gap-4 rounded-2xl border border-white/20 bg-gradient-to-br ${item.cls} p-4 shadow-lg`}>
-              <div className="p-3 rounded-xl bg-white/20"><item.icon className="w-8 h-8 text-white"/></div>
-              <div><p className="text-3xl font-black text-white">{item.value}</p><p className="font-extrabold text-white">{item.label}</p><p className="text-white/90 text-sm">{item.detail}</p></div>
-            </div>)}
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
-              {TABS.map(t => <button key={t.key} onClick={() => setTab(t.key)} className={`rounded-full px-4 py-2.5 text-sm font-bold border transition-all ${tab===t.key?"bg-gradient-to-r from-sky-500 to-blue-600 border-sky-400 text-white shadow-lg":"bg-[#09254c] border-blue-500/40 text-white hover:bg-[#16427b]"}`}>{t.label}{counts[t.key]>0?` (${counts[t.key]})`:""}</button>)}
-            </div>
-            <button onClick={() => setLocation("/browse")} className="flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-6 py-3 text-white font-black shadow-lg"><ShoppingBag className="w-5 h-5"/> Browse Listings</button>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)] gap-4">
-            <div className="min-h-[310px] rounded-2xl border border-blue-400/60 bg-gradient-to-br from-[#073a97] via-[#092a6e] to-[#21146d] p-6">
-              {filtered.length===0 ? <div className="flex min-h-[265px] flex-col items-center justify-center text-center">
-                <div className="text-7xl mb-3 drop-shadow-xl">🎁</div>
-                <h2 className="text-2xl font-black text-white">{tab==="all"?"No offers yet":`No ${tab} offers`}</h2>
-                <p className="mt-2 text-blue-100">{tab==="all"?"Browse listings and make an offer on something you like.":"Switch tabs to see your other offers."}</p>
-                <button onClick={() => tab==="all"?setLocation("/browse"):setTab("all")} className="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 hover:bg-orange-400 px-6 py-3 text-white font-black"><Search className="w-4 h-4"/>{tab==="all"?"Browse Listings":"All Offers"} <ChevronRight className="w-4 h-4"/></button>
-              </div> : <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">{filtered.map(offer=><OfferCard key={offer.id} offer={offer} currentEmail={user.email} onRespond={respond}/>)}</div>}
-            </div>
-            <aside className="rounded-2xl border border-blue-400/60 bg-gradient-to-br from-[#092d80] to-[#111060] p-5">
-              <h2 className="text-xl font-black text-white flex items-center gap-2 mb-4"><Lightbulb className="w-6 h-6 text-yellow-300"/> Tips for Getting Great Deals</h2>
+            <div className="bz-offers-hero-art" aria-hidden="true"><span className="bz-offers-bag-blue"><ShoppingBag/></span><span className="bz-offers-bag-orange"><ShoppingBag/><b>B</b></span><span className="bz-offers-percent">%</span><span className="bz-offers-spark">✦</span></div>
+          </section>
+          <section className="bz-offers-board">
+            {offerApiError&&<p role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{offerApiError}</p>}
+            <div className="bz-offers-metrics">
               {[
-                {icon:"🏷️", title:"Be reasonable",detail:"Fair offers are more likely to be accepted."},
+                {label:"Pending Offers",value:counts.pending,detail:"Waiting for a response",icon:Hourglass,cls:"pending"},
+                {label:"Accepted Offers",value:counts.accepted,detail:"Great deals!",icon:CheckCircle2,cls:"accepted"},
+                {label:"Declined Offers",value:counts.declined,detail:"Keep trying!",icon:XCircle,cls:"declined"}
+              ].map(item=><div key={item.label} className={`bz-offers-metric bz-offers-metric-${item.cls}`}><item.icon size={39}/><div><strong>{item.value}</strong><b>{item.label}</b><small>{item.detail}</small></div></div>)}
+            </div>
+            <div className="bz-offers-tabs"><div className="bz-offers-tab-list">{TABS.map(t=><button type="button" key={t.key} aria-pressed={tab===t.key} onClick={()=>setTab(t.key)} className={tab===t.key?"active":""}>{t.label} ({counts[t.key]})</button>)}</div><button type="button" className="bz-offers-notifications" onClick={()=>setLocation("/messages")}><MessageSquare size={16}/> Offer Notifications</button></div>
+            <div className="bz-offers-content">
+              <div className="bz-offers-list">
+                {!filtered.length?<div className="bz-offers-empty"><span>🎁</span><h2>{tab==="all"?"No offers yet":`No ${tab} offers`}</h2><p>{tab==="all"?"Browse listings and make an offer on something you like.":"Switch tabs to see your other offers."}</p><button type="button" onClick={()=>tab==="all"?setLocation("/browse"):setTab("all")}><Search size={17}/>{tab==="all"?"Browse Listings":"All Offers"} <ChevronRight size={17}/></button></div>:filtered.map(offer=><OfferCard key={offer.id} offer={offer} currentEmail={user.email} onRespond={respond}/>)}
+              </div>
+              <aside className="bz-offers-tips"><h2><Lightbulb size={24}/> Tips for Getting Great Deals</h2>{[
+                {icon:"🏷️",title:"Be reasonable",detail:"Fair offers are more likely to be accepted."},
                 {icon:"💬",title:"Try a counter offer",detail:"Sellers might come back with a better price."},
-                {icon:"💗",title:"Keep an eye on offers",detail:"Check back for seller responses."},
-              ].map(t=><div key={t.title} className="flex gap-3 items-center rounded-xl border border-blue-400/30 bg-[#051d4b]/75 p-3 mb-2"><span className="text-3xl">{t.icon}</span><div><h3 className="text-white font-extrabold">{t.title}</h3><p className="text-sm font-semibold text-white/95 leading-relaxed">{t.detail}</p></div></div>)}
-            </aside>
-          </div>
-          {counts.countered>0&&tab!=="countered"&&<button onClick={()=>setTab("countered")} className="w-full text-left rounded-xl border border-cyan-400 bg-cyan-900 p-4 text-white font-bold">{counts.countered} counter offer(s) waiting for your response →</button>}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pb-6">
-            {[
-              {title:"Find Something You Love",detail:"Browse items and make an offer.",icon:"🔎",cls:"from-blue-600 via-indigo-600 to-fuchsia-600",link:"/browse"},
-              {title:"Negotiate a Better Price",detail:"Make an offer and save on items you want.",icon:"🤝",cls:"from-cyan-500 via-blue-600 to-indigo-700",link:"/browse"},
-              {title:"Great Deals Are Waiting!",detail:"Start browsing and make your first offer today.",icon:"🛍️",cls:"from-fuchsia-600 via-pink-600 to-orange-500",link:"/browse"},
-            ].map(c=><button key={c.title} onClick={()=>setLocation(c.link)} className={`text-left rounded-2xl p-5 bg-gradient-to-r ${c.cls} flex items-center gap-4 hover:brightness-110 transition shadow-lg`}><span className="text-5xl">{c.icon}</span><span><strong className="text-xl font-black text-white block">{c.title}</strong><span className="text-sm text-white font-medium">{c.detail}</span></span></button>)}
-          </div>
+                {icon:"💗",title:"Keep an eye on offers",detail:"Check back for seller responses."}
+              ].map(t=><div className="bz-offers-tip" key={t.title}><span>{t.icon}</span><div><strong>{t.title}</strong><p>{t.detail}</p></div></div>)}</aside>
+            </div>
+            {counts.countered>0&&tab!=="countered"&&<button type="button" onClick={()=>setTab("countered")} className="bz-offers-counter-alert">{counts.countered} counter offer(s) waiting for your response <ChevronRight size={18}/></button>}
+            <div className="bz-offers-bottom"><button type="button" onClick={()=>setLocation("/browse")}><span>🔎</span><div><strong>Find great deals</strong><small>Browse listings and make an offer.</small></div></button><button type="button" onClick={()=>setLocation("/browse")}><span>🤝</span><div><strong>Negotiate with sellers</strong><small>Make a fair offer and agree a price that works.</small></div></button><button type="button" onClick={()=>setLocation("/deals")}><span>🎁</span><div><strong>Save more on Bazunk</strong><small>Get the items you want for less.</small></div></button></div>
+          </section>
         </div>
       </main>
       <Footer />

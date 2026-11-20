@@ -32,6 +32,7 @@ export interface PlatformMeta {
   canEmbed: boolean;
   placeholder: string;
   native?: boolean;
+  viewingNote?: string;
 }
 
 export const FEATURED_KEY = "sbd_live_featured_v2";
@@ -39,10 +40,10 @@ export const FEATURED_KEY = "sbd_live_featured_v2";
 export const PLATFORM_META: Record<LivePlatform, PlatformMeta> = {
   youtube:   { label: "YouTube",          bg: "bg-red-500",     text: "text-red-500",     canEmbed: true,  placeholder: "https://www.youtube.com/watch?v=..." },
   twitch:    { label: "Twitch",           bg: "bg-purple-600",  text: "text-purple-600",  canEmbed: true,  placeholder: "https://www.twitch.tv/yourchannel" },
-  tiktok:    { label: "TikTok",           bg: "bg-gray-900",    text: "text-gray-900",    canEmbed: false, placeholder: "https://www.tiktok.com/@you/live" },
-  zoom:      { label: "Zoom",             bg: "bg-blue-500",    text: "text-blue-500",    canEmbed: false, placeholder: "https://us02web.zoom.us/j/..." },
-  instagram: { label: "Instagram",        bg: "bg-pink-500",    text: "text-pink-500",    canEmbed: false, placeholder: "https://www.instagram.com/yourhandle/" },
-  facebook:  { label: "Facebook",         bg: "bg-blue-700",    text: "text-blue-700",    canEmbed: false, placeholder: "https://www.facebook.com/yourpage/live" },
+  tiktok:    { label: "TikTok",           bg: "bg-gray-900",    text: "text-white",    canEmbed: false, viewingNote: "TikTok LIVE is viewed on TikTok. Keep this Bazunk tab open to shop alongside the broadcast.", placeholder: "https://www.tiktok.com/@you/live" },
+  zoom:      { label: "Zoom",             bg: "bg-blue-500",    text: "text-blue-500",    canEmbed: false, viewingNote: "Zoom meetings open in Zoom or your browser. Bazunk does not relay private meeting content.", placeholder: "https://us02web.zoom.us/j/..." },
+  instagram: { label: "Instagram",        bg: "bg-pink-500",    text: "text-pink-500",    canEmbed: false, viewingNote: "Instagram Live opens on Instagram; in-page playback is not available here.", placeholder: "https://www.instagram.com/yourhandle/" },
+  facebook:  { label: "Facebook",         bg: "bg-blue-700",    text: "text-blue-700",    canEmbed: false, viewingNote: "Facebook Live opens on Facebook; in-page playback is not available here.", placeholder: "https://www.facebook.com/yourpage/live" },
   livekit:   { label: "LiveKit (Native)", bg: "bg-orange-500",  text: "text-orange-500",  canEmbed: false, placeholder: "", native: true },
 };
 

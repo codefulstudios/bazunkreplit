@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
+import { useTheme } from "next-themes";
+import { useRawSettings } from "@/context/SiteSettingsContext";
+import { designSettingKey, parseDesignPalette } from "@/design-system/palette";
 import { useAuth } from "@clerk/react";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { Bell, BellOff, Bot, CheckCircle2, Clock3, ExternalLink, Pause, Play,
@@ -17,6 +20,12 @@ const btn="rounded-xl px-4 py-2.5 text-sm font-bold transition disabled:cursor-n
 
 export function DealPilotPanel() {
  const {isSignedIn,isLoaded,getToken}=useAuth();
+ const rawDesign=useRawSettings();
+ const {resolvedTheme}=useTheme();
+ const designMode=resolvedTheme==="dark"?"dark":"light";
+ const customDealPilot=Boolean(rawDesign[designSettingKey("dealpilot",designMode)]);
+ const dealPilotPalette=parseDesignPalette(rawDesign[designSettingKey("dealpilot",designMode)],"dealpilot",designMode);
+ const designStyles=customDealPilot?({"--dp-bg":dealPilotPalette.background,"--dp-surface":dealPilotPalette.surface,"--dp-text":dealPilotPalette.text,"--dp-subtext":dealPilotPalette.secondaryText,"--dp-field":dealPilotPalette.field,"--dp-action":dealPilotPalette.action,"--dp-action-text":dealPilotPalette.actionText} as React.CSSProperties):undefined;
  const [marketRegion]=useMarketplaceRegion();
  const [data,setData]=useState<Payload|null>(null);
  const [loading,setLoading]=useState(false),[busy,setBusy]=useState(false);
@@ -74,8 +83,8 @@ export function DealPilotPanel() {
  };
  const pilots=data?.pilots||[];
  const matches=data?.matches||[];
- return <div className="mx-auto max-w-7xl space-y-5 pb-12 text-slate-900 dark:!text-white" data-testid="deal-pilot-panel">
-  <header className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-800 via-violet-700 to-orange-600 px-6 py-8 text-white shadow-lg sm:px-9">
+ return <div className="mx-auto max-w-7xl space-y-5 pb-12 text-slate-900 dark:!text-white" data-testid="deal-pilot-panel" data-design-custom={customDealPilot?"true":"false"} style={designStyles}>
+  <header className="bz-dp-hero relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-800 via-violet-700 to-orange-600 px-6 py-8 text-white shadow-lg sm:px-9">
    <div className="relative z-10 flex flex-wrap items-start justify-between gap-4">
     <div className="max-w-2xl">
      <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white"><Sparkles className="h-4 w-4"/> Your personal shopping assistant</span>
@@ -96,7 +105,7 @@ export function DealPilotPanel() {
    </div>:<>
    {error&&<div role="alert" className="rounded-xl border border-red-400 bg-red-50 p-4 font-semibold text-red-900 dark:bg-red-950 dark:text-red-100">{error}</div>}
    {message&&<div role="status" className="rounded-xl border border-emerald-400 bg-emerald-50 p-4 font-semibold text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100">{message}</div>}
-   <section className={panel}>
+   <section className={panel+" bz-dp-mission"}>
     <div className="mb-5 flex items-center gap-3"><div className="rounded-xl bg-orange-100 p-2 dark:bg-orange-950"><WandSparkles className="h-6 w-6 text-orange-700 dark:text-orange-300"/></div>
      <div><h2 className="text-lg font-black">Create a shopping mission</h2><p className="text-sm text-slate-700 dark:text-slate-200">Up to five personalised DealPilots per account.</p></div></div>
     <form onSubmit={e=>{e.preventDefault();void create();}} className="space-y-4">

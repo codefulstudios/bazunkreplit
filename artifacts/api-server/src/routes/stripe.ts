@@ -6,12 +6,14 @@ import { quoteCart, saveFeeSnapshot, QuoteError } from "../lib/checkoutQuote.js"
 import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { sql } from "drizzle-orm";
-import { db } from "@workspace/db";
+import { db, usersTable, creditTransactionsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { storage } from "../storage.js";
 import { getUncachableStripeClient, getStripePublishableKey } from "../stripeClient.js";
 import { convertAmount, smallestUnit } from "../fxRates.js";
 import { logger } from "../lib/logger.js";
 import { sendCreditsConfirmation, sendOrderConfirmation } from "../email.js";
+import { fulfillAuctionSession } from "../lib/auctionFulfillment.js";
 import { fulfillCartSession } from "../lib/fulfillment.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
@@ -233,7 +235,7 @@ router.post("/stripe/seller-fee-estimate",async(req,res)=>{
     const sellerType=String(row?.seller_type??"private");
     const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%'`)).rows as any[];
     const fees=Object.fromEntries(settings.map(r=>[r.key,r.value]));
-    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,8));
+    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,5));
     const amount=minor(req.body.amount??0),fee=Math.round(amount*rate/100);
     res.json({sellerType,rate,sellerFee:fee/100,sellerNet:(amount-fee)/100,currency:"GBP"});
   }catch(err){res.status(400).json({error:"Could not calculate seller fees."});}
@@ -251,7 +253,7 @@ router.post("/stripe/special-checkout", async(req,res)=>{
   try {
     const email=await authenticatedSellerEmail(req,res);if(!email)return;
     const kind=req.body?.kind, id=req.body?.id;
-    if((kind!=="auction"&&kind!=="flash")||typeof id!=="string"||!id.trim()||id.length>100) {
+    if((kind!=="auction"&&kind!=="flash"&&kind!=="find_it")||typeof id!=="string"||!id.trim()||id.length>100) {
       res.status(400).json({error:"Invalid sale reference"});return;
     }
     const origin=new URL(resolveOrigin(req)).origin;
@@ -272,6 +274,34 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     // Credits and demo promo codes were never discounted by Stripe. Do not charge
     // a full cash price while also subtracting credits from the buyer's balance.
     if(Number(body.creditsApplied??0)>0 || body.promoCode) throw new QuoteError("Marketplace credits and promotion codes are not supported for this checkout.");
+    const shipping=body.shippingAddress as Record<string,unknown>|undefined;
+    const shippingName=String(shipping?.name??"").trim();
+    const shippingLine1=String(shipping?.line1??"").trim();
+    const shippingCity=String(shipping?.city??"").trim();
+    const shippingPostcode=String(shipping?.postcode??"").trim();
+    const shippingCountry=String(shipping?.country??"").trim().toUpperCase();
+    if(!shippingName || !shippingLine1 || !shippingCity || !shippingPostcode || !/^[A-Z]{2}$/.test(shippingCountry) || [shippingName,shippingLine1,shippingCity,shippingPostcode].some(v=>v.length>200))
+      throw new QuoteError("Enter a valid full delivery address before payment.");
+    // Check destination against each seller's stated zone. Missing shipping rules
+    // cannot be interpreted as free or worldwide shipping.
+    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 100 ||
+        !body.items.every((item: unknown) => item !== null && typeof item === "object" &&
+          Number.isSafeInteger(Number((item as {id?: unknown}).id)) && Number((item as {id?: unknown}).id) > 0 &&
+          Number.isSafeInteger(Number((item as {quantity?: unknown}).quantity)) && Number((item as {quantity?: unknown}).quantity) > 0 &&
+          Number((item as {quantity?: unknown}).quantity) <= 100)) {
+      throw new QuoteError("Your basket contains invalid items or quantities.", 400);
+    }
+    const cartIds=(body.items as Array<{id:number}>).map(x=>Number(x.id));
+    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(cartIds.map(id=>sql`${id}`),sql`, `)})`)).rows as Array<Record<string,unknown>>;
+    if(shippingRows.length!==new Set(cartIds).size)throw new QuoteError("A listing is no longer available.",409);
+    for(const row of shippingRows){
+      const zone=String(row.ship_zone??"").toLowerCase(), origin=String(row.ship_origin??"").toUpperCase();
+      const country=shippingCountry==="GB"?"UK":shippingCountry;
+      const domestic=origin==="GB"?"UK":origin;
+      const european=["GB","IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"].includes(shippingCountry);
+      if(!zone || (zone==="domestic"&&country!==domestic) || (zone==="eu"&&!(european&&(origin==="UK"||origin==="GB"||shippingCountry!=="GB"))) || (zone==="eu-only"&&!european) || (zone==="europe"&&!([...["GB","NO","CH","IS","LI"],...["IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"]].includes(shippingCountry))) || (zone==="north-america"&&!["US","CA","MX"].includes(shippingCountry)) || (zone==="asia"&&!["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(shippingCountry)) || !["domestic","eu","eu-only","europe","north-america","asia","worldwide"].includes(zone))
+        throw new QuoteError("One or more sellers have not enabled delivery to this destination. Please update your basket or delivery address.",409);
+    }
     const quote=await quoteCart(body.items);
     if(body.expectedTotal==null || Math.round(Number(body.expectedTotal)*100)!==quote.totalMinor)
       throw new QuoteError("Your cart price or fees changed. Refresh the fee breakdown before paying.",409);
@@ -293,7 +323,21 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     let user=await storage.getUser(email);let stripeCustomerId=user?.stripeCustomerId;
     if(!stripeCustomerId) {const customer=await stripe.customers.create({email,name});await storage.setStripeCustomerId(email,customer.id);stripeCustomerId=customer.id;}
     const origin=resolveOrigin(req);
-    const session=await stripe.checkout.sessions.create({customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment",metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`});
+    const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",shippingName,shippingLine1,shippingLine2:String(shipping?.line2??"").slice(0,200),shippingCity,shippingRegion:String(shipping?.region??"").slice(0,200),shippingPostcode,shippingCountry,shippingPhone:String(shipping?.phone??"").slice(0,100),feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (error) {
+      // A customer saved under a previous Stripe sandbox or payment mode
+      // does not exist under the current API key. Recover only this specific
+      // Stripe error; never mask other checkout failures.
+      const err = error as { code?: string; param?: string; message?: string };
+      if (err.code !== "resource_missing" || err.param !== "customer") throw error;
+      logger.warn({ email, oldCustomerId: stripeCustomerId }, "Saved Stripe customer not available in current Stripe environment; creating replacement");
+      const replacement = await stripe.customers.create({ email, name });
+      await storage.setStripeCustomerId(email, replacement.id);
+      session = await stripe.checkout.sessions.create({ ...sessionParams, customer: replacement.id });
+    }
     res.json({url:session.url});
   } catch(err) {
     logger.error({err},"Failed to create cart checkout session");
@@ -442,6 +486,8 @@ router.post("/stripe/apply-credits", async (req, res) => {
 
     const alreadyApplied = await storage.hasCreditTransaction(sessionId);
     if (alreadyApplied) {
+      const existing = (await db.select({ email: creditTransactionsTable.email }).from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId)))[0];
+      if (!existing || existing.email.toLowerCase() !== String(email).toLowerCase()) { res.status(403).json({ error: "Session does not belong to this account" }); return; }
       const balance = await storage.getCredits(email);
       res.json({ success: true, alreadyApplied: true, balance }); return;
     }
@@ -449,8 +495,11 @@ router.post("/stripe/apply-credits", async (req, res) => {
     const stripe = await getUncachableStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (session.payment_status !== "paid") {
-      res.status(400).json({ error: "Payment not completed" }); return;
+    if (session.payment_status !== "paid" || session.mode !== "payment" || session.currency !== "gbp" || !session.amount_total || session.amount_total <= 0) {
+      res.status(400).json({ error: "Valid paid GBP credit checkout required" }); return;
+    }
+    if (session.metadata?.basePrice && Math.round(Number(session.metadata.basePrice) * 100) !== session.amount_total) {
+      res.status(400).json({ error: "Credit checkout amount mismatch" }); return;
     }
 
     if (session.client_reference_id !== email) {
@@ -463,9 +512,32 @@ router.post("/stripe/apply-credits", async (req, res) => {
     }
 
     await storage.upsertUser(email);
-    await storage.recordCreditTransaction(sessionId, email, totalCredits);
-    const balance = await storage.addCredits(email, totalCredits);
-    await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    // Claim the Stripe session and credit the account in ONE database transaction.
+    // A duplicate callback cannot increment the balance a second time.
+    const applied = await db.transaction(async tx => {
+      const [claim] = await tx.insert(creditTransactionsTable)
+        .values({ id: sessionId, email, creditsAdded: totalCredits.toString() })
+        .onConflictDoNothing().returning({ id: creditTransactionsTable.id });
+      if (!claim) {
+        const [existing] = await tx.select({ email: creditTransactionsTable.email })
+          .from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId));
+        if (!existing || existing.email.toLowerCase() !== email.toLowerCase()) throw new Error("Session already belongs to another account");
+        const [account] = await tx.select({ credits: usersTable.credits }).from(usersTable).where(eq(usersTable.email, email));
+        return { balance: Number(account?.credits ?? 0), newlyApplied: false };
+      }
+      const [account] = await tx.update(usersTable)
+        .set({ credits: sql`${usersTable.credits} + ${totalCredits}` })
+        .where(eq(usersTable.email, email)).returning({ credits: usersTable.credits });
+      if (!account) throw new Error("Credit recipient account missing");
+      return { balance: Number(account.credits), newlyApplied: true };
+    });
+    const balance = applied.balance;
+    if (!applied.newlyApplied) { res.json({ success: true, alreadyApplied: true, balance }); return; }
+    try {
+      await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    } catch (ledgerError) {
+      logger.error({ ledgerError, sessionId }, "Credit granted but auxiliary economy log failed");
+    }
 
     void sendCreditsConfirmation({ email, creditsAdded: totalCredits, newBalance: balance });
     void sendSystemMessage(email, {

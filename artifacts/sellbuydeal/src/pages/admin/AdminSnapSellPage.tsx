@@ -25,7 +25,7 @@ export function AdminSnapSellPage(){
  const v=report?.status;
  const text="text-slate-900 dark:text-white";
  return <AdminLayout><div className="mx-auto max-w-7xl space-y-5 pb-10">
-  <div className="rounded-3xl bg-gradient-to-r from-orange-600 to-violet-700 p-6 text-white">
+  <div className="bz-contrast-hero rounded-3xl bg-gradient-to-r from-orange-600 to-violet-700 p-6 text-white">
    <div className="flex flex-wrap items-center justify-between gap-3">
     <div><p className="text-xs font-black uppercase tracking-wider text-white">Marketplace AI tools</p><h1 className="mt-1 flex items-center gap-3 text-3xl font-black"><Camera className="h-8 w-8"/>Snap & Sell Control Centre</h1><p className="mt-2 text-sm font-semibold text-white">Photo recognition, ISBN and barcode catalogues, writing assistance and listing quality.</p></div>
     <button type="button" disabled={loading} onClick={()=>void refresh()} className="flex items-center gap-2 rounded-xl border border-white/50 bg-white/15 px-4 py-2 text-sm font-bold text-white disabled:opacity-60"><RefreshCw className="h-4 w-4"/>{loading?"Refreshing…":"Refresh"}</button>

@@ -96,12 +96,12 @@
 .dark .bazunk-admin main .admin-dashboard .recharts-cartesian-grid line {stroke:#405273;stroke-dasharray:3 6;}
 
 /* Accessibility fixes for the production admin shell and sign-in. */
-.bazunk-admin aside .admin-nav-link:not(.bg-\\[\\#F26B21\\]) {color:#e2eaf9 !important;}
-.bazunk-admin aside .admin-nav-link {color:#e2eaf9 !important;}
-.bazunk-admin aside .admin-nav-link.bg-\\[\\#F26B21\\] {color:#fff !important;}
-.bazunk-admin aside .admin-nav-link:hover {color:#fff !important;}
-.bazunk-admin aside .admin-sign-out {color:#e2eaf9 !important;}
-.bazunk-admin aside input,.bazunk-admin aside input::placeholder {color:#e5edff !important;opacity:1;}
+.bazunk-admin aside .admin-nav-link:not([aria-current="page"]) {color:#243954 !important;}
+.bazunk-admin aside .admin-nav-link {color:#243954 !important;}
+.bazunk-admin aside .admin-nav-link.bg-\[\#F26B21\] {color:#fff !important;}
+.bazunk-admin aside .admin-nav-link:hover:not([aria-current="page"]) {color:#1459df !important;}
+.bazunk-admin aside .admin-sign-out {color:#243954 !important;}
+.bazunk-admin aside input {color:#162b48 !important;opacity:1;}.bazunk-admin aside input::placeholder {color:#526780 !important;opacity:1;}
 .bazunk-admin .admin-header-popover {color:#172c50;}
 .dark .bazunk-admin .admin-header-popover {color:#f5f8ff;}
 .bazunk-admin header button[aria-label="Open admin account menu"] {color:#253b60;}
@@ -145,7 +145,8 @@
 .dark .bazunk-admin main .admin-orders-page .grid > div > p.text-2xl { color:#fff !important; }
 .dark .bazunk-admin main .admin-orders-page .grid > div { color:#ecf3ff !important; }
 .dark .bazunk-admin main .admin-orders-page .grid > div > p:last-child {color:#cbd8ee !important;}
-.dark .bazunk-admin main button[class*="bg-[#"] {color:#fff;}
+/* Do not override every custom-colour button: bright buttons may require dark text. */
+.dark .bazunk-admin main button[class*="bg-[#"]:not([class*="text-[#"]):not([class*="text-black"]):not([class*="text-slate-9"]) {color:#fff;}
 /* Users: allow a real, legible table rather than compressing ten columns into tiny vertical strips. */
 .bazunk-admin main .admin-users-table { max-width:100%; }
 .bazunk-admin main .admin-users-table .overflow-x-auto { overflow-x:auto; }
@@ -277,7 +278,7 @@
 .dark .bazunk-admin main .admin-users-table button.bg-sky-50 {background:#194c69!important;color:#d5f1ff!important;}
 .dark .bazunk-admin main .admin-users-table button.bg-gray-100 {background:#334866!important;color:#fff!important;}
 .dark .bazunk-admin main .admin-users-table :is(th,td) {color:#eaf2ff;}
-.dark .bazunk-admin main .admin-users-table td .text-\\[\\#4A5CE8\\] {color:#adbaff!important;}
+.dark .bazunk-admin main .admin-users-table td .text-\[\#4A5CE8\] {color:#adbaff!important;}
 
 
 /* Admin typography contract: labels, table metadata, KPI figures and help copy. */
@@ -326,10 +327,11 @@
 
 
 /* Production screenshot corrections: sidebar group labels and neutral action buttons. */
-.bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#f3f7ff!important;opacity:1!important;}
+.bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#334155!important;opacity:1!important;}
+.dark .bazunk-admin aside button[aria-controls^="admin-nav-"] {color:#f3f7ff!important;}
 .bazunk-admin aside button[aria-controls^="admin-nav-"] :is(span,svg) {color:inherit!important;opacity:1!important;}
-.dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
-.dark .bazunk-admin main .admin-compliance-page button.dark\\:!bg-\\[\\#334d73\\]:hover {background:#47668f!important;}
+.dark .bazunk-admin main .admin-compliance-page button[class*="dark:!bg-"][class*="334d73"] {background:#334d73!important;color:#ffffff!important;border-color:#7188aa!important;}
+.dark .bazunk-admin main .admin-compliance-page button[class*="dark:!bg-"][class*="334d73"]:hover {background:#47668f!important;}
 
 
 /* Keep semantic error/status labels legible on dark admin panels, including
@@ -339,3 +341,20 @@
 .dark .bazunk-admin main :is(.text-emerald-700,.text-emerald-800,.text-emerald-900,.text-green-700,.text-green-800,.text-green-900):not([class*="dark:text-"]) {color:#a7f3d0!important;}
 .dark .bazunk-admin main .admin-importer-monitor details .text-red-700,
 .dark .bazunk-admin main .admin-importer-monitor details .text-red-200 {color:#ffb4b4!important;}
+
+/* Explicit light/dark sidebar foreground contract. Prevent legacy navy-only rules
+   from rendering light labels and search text invisible on white. */
+.bazunk-admin:not(.dark) aside .admin-nav-link:not([aria-current="page"]),
+.bazunk-admin aside .admin-nav-link:not([aria-current="page"]){color:#243954!important;opacity:1!important}
+.bazunk-admin aside .admin-nav-link:not([aria-current="page"]) :is(span,svg){color:inherit!important;opacity:1!important}
+.bazunk-admin aside .admin-nav-link[aria-current="page"],
+.bazunk-admin aside .admin-nav-link[aria-current="page"] :is(span,svg){color:#fff!important;opacity:1!important}
+.bazunk-admin aside .admin-sign-out,.bazunk-admin aside .admin-sidebar-signout-label{color:#243954!important;opacity:1!important}
+.bazunk-admin aside .admin-sidebar-search input{color:#162b48!important;-webkit-text-fill-color:#162b48!important}
+.bazunk-admin aside .admin-sidebar-search input::placeholder{color:#526780!important;-webkit-text-fill-color:#526780!important;opacity:1!important}
+.dark .bazunk-admin aside .admin-nav-link:not([aria-current="page"]),
+.dark .bazunk-admin aside .admin-nav-link:not([aria-current="page"]) :is(span,svg),
+.dark .bazunk-admin aside .admin-sign-out,
+.dark .bazunk-admin aside .admin-sidebar-signout-label{color:#e9f1ff!important;opacity:1!important}
+.dark .bazunk-admin aside .admin-sidebar-search input{color:#fff!important;-webkit-text-fill-color:#fff!important}
+.dark .bazunk-admin aside .admin-sidebar-search input::placeholder{color:#cbd8eb!important;-webkit-text-fill-color:#cbd8eb!important;opacity:1!important}

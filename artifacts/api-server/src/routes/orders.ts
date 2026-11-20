@@ -122,7 +122,11 @@ router.post("/orders/:id/tracking/refresh", async(req,res)=>{
   try{
     const track:any=await getTracking(String(o.carrier),String(o.tracking_number));
     const latest=track?.tracking_status||{}; const mapped=mapShippoStatus(latest.status);
-    const nextStatus=mapped==="delivered"?"delivered":(mapped==="shipped"&&!["delivered","out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
+    // A late carrier event must never reopen delivered orders or change cancelled/refunded orders.
+    if (["cancelled","refunded"].includes(String(o.status))) {
+      res.status(409).json({error:"Tracking cannot update a cancelled or refunded order"});return;
+    }
+    const nextStatus=String(o.status)==="delivered"?"delivered":mapped==="delivered"?"delivered":(mapped==="shipped"&&!["out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
     await db.execute(sql`UPDATE orders SET status=${nextStatus},tracking_status=${latest.status??null},
       tracking_eta=${track?.eta??null},estimated_delivery=COALESCE(${track?.eta??null},estimated_delivery),
       tracking_last_event=${latest.status_details??null},tracking_updated_at=NOW(),
@@ -132,7 +136,30 @@ router.post("/orders/:id/tracking/refresh", async(req,res)=>{
     res.json({ok:true,status:nextStatus,trackingStatus:latest.status??null,eta:track?.eta??null,lastEvent:latest.status_details??null,history:track?.tracking_history??[]});
   }catch(err:any){res.status(502).json({error:err?.message||"Could not refresh tracking"});}
 });
-router.patch("/orders/:id/status",async(req,res)=>{const {status,trackingNumber,carrier,estimatedDelivery,buyerEmail}=req.body as Record<string,string>;if(!status||!VALID_STATUSES.includes(status)){res.status(400).json({error:"Valid status required"});return;}await db.execute(sql`UPDATE orders SET status=${status},tracking_number=COALESCE(${trackingNumber??null},tracking_number),carrier=COALESCE(${carrier??null},carrier),estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),shipped_at=CASE WHEN ${status} IN ('shipped','out_for_delivery','delivered') THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,delivered_at=CASE WHEN ${status}='delivered' THEN COALESCE(delivered_at,NOW()) ELSE delivered_at END,updated_at=NOW() WHERE id=${String(req.params.id)} AND buyer_email=${buyerEmail??""}`);res.json({ok:true});});
+// Seller-only fulfilment update. Never trust a buyerEmail supplied by the browser.
+router.patch("/orders/:id/status",async(req,res)=>{
+  const seller=await signedInEmail(req);
+  if(!seller){res.status(401).json({error:"Sign in required"});return;}
+  const {status,trackingNumber,carrier,estimatedDelivery}=req.body as Record<string,string>;
+  if(!["preparing","shipped"].includes(status)){res.status(400).json({error:"Only preparing or shipped can be set manually. Carrier tracking determines delivery."});return;}
+  const id=String(req.params.id);
+  const existing=(await db.execute(sql`SELECT id,status,tracking_number FROM orders WHERE id=${id} AND LOWER(seller_email)=LOWER(${seller})`)).rows[0] as any;
+  if(!existing){res.status(404).json({error:"Order not found"});return;}
+  if(["cancelled","refunded","delivered"].includes(String(existing.status))){res.status(409).json({error:"Completed or cancelled orders cannot be manually updated"});return;}
+  if(status==="shipped"&&(!trackingNumber||!carrier)){res.status(400).json({error:"Carrier and tracking number required to mark shipped"});return;}
+  if(trackingNumber&&(!/^[a-z0-9 -]{5,100}$/i.test(trackingNumber)||!carrier||carrier.length>100)){res.status(400).json({error:"Invalid carrier or tracking number"});return;}
+  const result=await db.execute(sql`UPDATE orders SET status=${status},
+    tracking_number=COALESCE(${trackingNumber??null},tracking_number),
+    carrier=COALESCE(${carrier??null},carrier),
+    estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),
+    shipped_at=CASE WHEN ${status}='shipped' THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,
+    updated_at=NOW()
+    WHERE id=${id} AND LOWER(seller_email)=LOWER(${seller})
+      AND status NOT IN ('cancelled','refunded','delivered')
+    RETURNING id`);
+  if(!result.rows.length){res.status(409).json({error:"Order status changed; refresh and try again"});return;}
+  res.json({ok:true});
+});
 
 router.post("/admin/orders/test-sale", requireAdmin, async(req,res)=>{
   const buyerEmail=String(req.body?.buyerEmail||"").trim().toLowerCase();

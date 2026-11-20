@@ -146,6 +146,7 @@ export function FlashSalesPage() {
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
+  const [showIntro, setShowIntro] = useState(true);
   const [tab, setTab] = useState<TabValue>("active");
   const [sales, setSales] = useState<FlashSale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,20 +179,37 @@ export function FlashSalesPage() {
   const otherSales = sales.filter(s => s.sale_type !== "lightning");
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#03152e] text-white">
+    <div className="bz-flash-page min-h-screen flex flex-col text-white">
       <Navbar />
-      <header className="relative overflow-hidden border-b border-[#2d65ff] bg-gradient-to-r from-[#082e61] via-[#154b91] to-[#263b79]">
+      {showIntro && (
+        <section aria-label="Flash Sales introduction" className="relative isolate flex min-h-[calc(100svh-80px)] items-center justify-center overflow-hidden bg-[#090606]">
+          <img
+            src="/images/flash-sales-intro.png"
+            alt="Bazunk Flash Sales: Hot Deals, Limited Time, Don't Miss Out! Shirtless model opening his jacket."
+            className="block h-auto max-h-[calc(100svh-80px)] w-full object-contain"
+          />
+          <button
+            type="button"
+            aria-label="Reveal the deals and enter Flash Sales"
+            title="Reveal the Deals"
+            onClick={() => setShowIntro(false)}
+            className="absolute inset-0 z-10 cursor-pointer bg-transparent focus-visible:outline focus-visible:outline-4 focus-visible:outline-orange-400"
+          />
+        </section>
+      )}
+      <div className={showIntro ? "hidden" : "contents"}>
+      <header className="bz-market-hero relative overflow-hidden">
         <div className="pointer-events-none absolute -top-24 right-[-8%] h-[260px] w-[380px] rounded-full bg-[#fb29c8]/40 blur-3xl"/>
         <div className="pointer-events-none absolute bottom-[-150px] left-[30%] h-[210px] w-[300px] rounded-full bg-[#00b9ff]/50 blur-3xl"/>
         <div className="relative mx-auto grid max-w-7xl items-center gap-4 px-5 py-5 sm:px-8 md:grid-cols-[1.3fr_.7fr] md:py-6">
           <div>
             <span className="inline-flex items-center gap-2 rounded-xl bg-[#ff315f] px-4 py-2 text-sm font-black uppercase tracking-wide text-white shadow-[0_5px_20px_rgba(255,35,102,.45)]"><Zap className="h-5 w-5 fill-white"/> Flash Sales</span>
-            <h1 className="mt-3 max-w-2xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Deals that don't <span className="block text-[#ffe329]">last forever!</span></h1>
+            <h1 className="mt-3 max-w-2xl text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl lg:text-5xl">Bazunk <span className="text-[#ff7900]">Flash Sales</span><span className="block text-[.55em] tracking-normal">Deals that don't last forever!</span></h1>
             <p className="mt-3 max-w-lg text-sm font-medium leading-relaxed text-slate-100 sm:text-base">Massive discounts for a limited time only. Grab them before the countdown hits zero.</p>
             <div className="mt-3 inline-flex max-w-full items-center gap-2 rounded-xl border border-purple-200/40 bg-[#5c32e9] px-4 py-2.5 text-sm font-bold text-white shadow-lg"><Calendar className="h-4 w-4 shrink-0"/>{isWeekend() ? "Weekend Mega Sales are on — explore this weekend's deals!" : "Limited-time offers — check back for upcoming deals!"}</div>
             {user && <Link href="/flash-sales/create" className="mt-3 flex w-fit items-center gap-2 rounded-xl bg-[#ff711f] px-5 py-3 font-black !text-white shadow-lg hover:bg-[#ff8b42]"><Plus className="h-5 w-5"/> Run a Flash Sale</Link>}
           </div>
-          <div aria-hidden="true" className="relative hidden min-h-[155px] items-center justify-center sm:flex sm:min-h-[195px]">
+          <div aria-hidden="true" className="bz-market-hero-art relative hidden min-h-[155px] items-center justify-center sm:flex sm:min-h-[195px]">
             <div className="absolute left-[8%] top-[12%] rotate-[-18deg] text-4xl drop-shadow-2xl">🎮</div>
             <div className="absolute right-[5%] top-[8%] rotate-[18deg] text-4xl drop-shadow-2xl">⚡</div>
             <div className="absolute left-[8%] bottom-[5%] rotate-[-12deg] text-7xl drop-shadow-2xl">📦</div>
@@ -206,6 +224,12 @@ export function FlashSalesPage() {
       </header>
       <div className="mx-auto w-full max-w-7xl px-5 pt-4 sm:px-8"><AdSlot slotKey="flash_sales_mid" /></div>
       <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-5 sm:px-8">
+        <div className="bz-market-stats">
+          <div className="bz-market-stat orange"><Zap/><strong>{sales.length}</strong><span>{tab==="active"?"Live Deals Now":"Upcoming Deals"}<small>Limited-time offers</small></span></div>
+          <div className="bz-market-stat blue"><Tag/><strong>{sales.length?Math.max(...sales.map(s=>Number(s.discount_percent)||0)):0}%</strong><span>Biggest Discount<small>Among displayed sales</small></span></div>
+          <div className="bz-market-stat green"><Calendar/><strong>{new Set(sales.map(s=>s.category).filter(Boolean)).size}</strong><span>Categories<small>With available deals</small></span></div>
+          <div className="bz-market-stat pink"><Clock/><strong>{sales.filter(s=>new Date(s.ends_at).getTime()-Date.now()<86400000).length}</strong><span>Ending Soon<small>Within 24 hours</small></span></div>
+        </div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex max-w-full flex-wrap gap-2">{TYPE_FILTERS.map(({value,label,icon:Icon})=><button key={value} onClick={()=>setSaleTypeFilter(value)} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-extrabold transition-all ${saleTypeFilter===value?"border-[#248bff] bg-[#066af3] text-white shadow-lg shadow-blue-950/50":"border-[#2463a3] bg-[#092b55] text-white hover:bg-[#174a85]"}`}><Icon className="h-4 w-4"/>{label}</button>)}</div>
           <span className="inline-flex items-center gap-2 rounded-xl border border-[#2562aa] bg-[#08254c] px-4 py-3 text-sm font-bold text-white"><Timer className="h-5 w-5 text-[#ff5473]"/> Live deals update automatically when refreshed</span>
@@ -218,16 +242,17 @@ export function FlashSalesPage() {
         : error ? <div className="flex flex-col items-center rounded-2xl border border-red-500/40 bg-[#12294c] py-20 text-white"><AlertCircle className="mb-3 h-10 w-10 text-red-400"/><p className="font-bold">{error}</p><button onClick={load} className="mt-4 rounded-xl bg-[#1767f5] px-6 py-3 font-bold text-white">Retry</button></div>
         : sales.length===0 ? <div className="flex flex-col items-center rounded-3xl border border-[#1e508d] bg-gradient-to-br from-[#092a59] to-[#17225d] px-5 py-16 text-center"><span className="text-7xl">⏰</span><h2 className="mt-4 text-2xl font-black text-white">{tab==="active"?"No flash sales running right now":"No upcoming flash sales scheduled"}</h2><p className="mt-2 max-w-lg text-sm font-medium text-sky-100">Real seller deals will appear here as soon as they are available. Check back soon, or launch the next great deal!</p>{user&&<Link href="/flash-sales/create" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#ff721e] px-6 py-3 font-black !text-white hover:bg-[#ff8d3d]"><Zap className="h-5 w-5"/> Create Flash Sale</Link>}</div>
         : <div className="space-y-7">
-          {lightningDeals.length>0&&<section><div className="mb-4 flex items-center gap-2"><Zap className="h-6 w-6 text-yellow-300"/><h2 className="text-2xl font-black text-white">Lightning Deals</h2><span className="rounded-full bg-[#ff315f] px-3 py-1 text-xs font-black text-white">5–15 min</span></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{lightningDeals.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
-          {otherSales.length>0&&<section>{lightningDeals.length>0&&<h2 className="mb-4 text-2xl font-black text-white">More Deals</h2>}<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{otherSales.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
+          {lightningDeals.length>0&&<section><div className="mb-4 flex items-center gap-2"><Zap className="h-6 w-6 text-yellow-300"/><h2 className="text-2xl font-black text-white">Lightning Deals</h2><span className="rounded-full bg-[#ff315f] px-3 py-1 text-xs font-black text-white">5–15 min</span></div><div className="bz-market-product-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{lightningDeals.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
+          {otherSales.length>0&&<section>{lightningDeals.length>0&&<h2 className="mb-4 text-2xl font-black text-white">More Deals</h2>}<div className="bz-market-product-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{otherSales.map(s=><SaleCard key={s.id} s={s} tab={tab} formatPrice={formatPrice} setLocation={setLocation}/>)}</div></section>}
         </div>}
         <div className="relative mt-7 flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-2xl border border-fuchsia-300/60 bg-gradient-to-r from-[#6526f9] via-[#c41bdc] to-[#ff6284] px-6 py-6 shadow-xl">
           <span aria-hidden="true" className="absolute -left-5 bottom-[-22px] rotate-[-15deg] text-7xl">📣</span>
           <div className="relative pl-14 sm:pl-20"><h2 className="text-2xl font-black text-[#fff22a] sm:text-3xl">Weekend Mega Sales!</h2><p className="mt-1 text-sm font-bold text-white">Discover limited-time deals across your favourite categories.</p></div>
-          <button onClick={()=>{setSaleTypeFilter("weekend_mega");setTab("active");window.scrollTo({top:0,behavior:"smooth"});}} className="relative rounded-xl bg-white px-5 py-3 font-black text-[#5025d4] hover:bg-yellow-100">View Mega Sales →</button>
+          <button onClick={()=>{setSaleTypeFilter("weekend_mega");setTab("active");window.scrollTo({top:0,behavior:"smooth"});}} className="relative rounded-xl !bg-white px-5 py-3 font-black !text-[#5025d4] hover:bg-yellow-100">View Mega Sales →</button>
         </div>
       </main>
       <Footer/>
+      </div>
     </div>
   );
 }
@@ -241,7 +266,7 @@ function SaleCard({ s, tab, formatPrice, setLocation }: {
   const sale = parseFloat(s.sale_price);
   const isLightning = s.sale_type === "lightning";
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-[#2875c2] bg-gradient-to-b from-[#0c315f] to-[#051c3a] shadow-lg shadow-black/20 transition-transform hover:-translate-y-1">
+    <article className="bz-market-item-card group flex flex-col overflow-hidden rounded-2xl transition-transform hover:-translate-y-1">
       <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
         {s.image?<img src={s.image} alt={s.title} className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"/>:<div className="flex h-full items-center justify-center text-7xl" aria-label="Product image unavailable">🎁</div>}
         <span className="absolute left-2 top-2 rounded-lg bg-[#ff315b] px-3 py-1 text-base font-black text-white shadow-lg">-{s.discount_percent}%</span>
@@ -250,7 +275,7 @@ function SaleCard({ s, tab, formatPrice, setLocation }: {
       <div className="flex flex-1 flex-col p-3.5">
         <h3 className="line-clamp-2 min-h-10 text-sm font-black leading-snug text-white">{s.title}</h3>
         <div className="mt-1 flex flex-wrap items-baseline gap-2"><strong className="text-xl font-black text-[#ffe15b]">{formatPrice(sale)}</strong><span className="text-sm font-semibold text-slate-300 line-through">{formatPrice(orig)}</span></div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#34557b]"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#ff386a] to-[#ff812c]"/></div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e3eafa]"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-[#ff386a] to-[#ff812c]"/></div>
         <div className="mt-3 flex items-center justify-between gap-2"><CountdownPill target={tab==="active"?s.ends_at:s.starts_at} label={tab==="active"?"Ends":"Starts"} urgent={tab==="active"}/><NotifyButton sale={s}/></div>
         <button onClick={()=>setLocation(`/flash-sales/${s.id}`)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#ff701e] px-4 py-2.5 text-sm font-black text-white hover:bg-[#ff8b3e]">{tab==="active"?"View Deal":"Preview Deal"}<ChevronRight className="h-4 w-4"/></button>
       </div>

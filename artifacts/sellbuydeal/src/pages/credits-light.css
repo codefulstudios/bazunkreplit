@@ -1,0 +1,35 @@
+/* Isolated credit purchase design. Intentionally independent of dashboard dark-theme rules. */
+.bz-credits-checkout{background:linear-gradient(145deg,#eff8ff 0%,#f7f4ff 48%,#eafbf5 100%)!important;color:#173654!important;color-scheme:light;}
+.bz-credits-checkout .bz-credits-checkout-hero{background:linear-gradient(108deg,#04b8e8 0%,#0878f0 53%,#ee75b3 100%)!important;border:2px solid #8edaff!important;box-shadow:0 12px 28px #126ab12a!important;}
+.bz-credits-checkout .bz-credits-checkout-hero :is(h1,p,span){color:#fff!important;text-shadow:none!important;}
+.bz-credits-checkout .bz-credits-checkout-hero .bg-white\/20{background:#ffffff35!important;}
+.bz-credits-checkout .bz-credits-checkout-card{background:#fff!important;color:#173654!important;border:2px solid #bddcf4!important;box-shadow:0 8px 24px #185b9315!important;}
+.bz-credits-checkout .bz-credits-checkout-card h2,.bz-credits-checkout .bz-credits-checkout-card h3{color:#143a60!important;}
+.bz-credits-checkout .bz-credits-checkout-card :is(p,span,strong,label){color:#244563!important;text-shadow:none!important;}
+.bz-credits-checkout .bz-credits-checkout-card .text-gray-400,.bz-credits-checkout .bz-credits-checkout-card .text-gray-500{color:#536e89!important;}
+.bz-credits-checkout .bz-credits-checkout-package{background:#f4faff!important;border-color:#c7e0f5!important;color:#173654!important;box-shadow:0 3px 10px #145c8e0c!important;}
+.bz-credits-checkout .bz-credits-checkout-package:nth-child(5n+1){background:#e9fbf2!important;border-color:#a4e6c7!important;}
+.bz-credits-checkout .bz-credits-checkout-package:nth-child(5n+2){background:#e9f4ff!important;border-color:#b0d9fb!important;}
+.bz-credits-checkout .bz-credits-checkout-package:nth-child(5n+3){background:#fff0e2!important;border-color:#ffc991!important;}
+.bz-credits-checkout .bz-credits-checkout-package:nth-child(5n+4){background:#f0ecff!important;border-color:#d3c3ff!important;}
+.bz-credits-checkout .bz-credits-checkout-package:nth-child(5n){background:#fff0f2!important;border-color:#ffc5d2!important;}
+.bz-credits-checkout .bz-credits-checkout-package:hover{border-color:#0785e6!important;box-shadow:0 5px 15px #1274b52b!important;}
+.bz-credits-checkout .bz-credits-checkout-package.border-\\[\\#F26B21\\]{border-color:#ed7615!important;box-shadow:0 0 0 2px #ed76153d!important;}
+.bz-credits-checkout .bz-credits-checkout-package :is(p,span,strong){color:#183b5c!important;}
+.bz-credits-checkout .bz-credits-checkout-package .bg-\\[\\#F26B21\\]{background:#e86e12!important;color:#fff!important;}
+.bz-credits-checkout .bz-credits-checkout-feature{background:#f0f8ff!important;border:1px solid #c5dff4!important;color:#173654!important;}
+.bz-credits-checkout .bz-credits-checkout-feature:nth-child(4n+2){background:#fff1e5!important;border-color:#ffd3a8!important;}
+.bz-credits-checkout .bz-credits-checkout-feature:nth-child(4n+3){background:#eafaf2!important;border-color:#b5e6cc!important;}
+.bz-credits-checkout .bz-credits-checkout-feature:nth-child(4n){background:#f4edff!important;border-color:#d7c5f9!important;}
+.bz-credits-checkout .bz-credits-checkout-feature :is(p,span,strong){color:#173654!important;}
+.bz-credits-checkout .bz-credits-checkout-summary{background:linear-gradient(150deg,#fff,#eaf5ff)!important;border-color:#a9d6f6!important;}
+.bz-credits-checkout .bz-credits-checkout-summary .bg-emerald-50{background:#e1faed!important;border:1px solid #a5e5c6!important;}
+.bz-credits-checkout .bz-credits-checkout-summary .bg-emerald-50 :is(p,span){color:#08684e!important;}
+.bz-credits-checkout .bz-credits-checkout-summary button.bg-gradient-to-r{background:linear-gradient(100deg,#fa8513,#e96213)!important;color:#fff!important;}
+.bz-credits-checkout .bz-credits-checkout-summary button.bg-gradient-to-r :is(span,svg){color:#fff!important;}
+.bz-credits-checkout input{background:#fff!important;color:#173654!important;-webkit-text-fill-color:#173654!important;border:1px solid #a8cbe7!important;}
+.bz-credits-checkout input::placeholder{color:#6d839a!important;-webkit-text-fill-color:#6d839a!important;}
+.bz-credits-checkout .bg-blue-50{background:#e7f4ff!important;border-color:#a8d4f5!important;}
+.bz-credits-checkout .bg-blue-50 :is(p,span,strong,a){color:#15527d!important;}
+.bz-credits-checkout a:focus-visible,.bz-credits-checkout button:focus-visible{outline:3px solid #ff991e!important;outline-offset:2px;}
+@media(max-width:720px){.bz-credits-checkout .bz-credits-checkout-hero{padding:19px!important;}.bz-credits-checkout .bz-credits-checkout-card{padding:15px!important;}}

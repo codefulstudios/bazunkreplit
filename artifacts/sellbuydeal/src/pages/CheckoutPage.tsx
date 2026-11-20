@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, CheckCircle2,
   Lock, ShoppingBag, Truck, Shield,
-  Package, AlertCircle, Loader2,
+  Package, AlertCircle, Loader2, Trash2, Minus, Plus, Tag,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -46,7 +46,7 @@ const CONDITION_COLORS: Record<string, string> = {
 };
 
 export function CheckoutPage() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, removeFromCart, updateQuantity } = useCart();
   const { getToken } = useClerkAuth();
   const { user, refreshBalance } = useAuth();
   const [, setLocation] = useLocation();
@@ -60,6 +60,9 @@ export function CheckoutPage() {
   const [confirming, setConfirming] = useState(() => new URLSearchParams(window.location.search).has("session_id"));
   const [paymentReturnFailed, setPaymentReturnFailed] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
+  const [deliveryAddress,setDeliveryAddress]=useState({name:"",line1:"",line2:"",city:"",region:"",postcode:"",country:"GB",phone:""});
+  const [discountCode,setDiscountCode] = useState("");
+  const [discountMessage,setDiscountMessage] = useState("");
   type Quote = { currency:string; subtotal:number; privateSubtotal:number; buyerProtectionFee:number; delivery:number; bundleDiscount:number; bundleBreakdown:{sellerEmail:string;itemCount:number;discountMinor:number;shippingMinor:number}[]; total:number; protectionPercent:number; fixedProtection:number; items:{id:number;price:number;title:string;sellerType:string}[] };
   const [recoveryConsent, setRecoveryConsent] = useState(false);
   const [quote,setQuote]=useState<Quote|null>(null);
@@ -119,12 +122,14 @@ export function CheckoutPage() {
     if (placed && user?.email) refreshBalance();
   }, [placed, user?.email]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const editCart=()=>{setCheckoutError(null);setQuote(null);setQuotedKey("");};
   async function handleContinueToPayment() {
     const email = user?.email ?? guestEmail.trim();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setCheckoutError("Please enter a valid email address to continue.");
       return;
     }
+    if(!deliveryAddress.name.trim() || !deliveryAddress.line1.trim() || !deliveryAddress.city.trim() || !deliveryAddress.postcode.trim()) {setCheckoutError("Enter your full delivery address before continuing to Stripe.");return;}
     if(!quote || quoteLoading || quotedKey!==cartKey) {setCheckoutError("Wait for your fee breakdown before paying.");return;}
     setCheckoutError(null);
     setCheckoutLoading(true);
@@ -151,6 +156,7 @@ export function CheckoutPage() {
             currency: i.product.currency ?? "GBP",
             priceGbp: i.product.priceGbp,
           })),
+          shippingAddress:deliveryAddress,
           expectedTotal:total,
           deliveryGbp: delivery,
         }),
@@ -253,7 +259,7 @@ export function CheckoutPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl flex-1">
+      <div className="container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-4xl flex-1">
         <button onClick={() => setLocation("/browse")} className="flex items-center gap-1.5 text-sm text-slate-600 hover:text-gray-700 transition-colors mb-6">
           <ChevronLeft className="w-4 h-4" /> Back to browsing
         </button>
@@ -269,7 +275,7 @@ export function CheckoutPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <div className="lg:col-span-2 space-y-4">
 
             {/* ── STEP 1: Order Review ── */}
@@ -278,27 +284,48 @@ export function CheckoutPage() {
 
                 {/* Items */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4">
-                  <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-[#4A5CE8]" /> Your Items ({items.length})
-                  </h2>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="font-bold text-gray-900 flex items-center gap-2"><ShoppingBag className="w-4 h-4 text-[#4A5CE8]" /> Your Items ({items.length})</h2>
+                    <button type="button" onClick={()=>{if(window.confirm("Remove all items from your basket?")){editCart();clearCart();}}} className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs font-bold text-red-800 hover:bg-red-100" aria-label="Remove all items from basket" data-testid="checkout-clear-cart"><Trash2 className="h-3.5 w-3.5"/> Clear cart</button>
+                  </div>
                   <div className="space-y-3">
                     {items.map((item) => (
                       <div key={item.product.id} className="flex gap-3 items-center">
                         <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex-shrink-0 overflow-hidden">
-                          <img src={item.product.image} alt={item.product.title} className="w-full h-full object-contain p-1.5" />
+                          <img src={item.product.image} alt={item.product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-1.5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.product.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full capitalize ${CONDITION_COLORS[item.product.condition]}`}>{item.product.condition}</span>
-                            <span className="text-xs text-slate-600">Qty: {item.quantity}</span>
+                            <div className="flex items-center gap-1 rounded-lg border border-slate-300 bg-white text-slate-950">
+                              <button type="button" onClick={()=>{if(item.quantity>1){editCart();updateQuantity(item.product.id,item.quantity-1);}}} disabled={item.quantity<=1} aria-label={`Decrease quantity of ${item.product.title}`} className="flex min-h-11 min-w-11 items-center justify-center hover:bg-slate-100 rounded-l-lg disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3 w-3"/></button>
+                              <span className="min-w-5 text-center text-xs font-bold" aria-label={`Quantity: ${item.quantity}`}>{item.quantity}</span>
+                              <button type="button" onClick={()=>{editCart();updateQuantity(item.product.id,item.quantity+1);}} aria-label={`Increase quantity of ${item.product.title}`} className="flex min-h-11 min-w-11 items-center justify-center hover:bg-slate-100 rounded-r-lg"><Plus className="h-3 w-3"/></button>
+                            </div>
                           </div>
                         </div>
-                        <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="font-bold text-gray-900 text-sm">{formatPrice((quote?.items.find(row=>row.id===item.product.id)?.price ?? item.product.priceGbp ?? item.product.price) * item.quantity)}</span>
+                          <button type="button" onClick={()=>{editCart();removeFromCart(item.product.id);}} aria-label={`Remove ${item.product.title} from basket`} title="Remove item" className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-bold text-red-700 hover:bg-red-50 hover:text-red-900" data-testid={`checkout-remove-${item.product.id}`}><Trash2 className="h-3.5 w-3.5"/> Remove</button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                <details className="mb-4 rounded-xl border border-slate-300 bg-white p-3 text-slate-900 lg:hidden">
+                  <summary className="cursor-pointer text-sm font-bold">Have a discount or promo code?</summary>
+                  <div className="mt-3 space-y-2">
+                    <label htmlFor="mobile-checkout-discount-code" className="block text-xs font-semibold">Discount code</label>
+                    <div className="flex gap-2">
+                      <input id="mobile-checkout-discount-code" type="text" autoComplete="off" maxLength={64} value={discountCode} onChange={e=>{setDiscountCode(e.target.value);setDiscountMessage("");}} placeholder="Enter a code" className="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-950" />
+                      <button type="button" onClick={()=>setDiscountMessage(discountCode.trim()?"Promo codes are not yet supported. No discount has been applied.":"Enter a code first.")} className="min-h-11 rounded-lg bg-slate-800 px-4 text-sm font-bold text-white">Check</button>
+                    </div>
+                    {discountMessage&&<p role="status" className="text-xs font-semibold text-amber-900">{discountMessage}</p>}
+                    <p className="text-xs text-slate-700">Promo codes are not yet enabled. Your order total will not change.</p>
+                  </div>
+                </details>
 
                 <p className="text-xs text-slate-600 leading-relaxed">Eligible purchases include Buyer Protection. Your exact fee and delivery costs appear in the order summary before payment.</p>
                 {quoteLoading && <p role="status" className="mt-4 text-sm text-muted-foreground">Calculating your checkout fees…</p>}
@@ -317,10 +344,38 @@ export function CheckoutPage() {
                   </div>
                 )}
 
+                {/* At phone sizes the entire fee breakdown sits beside the payment decision,
+                    rather than hidden below the Pay button in the desktop sidebar. */}
+                <section aria-label="Mobile order cost breakdown" className="mt-5 rounded-2xl border-2 border-indigo-300 bg-white p-4 text-slate-900 shadow-sm lg:hidden">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="text-base font-black text-slate-950">Payable total · GBP</h2>
+                    <span className="text-xs font-bold text-slate-700">Stripe secure payment</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-3"><span>Items</span><strong>{quote?formatPrice(subtotal):"Calculating…"}</strong></div>
+                    <div className="flex justify-between gap-3"><span>Delivery</span><strong>{quote?(delivery===0?"FREE":formatPrice(delivery)):"Calculating…"}</strong></div>
+                    <div className="flex justify-between gap-3"><span>Buyer protection</span><strong>{quote?(buyerProtectionFee>0?formatPrice(buyerProtectionFee):"Included"):"Calculating…"}</strong></div>
+                    {bundleDiscount>0&&<div className="flex justify-between gap-3 font-bold text-emerald-800"><span>Bundle savings</span><span>−{formatPrice(bundleDiscount)}</span></div>}
+                    <div aria-live="polite" className="flex justify-between gap-3 border-t border-indigo-200 pt-3 text-xl font-black">
+                      <span>Total</span><span data-testid="mobile-checkout-total">{!quote||quotedKey!==cartKey?"Calculating…":formatPrice(total)}</span>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-slate-700">The price is calculated by Bazunk. It will be confirmed again before Stripe payment.</p>
+                </section>
+
+                <section aria-label="Delivery address" className="mt-5 rounded-2xl border border-slate-300 bg-white p-4 text-slate-900 dark:border-slate-600 dark:bg-[#132742] dark:text-white">
+                  <h2 className="mb-1 flex items-center gap-2 text-lg font-bold"><Truck className="h-5 w-5 text-orange-500"/> Delivery address</h2>
+                  <p className="mb-4 text-sm text-slate-600 dark:text-slate-300">Enter your address before Stripe. Delivery charges shown above are calculated by Bazunk and must be confirmed for your destination.</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {([{key:"name",label:"Full name",required:true},{key:"line1",label:"Address line 1",required:true},{key:"line2",label:"Address line 2",required:false},{key:"city",label:"Town / city",required:true},{key:"region",label:"County / state",required:false},{key:"postcode",label:"Postcode / ZIP",required:true},{key:"phone",label:"Contact phone (optional)",required:false}] as const).map(field=><label key={field.key} className="block text-sm font-semibold">{field.label}<input required={field.required} autoComplete={field.key==="name"?"shipping name":field.key==="line1"?"shipping address-line1":field.key==="line2"?"shipping address-line2":field.key==="city"?"shipping address-level2":field.key==="region"?"shipping address-level1":field.key==="postcode"?"shipping postal-code":"tel"} value={deliveryAddress[field.key]} onChange={e=>setDeliveryAddress(a=>({...a,[field.key]:e.target.value}))} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900" /></label>)}
+                    <label className="block text-sm font-semibold">Country<select value={deliveryAddress.country} onChange={e=>setDeliveryAddress(a=>({...a,country:e.target.value}))} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900">{[["GB","United Kingdom"],["US","United States"],["IE","Ireland"],["FR","France"],["DE","Germany"],["CA","Canada"],["AU","Australia"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}</select></label>
+                  </div>
+                </section>
+
                 <button
                   onClick={handleContinueToPayment}
                   disabled={checkoutLoading || quoteLoading || !quote || quotedKey!==cartKey}
-                  className="w-full mt-4 py-4 rounded-xl bg-[#E66A20] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="sticky bottom-[calc(env(safe-area-inset-bottom)+0.5rem)] z-20 w-full mt-4 min-h-14 py-4 rounded-xl bg-[#E66A20] text-white font-black text-base hover:bg-orange-700 transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 lg:static"
                   data-testid="button-continue-payment"
                 >
                   {checkoutLoading
@@ -359,8 +414,8 @@ export function CheckoutPage() {
           </div>
 
           {/* Right: order summary (sticky) */}
-          <div className="space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
+          <div className="hidden space-y-4 lg:block lg:sticky lg:top-24 lg:self-start">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h3 className="font-bold text-gray-900 mb-4 text-lg">Order Summary · GBP</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between text-gray-600">
@@ -371,7 +426,7 @@ export function CheckoutPage() {
                   <span className="flex items-center gap-1">Buyer Protection <Link href="/buyer-protection" className="text-[#4A5CE8] underline text-xs">Learn more</Link></span>
                   <span className="font-semibold text-gray-900">{quoteLoading ? "Calculating…" : !quote ? "Unavailable" : buyerProtectionFee>0 ? formatPrice(buyerProtectionFee) : "Included"}</span>
                 </div>
-                <p className="text-xs text-slate-600">{quote?.privateSubtotal ? `${quote.protectionPercent}% of personal-seller items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Protection is included on business-seller purchases."}</p>
+                <p className="text-xs text-slate-600">{quote ? `${quote.protectionPercent}% of all eligible items + ${formatPrice(quote.fixedProtection)} once per checkout.` : "Buyer Protection applies to all eligible seller types."}</p>
                 <div className="flex justify-between text-gray-600">
                   <span>Delivery (combined by seller where offered)</span>
                   <span className={`font-semibold ${delivery === 0 ? "text-emerald-600" : "text-gray-900"}`}>
@@ -387,6 +442,15 @@ export function CheckoutPage() {
               </div>
 
 
+              <div className="mt-4 rounded-xl border border-slate-300 bg-slate-50 p-3 text-slate-900">
+                <label htmlFor="checkout-discount-code" className="flex items-center gap-2 text-sm font-bold"><Tag className="h-4 w-4"/> Discount or promo code</label>
+                <div className="mt-2 flex gap-2">
+                  <input id="checkout-discount-code" type="text" autoComplete="off" maxLength={64} value={discountCode} onChange={e=>{setDiscountCode(e.target.value);setDiscountMessage("");}} placeholder="Enter a code" className="min-w-0 flex-1 rounded-lg border border-slate-400 bg-white px-3 py-2 text-sm text-slate-950 placeholder:text-slate-600" />
+                  <button type="button" onClick={()=>setDiscountMessage(discountCode.trim()?"Promotion codes are not enabled for Bazunk checkout yet. No discount has been applied.":"Enter a code first.")} className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-bold text-white">Apply</button>
+                </div>
+                {discountMessage&&<p role="status" className="mt-2 text-xs font-semibold text-amber-900">{discountMessage}</p>}
+                <p className="mt-2 text-xs text-slate-700">Codes are not yet supported by the payment system; totals will not change.</p>
+              </div>
               {user?.email && <details className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
                 <summary className="cursor-pointer font-semibold">Optional checkout reminder</summary>
                 {user?.email&&<label className="mt-3 flex items-start gap-2 text-xs text-slate-700"><input type="checkbox" className="mt-1" checked={recoveryConsent} onChange={e=>{const allowed=e.target.checked;setRecoveryConsent(allowed);void (async()=>{try{const token=await getToken();if(!token)return;await fetch("/api/checkout-recovery/save",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({items:JSON.parse(cartKey),consent:allowed})});}catch{/* Optional reminders never block checkout. */}})();}}/><span>Send me one reminder if I leave checkout unfinished. This does not affect payment.</span></label>}

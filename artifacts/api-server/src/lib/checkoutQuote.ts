@@ -20,7 +20,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     counts.set(id,qty);
   }
   const ids=[...counts.keys()];
-  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.seller_email,COALESCE(u.seller_type,'private') seller_type
+  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.quantity,l.seller_email,COALESCE(u.seller_type,'private') seller_type
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
     WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
     AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
@@ -37,23 +37,41 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   for(const id of ids) {
     const row=byId.get(id);
     if(!row || row.status!=="active" || !row.seller_email) throw new QuoteError("An item is no longer available. Please update your cart.",409);
+    // Reject insufficient inventory before a payment session can be created.
+    const stock=Number(row.quantity);
+    if(!Number.isSafeInteger(stock)||stock<counts.get(id)!)
+      throw new QuoteError("Insufficient stock for this listing. Please reduce the quantity.",409);
     const currency=String(row.currency??"GBP").toUpperCase();
     const priceGbp=row.price_gbp!=null ? Number(row.price_gbp) : currency==="GBP" ? Number(row.price) : await convertAmount(Number(row.price),currency,"GBP");
-    const priceMinor=minor(priceGbp);
+    let priceMinor=minor(priceGbp);
+    // Only server-published, currently active flash events can change checkout prices.
+    // The promotion is frozen into the existing fee snapshot and Stripe line items.
+    const liveEventsTable=(await db.execute(sql`SELECT to_regclass('public.live_sale_events') AS name`)).rows[0]?.name;
+    if(liveEventsTable){
+      const promo=(await db.execute(sql`SELECT e.discount_percent
+        FROM live_sale_events e JOIN live_stream_sessions s ON s.id=e.session_id
+        WHERE e.product_id=${id} AND e.kind='flash' AND e.cancelled_at IS NULL
+        AND e.ends_at>NOW() AND s.is_live=TRUE AND LOWER(s.seller_email)=LOWER(${String(row.seller_email)})
+        ORDER BY e.created_at DESC LIMIT 1`)).rows[0] as any;
+      if(promo){
+        const pct=Number(promo.discount_percent);
+        if(Number.isInteger(pct)&&pct>=1&&pct<=70)priceMinor=Math.max(1,Math.round(priceMinor*(100-pct)/100));
+      }
+    }
     if(priceMinor<=0) throw new QuoteError("Items must have a positive price.");
     const category=String(row.category??"").toLowerCase();
     const sellerType=String(row.seller_type??"private").toLowerCase();
     if(!["private","business","sole_trader"].includes(sellerType)) throw new QuoteError("Seller account type needs to be checked before checkout.",409);
-    items.push({id,quantity:counts.get(id)!,priceMinor,sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,8)),title:String(row.title),image:row.image ? String(row.image):null,sellerEmail:String(row.seller_email),category});
+    items.push({id,quantity:counts.get(id)!,priceMinor,sellerType,businessRate:percentage(fees[`fee_rate_${category}`],percentage(fees.fee_rate_default,5)),title:String(row.title),image:row.image ? String(row.image):null,sellerEmail:String(row.seller_email),category});
   }
   const subtotal=items.reduce((sum,item)=>sum+item.priceMinor*item.quantity,0);
-  const fixed=fees.buyer_protection_fixed_gbp==null ? 70 : minor(fees.buyer_protection_fixed_gbp);
+  const fixed=fees.buyer_protection_fixed_gbp==null ? 100 : minor(fees.buyer_protection_fixed_gbp);
   // Never trust browser discount/shipping totals. Policy is read from the seller's
   // verified settings and frozen in the quote snapshot before charging Stripe.
   const enabled = await featureEnabled("combined_shipping");
   const discountsEnabled = await featureEnabled("multi_item_discount");
   const policyExists = (await db.execute(sql`SELECT to_regclass('public.seller_bundle_policies') AS table_name`)).rows[0]?.table_name;
-  if (!enabled || !policyExists) return calculateFees(items,percentage(fees.buyer_protection_percent,5),fixed,subtotal>=5000?0:399);
+  if (!enabled || !policyExists) return calculateFees(items,percentage(fees.buyer_protection_percent,6),fixed,subtotal>=5000?0:399);
   const policyRows = (await db.execute(sql`SELECT seller_email,enabled,combined_shipping_minor,multi_item_discount_percent,min_items FROM seller_bundle_policies WHERE enabled=TRUE`)).rows as any[];
   const policies = new Map(policyRows.map(p=>[String(p.seller_email).toLowerCase(),p]));
   const perSeller = new Map<string,FeeItem[]>();
@@ -90,7 +108,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     breakdown.find(b=>b.sellerEmail===key)!.shippingMinor+=fallback;
     deliveryMinor+=fallback;
   }
-  const quote=calculateFees(adjusted,percentage(fees.buyer_protection_percent,5),fixed,0) as CheckoutQuote;
+  const quote=calculateFees(adjusted,percentage(fees.buyer_protection_percent,6),fixed,0) as CheckoutQuote;
   // Allocate each seller's shipping only across that seller's orders.
   for(const [email,charge] of sellerDelivery) {
     const indices=quote.units.map((u,i)=>u.sellerEmail.toLowerCase()===email?i:-1).filter(i=>i>=0);

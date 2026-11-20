@@ -1,14 +1,15 @@
+import { BrowseSponsoredListings } from "@/components/BrowseSponsoredListings";
 import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSearch, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Bell, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
   Grid3X3, List, ChevronDown, ChevronUp, ArrowUpDown, Users,
-  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag,
+  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag, ShieldCheck, Tag, ArrowRight,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -139,16 +140,13 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 
   if (view === "list") {
     return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
+      <div
+        className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
         <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-[#f5f7fa] dark:bg-[#18253a] flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
@@ -172,7 +170,7 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
             <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
@@ -180,21 +178,18 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`bz-product-card bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
+    <div
+      className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div className="bz-browse-product-image relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-4 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -213,11 +208,11 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-base font-semibold text-slate-900 dark:text-white line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
+      <div className="bz-browse-product-details p-2.5 sm:p-3 flex flex-col flex-1">
+        <h3 className="bz-browse-product-title text-sm font-bold text-slate-900 line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xl font-extrabold tracking-tight text-slate-950 dark:text-white">{formatPrice(product.price)}</span>
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
             <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><Eye className="w-3.5 h-3.5" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
@@ -228,11 +223,27 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-export function BrowsePage() {
+const browseCache = new Map<string, { items: ApiListing[]; time: number }>();
+const BROWSE_CACHE_TTL = 45_000;
+const BROWSE_CACHE_MAX = 30;
+function getCachedBrowse(key: string) {
+  const cached = browseCache.get(key);
+  if (!cached || Date.now() - cached.time > BROWSE_CACHE_TTL) {
+    if (cached) browseCache.delete(key);
+    return null;
+  }
+  return cached.items;
+}
+function cacheBrowse(key: string, items: ApiListing[]) {
+  if (browseCache.size >= BROWSE_CACHE_MAX) browseCache.delete(browseCache.keys().next().value!);
+  browseCache.set(key, { items, time: Date.now() });
+}
+
+export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
   const [marketRegion, setMarketRegion] = useMarketplaceRegion();
   const { getToken } = useClerkAuth();
   const [, refreshThirdLevels] = useState(0);
@@ -250,6 +261,8 @@ export function BrowsePage() {
   const urlList=(name:string)=>params.get(name)?.split(",").filter(Boolean)??[];
 
   const [query, setQuery] = useState(urlQuery);
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
+  useEffect(() => { const timer = window.setTimeout(() => setDebouncedQuery(query), 350); return () => window.clearTimeout(timer); }, [query]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(urlList("categories").length ? urlList("categories") : urlCategory ? [urlCategory] : []);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlList("subcategories").length ? urlList("subcategories") : urlSub ? [urlSub] : []);
   const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlList("thirdLevels").length ? urlList("thirdLevels") : urlSubsub ? [urlSubsub] : []);
@@ -268,7 +281,11 @@ export function BrowsePage() {
   const [listedWithin, setListedWithin] = useState(params.get("listedWithin")||"any");
   const [apiListings, setApiListings] = useState<(typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] })[]>([]);
   const [hasMoreListings, setHasMoreListings] = useState(true);
+  const [currentPage,setCurrentPage] = useState(1);
+  const [highestPage,setHighestPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const moreController = useRef<AbortController | null>(null);
+  const scopeRef = useRef("");
   const [loadingListings, setLoadingListings] = useState(true);
   const delayedLoading = useMarketplaceLoadingDelay(loadingListings, "browse");
   const [listingError, setListingError] = useState<string | null>(null);
@@ -312,10 +329,11 @@ export function BrowsePage() {
   const browseSubsub = browseSub && selectedThirdLevels.length === 1 ? selectedThirdLevels[0] : "";
   const browseScope = new URLSearchParams();
   browseScope.set("region", marketRegion);
+  if(collection)browseScope.set("collection",collection);
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
-  if (query.trim()) browseScope.set("q", query.trim());
+  if (debouncedQuery.trim()) browseScope.set("q", debouncedQuery.trim());
   if (selectedCategories.length) browseScope.set("categories", selectedCategories.join(","));
   if (selectedSubcategories.length) browseScope.set("subcategories", selectedSubcategories.join(","));
   if (selectedThirdLevels.length) browseScope.set("thirdLevels", selectedThirdLevels.join(","));
@@ -328,6 +346,7 @@ export function BrowsePage() {
   if (freeShipping) browseScope.set("freeShipping", "true");
   if (listedWithin !== "any") browseScope.set("listedWithin", listedWithin);
   const browseScopeQuery = browseScope.toString();
+  useEffect(()=>{setCurrentPage(1);setHighestPage(1);},[browseScopeQuery]);
 
 
   useEffect(() => {
@@ -354,45 +373,57 @@ export function BrowsePage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    moreController.current?.abort();
+    scopeRef.current = browseScopeQuery;
+    setLoadingMore(false);
+    setMoreError(null);
+    setListingError(null);
+    const offset = (currentPage-1)*LISTING_BATCH;
+    const key = `listings:${LISTING_BATCH}:${offset}:${browseScopeQuery}`;
+    const cached = loadAttempt === 0 ? getCachedBrowse(key) : null;
+    if (cached) {
+      setApiListings(cached.map(mapApiListing));
+      setHasMoreListings(cached.length === LISTING_BATCH);
+      setLoadingListings(false);
+      return () => controller.abort();
+    }
     setLoadingListings(true);
     setApiListings([]);
     setHasMoreListings(true);
-    setListingError(null);
-    setMoreError(null);
-    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${offset}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`Listings API returned HTTP ${r.status}`);
         const data: ApiListing[] = await r.json();
         if (!Array.isArray(data)) throw new Error("Invalid listings response");
         if (controller.signal.aborted) return;
+        cacheBrowse(key, data);
         setApiListings(data.map(mapApiListing));
         setHasMoreListings(data.length === LISTING_BATCH);
       })
       .catch((error) => {
         if (!controller.signal.aborted) setListingError(error instanceof Error ? error.message : "We couldn’t load listings. Please try again.");
+        else if (controller.signal.reason !== undefined && controller.signal.reason !== "scope-change") {
+          // Timeout: offer a retry rather than leave the loading skeleton forever.
+          setListingError("Listings are taking too long to respond. Please try again.");
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoadingListings(false);
+        clearTimeout(timeout);
+        if (scopeRef.current === browseScopeQuery) setLoadingListings(false);
       });
-    return () => controller.abort();
-  }, [loadAttempt, browseScopeQuery]);
+    return () => { clearTimeout(timeout); controller.abort("scope-change"); };
+  }, [loadAttempt, browseScopeQuery, currentPage]);
 
-  async function loadMoreListings() {
-    if (loadingMore || loadingListings || !hasMoreListings) return;
-    setLoadingMore(true);
+  useEffect(() => () => moreController.current?.abort(), []);
+
+  function goToPage(page:number) {
+    if(page<1||loadingListings||page===currentPage)return;
+    if(page>highestPage && !hasMoreListings)return;
+    setHighestPage(n=>Math.max(n,page));
+    setCurrentPage(page);
     setMoreError(null);
-    try {
-      const r = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${apiListings.length}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`);
-      if (!r.ok) throw new Error("Could not load more listings");
-      const data: ApiListing[] = await r.json();
-      if (!Array.isArray(data)) throw new Error("Invalid listings response");
-      setApiListings((current) => [...current, ...data.map(mapApiListing)]);
-      setHasMoreListings(data.length === LISTING_BATCH);
-    } catch {
-      setMoreError("We couldn’t load more listings. Your current results are still available. Please try again.");
-    } finally {
-      setLoadingMore(false);
-    }
+    window.scrollTo({top:Math.max(0,(document.querySelector(".bz-browse-results")?.getBoundingClientRect().top||0)+window.scrollY-90),behavior:"smooth"});
   }
 
   useEffect(() => {
@@ -516,7 +547,7 @@ export function BrowsePage() {
     (minRating !== null ? 1 : 0) +
     (listedWithin !== "any" ? 1 : 0);
 
-  const pageTitle = urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
+  const pageTitle = collection === "deals" ? "Promoted Deals" : collection === "eco" ? "Eco Marketplace" : urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "newest",    label: "Newest First" },
@@ -632,6 +663,19 @@ export function BrowsePage() {
       </FilterSection>
 
       <FilterSection title="Price Range">
+        <div className="space-y-2 mb-3">
+          <label className="block text-xs font-semibold text-slate-700">Minimum price: £{minPrice || "0"}</label>
+          <input aria-label="Minimum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, Number(minPrice) || 0)}
+            onChange={e => { const next = Number(e.target.value); setMinPrice(String(Math.min(next, Number(maxPrice) || 5000))); }}
+            className="w-full accent-orange-600" />
+          <label className="block text-xs font-semibold text-slate-700">Maximum price: £{maxPrice || "5000+"}</label>
+          <input aria-label="Maximum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, maxPrice === "" ? 5000 : Number(maxPrice))}
+            onChange={e => setMaxPrice(String(Math.max(Number(minPrice) || 0, Number(e.target.value))))}
+            className="w-full accent-blue-600" />
+          <p className="text-xs text-slate-500">Use the fields below for prices above £5,000.</p>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">£</span>
@@ -807,31 +851,17 @@ export function BrowsePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bz-browse-page min-h-screen bg-[#f2f7fc] flex flex-col">
       <Navbar />
 
       {/* Search header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-5">
+      <div className="bz-browse-filter-feedback bg-transparent">
+        <div className="container mx-auto max-w-[1440px] px-4 py-0">
           <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-xl">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] bg-gray-50"
-                data-testid="input-browse-search"
-              />
-              {query && (
-                <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
             <button
               onClick={() => setShowMobileFilters(true)}
+              aria-label="Open listing filters"
+              aria-expanded={showMobileFilters}
               className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#4A5CE8] transition-colors"
               data-testid="button-mobile-filters"
             >
@@ -860,7 +890,7 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/10 text-[#4A5CE8] text-xs font-semibold px-3 py-1 rounded-full">
                     {cat?.name ?? slug}
-                    <button onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove category filter" onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
@@ -873,31 +903,31 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/5 text-[#4A5CE8] text-xs font-medium px-3 py-1 rounded-full border border-[#4A5CE8]/20">
                     ↳ {label}
-                    <button onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove subcategory filter" onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {selectedConditions.map((c) => (
                 <span key={c} className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full capitalize">
-                  {c}<button onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
+                  {c}<button type="button" aria-label="Remove condition filter" onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {(minPrice || maxPrice) && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   £{minPrice || "0"} – £{maxPrice || "∞"}
-                  <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove price filter" onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {verifiedOnly && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full">
                   <CheckCircle2 className="w-3 h-3" /> Verified Only
-                  <button onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove verified-only filter" onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {shipFrom.map((f) => (
                 <span key={f} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
                   From: {f}
-                  <button onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove ships-from filter" onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {shipTo.map((t) => {
@@ -905,26 +935,26 @@ export function BrowsePage() {
                 return (
                   <span key={t} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
                     <Globe className="w-3 h-3" /> {label}
-                    <button onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove ships-to filter" onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {freeShipping && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Truck className="w-3 h-3" /> Free Shipping
-                  <button onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove free-shipping filter" onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {minRating !== null && (
                 <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Star className="w-3 h-3 fill-current" /> {minRating}+ stars
-                  <button onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove rating filter" onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {listedWithin !== "any" && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   {{ today: "Today", week: "Last 7 days", month: "Last 30 days" }[listedWithin]}
-                  <button onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove date filter" onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
                 </span>
               )}
             </div>
@@ -932,44 +962,55 @@ export function BrowsePage() {
         </div>
       </div>
 
+      <div className="bz-browse-hero-shell">
+        <section className={`bz-browse-hero ${collection==="eco"?"bz-eco-hero":collection==="deals"?"bz-deals-hero":""}`} aria-label={collection==="eco"?"Eco Marketplace":collection==="deals"?"Deals on Bazunk":"Shop on Bazunk"}>
+          <div className="bz-browse-hero-copy"><h1>{collection==="eco"?"Shop sustainably":collection==="deals"?"Discover great deals":<>Shop on <span>Bazunk</span></>}</h1><p>{collection==="eco"?"Explore items sellers have marked eco-friendly or recyclable. Reuse, resell and give great products another life.":collection==="deals"?"Discover listings with active promotions, featured placements and seller boosts.":"Browse thousands of unique items from independent sellers."}</p></div>
+          <div className="bz-browse-hero-bags" aria-hidden="true"><div className="bz-browse-bag bz-browse-bag-blue"><ShoppingBag /></div><div className="bz-browse-bag bz-browse-bag-orange"><ShoppingBag /><strong>B</strong></div></div>
+          <div className="bz-browse-hero-points"><span><ShieldCheck/> Buyer Protected</span><span><Zap/> {collection==="eco"?"Reuse & Resell":"Great Deals"}</span><span><Tag/> {collection==="deals"?"Promoted Listings":"Make an Offer"}</span></div>
+        </section>
+      </div>
       <AdSlot slotKey="browse_top" />
 
-      <div className="container mx-auto px-4 py-6 flex gap-6 flex-1">
+      <div className="bz-browse-content container mx-auto max-w-[1440px] px-3 sm:px-5 lg:px-6 py-4 sm:py-6 flex gap-4 lg:gap-5 flex-1 pb-24 md:pb-8">
 
         {/* Desktop sidebar */}
-        <aside className="hidden md:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:sticky md:top-24 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto overscroll-contain [scrollbar-width:thin] dark:bg-[#132543] dark:border-slate-700">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#4A5CE8]" /> Filters
-              </h2>
-              {activeFilterCount > 0 && (
-                <span className="text-xs font-bold bg-[#4A5CE8] text-white px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>
-              )}
-            </div>
-            {filterPanel}
+        <aside className="bz-browse-sidebar hidden md:block w-56 lg:w-60 flex-shrink-0">
+          <div className="bz-browse-filter-card md:sticky md:top-4">
+            <div className="bz-browse-filter-heading"><h2><SlidersHorizontal size={21}/> Filters {activeFilterCount > 0 && <span className="bz-filter-count">{activeFilterCount}</span>}</h2><button type="button" onClick={clearAll}>Clear all</button></div>
+            <div className="bz-browse-filter-body">{filterPanel}</div>
           </div>
+          <Link href={collection==="deals"?"/eco":collection==="eco"?"/deals":"/flash-sales"} className="bz-browse-flash-card"><span className="bz-browse-flash-icon"><Zap size={25}/></span><strong>{collection==="deals"?"Eco Marketplace":collection==="eco"?"Promoted Deals":"Flash Sales"}</strong><span>{collection==="deals"?"Discover eco-friendly and recyclable finds.":collection==="eco"?"Explore featured and promoted listings.":"Limited-time deals with extra savings."}</span><span className="bz-browse-flash-action">{collection==="deals"?"Shop Eco":collection==="eco"?"Explore Deals":"Shop Flash Sales"} <ArrowRight size={16}/></span><Zap className="bz-browse-flash-watermark" aria-hidden="true"/></Link>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">
+        <main className="bz-browse-results flex-1 min-w-0">
+          {/* Thumb-friendly sorting without an extra modal. Desktop keeps the detailed selector. */}
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-2 sm:hidden" aria-label="Quick sorting" data-testid="mobile-browse-sort">
+            {([
+              ["newest","Newest"],["price-asc","Lowest £"],["price-desc","Highest £"],["views","Popular"]
+            ] as const).map(([value,label])=><button key={value} type="button"
+              onClick={()=>setSort(value)} aria-pressed={sort===value}
+              className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold ${sort===value?"border-indigo-600 bg-indigo-600 text-white":"border-slate-300 bg-white text-slate-900 dark:border-slate-500 dark:bg-[#1b3151] dark:text-white"}`}>
+              {label}
+            </button>)}
+          </div>
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
-              <p className="text-sm text-gray-400">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
+              <h1 className="bz-browse-results-title text-xl font-extrabold text-[#0b2243]">{pageTitle}</h1>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `Page ${currentPage} · ${filtered.length} listing${filtered.length !== 1 ? "s" : ""} shown`}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
-                className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-3 py-2 font-black text-sm text-white hover:bg-orange-700" data-testid="button-save-search">
+                className="bz-browse-save inline-flex items-center gap-2 rounded-xl border border-[#cbd9e9] bg-white px-3 py-2 font-bold text-sm text-[#0b2243] hover:border-orange-500" data-testid="button-save-search">
                 <Bell className="h-4 w-4"/> Save search
               </button>
               {/* Sort */}
-              <div className="relative">
+              <div className="relative hidden sm:block">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] cursor-pointer"
+                  className="bz-browse-sort min-h-11 appearance-none border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 cursor-pointer dark:border-slate-500 dark:bg-[#172b49] dark:text-white"
                   data-testid="select-sort"
                 >
                   {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
@@ -981,14 +1022,16 @@ export function BrowsePage() {
               <div className="flex border border-gray-200 rounded-xl overflow-hidden">
                 <button
                   onClick={() => setView("grid")}
-                  className={`p-2 ${view === "grid" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  aria-label="Grid view" aria-pressed={view==="grid"}
+                  className={`p-2 ${view === "grid" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-grid"
                 >
                   <Grid3X3 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setView("list")}
-                  className={`p-2 ${view === "list" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  aria-label="List view" aria-pressed={view==="list"}
+                  className={`p-2 ${view === "list" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-list"
                 >
                   <List className="w-4 h-4" />
@@ -999,7 +1042,7 @@ export function BrowsePage() {
 
           {/* Results */}
           {delayedLoading ? (
-            <MarketplaceLoader area="browse" label="Finding your next great deal…" />
+            <div role="status" aria-label="Loading listings" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">{Array.from({ length: 8 }, (_, i) => <div key={i} className="animate-pulse rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"><div className="aspect-square rounded-lg bg-slate-200 dark:bg-slate-700" /><div className="mt-3 h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-2 h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-700" /></div>)}</div>
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Listings couldn’t load</h3>
@@ -1012,7 +1055,7 @@ export function BrowsePage() {
                 <Search className="w-8 h-8 text-gray-300" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 mb-2">No listings found</h3>
-              <p className="text-sm text-gray-400 mb-6">Try adjusting your search or filters</p>
+              <p className="text-sm text-gray-400 mb-6">{collection==="eco"?"No eco-labelled listings yet. Sellers can mark new products as eco-friendly when listing.":collection==="deals"?"No actively promoted listings match these filters right now.":"Try adjusting your search or filters"}</p>
               <button
                 onClick={clearAll}
                 className="px-6 py-2.5 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -1022,7 +1065,7 @@ export function BrowsePage() {
             </div>
           ) : (
             <div className={view === "grid"
-              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4"
               : "flex flex-col gap-3"
             }>
               {filtered.map((product) => (
@@ -1032,18 +1075,15 @@ export function BrowsePage() {
               ))}
             </div>
           )}
-          {moreError && <p role="alert" className="mt-6 text-center text-sm text-red-600">{moreError}</p>}
-          {!loadingListings && !listingError && hasMoreListings && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={loadMoreListings}
-                disabled={loadingMore}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:border-[#4A5CE8] hover:text-[#4A5CE8] disabled:opacity-50 transition-colors"
-              >
-                {loadingMore ? "Loading…" : moreError ? "Try loading more again" : "Load more listings"}
-              </button>
-            </div>
+          {!loadingListings && !listingError && collection===undefined && <BrowseSponsoredListings category={selectedCategories.length===1?selectedCategories[0]:undefined} />}
+          {!loadingListings && !listingError && (currentPage>1 || hasMoreListings) && (
+            <nav className="bz-browse-pagination" aria-label="Listing pages">
+              <button type="button" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)} aria-label="Previous page">‹ <span>Previous</span></button>
+              {Array.from({length:Math.max(highestPage,currentPage+(hasMoreListings?1:0))},(_,i)=>i+1).filter(n=>n===1||n===highestPage||Math.abs(n-currentPage)<=2||n===currentPage+1&&hasMoreListings).map(n=><button type="button" key={n} aria-current={n===currentPage?"page":undefined} className={n===currentPage?"active":""} onClick={()=>goToPage(n)}>{n}</button>)}
+              <button type="button" disabled={!hasMoreListings} onClick={()=>goToPage(currentPage+1)} aria-label="Next page"><span>Next</span> ›</button>
+            </nav>
           )}
+
         </main>
       </div>
 

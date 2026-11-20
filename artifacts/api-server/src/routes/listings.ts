@@ -3,6 +3,7 @@ import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
+import { ensureTrustProofTables, auditProof } from "../lib/trustProof.js";
 import { db, listingsTable, listingPromotionsTable } from "@workspace/db";
 import { eq, desc, and, gt, sql, inArray } from "drizzle-orm";
 import { toGbp } from "../fxRates.js";
@@ -14,6 +15,9 @@ import { awardReferralMilestone } from "../lib/referrals.js";
 import { getPromoConfig } from "../lib/promoConfig.js";
 
 const router = Router();
+const listingMediaUrl=(value:unknown):unknown=>typeof value==="string"&&value.startsWith("/api/listing-media/")?"https://bazunk-api-ifqs.onrender.com"+value:value;
+const normalizeListingMedia=<T extends Record<string,any>>(item:T):T=>({...item,image:listingMediaUrl(item.image)});
+
 
 // Server-side visibility: missing setting means visible; parent OFF overrides children.
 async function categoryVisibility() {
@@ -86,13 +90,67 @@ function promoRank(promotions: string[]): number {
   return 0;
 }
 
+// Lightweight, region-aware autocomplete. Uses the same visibility rules as browse.
+router.get("/listings/search-suggestions", async (req, res) => {
+  try {
+    const q = String(req.query.q ?? "").trim().slice(0, 80);
+    if (q.length < 2) { res.json({ suggestions: [] }); return; }
+    if (req.query.region !== undefined && !["uk", "us"].includes(String(req.query.region))) {
+      res.status(400).json({ error: "Invalid region" }); return;
+    }
+    const visible = await categoryVisibility();
+    const region = listingRegionFilter(req.query.region);
+    const rows = await db.select({ title: listingsTable.title })
+      .from(listingsTable)
+      .where(and(eq(listingsTable.status, "active"), visible, region,
+        sql`STRPOS(LOWER(${listingsTable.title}), ${q.toLowerCase()}) > 0`))
+      .groupBy(listingsTable.title)
+      .orderBy(sql`CASE WHEN LOWER(${listingsTable.title}) LIKE ${q.toLowerCase() + "%"} THEN 0 ELSE 1 END`, listingsTable.title)
+      .limit(8);
+    res.setHeader("Cache-Control", "public, max-age=30");
+    // Keep suggestions limited to visible, active listings in the selected region.
+    // For misspellings, PostgreSQL pg_trgm provides ranked alternatives without
+    // changing the exact-match browse results or disclosing hidden listings.
+    let suggestions = rows.map(r => r.title);
+    if (suggestions.length === 0 && q.length >= 3) {
+      try {
+        const fuzzy = await db.execute(sql`
+          SELECT DISTINCT l.title, similarity(LOWER(l.title), ${q.toLowerCase()}) AS score
+          FROM listings l
+          WHERE l.status = 'active'
+            AND similarity(LOWER(l.title), ${q.toLowerCase()}) >= 0.3
+          ORDER BY score DESC, l.title ASC LIMIT 5
+        `);
+        // Do not serve unscoped suggestions: fuzzy results must also pass the
+        // existing category and marketplace-region visibility filters.
+        const candidates = fuzzy.rows.map(r => String(r.title));
+        if (candidates.length) {
+          const safe = await db.select({ title: listingsTable.title }).from(listingsTable)
+            .where(and(eq(listingsTable.status, "active"), visible, region,
+              sql`${listingsTable.title} IN (${sql.join(candidates.map(t => sql`${t}`), sql`, `)})`))
+            .groupBy(listingsTable.title).limit(5);
+          const allowed = new Set(safe.map(r => r.title));
+          suggestions = candidates.filter(t => allowed.has(t));
+        }
+      } catch (error) {
+        // pg_trgm may not yet be installed; exact-match autocomplete still works.
+        console.warn("Typo suggestions unavailable", error);
+      }
+    }
+    res.json({ suggestions });
+  } catch (err) {
+    console.error("Search suggestions failed", err);
+    res.status(500).json({ error: "Search suggestions unavailable" });
+  }
+});
+
 router.get("/listings", async (req, res) => {
   try {
     if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {
       res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
       return;
     }
-    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin } = req.query as Record<string, string>;
+    const { category, sub, subsub, sellerEmail, limit = "40", offset = "0", ids, q, conditions, categories, subcategories, thirdLevels, minPrice, maxPrice, sort, shipFrom, shipTo, freeShipping, listedWithin, collection } = req.query as Record<string, string>;
 
     if (ids) {
       const regionalVisibility = listingRegionFilter(req.query.region);
@@ -100,7 +158,7 @@ router.get("/listings", async (req, res) => {
       if (idList.length === 0) { res.json([]); return; }
       const visible = await categoryVisibility();
       const rows = await db.select().from(listingsTable).where(and(inArray(listingsTable.id, idList), eq(listingsTable.status, "active"), visible, regionalVisibility));
-      res.json(rows);
+      res.json(rows.map(normalizeListingMedia));
       return;
     }
 
@@ -111,6 +169,9 @@ router.get("/listings", async (req, res) => {
 
     // Apply browsing criteria before LIMIT/OFFSET, across the complete database.
     const clauses: any[] = [visible, regionalVisibility, eq(listingsTable.status, "active")];
+    // Apply collection criteria in SQL before pagination.
+    if (collection === "eco") clauses.push(sql`(COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%' OR ${listingsTable.category} = 'eco-friendly')`);
+    if (collection === "deals") clauses.push(sql`EXISTS (SELECT 1 FROM ${listingPromotionsTable} lp WHERE lp.listing_id = ${listingsTable.id} AND lp.expires_at > NOW() AND lp.type IN ('homepage-spotlight','spotlight','premium-placement','featured-badge','featured','visibility-boost','move-to-top','flash'))`);
     if (sellerEmail) clauses.push(sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${sellerEmail})`);
     if (q?.trim()) {
       const term = q.trim().slice(0, 150).toLowerCase();
@@ -158,6 +219,7 @@ router.get("/listings", async (req, res) => {
         sellerName: listingsTable.sellerName,
         sellerUsername: listingsTable.sellerUsername,
         extraCategories: listingsTable.extraCategories,
+        ecoFriendly: sql<boolean>`COALESCE(${listingsTable.tags}, '') ILIKE '%eco-friendly%'`,
         currency: listingsTable.currency,
         marketplaceRegion: sql<string | null>`CASE WHEN COALESCE(${listingsTable.specifications}, '') ~ '^\\s*\\{' THEN ${listingsTable.specifications}::jsonb->>'marketplace_region' ELSE NULL END`,
         priceGbp: listingsTable.priceGbp,
@@ -174,7 +236,7 @@ router.get("/listings", async (req, res) => {
     // Public browse cards change relatively infrequently; a tiny cache removes repeated
     // database work while keeping new/edited listings fresh within seconds.
     res.setHeader("Cache-Control", "public, max-age=15, stale-while-revalidate=45");
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -196,7 +258,7 @@ router.get("/listings/category-counts", async (req, res) => {
       WHERE status = 'active' AND ${regionFilter ?? sql`TRUE`} AND ${demoVisibility} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || listings.category OR cv.key='category_visible_' || listings.category || '__' || COALESCE(listings.subcategory,'')))
       GROUP BY category, subcategory
     `);
-    res.json(rows.rows);
+    res.json(rows.rows.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching category counts:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -232,7 +294,7 @@ router.get("/listings/spotlight", async (req, res) => {
     );
     const withPromos = await attachPromotions(rows);
     withPromos.sort((a, b) => promoRank(b.promotions) - promoRank(a.promotions));
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching spotlight listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -263,6 +325,10 @@ router.get("/listings/mine", async (req, res) => {
         price: listingsTable.price,
         category: listingsTable.category,
         subcategory: listingsTable.subcategory,
+        subsubcategory: listingsTable.subsubcategory,
+        quantity: listingsTable.quantity,
+        shippingPrice: listingsTable.shippingPrice,
+        carrier: listingsTable.carrier,
         description: listingsTable.description,
         condition: listingsTable.condition,
         image: listingsTable.image,
@@ -285,7 +351,7 @@ router.get("/listings/mine", async (req, res) => {
       .orderBy(desc(listingsTable.createdAt))
       .limit(100);
     const withPromos = await attachPromotions(rows);
-    res.json(withPromos);
+    res.json(withPromos.map(normalizeListingMedia));
   } catch (err) {
     console.error("Error fetching my listings:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -307,7 +373,7 @@ router.get("/listings/:id", async (req, res) => {
       tags: listingsTable.tags, extraCategories: listingsTable.extraCategories, specifications: listingsTable.specifications,
       currency: listingsTable.currency, priceGbp: listingsTable.priceGbp,
       createdAt: listingsTable.createdAt, updatedAt: listingsTable.updatedAt,
-    }).from(listingsTable).where(eq(listingsTable.publicId, rawId)).limit(1);
+    }).from(listingsTable).where(sql`public_url_token = ${rawId} OR public_id = ${rawId}`).limit(1);
     if (!row && /^\\d+$/.test(rawId)) {
       [row] = await db.select({
       id: listingsTable.id, publicId: listingsTable.publicId, title: listingsTable.title,
@@ -341,7 +407,8 @@ router.get("/listings/:id", async (req, res) => {
       console.error("Error checking seller verification, defaulting to unverified:", err);
     }
 
-    res.json({ ...withPromo, sellerVerified });
+    const tokenResult=await db.execute(sql`SELECT public_url_token FROM listings WHERE id=${row.id}`);
+    res.json(normalizeListingMedia({ ...withPromo, publicUrlToken:tokenResult.rows[0]?.public_url_token ?? null, sellerVerified }));
   } catch (err) {
     console.error("Error fetching listing:", err);
     res.status(500).json({ error: "internal_server_error", message: String(err) });
@@ -404,7 +471,8 @@ router.post("/listings", async (req, res) => {
     const shippingPrice = body.shippingPrice != null && Number.isFinite(Number(body.shippingPrice)) ? String(body.shippingPrice) : null;
     const handlingCharge = body.handlingCharge != null && Number.isFinite(Number(body.handlingCharge)) ? String(body.handlingCharge) : null;
     const quantity = body.quantity != null && Number.isFinite(Number(body.quantity)) ? Math.max(0, Math.floor(Number(body.quantity))) : null;
-    const sku = typeof body.sku === "string" ? body.sku.slice(0, 120) : null;
+    // Canonicalise the submitted SKU before storage and duplicate matching.
+    const sku = typeof body.sku === "string" ? body.sku.trim().slice(0, 120) || null : null;
 
     // Product Video is priced in credits and controlled by Admin → Promotions.
     // Validate the balance before creating the listing so a failed add-on cannot create duplicates.
@@ -429,7 +497,21 @@ router.post("/listings", async (req, res) => {
       priceGbp = String(price);
     }
 
-    const [inserted] = await db
+    // Keep the check and insert inside one transaction. The per-seller/SKU
+    // transaction lock makes simultaneous retries of this API endpoint serial,
+    // preventing both requests from passing the duplicate check.
+    const created = await db.transaction(async (tx) => {
+      if (sku) {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${authenticatedEmail}), hashtext(${sku.toLowerCase()}))`);
+        const existing = await tx.execute(sql`
+          SELECT id FROM listings
+          WHERE LOWER(seller_email) = ${authenticatedEmail}
+            AND LOWER(BTRIM(sku)) = ${sku.toLowerCase()}
+          ORDER BY id LIMIT 1
+        `);
+        if (existing.rows.length) return { listing: null, existingListingId: Number(existing.rows[0].id) };
+      }
+    const [inserted] = await tx
       .insert(listingsTable)
       .values({ 
         title, 
@@ -461,11 +543,24 @@ router.post("/listings", async (req, res) => {
       .returning();
 
     const publicId = makePublicId(inserted.id);
-    const [listing] = await db
+    const [listing] = await tx
       .update(listingsTable)
       .set({ publicId })
       .where(eq(listingsTable.id, inserted.id))
       .returning();
+
+      return { listing, existingListingId: null };
+    });
+    if (created.existingListingId !== null) {
+      res.status(409).json({
+        error: "duplicate_sku",
+        message: "A listing with this SKU already exists in your seller account.",
+        existingListingId: created.existingListingId,
+      });
+      return;
+    }
+    const listing = created.listing;
+    if (!listing) throw new Error("Listing insert returned no result");
 
     console.log("Listing successfully created:", listing.id);
 
@@ -513,9 +608,31 @@ router.patch("/listings/:id", async (req, res) => {
     if (!email || email.trim().toLowerCase() !== authenticatedEmail) { res.status(403).json({ error: "Seller account mismatch" }); return; }
     const body = req.body as Record<string, unknown>;
     const allowed = ["title", "price", "description", "condition", "category", "subcategory", "subsubcategory", "image", "status", "currency", "specifications", "tags"] as const;
-    const updates: Partial<Record<typeof allowed[number] | "extraCategories", string>> = {};
+    const updates: Partial<typeof listingsTable.$inferInsert> = {};
     for (const key of allowed) {
-      if (typeof body[key] === "string") updates[key] = body[key] as string;
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = body[key];
+    }
+    // Mobile and desktop draft publication share this API. Persist the fields
+    // buyers use to choose delivery, including when publishing a saved draft.
+    if (body.image === null) updates.image = null;
+    for (const key of ["shipOrigin", "shipOriginOther", "shipZone", "carrier", "sku", "sellerName", "sellerUsername"] as const) {
+      if (typeof body[key] === "string") (updates as Record<string, unknown>)[key] = (body[key] as string).slice(0, key==="shipOriginOther"||key==="sku"?120:80);
+    }
+    for (const key of ["shippingPrice", "handlingCharge"] as const) {
+      if (body[key] !== undefined) {
+        const amount=Number(body[key]);
+        if (!Number.isFinite(amount) || amount<0 || amount>100000) {
+          res.status(400).json({error:"Shipping and handling must be valid non-negative amounts"});return;
+        }
+        updates[key]=amount.toFixed(2);
+      }
+    }
+    if (body.quantity !== undefined) {
+      const quantity=Number(body.quantity);
+      if (!Number.isSafeInteger(quantity) || quantity<1 || quantity>10000) {
+        res.status(400).json({error:"Quantity must be between 1 and 10000"});return;
+      }
+      updates.quantity=quantity;
     }
 
     if (typeof body.subsubcategory === "string" && body.subsubcategory !== "" && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(body.subsubcategory)) { res.status(400).json({ error: "Invalid third-level category slug" }); return; }
@@ -549,6 +666,19 @@ router.patch("/listings/:id", async (req, res) => {
       .where(and(eq(listingsTable.id, id), sql`LOWER(${listingsTable.sellerEmail}) = LOWER(${email})`))
       .returning();
     if (updated.length === 0) { res.status(404).json({ error: "Listing not found or not yours" }); return; }
+    // Proof belongs to the specific photographed item and description. Any
+    // material change revokes prior human review and third-party authentication.
+    if (["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].some(k=>body[k]!==undefined)) {
+      try{
+        await ensureTrustProofTables();
+        const revoked=await db.execute(sql`UPDATE marketplace_trust_proofs SET status='revoked',
+          reviewed_at=NULL,reviewed_by=NULL,external_provider=NULL,external_reference=NULL,
+          external_checked_at=NULL,external_admin=NULL,updated_at=NOW()
+          WHERE listing_id=${id} AND status IN ('collecting','submitted','approved','rejected')
+          RETURNING listing_id`);
+        if(revoked.rows.length)await auditProof(id,authenticatedEmail,"listing_changed",{fields:Object.keys(body).filter(k=>["title","description","condition","image","category","specifications","photos","marketplaceRegion","marketplace_region"].includes(k))});
+      }catch(err){console.error("TrustProof revocation failed; public fingerprint still blocks stale evidence",err);}
+    }
     res.json(updated[0]);
   } catch (err) {
     console.error("Error updating listing:", err);
@@ -830,3 +960,4 @@ router.patch("/listings/profile/me", async (req, res) => {
 });
 
 export default router;
+

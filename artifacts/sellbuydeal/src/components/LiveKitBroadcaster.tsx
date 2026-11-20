@@ -119,18 +119,32 @@ export function LiveKitBroadcaster({ roomName, publisherIdentity, onEnd, youtube
   useEffect(() => {
     setLoading(true);
     setError(null);
-    getToken().then((authToken) => fetch(
-      `/api/livekit/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(publisherIdentity)}&canPublish=true`,
-      { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} }
-    ))
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) { setError(data.error); return; }
-        setToken(data.token);
-        setWsUrl(data.wsUrl);
-      })
-      .catch(() => setError("Could not connect to LiveKit. Check your server credentials."))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    const connect = async () => {
+      try {
+        const authToken = await getToken();
+        if (!authToken) throw new Error("Sign in to start broadcasting.");
+        const url = `/api/livekit/token?room=${encodeURIComponent(roomName)}&identity=${encodeURIComponent(publisherIdentity)}&canPublish=true`;
+        // The session is persisted asynchronously by the dashboard. Wait briefly
+        // for it to become visible instead of failing the broadcaster immediately.
+        for (let attempt = 0; attempt < 6 && !cancelled; attempt++) {
+          const response = await fetch(url, { headers: { Authorization: `Bearer ${authToken}` } });
+          const data = await response.json().catch(() => ({}));
+          if (response.ok && data.token && data.wsUrl) {
+            if (!cancelled) { setToken(data.token); setWsUrl(data.wsUrl); }
+            return;
+          }
+          if (response.status !== 403 || attempt === 5) throw new Error(data.error || "Could not authorize this broadcast.");
+          await new Promise(resolve => setTimeout(resolve, 600));
+        }
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Could not connect to LiveKit.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void connect();
+    return () => { cancelled = true; };
   }, [roomName, publisherIdentity, getToken]);
 
 

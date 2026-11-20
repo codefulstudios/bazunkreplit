@@ -35,7 +35,7 @@ export function LoginPage() {
             {/* Header */}
             <div className="bg-gradient-to-r from-[#3B4FD8] to-[#1E3A8A] px-8 py-8 text-center">
               <div className="mb-1">
-                <img src="/bazunk-logo.png" alt="Bazunk" className="h-10 w-auto object-contain mx-auto rounded bg-white px-3 py-1" />
+                <img src="/bazunk-brand-dark.png" alt="Bazunk" className="h-10 w-auto object-contain mx-auto rounded bg-white px-3 py-1" />
               </div>
               <p className="text-blue-200 text-sm mt-1">Sign in to your account</p>
             </div>

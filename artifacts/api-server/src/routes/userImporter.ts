@@ -1,4 +1,12 @@
 import { browseShopify } from "../lib/shopifyPublic.js";
+import { marketplaceDataRequest } from "../lib/data-platform-client.js";
+
+async function browseShopifyForMarketplace(url:string):ReturnType<typeof browseShopify>{
+ if(!process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY||!process.env.BAZUNK_DATA_PLATFORM_URL)return browseShopify(url);
+ const result=await marketplaceDataRequest("/v1/shopify/import-preview",{url});
+ if(!result||typeof result!=="object"||!Array.isArray((result as {items?:unknown}).items))throw new Error("Invalid Data Platform Shopify preview");
+ return result as Awaited<ReturnType<typeof browseShopify>>;
+}
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
@@ -185,9 +193,10 @@ router.post("/user/import-amazon", async (req, res) => {
   const destination = canonicalEbayDestination(req.body.category ?? "other", req.body.subcategory);
   if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
   const { category, subcategory } = destination;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const ecoFriendly = req.body.ecoFriendly === true;
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)    { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)    { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length){ res.status(400).json({ error: "products array required" }); return; }
 
   // Look up seller name
@@ -226,6 +235,7 @@ router.post("/user/import-amazon", async (req, res) => {
       ? buildAmazonDescription(details, p.price_gbp)
       : [p.title, "", "Product sourced from Amazon UK.", "", `Original Amazon UK price: £${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = details?.image ?? p.image ?? null;
+    const shouldTagEco = ecoFriendly || category === 'eco-friendly' || /\beco[ -]?friendly\b/i.test(richTitle);
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
@@ -234,7 +244,7 @@ router.post("/user/import-amazon", async (req, res) => {
         ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, 'GBP', ${category}, ${subcategory},
         ${description},
         'new', ${image}, ${sellerEmail}, ${sellerName},
-        ${specs}, 'active', NOW(), NOW()
+        ${specs}, ${shouldTagEco ? 'eco-friendly' : ''}, 'active', NOW(), NOW()
       )
     `);
     inserted++;
@@ -360,9 +370,9 @@ router.post("/user/import-ebay", async (req, res) => {
   const shippingAmt = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
   const category    = (req.body.category    as string) || "other";
   const subcategory = (req.body.subcategory as string) || null;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)     { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)     { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length) { res.status(400).json({ error: "products array required" }); return; }
 
   const sellerRow = await db.execute(
@@ -451,7 +461,7 @@ router.post("/user/import-ebay", async (req, res) => {
 router.post("/user/shopify-public/preview", async (req,res)=>{
  const email=await requestEmail(req);if(!email){res.status(401).json({error:"Sign in to import Shopify products."});return;}
  try{
-  res.json(await browseShopify(String(req.body.url ?? "")));
+  res.json(await browseShopifyForMarketplace(String(req.body.url ?? "")));
  }catch(e){res.status(422).json({error:e instanceof Error?e.message:"Could not read this Shopify storefront."});}
 });
 
@@ -477,7 +487,7 @@ router.post("/user/import-shopify-public", async (req, res) => {
   const products: Awaited<ReturnType<typeof browseShopify>>["items"] = [];
   try {
   for (const raw of items) {
-   const result = await browseShopify(String(raw.sourceUrl ?? ""));
+   const result = await browseShopifyForMarketplace(String(raw.sourceUrl ?? ""));
    if (result.kind !== "product" || result.items[0]?.externalId !== String(raw.externalId)) { res.status(400).json({error:"Invalid Shopify product selection"}); return; }
    products.push(result.items[0]);
   }

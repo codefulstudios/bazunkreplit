@@ -6,6 +6,7 @@ import { Link } from "wouter";
 import {
   Camera,
   ShoppingCart,
+  Gavel,
   Layers,
   Newspaper,
   Store,
@@ -24,10 +25,12 @@ import {
   Info,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { CompactPageHero } from "@/components/CompactPageHero";
 import { Footer } from "@/components/Footer";
 import { useCurrency } from "@/context/CurrencyContext";
 
 const SELL_OPTIONS = [
+  { id:"bulk-import",title:"Bulk Import",description:"Upload a CSV to create multiple product listings with a preview before publishing.",icon:Layers,gradient:"from-indigo-500 to-purple-600",cta:"Import CSV",ctaColor:"text-indigo-600",href:"/sell/import",badge:"NEW" },
   {
     id:"snap-sell",title:"Snap & Sell",
     description:"Take a photo or scan a barcode to start an editable listing with AI-assisted details.",
@@ -43,6 +46,17 @@ const SELL_OPTIONS = [
     cta: "Get started",
     ctaColor: "text-[#4A5CE8]",
     href: "/sell/direct",
+    badge: null,
+  },
+  {
+    id: "auction",
+    title: "Auctions",
+    description: "Let buyers compete with timed bidding and discover the best selling price.",
+    icon: Gavel,
+    gradient: "from-orange-500 to-amber-500",
+    cta: "Create auction",
+    ctaColor: "text-orange-600",
+    href: "/auctions/create",
     badge: null,
   },
   {
@@ -110,7 +124,7 @@ const STRIPE_RATE = 0.029;
 const STRIPE_FIXED = 0.30;
 
 function useMktRate(rawSettings: Record<string, string>) {
-  return (parseFloat(rawSettings["fee_rate_default"] ?? "8") || 8) / 100;
+  return (parseFloat(rawSettings["fee_rate_default"] ?? "5") || 5) / 100;
 }
 
 function buildFeeRows(mktRatePct: number) {
@@ -161,14 +175,14 @@ function FeeCalculator() {
   const rawSettings = useRawSettings();
   const businessRate = useMktRate(rawSettings);
   const businessRatePct = businessRate * 100;
-  const buyerPct = (parseFloat(rawSettings["buyer_protection_rate"] ?? rawSettings["buyer_protection_percent"] ?? "5") || 5) / 100;
-  const defaultFixed: Record<string, number> = { GBP: 0.70, USD: 0.89, EUR: 1.00, AUD: 1.00, CAD: 1.00, NZD: 1.00, CHF: 1.00 };
+  const buyerPct = (parseFloat(rawSettings["buyer_protection_percent"] ?? "6") || 6) / 100;
+  const defaultFixed: Record<string, number> = { GBP: 1.00, USD: 1.00, EUR: 1.00, AUD: 1.00, CAD: 1.00, NZD: 1.00, CHF: 1.00 };
   const fixedSetting = rawSettings[`buyer_protection_fixed_${currency.code.toLowerCase()}`] ?? (currency.code === "GBP" ? rawSettings["buyer_protection_fixed"] : undefined);
   const buyerFixed = fixedSetting !== undefined && Number.isFinite(Number(fixedSetting)) ? Math.max(0, Number(fixedSetting)) : defaultFixed[currency.code] ?? 1;
   const [amount, setAmount] = useState("50");
   const [sellerType, setSellerType] = useState<"private"|"business">("private");
   const val = Math.max(0, parseFloat(amount) || 0);
-  const buyerProtection = sellerType === "private" ? val * buyerPct + (val > 0 ? buyerFixed : 0) : 0;
+  const buyerProtection = val > 0 ? val * buyerPct + buyerFixed : 0;
   const buyerPays = val + buyerProtection;
   const sellerFee = sellerType === "business" ? val * businessRate : 0;
   const sellerReceives = Math.max(0, val - sellerFee);
@@ -212,53 +226,40 @@ export function SellPage() {
   const mktRatePct = Math.round(mktRate * 100);
   const FEE_ROWS = buildFeeRows(mktRatePct);
 
-  const visibleOptions = SELL_OPTIONS.filter(option => ["direct-sale","create-bundle","open-store"].includes(option.id) && (!featureForHref(option.href) || isFeatureEnabled(rawSettings, featureForHref(option.href)!)));
+  const visibleOptions = SELL_OPTIONS.filter(option => ["direct-sale","auction","create-bundle","classified-ads","open-store"].includes(option.id) && (!featureForHref(option.href) || isFeatureEnabled(rawSettings, featureForHref(option.href)!)));
   const art: Record<string,{emoji:string;bg:string;caption:string}> = {
     "direct-sale": {emoji:"👟 📱 ✨",bg:"from-orange-500 via-amber-400 to-pink-500",caption:"Quick & easy · Most popular"},
+    "auction": {emoji:"🔨 ⏱️ 💰",bg:"from-amber-500 via-orange-500 to-rose-500",caption:"Timed bidding · More excitement"},
+    "classified-ads": {emoji:"📣 📰 📍",bg:"from-cyan-500 via-sky-500 to-indigo-600",caption:"Local listings · Services & more"},
     "create-bundle": {emoji:"📦 🎁 💝",bg:"from-purple-600 via-fuchsia-500 to-indigo-600",caption:"Save time · Bigger sales"},
     "open-store": {emoji:"🏪 📦 🌟",bg:"from-blue-600 via-cyan-500 to-blue-700",caption:"Build your brand · Grow your business"}
   };
   return (
-    <div className="min-h-screen bg-[#03152d] text-white flex flex-col">
+    <div className="sell-page min-h-screen bg-[#f2f5fb] text-[#10213e] flex flex-col">
       <Navbar />
       <main className="flex-1">
-        <section className="relative overflow-hidden border-b border-blue-400/30 bg-gradient-to-r from-[#063bd4] via-[#174aff] to-[#b318db]">
-          <div className="absolute -top-20 right-16 h-72 w-72 rounded-full bg-pink-400/40 blur-3xl" />
-          <div className="absolute bottom-0 left-1/3 h-40 w-64 rounded-full bg-cyan-400/30 blur-3xl" />
-          <div className="relative mx-auto max-w-7xl px-5 py-9 md:py-14 grid gap-5 md:grid-cols-[1fr_1fr] items-center">
-            <div>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.02] drop-shadow-lg">Start Selling<br/><span className="text-[#ff9b28] drop-shadow-[0_2px_12px_rgba(255,130,0,0.45)]">Today!</span></h1>
-              <p className="mt-4 max-w-lg text-lg md:text-xl font-semibold text-white">Turn your items into cash. It's free, simple and takes just minutes!</p>
-              <div className="mt-6 flex flex-wrap gap-3 text-xs md:text-sm font-bold">
-                {["✓ No seller fees for private sellers","✓ Reach buyers worldwide","✓ Safe & secure marketplace"].map(t=><span key={t} className="rounded-full bg-[#001b64]/55 border border-white/20 px-3 py-2 text-white">{t}</span>)}
-              </div>
-            </div>
-            <div className="relative flex justify-center items-center min-h-48 md:min-h-64">
-              <div className="absolute inset-4 rounded-[3rem] bg-gradient-to-br from-yellow-300/35 via-pink-400/25 to-cyan-400/30 blur-2xl" />
-              <div className="relative text-center rotate-[-5deg]">
-                <div className="text-7xl md:text-8xl drop-shadow-2xl">📦 🎮 👟</div>
-                <div className="mt-3 inline-block rotate-6 rounded-2xl border-4 border-yellow-300 bg-fuchsia-600 px-7 py-3 text-2xl md:text-3xl font-black shadow-xl">SELL ANYTHING! ✨</div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <CompactPageHero kind="sell" eyebrow="Selling" title="Start Selling Today!" description="Turn your items into cash. It's free, simple and takes just minutes." art="📦">
+          <span className="bz-hero-chip">✓ No seller fees for private sellers</span>
+          <span className="bz-hero-chip">✓ Reach buyers worldwide</span>
+          <span className="bz-hero-chip">✓ Safe & secure marketplace</span>
+        </CompactPageHero>
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-5">
           <section>
-            <h2 className="text-center text-3xl md:text-4xl font-black">Choose <span className="text-yellow-300">How You Want to Sell</span></h2>
-            <p className="text-center text-white/85 mt-1 mb-5">Different ways to sell for every item and every style.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <h2 className="text-center text-3xl md:text-4xl font-black text-[#10213e]">Choose <span className="text-orange-600">How You Want to Sell</span></h2>
+            <p className="text-center text-slate-700 mt-1 mb-5">Different ways to sell for every item and every style.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {visibleOptions.map(option => {
                 const artwork=art[option.id];
-                return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border-2 border-white/25 bg-[#0d2550] hover:border-yellow-300 hover:-translate-y-1 transition-all shadow-xl" data-testid={`card-sell-option-${option.id}`}>
-                  <div className={`h-36 sm:h-44 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
-                    <span className="text-6xl sm:text-7xl drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
+                return <Link key={option.id} href={option.href} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white hover:border-orange-400 hover:-translate-y-1 transition-all shadow-md" data-testid={`card-sell-option-${option.id}`}>
+                  <div className={`bz-sell-option-art h-40 sm:h-52 flex items-center justify-center bg-gradient-to-br ${artwork.bg} relative`}>
+                    <span className="bz-sell-option-emoji inline-flex items-center justify-center drop-shadow-2xl group-hover:scale-110 transition-transform">{artwork.emoji}</span>
                     {option.badge && <span className="absolute right-3 top-3 rounded-lg bg-green-400 px-3 py-1 text-[#002e24] font-black rotate-6">{option.badge}</span>}
                   </div>
-                  <div className="p-5 bg-gradient-to-br from-[#102c57] to-[#08172f]">
-                    <div className="flex items-center justify-between"><h3 className="text-2xl font-black">{option.title}</h3><span className="rounded-full bg-orange-500 p-2 text-white"><ArrowRight className="w-5 h-5"/></span></div>
-                    <p className="text-sm text-white/90 mt-2 min-h-10">{option.description}</p>
-                    <div className="mt-3 text-xs font-bold text-yellow-300">✓ {artwork.caption}</div>
+                  <div className="p-5 bg-white text-[#10213e]">
+                    <div className="flex items-center justify-between"><h3 className="text-2xl font-black text-[#10213e]">{option.title}</h3><span className="rounded-full bg-orange-500 p-2 text-white"><ArrowRight className="w-5 h-5"/></span></div>
+                    <p className="text-sm text-slate-700 mt-2 min-h-10">{option.description}</p>
+                    <div className="mt-3 text-xs font-bold text-orange-700">✓ {artwork.caption}</div>
                   </div>
                 </Link>;
               })}
@@ -266,17 +267,17 @@ export function SellPage() {
           </section>
 
           <section className="grid lg:grid-cols-2 gap-3" aria-label="Seller fees and calculator">
-            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 text-[#10213e] shadow-sm">
               <span className="inline-block rounded-full bg-orange-500 px-3 py-1 text-xs font-black">⚡ Transparent Pricing</span>
               <h2 className="text-2xl md:text-3xl font-black mt-3">Seller Fees — No Hidden Costs</h2>
               <p className="mt-2 text-sm text-white/85">Private sellers list and sell free. Business sellers pay their configured fee when an item sells. No invoices, no surprises.</p>
-              <div className="mt-4 rounded-xl border border-blue-400/25 overflow-hidden">
-                {FEE_ROWS.map(row=>{const Icon=row.icon;return <div key={row.label} className="flex gap-3 items-center justify-between border-b border-white/10 bg-[#041c3b]/80 p-3 last:border-b-0"><span className="flex items-center gap-3"><span className="rounded-lg bg-blue-600 p-2"><Icon className="w-5 h-5 text-white"/></span><span><strong className="block text-sm text-white">{row.label}</strong><small className="text-white/75">{row.sub}</small></span></span><strong className="text-emerald-300 text-sm text-right">{row.value}</strong></div>})}
+              <div className="mt-4 rounded-xl border border-slate-200 overflow-hidden">
+                {FEE_ROWS.map(row=>{const Icon=row.icon;return <div key={row.label} className="flex gap-3 items-center justify-between border-b border-slate-200 bg-slate-50 p-3 last:border-b-0"><span className="flex items-center gap-3"><span className="rounded-lg bg-blue-600 p-2"><Icon className="w-5 h-5 text-white"/></span><span><strong className="block text-sm text-[#10213e]">{row.label}</strong><small className="text-slate-600">{row.sub}</small></span></span><strong className="text-emerald-700 text-sm text-right">{row.value}</strong></div>})}
               </div>
-              <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs font-bold text-white/90"><span>✓ No invoices</span><span>✓ No monthly fees</span><span>✓ No hidden charges</span></div>
-              <p className="mt-3 text-xs text-white/70">Business fees vary by category. Exact fees appear before checkout.</p>
+              <div className="mt-4 flex flex-wrap justify-between gap-2 text-xs font-bold text-slate-700"><span>✓ No invoices</span><span>✓ No monthly fees</span><span>✓ No hidden charges</span></div>
+              <p className="mt-3 text-xs text-slate-600">Business fees vary by category. Exact fees appear before checkout.</p>
             </div>
-            <div className="rounded-2xl border border-blue-400/40 bg-gradient-to-br from-[#062a54] to-[#061a34] p-4 sm:p-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 text-[#10213e] shadow-sm">
               <h2 className="text-xl font-black mb-3">🧮 Fee Calculator</h2>
               <div className="sell-bright-calculator"><FeeCalculator /></div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 p-4">
@@ -286,9 +287,9 @@ export function SellPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-blue-400/40 bg-gradient-to-r from-[#04264e] to-[#061b3c] p-5">
-            <h2 className="text-center text-2xl md:text-3xl font-black">Why Sellers <span className="text-yellow-300">Choose Bazunk</span></h2>
-            <p className="text-center text-white/85 text-sm mb-5">Everything you need to succeed as a seller.</p>
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 text-[#10213e] shadow-sm">
+            <h2 className="text-center text-2xl md:text-3xl font-black">Why Sellers <span className="text-orange-600">Choose Bazunk</span></h2>
+            <p className="text-center text-slate-700 text-sm mb-5">Everything you need to succeed as a seller.</p>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{WHY_FEATURES.map((f,i)=>{const Icon=f.icon;return <div key={f.title} className="flex items-start gap-3"><span className={`shrink-0 rounded-xl p-3 ${["bg-fuchsia-600","bg-blue-600","bg-orange-500","bg-emerald-500"][i]}`}><Icon className="w-6 h-6 text-white"/></span><div><h3 className="font-black text-sm">{f.title}</h3><p className="text-xs text-white/85 mt-1">{f.desc}</p></div></div>})}</div>
           </section>
           <section className="relative overflow-hidden rounded-2xl border-2 border-purple-400 bg-gradient-to-r from-[#1256f2] via-[#4e20e8] to-[#f02dc1] p-5 md:p-7 flex flex-col md:flex-row justify-between gap-5 items-center">

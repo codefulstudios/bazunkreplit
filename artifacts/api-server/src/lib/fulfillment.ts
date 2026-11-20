@@ -1,4 +1,5 @@
 import { getFeeSnapshot } from "./checkoutQuote.js";
+import { recordCashbackForSession } from "./cashback.js";
 import { awardReferralMilestone } from "./referrals.js";
 import { db, creditTransactionsTable } from "@workspace/db";
 import { recordCreditEconomy } from "./creditEconomy.js";
@@ -40,6 +41,9 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
   if (!buyerEmail) throw new Error(`Session ${sessionId} has no buyer email`);
   if (expectedEmail && buyerEmail !== expectedEmail) return { status: "email_mismatch", orders: 0 };
 
+  const shipping = session.collected_information?.shipping_details;
+  const deliveryAddress = shipping?.address ? [shipping.name,shipping.address.line1,shipping.address.line2,shipping.address.city,shipping.address.state,shipping.address.postal_code,shipping.address.country].filter(Boolean).join("\n") : null;
+  if (session.metadata?.mobileOwner && !deliveryAddress) throw new Error("Mobile checkout is missing its delivery address");
   const claimId = `cart-${sessionId}`;
   const claimed = await db
     .insert(creditTransactionsTable)
@@ -106,9 +110,9 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
         const buyerTotal = frozen ? frozen.buyerTotalMinor/100 : unitPrice+protectionShare;
         await db.execute(sql`
           INSERT INTO orders (id, buyer_email, seller_email, item_title, item_image, price, status,
-                              stripe_session_id, line_no, buyer_protection_fee, seller_fee, seller_type, seller_fee_rate, seller_net, delivery_fee, buyer_total, fee_policy, created_at, updated_at)
+                              stripe_session_id, line_no, buyer_protection_fee, seller_fee, seller_type, seller_fee_rate, seller_net, delivery_fee, buyer_total, fee_policy, address, created_at, updated_at)
           VALUES (${orderId}, ${buyerEmail}, ${seller}, ${row.title as string}, ${(row.image as string | null) ?? null},
-                  ${unitPrice}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, NOW(), NOW())
+                  ${unitPrice}, 'confirmed', ${sessionId}, ${lineNo}, ${protectionShare}, ${sellerFee}, ${sellerType}, ${businessRate}, ${net}, ${deliveryShare}, ${buyerTotal}, ${feeSnapshot?.policy ?? "legacy"}, ${deliveryAddress}, NOW(), NOW())
           ON CONFLICT (stripe_session_id, line_no) DO NOTHING
         `);
       }
@@ -151,6 +155,10 @@ export async function fulfillCartSession(sessionId: string, expectedEmail?: stri
       for (const [email, items] of sellerEmailItems) void sendSellerSaleNotification({ email, items, buyerEmail });
     }
 
+    // Order confirmation must not fail if the optional cashback ledger is unavailable.
+    // Admin reconciliation can repair missing entries from Stripe-verified sessions.
+    try { await recordCashbackForSession(sessionId); }
+    catch (err) { logger.error({err,sessionId},"Cashback accrual deferred for reconciliation"); }
     return { status: "fulfilled", orders: lineNo };
   } catch (err) {
     // Release the claim so a retry (webhook redelivery or page refresh) can finish the job.

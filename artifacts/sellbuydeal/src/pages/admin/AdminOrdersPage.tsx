@@ -3,6 +3,7 @@ import { Search,RefreshCw,Package,Truck,ShieldCheck,RotateCcw,XCircle,ChevronRig
 import { AdminLayout } from "./AdminLayout";
 import { CheckoutRecoveryAdmin } from "@/components/admin/CheckoutRecoveryAdmin";
 import { AdminBulkSelection } from "@/components/admin/AdminBulkSelection";
+import { AdminManagementHeader, AdminStatusTabs, AdminMetric } from "@/components/admin/AdminUi";
 import { useAdmin } from "@/context/AdminContext";
 
 type Order=Record<string,any>; const statuses=["","pending","confirmed","preparing","shipped","out_for_delivery","delivered","cancelled","refunded"];
@@ -46,9 +47,25 @@ export function AdminOrdersPage(){const {authFetch}=useAdmin();const [orders,set
  const visibleOrders=orders.filter(o=>paymentFilter==="all"||String(o.payment_status||"unknown")===paymentFilter);
  const visibleOrderIds=visibleOrders.map(o=>String(o.id));
  const active=orders.filter(o=>!["delivered","cancelled","refunded"].includes(o.status)).length, paid=orders.filter(o=>o.payment_status==="paid").length, disputes=orders.filter(o=>o.dispute_status&&!["closed","resolved_no_action","resolved_refund"].includes(o.dispute_status)).length, deliveryExceptions=orders.filter(o=>["RETURNED","FAILURE"].includes(String(o.tracking_status||"").toUpperCase())).length;
- return <AdminLayout><CheckoutRecoveryAdmin /><div className="admin-orders-page space-y-5"><div className="flex items-center justify-between"><div><h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Orders</h1><p className="text-sm text-gray-500">Payments, fulfilment, tracking, Buyer Protection, disputes, cancellations and refunds.</p></div><div className="flex gap-2"><button onClick={()=>{setTestOpen(true);setTestError("")}} className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm font-bold">Create Test Sale</button><button onClick={load} className="flex gap-2 items-center text-sm font-bold"><RefreshCw className={`w-4 h-4 ${loading?'animate-spin':''}`}/>Refresh</button></div></div>
+ return <AdminLayout><div className="admin-orders-page wp-management-page wp-orders-page space-y-5">
+ <AdminManagementHeader title="Orders" description="Manage purchases, payment status, fulfilment, delivery, refunds and Buyer Protection." actions={<>
+  <button type="button" onClick={()=>{setTestOpen(true);setTestError("")}} className="wp-action wp-action-secondary">Create test sale</button>
+  <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-primary"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/>Refresh orders</button>
+ </>}/>
+ <AdminStatusTabs label="Order fulfilment status" value={status} onChange={x=>{setStatus(x);setSelectedOrderIds([])}} options={[
+  {value:"",label:"All orders"},{value:"pending",label:"Pending"},{value:"confirmed",label:"Confirmed"},
+  {value:"preparing",label:"Processing"},{value:"shipped",label:"Shipped"},{value:"delivered",label:"Delivered"},
+  {value:"cancelled",label:"Cancelled"},{value:"refunded",label:"Refunded"}
+ ]}/>
  {listError&&<div role="alert" className="bg-red-50 text-red-700 p-3 rounded-xl text-sm">{listError}</div>}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[["Orders",orders.length,Package],["Active fulfilment",active,Truck],["Paid",paid,CreditCard],["Open disputes",disputes,ShieldCheck],["Delivery problems",deliveryExceptions,Truck]].map(([a,b,I]:any)=><div className="bg-white border rounded-2xl p-4" key={a}><I className="w-5 h-5 text-orange-500"/><p className="text-2xl font-black mt-2">{b}</p><p className="text-xs text-gray-500">{a}</p></div>)}</div>
+ <section aria-label="Order status overview" className="wp-management-metrics grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+  <AdminMetric label="Orders loaded" value={orders.length} icon={Package}/>
+  <AdminMetric label="Active fulfilment" value={active} icon={Truck} tone="blue"/>
+  <AdminMetric label="Paid orders" value={paid} icon={CreditCard} tone="green"/>
+  <AdminMetric label="Open disputes" value={disputes} icon={ShieldCheck} tone="orange"/>
+  <AdminMetric label="Delivery exceptions" value={deliveryExceptions} icon={Truck} tone="violet"/>
+ </section>
+ <CheckoutRecoveryAdmin />
  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-[#172541]">
     <label className="text-sm font-bold text-slate-900 dark:text-white">Payment status
       <select value={paymentFilter} onChange={e=>{setPaymentFilter(e.target.value);setSelectedOrderIds([]);}}
@@ -62,7 +79,7 @@ export function AdminOrdersPage(){const {authFetch}=useAdmin();const [orders,set
     rows={visibleOrders.map(o=>({id:String(o.id),cells:[o.item_title,o.buyer_email,o.seller_email,o.payment_status,o.status,o.buyer_total??o.price,o.created_at]}))}
     columns={["Item","Buyer","Seller","Payment","Fulfilment","Total","Created"]} filename="bazunk-admin-selected-orders" onClear={()=>setSelectedOrderIds([])}/>
  <div className="bg-white border rounded-2xl p-3 flex gap-3"><div className="relative flex-1"><Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400"/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Order ID, buyer, seller, product or tracking…" className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm"/></div><select value={status} aria-label="Filter fulfilment status" onChange={e=>{setStatus(e.target.value);setSelectedOrderIds([]);}} className="border rounded-xl px-3 text-sm">{statuses.map(s=><option value={s} key={s}>{s?s.replaceAll('_',' '):'All statuses'}</option>)}</select></div>
- <div className="bg-white border rounded-2xl overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-gray-50 text-xs text-gray-500"><tr><th className="px-3 py-3"><input type="checkbox" aria-label="Select all filtered orders" className="h-4 w-4"
+ <div className="wp-management-table-card bg-white border rounded-xl overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-gray-50 text-xs text-gray-500"><tr><th className="px-3 py-3"><input type="checkbox" aria-label="Select all filtered orders" className="h-4 w-4"
    checked={visibleOrderIds.length>0&&visibleOrderIds.every(id=>selectedOrderIds.includes(id))}
    onChange={e=>setSelectedOrderIds(e.target.checked?visibleOrderIds:[])}/></th>
  {["Order","Item","Buyer / Seller","Payment","Dispatch","Protection","Total",""] .map(x=><th className="text-left px-4 py-3" key={x}>{x}</th>)}</tr></thead><tbody>{visibleOrders.map(o=><tr key={o.id} className={`border-t hover:bg-gray-50 ${["RETURNED","FAILURE"].includes(String(o.tracking_status||"").toUpperCase())?"bg-red-50":""}`}><td className="px-3 py-2"><input type="checkbox" aria-label={`Select order ${o.id}`} className="h-4 w-4"

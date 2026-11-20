@@ -1,3 +1,5 @@
+import "./BazunkLiveStudio.css";
+import { CashbackPage } from "@/pages/CashbackPage";
 import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
 import { SellerTrustInsights } from "@/components/SellerTrustInsights";
 import { SellerPricingInsightsPanel } from "@/components/SellerPricingInsightsPanel";
@@ -10,13 +12,13 @@ import "./../styles/dashboard-submenus-theme.css";
 import "./../styles/dashboard-overview-redesign.css";
 import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
-import { useAuth as useClerkAuth } from "@clerk/react";
+import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, Bell, ShoppingBag, BarChart2, Heart, Search, MessageSquare,
+  LayoutDashboard, Bell, ShoppingBag, BarChart2, BarChart3, Video, Heart, Search, MessageSquare,
   ArrowUp, Home as HomeIcon, Crown,
-  Coins, Megaphone, User, Shield, ShieldCheck, MapPin, CreditCard, Banknote, Zap, Store,
+  Coins, Megaphone, User, Shield, ShieldCheck, Lock, MapPin, CreditCard, Banknote, Zap, Store,
   Tag, Eye, Plus, TrendingUp, Trophy, Gift, ChevronRight, LogOut,
   ShoppingCart, Trash2, TrendingDown, Bell as BellIcon, BellOff, ExternalLink,
   ArrowRight, CheckCheck, Check, CheckCircle, CheckCircle2, Flame, Star,
@@ -57,6 +59,13 @@ type SidebarSubItem = { id: string; label: string; icon: React.ElementType; icon
 type SidebarCategory = {
   id: string; label: string; icon: React.ElementType;
   gradient: string; bg: string; items: SidebarSubItem[];
+};
+
+// Dashboard rail entries that are full pages, not inline dashboard sections.
+// Both desktop flyout and mobile accordion MUST use the same navigation.
+const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
+  "open-importers": "/importers",
+  importers: "/importers",
 };
 
 const SIDEBAR_CATEGORIES: SidebarCategory[] = [
@@ -218,7 +227,7 @@ const MOCK_SALES: { id: string; title: string; price: number; date: string; stat
 function BuyerProtectionDashSection() {
   const [, setLocation] = useLocation();
   return (
-    <div className="flex-1 p-6 max-w-3xl space-y-6">
+    <div className="bz-protection-bright flex-1 p-5 space-y-4">
       <div>
         <h2 className="text-2xl font-black text-gray-900">Buyer Protection</h2>
         <p className="text-gray-500 text-sm mt-1">Every purchase on Bazunk is fully covered.</p>
@@ -577,6 +586,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }:
               <button onClick={openRevise} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <Pencil className="w-3.5 h-3.5 text-[#4A5CE8]" /> Revise Listing
               </button>
+              {listing.status === "active" && <Link href={`/trust-proof?listing=${listing.id}`} onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50"><ShieldCheck className="h-4 w-4"/> TrustProof evidence</Link>}
               <button onClick={() => { setMenuOpen(false); setPromoteOpen(true); }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <TrendingUp className="w-3.5 h-3.5 text-[#F26B21]" /> Promote Listing
               </button>
@@ -1095,40 +1105,18 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
 
   return (
     <div className="bazunk-overview-v2 flex-1 p-4 sm:p-6 space-y-6">
-      <div className="overview-hero-v2">
-        <div className="overview-hero-copy">
-          <span className="overview-hero-wave" aria-hidden="true">👋</span>
-          <div><h1>Welcome back, {user.name?.split(" ")[0] || user.username || "Seller"}!</h1>
-          <p>Manage your marketplace activity, grow your sales, and reach more buyers.</p></div>
+      <div className="bz-arcade-heading">
+        <div className="bz-arcade-title">
+          <h1>My Dashboard</h1>
+          <p>Welcome back, <strong>{user.name?.split(" ")[0] || user.username || "Seller"}</strong> 👋</p>
         </div>
-        <div className="overview-hero-art" aria-hidden="true"><span>🏬</span><span>📦</span><span>✨</span><span>↗</span></div>
-      </div>
-      {/* Header */}
-      <div className="overview-original-heading flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Manage your account, orders, and marketplace activity</p>
-        </div>
-        <div className="hidden lg:flex items-center gap-2">
-          <a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4A5CE8]/10 hover:bg-[#4A5CE8]/20 transition-colors text-[#4A5CE8] border border-[#4A5CE8]/20 text-sm font-semibold" title="Open Bazunk Data Platform">
-            <ExternalLink className="w-4 h-4" /> Bazunk Data Platform
-          </a>
-          <Link href="/cashback" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-sm font-semibold"><Gift className="w-4 h-4" /> Cashback</Link>
-          <Link href="/rewards" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F26B21]/10 hover:bg-[#F26B21]/20 transition-colors text-[#F26B21] border border-[#F26B21]/20 text-sm font-semibold">
-            <Gift className="w-4 h-4" /> Rewards
-          </Link>
-          <Link href="/promotions" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 transition-colors text-[#7C3AED] border border-[#7C3AED]/20 text-sm font-semibold">
-            <Megaphone className="w-4 h-4" /> Promotions
-          </Link>
-          <Link href="/credits" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F59E0B] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm" data-testid="button-buy-credits">
-            <Coins className="w-4 h-4" /> Buy Credits
-          </Link>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold">
-            <Tag className="w-4 h-4" /> £{user.balance.toFixed(2)}
-          </div>
+        <div className="bz-arcade-actions">
+          <Link href="/sell/direct" className="bz-arcade-action bz-arcade-blue"><Plus size={19}/> List an Item</Link>
+          <button type="button" onClick={() => onNavigate("go-live")} className="bz-arcade-action bz-arcade-red"><Radio size={19}/> Go Live</button>
+          <button type="button" onClick={() => onNavigate("my-auctions")} className="bz-arcade-action bz-arcade-orange"><Gavel size={19}/> Start an Auction</button>
+          <button type="button" onClick={() => onNavigate("my-flash-sales")} className="bz-arcade-action bz-arcade-light"><Zap size={19}/> Flash Deals</button>
         </div>
       </div>
-
       {/* Stats row */}
       <div className="overview-stat-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* User card */}
@@ -1210,14 +1198,28 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
           <div className="overview-new-actions">
             <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button type="button" onClick={()=>onNavigate("my-store")} className="overview-new-action action-blue"><Store className="w-6 h-6"/><span><b>Manage Store</b><small>Storefront and settings</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("my-auctions")} className="overview-new-action action-orange"><Gavel className="w-6 h-6"/><span><b>Start an Auction</b><small>Manage your auctions</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("seller-analytics")} className="overview-new-action action-blue"><BarChart2 className="w-6 h-6"/><span><b>Analytics</b><small>Track selling performance</small></span><ChevronRight className="w-4 h-4"/></button>
             <Link href="/sell/snap" className="overview-new-action action-pink"><Camera className="w-6 h-6"/><span><b>Snap & Sell</b><small>Photo / barcode assistant</small></span><ChevronRight className="w-4 h-4"/></Link>
-            <button onClick={()=>onNavigate("importers")} className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></button>
+            <Link href="/importers" className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></Link>
             <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
             <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
           </div>
           <button onClick={()=>onNavigate("promotions")} className="overview-new-promo"><Crown className="w-9 h-9"/><span><b>Boost Your Listings</b><small>Use Promotions to reach more buyers.</small></span><Megaphone className="w-9 h-9"/></button>
         </section>
       </div>
+
+      <section className="bz-arcade-todo overview-section-card" aria-label="To Do">
+        <div className="bz-arcade-todo-header"><h2><Check size={22}/> To Do</h2><span>Marketplace checklist</span></div>
+        <div className="bz-arcade-todo-items">
+          {myListings.length === 0 && <button type="button" onClick={()=>onNavigate("my-listings")}><Package size={18}/><span>Create your first listing</span><ChevronRight size={17}/></button>}
+          {myListings.some(l=>l.status==="draft") && <button type="button" onClick={()=>onNavigate("my-listings")}><Tag size={18}/><span>Review draft listings</span><ChevronRight size={17}/></button>}
+          {overviewOrders.sold > 0 && <button type="button" onClick={()=>onNavigate("sales")}><ShoppingBag size={18}/><span>Review seller orders and fulfilment</span><ChevronRight size={17}/></button>}
+          <button type="button" onClick={()=>onNavigate("offers")}><Handshake size={18}/><span>Check offers</span><ChevronRight size={17}/></button>
+          <button type="button" onClick={()=>onNavigate("my-auctions")}><Gavel size={18}/><span>Review your auctions</span><ChevronRight size={17}/></button>
+        </div>
+      </section>
 
       {/* Referral rewards — deliberately prominent on the dashboard */}
       <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#F26B21] via-[#E85D2A] to-[#4A5CE8] text-white shadow-sm">
@@ -1270,7 +1272,7 @@ function OverviewContent({ user, onNavigate, recentEvents, activityLoading, acti
           </div>
         ) : (
           <div className="space-y-1">
-            {myListings.map((listing) => (
+            {myListings.slice(0,3).map((listing) => (
               <div key={listing.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-xl px-1 -mx-1 transition-colors group">
                 <Link href={`/listing/${listing.publicId ?? listing.id}`} className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 block">
                   {listing.image
@@ -2838,9 +2840,9 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── SETUP ─── */
   if (view === "setup") {
     return (
-      <div className="space-y-5 p-4 sm:p-6">
+      <div className="bz-store-setup space-y-5 p-4 sm:p-6">
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(120deg,#6d28d9,#4338ca 55%,#ec4899)" }}>
+        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(115deg,#0c75db,#0953aa 58%,#f5821b)" }}>
           <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/5" />
           <div className="absolute right-16 bottom-0 w-28 h-28 rounded-full bg-white/5" />
           <div className="relative">
@@ -2901,9 +2903,9 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
           </button>
         <p className="text-xs text-muted-foreground mt-3">Your branding and store details save in this browser. Your public seller profile and listings are managed separately.</p>
         </div>
-        <aside className="rounded-2xl border border-border bg-background overflow-hidden self-start">
+        <aside className="bazunk-store-preview rounded-2xl border border-[#42648b] bg-[#102746] overflow-hidden self-start">
           <div className="p-6" style={{background: setupCover}}><span className="text-xs font-bold !text-white/80 uppercase tracking-widest">Live brand preview</span><div className="w-14 h-14 rounded-2xl bg-black/20 mt-5 flex items-center justify-center !text-white text-2xl font-black">{storeName.trim().charAt(0).toUpperCase() || "B"}</div><h3 className="text-2xl font-black !text-white mt-4 break-words">{storeName.trim() || "Your store starts here"}</h3><p className="text-sm !text-white/80 mt-1">{storeCategory}</p></div>
-          <div className="p-5"><p className="text-sm text-foreground break-words">{storeDesc || "Tell buyers what makes your collection special."}</p><div className="mt-5 space-y-3">{[{label:"Add your store name",done:!!storeName.trim()},{label:"Describe what you sell",done:!!storeDesc.trim()},{label:"Choose your category",done:!!storeCategory}].map(step => <div key={step.label} className="flex items-center gap-2 text-xs text-muted-foreground"><CheckCircle2 className={`w-4 h-4 ${step.done ? "text-emerald-500" : "text-muted-foreground"}`}/>{step.label}</div>)}</div><p className="text-xs text-muted-foreground mt-5 leading-relaxed">After setup, customise your cover, contact details, social links and policies.</p></div>
+          <div className="p-5 !bg-[#102746] !text-white"><p className="text-sm !text-white break-words">{storeDesc || "Tell buyers what makes your collection special."}</p><div className="mt-5 space-y-3">{[{label:"Add your store name",done:!!storeName.trim()},{label:"Describe what you sell",done:!!storeDesc.trim()},{label:"Choose your category",done:!!storeCategory}].map(step => <div key={step.label} className="flex items-center gap-2 text-xs !text-slate-200"><CheckCircle2 className={`w-4 h-4 ${step.done ? "text-emerald-500" : "text-muted-foreground"}`}/>{step.label}</div>)}</div><p className="text-xs !text-slate-200 mt-5 leading-relaxed">After setup, customise your cover, contact details, social links and policies.</p></div>
         </aside>
         </div>
       </div>
@@ -2915,7 +2917,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── EDIT ─── */
   if (view === "edit") {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bz-store-edit bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <button onClick={() => setView("overview")} className="flex items-center gap-1.5 text-sm text-[#4A5CE8] font-semibold mb-1 hover:underline">
@@ -3109,7 +3111,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-5">Store Settings</h3>
                 <p className="text-sm text-muted-foreground mb-4">Manage your selling preferences through the connected account tools.</p>
-                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-violet-400"><Icon className="w-5 h-5 text-violet-500"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
+                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-blue-400"><Icon className="w-5 h-5 text-blue-600"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
 
                 {/* Danger Zone */}
                 <div>
@@ -4351,6 +4353,9 @@ function GoLiveSection() {
   const { getToken } = useClerkAuth();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [error, setError] = useState("");
+  const [startingLive, setStartingLive] = useState(false);
+  const [endingLive, setEndingLive] = useState(false);
+  const [endError, setEndError] = useState("");
   const [, navigate] = useLocation();
   const [featureSettings, setFeatureSettings] = useState<Record<number, { discount?: number; stock?: string }>>({});
   const [myListings, setMyListings] = useState<GoLiveListing[]>([]);
@@ -4382,7 +4387,8 @@ function GoLiveSection() {
     );
   }
 
-  function handleGoLive() {
+  async function handleGoLive() {
+    if (startingLive) return;
     if (!title.trim()) { setError("Please add a session title."); return; }
     if (platform === "youtube") {
       if (!streamUrl.trim()) { setError("Paste the YouTube watch/live URL buyers will see."); return; }
@@ -4395,7 +4401,9 @@ function GoLiveSection() {
     const name = user?.name ?? user?.email ?? "Seller";
     const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const broadcastRoom = platform === "youtube" ? `bazunk-youtube-${Date.now()}` : undefined;
-    const session = goLive({
+    setStartingLive(true);
+    try {
+    const session = await goLive({
       sellerId: user?.email ?? "me",
       sellerName: name,
       sellerInitials: initials,
@@ -4409,21 +4417,42 @@ function GoLiveSection() {
     // YouTube sellers stay in the Bazunk control room. Their browser camera/mic
     // publishes to LiveKit, which relays the encoded stream to YouTube.
     if (platform !== "youtube") navigate(`/live/${session.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the live stream. Please try again.");
+    } finally {
+      setStartingLive(false);
+    }
   }
 
   async function handleEndLive() {
-    if (!mySession) return;
-    if (mySession.platform === "youtube" && mySession.broadcastRoom) {
-      try {
-        const token = await getToken();
-        await fetch("/api/livekit/youtube/stop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ roomName: mySession.broadcastRoom }),
-        });
-      } catch {}
+    if (!mySession || endingLive) return;
+    setEndError("");
+    setEndingLive(true);
+    try {
+      // First end the authoritative public session; preserve the controls if this fails.
+      await endSession(mySession.id);
+      if (mySession.platform === "youtube" && mySession.broadcastRoom) {
+        try {
+          const token = await getToken();
+          if (!token) throw new Error("Sign-in expired.");
+          const response = await fetch("/api/livekit/youtube/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ roomName: mySession.broadcastRoom }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error(data?.error || "YouTube relay could not be stopped.");
+          }
+        } catch (err) {
+          setEndError("Bazunk stream ended, but the YouTube relay could not be confirmed stopped. Check YouTube Studio and stop it there if necessary. " + (err instanceof Error ? err.message : ""));
+        }
+      }
+    } catch (err) {
+      setEndError(err instanceof Error ? err.message : "Could not end the stream. Please retry.");
+    } finally {
+      setEndingLive(false);
     }
-    endSession(mySession.id);
   }
 
   if (mySession) {
@@ -4445,7 +4474,7 @@ function GoLiveSection() {
     return (
       <div className="space-y-4">
         {/* Status bar */}
-        <div className="bg-gradient-to-r from-red-600 via-red-500 to-[#F26B21] rounded-2xl p-5 text-white">
+        <div className="bz-studio-control-header rounded-2xl p-5 text-white">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               <span className="relative flex h-4 w-4 flex-shrink-0">
@@ -4471,9 +4500,9 @@ function GoLiveSection() {
                   <Link2 className="w-3.5 h-3.5" /> My Stream
                 </a>
               )}
-              <button onClick={() => { void handleEndLive(); }}
+              <button disabled={endingLive} aria-busy={endingLive} onClick={() => { void handleEndLive(); }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/25 text-white font-bold text-xs hover:bg-black/35 transition-colors">
-                <X className="w-3.5 h-3.5" /> End
+                <X className="w-3.5 h-3.5" /> {endingLive ? "Ending…" : "End Broadcast"}
               </button>
             </div>
           </div>
@@ -4484,7 +4513,7 @@ function GoLiveSection() {
           </p>
         </div>
 
-        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
+        {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#172f49] p-4 text-white text-sm"><p>{endError}</p><button type="button" disabled={endingLive} onClick={() => void handleEndLive()} className="mt-2 rounded-lg bg-[#008fff] px-4 py-2 font-bold">Retry ending broadcast</button></div>}\n        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
         {mySession.platform === "youtube" && mySession.broadcastRoom && (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -4703,12 +4732,13 @@ function GoLiveSection() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
+    <div className="bz-studio-control bz-studio-setup rounded-2xl p-6" style={{ minHeight: 400 }}>
       <div className="mb-6">
-        <h2 className="font-black text-gray-900 text-lg">Go Live</h2>
+        <h2 className="font-black text-white text-2xl">Creator Studio <span className="text-[#ff7900]">/ Go Live</span></h2>
         <p className="text-sm text-gray-400 mt-1">Stream on your favourite platform and sell directly on Bazunk.</p>
       </div>
 
+      {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#173650] p-3 text-white text-sm mb-4">{endError}</div>}
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -4828,9 +4858,11 @@ function GoLiveSection() {
 
       <button
         onClick={handleGoLive}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-red-500 to-[#F26B21] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
+        disabled={startingLive}
+        aria-busy={startingLive}
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#008fff] to-[#0065d9] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
       >
-        <Radio className="w-5 h-5" /> Go Live Now
+        <Radio className="w-5 h-5" /> {startingLive ? "Registering your live stream…" : "Go Live Now"}
       </button>
       <p className="text-[10px] text-gray-400 text-center mt-3">
         You'll be taken to your live page where buyers can browse and purchase while watching your stream.
@@ -4860,6 +4892,7 @@ const AUCTION_STATUS_COLORS: Record<string, string> = {
 
 function MyAuctionsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<AuctionSummary[]>([]);
@@ -4867,8 +4900,11 @@ function MyAuctionsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-listings?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-listings`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -4935,6 +4971,7 @@ function MyAuctionsSection() {
 
 function MyBidsSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const { formatPrice } = useCurrency();
   const [, setLocation] = useLocation();
   const [auctions, setAuctions] = useState<(AuctionSummary & { my_latest_bid: string })[]>([]);
@@ -4942,8 +4979,11 @@ function MyBidsSection() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    fetch(`/api/auctions/my-bids?email=${encodeURIComponent(user.email)}`)
-      .then(r => r.ok ? r.json() : [])
+    getToken().then(token => {
+      if (!token) throw new Error("Sign in to view your auctions");
+      return fetch(`/api/auctions/my-bids`, { headers: { Authorization: `Bearer ${token}` } });
+    })
+      .then(r => { if (!r.ok) throw new Error("Could not load auctions"); return r.json(); })
       .then(setAuctions)
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -5288,7 +5328,7 @@ function SupportTicketsSection({ user }: { user: { email: string; name?: string 
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
+    <div className="bz-tickets-bright bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -5639,11 +5679,27 @@ function VerificationSection({ userEmail }: { userEmail: string }) {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const { user: clerkProfileUser } = useClerkUser();
+  const { openUserProfile } = useClerk();
+  const { getToken: getProfileToken } = useClerkAuth();
+  const [profileSaveError, setProfileSaveError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoSaving, setPhotoSaving] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const uploadProfilePhoto = async (file?: File) => {
+    if (!file || !clerkProfileUser) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) { setPhotoError("Choose an image smaller than 5 MB."); return; }
+    setPhotoError(""); setPhotoSaving(true);
+    try { await clerkProfileUser.setProfileImage({ file }); await clerkProfileUser.reload(); }
+    catch { setPhotoError("Could not update your profile photo. Please try again."); }
+    finally { setPhotoSaving(false); if (photoInputRef.current) photoInputRef.current.value = ""; }
+  };
   const rawSettings = useRawSettings();
   const liveEnabled = isFeatureEnabled(rawSettings, "live");
   const dashboardFeatureForItem: Record<string,string> = {
     "my-bids":"auctions", "offers":"offers", "deal-pilot":"deal_pilot", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
-    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits",
+    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits", "cashback":"cashback",
     "promotions":"promotions", "verification":"verification", "buyer-protection":"buyer_protection",
     "disputes":"disputes_returns", "returns":"disputes_returns"
   };
@@ -5658,22 +5714,48 @@ export function DashboardPage() {
     let s = params.get("section");
     if (s === "payment") s = "seller-payouts"; // legacy redirect
     const allIds = SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items.map(i => i.id) : [c.id]);
-    return s && allIds.includes(s) ? s : "overview";
+    // Importers are a standalone route; cashback is rendered within this dashboard.
+    return s && allIds.includes(s) && !DASHBOARD_PAGE_ROUTES[s] ? s : "overview";
   });
+  useEffect(() => {
+    // Redirect legacy standalone importer dashboard links.
+    const section=new URLSearchParams(window.location.search).get("section");
+    const destination=section?DASHBOARD_PAGE_ROUTES[section]:undefined;
+    if(destination) setLocation(destination);
+  }, [setLocation]);
   const dashboardContentRef = useRef<HTMLElement>(null);
   const [sectionNavigation, setSectionNavigation] = useState(0);
   const setActiveSection = (id: string) => {
+    const destination=DASHBOARD_PAGE_ROUTES[id];
+    if(destination){
+      setSidebarOpen(false);
+      setTileMenuOpen(false);
+      setActiveCategory(null);
+      setMobileExpandedCat(null);
+      setLocation(destination);
+      return;
+    }
+    // Switch dashboard sections in-place; a full page reload can lose the
+    // authenticated SPA state and display an empty destination.
+    const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
+    // Dashboard subpages are panels of this mounted component, not separate
+    // router pages. Keep the URL bookmarkable without remounting the dashboard.
     setActiveSectionRaw(id);
+    window.history.replaceState(window.history.state, "", target);
+    setTileMenuOpen(false);
+    setTileCategory(null);
     setSidebarOpen(false);
-    setActiveCategory(null);
+    const parent = SIDEBAR_CATEGORIES.find(c => c.items.some(item => item.id === id));
+    setActiveCategory(parent?.id ?? null);
+    setMobileExpandedCat(parent?.id ?? null);
     setSectionNavigation(value => value + 1);
-    setMobileExpandedCat(
-      SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null
-    );
+    requestAnimationFrame(() => dashboardContentRef.current?.focus());
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [tileMenuOpen, setTileMenuOpen] = useState(false);
+  const [tileCategory, setTileCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => { const section = new URLSearchParams(window.location.search).get("section"); return SIDEBAR_CATEGORIES.find(c => c.items.some(i=>i.id===section))?.id ?? null; });
   const [flyoutY, setFlyoutY] = useState(0);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -5767,283 +5849,20 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Mobile sticky sub-header */}
-      <div className="lg:hidden relative z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
-        <button
-          onClick={() => {
-            setSidebarOpen(true);
-            const activeCat = SIDEBAR_CATEGORIES.find(c =>
-              c.id === activeSection || c.items.some(i => i.id === activeSection)
-            );
-            if (activeCat) setMobileExpandedCat(activeCat.id);
-          }}
-          className="flex items-center gap-2 text-gray-700 font-semibold text-sm"
-        >
-          <Menu className="w-5 h-5 text-gray-500" />
-          <span>{SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items : [{ id: c.id, label: c.label }]).find(s => s.id === activeSection)?.label ?? "Dashboard"}</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <Link href="/credits" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F59E0B] text-white text-xs font-semibold">
-            <Coins className="w-3.5 h-3.5" /> Credits
-          </Link>
-          <div className="w-8 h-8 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {initial}
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
-
-        {/* Sidebar — fixed drawer on mobile, static on desktop */}
-        <aside className={`
-          fixed lg:static inset-y-0 left-0 z-[70] lg:z-40
-          w-72 max-w-[100vw] lg:w-24 flex-shrink-0
-          flex flex-col
-          bg-gray-100 lg:bg-transparent
-          transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}>
-          {/* Scrollable inner container */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-visible">
-
-            {/* Mobile close row */}
-            <div className="lg:hidden flex items-center justify-between pb-1 flex-shrink-0">
-              <span className="font-bold text-gray-900 text-sm">My Dashboard</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-700 p-1">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* User card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
-              <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
-                {initial}
-              </div>
-              <p className="font-bold text-gray-900">{user.username}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
-            </div>
-
-            {/* Nav menu — icon rail + flyout (desktop only hint) */}
-            <div className="hidden lg:flex items-center justify-end px-1 -mb-1">
-              <div className="group relative">
-                <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center cursor-default select-none">?</span>
-                <div className="absolute right-0 top-5 z-50 hidden group-hover:block w-52 bg-gray-900 text-white text-[11px] leading-snug rounded-xl px-3 py-2 shadow-lg pointer-events-none">
-                  Click a menu icon to open options · click anywhere to close
-                </div>
-              </div>
-            </div>
-
-            {/* ── Mobile nav: accordion list (no flyout) ── */}
-            <nav className="lg:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden flex-shrink-0">
-              {visibleSidebarCategories.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = cat.items.length === 0
-                  ? activeSection === cat.id
-                  : cat.items.some(i => i.id === activeSection);
-                const isExpanded = mobileExpandedCat === cat.id;
-
-                if (cat.items.length === 0) {
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setActiveSection(cat.id); setSidebarOpen(false); setMobileExpandedCat(null); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left border-b border-gray-100 transition-colors ${isActive ? "bg-[#3B4FD8]/8" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 text-[#3B4FD8]" />}
-                    </button>
-                  );
-                }
-
-                return (
-                  <div key={cat.id} className="border-b border-gray-100 last:border-0">
-                    <button
-                      onClick={() => setMobileExpandedCat(isExpanded ? null : cat.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${isActive ? "bg-[#3B4FD8]/5" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && !isExpanded && <span className="w-2 h-2 rounded-full bg-[#3B4FD8] mr-1 flex-shrink-0" />}
-                      <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                    </button>
-                    {isExpanded && (
-                      <div className="bg-gray-50/80 border-t border-gray-100">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                setActiveSection(item.id);
-                                setSidebarOpen(false);
-                                setMobileExpandedCat(null);
-                              }}
-                              className={`w-full flex items-center gap-3 pl-6 pr-4 py-3 text-left border-b border-gray-100 last:border-0 transition-colors ${isItemActive ? "bg-white" : "hover:bg-white/60"}`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className={`flex-1 text-sm ${isItemActive ? "font-semibold text-[#3B4FD8]" : "text-gray-600"}`}>{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 text-[#3B4FD8] flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-red-50 transition-colors border-t border-gray-100"
-                data-testid="button-logout"
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50">
-                  <LogOut className="w-4 h-4 text-red-400" />
-                </div>
-                <span className="text-sm font-semibold text-red-500">Sign Out</span>
-              </button>
-            </nav>
-
-            {/* ── Desktop nav: icon rail + flyout ── */}
-            <nav
-              className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-visible flex-shrink-0 relative"
-              ref={categoryMenuRef}
-            >
-              {/* Icon rail */}
-              <div className="flex flex-col py-2">
-                {visibleSidebarCategories.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = cat.items.length === 0
-                    ? activeSection === cat.id
-                    : cat.items.some(i => i.id === activeSection);
-                  const isOpen = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={(e) => {
-                        if (cat.items.length === 0) {
-                          setActiveSection(cat.id);
-                          setActiveCategory(null);
-                          setSidebarOpen(false);
-                        } else {
-                          const y = (e.currentTarget as HTMLElement).offsetTop;
-                          setFlyoutY(y);
-                          setActiveCategory(isOpen ? null : cat.id);
-                        }
-                      }}
-                      className="group relative flex flex-col items-center gap-1 px-2 py-2.5 w-full transition-all"
-                      title={cat.label}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      {(isActive || isOpen) && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#3B4FD8] rounded-r-full" />
-                      )}
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shadow-sm bg-gradient-to-br ${cat.gradient} ${
-                        isActive || isOpen ? "scale-110 shadow-md ring-2 ring-offset-1 ring-white" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
-                      }`}>
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <span className={`text-[9px] font-bold tracking-wide leading-tight ${
-                        isActive || isOpen ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
-                      }`}>{cat.label}</span>
-                    </button>
-                  );
-                })}
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="group flex flex-col items-center gap-1 px-2 py-2.5 w-full border-t border-gray-100 mt-1 transition-all"
-                  title="Sign Out"
-                  data-testid="button-logout"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-red-50 group-hover:bg-red-500 flex items-center justify-center transition-all">
-                    <LogOut className="w-5 h-5 text-red-400 group-hover:text-white transition-colors" />
-                  </div>
-                  <span className="text-[9px] font-bold text-gray-400 group-hover:text-red-400 tracking-wide transition-colors">Sign Out</span>
-                </button>
-              </div>
-
-              {/* Flyout panel */}
-              <AnimatePresence>
-                {activeCategory && (() => {
-                  const cat = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory);
-                  if (!cat || cat.items.length === 0) return null;
-                  return (
-                    <motion.div
-                      key={activeCategory}
-                      initial={{ opacity: 0, x: -8, scale: 0.97 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -8, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-full ml-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden"
-                      style={{ top: flyoutY }}
-                    >
-                      <div className={`px-4 py-3 bg-gradient-to-r ${cat.gradient} flex items-center gap-2`}>
-                        <cat.icon className="w-4 h-4 text-white/80" />
-                        <span className="text-sm font-bold text-white">{cat.label}</span>
-                      </div>
-                      <div className="py-1.5">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
-                                setActiveSection(item.id);
-                                setActiveCategory(null);
-                                setSidebarOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left ${
-                                isItemActive
-                                  ? "bg-[#3B4FD8]/8 text-[#3B4FD8] font-semibold"
-                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                              }`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className="flex-1">{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
-            </nav>
-
-          </div>
+      {/* Permanent glassmorphism sidebar: no pop-up navigation. */}
+      <div className="bz-glass-v8-layout flex-1">
+        <aside className="bz-glass-sidebar" aria-label="Dashboard navigation">
+          <div className="bz-glass-sidebar-heading"><span>BAZUNK / YOUR SPACE</span><h2>Dashboard</h2><p>Manage your marketplace</p></div>
+          <nav className="bz-glass-sidebar-nav">
+            {visibleSidebarCategories.map(cat=>{const Icon=cat.icon;const expanded=activeCategory===cat.id;const active=cat.id===activeSection||cat.items.some(item=>item.id===activeSection);return <div className="bz-glass-sidebar-group" key={cat.id}>
+              <button type="button" className={`bz-glass-sidebar-category ${active?"is-active":""}`} aria-expanded={cat.items.length?expanded:undefined} onClick={()=>cat.items.length?setActiveCategory(expanded?null:cat.id):setActiveSection(cat.id)}><Icon size={18}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronDown size={16} className={expanded?"bz-glass-rotated":""}/>}</button>
+              {expanded&&cat.items.length>0&&<div className="bz-glass-sidebar-subpages">{cat.items.map(item=>{const ItemIcon=item.icon;return <button key={item.id} type="button" className={`bz-glass-sidebar-subpage ${activeSection===item.id?"is-active":""}`} onClick={()=>setActiveSection(item.id)}><ItemIcon size={15}/><span>{item.label}</span></button>})}</div>}
+            </div>})}
+          </nav>
+          <button type="button" className="bz-glass-sidebar-signout" onClick={handleLogout}><LogOut size={17}/> Sign Out</button>
         </aside>
-
         {/* Main content */}
-        <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
+        <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${["orders","my-bids","offers","watchlist","saved-searches","deal-pilot"].includes(activeSection) ? "bz-buying-light" : ""} ${["my-listings","sales","seller-analytics","shipping-centre","my-auctions","my-flash-sales","auto-accept","go-live"].includes(activeSection) ? "bz-selling-light" : ""} ${["cashback","credits","seller-payouts","payment-cards","promotions"].includes(activeSection) ? "bz-finance-light" : ""} ${["profile","security","verification","addresses"].includes(activeSection) ? "bz-account-light" : ""} ${["buyer-protection","disputes","returns","support-tickets"].includes(activeSection) ? "bz-support-light" : ""} ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 10 }}
@@ -6051,6 +5870,44 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
+            {activeSection !== "overview" && activeSection !== "credits" && (() => {
+              const group = SIDEBAR_CATEGORIES.find(category => category.items.some(item => item.id === activeSection));
+              const entry = group?.items.find(item => item.id === activeSection);
+              if (!group || !entry) return null;
+              const SectionIcon = entry.icon;
+              const GroupIcon = group.icon;
+              return (
+                <header className={`bz-unified-page-banner bz-unified-page-${group.id}`}>
+                  <div className="bz-unified-page-copy">
+                    <div className="bz-unified-page-kicker"><GroupIcon size={15} /> BAZUNK / {group.label.toUpperCase()}</div>
+                    <h1><SectionIcon size={29} strokeWidth={2.5} /> {entry.label}</h1>
+                    <p>Your {entry.label.toLowerCase()} workspace — manage everything in one place.</p>
+                    <div className="bz-unified-page-pills"><span><ShieldCheck size={15}/> Your dashboard</span><span><Zap size={15}/> Quick access</span></div>
+                  </div>
+                  <div className="bz-unified-page-illustration" aria-hidden="true">
+                    <div className="bz-unified-page-art-main"><SectionIcon size={58} strokeWidth={1.8}/></div>
+                    <span className="bz-unified-page-art-coin"><Star size={22}/></span>
+                    <span className="bz-unified-page-art-spark"><Zap size={20}/></span>
+                  </div>
+                </header>
+              );
+            })()}
+            {(activeSection === "my-store" || activeSection === "store-settings") && (
+              <section className="bazunk-dashboard-store bz-store-light-theme">
+                <div className="bz-store-page-heading flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-white border border-[#dce7f5] p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500 text-white"><Store size={26} /></span>
+                    <div><h1 className="text-xl font-black !text-[#142d50]">{activeSection === "store-settings" ? "Store Settings" : "My Store"}</h1><p className="text-sm !text-[#536b87]">Manage your storefront, branding and selling preferences.</p></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setActiveSection("my-store")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "my-store" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>My Store</button>
+                    <button type="button" onClick={() => setActiveSection("store-settings")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "store-settings" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>Settings</button>
+                  </div>
+                </div>
+                <div className="bz-store-page-content"><MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} /></div>
+              </section>
+            )}
+            {activeSection === "cashback" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cashback"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Gift size={16}/> BAZUNK FINANCE</span><h2>Cashback that adds up</h2><p>Every purchase could bring a little something back.</p><div className="bz-finance-fun-chips"><span><Coins size={15}/>Earn rewards</span><span><Star size={15}/>More value</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Gift size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><CashbackPage embedded /></div>}
             {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
@@ -6113,11 +5970,10 @@ export function DashboardPage() {
               </div>
             )}
             {activeSection === "orders" && <OrdersSection />}
-            {activeSection === "sales" && <SellerSales />}
+            {activeSection === "sales" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-sales-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><BarChart3 size={15}/> SELLER COMMAND CENTRE</span><h2>Your sales, <span>in full colour.</span></h2><p>Follow your orders, spot new opportunities and celebrate every sale.</p><div className="bz-seller-vivid-chips"><span><ShoppingBag size={15}/> Orders</span><span><TrendingUp size={15}/> Performance</span><span><Coins size={15}/> Earnings</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><BarChart3 size={66}/><span className="bz-seller-art-live">GROW</span></div><div className="bz-seller-art-bubble"><Coins size={25}/></div><div className="bz-seller-art-spark"><TrendingUp size={25}/></div></div></div><SellerSales /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
             {activeSection === "shipping-centre" && <div className="space-y-6 p-4 sm:p-6"><SellerBundleSettings /><SellerShipping /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerTrustInsights /><SellerPricingInsightsPanel /></div>}
-            {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (
               <>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
@@ -6244,7 +6100,7 @@ export function DashboardPage() {
   </section>
 )}
             {activeSection === "credits" && <CreditsSection user={user} />}
-            {activeSection === "promotions" && (
+            {activeSection === "promotions" && (<div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-promotions"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Megaphone size={16}/> BAZUNK FINANCE</span><h2>Make your listings shine</h2><p>Discover colourful ways to get noticed and reach more buyers.</p><div className="bz-finance-fun-chips"><span><TrendingUp size={15}/>Boost visibility</span><span><Zap size={15}/>Stand out</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Megaphone size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -6287,7 +6143,8 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-            )}
+            </div>)}
+            {activeSection === "profile" && (<div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-profile"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><User size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Make it yours</h2><p>Your profile, preferences and personal details — all in one place.</p><div className="bz-account-hero-chips"><span><User size={15}/>Personal details</span><span><ShieldCheck size={15}/>Your account</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><User size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>)}
             {activeSection === "profile" && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5" style={{ minHeight: 400 }}>
                 {/* Header */}
@@ -6322,31 +6179,41 @@ export function DashboardPage() {
                       </button>
                       <button
                         onClick={async () => {
+                          if (profileSaving) return;
+                          setProfileSaveError("");
                           const updated = { ...profileForm };
-                          setSavedProfile(updated);
-                          // Always use the actual Clerk email (not the form email) for DB cascade
                           const clerkEmail = user?.email || "";
-                          const displayName = updated.name.trim() || savedProfile.name;
-                          if (clerkEmail) {
-                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username: updated.username })); } catch {}
-                            if (displayName || updated.username) {
-                              try {
-                                await fetch("/api/listings/seller-name", {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ email: clerkEmail, name: displayName || undefined, username: updated.username || undefined }),
-                                });
-                              } catch {}
-                            }
-                          }
-                          setProfileEdit(false);
-                          setProfileSaved(true);
-                          setTimeout(() => setProfileSaved(false), 3000);
+                          const displayName = updated.name.trim();
+                          const username = updated.username.trim().replace(/^@/, "");
+                          if (!clerkEmail || !displayName) { setProfileSaveError("Enter your name before saving."); return; }
+                          if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) { setProfileSaveError("Username must be 3–30 characters: letters, numbers, dots, underscores or hyphens."); return; }
+                          setProfileSaving(true);
+                          try {
+                            const token = await getProfileToken();
+                            if (!token) throw new Error("Your session has expired. Sign in again to update your profile.");
+                            const response = await fetch("/api/listings/seller-name", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ name: displayName, username }),
+                            });
+                            const data = await response.json().catch(() => ({}));
+                            if (!response.ok) throw new Error(data.error || "Could not save your profile. Please try again.");
+                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username })); } catch {}
+                            setSavedProfile({ name: displayName, email: clerkEmail, username });
+                            setProfileForm({ name: displayName, email: clerkEmail, username });
+                            window.dispatchEvent(new CustomEvent("bazunk-profile-updated", { detail: { name: displayName, username } }));
+                            setProfileEdit(false);
+                            setProfileSaved(true);
+                            setTimeout(() => setProfileSaved(false), 3000);
+                          } catch (error) {
+                            setProfileSaveError(error instanceof Error ? error.message : "Could not save your profile.");
+                          } finally { setProfileSaving(false); }
                         }}
                         className="px-4 py-2 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                        disabled={profileSaving}
                         data-testid="button-save-profile"
                       >
-                        <Check className="w-3.5 h-3.5" /> Save Changes
+                        <Check className="w-3.5 h-3.5" /> {profileSaving ? "Saving…" : "Save Changes"}
                       </button>
                     </div>
                   )}
@@ -6355,12 +6222,13 @@ export function DashboardPage() {
                 {/* Avatar row */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
-                      {(profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
+                      {clerkProfileUser?.imageUrl ? <img src={clerkProfileUser.imageUrl} alt="Your profile photo" className="h-full w-full object-cover" /> : (profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
                     </div>
+                    <input ref={photoInputRef} type="file" accept="image/*" className="hidden" aria-label="Choose profile photo" onChange={e => void uploadProfilePhoto(e.target.files?.[0])} />
                     {profileEdit && (
-                      <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] transition-colors">
-                        <Pencil className="w-3 h-3" />
+                      <button type="button" disabled={photoSaving} onClick={() => photoInputRef.current?.click()} aria-label="Change profile photo" title="Change profile photo" className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] disabled:opacity-50 transition-colors">
+                        <Camera className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -6370,6 +6238,8 @@ export function DashboardPage() {
                   </div>
                 </div>
 
+                {photoError && <p role="alert" className="mb-3 text-sm text-red-700">{photoError}</p>}
+                {profileSaveError && <p role="alert" className="mb-3 text-sm font-semibold text-red-300">{profileSaveError}</p>}
                 {/* Fields */}
                 <div className="space-y-4">
                   {/* Full Name */}
@@ -6392,10 +6262,9 @@ export function DashboardPage() {
                   {/* Email — always read-only; managed by your sign-in provider */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email Address</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{savedProfile.email}</div>
-                    {profileEdit && (
-                      <p className="text-xs text-gray-400 mt-1">Email is managed by your sign-in account and cannot be changed here.</p>
-                    )}
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{user?.email || clerkProfileUser?.primaryEmailAddress?.emailAddress || savedProfile.email}</div>
+                    <p className="text-xs text-slate-300 mt-2">To change your email address, open your sign-in account settings and select Email addresses.</p>
+                    <button type="button" onClick={() => openUserProfile()} className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-blue-400 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700/30"><ExternalLink className="h-3.5 w-3.5" /> Manage sign-in email</button>
                   </div>
 
                   {/* Username */}
@@ -6418,31 +6287,29 @@ export function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Member since — always read-only */}
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Member Since</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-400 font-medium">January 2024</div>
-                  </div>
                 </div>
 
               </div>
             )}
+            {activeSection === "security" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-security"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><Shield size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Stay safe. Stay in control.</h2><p>Manage account security and protect your Bazunk experience.</p><div className="bz-account-hero-chips"><span><ShieldCheck size={15}/>Protection</span><span><Lock size={15}/>Security</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><Shield size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "security" && <SecuritySection />}
+            {activeSection === "verification" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-verification"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><ShieldCheck size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Get verified. Stand out.</h2><p>Build confidence and manage your identity verification.</p><div className="bz-account-hero-chips"><span><Star size={15}/>Build trust</span><span><Shield size={15}/>Verification</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><ShieldCheck size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "verification" && <VerificationSection userEmail={user?.email ?? ""} />}
+            {activeSection === "addresses" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-addresses"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><MapPin size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Your places, sorted.</h2><p>Keep delivery and contact addresses organised for smoother shopping.</p><div className="bz-account-hero-chips"><span><MapPin size={15}/>Addresses</span><span><ShoppingBag size={15}/>Easy checkout</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><MapPin size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "addresses" && <AddressesSection />}
-            {activeSection === "seller-payouts" && <PaymentSection defaultTab="payouts" />}
-            {activeSection === "payment-cards" && <PaymentSection defaultTab="cards" />}
+            {activeSection === "seller-payouts" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-payouts"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Banknote size={16}/> BAZUNK FINANCE</span><h2>Your money, in motion</h2><p>Follow earnings from sale to payout with a clearer view of every stage.</p><div className="bz-finance-fun-chips"><span><CheckCircle size={15}/>Eligible funds</span><span><Clock size={15}/>Pending payouts</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Banknote size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="payouts" /></div>}
+            {activeSection === "payment-cards" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cards"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><CreditCard size={16}/> BAZUNK FINANCE</span><h2>Payments made simple</h2><p>Manage secure payment methods in one colourful place.</p><div className="bz-finance-fun-chips"><span><ShieldCheck size={15}/>Secure checkout</span><span><Plus size={15}/>Add a card</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><CreditCard size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="cards" /></div>}
             {activeSection === "auto-accept" && <AutoAcceptSection />}
             {activeSection === "offers" && <OffersSection />}
-            {activeSection === "go-live" && <GoLiveSection />}
-            {activeSection === "buyer-protection" && <BuyerProtectionDashSection />}
-            {activeSection === "disputes" && <DisputesSection />}
-            {activeSection === "returns" && <ReturnsSection />}
+            {activeSection === "go-live" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-live-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><Radio size={15}/> BAZUNK CREATOR STUDIO</span><h2>Lights on. <span>Let's go live!</span></h2><p>Set up your stream, showcase products and turn your audience into shoppers.</p><div className="bz-seller-vivid-chips"><span><Video size={15}/> Live video</span><span><ShoppingBag size={15}/> Shoppable streams</span><span><Zap size={15}/> Instant deals</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><Video size={64}/><span className="bz-seller-art-live"><span className="bz-seller-live-dot"/> LIVE</span></div><div className="bz-seller-art-bubble"><ShoppingBag size={25}/></div><div className="bz-seller-art-spark"><Zap size={25}/></div></div></div><div className="bz-live-feature-grid"><div className="bz-live-feature-card bz-live-feature-blue"><span className="bz-live-feature-icon"><Video size={23}/></span><strong>01 · Connect</strong><p>Choose YouTube or Twitch</p></div><div className="bz-live-feature-card bz-live-feature-orange"><span className="bz-live-feature-icon"><Radio size={23}/></span><strong>02 · Create</strong><p>Give your broadcast a title</p></div><div className="bz-live-feature-card bz-live-feature-green"><span className="bz-live-feature-icon"><ShoppingBag size={23}/></span><strong>03 · Showcase</strong><p>Feature your products live</p></div><div className="bz-live-feature-card bz-live-feature-pink"><span className="bz-live-feature-icon"><Zap size={23}/></span><strong>04 · Go Live</strong><p>Start your shopping stream</p></div></div><GoLiveSection /></div>}
+            {activeSection === "buyer-protection" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-protection"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><ShieldCheck size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Shop with confidence</h2><p>Understand the protections available when buying on Bazunk.</p><div className="bz-support-hero-chips"><span><Shield size={15}/>Buyer protection</span><span><CheckCircle size={15}/>Peace of mind</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><ShieldCheck size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><BuyerProtectionDashSection /></div>}
+            {activeSection === "disputes" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-disputes"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><Handshake size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Let's sort it out</h2><p>Review disputes and follow the steps towards a resolution.</p><div className="bz-support-hero-chips"><span><MessageSquare size={15}/>Communicate</span><span><ShieldCheck size={15}/>Resolve issues</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><Handshake size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><DisputesSection /></div>}
+            {activeSection === "returns" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-returns"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><RotateCcw size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Returns made clearer</h2><p>Track return requests and see what happens next.</p><div className="bz-support-hero-chips"><span><Package size={15}/>Return items</span><span><CheckCircle size={15}/>Track progress</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><RotateCcw size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><ReturnsSection /></div>}
             {activeSection === "my-listings" && <MyListingsSection userEmail={user.email} />}
             {activeSection === "my-auctions" && <MyAuctionsSection />}
             {activeSection === "my-bids" && <MyBidsSection />}
             {activeSection === "my-flash-sales" && <MyFlashSalesSection />}
-            {activeSection === "support-tickets" && <SupportTicketsSection user={user} />}
+            {activeSection === "support-tickets" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-tickets"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><LifeBuoy size={16}/> BAZUNK / HELP & SUPPORT</span><h2>We're here to help</h2><p>Keep your support conversations and requests in one place.</p><div className="bz-support-hero-chips"><span><MessageSquare size={15}/>Get help</span><span><Clock size={15}/>Track requests</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><LifeBuoy size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><SupportTicketsSection user={user} /></div>}
           </motion.div>
         </main>
       </div>

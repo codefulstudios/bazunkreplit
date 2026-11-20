@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
@@ -13,6 +14,7 @@ import { useOffers, type Offer, type OfferStatus } from "@/context/OfferContext"
 import { useCart } from "@/context/CartContext";
 import { ALL_PRODUCTS } from "@/data/products";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -509,6 +511,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
 
   const { offers, respondToOffer, respondToCounter, pendingCount } = useOffers();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
 
   // Start empty for every account; never show another user's messages.
   useEffect(() => { setTickets([]); }, [user?.email]);
@@ -516,7 +519,9 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
   const loadInbox = useCallback(async () => {
     if (!user?.email) return;
     try {
-      const res = await fetch(`/api/support/inbox?email=${encodeURIComponent(user.email)}`);
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch("/api/support/inbox", { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return;
       const data = await res.json();
       setTickets((data.tickets ?? []).map((t: any) => ({
@@ -533,7 +538,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
     } catch {
       /* keep what we have */
     }
-  }, [user?.email]);
+  }, [user?.email, getToken]);
 
   useEffect(() => {
     if (!open) return;
@@ -612,11 +617,11 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
       ...t, unread: 0, messages: t.messages.map(m => ({ ...m, read: true }))
     } : t));
     if (user?.email) {
-      void fetch(`/api/support/tickets/${id}/read`, {
+      void getToken().then(token => token ? fetch(`/api/support/tickets/${id}/read`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email }),
-      }).catch(() => {});
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      }) : null).catch(() => {});
     }
   }
 
@@ -648,11 +653,14 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
     const newMsg: SupportMessage = { id: Date.now(), senderId: "me", text, timestamp: new Date().toISOString(), read: true };
     setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, messages: [...t.messages, newMsg] } : t));
     try {
-      await fetch(`/api/support/tickets/${ticketId}/reply`, {
+      const token = await getToken();
+      if (!token) throw Error("Sign in required");
+      const response = await fetch(`/api/support/tickets/${ticketId}/reply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, body: text }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ body: text }),
       });
+      if (!response.ok) throw Error("Support reply failed");
     } catch {
       /* the reload below shows what was really saved */
     }
@@ -676,7 +684,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
 
   const totalThreads = visibleConvos.length + visibleTickets.length + visibleOffers.length;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -687,7 +695,8 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+            className="fixed inset-0 z-[2147483000] backdrop-blur-[3px]"
+            style={{ backgroundColor: "rgba(3, 15, 34, 0.64)" }}
             onClick={onClose}
           />
 
@@ -698,8 +707,8 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-4 md:inset-8 z-[101] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white"
-            style={{ maxWidth: 1200, maxHeight: 800, margin: "auto" }}
+            role="dialog" aria-modal="true" aria-label="Bazunk messages" className="fixed inset-3 md:inset-8 z-[2147483001] bz-messages-dialog flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white text-slate-900"
+            style={{ maxWidth: 1200, maxHeight: 800, margin: "auto", backgroundColor: "#ffffff", isolation: "isolate" }}
           >
             <div className="flex h-full min-h-0">
 
@@ -994,6 +1003,7 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

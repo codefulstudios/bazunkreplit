@@ -1,9 +1,10 @@
+import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart, Store, Zap, Gavel, Handshake, Newspaper, Tag, Layers,
   ArrowRight, X,
-  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2,
+  Smartphone, Shirt, Armchair, Dumbbell, BookOpen, CarFront, Gamepad2, Gem, Package2, ShoppingBag, Camera, Headphones, ShieldCheck, Sparkles, Gift,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -12,6 +13,9 @@ import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { useLanguage } from "@/context/LanguageContext";
 import { useState } from "react";
 import { useRawSettings } from "@/context/SiteSettingsContext";
+import { useTheme } from "next-themes";
+import { readSection,sectionStyle } from "@/design-system/sectionAppearance";
+import {readIconAppearance,iconStyle} from "@/design-system/iconAppearance";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 
 const PILLS = [
@@ -66,6 +70,7 @@ const SELL_OPTIONS = [
   },
 ];
 
+const APPROVED_CATEGORY_ICONS = { smartphone:Smartphone,shirt:Shirt,gaming:Gamepad2,home:Armchair,sports:Dumbbell,books:BookOpen,collectibles:Gem,automotive:CarFront,package:Package2 } as const;
 const HERO_CATS = [
   { name: "Electronics",   icon: Smartphone, color: "#3B82F6", emoji:"💻", href: "/browse?category=electronics" },
   { name: "Fashion",       icon: Shirt,      color: "#EC4899", emoji:"🧥", href: "/browse?category=fashion"     },
@@ -85,20 +90,29 @@ export function Hero() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [sellOpen, setSellOpen] = useState(false);
+  const [introOpen, setIntroOpen] = useState(false);
   const featureSettings = useRawSettings();
+  const {isActive:categoryIsActive} = usePublicCategoryVisibility();
+  const {resolvedTheme}=useTheme();
+  const designMode=resolvedTheme==="dark"?"dark":"light";
+  const heroAppearance=readSection(featureSettings,"home_hero",designMode);
+  const categoryAppearance=readSection(featureSettings,"home_categories",designMode);
+  const categoryIconAppearance=readIconAppearance(featureSettings,"categories",designMode);
+  const studioImage=featureSettings.theme_studio_enabled==="true"?featureSettings.hero_image_url||"":"";
+  const heroGraphic=studioImage||featureSettings.design_hero_image_url||"";
+  const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
+  const safeHeroGraphic=/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(heroGraphic)
+    ? API_BASE+heroGraphic
+    : /^https:\/\/[^\s?#]+\.(png|jpe?g|webp)(\?[^\s]*)?$/i.test(heroGraphic)?heroGraphic:"";
   const visibleSellOptions = SELL_OPTIONS.filter((option) => { const feature = featureForHref(option.href); return !feature || isFeatureEnabled(featureSettings, feature); });
   const visiblePills = PILLS.filter((pill) => { const feature = pill.label === "auctions" ? "auctions" : pill.label === "flashSales" ? "flash_sales" : pill.label === "classifieds" ? "classifieds" : pill.label === "makeOffer" ? "offers" : undefined; return !feature || isFeatureEnabled(featureSettings, feature); });
 
   function handleSellClick() {
-    if (!user) {
-      setLocation("/sell");
-    } else {
-      setSellOpen(true);
-    }
+    setLocation(user ? "/sell/direct" : "/sign-in");
   }
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#1A1D2E]">
+    <section data-design-home-hero={heroAppearance?"true":"false"} style={sectionStyle(heroAppearance)} className="bz-design-home-hero bz-mockup-hero relative w-full overflow-hidden bg-[#1A1D2E]">
       {/* Diagonal accent */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
         <div className="absolute -right-48 top-0 h-full w-[700px] bg-[#4A5CE8]/10"
@@ -117,25 +131,25 @@ export function Hero() {
           >
             <div className="mb-4">
               <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-orange-300 bz-hero-kicker">Discover something great · {marketRegion === "uk" ? "UK" : "USA"} marketplace</p>
-              <h1 className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">Great finds. Better deals. <span className="text-orange-400">All in one place.</span></h1>
-              <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer.</p>
+              <h1 data-theme-edit="hero_title" className="max-w-xl text-4xl font-extrabold leading-[1.12] tracking-tight text-white sm:text-5xl">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_title||"Buy. Sell. Find Amazing Deals on Bazunk.":<>Buy. Sell.<br />Find Amazing Deals <span className="bz-hero-brand">on Bazunk.</span></>}</h1>
+              <p data-theme-edit="hero_subtitle" className="mt-4 max-w-lg text-base leading-relaxed text-slate-200 bz-hero-summary">{featureSettings.theme_studio_enabled==="true"?featureSettings.hero_subtitle||"Explore unique finds from independent sellers.":"Explore unique finds, everyday essentials and new arrivals from independent sellers. Browse at your own pace, or make an offer."}</p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
-                <ShoppingCart className="h-5 w-5" /> Shop all listings <ArrowRight className="h-4 w-4" />
+            <div className="bz-hero-actions flex flex-col gap-3 sm:flex-row">
+              <Link data-theme-edit="hero_cta_primary" href="/browse" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#F26B21] px-7 py-3 text-base font-bold text-white shadow-lg shadow-orange-950/20 transition-colors hover:bg-[#d95712]">
+                <ShoppingCart className="h-5 w-5" /> {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_primary||"Browse deals":"Browse deals"} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/categories" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
-                Explore categories
+              <Link data-theme-edit="hero_cta_secondary" href={/\b(sell|list|selling)\b/i.test(featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Sell on Bazunk":"Sell on Bazunk") ? (user ? "/sell/direct" : "/sign-in") : "/categories" } className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/20">
+                {featureSettings.theme_studio_enabled==="true"?featureSettings.hero_cta_secondary||"Sell on Bazunk":"Sell on Bazunk"}
               </Link>
             </div>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm !text-white">
+            <div className="bz-hero-benefits mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
               <Link href="/buyer-protection" className="!text-white hover:!text-orange-200">✓ Buyer Protection on eligible orders</Link>
-              <Link href="/sell" className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
+              <Link href={user ? "/sell/direct" : "/sign-in"} className="!text-white hover:!text-orange-200">✓ Sell your items on Bazunk</Link>
             </div>
-            <Link href="/welcome-new-buyers" className="mt-7 flex items-center justify-between gap-3 rounded-xl border border-orange-200/25 bg-white/10 px-4 py-3 text-sm text-white transition-colors hover:bg-white/15">
-              <span><span className="font-bold text-orange-300">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
-              <ArrowRight className="h-4 w-4 shrink-0" />
-            </Link>
+            <button type="button" onClick={() => setIntroOpen(true)} className="bz-intro-trigger mt-7 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-colors">
+              <span><span className="font-extrabold">New to Bazunk?</span> Discover the {currency.symbol}5 introductory credit offer and its conditions.</span>
+              <ArrowRight className="h-5 w-5 shrink-0" />
+            </button>
           </motion.div>
 
           {/* ── Right panel — top categories ──────────── */}
@@ -143,10 +157,38 @@ export function Hero() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col gap-4 self-start"
+            className="bz-mockup-hero-art flex flex-col gap-4 self-start"
           >
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-            {HERO_CATS.map(({ name, icon: Icon, href }, i) => (
+            <div className="bz-mockup-scene bz-hero-artwork" aria-label="Shopping bags and curated marketplace finds">
+              <div className="bz-art-glow bz-art-glow-blue" aria-hidden="true" />
+              <div className="bz-art-glow bz-art-glow-peach" aria-hidden="true" />
+              {safeHeroGraphic ? (
+                <img src={safeHeroGraphic} alt={featureSettings.design_hero_image_alt || "Discover Bazunk marketplace"} className="bz-art-main-image" loading="eager" />
+              ) : (
+                <div className="bz-art-centre" aria-hidden="true">
+                  <div className="bz-art-bag bz-art-bag-blue"><ShoppingBag strokeWidth={1.5} /></div>
+                  <div className="bz-art-bag bz-art-bag-orange"><ShoppingBag strokeWidth={1.5} /></div>
+                  <div className="bz-art-package"><Package2 strokeWidth={1.45} /><span>bazunk</span></div>
+                  <div className="bz-art-spark"><Sparkles /></div>
+                </div>
+              )}
+              <div className="bz-art-product bz-art-product-left">
+                <div className="bz-art-product-icon"><Headphones strokeWidth={1.7} /></div>
+                <strong>Headphones</strong><span>Explore electronics</span>
+              </div>
+              <div className="bz-art-product bz-art-product-top">
+                <div className="bz-art-product-icon"><Camera strokeWidth={1.7} /></div>
+                <strong>Camera gear</strong><span>Discover more</span>
+              </div>
+              <div className="bz-art-product bz-art-product-right">
+                <div className="bz-art-product-icon"><Shirt strokeWidth={1.7} /></div>
+                <strong>Fashion finds</strong><span>Shop new arrivals</span>
+              </div>
+              <div className="bz-art-sticker"><Tag size={17} /> Great deals every day</div>
+              <div className="bz-art-trust"><ShieldCheck size={17} /> Shop with confidence</div>
+            </div>
+            <div data-design-home-categories={categoryAppearance?"true":"false"} data-design-icons={categoryIconAppearance?"true":"false"} style={{...sectionStyle(categoryAppearance),...iconStyle(categoryIconAppearance)}} className="bz-design-home-categories grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            {HERO_CATS.filter(cat=>!cat.href.includes("category=")||categoryIsActive(cat.href.split("category=")[1])).map(({ name, icon: DefaultIcon, href }, i) => { const key = href.split("category=")[1]; const selected = featureSettings["design_category_icon_" + key] as keyof typeof APPROVED_CATEGORY_ICONS | undefined; const Icon = (selected && APPROVED_CATEGORY_ICONS[selected]) || DefaultIcon; return (
               <motion.div
                 key={name}
                 initial={{ opacity: 0, y: 24 }}
@@ -154,9 +196,9 @@ export function Hero() {
                 transition={{ delay: 0.3 + i * 0.05 }}
               >
                 <Link href={href}>
-                  <div className="bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
+                  <div className="bz-design-category-tile bg-[#27364d] border border-slate-500/70 rounded-xl px-3 py-3.5 min-h-[105px] flex flex-col items-center justify-center gap-2 hover:bg-[#35475e] hover:border-orange-300 transition-all duration-200 cursor-pointer group">
                     <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
+                      className="bz-design-category-icon w-12 h-12 rounded-xl flex items-center justify-center bg-slate-700 border border-slate-500"
                     >
                       <Icon className="w-6 h-6 text-orange-200" aria-hidden="true" />
                     </div>
@@ -166,7 +208,7 @@ export function Hero() {
                   </div>
                 </Link>
               </motion.div>
-            ))}
+            ); })}
             </div>
 
             {/* Marketplace type pills — aligned under categories */}
@@ -183,6 +225,27 @@ export function Hero() {
 
       </div>
 
+      {introOpen && createPortal(
+        <div className="bz-intro-overlay" onClick={() => setIntroOpen(false)} role="presentation">
+          <section role="dialog" aria-modal="true" aria-labelledby="bz-intro-title" className="bz-intro-modal" onClick={event => event.stopPropagation()}>
+            <button type="button" onClick={() => setIntroOpen(false)} className="bz-intro-close" aria-label="Close introductory offer">×</button>
+            <div className="bz-intro-symbol" aria-hidden="true"><Gift /></div>
+            <p className="bz-intro-eyebrow">WELCOME TO BAZUNK</p>
+            <h2 id="bz-intro-title">A little extra for your first purchases</h2>
+            <p className="bz-intro-lead">Discover the new-buyer benefits available on qualifying purchases.</p>
+            <div className="bz-intro-perks">
+              <div><Gift aria-hidden="true" /><strong>{currency.symbol}5 new-buyer credit</strong><span>Applied to your first or second qualifying purchase.</span></div>
+              <div><ShieldCheck aria-hidden="true" /><strong>Buyer Protection fee covered</strong><span>Bazunk covers the protection fee on your first qualifying purchase.</span></div>
+            </div>
+            <p className="bz-intro-terms">Eligibility, qualifying-purchase requirements and Buyer Protection terms apply. Eligible items that don't arrive or aren't as described may qualify for a refund under the protection policy.</p>
+            <div className="bz-intro-actions">
+              <Link href="/sign-up" onClick={() => setIntroOpen(false)} className="bz-intro-primary">Create your free account <ArrowRight size={17}/></Link>
+              <Link href="/welcome-new-buyers" onClick={() => setIntroOpen(false)} className="bz-intro-secondary">Full offer details</Link>
+            </div>
+          </section>
+        </div>,
+        document.body
+      )}
       {/* ── Sell flyout portal (escapes overflow-hidden) ── */}
       {createPortal(
         <AnimatePresence>
