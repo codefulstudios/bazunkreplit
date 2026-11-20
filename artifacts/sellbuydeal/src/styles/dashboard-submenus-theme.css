@@ -763,3 +763,44 @@ body:has(#bz-dashboard-main) .bz-glass-v8-layout .bz-glass-sidebar-signout{color
 #bz-dashboard-main.bz-account-light a:not([class*="bg-"]){color:#0968b8!important;}
 #bz-dashboard-main.bz-account-light :is(button,a):focus-visible{outline:3px solid #ff9b33!important;outline-offset:2px;}
 @media(max-width:700px){#bz-dashboard-main.bz-account-light .bz-account-credits-hero{padding:19px 17px;min-height:180px;}#bz-dashboard-main.bz-account-light .bz-account-hero-art{flex-basis:85px;height:100px;}#bz-dashboard-main.bz-account-light .bz-account-hero-main{width:75px;height:75px;border-radius:17px;}#bz-dashboard-main.bz-account-light .bz-account-hero-main svg{width:38px;height:38px;}#bz-dashboard-main.bz-account-light .bz-account-hero-orbit-one,#bz-dashboard-main.bz-account-light .bz-account-hero-orbit-two{width:29px;height:29px;}#bz-dashboard-main.bz-account-light .bz-account-hero-orbit-one svg,#bz-dashboard-main.bz-account-light .bz-account-hero-orbit-two svg{width:17px;height:17px;}}
+
+
+/* Support pages: Credits-style gradients, playful illustrations, and readable light panels. */
+#bz-dashboard-main.bz-support-light{color:#183655!important;background:transparent!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page{display:flex;flex-direction:column;gap:18px;padding:8px 0 24px;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:205px;padding:26px 30px;border-radius:21px;border:2px solid #8bd9ff;box-shadow:0 10px 26px #1856a620;overflow:hidden;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-protection{background:linear-gradient(110deg,#08a6dc,#0c76ec 53%,#13b995)!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-disputes{background:linear-gradient(110deg,#087bdf,#3970f0 55%,#f78a20)!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-returns{background:linear-gradient(110deg,#04a9c9,#137ce8 51%,#17ba99)!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-tickets{background:linear-gradient(110deg,#0a84e3,#306af2 57%,#e14bbd)!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-copy{position:relative;z-index:2;max-width:540px;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:99px;background:#ffffff38;color:#fff!important;font-size:10px;font-weight:900;letter-spacing:1.1px;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-hero h2{color:#fff!important;font-size:clamp(25px,3vw,38px);font-weight:950;line-height:1.15;letter-spacing:-.6px;margin:12px 0 9px;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-hero p{color:#fff!important;font-size:13px;line-height:1.6;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:17px;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-chips span{display:inline-flex;align-items:center;gap:7px;background:#fffffff0;color:#174d7e!important;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:850;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-chips svg{color:#ed7811!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-art{position:relative;display:grid;place-items:center;flex:0 0 175px;height:155px;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-main{display:grid;place-items:center;width:126px;height:126px;border-radius:29px;background:linear-gradient(145deg,#fff,#d9edff);color:#0b74d3!important;transform:rotate(-9deg);box-shadow:0 14px 28px #113f763e;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-float-one,#bz-dashboard-main.bz-support-light .bz-support-hero-float-two{position:absolute;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;box-shadow:0 5px 17px #143d7338;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-float-one{top:0;right:0;background:#ffe3a0;color:#a65c07!important;}
+#bz-dashboard-main.bz-support-light .bz-support-hero-float-two{bottom:0;left:0;background:#c9ffe7;color:#078a64!important;}
+/* Scoped light surfaces for legacy Support components. */
+#bz-dashboard-main.bz-support-light .bz-support-credits-page > :not(.bz-support-credits-hero){background:#fff!important;color:#183655!important;border:1px solid #d2e5f5!important;border-radius:18px!important;box-shadow:0 7px 22px #164e8b12!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(div,section,article,header)[class*="bg-[#0"],#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(div,section,article,header)[class*="bg-[#1"],#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(div,section,article,header).bg-slate-900,#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(div,section,article,header).bg-slate-950,#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(div,section,article,header).bg-gray-900{background:#eef7ff!important;color:#183655!important;border-color:#d3e5f4!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page > :not(.bz-support-credits-hero) :is(h1,h2,h3,h4,h5,h6,p,label,li,small,span,strong){color:#183655!important;text-shadow:none!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(input:not([type=checkbox]):not([type=radio]),textarea,select){background:#f8fbff!important;color:#163858!important;-webkit-text-fill-color:#163858!important;border:1px solid #b9d3eb!important;border-radius:10px;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(input,textarea)::placeholder{color:#687f99!important;-webkit-text-fill-color:#687f99!important;opacity:1!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(.bg-blue-50,.bg-sky-50){background:#e9f4ff!important;color:#17507f!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(.bg-emerald-50,.bg-green-50,.bg-teal-50){background:#e4f8ef!important;color:#116e4e!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(.bg-amber-50,.bg-orange-50){background:#fff0df!important;color:#8d5217!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(.bg-red-50,.bg-rose-50){background:#ffedf2!important;color:#97334c!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-blue-600,#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a)[class*="bg-[#4A5CE8]"]{background:#086ecf!important;color:#fff!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-orange-500{background:#ed7918!important;color:#fff!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-emerald-600{background:#078762!important;color:#fff!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-red-600{background:#ca3550!important;color:#fff!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-blue-600 :is(span,svg),#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-orange-500 :is(span,svg),#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-emerald-600 :is(span,svg){color:#fff!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a).bg-white{background:#eaf5ff!important;color:#15518a!important;border-color:#bad6ef!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page a:not([class*="bg-"]){color:#0968b8!important;}
+#bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a):focus-visible{outline:3px solid #ff9b34!important;outline-offset:2px;}
+@media(max-width:700px){#bz-dashboard-main.bz-support-light .bz-support-credits-hero{padding:19px 17px;min-height:175px;}#bz-dashboard-main.bz-support-light .bz-support-hero-art{flex-basis:85px;height:100px;}#bz-dashboard-main.bz-support-light .bz-support-hero-main{width:76px;height:76px;border-radius:18px;}#bz-dashboard-main.bz-support-light .bz-support-hero-main svg{width:39px;height:39px;}#bz-dashboard-main.bz-support-light .bz-support-hero-float-one,#bz-dashboard-main.bz-support-light .bz-support-hero-float-two{width:29px;height:29px;}#bz-dashboard-main.bz-support-light .bz-support-hero-float-one svg,#bz-dashboard-main.bz-support-light .bz-support-hero-float-two svg{width:17px;height:17px;}}
