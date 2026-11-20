@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { dropshipConfigured, searchDropship, getDropshipProduct, aliExpressProductId } from "../lib/aliexpressDropship.js";
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
@@ -645,6 +646,55 @@ router.post("/admin/users", async (req, res) => {
     logger.error({ err }, "Failed to add user");
     res.status(500).json({ error: "Failed to add user" });
   }
+});
+
+// Admin-managed demo sellers are not Clerk identities and must never be treated as verified accounts.
+const DEMO_SELLER_STORES = [
+  "Copper & Fern","Northstar Finds","Bluebird Home","The Retro Attic","Willow & Wire",
+  "Harbour Goods","Pixel Pantry","Oak & Ember","Brightside Bazaar","Luna Lane",
+  "The Gadget Grove","Cedar Collective","Urban Trinkets","Sunset Supply","Moss & Maple",
+  "The Vinyl Vault","Little Lantern","Orange Orchard","Silver Sparrow","Coastal Curios"
+];
+router.post("/admin/users/demo-sellers/bulk", async (req, res) => {
+  try {
+    if (req.body?.confirm !== "CREATE_20_DEMO_SELLERS") { res.status(400).json({error:"Confirmation required"}); return; }
+    const batch = randomUUID().slice(0, 8);
+    const created = await db.transaction(async tx => {
+      const result = [];
+      for (let i = 0; i < DEMO_SELLER_STORES.length; i++) {
+        const email = `demo-seller-${batch}-${String(i+1).padStart(2,"0")}@example.com`;
+        const name = DEMO_SELLER_STORES[i];
+        await tx.execute(sql`INSERT INTO users (id,email,name,credits,seller_type) VALUES (${email},${email},${name},0,'business')`);
+        result.push({email,name});
+      }
+      return result;
+    });
+    await recordAdminAudit({req,category:"users",action:"demo_sellers.bulk_create",targetType:"user",targetId:batch,summary:`Created ${created.length} admin-managed demo sellers`});
+    res.json({success:true,created});
+  } catch(err) { logger.error({err},"Demo seller creation failed");res.status(500).json({error:"Could not create demo sellers"}); }
+});
+router.delete("/admin/users/demo-sellers/:email/with-listings", async (req,res) => {
+  try {
+    const email = String(req.params.email).toLowerCase();
+    if (!/^demo-seller-[a-f0-9]{8}-\\d{2}@example\\.com$/.test(email) || req.body?.confirm !== email) {
+      res.status(400).json({error:"Exact demo seller email confirmation required"});return;
+    }
+    const result = await db.transaction(async tx => {
+      const user = await tx.execute(sql`SELECT email,credits FROM users WHERE lower(email)=${email} FOR UPDATE`).then(r=>r.rows[0] as any);
+      if (!user) return {missing:true};
+      if (Number(user.credits)>0) throw new Error("Demo seller has credits; resolve balance first");
+      const orders = await tx.execute(sql`SELECT COUNT(*)::int n FROM orders WHERE lower(seller_email)=${email} OR lower(buyer_email)=${email}`).then(r=>r.rows[0] as any);
+      if (Number(orders?.n)>0) throw new Error("Demo seller has order history; deletion blocked");
+      const listings = await tx.execute(sql`SELECT COUNT(*)::int n FROM listings WHERE lower(seller_email)=${email}`).then(r=>r.rows[0] as any);
+      // Remove only listings owned by this demo seller. Existing listing-related dependencies may block deletion.
+      await tx.execute(sql`DELETE FROM listings WHERE lower(seller_email)=${email}`);
+      await tx.execute(sql`DELETE FROM users WHERE lower(email)=${email}`);
+      return {deletedListings:Number(listings?.n??0)};
+    });
+    if ("missing" in result) {res.status(404).json({error:"Demo seller not found"});return;}
+    await recordAdminAudit({req,category:"users",action:"demo_sellers.delete_with_listings",targetType:"user",targetId:email,summary:`Deleted demo seller and ${result.deletedListings} listings`});
+    res.json({success:true,...result});
+  } catch(err) {logger.error({err},"Demo seller deletion failed");res.status(409).json({error:err instanceof Error?err.message:"Could not delete demo seller"});}
 });
 
 // Pull in people who exist elsewhere but aren't in the users table yet:
