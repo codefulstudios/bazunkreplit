@@ -232,15 +232,15 @@ export function AdminUsersPage() {
     if (!emails.length) {setBulkResult("Select customers first.");return;}
     const credits=Number(bulkAmount);
     if (bulkAction==="credit" && (!Number.isInteger(credits)||credits<=0||credits>100000)) {setBulkResult("Enter 1–100,000 whole credits.");return;}
-    if (bulkAction==="credit" && !bulkReason.trim()) {setBulkResult("A reason is required for bulk credit changes.");return;}
-    const description=bulkAction==="credit"?`ADD ${credits} credits to each of ${emails.length} customers (${credits*emails.length} credits total)`:bulkAction==="suspend"?"SUSPEND":"REACTIVATE";
+    if ((bulkAction==="credit"||bulkAction==="clear") && bulkReason.trim().length<8) {setBulkResult("A reason is required for bulk credit changes.");return;}
+    const description=bulkAction==="clear"?`REMOVE ALL CURRENT CREDITS from each of ${emails.length} selected customers`:bulkAction==="credit"?`ADD ${credits} credits to each of ${emails.length} customers (${credits*emails.length} credits total)`:bulkAction==="suspend"?"SUSPEND":"REACTIVATE";
     if (!window.confirm(`${description} for ${emails.length} selected customers? This changes live customer accounts.`)) return;
     setBulkBusy(true);setBulkResult("");
     let succeeded=0;const failed:string[]=[];
     for (const email of emails) {
       try {
-        const path=bulkAction==="credit"?`/api/admin/users/${encodeURIComponent(email)}/credits`:`/api/admin/users/${encodeURIComponent(email)}/ban`;
-        const response=await authFetch(path,{method:"PATCH",body:JSON.stringify(bulkAction==="credit"?{amount:credits/100,reason:bulkReason.trim()}:{banned:bulkAction==="suspend"})});
+        const path=bulkAction==="clear"?`/api/admin/users/${encodeURIComponent(email)}/credits/clear`:bulkAction==="credit"?`/api/admin/users/${encodeURIComponent(email)}/credits`:`/api/admin/users/${encodeURIComponent(email)}/ban`;
+        const response=await authFetch(path,{method:"PATCH",body:JSON.stringify(bulkAction==="clear"?{reason:bulkReason.trim()}:bulkAction==="credit"?{amount:credits/100,reason:bulkReason.trim()}:{banned:bulkAction==="suspend"})});
         if (!response.ok) {const data=await response.json().catch(()=>({}));throw new Error(data.error||`HTTP ${response.status}`);}
         succeeded++;
       } catch(err) {failed.push(`${email}: ${err instanceof Error?err.message:"Network error"}`);}
@@ -395,11 +395,11 @@ export function AdminUsersPage() {
         <div className="flex flex-wrap items-center gap-2">
           <strong className="text-sm">{selectedUserIds.length} selected</strong>
           <select aria-label="Bulk action" value={bulkAction} onChange={e=>setBulkAction(e.target.value)} className="rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900">
-            <option value="credit">Add credits</option><option value="suspend">Suspend accounts</option><option value="reactivate">Reactivate accounts</option>
+            <option value="credit">Add credits</option><option value="clear">Remove all credits</option><option value="suspend">Suspend accounts</option><option value="reactivate">Reactivate accounts</option>
           </select>
-          {bulkAction==="credit"&&<>
-            <input aria-label="Credits per customer" type="number" min="1" max="100000" step="1" placeholder="Credits per customer" value={bulkAmount} onChange={e=>setBulkAmount(e.target.value)} className="w-40 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
-            <input aria-label="Bulk credit reason" placeholder="Reason (required)" value={bulkReason} onChange={e=>setBulkReason(e.target.value)} className="min-w-40 flex-1 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
+          {(bulkAction==="credit"||bulkAction==="clear")&&<>
+            {bulkAction==="credit"&&<input aria-label="Credits per customer" type="number" min="1" max="100000" step="1" placeholder="Credits per customer" value={bulkAmount} onChange={e=>setBulkAmount(e.target.value)} className="w-40 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>}
+            <input aria-label="Bulk credit reason" placeholder="Reason (at least 8 characters)" value={bulkReason} onChange={e=>setBulkReason(e.target.value)} className="min-w-40 flex-1 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
           </>}
           <button type="button" disabled={bulkBusy||!selectedUserIds.length} onClick={runBulkAction} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkBusy?"Applying…":"Apply to selected"}</button>
         </div>
