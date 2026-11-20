@@ -329,7 +329,9 @@ export function ListingPage() {
     if(!email||!reportReason){setReportError("Please provide an email and select a reason.");return;}
     setReportBusy(true);
     try {
-      const response=await fetch(API_BASE+"/api/support/tickets",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,subject:"Listing report #"+(product?.id||id)+" - "+reportReason,category:"listing_report",body:"Listing: "+listingUrl+"\\nReason: "+reportReason+"\\nDetails: "+(reportDetails.trim()||"No additional details")})});
+      const token=await session?.getToken();
+      if(!token)throw new Error("Sign in to submit a listing report");
+      const response=await fetch(API_BASE+"/api/support/tickets",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({email,subject:"Listing report #"+(product?.id||id)+" - "+reportReason,category:"listing_report",body:"Listing: "+listingUrl+"\\nReason: "+reportReason+"\\nDetails: "+(reportDetails.trim()||"No additional details")})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.error||"Could not submit report");
       setReported(true);setReportOpen(false);setReportDetails("");setReportReason("");
