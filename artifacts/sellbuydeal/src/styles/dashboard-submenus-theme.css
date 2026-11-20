@@ -550,3 +550,38 @@ body:has(#bz-dashboard-main) .bz-glass-v8-layout .bz-glass-sidebar-signout{color
 #bz-dashboard-main.bz-buying-light :is(.text-orange-500,.text-amber-500){color:#d66b09!important;}
 #bz-dashboard-main.bz-buying-light :is(svg.text-gray-200,svg.text-gray-300){color:#0a79d9!important;}
 #bz-dashboard-main.bz-buying-light :is(button,a):focus-visible{outline:3px solid #ff9c32!important;outline-offset:2px;}
+
+
+/* Selling dashboard / Option 8 light design: all eight submenu destinations.
+   Neutralise old dark cards without erasing semantic coloured action buttons. */
+#bz-dashboard-main.bz-selling-light{color:#193858!important;background:transparent!important;}
+#bz-dashboard-main.bz-selling-light > div{color:#193858!important;}
+#bz-dashboard-main.bz-selling-light > div > :is(div,section,article){background:#fff!important;border:1px solid #d8e5f3!important;border-radius:18px!important;box-shadow:0 5px 20px #164b8914!important;}
+#bz-dashboard-main.bz-selling-light :is(section,article,div)[class*="bg-[#0"],#bz-dashboard-main.bz-selling-light :is(section,article,div)[class*="bg-[#1"],#bz-dashboard-main.bz-selling-light :is(section,article,div).bg-slate-900,#bz-dashboard-main.bz-selling-light :is(section,article,div).bg-slate-950,#bz-dashboard-main.bz-selling-light :is(section,article,div).bg-gray-900{background:#fff!important;color:#193858!important;}
+#bz-dashboard-main.bz-selling-light :is(section,article,div)[class*="dark:bg-[#"]{background:#fff!important;color:#193858!important;}
+#bz-dashboard-main.bz-selling-light :is(h1,h2,h3,h4,h5,h6){color:#14365b!important;}
+#bz-dashboard-main.bz-selling-light :is(p,li,label,legend,dt,dd,small){color:#315474!important;}
+#bz-dashboard-main.bz-selling-light :is(span,strong,b)[class*="text-white"],#bz-dashboard-main.bz-selling-light :is(p,h1,h2,h3,h4)[class*="text-white"]{color:#193858!important;}
+#bz-dashboard-main.bz-selling-light :is(.text-gray-300,.text-gray-400,.text-slate-200,.text-slate-300){color:#5d7895!important;}
+#bz-dashboard-main.bz-selling-light :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:#f7fbff!important;color:#193858!important;-webkit-text-fill-color:#193858!important;border:1px solid #b9d1eb!important;border-radius:9px;}
+#bz-dashboard-main.bz-selling-light :is(input,textarea)::placeholder{color:#6a809a!important;-webkit-text-fill-color:#6a809a!important;opacity:1!important;}
+#bz-dashboard-main.bz-selling-light :is(.bg-white,.bg-slate-50,.bg-gray-50){color:#193858!important;}
+#bz-dashboard-main.bz-selling-light :is(.bg-blue-50,.bg-sky-50){background:#eaf5ff!important;color:#174773!important;}
+#bz-dashboard-main.bz-selling-light :is(.bg-orange-50,.bg-amber-50){background:#fff0df!important;color:#805016!important;}
+#bz-dashboard-main.bz-selling-light :is(.bg-green-50,.bg-emerald-50){background:#e6f8f0!important;color:#136a4b!important;}
+#bz-dashboard-main.bz-selling-light :is(.bg-red-50,.bg-rose-50){background:#ffedf1!important;color:#92334d!important;}
+#bz-dashboard-main.bz-selling-light :is(svg.text-gray-200,svg.text-gray-300){color:#0879db!important;}
+#bz-dashboard-main.bz-selling-light :is(.text-violet-500,.text-purple-500,.text-indigo-500){color:#0b73d0!important;}
+#bz-dashboard-main.bz-selling-light :is(.border-violet-400,.border-purple-400){border-color:#4da6ee!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#4A5CE8]"],#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#3B4FD8]"],#bz-dashboard-main.bz-selling-light :is(button,a).bg-blue-600,#bz-dashboard-main.bz-selling-light :is(button,a).bg-blue-700{background:#096fce!important;color:#fff!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#F26B21]"],#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#F59E0B]"],#bz-dashboard-main.bz-selling-light :is(button,a).bg-orange-500,#bz-dashboard-main.bz-selling-light :is(button,a).bg-orange-600{background:#ec7615!important;color:#fff!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a).bg-emerald-600,#bz-dashboard-main.bz-selling-light :is(button,a).bg-green-600{background:#088962!important;color:#fff!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a).bg-red-600{background:#c9304b!important;color:#fff!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#4A5CE8]"] :is(span,svg),#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#3B4FD8]"] :is(span,svg),#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#F26B21]"] :is(span,svg),#bz-dashboard-main.bz-selling-light :is(button,a)[class*="bg-[#F59E0B]"] :is(span,svg),#bz-dashboard-main.bz-selling-light :is(button,a).bg-blue-600 :is(span,svg),#bz-dashboard-main.bz-selling-light :is(button,a).bg-orange-500 :is(span,svg){color:#fff!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a).bg-white,#bz-dashboard-main.bz-selling-light :is(button,a).bg-slate-50{background:#eaf5ff!important;color:#14558e!important;border:1px solid #bcd7f0!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a).bg-white :is(span,svg){color:#14558e!important;}
+#bz-dashboard-main.bz-selling-light a:not([class*="bg-"]){color:#0966b7!important;}
+#bz-dashboard-main.bz-selling-light :is(button,a):focus-visible{outline:3px solid #ff9c36!important;outline-offset:2px;}
+/* Deliberate blue/orange section treatment rather than empty white blocks. */
+#bz-dashboard-main.bz-selling-light > div > :is(section,article,div) > :first-child:is(header,div){border-color:#d5e5f5!important;}
+#bz-dashboard-main.bz-selling-light > div > :is(section,article,div) > header:first-child{background:linear-gradient(105deg,#e7f3ff,#fff 58%,#fff0dd)!important;border-bottom:2px solid #c8e1fa!important;}
