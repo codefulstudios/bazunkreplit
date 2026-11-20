@@ -66,3 +66,16 @@ test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
  assert.match(offers,/l\.status=\x27active\x27/);
  assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
 });
+
+test("BZ-008: seller SKU imports are duplicate-safe without treating rows as failures",()=>{
+ const listings=read(root+"routes/listings.ts");
+ const bulk=read("artifacts/sellbuydeal/src/pages/BulkImportPage.tsx");
+ assert.match(listings,/pg_advisory_xact_lock/);
+ assert.match(listings,/LOWER\(seller_email\) = \$\{authenticatedEmail\}/);
+ assert.match(listings,/LOWER\(BTRIM\(sku\)\) = \$\{sku\.toLowerCase\(\)\}/);
+ assert.match(listings,/existingListingId/);
+ assert.match(listings,/error: "duplicate_sku"/);
+ assert.match(bulk,/response\.status===409 && body\.error==="duplicate_sku"/);
+ assert.match(bulk,/SKIPPED/);
+ assert.match(bulk,/const skuKey=row\.sku\.trim\(\)\.toLowerCase\(\)/);
+});
