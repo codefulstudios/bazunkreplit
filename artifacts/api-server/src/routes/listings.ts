@@ -296,6 +296,10 @@ router.get("/listings/mine", async (req, res) => {
         price: listingsTable.price,
         category: listingsTable.category,
         subcategory: listingsTable.subcategory,
+        subsubcategory: listingsTable.subsubcategory,
+        quantity: listingsTable.quantity,
+        shippingPrice: listingsTable.shippingPrice,
+        carrier: listingsTable.carrier,
         description: listingsTable.description,
         condition: listingsTable.condition,
         image: listingsTable.image,
@@ -899,3 +903,4 @@ router.patch("/listings/profile/me", async (req, res) => {
 });
 
 export default router;
+
