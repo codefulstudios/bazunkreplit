@@ -6,7 +6,7 @@ const css=read("artifacts/sellbuydeal/src/index.css");
 const targets=[
  ["Hero.tsx","artifacts/sellbuydeal/src/components/Hero.tsx",["bz-hero-kicker","bz-hero-summary"]],
  ["CookieConsent.tsx","artifacts/sellbuydeal/src/components/CookieConsent.tsx",["bazunk-cookie-consent","bz-cookie-description","bz-cookie-reject","bz-cookie-customise","bz-cookie-accept"]],
- ["OffersPage.tsx","artifacts/sellbuydeal/src/pages/OffersPage.tsx",["text-[#fff0a8]","from-[#9a3412]","from-[#065f46]"]],
+ ["OffersPage.tsx","artifacts/sellbuydeal/src/pages/OffersPage.tsx",["text-[#fff0a8]","text-blue-100","text-emerald-300"]],
  ["DealPilotPanel.tsx","artifacts/sellbuydeal/src/components/DealPilotPanel.tsx",["dark:!text-white","Notify me about matches","Suggest offers for my approval"]],
  ["ImportersPage.tsx","artifacts/sellbuydeal/src/pages/ImportersPage.tsx",["bz-importer-dialog","bz-example-light"]]
 ];

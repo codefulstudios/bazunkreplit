@@ -5966,7 +5966,6 @@ export function DashboardPage() {
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
             {activeSection === "shipping-centre" && <div className="space-y-6 p-4 sm:p-6"><SellerBundleSettings /><SellerShipping /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerTrustInsights /><SellerPricingInsightsPanel /></div>}
-            {activeSection === "shipping-centre" && <SellerShipping />}
             {activeSection === "watchlist" && (
               <>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>

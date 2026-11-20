@@ -577,7 +577,7 @@ export function LivePage() {
                   {session.sellerName} is live on {meta.label}
                 </p>
                 <p className="text-gray-400 text-sm max-w-sm">
-                  {meta.label} doesn't support in-page embedding. Open the stream in a new tab, then come back here to browse and buy the items below.
+                  {meta.viewingNote || `${meta.label} opens in a separate tab. Return to Bazunk to browse and buy the featured items.`}
                 </p>
               </div>
               <a

@@ -1,0 +1,25 @@
+name: Shopify seller import integration
+on:
+  pull_request:
+    paths:
+      - 'artifacts/api-server/src/routes/userImporter.ts'
+      - 'artifacts/api-server/src/lib/data-platform-client.ts'
+      - 'artifacts/api-server/tests/shopify-integration.test.mjs'
+      - '.github/workflows/shopify-import-integration.yml'
+  workflow_dispatch:
+jobs:
+  shopify-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Authenticated Shopify seller import and duplicate regression
+        run: node --test artifacts/api-server/tests/shopify-integration.test.mjs

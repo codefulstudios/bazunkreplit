@@ -14,6 +14,7 @@ test('Shopify preview → seller selection → transaction → source sync', asy
   express: 'export const Router=()=>({post:(p,f)=>globalThis.shopifyTest.routes.set(p,f),get(){}});',
   '@workspace/db': 'export const db={execute:q=>globalThis.shopifyTest.execute(q),transaction:f=>globalThis.shopifyTest.transaction(f)};',
   'drizzle-orm': 'export const sql=(strings,...values)=>({text:strings.join("?"),values});',
+  '../lib/data-platform-client.js': 'export const marketplaceDataRequest=async(path,query)=>globalThis.shopifyTest.platformRequest(path,query);',
   '../lib/logger.js': 'export const logger={error(){},warn(){},info(){}};',
   './logger.js': 'export const logger={error(){},warn(){},info(){}};',
   '../lib/amazon.js': 'export const fetchAmazonDetails=()=>{},buildAmazonDescription=()=>{};',
@@ -33,7 +34,15 @@ test('Shopify preview → seller selection → transaction → source sync', asy
  }};
  const savedFetch = globalThis.fetch;
  let price=12.50, available=true, failSupplier=false;
+ const previousKey=process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY;
+ const previousUrl=process.env.BAZUNK_DATA_PLATFORM_URL;
  const state=globalThis.shopifyTest={routes:new Map(),listings:[],suppliers:[],updates:[],
+  platformCalls:[],
+  async platformRequest(endpoint,query){
+   this.platformCalls.push({endpoint,query});
+   if(this.platformFails)throw Error('Simulated Data Platform outage');
+   return {items:[{sourceUrl:'https://shop.example.com/products/same-handle',externalId:'same-handle',title:'Source product',description:'Source description',image:'https://cdn.example.com/product.jpg',price:{amount:price,currency:'GBP'},available,variants:[]}]};
+  },
   async execute(q){
    if(q.text.includes('SELECT name'))return {rows:[{name:'Test seller'}]};
    if(q.text.includes('SELECT si.id FROM'))return {rows:this.suppliers.filter(s=>s.url===q.values[0]&&s.email===q.values[1]).map(()=>({id:1}))};
@@ -70,7 +79,7 @@ test('Shopify preview → seller selection → transaction → source sync', asy
   const preview=await call('/user/shopify-public/preview',{url:'shop.example.com/products/same-handle'});
   assert.equal(preview.statusCode,200);assert.equal(preview.body.items[0].price.amount,12.5);
   assert.equal(preview.body.items[0].price.currency,'GBP');
-  const payload={items:preview.body.items,category:'fashion',subcategory:'shirts',markupType:'percentage',markupValue:20,syncEnabled:true};
+  const payload={items:preview.body.items,category:'fashion',subcategory:'shirts',markupType:'percentage',markupValue:20,syncEnabled:true,marketplaceRegion:'uk'};
   assert.equal((await call('/user/import-shopify-public',{...payload,markupValue:'NaN'})).statusCode,400);
   // A tampered handoff price/title is replaced by the source response.
   const imported=await call('/user/import-shopify-public',{...payload,items:[{...preview.body.items[0],title:'Tampered',price:{amount:999,currency:'USD'}}]});
@@ -89,9 +98,26 @@ test('Shopify preview → seller selection → transaction → source sync', asy
   const updated=state.updates.find(q=>q.text.includes('UPDATE listings'));
   assert.equal(updated.values[0],24);assert.equal(updated.values[3],0);assert.equal(updated.values[4],'inactive');
   assert.equal(state.updates.find(q=>q.text.includes('UPDATE supplier_imports')).values[0],20);
+  // Exercise the authenticated internal Data Platform branch, not only the direct reader.
+  process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY='fixture-restricted-products-read-key';
+  process.env.BAZUNK_DATA_PLATFORM_URL='https://data.example.test';
+  const platformPreview=await call('/user/shopify-public/preview',{url:'shop.example.com/products/same-handle'});
+  assert.equal(platformPreview.statusCode,200);
+  assert.equal(state.platformCalls.at(-1).endpoint,'/v1/shopify/import-preview');
+  assert.equal(state.platformCalls.at(-1).query.url,'shop.example.com/products/same-handle');
+  assert.equal((await call('/user/shopify-public/preview',{url:'shop.example.com'},null)).statusCode,401);
+  // Same seller and source must not create a second listing, even via the adapter.
+  const duplicate=await call('/user/import-shopify-public',{...payload,items:[preview.body.items[0]]});
+  assert.equal(duplicate.body.skipped,1);
+  assert.equal(state.listings.length,2);
+  state.platformFails=true;
+  const outage=await call('/user/shopify-public/preview',{url:'shop.example.com/products/same-handle'});
+  assert.notEqual(outage.statusCode,200);
+  assert.equal(state.listings.length,2);
+  state.platformFails=false;
   state.updates=[];state.suppliers[0].data.syncEnabled=false;
   assert.equal((await sync.syncImport(1)).error,'Sync disabled');assert.equal(state.updates.length,0);
   const component=await readFile(path.join(root,'../sellbuydeal/src/components/ShopifyPublicImporter.tsx'),'utf8');
   assert.ok(component.includes('selected[x.sourceUrl]'));assert.ok(component.includes('bazunk_shopify_handoff'));
- } finally {globalThis.fetch=savedFetch;delete globalThis.shopifyTest;await rm(dir,{recursive:true,force:true});}
+ } finally {if(previousKey===undefined)delete process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY;else process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY=previousKey;if(previousUrl===undefined)delete process.env.BAZUNK_DATA_PLATFORM_URL;else process.env.BAZUNK_DATA_PLATFORM_URL=previousUrl;globalThis.fetch=savedFetch;delete globalThis.shopifyTest;await rm(dir,{recursive:true,force:true});}
 });

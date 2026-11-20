@@ -9,6 +9,8 @@ const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL|
 export function Footer() {
   const s=useSiteSettings();
   const raw=useRawSettings();
+  // Footer copy is a published site setting independent of Theme Studio activation.
+  const footerAbout=s.footer_about?.trim()||"";
   const studioIcons=parseIconOverrides(raw.icon_overrides);
   const social=[
     {url:s.footer_youtube,Icon:iconForPlacement(studioIcons,"footer_youtube"),label:"YouTube"},
@@ -34,6 +36,7 @@ export function Footer() {
             {social.map(({url,Icon,label})=><a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label}><Icon size={19}/></a>)}
           </div>
         </div>
+        {footerAbout&&<p className="bz-compact-footer-about" data-theme-edit="footer_about">{footerAbout}</p>}
         <div className="bz-compact-footer-bottom">
           <p>&copy; {new Date().getFullYear()} {s.footer_copyright||"Bazunk Marketplace USA LLC."} All rights reserved.</p>
           <button type="button" onClick={openCookieSettings}>Cookie Settings</button>

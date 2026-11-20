@@ -195,9 +195,9 @@ export function ListingPage() {
       const token = await session.getToken();
       const r = await fetch("/api/messages/conversations", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ listingId: apiProduct.id }) });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) { window.alert(data.error || "Could not start conversation"); return; }
+      if (!r.ok) { toast({title:"Message unavailable",description:data.error || "Could not start conversation",variant:"destructive"}); return; }
       window.dispatchEvent(new CustomEvent("bazunk:open-message-center", { detail: { conversationId: data.id } }));
-    } catch { window.alert("Could not start conversation. Please try again."); } finally { setStartingMessage(false); }
+    } catch { toast({title:"Message unavailable",description:"Could not start conversation. Please try again.",variant:"destructive"}); } finally { setStartingMessage(false); }
   }
 
   // Count the view (and where it came from) for the seller's analytics
