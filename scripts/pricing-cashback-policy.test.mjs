@@ -52,3 +52,17 @@ test("fee pricing appears in legal and sitewide explanations",()=>{
    assert.match(read(p),/6% of their combined eligible item price plus £1\.00/);
  }
 });
+
+test("Phase 2 cart checkout rejects invalid quantities before payment",()=>{
+ const stripe=read(root+"routes/stripe.ts");
+ assert.match(stripe,/Array\.isArray\(body\.items\)/);
+ assert.match(stripe,/Number\.isSafeInteger\(Number\(\(item as \{quantity\?: unknown\}\)\.quantity\)\)/);
+ assert.match(stripe,/Your basket contains invalid items or quantities/);
+ assert.match(stripe,/quoteCart\(body\.items\)/);
+});
+test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
+ const offers=read(root+"routes/marketplaceOffers.ts");
+ assert.match(offers,/expires_at > NOW\(\)/);
+ assert.match(offers,/l\.status=\x27active\x27/);
+ assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
+});
