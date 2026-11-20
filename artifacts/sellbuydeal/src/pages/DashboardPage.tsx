@@ -16,7 +16,7 @@ import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk } from "@cle
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, Bell, ShoppingBag, BarChart2, Heart, Search, MessageSquare,
+  LayoutDashboard, Bell, ShoppingBag, BarChart2, BarChart3, Video, Heart, Search, MessageSquare,
   ArrowUp, Home as HomeIcon, Crown,
   Coins, Megaphone, User, Shield, ShieldCheck, MapPin, CreditCard, Banknote, Zap, Store,
   Tag, Eye, Plus, TrendingUp, Trophy, Gift, ChevronRight, LogOut,
