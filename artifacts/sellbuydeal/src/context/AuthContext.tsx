@@ -1,3 +1,4 @@
+import { toast } from "@/hooks/use-toast";
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useUser, useClerk } from "@clerk/react";
 
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     syncUserWithServer(email, name).then((b) => {
       if (b === "suspended") {
         signOut();
-        window.alert("This account has been suspended. Please contact Bazunk support if you think this is a mistake.");
+        toast({title:"Account suspended",description:"Please contact Bazunk support if you think this is a mistake.",variant:"destructive"});
         return;
       }
       if (b !== null) { setBalance(b.balance); setProfileUsername(b.username ?? null); }

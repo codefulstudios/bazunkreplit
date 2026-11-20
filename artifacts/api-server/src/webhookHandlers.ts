@@ -3,6 +3,7 @@ import { reconcileRefundedPaymentIntent } from "./lib/refundReconciliation.js";
 import { fulfillSpecialCheckout } from "./lib/specialCheckout.js";
 import type Stripe from "stripe";
 import { getUncachableStripeClient } from "./stripeClient.js";
+import { fulfillAuctionSession } from "./lib/auctionFulfillment.js";
 import { fulfillCartSession } from "./lib/fulfillment.js";
 import { fulfillPostage } from "./routes/postage.js";
 
