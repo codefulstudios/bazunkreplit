@@ -4264,3 +4264,11 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 #bz-dashboard-main .bz-tickets-bright :is(input,textarea)::placeholder{color:#687f98!important;-webkit-text-fill-color:#687f98!important;}
 #bz-dashboard-main .bz-tickets-bright :is(.rounded-xl,.rounded-2xl)[class*="border"]{border-color:#b9d7ee!important;}
 #bz-dashboard-main .bz-tickets-bright :is(.rounded-xl,.rounded-2xl)[class*="shadow"]{box-shadow:0 3px 12px #174f8314!important;}
+
+
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50{background:linear-gradient(105deg,#eaf6ff,#fff)!important;border:2px solid #b6d9f5!important;color:#173654!important;box-shadow:0 4px 12px #195f9312!important;}
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50:nth-child(3n+2){background:linear-gradient(105deg,#fff2e2,#fff)!important;border-color:#f9d1a5!important;}
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50:nth-child(3n){background:linear-gradient(105deg,#e9fbf3,#fff)!important;border-color:#a7e2c9!important;}
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50:hover{background:#dcefff!important;border-color:#1885dc!important;}
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50 :is(p,span,strong){color:#173654!important;}
+#bz-dashboard-main .bz-tickets-bright button.w-full.text-left.bg-gray-50 span[class*="bg-"]{background:#d8ecff!important;color:#1a5584!important;}
