@@ -150,11 +150,21 @@ export function AdminUsersPage() {
 
   async function toggleBan(email: string, banned: boolean) {
     setBanSaving(email);
-    await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
-      method: "PATCH", body: JSON.stringify({ banned: !banned }),
-    });
-    await load();
-    setBanSaving(null);
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
+        method: "PATCH", body: JSON.stringify({ banned: !banned }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to update account status (HTTP ${res.status}).`);
+      }
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to update account status.");
+    } finally {
+      setBanSaving(null);
+    }
   }
 
   async function saveEdit() {
@@ -179,10 +189,20 @@ export function AdminUsersPage() {
   async function confirmDelete() {
     if (!deleteUser) return;
     setDeleteSaving(true);
-    await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
-    setDeleteUser(null);
-    setDeleteSaving(false);
-    await load();
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to delete account (HTTP ${res.status}).`);
+      }
+      setDeleteUser(null);
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to delete account.");
+    } finally {
+      setDeleteSaving(false);
+    }
   }
 
   async function syncUsers() {
