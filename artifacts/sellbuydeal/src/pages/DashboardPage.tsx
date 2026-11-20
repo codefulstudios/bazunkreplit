@@ -227,7 +227,7 @@ const MOCK_SALES: { id: string; title: string; price: number; date: string; stat
 function BuyerProtectionDashSection() {
   const [, setLocation] = useLocation();
   return (
-    <div className="flex-1 p-6 max-w-3xl space-y-6">
+    <div className="bz-protection-bright flex-1 p-5 space-y-4">
       <div>
         <h2 className="text-2xl font-black text-gray-900">Buyer Protection</h2>
         <p className="text-gray-500 text-sm mt-1">Every purchase on Bazunk is fully covered.</p>
@@ -5320,7 +5320,7 @@ function SupportTicketsSection({ user }: { user: { email: string; name?: string 
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
+    <div className="bz-tickets-bright bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900 flex items-center gap-2">
