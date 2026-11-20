@@ -617,11 +617,11 @@ export function MessageCenterOverlay({ open, onClose }: { open: boolean; onClose
       ...t, unread: 0, messages: t.messages.map(m => ({ ...m, read: true }))
     } : t));
     if (user?.email) {
-      void getToken().then(token => token && fetch(`/api/support/tickets/${id}/read`, {
+      void getToken().then(token => token ? fetch(`/api/support/tickets/${id}/read`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({}),
-      })).catch(() => {});
+      }) : null).catch(() => {});
     }
   }
 
