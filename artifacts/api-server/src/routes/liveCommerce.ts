@@ -45,5 +45,15 @@ router.post("/admin/live-commerce",requireAdmin,async(req,res)=>{
  else{const q=await db.execute(sql`INSERT INTO live_commerce_entries(kind,title,description,platform,destination_url,image_url,creator_name,price,currency,affiliate,featured,enabled,status,sponsor_until,sponsor_fee_pence,sponsor_payment_status) VALUES(${kind},${title},${description},${platform},${url},${img},${creator},${price},${currency},${affiliate},${featured},${enabled},${status},${sponsorUntil?sponsorUntil.toISOString():null},${sponsorFeePence},${sponsorPaymentStatus}) RETURNING id`);res.json({id:q.rows[0]?.id})}
  }catch{res.status(500).json({error:"Could not save entry"})}
 });
+router.get("/live-commerce/:id/visit",async(req,res)=>{
+ const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1){res.status(400).send("Invalid entry");return;}
+ try{await ensure();const q=await db.execute(sql`SELECT platform,destination_url FROM live_commerce_entries WHERE id=${id} AND enabled=TRUE AND status<>'unverified' LIMIT 1`);
+ if(!q.rows.length){res.status(404).send("Not found");return;}
+ const e=q.rows[0] as {platform:string;destination_url:string};
+ if(!safeUrl(e.destination_url)||!platformHostAllowed(e.platform,e.destination_url)){res.status(400).send("Invalid destination");return;}
+ await db.execute(sql`UPDATE live_commerce_entries SET sponsor_clicks=sponsor_clicks+1 WHERE id=${id}`);
+ res.redirect(302,e.destination_url);
+ }catch{res.status(503).send("Link temporarily unavailable");}
+});
 router.delete("/admin/live-commerce/:id",requireAdmin,async(req,res)=>{const id=Number(req.params.id);if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid ID"});return}try{await ensure();await db.execute(sql`DELETE FROM live_commerce_entries WHERE id=${id}`);res.json({ok:true})}catch{res.status(500).json({error:"Unable to delete entry"})}});
 export default router;
