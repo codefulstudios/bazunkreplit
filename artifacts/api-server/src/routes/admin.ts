@@ -77,13 +77,6 @@ router.post("/admin/login", async (req, res) => {
     ? hashPassword(password) === creds.passwordHash
     : password === creds.passwordHash;
 
-  // Recovery path: a DB-stored admin hash is tied to SESSION_SECRET. If that
-  // secret changes during infrastructure work, the correct configured admin
-  // password must still be able to restore access.
-  if (!passwordMatch && creds.isHashed && process.env.ADMIN_PASSWORD) {
-    passwordMatch = password === process.env.ADMIN_PASSWORD;
-  }
-
   if (!emailMatch || !passwordMatch) {
     res.status(401).json({ error: "Invalid email or password" });
     return;
