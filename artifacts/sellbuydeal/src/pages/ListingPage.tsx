@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDiscovery";
 import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
@@ -887,19 +888,19 @@ export function ListingPage() {
       </div>
 
       {/* Make an Offer modal */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {offerOpen && product && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-50"
+              className="fixed inset-0 bg-black/70 z-[200]"
               onClick={resetOfferModal}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed z-50 inset-0 flex items-center justify-center p-4 pointer-events-none"
+              className="fixed z-[201] inset-0 flex items-center justify-center p-4 pointer-events-none"
             >
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90dvh] pointer-events-auto overflow-y-auto">
                 {/* Header */}
@@ -1033,7 +1034,7 @@ export function ListingPage() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
       <div className="container mx-auto max-w-[1920px] px-4"><ProductDiscovery currentId={Number(product?.id)} /></div>
       <Footer />
