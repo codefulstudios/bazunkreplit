@@ -514,3 +514,39 @@ body:has(#bz-dashboard-main) .bz-glass-v8-layout .bz-glass-sidebar-signout{color
 /* Store previews, tiles and cards with pale backgrounds. */
 #bz-dashboard-main .bz-store-light-theme .bz-store-page-content :is(.bg-background,.bg-card,.bg-white,.bg-slate-50,.bg-blue-50,.bg-orange-50) :is(p,span,h2,h3,h4,label){color:#173759!important;}
 #bz-dashboard-main .bz-store-light-theme .bz-store-page-content .bz-store-edit button.hover\:border-blue-400 :is(span,svg){color:#164a7c!important;}
+
+
+/* Buying dashboard: light, accessible surfaces shared by Orders, Bids, Offers,
+   Watchlist, Saved Searches and DealPilot. Keep other dashboard pages untouched. */
+#bz-dashboard-main.bz-buying-light{background:transparent!important;color:#173455!important;}
+#bz-dashboard-main.bz-buying-light > div{color:#173455!important;}
+#bz-dashboard-main.bz-buying-light :is(section,article,[class*="rounded-2xl"],[class*="rounded-xl"]){border-color:#dbe6f3;}
+/* Neutralise the legacy navy panels, including dark-mode variants. */
+#bz-dashboard-main.bz-buying-light :is(div,section,article,header)[class*="bg-[#0"],#bz-dashboard-main.bz-buying-light :is(div,section,article,header)[class*="bg-[#1"],#bz-dashboard-main.bz-buying-light :is(div,section,article,header)[class*="dark:bg-[#"],#bz-dashboard-main.bz-buying-light :is(div,section,article,header).bg-slate-900,#bz-dashboard-main.bz-buying-light :is(div,section,article,header).bg-slate-950,#bz-dashboard-main.bz-buying-light :is(div,section,article,header).bg-gray-900{background:#fff!important;color:#173455!important;}
+#bz-dashboard-main.bz-buying-light > div > :is(div,section){background:#fff!important;border:1px solid #dce8f5!important;border-radius:17px!important;box-shadow:0 5px 18px #194c8413!important;overflow:hidden;}
+#bz-dashboard-main.bz-buying-light > div > :is(div,section) > div:first-child{background:linear-gradient(105deg,#eaf4ff,#fff 57%,#fff1df)!important;border-bottom:1px solid #dce8f5!important;}
+#bz-dashboard-main.bz-buying-light :is(h1,h2,h3,h4,h5,h6){color:#14375d!important;}
+#bz-dashboard-main.bz-buying-light :is(p,li,label,small,legend,dt,dd){color:#315475!important;}
+#bz-dashboard-main.bz-buying-light :is(span,strong,b)[class*="text-white"],#bz-dashboard-main.bz-buying-light :is(p,h1,h2,h3,h4)[class*="text-white"]{color:#173455!important;}
+#bz-dashboard-main.bz-buying-light .text-gray-400,#bz-dashboard-main.bz-buying-light .text-gray-300,#bz-dashboard-main.bz-buying-light .text-slate-200,#bz-dashboard-main.bz-buying-light .text-slate-300{color:#607995!important;}
+#bz-dashboard-main.bz-buying-light :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){background:#f8fbff!important;color:#173455!important;-webkit-text-fill-color:#173455!important;border:1px solid #bad3ed!important;}
+#bz-dashboard-main.bz-buying-light :is(input,textarea)::placeholder{color:#647e9b!important;opacity:1!important;}
+#bz-dashboard-main.bz-buying-light :is(a,button){font-weight:650;}
+#bz-dashboard-main.bz-buying-light a:not([class*="bg-"]){color:#0b65bd!important;}
+#bz-dashboard-main.bz-buying-light button[class*="bg-[#4A5CE8]"],#bz-dashboard-main.bz-buying-light a[class*="bg-[#4A5CE8]"]{background:#086bd1!important;color:#fff!important;}
+#bz-dashboard-main.bz-buying-light button[class*="bg-[#4A5CE8]"] :is(span,svg),#bz-dashboard-main.bz-buying-light a[class*="bg-[#4A5CE8]"] :is(span,svg){color:#fff!important;}
+#bz-dashboard-main.bz-buying-light button[class*="bg-orange-"],#bz-dashboard-main.bz-buying-light button[class*="bg-[#F26B21]"]{background:#f47716!important;color:#fff!important;}
+#bz-dashboard-main.bz-buying-light button[class*="bg-orange-"] :is(span,svg){color:#fff!important;}
+#bz-dashboard-main.bz-buying-light :is(button,a)[class*="bg-white"]{background:#f0f7ff!important;color:#1359a0!important;border-color:#b9d7f4!important;}
+#bz-dashboard-main.bz-buying-light :is(button,a)[class*="bg-white"] :is(span,svg){color:#1359a0!important;}
+#bz-dashboard-main.bz-buying-light :is(button,a)[class*="bg-transparent"]{color:#125a9f!important;border-color:#b9d7f4!important;}
+#bz-dashboard-main.bz-buying-light :is(.bg-red-50,.bg-rose-50){background:#fff0f1!important;}
+#bz-dashboard-main.bz-buying-light :is(.bg-blue-50,.bg-sky-50){background:#eaf5ff!important;}
+#bz-dashboard-main.bz-buying-light :is(.bg-green-50,.bg-emerald-50){background:#e9faf2!important;}
+#bz-dashboard-main.bz-buying-light :is(.bg-orange-50,.bg-amber-50){background:#fff2e3!important;}
+#bz-dashboard-main.bz-buying-light :is(.text-red-500,.text-rose-500){color:#cc3155!important;}
+#bz-dashboard-main.bz-buying-light :is(.text-blue-500,.text-sky-500){color:#0873d6!important;}
+#bz-dashboard-main.bz-buying-light :is(.text-green-500,.text-emerald-500){color:#078d65!important;}
+#bz-dashboard-main.bz-buying-light :is(.text-orange-500,.text-amber-500){color:#d66b09!important;}
+#bz-dashboard-main.bz-buying-light :is(svg.text-gray-200,svg.text-gray-300){color:#0a79d9!important;}
+#bz-dashboard-main.bz-buying-light :is(button,a):focus-visible{outline:3px solid #ff9c32!important;outline-offset:2px;}
