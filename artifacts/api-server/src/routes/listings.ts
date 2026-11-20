@@ -103,7 +103,7 @@ router.get("/listings/search-suggestions", async (req, res) => {
     const rows = await db.select({ title: listingsTable.title })
       .from(listingsTable)
       .where(and(eq(listingsTable.status, "active"), visible, region,
-        sql`LOWER(${listingsTable.title}) LIKE ${"%" + q.toLowerCase().replace(/[\\%_]/g, "\\router.get("/listings", async (req, res) => {") + "%"} ESCAPE '\\'`))
+        sql`STRPOS(LOWER(${listingsTable.title}), ${q.toLowerCase()}) > 0`))
       .groupBy(listingsTable.title)
       .orderBy(sql`CASE WHEN LOWER(${listingsTable.title}) LIKE ${q.toLowerCase() + "%"} THEN 0 ELSE 1 END`, listingsTable.title)
       .limit(8);
