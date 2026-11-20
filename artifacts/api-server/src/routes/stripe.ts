@@ -13,6 +13,7 @@ import { getUncachableStripeClient, getStripePublishableKey } from "../stripeCli
 import { convertAmount, smallestUnit } from "../fxRates.js";
 import { logger } from "../lib/logger.js";
 import { sendCreditsConfirmation, sendOrderConfirmation } from "../email.js";
+import { fulfillAuctionSession } from "../lib/auctionFulfillment.js";
 import { fulfillCartSession } from "../lib/fulfillment.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 
