@@ -5940,7 +5940,7 @@ export function DashboardPage() {
               </div>
             )}
             {activeSection === "orders" && <OrdersSection />}
-            {activeSection === "sales" && <SellerSales />}
+            {activeSection === "sales" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-sales-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><BarChart3 size={15}/> SELLER COMMAND CENTRE</span><h2>Your sales, <span>in full colour.</span></h2><p>Follow your orders, spot new opportunities and celebrate every sale.</p><div className="bz-seller-vivid-chips"><span><ShoppingBag size={15}/> Orders</span><span><TrendingUp size={15}/> Performance</span><span><Coins size={15}/> Earnings</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><BarChart3 size={66}/><span className="bz-seller-art-live">GROW</span></div><div className="bz-seller-art-bubble"><Coins size={25}/></div><div className="bz-seller-art-spark"><TrendingUp size={25}/></div></div></div><SellerSales /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
             {activeSection === "shipping-centre" && <div className="space-y-6 p-4 sm:p-6"><SellerBundleSettings /><SellerShipping /></div>}
             {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerTrustInsights /><SellerPricingInsightsPanel /></div>}
@@ -6268,7 +6268,7 @@ export function DashboardPage() {
             {activeSection === "payment-cards" && <PaymentSection defaultTab="cards" />}
             {activeSection === "auto-accept" && <AutoAcceptSection />}
             {activeSection === "offers" && <OffersSection />}
-            {activeSection === "go-live" && <GoLiveSection />}
+            {activeSection === "go-live" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-live-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><Radio size={15}/> BAZUNK CREATOR STUDIO</span><h2>Lights on. <span>Let's go live!</span></h2><p>Set up your stream, showcase products and turn your audience into shoppers.</p><div className="bz-seller-vivid-chips"><span><Video size={15}/> Live video</span><span><ShoppingBag size={15}/> Shoppable streams</span><span><Zap size={15}/> Instant deals</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><Video size={64}/><span className="bz-seller-art-live"><span className="bz-seller-live-dot"/> LIVE</span></div><div className="bz-seller-art-bubble"><ShoppingBag size={25}/></div><div className="bz-seller-art-spark"><Zap size={25}/></div></div></div><GoLiveSection /></div>}
             {activeSection === "buyer-protection" && <BuyerProtectionDashSection />}
             {activeSection === "disputes" && <DisputesSection />}
             {activeSection === "returns" && <ReturnsSection />}
