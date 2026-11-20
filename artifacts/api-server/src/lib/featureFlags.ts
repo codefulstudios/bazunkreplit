@@ -13,5 +13,10 @@ export async function featureEnabled(key:string):Promise<boolean>{
     const r=await db.execute(sql`SELECT value FROM site_settings WHERE key=${`feature_${key}`} LIMIT 1`);
     const v=(r.rows[0] as any)?.value;
     return v == null ? true : String(v).toLowerCase() !== "false";
-  } catch { return true; }
+  } catch (error) {
+    // Fail closed if feature settings cannot be read. An absent setting still
+    // uses the documented enabled-by-default behaviour above.
+    console.error(`Feature flag lookup failed for ${key}; disabling feature`, error);
+    return false;
+  }
 }
