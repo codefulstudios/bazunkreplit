@@ -52,3 +52,12 @@ test("fee pricing appears in legal and sitewide explanations",()=>{
    assert.match(read(p),/6% of their combined eligible item price plus £1\.00/);
  }
 });
+
+test("Phase 4 seller bulk actions enforce ownership and expose auditable history",()=>{
+ const route=read(root+"routes/sellerListingTools.ts");
+ assert.match(route,/authenticatedSellerEmail\(req,res\)/);
+ assert.match(route,/LOWER\(seller_email\)=\$\{email\}/);
+ assert.match(route,/seller_listing_bulk_audit/);
+ assert.match(route,/batchId=randomUUID\(\)/);
+ assert.match(route,/\/listings\/seller-tools\/history/);
+});
