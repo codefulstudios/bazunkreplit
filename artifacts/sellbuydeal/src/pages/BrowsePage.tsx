@@ -390,7 +390,7 @@ export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
     setApiListings([]);
     setHasMoreListings(true);
     const timeout = setTimeout(() => controller.abort(), 12000);
-    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
+    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${offset}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`Listings API returned HTTP ${r.status}`);
         const data: ApiListing[] = await r.json();
