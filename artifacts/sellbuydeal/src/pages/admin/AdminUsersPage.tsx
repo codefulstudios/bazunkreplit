@@ -44,6 +44,11 @@ export function AdminUsersPage() {
   const [accountFilter,setAccountFilter]=useState<"all"|"active"|"suspended">("all");
   const [sellerFilter,setSellerFilter]=useState<"all"|"private"|"business">("all");
   const [selectedUserIds,setSelectedUserIds]=useState<string[]>([]);
+  const [bulkAction,setBulkAction]=useState("credit");
+  const [bulkAmount,setBulkAmount]=useState("");
+  const [bulkReason,setBulkReason]=useState("");
+  const [bulkBusy,setBulkBusy]=useState(false);
+  const [bulkResult,setBulkResult]=useState("");
   const visibleUsers=users.filter(u=>(accountFilter==="all"||(accountFilter==="suspended"?u.banned:!u.banned))
     &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):(u.seller_type==="business"||u.seller_type==="sole_trader"))));
   const visibleUserIds=visibleUsers.map(u=>u.email);
@@ -76,6 +81,8 @@ export function AdminUsersPage() {
 
   // Add user modal
   const [addOpen, setAddOpen] = useState(false);
+  const [demoBusy,setDemoBusy]=useState(false);
+  const [demoMessage,setDemoMessage]=useState("");
   const [addEmail, setAddEmail] = useState("");
   const [addName, setAddName] = useState("");
   const [addCredits, setAddCredits] = useState("");
@@ -150,11 +157,21 @@ export function AdminUsersPage() {
 
   async function toggleBan(email: string, banned: boolean) {
     setBanSaving(email);
-    await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
-      method: "PATCH", body: JSON.stringify({ banned: !banned }),
-    });
-    await load();
-    setBanSaving(null);
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(email)}/ban`, {
+        method: "PATCH", body: JSON.stringify({ banned: !banned }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to update account status (HTTP ${res.status}).`);
+      }
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to update account status.");
+    } finally {
+      setBanSaving(null);
+    }
   }
 
   async function saveEdit() {
@@ -179,10 +196,20 @@ export function AdminUsersPage() {
   async function confirmDelete() {
     if (!deleteUser) return;
     setDeleteSaving(true);
-    await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
-    setDeleteUser(null);
-    setDeleteSaving(false);
-    await load();
+    setLoadError("");
+    try {
+      const res = await authFetch(`/api/admin/users/${encodeURIComponent(deleteUser.email)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Unable to delete account (HTTP ${res.status}).`);
+      }
+      setDeleteUser(null);
+      await load();
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to delete account.");
+    } finally {
+      setDeleteSaving(false);
+    }
   }
 
   async function syncUsers() {
@@ -198,6 +225,55 @@ export function AdminUsersPage() {
     } catch {
       setSyncMsg({ ok: false, text: "Network error — try again" });
     } finally { setSyncing(false); }
+  }
+
+  async function runBulkAction() {
+    const emails=selectedUserIds.filter(email=>visibleUsers.some(u=>u.email===email));
+    if (!emails.length) {setBulkResult("Select customers first.");return;}
+    const credits=Number(bulkAmount);
+    if (bulkAction==="credit" && (!Number.isInteger(credits)||credits<=0||credits>100000)) {setBulkResult("Enter 1–100,000 whole credits.");return;}
+    if ((bulkAction==="credit"||bulkAction==="clear") && bulkReason.trim().length<8) {setBulkResult("A reason is required for bulk credit changes.");return;}
+    const description=bulkAction==="clear"?`REMOVE ALL CURRENT CREDITS from each of ${emails.length} selected customers`:bulkAction==="credit"?`ADD ${credits} credits to each of ${emails.length} customers (${credits*emails.length} credits total)`:bulkAction==="suspend"?"SUSPEND":"REACTIVATE";
+    if (!window.confirm(`${description} for ${emails.length} selected customers? This changes live customer accounts.`)) return;
+    setBulkBusy(true);setBulkResult("");
+    let succeeded=0;const failed:string[]=[];
+    for (const email of emails) {
+      try {
+        const path=bulkAction==="clear"?`/api/admin/users/${encodeURIComponent(email)}/credits/clear`:bulkAction==="credit"?`/api/admin/users/${encodeURIComponent(email)}/credits`:`/api/admin/users/${encodeURIComponent(email)}/ban`;
+        const response=await authFetch(path,{method:"PATCH",body:JSON.stringify(bulkAction==="clear"?{reason:bulkReason.trim()}:bulkAction==="credit"?{amount:credits/100,reason:bulkReason.trim()}:{banned:bulkAction==="suspend"})});
+        if (!response.ok) {const data=await response.json().catch(()=>({}));throw new Error(data.error||`HTTP ${response.status}`);}
+        succeeded++;
+      } catch(err) {failed.push(`${email}: ${err instanceof Error?err.message:"Network error"}`);}
+    }
+    setBulkResult(`Completed ${succeeded}/${emails.length}. ${failed.length?`Failed: ${failed.slice(0,8).join("; ")}`:"All changes saved."}`);
+    setSelectedUserIds(failed.map(x=>x.split(":")[0]));
+    setBulkBusy(false);
+    await load();
+  }
+
+  async function createDemoSellers() {
+    if (!window.confirm("Create 20 admin-managed demo seller profiles? These are fictional sellers without logins or verification.")) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch("/api/admin/users/demo-sellers/bulk",{method:"POST",body:JSON.stringify({confirm:"CREATE_20_DEMO_SELLERS"})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Could not create demo sellers");
+      setDemoMessage(`Created ${data.created?.length??20} demo sellers. Search demo-seller- to find them.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
+  }
+  async function deleteDemoSeller(user: User) {
+    if (!window.confirm(`Permanently delete ${user.name||user.email} AND all its listings? This cannot be undone. Deletion is blocked if orders exist.`)) return;
+    setDemoBusy(true);setDemoMessage("");
+    try {
+      const response=await authFetch(`/api/admin/users/demo-sellers/${encodeURIComponent(user.email)}/with-listings`,{method:"DELETE",body:JSON.stringify({confirm:user.email})});
+      const data=await response.json().catch(()=>({}));
+      if (!response.ok) throw new Error(data.error||"Deletion failed");
+      setDemoMessage(`Deleted ${user.email} and ${data.deletedListings} listings.`);
+      await load();
+    } catch(error) {setDemoMessage(error instanceof Error?error.message:"Network error");}
+    finally {setDemoBusy(false);}
   }
 
   async function saveNewUser() {
@@ -274,6 +350,8 @@ export function AdminUsersPage() {
     <AdminLayout>
       <AdminManagementHeader title="Customers" description="Manage marketplace accounts, seller access, credits and customer activity." meta={<span>{total.toLocaleString("en-GB")} matching accounts</span>} actions={<>
         <button type="button" onClick={syncUsers} disabled={syncing} title="Synchronise users from Clerk and marketplace activity" className="wp-action wp-action-secondary">{syncing?<Loader2 className="h-4 w-4 animate-spin"/>:<Download className="h-4 w-4"/>}Sync users</button>
+        <button type="button" onClick={createDemoSellers} disabled={demoBusy} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/> {demoBusy?"Working…":"Create 20 demo sellers"}</button>
+        
         <button type="button" onClick={()=>{setAddOpen(true);setAddError("")}} className="wp-action wp-action-primary"><UserPlus className="h-4 w-4"/>Add customer</button>
         <button type="button" onClick={load} disabled={loading} className="wp-action wp-action-secondary" aria-label="Refresh customers"><RefreshCw className={"h-4 w-4 "+(loading?"animate-spin":"")}/></button>
       </>}/>
@@ -312,6 +390,21 @@ export function AdminUsersPage() {
           </select>
         </label>
         <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">{visibleUsers.length} shown (up to 200 loaded)</span>
+      </div>
+      <div className="mb-3 rounded-xl border-2 border-orange-300 bg-white p-3 text-gray-900">
+        <div className="flex flex-wrap items-center gap-2">
+          <strong className="text-sm">{selectedUserIds.length} selected</strong>
+          <select aria-label="Bulk action" value={bulkAction} onChange={e=>setBulkAction(e.target.value)} className="rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900">
+            <option value="credit">Add credits</option><option value="clear">Remove all credits</option><option value="suspend">Suspend accounts</option><option value="reactivate">Reactivate accounts</option>
+          </select>
+          {(bulkAction==="credit"||bulkAction==="clear")&&<>
+            {bulkAction==="credit"&&<input aria-label="Credits per customer" type="number" min="1" max="100000" step="1" placeholder="Credits per customer" value={bulkAmount} onChange={e=>setBulkAmount(e.target.value)} className="w-40 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>}
+            <input aria-label="Bulk credit reason" placeholder="Reason (at least 8 characters)" value={bulkReason} onChange={e=>setBulkReason(e.target.value)} className="min-w-40 flex-1 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
+          </>}
+          <button type="button" disabled={bulkBusy||!selectedUserIds.length} onClick={runBulkAction} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkBusy?"Applying…":"Apply to selected"}</button>
+        </div>
+        <p className="mt-2 text-xs text-gray-600">Selection applies to visible customers on this page. Changes are audited per account; failures are reported individually.</p>
+        {bulkResult&&<p role="status" className="mt-2 text-sm font-semibold text-gray-900">{bulkResult}</p>}
       </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
@@ -396,6 +489,7 @@ export function AdminUsersPage() {
                           <button type="button" className="admin-users-action" aria-expanded={expandedEmail===u.email} onClick={()=>toggleMilestones(u.email)}>
                             <Trophy size={14}/> Milestones
                           </button>
+                          {/^demo-seller-[a-f0-9]{8}-\d{2}@example\.com$/.test(u.email) && <button type="button" disabled={demoBusy} onClick={()=>deleteDemoSeller(u)} className="admin-users-action admin-users-danger">Delete demo + listings</button>}
                           <button type="button" onClick={()=>setDeleteUser(u)} className="admin-users-action admin-users-danger">
                             <Trash2 size={14}/> Delete
                           </button>
@@ -491,6 +585,7 @@ export function AdminUsersPage() {
           </table>
       </div>
 
+      {demoMessage && <div role="status" className="mb-4 rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm font-semibold text-gray-900">{demoMessage}</div>}
       {/* ── Add User Modal ── */}
       {addOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setAddOpen(false)}>

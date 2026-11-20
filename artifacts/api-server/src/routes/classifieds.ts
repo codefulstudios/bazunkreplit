@@ -86,6 +86,65 @@ router.post("/classifieds", async (req, res) => {
   res.status(201).json(row);
 });
 
+// Seller-owned classified edits. Never accept ownership, region or status from the browser.
+router.patch("/classifieds/:id", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid classified ID" }); return; }
+  const allowed = ["title", "description", "category", "subcategory", "type", "price", "priceLabel",
+    "negotiable", "condition", "location", "contactName", "contactPhone", "urgency",
+    "photos", "externalLink", "expiresAt"] as const;
+  const body = req.body;
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    res.status(400).json({ error: "Invalid update" }); return;
+  }
+  const changes: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
+    const value = body[key];
+    if (["title", "description", "category", "location", "contactName"].includes(key)) {
+      if (typeof value !== "string" || !value.trim() || value.length > 5000) {
+        res.status(400).json({ error: `Invalid ${key}` }); return;
+      }
+      changes[key] = value.trim();
+    } else if (key === "photos") {
+      if (!Array.isArray(value) || value.length > 12 || !value.every(v => typeof v === "string" && v.length <= 2048)) {
+        res.status(400).json({ error: "Invalid photos" }); return;
+      }
+      changes.photos = JSON.stringify(value);
+    } else if (key === "negotiable") {
+      if (typeof value !== "boolean") { res.status(400).json({ error: "Invalid negotiable" }); return; }
+      changes.negotiable = value;
+    } else if (key === "price") {
+      if (value !== null && (typeof value !== "string" && typeof value !== "number" || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 99999999)) {
+        res.status(400).json({ error: "Invalid price" }); return;
+      }
+      changes.price = value === null ? null : Number(value).toFixed(2);
+    } else if (key === "expiresAt") {
+      const date = value === null ? null : new Date(String(value));
+      if (date !== null && !Number.isFinite(date.getTime())) { res.status(400).json({ error: "Invalid expiry" }); return; }
+      changes.expiresAt = date;
+    } else {
+      if (value !== null && (typeof value !== "string" || value.length > 2048)) {
+        res.status(400).json({ error: `Invalid ${key}` }); return;
+      }
+      changes[key] = value;
+    }
+  }
+  if (!Object.keys(changes).length) { res.status(400).json({ error: "No editable fields supplied" }); return; }
+  try {
+    const updated = await db.update(classifiedAdsTable).set(changes as Partial<typeof classifiedAdsTable.$inferInsert>)
+      .where(and(eq(classifiedAdsTable.id, id), eq(classifiedAdsTable.status, "active"),
+        sql`LOWER(${classifiedAdsTable.contactEmail}) = ${sellerEmail}`))
+      .returning();
+    if (!updated.length) { res.status(404).json({ error: "Active classified not found or not yours" }); return; }
+    res.json(updated[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Could not update classified" });
+  }
+});
+
 router.delete("/classifieds/:id", async (req, res) => {
   const sellerEmail = await authenticatedSellerEmail(req, res);
   if (!sellerEmail) return;

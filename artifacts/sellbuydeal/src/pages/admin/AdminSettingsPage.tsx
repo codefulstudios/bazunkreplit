@@ -162,7 +162,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?: boolean; initialTab?: "branding" | "homepage" | "footer" | "advertising" } = {}) {
+export function AdminSettingsPage({ embedded = false, initialTab, advertisingOnly = false }: { embedded?: boolean; advertisingOnly?: boolean; initialTab?: "branding" | "homepage" | "footer" | "advertising" } = {}) {
   const { isAdmin, authFetch, logout } = useAdmin();
   const [, setLocation] = useLocation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
@@ -173,7 +173,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
   const [saved, setSaved] = useState(false);
   const [tab, setTabState] = useState<Tab>(() => {
     const savedTab = sessionStorage.getItem("bazunk-admin-settings-tab") as Tab | null;
-    return embedded ? (initialTab || "branding") : (savedTab && ["access","fees"].includes(savedTab) ? savedTab : "fees");
+    return advertisingOnly ? "advertising" : embedded ? (initialTab || "branding") : (savedTab && ["access","fees"].includes(savedTab) ? savedTab : "fees");
   });
   const setTab = (next: Tab) => {
     sessionStorage.setItem("bazunk-admin-settings-tab", next);
@@ -275,6 +275,8 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
       setCredMsg({ type: "ok", text: "Credentials updated! You will be logged out now." });
       setCurrentPw(""); setNewPw(""); setConfirmPw(""); setNewEmail("");
       setTimeout(() => { logout(); setLocation("/admin"); }, 2000);
+    } catch {
+      setCredMsg({ type: "err", text: "Network error — credentials could not be updated. Please try again." });
     } finally { setCredSaving(false); }
   }
 
@@ -299,13 +301,13 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
   }
 
 
-  const visibleTabs = TABS.filter(t => embedded ? ["branding","homepage","footer","advertising"].includes(t.id) : ["fees","access"].includes(t.id));
+  const visibleTabs = TABS.filter(t => advertisingOnly ? t.id==="advertising" : embedded ? ["branding","homepage","footer"].includes(t.id) : ["fees","access"].includes(t.id));
   const Shell = embedded ? Fragment : AdminLayout;
   return (
     <Shell>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">Settings</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">{advertisingOnly ? "Advertising Management" : embedded ? "Website Content & SEO" : "Settings"}</h1>
           <p className="text-sm text-gray-400 mt-0.5">Changes apply to the live site immediately after saving</p>
         </div>
         <button onClick={load} disabled={loading}
@@ -316,7 +318,7 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
+      {!advertisingOnly && <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
         {visibleTabs.map(t => {
           const Icon = t.icon;
           return (
@@ -333,8 +335,9 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
             </button>
           );
         })}
-      </div>
+      </div>}
 
+      {advertisingOnly && <div className="mb-5 rounded-xl border border-orange-300 bg-orange-50 p-4 text-slate-900"><p className="font-bold">Advertising inventory & placements</p><p className="mt-1 text-sm">Manage site advertising positions and creative formats independently of homepage content, SEO and footer settings. This is the foundation for future paid advertiser campaigns, bookings and reporting; those sales tools are not enabled yet.</p></div>}
       {saveError && <p role="alert" className="mb-4 bg-red-50 text-red-700 p-3 rounded-xl">{saveError} Your edits are retained; use Save Changes to retry.</p>}
       {loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse h-72" />

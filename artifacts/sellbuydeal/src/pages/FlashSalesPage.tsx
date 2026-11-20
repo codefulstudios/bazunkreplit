@@ -146,6 +146,7 @@ export function FlashSalesPage() {
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
+  const [showIntro, setShowIntro] = useState(true);
   const [tab, setTab] = useState<TabValue>("active");
   const [sales, setSales] = useState<FlashSale[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,6 +181,23 @@ export function FlashSalesPage() {
   return (
     <div className="bz-flash-page min-h-screen flex flex-col text-white">
       <Navbar />
+      {showIntro && (
+        <section aria-label="Flash Sales introduction" className="relative isolate flex min-h-[calc(100svh-80px)] items-center justify-center overflow-hidden bg-[#090606]">
+          <img
+            src="/images/flash-sales-intro.png"
+            alt="Bazunk Flash Sales: Hot Deals, Limited Time, Don't Miss Out! Shirtless model opening his jacket."
+            className="block h-auto max-h-[calc(100svh-80px)] w-full object-contain"
+          />
+          <button
+            type="button"
+            aria-label="Reveal the deals and enter Flash Sales"
+            title="Reveal the Deals"
+            onClick={() => setShowIntro(false)}
+            className="absolute inset-0 z-10 cursor-pointer bg-transparent focus-visible:outline focus-visible:outline-4 focus-visible:outline-orange-400"
+          />
+        </section>
+      )}
+      <div className={showIntro ? "hidden" : "contents"}>
       <header className="bz-market-hero relative overflow-hidden">
         <div className="pointer-events-none absolute -top-24 right-[-8%] h-[260px] w-[380px] rounded-full bg-[#fb29c8]/40 blur-3xl"/>
         <div className="pointer-events-none absolute bottom-[-150px] left-[30%] h-[210px] w-[300px] rounded-full bg-[#00b9ff]/50 blur-3xl"/>
@@ -234,6 +252,7 @@ export function FlashSalesPage() {
         </div>
       </main>
       <Footer/>
+      </div>
     </div>
   );
 }

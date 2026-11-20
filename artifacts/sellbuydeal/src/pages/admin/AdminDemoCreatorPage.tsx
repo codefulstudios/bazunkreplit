@@ -34,6 +34,7 @@ export function AdminDemoCreatorPage(){
   const [photoListing,setPhotoListing]=useState<DemoListing|null>(null);
   const [photoOptions,setPhotoOptions]=useState<Array<{id:number;image:string;preview:string;sourceUrl:string;photographer:string;tags:string}>>([]);
   const [photoLoading,setPhotoLoading]=useState(false);
+  const [photoQuery,setPhotoQuery]=useState("");
   const [busy,setBusy]=useState(false);const [error,setError]=useState("");const [message,setMessage]=useState("");
   async function load(){
     try{const r=await authFetch("/api/admin/demo-creator");if(!r.ok)throw Error("Unable to load Demo Creator");
@@ -59,18 +60,25 @@ export function AdminDemoCreatorPage(){
       await load();
     }catch(e){setError(String(e));}finally{setBusy(false);}
   }
-  async function choosePhotoListing(listing:DemoListing){
-    setPhotoListing(listing);setPhotoOptions([]);setPhotoLoading(true);setError("");
+  async function searchPhotos(query:string){
+    setPhotoOptions([]);setPhotoLoading(true);setError("");
     try{
-      const r=await authFetch("/api/admin/demo-creator/images/options?q="+encodeURIComponent(listing.title));
-      const d=await r.json();if(!r.ok)throw Error(d.error||"Photo search failed");
-      setPhotoOptions(d.photos||[]);
-    }catch(e){setError(String(e));}finally{setPhotoLoading(false);}
+      const r=await authFetch("/api/admin/demo-creator/images/options?q="+encodeURIComponent(query.trim()));
+      const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Photo search failed (HTTP ${r.status})`);
+      setPhotoOptions(Array.isArray(d.photos)?d.photos:[]);
+    }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setPhotoLoading(false);}
+  }
+  async function choosePhotoListing(listing:DemoListing){
+    setPhotoListing(listing);setPhotoQuery(listing.title);await searchPhotos(listing.title);
   }
   async function savePhoto(photo:{image:string;sourceUrl:string;photographer:string}){
     if(!photoListing)return;
-    await send("/images/replace",{listingId:photoListing.listing_id,...photo});
-    setPhotoListing(null);setPhotoOptions([]);
+    setBusy(true);setError("");setMessage("");
+    try{
+      const r=await authFetch("/api/admin/demo-creator/images/replace",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({listingId:photoListing.listing_id,...photo})});
+      const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Photo replacement failed (HTTP ${r.status})`);
+      await load();setPhotoListing(null);setPhotoOptions([]);setMessage("Product photograph replaced successfully.");
+    }catch(e){setError(e instanceof Error?e.message:String(e));}finally{setBusy(false);}
   }
   async function previewCataloguePhoto(product:CatalogueProduct){
     setPreviewBusy(product.id);setError("");
@@ -147,7 +155,8 @@ export function AdminDemoCreatorPage(){
     <section className="rounded-xl border bg-white p-4 space-y-3"><h2 className="font-semibold">Simulated activity (admin-only)</h2><div className="grid gap-3 md:grid-cols-3"><label>Type<select className={field} value={kind} onChange={e=>setKind(e.target.value)}><option value="review">Review</option><option value="sale">Successful sale</option><option value="repeat_buyer">Repeat buyer</option></select></label><label>Quantity<input className={field} type="number" min={1} max={100} value={quantity} onChange={e=>setQuantity(Number(e.target.value))}/></label>{kind==="review"&&<label>Stars<select className={field} value={rating} onChange={e=>setRating(Number(e.target.value))}>{[1,2,3,4,5].map(n=><option key={n} value={n}>{n} stars</option>)}</select></label>}</div><textarea className={field} placeholder="Internal sample review text or note" value={note} onChange={e=>setNote(e.target.value)}/><button disabled={busy||!sellerEmail} className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50" onClick={()=>send("/activities",{sellerEmail,kind,rating,note,quantity})}>Create simulated activity</button><div className="space-y-2">{activities.map(a=><div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded border p-2 text-sm"><span>{a.kind.replaceAll("_"," ")} · {a.seller_email} · {a.quantity} {a.rating? `· ${a.rating} stars`:""}</span><div className="flex gap-3 items-center"><label><input type="checkbox" checked={a.enabled} disabled={busy} onChange={e=>send("/activities/"+a.id,{enabled:e.target.checked},"PATCH")}/> Enabled</label><button disabled={busy} className="text-red-700" onClick={()=>{if(window.confirm("Delete this simulated activity?"))void send("/activities/batch-delete",{ids:[Number(a.id)]});}}>Delete</button></div></div>)}</div></section>
     {photoListing&&<section className="rounded-xl border bg-white p-4 space-y-3">
       <div className="flex items-center justify-between"><h2 className="font-semibold">Choose photo: {photoListing.title} (#{photoListing.listing_id})</h2><button className="underline" onClick={()=>setPhotoListing(null)}>Close</button></div>
-      {photoLoading?<p>Searching Pixabay…</p>:photoOptions.length===0?<p>No suitable photographs found. Try another product title.</p>:
+      <form className="flex gap-2" onSubmit={e=>{e.preventDefault();void searchPhotos(photoQuery);}}><input aria-label="Search product photographs" className={field} value={photoQuery} onChange={e=>setPhotoQuery(e.target.value)} placeholder="Try a shorter search, e.g. ceramic mug"/><button type="submit" disabled={photoLoading||busy||!photoQuery.trim()} className="rounded bg-blue-700 px-4 py-2 text-white disabled:opacity-50">Search</button></form>
+      {photoLoading?<p>Searching product photographs…</p>:photoOptions.length===0?<p>No suitable photographs found. Try another product title.</p>:
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{photoOptions.map(photo=><button key={photo.id} disabled={busy} onClick={()=>savePhoto(photo)} className="rounded border p-2 text-left hover:border-orange-500">
           <img src={photo.preview} alt={photo.tags} className="h-28 w-full rounded object-cover"/>
           <span className="mt-1 block text-xs text-gray-600">{photo.tags}</span>

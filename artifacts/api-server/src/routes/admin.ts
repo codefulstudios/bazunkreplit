@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { dropshipConfigured, searchDropship, getDropshipProduct, aliExpressProductId } from "../lib/aliexpressDropship.js";
 import { Router } from "express";
 import adminNavigationRouter from "./adminNavigation.js";
@@ -8,8 +9,6 @@ import adminActionRequiredRouter from "./adminActionRequired.js";
 import adminFinanceMonitorRouter from "./adminFinanceMonitor.js";
 import adminComplianceReviewRouter from "./adminComplianceReview.js";
 import adminImporterMonitorRouter from "./adminImporterMonitor.js";
-import adminCraigslistRouter from "./adminCraigslist.js";
-import adminOlxRouter from "./adminOlx.js";
 import { scanSellerCompliance } from "../lib/sellerComplianceScan.js";
 import { syncAllImports } from "../lib/syncJob.js";
 import { attachStripePaymentAmounts } from "../lib/adminPaymentRevenue.js";
@@ -39,7 +38,7 @@ const isPrivateSetting = (k: string) =>
 
 const router = Router();
 
-const SESSION_SECRET = process.env.SESSION_SECRET ?? "dev-secret";
+const SESSION_SECRET = process.env.SESSION_SECRET?.trim() || "";
 
 function hashPassword(password: string): string {
   return createHmac("sha256", SESSION_SECRET).update(password).digest("hex");
@@ -56,12 +55,12 @@ async function getAdminCredentials(): Promise<{ email: string; passwordHash: str
     if (map.admin_email && map.admin_password_hash) {
       return { email: map.admin_email, passwordHash: map.admin_password_hash, isHashed: true };
     }
-  } catch { /* DB not ready */ }
-  return {
-    email: process.env.ADMIN_EMAIL ?? "admin@example.com",
-    passwordHash: process.env.ADMIN_PASSWORD ?? "admin123",
-    isHashed: false,
-  };
+  } catch (error) {
+    logger.error({ error }, "Admin credential lookup unavailable");
+    throw new Error("Admin credentials unavailable");
+  }
+  if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) throw new Error("Admin credentials not configured");
+  return { email: process.env.ADMIN_EMAIL, passwordHash: process.env.ADMIN_PASSWORD, isHashed: false };
 }
 
 // ── Public: login ─────────────────────────────────────────────────────────────
@@ -70,18 +69,14 @@ router.post("/admin/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) { res.status(400).json({ error: "Email and password required" }); return; }
 
-  const creds = await getAdminCredentials();
+  if (SESSION_SECRET.length < 32) { res.status(503).json({ error: "Admin authentication not configured" }); return; }
+  let creds: Awaited<ReturnType<typeof getAdminCredentials>>;
+  try { creds = await getAdminCredentials(); }
+  catch { res.status(503).json({ error: "Admin authentication unavailable" }); return; }
   const emailMatch = email.toLowerCase() === creds.email.toLowerCase();
   let passwordMatch = creds.isHashed
     ? hashPassword(password) === creds.passwordHash
     : password === creds.passwordHash;
-
-  // Recovery path: a DB-stored admin hash is tied to SESSION_SECRET. If that
-  // secret changes during infrastructure work, the correct configured admin
-  // password must still be able to restore access.
-  if (!passwordMatch && creds.isHashed && process.env.ADMIN_PASSWORD) {
-    passwordMatch = password === process.env.ADMIN_PASSWORD;
-  }
 
   if (!emailMatch || !passwordMatch) {
     res.status(401).json({ error: "Invalid email or password" });
@@ -130,8 +125,6 @@ router.use(adminNavigationRouter); // real alerts and global search, after admin
 router.use(adminFinanceMonitorRouter);
 router.use(adminComplianceReviewRouter);
 router.use(adminImporterMonitorRouter);
-router.use(adminCraigslistRouter);
-router.use(adminOlxRouter);
 router.use(adminActionRequiredRouter); // refund/dispute/compliance/Stripe review, also admin-only
 
 // Seller compliance: restricted to authenticated administrators by router.use above.
@@ -655,6 +648,55 @@ router.post("/admin/users", async (req, res) => {
   }
 });
 
+// Admin-managed demo sellers are not Clerk identities and must never be treated as verified accounts.
+const DEMO_SELLER_STORES = [
+  "Copper & Fern","Northstar Finds","Bluebird Home","The Retro Attic","Willow & Wire",
+  "Harbour Goods","Pixel Pantry","Oak & Ember","Brightside Bazaar","Luna Lane",
+  "The Gadget Grove","Cedar Collective","Urban Trinkets","Sunset Supply","Moss & Maple",
+  "The Vinyl Vault","Little Lantern","Orange Orchard","Silver Sparrow","Coastal Curios"
+];
+router.post("/admin/users/demo-sellers/bulk", async (req, res) => {
+  try {
+    if (req.body?.confirm !== "CREATE_20_DEMO_SELLERS") { res.status(400).json({error:"Confirmation required"}); return; }
+    const batch = randomUUID().slice(0, 8);
+    const created = await db.transaction(async tx => {
+      const result = [];
+      for (let i = 0; i < DEMO_SELLER_STORES.length; i++) {
+        const email = `demo-seller-${batch}-${String(i+1).padStart(2,"0")}@example.com`;
+        const name = DEMO_SELLER_STORES[i];
+        await tx.execute(sql`INSERT INTO users (id,email,name,credits,seller_type) VALUES (${email},${email},${name},0,'business')`);
+        result.push({email,name});
+      }
+      return result;
+    });
+    await recordAdminAudit({req,category:"users",action:"demo_sellers.bulk_create",targetType:"user",targetId:batch,summary:`Created ${created.length} admin-managed demo sellers`});
+    res.json({success:true,created});
+  } catch(err) { logger.error({err},"Demo seller creation failed");res.status(500).json({error:"Could not create demo sellers"}); }
+});
+router.delete("/admin/users/demo-sellers/:email/with-listings", async (req,res) => {
+  try {
+    const email = String(req.params.email).toLowerCase();
+    if (!/^demo-seller-[a-f0-9]{8}-\d{2}@example\.com$/.test(email) || req.body?.confirm !== email) {
+      res.status(400).json({error:"Exact demo seller email confirmation required"});return;
+    }
+    const result = await db.transaction(async tx => {
+      const user = await tx.execute(sql`SELECT email,credits FROM users WHERE lower(email)=${email} FOR UPDATE`).then(r=>r.rows[0] as any);
+      if (!user) return {missing:true};
+      if (Number(user.credits)>0) throw new Error("Demo seller has credits; resolve balance first");
+      const orders = await tx.execute(sql`SELECT COUNT(*)::int n FROM orders WHERE lower(seller_email)=${email} OR lower(buyer_email)=${email}`).then(r=>r.rows[0] as any);
+      if (Number(orders?.n)>0) throw new Error("Demo seller has order history; deletion blocked");
+      const listings = await tx.execute(sql`SELECT COUNT(*)::int n FROM listings WHERE lower(seller_email)=${email}`).then(r=>r.rows[0] as any);
+      // Remove only listings owned by this demo seller. Existing listing-related dependencies may block deletion.
+      await tx.execute(sql`DELETE FROM listings WHERE lower(seller_email)=${email}`);
+      await tx.execute(sql`DELETE FROM users WHERE lower(email)=${email}`);
+      return {deletedListings:Number(listings?.n??0)};
+    });
+    if ("missing" in result) {res.status(404).json({error:"Demo seller not found"});return;}
+    await recordAdminAudit({req,category:"users",action:"demo_sellers.delete_with_listings",targetType:"user",targetId:email,summary:`Deleted demo seller and ${result.deletedListings} listings`});
+    res.json({success:true,...result});
+  } catch(err) {logger.error({err},"Demo seller deletion failed");res.status(409).json({error:err instanceof Error?err.message:"Could not delete demo seller"});}
+});
+
 // Pull in people who exist elsewhere but aren't in the users table yet:
 // every Clerk account, plus emails already used on listings / credit purchases / support tickets.
 router.post("/admin/users/sync", async (_req, res) => {
@@ -735,25 +777,54 @@ router.patch("/admin/users/:email/credits", async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);
     const { amount, reason } = req.body;
-    if (typeof amount !== "number") { res.status(400).json({ error: "amount required" }); return; }
-
-    const [beforeUser] = await db.execute(sql`SELECT email, credits FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
+    if (typeof amount !== "number" || !Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 100000 || Math.round(amount * 100) !== amount * 100) {
+      res.status(400).json({ error: "Enter a finite, nonzero credit adjustment of at most 100,000 with up to two decimal places" }); return;
+    }
+    const auditReason = typeof reason === "string" ? reason.trim().slice(0,500) : "";
+    if (auditReason.length < 8) { res.status(400).json({ error: "A reason of at least eight characters is required" }); return; }
+    const [beforeUser] = await db.execute(sql`SELECT email, credits FROM users WHERE LOWER(email) = LOWER(${email})`).then(r => r.rows as any[]);
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
     const [updated] = await db.execute(
-      sql`UPDATE users SET credits = GREATEST(0, credits + ${amount}) WHERE email = ${email} RETURNING email, credits`
+      sql`UPDATE users SET credits = credits + ${amount}
+      WHERE LOWER(email) = LOWER(${email}) AND credits + ${amount} >= 0 RETURNING email, credits`
     ).then(r => r.rows as any[]);
+    if (!updated) { res.status(409).json({ error: "Adjustment would make the credit balance negative, or account changed" }); return; }
 
-    if (!updated) { res.status(404).json({ error: "User not found" }); return; }
-
-    await recordCreditEconomy({ email, kind: "admin_adjustment", credits: amount, reason: reason || "Manual admin adjustment", referenceType: "admin_adjustment" });
-    logger.info({ email, amount, reason }, "Admin adjusted credits");
+    try { await recordCreditEconomy({ email, kind: "admin_adjustment", credits: amount, reason: auditReason, referenceType: "admin_adjustment" }); }
+    catch (ledgerError) { logger.error({ ledgerError, email }, "Admin adjustment succeeded but economy logging failed"); }
+    logger.info({ email, amount, reason: auditReason }, "Admin adjusted credits");
     await recordAdminAudit({ req, category: "credits", action: "credits.adjust", targetType: "user", targetId: email,
-      summary: `Admin ${amount >= 0 ? "credited" : "debited"} ${email} ${Math.abs(amount)} credits${reason ? ` — ${reason}` : ""}`,
-      before: { credits: Number(beforeUser?.credits ?? 0) }, after: { credits: Number(updated.credits), adjustment: amount }, metadata: { reason: reason ?? null } });
+      summary: `Admin ${amount >= 0 ? "credited" : "debited"} ${email} ${Math.abs(amount)} credits${auditReason ? ` — ${auditReason}` : ""}`,
+      before: { credits: Number(beforeUser?.credits ?? 0) }, after: { credits: Number(updated.credits), adjustment: amount }, metadata: { reason: auditReason } });
     res.json({ email: updated.email, newBalance: parseFloat(updated.credits) });
   } catch (err) {
     logger.error({ err }, "Failed to adjust credits");
     res.status(500).json({ error: "Failed to adjust credits" });
   }
+});
+
+// Reset a customer's entire current credit balance atomically, including concurrent adjustments.
+router.patch("/admin/users/:email/credits/clear", async (req,res) => {
+  const email=String(req.params.email||"").trim().toLowerCase();
+  const reason=typeof req.body?.reason==="string"?req.body.reason.trim().slice(0,500):"";
+  if(reason.length<8){res.status(400).json({error:"A reason of at least eight characters is required"});return;}
+  try {
+    const result=await db.transaction(async tx=>{
+      const rows=await tx.execute(sql`SELECT email,credits FROM users WHERE LOWER(email)=${email} FOR UPDATE`);
+      const user=rows.rows[0] as any;
+      if(!user)return null;
+      const previous=Number(user.credits);
+      if(previous>0)await tx.execute(sql`UPDATE users SET credits=0 WHERE LOWER(email)=${email}`);
+      return {email:user.email,previous};
+    });
+    if(!result){res.status(404).json({error:"User not found"});return;}
+    if(result.previous>0){
+      try{await recordCreditEconomy({email:result.email,kind:"admin_adjustment",credits:-result.previous,reason,referenceType:"admin_adjustment"});}
+      catch(ledgerError){logger.error({ledgerError,email},"Credit reset succeeded but economy logging failed");}
+    }
+    await recordAdminAudit({req,category:"credits",action:"credits.clear",targetType:"user",targetId:result.email,summary:`Admin cleared ${result.previous} credit balance for ${result.email}: ${reason}`,before:{credits:result.previous},after:{credits:0},metadata:{reason}});
+    res.json({success:true,email:result.email,removedCredits:Math.round(result.previous*100),newBalance:0});
+  }catch(err){logger.error({err,email},"Failed to clear credits");res.status(500).json({error:"Unable to clear credits"});}
 });
 
 // Edit user (name)
@@ -790,7 +861,10 @@ router.delete("/admin/users/:email", async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);
     const [beforeUser] = await db.execute(sql`SELECT email, name, seller_type, credits, banned FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
-    await db.execute(sql`DELETE FROM users WHERE email = ${email}`);
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
+    if (Number(beforeUser.credits) > 0) { res.status(409).json({ error: "Account has a credit balance. Resolve the balance before deletion." }); return; }
+    const deleted = await db.execute(sql`DELETE FROM users WHERE email = ${email} AND credits <= 0 RETURNING email`);
+    if (!deleted.rows.length) { res.status(409).json({ error: "Account balance changed; refresh before deletion" }); return; }
     logger.info({ email }, "Admin deleted user");
     await recordAdminAudit({ req, category: "users", action: "user.delete", targetType: "user", targetId: email, summary: `Admin deleted user ${email}`, before: beforeUser });
     res.json({ success: true });
@@ -1858,7 +1932,6 @@ router.post("/admin/import-selected-amazon", async (req, res) => {
     const richTitle = p.title;
     const description = [p.title, "", `Product sourced from ${source}.`, "", `Original ${source} price: ${currency} ${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = p.image ?? null;
-    const ecoFriendly = req.body.ecoFriendly === true || category === 'eco-friendly' || /\beco[ -]?friendly\b/i.test(richTitle);
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,

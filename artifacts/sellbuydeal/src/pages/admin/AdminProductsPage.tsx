@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import {
   Search, Plus, Pencil, Trash2, RefreshCw, Package, CheckCircle, XCircle,
@@ -27,7 +28,7 @@ interface Product {
   images: string[]; variants: Variant[]; seller_email: string | null;
   category_id: string | null; category_name: string | null; subcategory?: string | null; subsubcategory?: string | null; created_at: string;
   currency?: string; brand?: string; sku?: string; ships_from?: string; ships_from_location?: string;
-  ships_to?: string; shipping_price?: string | number; free_shipping?: boolean; dispatch_time?: string;
+  ships_to?: string; shipping_price?: string | number; handling_charge?: string | number; free_shipping?: boolean; dispatch_time?: string;
   delivery_estimate?: string; source?: string | null; source_url?: string | null; source_item_id?: string | null;
   source_condition?: string | null; source_price?: string | number | null; source_postage?: string | number | null;
   last_source_check?: string | null; markup_pct?: string | number | null; minimum_profit?: string | number | null;
@@ -38,14 +39,14 @@ interface ProductForm {
   condition: string; status: string; inventory: string; tags: string;
   seller_email: string; images: string[]; variants: Variant[]; subcategory: string; subsubcategory: string; currency: string;
   brand: string; sku: string; ships_from: string; ships_from_location: string; ships_to: string;
-  shipping_price: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
+  shipping_price: string; handling_charge: string; free_shipping: boolean; dispatch_time: string; delivery_estimate: string;
 }
 
 const EMPTY_FORM: ProductForm = {
   title: "", description: "", price: "0", category_id: "", condition: "new",
   status: "pending", inventory: "0", tags: "", seller_email: "", images: [], variants: [],
   subcategory: "", subsubcategory: "", currency: "GBP", brand: "", sku: "", ships_from: "", ships_from_location: "",
-  ships_to: "", shipping_price: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
+  ships_to: "", shipping_price: "", handling_charge: "", free_shipping: false, dispatch_time: "", delivery_estimate: "",
 };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -361,11 +362,15 @@ function ProductDrawer({
     variants: Array.isArray(product.variants) ? product.variants.map(v => ({ ...v, priceModifier: String(v.priceModifier), inventory: String(v.inventory) })) : [],
     subcategory: product.subcategory ?? "", subsubcategory: product.subsubcategory ?? "", currency: product.currency ?? "GBP", brand: product.brand ?? "", sku: product.sku ?? "",
     ships_from: product.ships_from ?? "", ships_from_location: product.ships_from_location ?? "", ships_to: product.ships_to ?? "",
-    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), free_shipping: Boolean(product.free_shipping),
+    shipping_price: product.shipping_price == null ? "" : String(product.shipping_price), handling_charge: product.handling_charge == null ? "" : String(product.handling_charge), free_shipping: Boolean(product.free_shipping),
     dispatch_time: product.dispatch_time ?? "", delivery_estimate: product.delivery_estimate ?? "",
   } : { ...EMPTY_FORM });
 
   const [saving, setSaving] = useState(false);
+  const editorScrollRef=useRef<HTMLDivElement>(null);
+  const dialogRef=useRef<HTMLDialogElement>(null);
+  useEffect(()=>{const dialog=dialogRef.current;if(!dialog)return;if(!dialog.open)dialog.showModal();return ()=>{if(dialog.open)dialog.close();};},[]);
+  useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow="hidden";return ()=>{document.body.style.overflow=previous;};},[]);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
   const [section,setSection] = useState("details");
@@ -404,13 +409,14 @@ function ProductDrawer({
   }
   function removeVariant(i: number) { set("variants", form.variants.filter((_, idx) => idx !== i)); }
 
-  async function save() {
+  async function save(publish=false) {
     if (!form.title.trim()) { setError("Title is required"); return; }
     if(uploading)return;
     setSaving(true);
     setError("");
     const body = {
       ...form,
+      status: publish ? "approved" : form.status,
       price: parseFloat(form.price) || 0,
       inventory: parseInt(form.inventory) || 0,
       category_id: form.category_id || null,
@@ -428,10 +434,77 @@ function ProductDrawer({
     setSaving(false);
   }
 
-  return (
+  return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/80 z-[90]" onClick={tryClose} />
+
       <style>{`
+        dialog#bazunk-listing-editor#bazunk-listing-editor { background: #101c30 !important; background-color: #101c30 !important; color: #fff !important; opacity: 1 !important; isolation: isolate !important; }
+        dialog#bazunk-listing-editor::backdrop { background: rgba(0,0,0,.88) !important; opacity: 1 !important; }
+        #bazunk-listing-editor .editor-header { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body { background: #101c30 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-footer { background: #172943 !important; color: #fff !important; }
+        #bazunk-listing-editor .editor-body label span, #bazunk-listing-editor .editor-body h3, #bazunk-listing-editor .editor-body p { color: #f8fafc !important; }
+        #bazunk-listing-editor .editor-body input:not([type=checkbox]):not([type=file]), #bazunk-listing-editor .editor-body textarea, #bazunk-listing-editor .editor-body select { background: #fff !important; color: #0f172a !important; -webkit-text-fill-color: #0f172a !important; border: 1px solid #94a3b8 !important; }
+        #bazunk-listing-editor .editor-body option { background: #fff !important; color: #0f172a !important; }
+        /* Maximum specificity to defeat site-wide admin input overrides. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; opacity: 1 !important;
+          caret-color: #111827 !important; text-shadow: none !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
+        /* The global admin theme forces transparent inputs and white text; override both together. */
+        dialog#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        dialog#bazunk-listing-editor .editor-body textarea,
+        dialog#bazunk-listing-editor .editor-body select {
+          background: #ffffff !important; background-color: #ffffff !important;
+          color: #111827 !important; -webkit-text-fill-color: #111827 !important;
+          opacity: 1 !important; caret-color: #111827 !important;
+          border: 2px solid #94a3b8 !important; box-shadow: none !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input::placeholder,
+        dialog#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #475569 !important; -webkit-text-fill-color: #475569 !important; opacity: 1 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input:disabled {
+          background: #e2e8f0 !important; color: #334155 !important; -webkit-text-fill-color: #334155 !important;
+        }
+        dialog#bazunk-listing-editor .editor-body input[type="file"] { color: #fff !important; }
+        dialog#bazunk-listing-editor .editor-body select option { background: #fff !important; color: #111827 !important; }
+
+        /* Unified dark editor: every field and select uses white text on opaque navy. */
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input:not([type="checkbox"]):not([type="file"]),
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select {
+          background: #203653 !important; background-color: #203653 !important;
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+          border: 2px solid #8098b6 !important; caret-color: #ffffff !important;
+          opacity: 1 !important; color-scheme: dark !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body input::placeholder,
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body textarea::placeholder {
+          color: #d1dce9 !important; -webkit-text-fill-color: #d1dce9 !important; opacity: 1 !important;
+        }
+        html body dialog#bazunk-listing-editor#bazunk-listing-editor#bazunk-listing-editor .editor-body select option {
+          background: #203653 !important; color: #ffffff !important;
+        }
+        dialog#bazunk-listing-editor .editor-body label,
+        dialog#bazunk-listing-editor .editor-body label span,
+        dialog#bazunk-listing-editor .editor-body h3,
+        dialog#bazunk-listing-editor .editor-body p,
+        dialog#bazunk-listing-editor .editor-body .text-gray-400,
+        dialog#bazunk-listing-editor .editor-body .text-gray-500,
+        dialog#bazunk-listing-editor .editor-body .text-gray-600,
+        dialog#bazunk-listing-editor .editor-body .text-gray-700,
+        dialog#bazunk-listing-editor .editor-body .text-gray-800 {
+          color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+        }
         #bazunk-listing-editor#bazunk-listing-editor button,
         #bazunk-listing-editor#bazunk-listing-editor a.editor-action {
           background: #263b57 !important;
@@ -476,9 +549,9 @@ function ProductDrawer({
           border:1px solid #566c87 !important;
         }
       `}</style>
-      <div id="bazunk-listing-editor" role="dialog" aria-modal="true" aria-label="Edit listing" className="fixed left-1/2 top-1/2 z-[100] flex h-[min(90vh,780px)] w-[min(92vw,760px)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white text-slate-950 shadow-2xl dark:border-slate-600 dark:bg-[#101c30] dark:text-white">
+      <dialog ref={dialogRef} id="bazunk-listing-editor" aria-label="Edit listing" onCancel={e=>{e.preventDefault();tryClose();}} onClick={e=>{if(e.target===dialogRef.current)tryClose();}} className="m-auto h-[min(90dvh,780px)] max-h-[90dvh] w-[min(94vw,900px)] max-w-[900px] flex-col overflow-hidden rounded-2xl border border-slate-500 bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-black/85 dark:border-slate-600 dark:bg-[#101c30] dark:text-white" style={{position:"fixed",inset:0,margin:"auto",display:"flex",flexDirection:"column",zIndex:2147483647,backgroundColor:"#101c30",color:"#ffffff",opacity:1}}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-600 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
+        <div className="editor-header flex shrink-0 items-center justify-between border-b border-slate-600 bg-[#172943] px-5 py-4">
           <div>
             <h2 className="font-black text-slate-950 dark:text-white">{isEdit ? "Edit Listing" : "New Product"}</h2>
             <p className="text-xs text-gray-400 mt-0.5">{isEdit ? `ID: ${product!.id.slice(0, 8)}…` : "Fill in the product details"}</p>
@@ -490,10 +563,10 @@ function ProductDrawer({
 
         <nav aria-label="Editor sections" className="flex shrink-0 flex-wrap gap-2 border-b border-slate-600 bg-slate-100 px-4 py-3 dark:bg-[#172943]">
           {([{id:"details",label:"Details"},{id:"images",label:"Images"},{id:"variants",label:"Variants"},{id:"pricing",label:"Pricing & Shipping"},{id:"more",label:"Advanced"}] as const).map(t=>
-            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);document.getElementById("product-editor-"+t.id)?.scrollIntoView({behavior:"smooth",block:"start"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
+            <button key={t.id} data-editor-tab={section===t.id?"selected":"other"} type="button" onClick={()=>{setSection(t.id);const target=document.getElementById("product-editor-"+t.id);const scroller=editorScrollRef.current;if(target&&scroller)scroller.scrollTo({top:target.offsetTop-scroller.offsetTop,behavior:"smooth"});}} className={`rounded-lg border-2 px-3 py-2 text-xs font-black ${section===t.id?"!border-blue-300 !bg-blue-700 !text-white":"!border-slate-500 !bg-slate-700 !text-white hover:!bg-slate-600"}`}>{t.label}</button>)}
         </nav>
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
+        <div ref={editorScrollRef} className="editor-body min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-5 space-y-5 [&_input:not([type=checkbox]):not([type=file])]:!border-slate-400 [&_input:not([type=checkbox]):not([type=file])]:!bg-white [&_input:not([type=checkbox]):not([type=file])]:!text-slate-950 [&_textarea]:!bg-white [&_textarea]:!text-slate-950 [&_select]:!bg-white [&_select]:!text-slate-950 dark:[&_label_span]:!text-white dark:[&_h3]:!text-white dark:[&_p]:!text-white">
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -510,6 +583,7 @@ function ProductDrawer({
             <h3 className="mb-2 text-sm font-black">Listing promotion</h3>
             <AdminListingPromotion listingId={Number(product?.id)} title={product?.title??""} status={product?.status==="approved"?"active":product?.status??"pending"}/>
           </div>}
+          <p className="rounded-lg border border-blue-400 bg-blue-50 p-3 text-sm font-semibold text-blue-950 dark:bg-blue-950 dark:text-white">Edit imported CSV fields here: title, price, category, SKU, description, currency, quantity (Inventory), condition, image URLs or uploads, shipping origin/destination, postage, handling charge and tags. Select Images or Pricing & Shipping above to jump to those fields.</p>
           {/* Core fields */}
           <div className="space-y-3">
             <label className="block">
@@ -566,7 +640,8 @@ function ProductDrawer({
                 <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Status</span>
                 <select value={form.status} onChange={e => set("status", e.target.value)}
                   className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 bg-white">
-                  <option value="pending">Pending</option>
+                  <option value="pending">Draft / Pending</option>
+                  <option value="draft">Draft</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                   <option value="inactive">Hidden</option>
@@ -630,6 +705,7 @@ function ProductDrawer({
                   <input value={form.ships_to} onChange={e => set("ships_to", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="United Kingdom" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Postage price</span>
                   <input type="number" min="0" step="0.01" disabled={form.free_shipping} value={form.shipping_price} onChange={e => set("shipping_price", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm disabled:bg-gray-50" /></label>
+                <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Handling charge</span><input type="number" min="0" step="0.01" value={form.handling_charge} onChange={e=>set("handling_charge",e.target.value)} className="mt-1 w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Dispatch time</span>
                   <input value={form.dispatch_time} onChange={e => set("dispatch_time", e.target.value)} className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm" placeholder="1 business day" /></label>
                 <label className="block"><span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Delivery estimate</span>
@@ -677,7 +753,7 @@ function ProductDrawer({
             <div className="space-y-2">
               {form.images.map((url, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  {url && <img src={url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+                  {url && <img src={url.startsWith("/api/listing-media/") ? `https://bazunk-api-ifqs.onrender.com${url}` : url} alt="" className="w-8 h-8 rounded-lg object-cover bg-gray-100 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />}
                   {!url && <div className="w-8 h-8 rounded-lg bg-gray-100 flex-shrink-0 flex items-center justify-center"><ImageIcon className="w-3 h-3 text-gray-300" /></div>}
                   <input value={url} onChange={e => setImage(i, e.target.value)}
                     placeholder="https://example.com/image.jpg"
@@ -731,17 +807,19 @@ function ProductDrawer({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-slate-500 bg-slate-100 px-5 py-4 dark:bg-[#172943]">
+        <div className="editor-footer flex shrink-0 gap-3 border-t border-slate-500 bg-[#172943] px-5 py-4">
           <button onClick={tryClose} className="flex-1 rounded-xl border-2 border-slate-500 !bg-[#334155] py-2.5 text-sm font-black !text-white hover:!bg-[#475569] transition-colors">
             Cancel
           </button>
-          <button onClick={save} disabled={saving||uploading}
+          {isEdit&&["pending","draft","rejected","inactive"].includes(form.status)&&<button type="button" onClick={()=>void save(true)} disabled={saving||uploading} className="flex-1 rounded-xl border-2 border-emerald-300 !bg-emerald-700 px-3 py-2.5 text-sm font-black !text-white hover:!bg-emerald-600 disabled:opacity-50">Publish Listing</button>}
+          <button onClick={()=>void save(false)} disabled={saving||uploading}
             data-editor-tone="primary" className="flex-1 py-2.5 rounded-xl !bg-[#c2410c] !text-white text-sm font-black hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2">
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Save className="w-4 h-4" /> {isEdit ? "Save Changes" : "Create Product"}</>}
           </button>
         </div>
-      </div>
-    </>
+      </dialog>
+    </>,
+    document.body
   );
 }
 

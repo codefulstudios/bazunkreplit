@@ -83,7 +83,7 @@ function DesignAssetsEditor() {
 export function AdminDesignSystemPage() {
   const [workspaceSection,setWorkspaceSection]=useState<"assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history">("assistant");
   useEffect(()=>{const change=(event:Event)=>{const id=(event as CustomEvent<string>).detail;if(["assistant","themes","preview","colours","components","content","history"].includes(id)){setWorkspaceSection(id as "assistant"|"themes"|"preview"|"colours"|"components"|"content"|"history");}};window.addEventListener("bazunk-design-section",change);return()=>window.removeEventListener("bazunk-design-section",change)},[]);
-  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"advertising"|"assets"|"sections">("colours");
+  const [designTab,setDesignTab]=useState<"colours"|"branding"|"homepage"|"footer"|"assets"|"sections">("colours");
   const [selectedPlatform,setSelectedPlatform]=useState<"admin"|"storefront"|"mobile">("admin");
   const [platformModes,setPlatformModes]=useState<Record<"admin"|"storefront"|"mobile",Mode>>({admin:"light",storefront:"light",mobile:"light"});
   const [previewPage,setPreviewPage]=useState<"home"|"listing"|"dealpilot"|"dashboard">("home");

@@ -34,7 +34,7 @@ test("admin Cashback recovers from render errors and customer Cashback redirects
   assert.match(app,/Cashback could not open/);
   assert.match(app,/Retry Cashback/);
   assert.match(app,/<CashbackErrorBoundary admin><AdminCashbackPage/);
-  assert.match(app,/<Route path="\/cashback">\{\(\) => <Redirect to="\/dashboard\?section=cashback" \/>\}<\/Route>/);
+  assert.match(app, /<Route path="\/cashback">\{\(\) => <Redirect to="\/dashboard\?section=cashback" \/>\}<\/Route>/);
   assert.match(front,/role="alert"/);
   assert.match(admin,/role="alert"/);
   assert.match(front,/Retry cashback/);

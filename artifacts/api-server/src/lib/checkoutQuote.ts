@@ -20,7 +20,7 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
     counts.set(id,qty);
   }
   const ids=[...counts.keys()];
-  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.seller_email,COALESCE(u.seller_type,'private') seller_type
+  const rows=(await db.execute(sql`SELECT l.id,l.title,l.image,l.price,l.price_gbp,l.currency,l.category,l.status,l.quantity,l.seller_email,COALESCE(u.seller_type,'private') seller_type
     FROM listings l LEFT JOIN users u ON LOWER(u.email)=LOWER(l.seller_email)
     WHERE l.id IN (${sql.join(ids.map(id=>sql`${id}`),sql`, `)})
     AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))`)).rows as Array<Record<string,unknown>>;
@@ -37,9 +37,27 @@ export async function quoteCart(input: unknown): Promise<CheckoutQuote> {
   for(const id of ids) {
     const row=byId.get(id);
     if(!row || row.status!=="active" || !row.seller_email) throw new QuoteError("An item is no longer available. Please update your cart.",409);
+    // Reject insufficient inventory before a payment session can be created.
+    const stock=Number(row.quantity);
+    if(!Number.isSafeInteger(stock)||stock<counts.get(id)!)
+      throw new QuoteError("Insufficient stock for this listing. Please reduce the quantity.",409);
     const currency=String(row.currency??"GBP").toUpperCase();
     const priceGbp=row.price_gbp!=null ? Number(row.price_gbp) : currency==="GBP" ? Number(row.price) : await convertAmount(Number(row.price),currency,"GBP");
-    const priceMinor=minor(priceGbp);
+    let priceMinor=minor(priceGbp);
+    // Only server-published, currently active flash events can change checkout prices.
+    // The promotion is frozen into the existing fee snapshot and Stripe line items.
+    const liveEventsTable=(await db.execute(sql`SELECT to_regclass('public.live_sale_events') AS name`)).rows[0]?.name;
+    if(liveEventsTable){
+      const promo=(await db.execute(sql`SELECT e.discount_percent
+        FROM live_sale_events e JOIN live_stream_sessions s ON s.id=e.session_id
+        WHERE e.product_id=${id} AND e.kind='flash' AND e.cancelled_at IS NULL
+        AND e.ends_at>NOW() AND s.is_live=TRUE AND LOWER(s.seller_email)=LOWER(${String(row.seller_email)})
+        ORDER BY e.created_at DESC LIMIT 1`)).rows[0] as any;
+      if(promo){
+        const pct=Number(promo.discount_percent);
+        if(Number.isInteger(pct)&&pct>=1&&pct<=70)priceMinor=Math.max(1,Math.round(priceMinor*(100-pct)/100));
+      }
+    }
     if(priceMinor<=0) throw new QuoteError("Items must have a positive price.");
     const category=String(row.category??"").toLowerCase();
     const sellerType=String(row.seller_type??"private").toLowerCase();

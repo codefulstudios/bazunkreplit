@@ -5,6 +5,12 @@ import { Footer } from "@/components/Footer";
 import "./VideoPage.css";
 
 const videos = [
+  { title: "Bazunk Promo", file: "bazunk-promo", description: "Discover buying, selling and rewards on Bazunk." },
+  { title: "Bazunk, RIP Fluffy Advert", file: "bazunk-fluffy-advert", description: "Our first advert: a very special send-off for Fluffy." },
+  { title: "The Bazunk Chainsaw", file: "bazunk-chainsaw", description: "One branch. One chainsaw. Several extremely expensive consequences." },
+  { title: "Bazunk Desert Island", file: "bazunk-desertislandadvert", poster: "bazunk-desertislandposter.png", description: "Two castaways. Five hundred iPhones. Absolutely nowhere sensible to sell them." },
+];
+const posterFor = (video: typeof videos[number]) => "poster" in video && video.poster ? video.poster : `${video.file}-poster.${video.file === "bazunk-chainsaw" ? "png" : "jpg"}`;
   { title: "Bazunk Promo", file: "bazunk-promo", description: "Discover buying, selling and rewards on Bazunk.", category: "Platform Updates" },
   { title: "Bazunk, RIP Fluffy Advert", file: "bazunk-fluffy-advert", description: "Our first advert: a very special send-off for Fluffy.", category: "Announcements" },
   { title: "The Bazunk Chainsaw", file: "bazunk-chainsaw", description: "One branch. One chainsaw. Several extremely expensive consequences.", category: "Buying & Selling" },

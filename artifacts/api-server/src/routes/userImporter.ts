@@ -194,9 +194,9 @@ router.post("/user/import-amazon", async (req, res) => {
   if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
   const { category, subcategory } = destination;
   const ecoFriendly = req.body.ecoFriendly === true;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)    { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)    { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length){ res.status(400).json({ error: "products array required" }); return; }
 
   // Look up seller name
@@ -370,9 +370,9 @@ router.post("/user/import-ebay", async (req, res) => {
   const shippingAmt = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
   const category    = (req.body.category    as string) || "other";
   const subcategory = (req.body.subcategory as string) || null;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)     { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)     { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length) { res.status(400).json({ error: "products array required" }); return; }
 
   const sellerRow = await db.execute(

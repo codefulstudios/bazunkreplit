@@ -42,12 +42,40 @@ test("one-time migration updates stored settings, not any earned ledger entries"
  assert.doesNotMatch(block,/cashback_runtime_policy/);
 });
 test("fee pricing appears in legal and sitewide explanations",()=>{
- assert.match(terms,/6% of their combined item price plus £1\.00/);
- assert.match(cart,/6% \+ £1 by default/);
+ assert.match(terms,/6% of their combined eligible item price plus £1\.00/);
+ assert.match(cart,/quote\.buyerProtectionFee/);
+ assert.match(cart,/final amount is confirmed at checkout/);
  assert.match(protection,/useRawSettings/);
  assert.match(admin,/buyer_protection_percent: "6"/);
  assert.match(admin,/buyer_protection_fixed_gbp: "1\.00"/);
  for(const p of ["BAZUNK-TERMS-UK.md","BAZUNK-TERMS-EU.md","BAZUNK-TERMS-USA.md"]){
-   assert.match(read(p),/6% of their combined item price plus £1\.00/);
+   assert.match(read(p),/6% of their combined eligible item price plus £1\.00/);
  }
+});
+
+test("Phase 2 cart checkout rejects invalid quantities before payment",()=>{
+ const stripe=read(root+"routes/stripe.ts");
+ assert.match(stripe,/Array\.isArray\(body\.items\)/);
+ assert.match(stripe,/Number\.isSafeInteger\(Number\(\(item as \{quantity\?: unknown\}\)\.quantity\)\)/);
+ assert.match(stripe,/Your basket contains invalid items or quantities/);
+ assert.match(stripe,/quoteCart\(body\.items\)/);
+});
+test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
+ const offers=read(root+"routes/marketplaceOffers.ts");
+ assert.match(offers,/expires_at > NOW\(\)/);
+ assert.match(offers,/l\.status=\x27active\x27/);
+ assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
+});
+
+test("BZ-008: seller SKU imports are duplicate-safe without treating rows as failures",()=>{
+ const listings=read(root+"routes/listings.ts");
+ const bulk=read("artifacts/sellbuydeal/src/pages/BulkImportPage.tsx");
+ assert.match(listings,/pg_advisory_xact_lock/);
+ assert.match(listings,/LOWER\(seller_email\) = \$\{authenticatedEmail\}/);
+ assert.match(listings,/LOWER\(BTRIM\(sku\)\) = \$\{sku\.toLowerCase\(\)\}/);
+ assert.match(listings,/existingListingId/);
+ assert.match(listings,/error: "duplicate_sku"/);
+ assert.match(bulk,/response\.status===409 && body\.error==="duplicate_sku"/);
+ assert.match(bulk,/SKIPPED/);
+ assert.match(bulk,/const skuKey=row\.sku\.trim\(\)\.toLowerCase\(\)/);
 });

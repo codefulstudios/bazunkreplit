@@ -162,6 +162,7 @@ export function Navbar() {
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [marketRegion, changeMarketRegion] = useMarketplaceRegion();
   const [regionPromptOpen, setRegionPromptOpen] = useState(() => {
@@ -209,7 +210,7 @@ export function Navbar() {
           c.subcategories.some((s) => categoryIsActive(c.slug,s.slug) && s.name.toLowerCase().includes(trimmed)))
       ).slice(0, 3)
     : [];
-  const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0;
+  const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0 || searchSuggestions.length > 0;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -239,6 +240,21 @@ export function Navbar() {
       } catch { setLiveSearchResults([]); }
     }, 180);
     return () => window.clearTimeout(timer);
+  }, [query, marketRegion]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setSearchSuggestions([]); return; }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/listings/search-suggestions?region=${marketRegion}&q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Suggestions unavailable");
+        const data = await response.json();
+        if (!controller.signal.aborted) setSearchSuggestions(Array.isArray(data.suggestions) ? data.suggestions.filter((x: unknown): x is string => typeof x === "string").slice(0, 8) : []);
+      } catch { if (!controller.signal.aborted) setSearchSuggestions([]); }
+    }, 220);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [query, marketRegion]);
 
   useEffect(() => {
@@ -432,6 +448,7 @@ export function Navbar() {
               </form>
               {searchOpen && query.trim() && createPortal(
                 <div role="region" aria-label="Search suggestions" className="bz-search-popover" style={{top:searchPopupRect.top,left:searchPopupRect.left,width:searchPopupRect.width}}><div className="bz-search-popover-head"><span className="bz-search-popover-icon"><Search size={18}/></span><div><strong>Search Bazunk</strong><small>Find products, deals and categories</small></div><button type="button" aria-label="Close suggestions" onClick={()=>setSearchOpen(false)}><X size={17}/></button></div><div className="bz-search-popover-scroll">
+                  {searchSuggestions.length > 0 && <div className="border-b border-slate-200 px-3 py-2"><p className="text-xs font-bold text-slate-600 mb-1">Suggested searches</p>{searchSuggestions.map(suggestion => <button key={suggestion} type="button" onClick={() => { setQuery(suggestion); setSearchOpen(false); setLocation(`/browse?q=${encodeURIComponent(suggestion)}`); }} className="block w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">{suggestion}</button>)}</div>}
                   {!hasResults ? (
                     <div className="px-4 py-6 text-center text-sm text-gray-600">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
                   ) : (

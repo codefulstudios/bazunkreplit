@@ -1,4 +1,6 @@
+import BulkImportPage from "@/pages/BulkImportPage";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
+const AdminGoLivePage = React.lazy(() => import("@/pages/admin/AdminGoLivePage").then(module => ({ default: module.AdminGoLivePage })));
 const AdminLiveCommercePage = React.lazy(() => import("@/pages/admin/AdminLiveCommercePage").then(module => ({ default: module.AdminLiveCommercePage })));
 const AdminDemoCreatorPage = React.lazy(() => import("@/pages/admin/AdminDemoCreatorPage").then(module => ({ default: module.AdminDemoCreatorPage })));
 import React, { useEffect, useRef, useState } from "react";
@@ -110,6 +112,7 @@ const CreditsPage = React.lazy(() => import("@/pages/CreditsPage").then(module =
 const PromotionsPage = React.lazy(() => import("@/pages/PromotionsPage").then(module => ({ default: module.PromotionsPage })));
 const SupportPage = React.lazy(() => import("@/pages/SupportPage").then(module => ({ default: module.SupportPage })));
 const TermsPage = React.lazy(() => import("@/pages/TermsPage").then(module => ({ default: module.TermsPage })));
+const OurSitesPage = React.lazy(() => import("@/pages/OurSitesPage").then(module => ({ default: module.OurSitesPage })));
 const PrivacyPage = React.lazy(() => import("@/pages/PrivacyPage").then(module => ({ default: module.PrivacyPage })));
 const CookiePolicyPage = React.lazy(() => import("@/pages/CookiePolicyPage").then(module => ({ default: module.CookiePolicyPage })));
 import { CookieConsentProvider, CookieConsentBanner, CookieMarketingScripts } from "@/components/CookieConsent";
@@ -133,10 +136,9 @@ const AdminAnalyticsPage = React.lazy(() => import("@/pages/admin/AdminManagemen
 const AdminMarketingOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminMarketingOverviewPage })));
 const AdminSettingsOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminSettingsOverviewPage })));
 const AdminImporterOverviewPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterOverviewPage })));
+const AdminCsvImporterPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCsvImporterPage })));
 const AdminImporterSettingsPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterSettingsPage })));
 const AdminImporterBulkUpdatePage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterBulkUpdatePage })));
-const AdminCraigslistPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCraigslistPage })));
-const AdminOlxPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminOlxPage })));
 const AdminCreditsEconomyPage = React.lazy(() => import("@/pages/admin/AdminCreditsEconomyPage").then(module => ({ default: module.AdminCreditsEconomyPage })));
 const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage").then(module => ({ default: module.AdminUsersPage })));
 const AdminSellerCompliancePage = React.lazy(() => import("@/pages/admin/AdminSellerCompliancePage").then(module => ({ default: module.AdminSellerCompliancePage })));
@@ -437,6 +439,7 @@ function Router() {
       <Route path="/register">{() => <Redirect to="/sign-up" />}</Route>
       <Route path="/categories" component={CategoriesPage} />
       <Route path="/sell" component={SellPage} />
+      <Route path="/sell/import" component={BulkImportPage} />
       <Route path="/sell/snap">{() => <FeatureGate feature="snap_sell" name="Snap & Sell"><SnapSellPage /></FeatureGate>}</Route>
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
       <Route path="/sell/quick">{() => <FeatureGate feature="quick_sell" name="Quick Sale"><DirectSalePage /></FeatureGate>}</Route>
@@ -448,10 +451,10 @@ function Router() {
       <Route path="/my-store">{() => <Redirect to="/dashboard?section=my-store" />}</Route>
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
-      <Route path="/browse">{()=><BrowsePage />}</Route>
+      <Route path="/browse">{() => <BrowsePage />}</Route>
       <Route path="/deals">{()=><BrowsePage collection="deals" />}</Route>
       <Route path="/eco">{()=><BrowsePage collection="eco" />}</Route>
-      <Route path="/search">{()=><BrowsePage />}</Route>
+      <Route path="/search">{() => <BrowsePage />}</Route>
       <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/notifications" component={MobileNotificationsPage} />
@@ -465,11 +468,13 @@ function Router() {
       <Route path="/faq">{() => <Redirect to="/support" />}</Route>
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/our-sites" component={OurSitesPage} />
       <Route path="/cookies" component={CookiePolicyPage} />
       <Route path="/offers">{() => <FeatureGate feature="offers" name="Make an Offer"><OffersPage /></FeatureGate>}</Route>
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
       <Route path="/admin" component={AdminLoginPage} />
+      <Route path="/admin/go-live" component={AdminGoLivePage} />
       <Route path="/admin/live-commerce" component={AdminLiveCommercePage} />
       <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/dashboard" component={AdminWordPressDashboard} />
@@ -497,8 +502,7 @@ function Router() {
       <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
       <Route path="/admin/importers/aliexpress">{() => <AdminImportsPage source="aliexpress" />}</Route>
       <Route path="/admin/importers/gumtree">{() => <AdminImportsPage source="gumtree" />}</Route>
-      <Route path="/admin/importers/craigslist" component={AdminCraigslistPage} />
-      <Route path="/admin/importers/olx" component={AdminOlxPage} />
+      <Route path="/admin/importers/csv" component={AdminCsvImporterPage} />
       <Route path="/admin/importers/settings" component={AdminImporterSettingsPage} />
       <Route path="/admin/importers/bulk-update" component={AdminImporterBulkUpdatePage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />

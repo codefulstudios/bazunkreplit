@@ -5,6 +5,7 @@ import { randomUUID } from "crypto";
 import { db } from "@workspace/db";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { logger } from "../lib/logger.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
@@ -36,7 +37,28 @@ router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
   await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
   const id=randomUUID();
   await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
-  res.status(201).json({url:"/api/listing-media/"+id});
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
+ }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
+});
+router.post("/seller/products/media-upload",async(req,res)=>{
+ const sellerEmail=await authenticatedSellerEmail(req,res);
+ if(!sellerEmail)return;
+ const {filename,dataUrl}=req.body||{};
+ if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
+ const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
+ if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
+ const bytes=Buffer.from(matched[2],"base64");
+ if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
+ const mime=matched[1];
+ const correct=mime==="image/png"&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||
+ mime==="image/jpeg"&&bytes[0]===255&&bytes[1]===216||
+ mime==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!correct){res.status(400).json({error:"Invalid image file"});return;}
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  const id=randomUUID();
+  await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
  }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
 });
 router.use("/admin/products", requireAdmin);
@@ -351,6 +373,39 @@ router.post("/admin/products/import", async (req, res) => {
   }
 });
 
+
+router.post("/admin/products/csv-listings", async(req,res)=>{
+ const {rows,sellerEmail,region="us"}=req.body||{};
+ if(!Array.isArray(rows)||rows.length<1||rows.length>100||typeof sellerEmail!=="string"||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)||!["us","uk"].includes(region)){
+  res.status(400).json({error:"Provide 1–100 rows, valid seller email and marketplace region"});return;
+ }
+ const results:{line:number;status:string;message?:string}[]=[];
+ const email=sellerEmail.trim().toLowerCase();
+ for(let i=0;i<rows.length;i++){
+  const r=rows[i]||{};
+  const title=String(r.title||"").trim(),category=String(r.category||"").trim();
+  const price=Number(r.price),quantity=Number(r.quantity??1),sku=String(r.sku||"").trim();
+  if(!title||title.length>180||!category||!Number.isFinite(price)||price<=0||price>1000000||!Number.isInteger(quantity)||quantity<0||quantity>100000||sku.length>120){
+   results.push({line:i+2,status:"error",message:"Invalid title, category, price, stock or SKU"});continue;
+  }
+  const currency=String(r.currency||"USD").toUpperCase();
+  if(!["USD","GBP","EUR"].includes(currency)){results.push({line:i+2,status:"error",message:"Invalid currency"});continue;}
+  const image=String(r.image_url||"").trim();
+  if(image&&(!/^https:\/\//i.test(image)||image.length>2000)){results.push({line:i+2,status:"error",message:"Image must be an HTTPS URL"});continue;}
+  try{
+   if(sku){
+    const duplicates=await db.execute(sql`SELECT id FROM listings WHERE LOWER(seller_email)=${email} AND sku=${sku} LIMIT 1`).then(x=>x.rows);
+    if(duplicates.length){results.push({line:i+2,status:"skipped",message:"SKU already exists"});continue;}
+   }
+   const specs=JSON.stringify({marketplace_region:region,import_source:"admin_csv"});
+   await db.execute(sql`INSERT INTO listings(title,description,price,currency,category,condition,image,seller_email,status,quantity,sku,ship_origin,ship_zone,shipping_price,handling_charge,tags,specifications)
+    VALUES(${title},${String(r.description||title).slice(0,10000)},${price.toFixed(2)},${currency},${category},${String(r.condition||"brand-new").slice(0,80)},${image||null},${email},'draft',${quantity},${sku||null},${String(r.ship_origin||"USA").slice(0,80)},${String(r.ship_zone||"international").slice(0,80)},${String(r.shipping_price||"0")},${String(r.handling_charge||"0")},${String(r.tags||"").slice(0,1000)},${specs})`);
+   results.push({line:i+2,status:"created"});
+  }catch(err){logger.error({err},"Admin CSV listing row failed");results.push({line:i+2,status:"error",message:"Database insert failed"});}
+ }
+ res.json({results,created:results.filter(x=>x.status==="created").length,skipped:results.filter(x=>x.status==="skipped").length});
+});
+
 // ── Products: CRUD ────────────────────────────────────────────────────────────
 
 router.get("/admin/products", async (req, res) => {
@@ -447,6 +502,7 @@ router.get("/admin/products/:id", async (req, res) => {
       ships_from_location: String(specs.ships_from_location ?? specs.source_item_location ?? ""),
       ships_to: String(specs.ships_to ?? ""),
       shipping_price: specs.shipping_price ?? specs.shipping ?? "",
+      handling_charge: specs.handling_charge ?? "",
       free_shipping: Boolean(specs.free_shipping ?? (String(specs.source_shipping_label ?? "").toLowerCase() === "free")),
       dispatch_time: String(specs.dispatch_time ?? ""),
       delivery_estimate: String(specs.delivery_estimate ?? ""),
@@ -472,7 +528,7 @@ router.put("/admin/products/:id", async (req, res) => {
     const {
       title, description, price, condition, status, category_id, subcategory, subsubcategory,
       seller_email, tags, images, currency, inventory, brand, sku,
-      ships_from, ships_from_location, ships_to, shipping_price, free_shipping,
+      ships_from, ships_from_location, ships_to, shipping_price, handling_charge, free_shipping,
       dispatch_time, delivery_estimate,
     } = req.body;
     if (!title) { res.status(400).json({ error: "title required" }); return; }
@@ -489,6 +545,7 @@ router.put("/admin/products/:id", async (req, res) => {
       brand: brand ?? "", sku: sku ?? "",
       ships_from: ships_from ?? "", ships_from_location: ships_from_location ?? "",
       ships_to: ships_to ?? "", shipping_price: shipping_price === "" ? null : Number(shipping_price),
+      handling_charge: handling_charge === "" ? null : Math.max(0, Number(handling_charge ?? specs.handling_charge ?? 0)),
       free_shipping: Boolean(free_shipping), dispatch_time: dispatch_time ?? "",
       delivery_estimate: delivery_estimate ?? "",
       admin_gallery_images: Array.isArray(images)?images.slice(0,12):specs.admin_gallery_images,

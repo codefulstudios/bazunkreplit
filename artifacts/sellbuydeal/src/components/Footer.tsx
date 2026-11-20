@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Cookie, FileText, Headphones, Mail, ShieldCheck } from "lucide-react";
+import { Cookie, FileText, Mail, ShieldCheck, Globe2 } from "lucide-react";
 import { useSiteSettings, useRawSettings } from "@/context/SiteSettingsContext";
 import { parseIconOverrides, iconForPlacement } from "@/design-system/designCenterFields";
 import { openCookieSettings } from "@/components/CookieConsent";
@@ -28,9 +28,9 @@ export function Footer() {
           <nav className="bz-compact-footer-links" aria-label="Footer links">
             <Link href="/privacy"><ShieldCheck size={20}/> <span>Privacy</span></Link>
             <Link href="/terms"><FileText size={20}/> <span>Terms</span></Link>
-            <a href="https://bazunk.com/cookies" target="_blank" rel="noopener noreferrer"><Cookie size={20}/> <span>Cookies</span></a>
-            <Link href="/support"><Headphones size={20}/> <span>Help</span></Link>
+            <Link href="/cookies"><Cookie size={20}/> <span>Cookies</span></Link>
             <Link href="/support"><Mail size={20}/> <span>Contact</span></Link>
+            <Link href="/our-sites"><Globe2 size={20}/> <span>Our Sites</span></Link>
           </nav>
           <div className="bz-compact-footer-social" aria-label="Bazunk social media">
             {social.map(({url,Icon,label})=><a key={label} href={url} target="_blank" rel="noopener noreferrer" aria-label={label}><Icon size={19}/></a>)}

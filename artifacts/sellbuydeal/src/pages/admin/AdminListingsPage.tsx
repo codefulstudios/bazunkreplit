@@ -97,6 +97,46 @@ export function AdminListingsPage() {
   const [offset, setOffset] = useState(0);
   const [statusFilter,setStatusFilter]=useState("all");
   const [selectedIds,setSelectedIds]=useState<string[]>([]);
+  const [bulkPromoOpen,setBulkPromoOpen]=useState(false);
+  const [bulkPromoOptions,setBulkPromoOptions]=useState<{type:string;label:string;daysValid:number}[]>([]);
+  const [bulkPromoSelected,setBulkPromoSelected]=useState<Record<string,number>>({});
+  const [bulkPromoBusy,setBulkPromoBusy]=useState(false);
+  const [bulkPromoMessage,setBulkPromoMessage]=useState("");
+  async function openBulkPromotions(){
+    if (!selectedIds.length && !listings.length) {setActionError("No listings loaded to promote.");return;}
+    if (!selectedIds.length) setSelectedIds(listings.map(l=>String(l.id)));
+    setBulkPromoOpen(true);setBulkPromoBusy(true);setBulkPromoMessage("");
+    try{
+      const res=await authFetch(`/api/admin/listings/${selectedIds[0]||listings[0].id}/promotions`);
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok||!Array.isArray(data.options))throw Error(data.error||"Cannot load promotion options");
+      setBulkPromoOptions(data.options);setBulkPromoSelected(data.options.length?{[data.options[0].type]:data.options[0].daysValid}:{});
+    }catch(e){setBulkPromoMessage(e instanceof Error?e.message:"Cannot load promotions");}
+    finally{setBulkPromoBusy(false);}
+  }
+  async function applyBulkPromotions(){
+    const ids=[...selectedIds],promotions=bulkPromoOptions.filter(o=>bulkPromoSelected[o.type]!==undefined).map(o=>({type:o.type,days:bulkPromoSelected[o.type]}));
+    if(!ids.length||!promotions.length){setBulkPromoMessage("Select listings and at least one promotion.");return;}
+    if(promotions.some(p=>!Number.isInteger(p.days)||p.days<1||p.days>365)){setBulkPromoMessage("Each selected promotion needs 1–365 whole days.");return;}
+    const total=ids.length*promotions.length;
+    if(!window.confirm(`Apply ${promotions.length} promotion types to ${ids.length} listings (${total} grants)? No seller credits charged. Existing promotions of matching types will have their expiry reset.`))return;
+    setBulkPromoBusy(true);setBulkPromoMessage("");
+    let ok=0;const failed:string[]=[];
+    const failedIds=new Set<string>();
+    for(const id of ids){
+      for(const promo of promotions){
+        try{
+          const res=await authFetch(`/api/admin/listings/${encodeURIComponent(id)}/promotions`,{method:"POST",body:JSON.stringify(promo)});
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok||data.ok!==true)throw Error(data.error||`HTTP ${res.status}`);
+          ok++;
+        }catch(e){failedIds.add(id);failed.push(`${id}/${promo.type}: ${e instanceof Error?e.message:"Network error"}`);}
+      }
+    }
+    setBulkPromoMessage(`Applied ${ok}/${total} promotion grants across ${ids.length} listings. ${failed.length?`Failures: ${failed.slice(0,10).join("; ")}`:"All promotions saved."}`);
+    setSelectedIds([...failedIds]);
+    setBulkPromoBusy(false);
+  }
   const visibleIds=listings.map(l=>String(l.id));
   const [imageEditing, setImageEditing] = useState<number | null>(null);
   const [imageDraft, setImageDraft] = useState("");
@@ -311,6 +351,20 @@ export function AdminListingsPage() {
       <div className="mb-3"><AdminBulkSelection selected={selectedIds}
         rows={listings.map(l=>({id:String(l.id),cells:[l.public_id??"",l.title,l.status,l.category,l.price,l.currency,l.seller_email]}))}
         columns={["Public ID","Title","Status","Category","Price","Currency","Seller"]} filename="bazunk-admin-selected-listings" onClear={()=>setSelectedIds([])}/></div>
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border-2 border-orange-400 bg-orange-50 p-3 text-slate-900"><button type="button" onClick={()=>void openBulkPromotions()} disabled={!listings.length} className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-black text-white disabled:opacity-40">📣 Bulk Promote Listings</button><span className="text-xs font-semibold">{selectedIds.length ? `${selectedIds.length} selected` : `No selection — promotes all ${listings.length} loaded listings on this page`}</span></div>
+      {bulkPromoOpen&&<div className="mb-4 rounded-xl border-2 border-orange-400 bg-white p-4 text-gray-900">
+        <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">Bulk listing promotions · {selectedIds.length} selected</h3><button type="button" onClick={()=>setBulkPromoOpen(false)} disabled={bulkPromoBusy} className="text-sm font-bold text-blue-700">Close</button></div>
+        <p className="mb-3 text-sm">Admin-sponsored promotions: no seller credits charged. Only selected listings on the current page are affected. Promotions do not publish inactive listings.</p>
+        <div className="mb-3 flex items-center gap-3"><button type="button" onClick={()=>setBulkPromoSelected(Object.fromEntries(bulkPromoOptions.map(o=>[o.type,o.daysValid])))} disabled={bulkPromoBusy} className="rounded-lg border border-blue-600 px-3 py-2 text-xs font-bold text-blue-700">Select all promotions</button><button type="button" onClick={()=>setBulkPromoSelected({})} disabled={bulkPromoBusy} className="rounded-lg border border-gray-400 px-3 py-2 text-xs font-bold text-gray-700">Clear promotions</button></div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {bulkPromoOptions.map(option=><div key={option.type} className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-gray-900">
+            <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" disabled={bulkPromoBusy} checked={bulkPromoSelected[option.type]!==undefined} onChange={e=>setBulkPromoSelected(prev=>{const next={...prev};if(e.target.checked)next[option.type]=option.daysValid;else delete next[option.type];return next;})}/>{option.label}</label>
+            {bulkPromoSelected[option.type]!==undefined&&<label className="mt-2 block text-xs font-semibold">Duration (days)<input aria-label={`${option.label} duration in days`} type="number" min="1" max="365" step="1" disabled={bulkPromoBusy} value={bulkPromoSelected[option.type]} onChange={e=>setBulkPromoSelected(prev=>({...prev,[option.type]:Number(e.target.value)}))} className="mt-1 block w-28 rounded-lg border border-gray-400 bg-white p-2 text-gray-900"/></label>}
+          </div>)}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3"><span className="text-sm font-semibold">{Object.keys(bulkPromoSelected).length} promotion types × {selectedIds.length} listings = {Object.keys(bulkPromoSelected).length*selectedIds.length} grants</span><button type="button" disabled={bulkPromoBusy||!Object.keys(bulkPromoSelected).length} onClick={()=>void applyBulkPromotions()} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkPromoBusy?"Applying…":"Apply selected promotions"}</button></div>
+        {bulkPromoMessage&&<p role="status" className="mt-3 text-sm font-semibold">{bulkPromoMessage}</p>}
+      </div>}
       {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>beginCategoryEdit()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Change category for {selectedIds.length} selected</button></div>}
       {categoryEditing==="bulk"&&<div className="mb-3 rounded-xl border border-blue-400 bg-blue-50 p-3 text-slate-950 dark:bg-slate-900 dark:text-white"><p className="mb-2 text-xs font-bold">Change category for {selectedIds.length} selected listings</p>{categoryFields}{categoryError&&<p role="alert" className="mt-2 text-xs font-bold text-red-500">{categoryError}</p>}</div>}
       {/* Table */}
@@ -367,7 +421,7 @@ export function AdminListingsPage() {
 
                     {/* Title */}
                     <td className="px-2 py-3 align-top">
-                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
+                      <div className="flex gap-2 items-start"><div className="w-12 h-12 rounded-lg border bg-gray-50 shrink-0 overflow-hidden flex items-center justify-center">{l.image ? <img src={l.image.startsWith("/api/listing-media/") ? `https://bazunk-api-ifqs.onrender.com${l.image}` : l.image} alt="" className="w-full h-full object-contain" /> : <Package className="w-5 h-5 text-gray-300" />}</div><p className="font-medium text-slate-900 dark:text-white text-xs leading-snug break-words">{l.title}</p></div>
                       <p className="text-[10px] text-gray-400 mt-0.5 capitalize">{l.condition}</p>
                     </td>
 
