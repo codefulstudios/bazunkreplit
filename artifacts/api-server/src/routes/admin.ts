@@ -676,7 +676,7 @@ router.post("/admin/users/demo-sellers/bulk", async (req, res) => {
 router.delete("/admin/users/demo-sellers/:email/with-listings", async (req,res) => {
   try {
     const email = String(req.params.email).toLowerCase();
-    if (!/^demo-seller-[a-f0-9]{8}-\\d{2}@example\\.com$/.test(email) || req.body?.confirm !== email) {
+    if (!/^demo-seller-[a-f0-9]{8}-\d{2}@example\.com$/.test(email) || req.body?.confirm !== email) {
       res.status(400).json({error:"Exact demo seller email confirmation required"});return;
     }
     const result = await db.transaction(async tx => {
