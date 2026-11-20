@@ -275,6 +275,8 @@ export function AdminSettingsPage({ embedded = false, initialTab }: { embedded?:
       setCredMsg({ type: "ok", text: "Credentials updated! You will be logged out now." });
       setCurrentPw(""); setNewPw(""); setConfirmPw(""); setNewEmail("");
       setTimeout(() => { logout(); setLocation("/admin"); }, 2000);
+    } catch {
+      setCredMsg({ type: "err", text: "Network error — credentials could not be updated. Please try again." });
     } finally { setCredSaving(false); }
   }
 
