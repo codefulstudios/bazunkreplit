@@ -125,6 +125,7 @@ export default function BulkImportPage(){
           let imageUrl=r.image_url||null;
           const explicit=r.image_url&&!/^https:\/\//i.test(r.image_url)?r.image_url.split("/").pop()!.toLowerCase():"";
           const match=(explicit&&zipImages[explicit]?explicit:"")||(r.sku?imageKeys.find(k=>k.replace(/\.(jpg|jpeg|png|webp)$/i,"")===r.sku.toLowerCase()):"");
+          if(explicit&&!match)throw Error("ZIP image not found: "+explicit);
           if(match){
             if(!uploaded.has(match)){
               const picture=zipImages[match];
