@@ -66,3 +66,12 @@ test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
  assert.match(offers,/l\.status=\x27active\x27/);
  assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
 });
+
+test("Phase 4 seller bulk actions enforce ownership and expose auditable history",()=>{
+ const route=read(root+"routes/sellerListingTools.ts");
+ assert.match(route,/authenticatedSellerEmail\(req,res\)/);
+ assert.match(route,/LOWER\(seller_email\)=\$\{email\}/);
+ assert.match(route,/seller_listing_bulk_audit/);
+ assert.match(route,/batchId=randomUUID\(\)/);
+ assert.match(route,/\/listings\/seller-tools\/history/);
+});
