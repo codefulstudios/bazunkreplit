@@ -661,11 +661,11 @@ export function LivePage() {
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                    {false && featuredItem?.discount && (
+                    {featuredItem?.discount ? (
                       <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full shadow-lg">
-                        -{featuredItem.discount}% OFF
+                        -{featuredItem?.discount}% OFF
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   <p className="font-bold text-white text-sm mb-2 line-clamp-2">
