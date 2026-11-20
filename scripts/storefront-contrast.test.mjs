@@ -4,9 +4,9 @@ import { test } from "node:test";
 const root="artifacts/sellbuydeal/src/";
 const read=(path)=>fs.readFileSync(root+path,"utf8");
 const browse=read("pages/BrowsePage.tsx");
-const cards=browse.slice(browse.indexOf("function ProductCard("),browse.indexOf("export function BrowsePage()"));
+const cards=browse.slice(browse.indexOf("function ProductCard("),browse.indexOf("export function BrowsePage("));
 test("Browse cards use theme-paired backgrounds and shared contract",()=>{
- assert.match(cards,/bz-product-card bg-white dark:bg-slate-900/);
+ assert.match(cards,/bz-product-card bz-browse-product bg-white dark:bg-slate-900/);
  assert.match(cards,/text-slate-900 dark:text-white/);
  assert.match(cards,/object-contain/);
 });

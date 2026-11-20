@@ -39,7 +39,8 @@ for(const part of ["select","dropdown-menu","popover","dialog"]){
 
 const source=(path)=>fs.readFileSync("artifacts/sellbuydeal/src/"+path,"utf8");
 test("front-end categories hero uses the shared contrast-aware compact hero",()=>{
-  assert.match(source("pages/CategoriesPage.tsx"),/<CompactPageHero kind="categories"/);
+  assert.match(source("pages/CategoriesPage.tsx"),/return <BrowsePage \/>/);
+  assert.match(source("pages/BrowsePage.tsx"),/bg-white dark:bg-slate-900/);
   assert.match(source("components/CompactPageHero.tsx"),/bz-compact-hero/);
   assert.match(css,/\.bz-compact-hero\{[^}]*background:linear-gradient/);
   assert.match(css,/\.bz-compact-hero h1\{[^}]*color:var\(--bz-hero-text\)!important/);

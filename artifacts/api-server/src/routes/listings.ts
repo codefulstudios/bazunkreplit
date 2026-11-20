@@ -90,6 +90,31 @@ function promoRank(promotions: string[]): number {
   return 0;
 }
 
+// Lightweight, region-aware autocomplete. Uses the same visibility rules as browse.
+router.get("/listings/search-suggestions", async (req, res) => {
+  try {
+    const q = String(req.query.q ?? "").trim().slice(0, 80);
+    if (q.length < 2) { res.json({ suggestions: [] }); return; }
+    if (req.query.region !== undefined && !["uk", "us"].includes(String(req.query.region))) {
+      res.status(400).json({ error: "Invalid region" }); return;
+    }
+    const visible = await categoryVisibility();
+    const region = listingRegionFilter(req.query.region);
+    const rows = await db.select({ title: listingsTable.title })
+      .from(listingsTable)
+      .where(and(eq(listingsTable.status, "active"), visible, region,
+        sql`STRPOS(LOWER(${listingsTable.title}), ${q.toLowerCase()}) > 0`))
+      .groupBy(listingsTable.title)
+      .orderBy(sql`CASE WHEN LOWER(${listingsTable.title}) LIKE ${q.toLowerCase() + "%"} THEN 0 ELSE 1 END`, listingsTable.title)
+      .limit(8);
+    res.setHeader("Cache-Control", "public, max-age=30");
+    res.json({ suggestions: rows.map(r => r.title) });
+  } catch (err) {
+    console.error("Search suggestions failed", err);
+    res.status(500).json({ error: "Search suggestions unavailable" });
+  }
+});
+
 router.get("/listings", async (req, res) => {
   try {
     if (req.query.region !== undefined && req.query.region !== "uk" && req.query.region !== "us") {

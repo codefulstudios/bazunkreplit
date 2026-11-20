@@ -663,6 +663,19 @@ export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
       </FilterSection>
 
       <FilterSection title="Price Range">
+        <div className="space-y-2 mb-3">
+          <label className="block text-xs font-semibold text-slate-700">Minimum price: £{minPrice || "0"}</label>
+          <input aria-label="Minimum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, Number(minPrice) || 0)}
+            onChange={e => { const next = Number(e.target.value); setMinPrice(String(Math.min(next, Number(maxPrice) || 5000))); }}
+            className="w-full accent-orange-600" />
+          <label className="block text-xs font-semibold text-slate-700">Maximum price: £{maxPrice || "5000+"}</label>
+          <input aria-label="Maximum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, maxPrice === "" ? 5000 : Number(maxPrice))}
+            onChange={e => setMaxPrice(String(Math.max(Number(minPrice) || 0, Number(e.target.value))))}
+            className="w-full accent-blue-600" />
+          <p className="text-xs text-slate-500">Use the fields below for prices above £5,000.</p>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">£</span>
