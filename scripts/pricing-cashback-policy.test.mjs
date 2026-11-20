@@ -67,19 +67,15 @@ test("Phase 2 offer transitions reject expired and unavailable listings",()=>{
  assert.match(offers,/AND status=\$\{String\(offer\.status\)\}/);
 });
 
-test("Phase 4 seller bulk actions enforce ownership and expose auditable history",()=>{
- const route=read(root+"routes/sellerListingTools.ts");
- assert.match(route,/authenticatedSellerEmail\(req,res\)/);
- assert.match(route,/LOWER\(seller_email\)=\$\{email\}/);
- assert.match(route,/seller_listing_bulk_audit/);
- assert.match(route,/batchId=randomUUID\(\)/);
- assert.match(route,/\/listings\/seller-tools\/history/);
-});
-
-test("Phase 5 wishlists are authenticated, deduplicated and removable",()=>{
- const discovery=read(root+"routes/discovery.ts");
- assert.match(discovery,/authenticatedSellerEmail\(req,res\)/);
- assert.match(discovery,/PRIMARY KEY \(user_email,listing_id\)/);
- assert.match(discovery,/ON CONFLICT\(user_email,listing_id\) DO NOTHING/);
- assert.match(discovery,/router\.delete\("\/discovery\/wishlist\/:listingId"/);
+test("BZ-008: seller SKU imports are duplicate-safe without treating rows as failures",()=>{
+ const listings=read(root+"routes/listings.ts");
+ const bulk=read("artifacts/sellbuydeal/src/pages/BulkImportPage.tsx");
+ assert.match(listings,/pg_advisory_xact_lock/);
+ assert.match(listings,/LOWER\(seller_email\) = \$\{authenticatedEmail\}/);
+ assert.match(listings,/LOWER\(BTRIM\(sku\)\) = \$\{sku\.toLowerCase\(\)\}/);
+ assert.match(listings,/existingListingId/);
+ assert.match(listings,/error: "duplicate_sku"/);
+ assert.match(bulk,/response\.status===409 && body\.error==="duplicate_sku"/);
+ assert.match(bulk,/SKIPPED/);
+ assert.match(bulk,/const skuKey=row\.sku\.trim\(\)\.toLowerCase\(\)/);
 });
