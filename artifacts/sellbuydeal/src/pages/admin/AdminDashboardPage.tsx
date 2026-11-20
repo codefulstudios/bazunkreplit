@@ -60,8 +60,44 @@ export function AdminDashboardPage(){
        <button type="button" onClick={()=>go("/admin/design-system")} className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-extrabold text-white hover:bg-blue-700">Open Design Center <ArrowUpRight className="h-4 w-4"/></button>
      </div>
    </div>
-   <div className="admin-charts grid min-w-0 lg:grid-cols-2 gap-5"><div className="min-w-0 bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5"><h2 className="flex items-center gap-2 font-black text-[#162850] dark:text-white"><BarChart3 className="h-5 w-5 text-blue-600"/>7-day Sales & GMV</h2><p className="text-xs text-slate-500 dark:text-slate-300 mb-4">Completed marketplace activity excluding cancelled/refunded orders.</p><div className="h-64"><ResponsiveContainer width="100%" height="100%"><LineChart data={s.salesTrend}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="label"/><YAxis/><Tooltip formatter={(v:any,n:any)=>n==='gmv'?[money(Number(v)),'GMV']:[v,'Orders']}/><Line type="monotone" dataKey="orders" stroke="#1769ff" strokeWidth={3} dot={{r:3}}/><Line type="monotone" dataKey="gmv" stroke="#60a5fa" strokeWidth={3} dot={{r:3}}/></LineChart></ResponsiveContainer></div></div>
-   <div className="bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl p-5"><h2 className="flex items-center gap-2 font-black text-[#162850] dark:text-white"><Users className="h-5 w-5 text-blue-600"/>New Users (30 Days)</h2><p className="text-xs text-slate-500 dark:text-slate-300 mb-4">Daily registrations.</p><div className="h-64"><ResponsiveContainer width="100%" height="100%"><BarChart data={s.userTrend}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="label" interval={4}/><YAxis allowDecimals={false}/><Tooltip/><Bar dataKey="users" fill="#1769ff" radius={[5,5,0,0]}/></BarChart></ResponsiveContainer></div></div></div>
+   <section aria-label="Marketplace trends" className="admin-charts grid min-w-0 gap-5 xl:grid-cols-2">
+    <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><BarChart3 className="h-5 w-5 text-blue-600"/>Sales overview</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 7 days · completed marketplace activity</p></div>
+        <div className="flex flex-wrap gap-3 text-xs font-semibold text-slate-700 dark:text-slate-200" aria-label="Sales chart legend"><span className="flex items-center gap-1.5"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#1769ff]"/>Orders</span><span className="flex items-center gap-1.5"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#16a6b6]"/>GMV (£)</span></div>
+      </div>
+      <div className="admin-chart-plot h-[275px] min-w-0" role="img" aria-label="Seven day orders and gross merchandise value trends">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={s.salesTrend} margin={{top:8,right:12,left:0,bottom:5}}>
+            <CartesianGrid vertical={false} stroke="var(--bz-chart-grid, #dce5f1)" strokeDasharray="4 4"/>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}} tickMargin={12}/>
+            <YAxis yAxisId="orders" allowDecimals={false} axisLine={false} tickLine={false} width={34} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
+            <YAxis yAxisId="gmv" orientation="right" axisLine={false} tickLine={false} width={48} tickFormatter={(v:number)=>"£"+v.toLocaleString("en-GB")} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
+            <Tooltip contentStyle={{background:"var(--bz-chart-tooltip, #ffffff)",color:"var(--bz-chart-tooltip-text, #0f172a)",border:"1px solid var(--bz-chart-grid, #dce5f1)",borderRadius:12}} formatter={(v:any,name:any)=>name==="GMV"?[money(Number(v)),"GMV"]:[num(Number(v)),"Orders"]}/>
+            <Line yAxisId="orders" name="Orders" type="monotone" dataKey="orders" stroke="#1769ff" strokeWidth={3} dot={{r:3,fill:"#1769ff"}} activeDot={{r:6}}/>
+            <Line yAxisId="gmv" name="GMV" type="monotone" dataKey="gmv" stroke="#16a6b6" strokeWidth={3} dot={{r:3,fill:"#16a6b6"}} activeDot={{r:6}}/>
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </article>
+    <article className="admin-chart-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-[#2e425e] dark:bg-[#111f35]">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="flex items-center gap-2 text-base font-extrabold text-slate-900 dark:text-white"><Users className="h-5 w-5 text-blue-600"/>User growth</h2><p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Last 30 days · daily registrations</p></div>
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200"><i aria-hidden="true" className="h-2.5 w-2.5 rounded-full bg-[#1769ff]"/>New users</span>
+      </div>
+      <div className="admin-chart-plot h-[275px] min-w-0" role="img" aria-label="Daily user registrations over the last thirty days">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={s.userTrend} margin={{top:8,right:8,left:0,bottom:5}} barCategoryGap="24%">
+            <CartesianGrid vertical={false} stroke="var(--bz-chart-grid, #dce5f1)" strokeDasharray="4 4"/>
+            <XAxis dataKey="label" axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={22} tickMargin={12} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
+            <YAxis allowDecimals={false} axisLine={false} tickLine={false} width={34} tick={{fill:"var(--bz-chart-tick, #52647c)",fontSize:11}}/>
+            <Tooltip cursor={{fill:"var(--bz-chart-hover, #edf4ff)"}} contentStyle={{background:"var(--bz-chart-tooltip, #ffffff)",color:"var(--bz-chart-tooltip-text, #0f172a)",border:"1px solid var(--bz-chart-grid, #dce5f1)",borderRadius:12}}/>
+            <Bar name="New users" dataKey="users" fill="#1769ff" maxBarSize={22} radius={[5,5,0,0]}/>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </article>
+   </section>
    <div><h2 className="text-sm font-black text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-3">Operations</h2><div className="admin-operations grid grid-cols-1 min-[390px]:grid-cols-2 md:grid-cols-4 gap-3">{[["Orders","/admin/orders",ShoppingBag],["Importer Control","/admin/importer-control",Activity],["Credits Economy","/admin/credits-economy",Coins],["Settings","/admin/settings",Settings]].map(([label,href,Icon]:any)=><button key={href} onClick={()=>go(href)} className="bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center gap-3 hover:border-[#1769ff]"><Icon className="w-5 h-5 text-[#1769ff]"/><span className="font-bold text-sm">{label}</span></button>)}</div></div>
    <div className="admin-payments bg-white dark:bg-[#172541] border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden"><div className="px-5 py-4 border-b"><h2 className="font-black">Recent Stripe payments</h2></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="bg-slate-100 dark:bg-[#233452] text-left text-xs uppercase text-slate-500 dark:text-slate-300"><th className="p-3">Customer</th><th className="p-3">Amount</th><th className="p-3">Status</th><th className="p-3">Date</th></tr></thead><tbody>{s.recentPayments.length?s.recentPayments.map(p=><tr key={p.id} className="border-t border-slate-200 dark:border-white/10"><td className="p-3">{p.email}</td><td className="p-3 font-bold">{p.currency} {p.amount.toFixed(2)}</td><td className="p-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${p.status==="paid"?"bg-emerald-100 text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-200":"bg-amber-100 text-amber-800 dark:bg-amber-400/20 dark:text-amber-200"}`}>{p.status}</span></td><td className="p-3">{new Date(p.date).toLocaleString("en-GB")}</td></tr>):<tr><td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-300">No recent Stripe payments</td></tr>}</tbody></table></div></div>
   </>}
