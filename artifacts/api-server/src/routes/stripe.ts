@@ -487,8 +487,11 @@ router.post("/stripe/apply-credits", async (req, res) => {
     const stripe = await getUncachableStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (session.payment_status !== "paid") {
-      res.status(400).json({ error: "Payment not completed" }); return;
+    if (session.payment_status !== "paid" || session.mode !== "payment" || session.currency !== "gbp" || !session.amount_total || session.amount_total <= 0) {
+      res.status(400).json({ error: "Valid paid GBP credit checkout required" }); return;
+    }
+    if (session.metadata?.basePrice && Math.round(Number(session.metadata.basePrice) * 100) !== session.amount_total) {
+      res.status(400).json({ error: "Credit checkout amount mismatch" }); return;
     }
 
     if (session.client_reference_id !== email) {
