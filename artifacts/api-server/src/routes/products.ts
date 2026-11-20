@@ -1,15 +1,206 @@
+import { COMPLETE_THIRD_LEVEL_LIBRARY } from "../data/thirdLevelLibrary.js";
 import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { db } from "@workspace/db";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { logger } from "../lib/logger.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
+// Persistent listing image uploads. Stored in PostgreSQL rather than ephemeral Render files.
+router.get("/listing-media/:id", async (req,res)=>{
+ const id=String(req.params.id||"");
+ if(!/^[0-9a-f-]{36}$/i.test(id)){res.status(400).end();return;}
+ try {
+   const rows=await db.execute(sql`SELECT mime,data_base64 FROM listing_media_assets WHERE id=${id}`).then(r=>r.rows as any[]);
+   if(!rows.length){res.status(404).end();return;}
+   res.setHeader("Content-Type",String(rows[0].mime));
+   res.setHeader("Cache-Control","public,max-age=31536000,immutable");
+   res.send(Buffer.from(String(rows[0].data_base64),"base64"));
+ } catch(err){logger.warn({err},"Listing media unavailable");res.status(404).end();}
+});
+router.post("/admin/products/media-upload",requireAdmin,async(req,res)=>{
+ const {filename,dataUrl}=req.body||{};
+ if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
+ const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
+ if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
+ const bytes=Buffer.from(matched[2],"base64");
+ if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
+ const mime=matched[1];
+ const correct=mime==="image/png"&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||
+ mime==="image/jpeg"&&bytes[0]===255&&bytes[1]===216||
+ mime==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!correct){res.status(400).json({error:"Invalid image file"});return;}
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  const id=randomUUID();
+  await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
+ }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
+});
+router.post("/seller/products/media-upload",async(req,res)=>{
+ const sellerEmail=await authenticatedSellerEmail(req,res);
+ if(!sellerEmail)return;
+ const {filename,dataUrl}=req.body||{};
+ if(typeof filename!=="string"||filename.length>180||typeof dataUrl!=="string"||dataUrl.length>4500000){res.status(400).json({error:"Upload a JPG, PNG or WebP under 3 MB"});return;}
+ const matched=new RegExp("^data:(image/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$").exec(dataUrl);
+ if(!matched){res.status(400).json({error:"Unsupported image format"});return;}
+ const bytes=Buffer.from(matched[2],"base64");
+ if(bytes.length<32||bytes.length>3145728){res.status(400).json({error:"Image must be under 3 MB"});return;}
+ const mime=matched[1];
+ const correct=mime==="image/png"&&bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||
+ mime==="image/jpeg"&&bytes[0]===255&&bytes[1]===216||
+ mime==="image/webp"&&bytes.toString("ascii",0,4)==="RIFF"&&bytes.toString("ascii",8,12)==="WEBP";
+ if(!correct){res.status(400).json({error:"Invalid image file"});return;}
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS listing_media_assets (id TEXT PRIMARY KEY, filename TEXT NOT NULL, mime TEXT NOT NULL, data_base64 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`);
+  const id=randomUUID();
+  await db.execute(sql`INSERT INTO listing_media_assets(id,filename,mime,data_base64) VALUES(${id},${filename},${mime},${matched[2]})`);
+  res.status(201).json({url:"https://bazunk-api-ifqs.onrender.com/api/listing-media/"+id});
+ }catch(err){logger.error({err},"Listing image upload failed");res.status(503).json({error:"Could not store image"});}
+});
 router.use("/admin/products", requireAdmin);
 router.use("/admin/categories", requireAdmin);
 
+// Populate complete third-level taxonomy idempotently. Existing names and visibility are never changed.
+let seedPromise:Promise<void>|undefined;
+async function ensureCompleteThirdLevelLibrary(){
+ await ensureDeletedThirdLevelTable();
+ if(!seedPromise)seedPromise=(async()=>{
+  const batches=[] as (typeof COMPLETE_THIRD_LEVEL_LIBRARY[number])[][];
+  for(let i=0;i<COMPLETE_THIRD_LEVEL_LIBRARY.length;i+=120)batches.push(COMPLETE_THIRD_LEVEL_LIBRARY.slice(i,i+120) as any);
+  for(const batch of batches)await db.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order)
+   SELECT candidate.* FROM (VALUES ${sql.join(batch.map(v=>sql`(${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sort_order}::integer)`),sql`,`)}) AS candidate(category,subcategory,slug,name,visible,sort_order)
+   WHERE NOT EXISTS (SELECT 1 FROM deleted_third_level_categories deleted WHERE deleted.category=candidate.category AND deleted.subcategory=candidate.subcategory AND deleted.slug=candidate.slug)
+   ON CONFLICT(category,subcategory,slug) DO NOTHING`);
+ })().catch(e=>{seedPromise=undefined;throw e});
+ return seedPromise;
+}
+// Seed on server startup as well as on reads; existing records are untouched.
+void ensureCompleteThirdLevelLibrary().catch(err=>logger.error({err},"Initial taxonomy population unavailable"));
+
+async function ensureDeletedThirdLevelTable(){await db.execute(sql`CREATE TABLE IF NOT EXISTS deleted_third_level_categories(category TEXT NOT NULL,subcategory TEXT NOT NULL,slug TEXT NOT NULL,deleted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),PRIMARY KEY(category,subcategory,slug))`);}
+// Admin-managed third-level taxonomy overrides; nullable listing values remain backwards compatible.
+router.get("/taxonomy/third-level", async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
+    res.json({ categories: rows.rows });
+  } catch (err) {
+    logger.error({ err }, "Third-level taxonomy unavailable");
+    res.status(503).json({ error: "Taxonomy unavailable" });
+  }
+});
+router.get("/admin/taxonomy/third-level", requireAdmin, async (_req, res) => {
+  try {
+    const rows = await db.execute(sql`SELECT category, subcategory, slug, name, visible, sort_order FROM third_level_categories ORDER BY category, subcategory, sort_order, name`);
+    res.json({ categories: rows.rows });
+  } catch (err) { res.status(500).json({ error: "Could not load taxonomy" }); }
+});
+// Safe bulk creation: never overwrite an existing taxonomy entry or its visibility.
+router.post("/admin/taxonomy/third-level/seed",requireAdmin,async(req,res)=>{
+ const input=req.body?.categories;
+ if(!Array.isArray(input)||input.length>1600){res.status(400).json({error:"Invalid taxonomy library"});return;}
+ const seen=new Set<string>();
+ const entries:{category:string;subcategory:string;slug:string;name:string;sortOrder:number}[]=[];
+ for(const v of input){
+  const category=String(v.category??""),subcategory=String(v.subcategory??""),slug=String(v.slug??""),name=String(v.name??"").trim();
+  const key=category+":"+subcategory+":"+slug;
+  if(![category,subcategory,slug].every(x=>/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(x))||!name||name.length>100||seen.has(key)){res.status(400).json({error:"Invalid or duplicate taxonomy entry"});return;}
+  seen.add(key);entries.push({category,subcategory,slug,name,sortOrder:Math.max(0,Math.min(9999,Number(v.sort_order)||0))});
+ }
+ try{
+  await ensureDeletedThirdLevelTable();
+  let created=0;
+  await db.transaction(async tx=>{for(const v of entries){
+   const inserted=await tx.execute(sql`INSERT INTO third_level_categories(category,subcategory,slug,name,visible,sort_order) SELECT ${v.category},${v.subcategory},${v.slug},${v.name},FALSE,${v.sortOrder} WHERE NOT EXISTS (SELECT 1 FROM deleted_third_level_categories WHERE category=${v.category} AND subcategory=${v.subcategory} AND slug=${v.slug}) ON CONFLICT(category,subcategory,slug) DO NOTHING RETURNING slug`);
+   if(inserted.rows.length)created++;
+  }});
+  res.json({created,total:entries.length});
+ }catch(err){logger.error({err},"Third-level seed failed");res.status(503).json({error:"Unable to populate taxonomy"});}
+});
+router.delete("/admin/taxonomy/third-level",requireAdmin,async(req,res)=>{
+ const {category,subcategory,slug}=req.body??{};
+ if(![category,subcategory,slug].every(v=>typeof v==="string"&&/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v))){res.status(400).json({error:"Invalid category identifier"});return;}
+ try{
+  await ensureDeletedThirdLevelTable();
+  await db.transaction(async tx=>{
+   await tx.execute(sql`INSERT INTO deleted_third_level_categories(category,subcategory,slug) VALUES(${category},${subcategory},${slug}) ON CONFLICT DO NOTHING`);
+   await tx.execute(sql`DELETE FROM third_level_categories WHERE category=${category} AND subcategory=${subcategory} AND slug=${slug}`);
+  });
+  res.json({deleted:true});
+ }catch(err){logger.error({err},"Delete third-level category failed");res.status(503).json({error:"Could not delete category"});}
+});
+router.put("/admin/taxonomy/third-level", requireAdmin, async (req, res) => {
+  try {
+    const items = req.body?.categories;
+    if (!Array.isArray(items) || items.length > 1600) { res.status(400).json({ error: "Invalid taxonomy" }); return; }
+    const cleaned: { category: string; subcategory: string; name: string; slug: string; visible: boolean; sortOrder: number }[] = [];
+    for (const item of items) {
+      const category = String(item.category ?? ""), subcategory = String(item.subcategory ?? "");
+      const name = String(item.name ?? "").trim().slice(0, 100);
+      const slug = String(item.slug ?? "").trim();
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subcategory) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !name) { res.status(400).json({ error: "Invalid category, subcategory or slug" }); return; }
+      cleaned.push({ category, subcategory, name, slug, visible: item.visible !== false, sortOrder: Math.max(0, Math.min(9999, Number(item.sort_order) || 0)) });
+    }
+    if (cleaned.length) {
+      const payload = JSON.stringify(cleaned);
+      await db.execute(sql`INSERT INTO third_level_categories (category,subcategory,slug,name,visible,sort_order)
+        SELECT x.category,x.subcategory,x.slug,x.name,x.visible,x.sort_order
+        FROM jsonb_to_recordset(${payload}::jsonb) AS x(category text,subcategory text,slug text,name text,visible boolean,sort_order integer)
+        ON CONFLICT (category,subcategory,slug) DO UPDATE SET name=EXCLUDED.name,visible=EXCLUDED.visible,sort_order=EXCLUDED.sort_order`);
+    }
+    res.json({ saved: cleaned.length });
+  } catch (err) { logger.error({ err }, "Taxonomy save failed"); res.status(500).json({ error: "Taxonomy save failed" }); }
+});
+
+// Read-only listing evidence for third-level taxonomy proposals; no records are reclassified here.
+router.get("/admin/taxonomy/listing-evidence", requireAdmin, async (_req,res)=>{
+ try{
+  const rows=await db.execute(sql`SELECT category,COALESCE(subcategory,'') AS subcategory, COUNT(*)::int AS count,
+    (ARRAY_AGG(LEFT(title,140) ORDER BY id DESC))[1:8] AS titles
+    FROM listings GROUP BY category,subcategory ORDER BY count DESC LIMIT 350`);
+  res.json({groups:rows.rows});
+ }catch(err){logger.error({err},"Taxonomy evidence unavailable");res.status(503).json({error:"Cannot load listing evidence"});}
+});
+// First- and second-level presentation overrides. Slugs are immutable so listing references survive renames.
+router.get("/taxonomy/category-overrides", async (_req,res)=>{
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
+  const rows=await db.execute(sql`SELECT category_slug,subcategory_slug,name,sort_order,visible FROM category_display_overrides ORDER BY sort_order,name`);
+  res.json({overrides:rows.rows});
+ }catch(err){logger.error({err},"Category overrides failed");res.status(503).json({error:"Category overrides unavailable"});}
+});
+router.put("/admin/taxonomy/category-overrides",requireAdmin,async(req,res)=>{
+ const rows=req.body?.overrides;
+ if(!Array.isArray(rows)||rows.length>700){res.status(400).json({error:"Invalid category data"});return;}
+ const cleaned: {category_slug:string;subcategory_slug:string;name:string;sort_order:number;visible:boolean}[]=[];
+ const seen=new Set<string>();
+ for(const v of rows){
+  const category_slug=String(v.category_slug??""),subcategory_slug=String(v.subcategory_slug??""),name=String(v.name??"").trim();
+  const key=category_slug+":"+subcategory_slug;
+  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category_slug)||(subcategory_slug&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subcategory_slug))||!name||name.length>100||seen.has(key)){res.status(400).json({error:"Invalid or duplicate category names/slugs"});return;}
+  seen.add(key);
+  cleaned.push({category_slug,subcategory_slug,name,sort_order:Math.max(0,Math.min(9999,Math.trunc(Number(v.sort_order)||0))),visible:v.visible!==false});
+ }
+ try{
+  await db.execute(sql`CREATE TABLE IF NOT EXISTS category_display_overrides (category_slug TEXT NOT NULL, subcategory_slug TEXT NOT NULL DEFAULT '', name TEXT NOT NULL, sort_order INTEGER NOT NULL DEFAULT 0, visible BOOLEAN NOT NULL DEFAULT TRUE, PRIMARY KEY(category_slug,subcategory_slug))`);
+  if(cleaned.length){
+   const overridesPayload=JSON.stringify(cleaned);
+   await db.execute(sql`INSERT INTO category_display_overrides(category_slug,subcategory_slug,name,sort_order,visible)
+    SELECT x.category_slug,x.subcategory_slug,x.name,x.sort_order,x.visible
+    FROM jsonb_to_recordset(${overridesPayload}::jsonb) AS x(category_slug text,subcategory_slug text,name text,sort_order integer,visible boolean)
+    ON CONFLICT(category_slug,subcategory_slug) DO UPDATE SET name=EXCLUDED.name,sort_order=EXCLUDED.sort_order,visible=EXCLUDED.visible`);
+   const settingRows=cleaned.flatMap(v=>{const suffix=v.subcategory_slug?"__"+v.subcategory_slug:"";const state=v.visible?"active":"hidden";return [{key:"category_visible_"+v.category_slug+suffix,value:v.visible?"true":"false"},{key:"category_display_"+v.category_slug+suffix,value:state}]});
+   const settingsPayload=JSON.stringify(settingRows);
+   await db.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+    SELECT x.key,x.value,NOW() FROM jsonb_to_recordset(${settingsPayload}::jsonb) AS x(key text,value text)
+    ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`);
+  }
+  res.json({saved:cleaned.length});
+ }catch(err){logger.error({err},"Category overrides save failed");res.status(503).json({error:"Could not save categories"});}
+});
 // ── Categories ────────────────────────────────────────────────────────────────
 
 router.get("/admin/categories", async (_req, res) => {
@@ -182,6 +373,39 @@ router.post("/admin/products/import", async (req, res) => {
   }
 });
 
+
+router.post("/admin/products/csv-listings", async(req,res)=>{
+ const {rows,sellerEmail,region="us"}=req.body||{};
+ if(!Array.isArray(rows)||rows.length<1||rows.length>100||typeof sellerEmail!=="string"||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sellerEmail)||!["us","uk"].includes(region)){
+  res.status(400).json({error:"Provide 1–100 rows, valid seller email and marketplace region"});return;
+ }
+ const results:{line:number;status:string;message?:string}[]=[];
+ const email=sellerEmail.trim().toLowerCase();
+ for(let i=0;i<rows.length;i++){
+  const r=rows[i]||{};
+  const title=String(r.title||"").trim(),category=String(r.category||"").trim();
+  const price=Number(r.price),quantity=Number(r.quantity??1),sku=String(r.sku||"").trim();
+  if(!title||title.length>180||!category||!Number.isFinite(price)||price<=0||price>1000000||!Number.isInteger(quantity)||quantity<0||quantity>100000||sku.length>120){
+   results.push({line:i+2,status:"error",message:"Invalid title, category, price, stock or SKU"});continue;
+  }
+  const currency=String(r.currency||"USD").toUpperCase();
+  if(!["USD","GBP","EUR"].includes(currency)){results.push({line:i+2,status:"error",message:"Invalid currency"});continue;}
+  const image=String(r.image_url||"").trim();
+  if(image&&(!/^https:\/\//i.test(image)||image.length>2000)){results.push({line:i+2,status:"error",message:"Image must be an HTTPS URL"});continue;}
+  try{
+   if(sku){
+    const duplicates=await db.execute(sql`SELECT id FROM listings WHERE LOWER(seller_email)=${email} AND sku=${sku} LIMIT 1`).then(x=>x.rows);
+    if(duplicates.length){results.push({line:i+2,status:"skipped",message:"SKU already exists"});continue;}
+   }
+   const specs=JSON.stringify({marketplace_region:region,import_source:"admin_csv"});
+   await db.execute(sql`INSERT INTO listings(title,description,price,currency,category,condition,image,seller_email,status,quantity,sku,ship_origin,ship_zone,shipping_price,handling_charge,tags,specifications)
+    VALUES(${title},${String(r.description||title).slice(0,10000)},${price.toFixed(2)},${currency},${category},${String(r.condition||"brand-new").slice(0,80)},${image||null},${email},'draft',${quantity},${sku||null},${String(r.ship_origin||"USA").slice(0,80)},${String(r.ship_zone||"international").slice(0,80)},${String(r.shipping_price||"0")},${String(r.handling_charge||"0")},${String(r.tags||"").slice(0,1000)},${specs})`);
+   results.push({line:i+2,status:"created"});
+  }catch(err){logger.error({err},"Admin CSV listing row failed");results.push({line:i+2,status:"error",message:"Database insert failed"});}
+ }
+ res.json({results,created:results.filter(x=>x.status==="created").length,skipped:results.filter(x=>x.status==="skipped").length});
+});
+
 // ── Products: CRUD ────────────────────────────────────────────────────────────
 
 router.get("/admin/products", async (req, res) => {
@@ -199,7 +423,7 @@ router.get("/admin/products", async (req, res) => {
       SELECT
         id::text AS id, title, description, price::float AS price,
         status, condition, seller_email, seller_name,
-        category AS category_slug, category AS category_name, subcategory,
+        category AS category_slug, category AS category_name, subcategory, subsubcategory,
         image AS images, created_at, updated_at, specifications, currency,
         NULL AS inventory, tags, '[]'::text AS variants, category AS category_id
       FROM listings
@@ -268,7 +492,8 @@ router.get("/admin/products/:id", async (req, res) => {
     try { specs = row.specifications ? JSON.parse(row.specifications) : {}; } catch { specs = {}; }
     res.json({
       ...row,
-      images: row.image ? [row.image] : [],
+      images: Array.isArray(specs.admin_gallery_images) && specs.admin_gallery_images.length ? specs.admin_gallery_images : (row.image ? [row.image] : []),
+      variants: Array.isArray(specs.admin_variants) ? specs.admin_variants : [],
       status: row.status === "active" ? "approved" : row.status,
       inventory: Number(specs.inventory ?? 1),
       brand: String(specs.brand ?? ""),
@@ -277,6 +502,7 @@ router.get("/admin/products/:id", async (req, res) => {
       ships_from_location: String(specs.ships_from_location ?? specs.source_item_location ?? ""),
       ships_to: String(specs.ships_to ?? ""),
       shipping_price: specs.shipping_price ?? specs.shipping ?? "",
+      handling_charge: specs.handling_charge ?? "",
       free_shipping: Boolean(specs.free_shipping ?? (String(specs.source_shipping_label ?? "").toLowerCase() === "free")),
       dispatch_time: String(specs.dispatch_time ?? ""),
       delivery_estimate: String(specs.delivery_estimate ?? ""),
@@ -300,9 +526,9 @@ router.get("/admin/products/:id", async (req, res) => {
 router.put("/admin/products/:id", async (req, res) => {
   try {
     const {
-      title, description, price, condition, status, category_id, subcategory,
+      title, description, price, condition, status, category_id, subcategory, subsubcategory,
       seller_email, tags, images, currency, inventory, brand, sku,
-      ships_from, ships_from_location, ships_to, shipping_price, free_shipping,
+      ships_from, ships_from_location, ships_to, shipping_price, handling_charge, free_shipping,
       dispatch_time, delivery_estimate,
     } = req.body;
     if (!title) { res.status(400).json({ error: "title required" }); return; }
@@ -319,8 +545,11 @@ router.put("/admin/products/:id", async (req, res) => {
       brand: brand ?? "", sku: sku ?? "",
       ships_from: ships_from ?? "", ships_from_location: ships_from_location ?? "",
       ships_to: ships_to ?? "", shipping_price: shipping_price === "" ? null : Number(shipping_price),
+      handling_charge: handling_charge === "" ? null : Math.max(0, Number(handling_charge ?? specs.handling_charge ?? 0)),
       free_shipping: Boolean(free_shipping), dispatch_time: dispatch_time ?? "",
       delivery_estimate: delivery_estimate ?? "",
+      admin_gallery_images: Array.isArray(images)?images.slice(0,12):specs.admin_gallery_images,
+      admin_variants: Array.isArray(req.body.variants)?req.body.variants.slice(0,50):specs.admin_variants,
       admin_manual_override: true,
       admin_manual_override_at: new Date().toISOString(),
     });
@@ -331,6 +560,7 @@ router.put("/admin/products/:id", async (req, res) => {
         title = ${title}, description = ${description ?? ""}, price = ${price ?? 0},
         price_gbp = ${price ?? 0}, currency = ${currency ?? "GBP"},
         category = ${category_id || "other"}, subcategory = ${subcategory || null},
+        subsubcategory = ${subcategory && typeof subsubcategory === "string" && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subsubcategory) ? subsubcategory : null},
         condition = ${condition ?? "used"}, status = ${dbStatus},
         seller_email = ${seller_email ?? ""}, tags = ${tags || null}, image = ${image},
         specifications = ${JSON.stringify(specs)}, updated_at = NOW()
@@ -341,6 +571,27 @@ router.put("/admin/products/:id", async (req, res) => {
     logger.error({ err }, "Failed to update product");
     res.status(500).json({ error: "Failed to update product" });
   }
+});
+
+// Manage listing galleries and variants without rewriting source/import metadata.
+router.patch("/admin/products/:id/media-variants",async(req,res)=>{
+ const id=Number(req.params.id);
+ if(!Number.isSafeInteger(id)||id<1){res.status(400).json({error:"Invalid listing ID"});return;}
+ const {images,variants}=req.body??{};
+ if(images===undefined&&variants===undefined){res.status(400).json({error:"No changes provided"});return;}
+ if(images!==undefined&&(!Array.isArray(images)||images.length>12||!images.every((x:unknown)=>typeof x==="string"&&x.length<=4000&&/^https:\/\//i.test(x)))){res.status(400).json({error:"Provide up to 12 HTTPS image URLs"});return;}
+ if(variants!==undefined&&(!Array.isArray(variants)||variants.length>50||!variants.every((v:any)=>v&&["size","color","condition","material","style","other"].includes(v.type)&&typeof v.value==="string"&&v.value.trim().length>0&&v.value.length<=100&&Number.isFinite(Number(v.priceModifier))&&Number.isFinite(Number(v.inventory))&&Number(v.inventory)>=0))){res.status(400).json({error:"Invalid variants (maximum 50)"});return;}
+ try{
+  const [row]=await db.execute(sql`SELECT id,specifications,image FROM listings WHERE id=${id}`).then(r=>r.rows as any[]);
+  if(!row){res.status(404).json({error:"Listing not found"});return;}
+  let specs:any={};try{specs=JSON.parse(row.specifications||"{}");}catch{}
+  if(images!==undefined)specs.admin_gallery_images=images;
+  if(variants!==undefined)specs.admin_variants=variants.map((v:any)=>({type:v.type,value:v.value.trim(),priceModifier:String(v.priceModifier),inventory:String(v.inventory)}));
+  specs.admin_manual_override=true;
+  const primary=images!==undefined?(images[0]??null):row.image;
+  await db.execute(sql`UPDATE listings SET specifications=${JSON.stringify(specs)},image=${primary},updated_at=NOW() WHERE id=${id}`);
+  res.json({ok:true,images:specs.admin_gallery_images??(primary?[primary]:[]),variants:specs.admin_variants??[]});
+ }catch(err){logger.error({err},"Listing media/variant update failed");res.status(500).json({error:"Could not save listing changes"});}
 });
 
 router.delete("/admin/products/:id", async (req, res) => {

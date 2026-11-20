@@ -1,3 +1,4 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -31,7 +32,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { CATEGORIES } from "@/data/categories";
+import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 
 const CONDITIONS = [
   { id: "brand-new", label: "Brand New", desc: "Never used, in original packaging", icon: Tag },
@@ -126,9 +127,13 @@ function extractCurrencyCode(display: string): string {
 }
 
 export function QuickSellPage() {
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
   interface BuilderOption { label: string; hex: string; qty: number; }
   interface BuilderVariant { type: "size" | "colour"; options: BuilderOption[]; newLabel: string; newHex: string; newQty: string; }
 
+  const { getToken } = useClerkAuth();
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [currency, setCurrency] = useState("£ GBP");
@@ -136,6 +141,7 @@ export function QuickSellPage() {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+  const [subsubcategory, setSubsubcategory] = useState("");
   const [extraCategories, setExtraCategories] = useState<{ category: string; subcategory: string }[]>([]);
   const [addingExtraCat, setAddingExtraCat] = useState(false);
   const [newExtraCatTop, setNewExtraCatTop] = useState("");
@@ -221,15 +227,18 @@ export function QuickSellPage() {
     setPublishing(true);
 
     try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in to create a listing.");
       const res = await fetch("/api/listings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           title: title.trim(),
           price,
           currency: extractCurrencyCode(currency),
           category,
           subcategory: subcategory || undefined,
+          subsubcategory: subcategory ? (subsubcategory || undefined) : undefined,
           extra_categories: extraCategories.length ? extraCategories : undefined,
           description: description.trim(),
           condition,
@@ -237,7 +246,7 @@ export function QuickSellPage() {
           sellerEmail: user?.email ?? "guest",
           sellerName: user?.username ?? user?.name ?? null,
           sellerUsername: user?.username ?? null,
-          tags: tags.trim() || undefined,
+          tags: [tags.trim(), ...(ecoFriendly ? ["eco-friendly"] : [])].filter(Boolean).join(", ") || undefined,
           specifications: specifications.length > 0 ? specifications : undefined,
           premiumVideo,
         }),
@@ -343,7 +352,7 @@ export function QuickSellPage() {
                   <select
                     required
                     value={category}
-                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); }}
+                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); setSubsubcategory(""); }}
                     className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="select-category"
                   >
@@ -361,7 +370,7 @@ export function QuickSellPage() {
                     <div className="relative mt-2">
                       <select
                         value={subcategory}
-                        onChange={(e) => setSubcategory(e.target.value)}
+                        onChange={(e) => { setSubcategory(e.target.value); setSubsubcategory(""); }}
                         className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                         data-testid="select-subcategory"
                       >
@@ -375,6 +384,16 @@ export function QuickSellPage() {
                   );
                 })()}
               </div>
+
+              {category && subcategory && suggestedThirdLevel(category, subcategory).length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">More specific category (optional)</label>
+                  <select value={subsubcategory} onChange={e => setSubsubcategory(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white" data-testid="select-subsubcategory">
+                    <option value="">No third-level category</option>
+                    {suggestedThirdLevel(category, subcategory).map(name => <option key={name} value={thirdLevelSlug(name)}>{name}</option>)}
+                  </select>
+                </div>
+              )}
 
               {/* Extra categories */}
               {category && (

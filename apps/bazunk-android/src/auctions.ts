@@ -1,0 +1,11 @@
+export type Auction={id:string;title:string;description:string;category:string;condition:string;images:string[];sellerName:string;startingBid:number;currentBid:number|null;bidIncrement:number;bidCount:number;endTime:string;status:string;hasReserve:boolean;reserveMet:boolean|null;extendEnabled:boolean;isOwner:boolean;isLeading:boolean;serverNow:string;myBid?:number|null;bids?:{id:string;name:string;amount:string|number;createdAt:string}[]};
+export function parseAuction(value:unknown):Auction{
+ const a=value as Auction;
+ if(!a||typeof a.id!=='string'||typeof a.title!=='string'||typeof a.description!=='string'||typeof a.sellerName!=='string'||!Array.isArray(a.images)||a.images.some(i=>typeof i!=='string')||![a.startingBid,a.bidIncrement,a.bidCount].every(n=>typeof n==='number'&&Number.isFinite(n)&&n>=0)||a.startingBid<=0||a.bidIncrement<=0||(a.currentBid!==null&&(!Number.isFinite(a.currentBid)||a.currentBid<=0))||typeof a.endTime!=='string'||!Number.isFinite(Date.parse(a.endTime))||typeof a.serverNow!=='string'||!Number.isFinite(Date.parse(a.serverNow))||!['active','ended','cancelled'].includes(a.status)||typeof a.hasReserve!=='boolean'||typeof a.extendEnabled!=='boolean'||typeof a.isOwner!=='boolean'||typeof a.isLeading!=='boolean')throw Error('Unexpected auction response.');
+ if(typeof a.category!=='string'||typeof a.condition!=='string'||(a.myBid!=null&&(typeof a.myBid!=='number'||!Number.isFinite(a.myBid)||a.myBid<=0))||(a.reserveMet!==null&&typeof a.reserveMet!=='boolean'))throw Error('Unexpected auction response.');
+ if(a.bids&&(!Array.isArray(a.bids)||a.bids.some(b=>typeof b.id!=='string'||typeof b.name!=='string'||!Number.isFinite(Number(b.amount))||typeof b.createdAt!=='string'||!Number.isFinite(Date.parse(b.createdAt)))))throw Error('Unexpected bid history.');
+ return a;
+}
+export function parseAuctions(data:unknown):Auction[]{if(!Array.isArray(data))throw Error('Unexpected auctions response.');return data.map(parseAuction)}
+export function minimumBid(a:Auction):number{return Math.round((a.currentBid===null?a.startingBid:a.currentBid+a.bidIncrement)*100)/100}
+export function bidAmount(text:string):number{if(!/^\d{1,8}(\.\d{1,2})?$/.test(text)||Number(text)<=0)throw Error('Enter a positive bid with up to two decimal places.');return Number(text)}

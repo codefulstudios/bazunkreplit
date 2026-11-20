@@ -73,6 +73,14 @@ export default function IntroSplash() {
 
     (async () => {
       try {
+        const apiBase = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "https://bazunk-api.onrender.com").replace(/\/$/, "");
+        // Check the admin-controlled toggle before downloading or displaying the GIF.
+        const setting = await fetch(`${apiBase}/api/public/homepage-intro`, { cache: "no-store" });
+        if (cancelled) return;
+        if (setting.ok) {
+          const data = await setting.json();
+          if (data.enabled === false) return;
+        }
         const res = await fetch(GIF_SRC, { cache: "force-cache" });
         if (!res.ok) throw new Error("gif not found");
         const buf = await res.arrayBuffer();

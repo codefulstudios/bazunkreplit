@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 
 const ADMIN_TOKEN_KEY = "sbd_admin_token";
-const API_BASE = "https://bazunk-api.onrender.com";
+const API_BASE = (import.meta.env.VITE_API_URL || "https://bazunk-api-ifqs.onrender.com").replace(/\/$/, "");
 const apiUrl = (path: string) => path.startsWith("/api/") ? `${API_BASE}${path}` : path;
 
 interface AdminContextValue {
@@ -32,19 +32,25 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [token]);
 
   async function login(email: string, password: string): Promise<boolean> {
+    // A stalled API must not leave the login form spinning indefinitely.
+    // Transport/server failures are distinct from incorrect credentials.
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch(apiUrl("/api/admin/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
+        signal: controller.signal,
       });
-      if (!res.ok) return false;
+      if (res.status === 401 || res.status === 403) return false;
+      if (!res.ok) throw new Error(`Admin authentication service returned HTTP ${res.status}`);
       const { token: t } = await res.json();
-      if (typeof t !== "string" || !t) return false;
+      if (typeof t !== "string" || !t) throw new Error("Admin authentication returned an invalid response");
       setToken(t);
       return true;
-    } catch {
-      return false;
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 

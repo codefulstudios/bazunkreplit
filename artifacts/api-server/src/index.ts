@@ -3,8 +3,15 @@ import { logger } from "./lib/logger.js";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { startSyncJob } from "./lib/syncJob.js";
-import { loadRapidApiKeyFromDb } from "./lib/rapidapi.js";
+import { startAdminEbaySyncJob } from "./routes/admin.js";
+import { loadRapidApiKeyFromDb, ensureEbayUsageLedger } from "./lib/rapidapi.js";
 import { startListingScheduler } from "./lib/scheduler.js";
+import { scanSellerCompliance } from "./lib/sellerComplianceScan.js";
+import { ensureAdminAuditLog } from "./lib/adminAudit.js";
+import { ensureListingAlerts } from "./lib/listingAlerts.js";
+import { startDealPilotMonitor } from "./lib/dealPilot.js";
+import { startTrustProofRetention } from "./lib/trustProof.js";
+import { ensureCashback } from "./lib/cashback.js";
 
 const rawPort = process.env["PORT"];
 
@@ -93,6 +100,14 @@ async function runAppMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
     )
   `, "listings");
+  await run(sql`CREATE TABLE IF NOT EXISTS third_level_categories (
+    category TEXT NOT NULL, subcategory TEXT NOT NULL, slug TEXT NOT NULL,
+    name TEXT NOT NULL, visible BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (category,subcategory,slug)
+  )`, "third_level_categories");
+  await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS subsubcategory TEXT`, "listings.subsubcategory");
+  await run(sql`CREATE INDEX IF NOT EXISTS listings_category_levels_idx ON listings (category, subcategory, subsubcategory)`, "listings_category_levels_idx");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_origin TEXT`, "listings.ship_origin");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_origin_other TEXT`, "listings.ship_origin_other");
   await run(sql`ALTER TABLE listings ADD COLUMN IF NOT EXISTS ship_zone TEXT`, "listings.ship_zone");
@@ -145,6 +160,42 @@ async function runAppMigrations() {
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
   `, "site_settings");
+  // Owner-requested one-time Chatwoot enablement (17 Oct 2026).
+  // Only the production Bazunk API may apply it; never stage/legacy services.
+  // The marker prevents future restarts from overriding a later admin choice.
+  if (process.env.RENDER_SERVICE_ID === "srv-davd6f3bc2fs73ce9ohg") {
+    try {
+      await ensureAdminAuditLog();
+      const result = await db.transaction(async (tx) => {
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('bazunk-chatwoot-one-time-enable-20261017'))`);
+        const marker = await tx.execute(sql`SELECT 1 FROM site_settings
+          WHERE key='migration_chatwoot_enable_20261017' LIMIT 1`);
+        if (marker.rows.length) return "previously_applied";
+        const found = await tx.execute(sql`SELECT value FROM site_settings
+          WHERE key='feature_chatwoot_support' LIMIT 1`);
+        const oldValue = String((found.rows[0] as any)?.value ?? "true");
+        if (oldValue !== "true") {
+          await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+            VALUES('feature_chatwoot_support','true',NOW())
+            ON CONFLICT(key) DO UPDATE SET value='true',updated_at=NOW()`);
+          await tx.execute(sql`INSERT INTO admin_audit_log
+            (actor,category,action,target_type,target_id,summary,before_data,after_data,metadata)
+            VALUES ('Owner-approved production enablement','settings','feature_flag.change',
+              'feature','chatwoot_support','Owner requested Chatwoot live support re-enabled',
+              ${JSON.stringify({enabled:false})}::jsonb,
+              ${JSON.stringify({enabled:true})}::jsonb,
+              ${JSON.stringify({source:"one_time_production_migration",date:"2026-10-17"})}::jsonb)`);
+        }
+        await tx.execute(sql`INSERT INTO site_settings(key,value,updated_at)
+          VALUES('migration_chatwoot_enable_20261017','applied',NOW())`);
+        return oldValue === "true" ? "already_enabled" : "enabled";
+      });
+      logger.info({ result }, "Owner-approved one-time production Chatwoot toggle change");
+    } catch (err) {
+      logger.error({ err }, "One-time Chatwoot enablement failed");
+    }
+  }
+
 
   await run(sql`
     CREATE TABLE IF NOT EXISTS user_milestones (
@@ -440,6 +491,28 @@ async function runAppMigrations() {
   `, "reward_plays");
 
   await run(sql`
+    CREATE TABLE IF NOT EXISTS reward_game_sessions (
+      id UUID PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      game_id TEXT NOT NULL REFERENCES reward_games(id),
+      status TEXT NOT NULL DEFAULT 'started',
+      server_result JSONB NOT NULL DEFAULT '{}'::jsonb,
+      telemetry JSONB NOT NULL DEFAULT '{}'::jsonb,
+      prize_credits INTEGER NOT NULL DEFAULT 0,
+      issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      completed_at TIMESTAMPTZ,
+      claimed_at TIMESTAMPTZ,
+      idempotency_key TEXT,
+      CONSTRAINT reward_session_status_valid CHECK (status IN ('started','completed','claimed','expired'))
+    )
+  `, "reward_game_sessions");
+  await run(sql`CREATE INDEX IF NOT EXISTS reward_session_user_game_idx ON reward_game_sessions(user_email,game_id,issued_at DESC)`, "reward_session_index");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS reward_session_idempotency_idx ON reward_game_sessions(user_email,idempotency_key) WHERE idempotency_key IS NOT NULL`, "reward_session_idempotency");
+  await run(sql`ALTER TABLE reward_plays ADD COLUMN IF NOT EXISTS session_id UUID REFERENCES reward_game_sessions(id)`, "reward_plays.session_id");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS reward_plays_session_once_idx ON reward_plays(session_id) WHERE session_id IS NOT NULL`, "reward_plays.session_unique");
+
+  await run(sql`
     INSERT INTO reward_games (id, name, description, icon, enabled, credits_min, credits_max, daily_plays_per_user)
     VALUES
       ('daily-checkin',  'Daily Check-In',   'Show up every day and earn free credits instantly.',                              '📅', TRUE, 10, 10,  1),
@@ -447,9 +520,12 @@ async function runAppMigrations() {
       ('daily-quiz',     'Daily Quiz',       'Answer today''s marketplace question correctly to earn credits.',                '❓', TRUE, 15, 15,  1),
       ('scratch-card',   'Scratch Card',     'Scratch to reveal your prize — 70% chance of winning each card.',               '🎁', TRUE,  5, 30,  3),
       ('mystery-box',    'Mystery Box',      'Pick a mystery box and reveal a surprise credit prize.',                          '🎁', TRUE,  5, 40,  1),
-        ('lucky-number',   'Lucky Number',      'Choose a number from 1 to 6. Match the draw for a bigger prize.',                   '🎲', TRUE,  5, 50,  2)
+        ('lucky-number',   'Lucky Number',      'Choose a number from 1 to 6. Match the draw for a bigger prize.',                   '🎲', TRUE,  5, 50,  2),
+      ('memory-match', 'Memory Match', 'Flip pairs to complete the memory challenge.', '🧩', TRUE, 5, 15, 3),
+      ('treasure-tap', 'Treasure Tap', 'Tap treasure chests and dodge bombs for thirty seconds.', '🧰', TRUE, 5, 15, 3)
     ON CONFLICT (id) DO NOTHING
   `, "reward_games.seed");
+  await run(sql`UPDATE reward_games SET enabled = FALSE WHERE id = 'parcel-dash'`, "reward_games.disable_parcel_dash");
   await run(sql`DELETE FROM reward_games WHERE id = 'word-scramble'`, "reward_games.remove_word_scramble");
 
   // ── Didit KYC verification ──────────────────────────────────────────────
@@ -498,42 +574,104 @@ async function runAppMigrations() {
   await run(sql`DO $$ BEGIN
     PERFORM pg_advisory_xact_lock(hashtext('bazunk-fee-policy-v1'));
     IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='fee_policy_private_business_v1') THEN
-      UPDATE site_settings SET value='5',updated_at=NOW() WHERE key='buyer_protection_percent';
-      UPDATE site_settings SET value='0.70',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
+      UPDATE site_settings SET value='6',updated_at=NOW() WHERE key='buyer_protection_percent';
+      UPDATE site_settings SET value='1.00',updated_at=NOW() WHERE key='buyer_protection_fixed_gbp';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key='fee_rate_default';
       UPDATE site_settings SET value='8',updated_at=NOW() WHERE key LIKE 'fee_rate_%' AND value='5';
       INSERT INTO site_settings(key,value,updated_at) VALUES('fee_policy_private_business_v1','applied',NOW());
     END IF;
   END $$`, "site_settings.fee_policy_private_business_v1");
 
-  // Seed default fee rates (8% for business categories) — DO NOTHING if already set
+  // One-time transition: migrate only legacy 8% defaults, preserving custom rates.
+  await run(sql`DO $ BEGIN
+    PERFORM pg_advisory_xact_lock(hashtext('bazunk-universal-buyer-business-five-v2'));
+    IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='fee_policy_universal_business_five_v2') THEN
+      UPDATE site_settings SET value='5',updated_at=NOW()
+      WHERE (key='fee_rate_default' OR key LIKE 'fee_rate_%') AND value='8';
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('fee_policy_universal_business_five_v2','applied',NOW());
+    END IF;
+  END $`, "site_settings.fee_policy_universal_business_five_v2");
+
+  // Seed default fee rates (5% for business categories) — DO NOTHING if already set
   await run(sql`
     INSERT INTO site_settings (key, value, updated_at) VALUES
-      ('fee_rate_default',              '8', NOW()),
+      ('fee_rate_default',              '5', NOW()),
       ('fee_listing_free',           'true', NOW()),
-      ('buyer_protection_percent',      '5', NOW()),
-      ('buyer_protection_fixed_gbp',   '0.70', NOW()),
+      ('buyer_protection_percent',      '6', NOW()),
+      ('buyer_protection_fixed_gbp',   '1.00', NOW()),
       ('buyer_protection_fixed_usd',   '1.00', NOW()),
       ('buyer_protection_fixed_eur',   '1.00', NOW()),
-      ('fee_rate_electronics',           '8', NOW()),
-      ('fee_rate_cell-phones',           '8', NOW()),
-      ('fee_rate_clothing-shoes-jewelry','8', NOW()),
-      ('fee_rate_automotive',            '8', NOW()),
-      ('fee_rate_home-garden',           '8', NOW()),
-      ('fee_rate_sports-outdoors',       '8', NOW()),
-      ('fee_rate_toys-games',            '8', NOW()),
-      ('fee_rate_books',                 '8', NOW()),
-      ('fee_rate_cds-vinyl',             '8', NOW()),
-      ('fee_rate_beauty-personal-care',  '8', NOW()),
-      ('fee_rate_baby-products',         '8', NOW()),
-      ('fee_rate_health-household',      '8', NOW()),
-      ('fee_rate_arts-crafts-sewing',    '8', NOW()),
-      ('fee_rate_appliances',            '8', NOW()),
-      ('fee_rate_eco-friendly',          '8', NOW()),
-      ('fee_rate_digital',               '8', NOW()),
-      ('fee_rate_adult',                 '8', NOW())
+      ('fee_rate_electronics',           '5', NOW()),
+      ('fee_rate_cell-phones',           '5', NOW()),
+      ('fee_rate_clothing-shoes-jewelry','5', NOW()),
+      ('fee_rate_automotive',            '5', NOW()),
+      ('fee_rate_home-garden',           '5', NOW()),
+      ('fee_rate_sports-outdoors',       '5', NOW()),
+      ('fee_rate_toys-games',            '5', NOW()),
+      ('fee_rate_books',                 '5', NOW()),
+      ('fee_rate_cds-vinyl',             '5', NOW()),
+      ('fee_rate_beauty-personal-care',  '5', NOW()),
+      ('fee_rate_baby-products',         '5', NOW()),
+      ('fee_rate_health-household',      '5', NOW()),
+      ('fee_rate_arts-crafts-sewing',    '5', NOW()),
+      ('fee_rate_appliances',            '5', NOW()),
+      ('fee_rate_eco-friendly',          '5', NOW()),
+      ('fee_rate_digital',               '5', NOW()),
+      ('fee_rate_adult',                 '5', NOW())
     ON CONFLICT (key) DO NOTHING
   `, "site_settings.seed");
+
+  // Versioned, once-only policy migration; keep historic orders and cashback earnings unchanged.
+  // The advisory lock prevents concurrent Render instances from applying it twice.
+  await run(sql`DO $$
+  DECLARE previous_policy JSONB;
+          new_tiers JSONB;
+  BEGIN
+    PERFORM pg_advisory_xact_lock(hashtext('bazunk-pricing-20261020-v2'));
+    IF NOT EXISTS (SELECT 1 FROM site_settings WHERE key='pricing_policy_20261020_v2') THEN
+      INSERT INTO site_settings(key,value,updated_at) VALUES
+        ('buyer_protection_percent','6',NOW()),
+        ('buyer_protection_fixed_gbp','1.00',NOW()),
+        ('buyer_protection_fixed_eur','1.00',NOW()),
+        ('buyer_protection_fixed_usd','1.00',NOW())
+      ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW();
+
+      SELECT value::jsonb INTO previous_policy
+      FROM site_settings WHERE key='cashback_program_settings' FOR UPDATE;
+      IF previous_policy IS NULL OR jsonb_typeof(previous_policy)<>'object' THEN
+        previous_policy=jsonb_build_object('enabled',false,
+          'payoutPolicy','Cashback payouts are not yet enabled.');
+      END IF;
+      IF jsonb_typeof(previous_policy->'tiers') IS DISTINCT FROM 'array'
+        OR jsonb_array_length(CASE WHEN jsonb_typeof(previous_policy->'tiers')='array'
+          THEN previous_policy->'tiers' ELSE '[]'::jsonb END) <> 4 THEN
+        previous_policy=jsonb_set(previous_policy,'{tiers}',jsonb_build_array(
+          jsonb_build_object('id','bronze','name','Bronze','rate',0.25,'spendGbp',50,'perks',jsonb_build_array()),
+          jsonb_build_object('id','silver','name','Silver','rate',0.5,'spendGbp',150,'perks',jsonb_build_array()),
+          jsonb_build_object('id','gold','name','Gold','rate',0.75,'spendGbp',350,'perks',jsonb_build_array()),
+          jsonb_build_object('id','platinum','name','Platinum','rate',1,'spendGbp',700,'perks',jsonb_build_array())
+        ),true);
+      ELSE
+        SELECT jsonb_agg(jsonb_set(tier,'{rate}',to_jsonb(
+          CASE tier->>'id'
+            WHEN 'bronze' THEN 0.25::numeric
+            WHEN 'silver' THEN 0.5::numeric
+            WHEN 'gold' THEN 0.75::numeric
+            WHEN 'platinum' THEN 1::numeric
+            ELSE 0.25::numeric
+          END),true) ORDER BY ord)
+        INTO new_tiers
+        FROM jsonb_array_elements(previous_policy->'tiers') WITH ORDINALITY AS v(tier,ord);
+        previous_policy=jsonb_set(previous_policy,'{tiers}',new_tiers,true);
+      END IF;
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('cashback_program_settings',previous_policy::text,NOW())
+      ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW();
+      INSERT INTO site_settings(key,value,updated_at)
+      VALUES('pricing_policy_20261020_v2','applied',NOW());
+    END IF;
+  END $$`, "site_settings.pricing_policy_20261020_v2");
 
   // ── Buyer / seller marketplace messaging ──
   await run(sql`CREATE TABLE IF NOT EXISTS marketplace_conversations (
@@ -675,6 +813,87 @@ async function runAppMigrations() {
       )
   `, "listings.map_aliexpress_old_categories");
 
+  // Seller compliance tables: idempotent startup setup before monitoring begins.
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_cases (
+    id BIGSERIAL PRIMARY KEY, seller_email TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','awaiting_information','under_review','resolved','appealed')),
+    risk_score SMALLINT CHECK(risk_score BETWEEN 0 AND 100),
+    risk_band TEXT CHECK(risk_band IN ('normal','enhanced','review')),
+    risk_reasons JSONB NOT NULL DEFAULT '[]'::jsonb,rule_version TEXT NOT NULL DEFAULT 'v1',
+    assigned_admin TEXT,opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),closed_at TIMESTAMPTZ
+  )`, "seller_compliance_cases");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_declarations (
+    id BIGSERIAL PRIMARY KEY,seller_email TEXT NOT NULL,
+    declared_type TEXT NOT NULL CHECK(declared_type IN ('private','sole_trader','business')),
+    declaration_version TEXT NOT NULL,declared_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    source TEXT NOT NULL DEFAULT 'seller_onboarding'
+  )`, "seller_declarations");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_events (
+    id BIGSERIAL PRIMARY KEY,case_id BIGINT NOT NULL REFERENCES seller_compliance_cases(id),
+    actor_type TEXT NOT NULL CHECK(actor_type IN ('system','seller','admin')),
+    actor_id TEXT,action TEXT NOT NULL,details JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`, "seller_compliance_events");
+  await run(sql`CREATE TABLE IF NOT EXISTS seller_compliance_appeals (
+    id BIGSERIAL PRIMARY KEY,case_id BIGINT NOT NULL REFERENCES seller_compliance_cases(id),
+    seller_email TEXT NOT NULL,explanation TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','accepted','rejected')),
+    decision_reason TEXT,decided_by TEXT,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    decided_at TIMESTAMPTZ
+  )`, "seller_compliance_appeals");
+  await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_cases_email_idx ON seller_compliance_cases(LOWER(seller_email),status)`, "seller_compliance_cases_email_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS seller_compliance_appeals_case_idx ON seller_compliance_appeals(case_id,status)`, "seller_compliance_appeals_case_idx");
+  await run(sql`CREATE UNIQUE INDEX IF NOT EXISTS seller_compliance_active_unique ON seller_compliance_cases(LOWER(seller_email)) WHERE status IN ('open','awaiting_information','under_review','appealed')`, "seller_compliance_active_unique");
+  // Regional activity schema: idempotent, additive and safe on existing databases.
+  // Do not backfill historical records on startup: that requires a verified backup
+  // and an explicit review of source-country evidence.
+  await run(sql`ALTER TABLE auctions ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "auctions.marketplace_region");
+  await run(sql`ALTER TABLE flash_sales ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "flash_sales.marketplace_region");
+  await run(sql`ALTER TABLE classified_ads ADD COLUMN IF NOT EXISTS marketplace_region TEXT`, "classified_ads.marketplace_region");
+  await run(sql`CREATE INDEX IF NOT EXISTS auctions_marketplace_region_idx ON auctions(marketplace_region)`, "auctions.marketplace_region_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS flash_sales_marketplace_region_idx ON flash_sales(marketplace_region)`, "flash_sales.marketplace_region_idx");
+  await run(sql`CREATE INDEX IF NOT EXISTS classified_ads_marketplace_region_idx ON classified_ads(marketplace_region)`, "classified_ads.marketplace_region_idx");
+
+  // One-time idempotent backfill for listings with an explicit importer market.
+  // Never guess from currency, price, seller address, or generic Shopify sources.
+  // Keep any manually assigned region unchanged.
+  await run(sql`
+    UPDATE listings
+    SET specifications = jsonb_set(
+      specifications::jsonb, '{marketplace_region}',
+      to_jsonb(CASE
+        WHEN specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK') THEN 'uk'
+        ELSE 'us'
+      END), true
+    )::text
+    WHERE specifications IS NOT NULL
+      AND specifications ~ '^\\s*\\{'
+      AND jsonb_typeof(specifications::jsonb) = 'object'
+      AND NOT (specifications::jsonb ? 'marketplace_region')
+      AND specifications::jsonb->>'source' IN ('eBay UK', 'Amazon UK', 'eBay US', 'Amazon US')
+  `, "listings.explicit_source_region_backfill");
+
+  // Owner-approved assignment (12 Oct 2026): four verified manual listings to UK.
+  // Match BOTH ID and title, and only fill missing specifications/region.
+  // This remains idempotent on subsequent starts and never overrides a later choice.
+  await run(sql`
+    UPDATE listings
+    SET specifications = jsonb_set(
+      CASE WHEN specifications IS NULL OR BTRIM(specifications) = ''
+        THEN '{}'::jsonb ELSE specifications::jsonb END,
+      '{marketplace_region}', '"uk"'::jsonb, true
+    )::text
+    WHERE (
+      (id = 2 AND title = 'Abercrombie & Fitch Fierce Cologne Eau de Cologne 200ml Spray')
+      OR (id = 4 AND title = 'Abercrombie & Fitch A&F Quarterly Illustrated Lifestyle Magazine')
+      OR (id = 7 AND title = 'Xiaomi Red Note 15')
+      OR (id = 27 AND title = 'JML Electric Can Opener – Automatic Tin Opener, One Touch Hands Free')
+    )
+    AND (specifications IS NULL OR BTRIM(specifications) = ''
+      OR (specifications ~ '^\\s*\\{' AND NOT (specifications::jsonb ? 'marketplace_region')))
+  `, "listings.owner_approved_four_uk_assignments");
+
   logger.info("App migrations complete");
 }
 
@@ -685,6 +904,7 @@ app.listen(port, (err?: Error) => {
     logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
+  logger.info({configured:Boolean(process.env.OPENAI_API_KEY),model:process.env.SNAP_SELL_AI_MODEL||"gpt-4o-mini"},"Snap Sell AI readiness");
   const shippoToken = process.env.SHIPPO_API_TOKEN?.trim() || "";
   logger.info({
     port,
@@ -694,9 +914,22 @@ app.listen(port, (err?: Error) => {
 });
 
 runAppMigrations()
+  // Install price-drop/restock change tracking before routine listing edits.
+  // Failure is logged without interrupting unrelated storefront services.
+  .then(async () => { try { await ensureCashback(); logger.info("Cashback ledger and payout policy ready"); }
+    catch (err) { logger.error({err},"Cashback schema setup failed: earning remains disabled until initialized"); }
+    try { await ensureListingAlerts(); logger.info("Persistent listing alert tracking ready"); }
+    catch (err) { logger.error({err},"Persistent listing alert initialization failed"); } })
+  .then(() => ensureEbayUsageLedger())
   .then(() => loadRapidApiKeyFromDb())
   .then(() => {
     startListingScheduler();
+    startDealPilotMonitor();
+    startTrustProofRetention();
     startSyncJob();
+    startAdminEbaySyncJob();
+    const complianceScan = () => { void scanSellerCompliance().then(result => logger.info({result},"Seller compliance scan complete")).catch(err => logger.error({err},"Seller compliance scan failed")); };
+    complianceScan();
+    setInterval(complianceScan, 24 * 60 * 60 * 1000).unref();
   })
   .catch((err: unknown) => logger.error({ err }, "Startup initialization error"));

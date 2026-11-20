@@ -13,6 +13,7 @@ import { CLASSIFIED_CATEGORIES } from "@/data/classifieds";
 interface AdRow {
   id: string;
   category: string;
+  marketplaceRegion: "uk" | "us";
   subcategory: string;
   title: string;
   description: string;
@@ -47,6 +48,7 @@ function makeBlankRow(): AdRow {
   return {
     id: Math.random().toString(36).slice(2),
     category: CLASSIFIED_CATEGORIES[0].slug,
+    marketplaceRegion: "uk",
     subcategory: "",
     title: "",
     description: "",
@@ -78,6 +80,7 @@ export function AdminClassifiedsPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [tableSearch, setTableSearch] = useState("");
+  const [tableRegion, setTableRegion] = useState<"all" | "uk" | "us">("all");
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -88,6 +91,7 @@ export function AdminClassifiedsPage() {
         limit: String(PAGE_SIZE),
         offset: String(page * PAGE_SIZE),
         ...(tableSearch ? { search: tableSearch } : {}),
+        ...(tableRegion !== "all" ? { region: tableRegion } : {}),
       });
       const r = await authFetch(`/api/admin/classifieds?${params}`);
       if (r.ok) {
@@ -98,7 +102,7 @@ export function AdminClassifiedsPage() {
     } finally {
       setLoading(false);
     }
-  }, [authFetch, page, tableSearch]);
+  }, [authFetch, page, tableSearch, tableRegion]);
 
   useEffect(() => { loadAds(); }, [loadAds]);
 
@@ -125,8 +129,8 @@ export function AdminClassifiedsPage() {
   // ── Batch import ──────────────────────────────────────────────
   async function handleImport() {
     const valid = rows.filter(r => r.title.trim() && r.description.trim() && r.location.trim() && r.contactName.trim());
-    if (!valid.length) {
-      setImportMsg({ ok: false, text: "Fill in at least title, description, location, and contact name on each row" });
+    if (valid.length !== rows.length) {
+      setImportMsg({ ok: false, text: "Complete title, description, location and contact name on every row before importing" });
       return;
     }
     setImporting(true);
@@ -134,6 +138,7 @@ export function AdminClassifiedsPage() {
     try {
       const ads = valid.map(r => ({
         title: r.title.trim(),
+        marketplaceRegion: r.marketplaceRegion,
         description: r.description.trim(),
         category: r.category,
         subcategory: r.subcategory || null,
@@ -216,17 +221,18 @@ export function AdminClassifiedsPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap w-[110px]">Marketplace</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap w-[220px]">Category / Subcategory</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[200px]">Title</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[220px]">Description</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[80px]">Type</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[70px]">Price £</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[70px]">Price</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[90px]">Price Label</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[80px]">Condition</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[120px]">Location</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[120px]">Contact Name</th>
                   <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[110px]">Phone</th>
-                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[140px]">Gumtree URL</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-gray-400 uppercase tracking-wide w-[140px]">Source URL</th>
                   <th className="px-3 py-2.5 w-[60px]"></th>
                 </tr>
               </thead>
@@ -236,6 +242,12 @@ export function AdminClassifiedsPage() {
                   const isEmpty = !row.title.trim() && !row.description.trim();
                   return (
                     <tr key={row.id} className={`border-b border-gray-50 ${isEmpty && idx > 0 ? "opacity-50" : ""}`}>
+                      <td className="px-3 py-2">
+                        <select aria-label="Marketplace region" value={row.marketplaceRegion} onChange={e => updateRow(row.id, { marketplaceRegion: e.target.value as "uk" | "us" })} className={inputCls}>
+                          <option value="uk">UK</option>
+                          <option value="us">USA / Canada</option>
+                        </select>
+                      </td>
                       {/* Category / Subcategory */}
                       <td className="px-3 py-2">
                         <select value={row.category} onChange={e => updateRow(row.id, { category: e.target.value, subcategory: "" })}
@@ -316,12 +328,12 @@ export function AdminClassifiedsPage() {
                       {/* Phone */}
                       <td className="px-3 py-2">
                         <input value={row.contactPhone} onChange={e => updateRow(row.id, { contactPhone: e.target.value })}
-                          placeholder="07..." className={inputCls} />
+                          placeholder="Phone number" className={inputCls} />
                       </td>
                       {/* Gumtree URL */}
                       <td className="px-3 py-2">
                         <input value={row.externalLink} onChange={e => updateRow(row.id, { externalLink: e.target.value })}
-                          placeholder="https://gumtree.com/…" className={inputCls} />
+                          placeholder="Source URL (optional)" className={inputCls} />
                       </td>
                       {/* Actions */}
                       <td className="px-3 py-2">
@@ -396,6 +408,11 @@ export function AdminClassifiedsPage() {
               <span className="font-bold text-gray-900">{total} Classified Ads</span>
             </div>
             <div className="flex items-center gap-2">
+              <select aria-label="Filter classified marketplace" value={tableRegion} onChange={e => { setTableRegion(e.target.value as "all" | "uk" | "us"); setPage(0); }} className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+                <option value="all">All markets</option>
+                <option value="uk">UK</option>
+                <option value="us">USA/Canada</option>
+              </select>
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input value={tableSearch} onChange={e => { setTableSearch(e.target.value); setPage(0); }}

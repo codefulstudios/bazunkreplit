@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExternalLink } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   Search, RefreshCw, LifeBuoy, ChevronLeft, Send, Loader2,
@@ -39,7 +40,7 @@ export function AdminSupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("open");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [loading, setLoading] = useState(true);
 
   const [selected, setSelected] = useState<Ticket | null>(null);
@@ -279,6 +280,10 @@ export function AdminSupportPage() {
 
   return (
     <AdminLayout>
+      <div className="mb-5 rounded-xl border border-orange-200 bg-orange-50 p-4 flex flex-wrap items-center justify-between gap-3">
+        <div><p className="font-semibold text-gray-900">Chatwoot Live Support</p><p className="text-sm text-gray-600">Live chats are managed separately from Bazunk support tickets.</p></div>
+        <a href="https://app.chatwoot.com/app" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-[#F26B21] px-4 py-2 text-white text-sm font-semibold">Open Chatwoot Inbox <ExternalLink className="w-4 h-4" /></a>
+      </div>
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-black text-gray-900">Support Tickets</h1>

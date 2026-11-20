@@ -1,0 +1,27 @@
+name: Bazunk API smoke tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/api-server/src/routes/**"
+      - "artifacts/api-server/src/lib/checkoutQuote.ts"
+      - "scripts/tests/category-visibility-smoke.mjs"
+      - ".github/workflows/category-visibility-smoke.yml"
+jobs:
+  production-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Wait for Render deployment
+        run: sleep 150
+      - name: Read-only category visibility smoke tests
+        env:
+          BAZUNK_API_URL: https://bazunk-api.onrender.com
+        run: node scripts/tests/category-visibility-smoke.mjs

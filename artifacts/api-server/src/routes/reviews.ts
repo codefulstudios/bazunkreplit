@@ -1,3 +1,4 @@
+import { reconcileFullyRefundedSession } from "../lib/refundReconciliation.js";
 import { Router, type Request } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
 import { db } from "@workspace/db";
@@ -91,13 +92,34 @@ async function sellerReputation(email: string) {
       return x.n>=3 && x.median_hours!==null ? Math.round(x.median_hours*10)/10 : null;
     })(),
     memberSince: seller?.created_at ?? null,
+    publicId: (await db.execute(sql`SELECT md5(LOWER(${email})) AS id`)).rows[0]?.id,
     profile: {
-      name: seller?.name || email.split("@")[0],
+      name: seller?.username || "Bazunk Seller",
       username: seller?.username ?? null,
       verified: seller?.verification_status === "verified",
     },
   };
 }
+
+// Public seller IDs are opaque, stable and never include email addresses.
+router.get("/sellers/public/:id", async (req,res) => {
+ const id=String(req.params.id||"").toLowerCase();
+ if(!/^[a-f0-9]{32}$/.test(id)){res.status(404).json({error:"Seller not found"});return;}
+ try {
+  const match=await db.execute(sql`SELECT email FROM users WHERE md5(LOWER(email))=${id} LIMIT 1`);
+  const email=String(match.rows[0]?.email||"");
+  if(!email){res.status(404).json({error:"Seller not found"});return;}
+  const region=String(req.query.region||"uk").toLowerCase();
+  if(!["uk","us"].includes(region)){res.status(400).json({error:"Invalid region"});return;}
+  const [reputation,reviewRows,listingRows]=await Promise.all([
+   sellerReputation(email),
+   db.execute(sql`SELECT r.id,r.rating,r.comment,r.item_title,r.created_at,r.seller_reply,r.seller_replied_at,r.item_as_described,r.dispatch_rating,r.packaging_rating,r.edited_at,TRUE AS verified_purchase,LEFT(split_part(r.reviewer_email,'@',1),2)||'••••' AS reviewer FROM reviews r WHERE r.role='buyer_to_seller' AND r.removed_at IS NULL AND r.deleted_by_reviewer_at IS NULL AND LOWER(r.reviewee_email)=LOWER(${email}) ORDER BY r.created_at DESC LIMIT 50`),
+   db.execute(sql`SELECT l.id,l.public_id,l.title,l.price,l.price_gbp,l.image,l.condition FROM listings l WHERE LOWER(l.seller_email)=LOWER(${email}) AND l.status='active' AND LOWER(COALESCE(l.marketplace_region,'uk'))=${region} ORDER BY l.created_at DESC LIMIT 24`)
+  ]);
+  res.setHeader("Cache-Control","public,max-age=60");
+  res.json({reputation,reviews:reviewRows.rows,listings:listingRows.rows});
+ }catch(err){logger.error({err},"Public seller profile failed");res.status(500).json({error:"Unable to load seller profile"});}
+});
 
 router.get("/sellers/reputation", async (req, res) => {
   const email = typeof req.query.email === "string" ? req.query.email.trim() : "";
@@ -237,7 +259,7 @@ router.delete("/reviews/:id/mine", async (req,res)=>{
 // ── Review replies & reporting ───────────────────────────────────────────────
 
 router.post("/reviews/:id/reply", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reply = typeof req.body?.reply === "string" ? req.body.reply.trim().slice(0, 1000) : "";
   if (!id || !reply) { res.status(400).json({ error: "Write a reply first" }); return; }
   try {
@@ -261,7 +283,7 @@ router.post("/reviews/:id/reply", async (req, res) => {
 
 const REPORT_REASONS = new Set(["abusive", "spam", "personal_information", "not_about_transaction", "other"]);
 router.post("/reviews/:id/report", async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reason = typeof req.body?.reason === "string" ? req.body.reason : "";
   const details = typeof req.body?.details === "string" ? req.body.details.trim().slice(0, 1000) : "";
   if (!id || !REPORT_REASONS.has(reason)) { res.status(400).json({ error: "Choose a valid report reason" }); return; }
@@ -290,6 +312,19 @@ router.get("/orders/seller", async (req, res) => {
   try {
     const email = await authenticatedEmail(req);
     if (!email) { res.status(401).json({ error: "Please sign in to view your sales" }); return; }
+    // Repair Stripe Dashboard refunds that occurred before refund webhooks were enabled.
+    // Limit remote calls to recent, still-dispatchable orders; never block the sales page if Stripe is unavailable.
+    const candidates=(await db.execute(sql`
+      SELECT DISTINCT stripe_session_id FROM orders
+      WHERE LOWER(seller_email)=LOWER(${email}) AND stripe_session_id IS NOT NULL
+        AND status IN ('pending','confirmed','preparing')
+        AND created_at > NOW() - INTERVAL '45 days'
+      ORDER BY stripe_session_id LIMIT 20
+    `)).rows as Array<{stripe_session_id:string}>;
+    await Promise.all(candidates.map(async row=>{
+      try{await reconcileFullyRefundedSession(row.stripe_session_id);}
+      catch(err){logger.warn({err}, "Could not reconcile seller's Stripe refund");}
+    }));
     const rows = await db.execute(sql`
       SELECT o.id, o.item_title, o.item_image, o.price, o.status, o.seller_fee, o.seller_fee_rate, o.seller_type, COALESCE(o.seller_net,o.price-o.seller_fee) seller_net, o.buyer_protection_fee, o.delivery_fee, o.buyer_total, o.stripe_transfer_id, o.payout_status, o.refunded_total, o.tracking_number, o.carrier, o.tracking_status, o.tracking_last_event, o.tracking_updated_at, o.tracking_eta, o.address,
              o.created_at, o.shipped_at, split_part(o.buyer_email, '@', 1) AS buyer_name, o.buyer_email,
@@ -313,7 +348,7 @@ router.post("/orders/:id/dispatch", async (req, res) => {
       { id: string; buyer_email: string; seller_email: string | null; item_title: string; status: string } | undefined;
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
     if (!order.seller_email || order.seller_email.toLowerCase() !== sellerEmail.toLowerCase()) { res.status(403).json({ error: "That isn't your order" }); return; }
-    if (["cancelled", "delivered"].includes(order.status)) { res.status(400).json({ error: `This order is already ${order.status}.` }); return; }
+    if (["cancelled", "delivered", "refunded"].includes(order.status)) { res.status(400).json({ error: `This order is already ${order.status}.` }); return; }
     if (["shipped", "out_for_delivery"].includes(order.status)) { res.status(400).json({ error: "This order has already been dispatched." }); return; }
 
     await db.execute(sql`
@@ -367,7 +402,7 @@ router.get("/admin/reviews", requireAdmin, async (_req, res) => {
 });
 
 router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim().slice(0, 500) : "Removed by admin";
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NOW(), removed_reason = ${reason || "Removed by admin"} WHERE id = ${id}`);
@@ -376,7 +411,7 @@ router.delete("/admin/reviews/:id", requireAdmin, async (req, res) => {
 });
 
 router.post("/admin/reviews/:id/restore", requireAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id), 10);
   if (!id) { res.status(400).json({ error: "bad id" }); return; }
   await db.execute(sql`UPDATE reviews SET removed_at = NULL, removed_reason = NULL WHERE id = ${id}`);
   logger.info({ id }, "Admin restored review");

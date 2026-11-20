@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   Save, RefreshCw, Check, KeyRound, Eye, EyeOff, Megaphone,
@@ -9,6 +9,13 @@ import { AdminLayout } from "./AdminLayout";
 import { useAdmin } from "@/context/AdminContext";
 
 interface Settings {
+  listing_section_specifications: string;
+  listing_section_buyer_protection: string;
+  listing_section_stats: string;
+  listing_section_sharing: string;
+  listing_section_quick_facts: string;
+  listing_section_delivery_details: string;
+  listing_section_trust: string;
   site_name: string;
   site_tagline: string;
   primary_color: string;
@@ -44,6 +51,13 @@ interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  listing_section_specifications: "true",
+  listing_section_buyer_protection: "true",
+  listing_section_stats: "false",
+  listing_section_sharing: "true",
+  listing_section_quick_facts: "false",
+  listing_section_delivery_details: "true",
+  listing_section_trust: "true",
   site_name: "Bazunk",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
@@ -72,11 +86,12 @@ const DEFAULTS: Settings = {
   seo_description: "The smarter way to buy and sell locally. Free listings, secure checkout, real reviews.",
 };
 
-type Tab = "branding" | "homepage" | "footer" | "access" | "advertising" | "fees";
+type Tab = "branding" | "homepage" | "footer" | "access" | "advertising" | "fees" | "listing";
 
 const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "branding", label: "Branding & SEO", icon: Paintbrush },
   { id: "homepage", label: "Homepage", icon: Layout },
+  { id: "listing", label: "Listing Page", icon: Layout },
   { id: "footer", label: "Footer & Contact", icon: Globe },
   { id: "advertising", label: "Advertising", icon: Megaphone },
   { id: "fees", label: "Buyer Protection & Fees", icon: Percent },
@@ -84,35 +99,38 @@ const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 const FEE_CATEGORIES: { name: string; slug: string; defaultRate: string }[] = [
-  { name: "Electronics", slug: "electronics", defaultRate: "8" },
-  { name: "Phones & Tablets", slug: "cell-phones", defaultRate: "8" },
-  { name: "Fashion, Clothing & Jewellery", slug: "clothing-shoes-jewelry", defaultRate: "8" },
-  { name: "Automotive", slug: "automotive", defaultRate: "8" },
-  { name: "Home & Garden", slug: "home-garden", defaultRate: "8" },
-  { name: "Sports & Outdoors", slug: "sports-outdoors", defaultRate: "8" },
-  { name: "Toys & Games", slug: "toys-games", defaultRate: "8" },
-  { name: "Books", slug: "books", defaultRate: "8" },
-  { name: "CDs, Vinyl & Music", slug: "cds-vinyl", defaultRate: "8" },
-  { name: "Beauty & Personal Care", slug: "beauty-personal-care", defaultRate: "8" },
-  { name: "Baby Products", slug: "baby-products", defaultRate: "8" },
-  { name: "Health & Household", slug: "health-household", defaultRate: "8" },
-  { name: "Arts, Crafts & Sewing", slug: "arts-crafts-sewing", defaultRate: "8" },
-  { name: "Appliances", slug: "appliances", defaultRate: "8" },
-  { name: "Eco-Friendly", slug: "eco-friendly", defaultRate: "8" },
-  { name: "Digital", slug: "digital", defaultRate: "8" },
-  { name: "Adult", slug: "adult", defaultRate: "8" },
+  { name: "Electronics", slug: "electronics", defaultRate: "5" },
+  { name: "Phones & Tablets", slug: "cell-phones", defaultRate: "5" },
+  { name: "Fashion, Clothing & Jewellery", slug: "clothing-shoes-jewelry", defaultRate: "5" },
+  { name: "Automotive", slug: "automotive", defaultRate: "5" },
+  { name: "Home & Garden", slug: "home-garden", defaultRate: "5" },
+  { name: "Sports & Outdoors", slug: "sports-outdoors", defaultRate: "5" },
+  { name: "Toys & Games", slug: "toys-games", defaultRate: "5" },
+  { name: "Books", slug: "books", defaultRate: "5" },
+  { name: "CDs, Vinyl & Music", slug: "cds-vinyl", defaultRate: "5" },
+  { name: "Beauty & Personal Care", slug: "beauty-personal-care", defaultRate: "5" },
+  { name: "Baby Products", slug: "baby-products", defaultRate: "5" },
+  { name: "Health & Household", slug: "health-household", defaultRate: "5" },
+  { name: "Arts, Crafts & Sewing", slug: "arts-crafts-sewing", defaultRate: "5" },
+  { name: "Appliances", slug: "appliances", defaultRate: "5" },
+  { name: "Eco-Friendly", slug: "eco-friendly", defaultRate: "5" },
+  { name: "Digital", slug: "digital", defaultRate: "5" },
+  { name: "Adult", slug: "adult", defaultRate: "5" },
 ];
 
 const AD_SLOTS = [
+  { key: "create_auction", label: "List an Auction — Vertical Sidebar Advert", desc: "Vertical 176 × 740 advert beside the auction listing form. The Bazunk Live Auctions placeholder appears until you enable an advert." },
+  { key: "browse_top", label: "Browse Page — Top Banner", desc: "Featured promotional banner above the Browse listings" },
   { key: "home_bottom",   label: "Home Page — Bottom Banner",   desc: "Leaderboard (728×90) between the features section and footer" },
   { key: "browse_top",    label: "Browse Page — Top Strip",     desc: "Compact text strip below the search bar (text ads only)" },
   { key: "browse_bottom", label: "Browse Page — Bottom Banner", desc: "Leaderboard (728×90) below listings, above footer" },
   { key: "auctions_mid",   label: "Auctions — Mid Banner",        desc: "Leaderboard (728×90) between the hero and auction filters" },
   { key: "flash_sales_mid",label: "Flash Sales — Mid Banner",    desc: "Leaderboard (728×90) between the hero and sale type filters" },
-  { key: "categories_top", label: "Categories — Top Banner",     desc: "Leaderboard (728×90) below the category header, above the grid" },
+  { key: "categories_top", label: "Categories — Bottom Banner",  desc: "Leaderboard (728×90) below the category content, above the footer (existing advert settings preserved)" },
   { key: "classifieds_mid",label: "Classifieds — Mid Banner",    desc: "Leaderboard (728×90) between the hero and search filters" },
   { key: "support_mid",    label: "Support — Mid Banner",        desc: "Leaderboard (728×90) between the hero and FAQ tabs" },
   { key: "live_left",      label: "Live Page — Left Vertical",    desc: "Vertical advert beside the Live Now content on desktop; moves below the content on smaller screens" },
+  { key: "rewards_right", label: "Rewards — Right Sidebar", desc: "Dedicated advert below the Rewards Arcade sidebar information and leaderboard" },
   { key: "live_bottom",    label: "Live Page — Bottom Banner",    desc: "Leaderboard (728×90) below the Live Now content" },
 ] as const;
 
@@ -144,7 +162,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-export function AdminSettingsPage() {
+export function AdminSettingsPage({ embedded = false, initialTab, advertisingOnly = false }: { embedded?: boolean; advertisingOnly?: boolean; initialTab?: "branding" | "homepage" | "footer" | "advertising" } = {}) {
   const { isAdmin, authFetch, logout } = useAdmin();
   const [, setLocation] = useLocation();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
@@ -155,7 +173,7 @@ export function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [tab, setTabState] = useState<Tab>(() => {
     const savedTab = sessionStorage.getItem("bazunk-admin-settings-tab") as Tab | null;
-    return savedTab && TABS.some(t => t.id === savedTab) ? savedTab : "branding";
+    return advertisingOnly ? "advertising" : embedded ? (initialTab || "branding") : (savedTab && ["access","fees"].includes(savedTab) ? savedTab : "fees");
   });
   const setTab = (next: Tab) => {
     sessionStorage.setItem("bazunk-admin-settings-tab", next);
@@ -173,7 +191,7 @@ export function AdminSettingsPage() {
   const defaultFeeRates = Object.fromEntries(
     FEE_CATEGORIES.map(c => [`fee_rate_${c.slug}`, c.defaultRate])
   );
-  const [feeRates, setFeeRates] = useState<Record<string, string>>({ ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "5", buyer_protection_fixed_gbp: "0.70", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" });
+  const [feeRates, setFeeRates] = useState<Record<string, string>>({ ...defaultFeeRates, fee_rate_default: "5", fee_listing_free: "true", buyer_protection_percent: "6", buyer_protection_fixed_gbp: "1.00", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" });
   const [feesSaving, setFeesSaving] = useState(false);
   const [feesSaved, setFeesSaved] = useState(false);
   const [feesError, setFeesError] = useState<string | null>(null);
@@ -189,7 +207,7 @@ export function AdminSettingsPage() {
       const [d, persisted] = await Promise.all([res.json(), feeRes.json()]);
       const valid = (value: unknown): value is Record<string, string> => !!value && typeof value === "object" && !Array.isArray(value) && Object.values(value).every(v => typeof v === "string");
       if (!valid(d) || !valid(persisted)) throw new Error("The settings response was invalid. Please retry.");
-      const loaded: Record<string, string> = { ...defaultFeeRates, fee_rate_default: "8", fee_listing_free: "true", buyer_protection_percent: "5", buyer_protection_fixed_gbp: "0.70", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" };
+      const loaded: Record<string, string> = { ...defaultFeeRates, fee_rate_default: "5", fee_listing_free: "true", buyer_protection_percent: "6", buyer_protection_fixed_gbp: "1.00", buyer_protection_fixed_usd: "1.00", buyer_protection_fixed_eur: "1.00" };
       Object.entries(d).forEach(([k, v]) => { if (k.startsWith("fee_") || k.startsWith("buyer_protection_")) loaded[k] = v; });
       setSettings({ ...DEFAULTS, ...d });
       setFeeRates({ ...loaded, ...persisted });
@@ -257,6 +275,8 @@ export function AdminSettingsPage() {
       setCredMsg({ type: "ok", text: "Credentials updated! You will be logged out now." });
       setCurrentPw(""); setNewPw(""); setConfirmPw(""); setNewEmail("");
       setTimeout(() => { logout(); setLocation("/admin"); }, 2000);
+    } catch {
+      setCredMsg({ type: "err", text: "Network error — credentials could not be updated. Please try again." });
     } finally { setCredSaving(false); }
   }
 
@@ -281,11 +301,13 @@ export function AdminSettingsPage() {
   }
 
 
+  const visibleTabs = TABS.filter(t => advertisingOnly ? t.id==="advertising" : embedded ? ["branding","homepage","footer"].includes(t.id) : ["fees","access"].includes(t.id));
+  const Shell = embedded ? Fragment : AdminLayout;
   return (
-    <AdminLayout>
+    <Shell>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl font-black text-gray-900">Site Settings</h1>
+          <h1 className="text-[26px] font-black tracking-tight text-[#142453] dark:text-white">{advertisingOnly ? "Advertising Management" : embedded ? "Website Content & SEO" : "Settings"}</h1>
           <p className="text-sm text-gray-400 mt-0.5">Changes apply to the live site immediately after saving</p>
         </div>
         <button onClick={load} disabled={loading}
@@ -296,8 +318,8 @@ export function AdminSettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
-        {TABS.map(t => {
+      {!advertisingOnly && <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
+        {visibleTabs.map(t => {
           const Icon = t.icon;
           return (
             <button
@@ -313,8 +335,9 @@ export function AdminSettingsPage() {
             </button>
           );
         })}
-      </div>
+      </div>}
 
+      {advertisingOnly && <div className="mb-5 rounded-xl border border-orange-300 bg-orange-50 p-4 text-slate-900"><p className="font-bold">Advertising inventory & placements</p><p className="mt-1 text-sm">Manage site advertising positions and creative formats independently of homepage content, SEO and footer settings. This is the foundation for future paid advertiser campaigns, bookings and reporting; those sales tools are not enabled yet.</p></div>}
       {saveError && <p role="alert" className="mb-4 bg-red-50 text-red-700 p-3 rounded-xl">{saveError} Your edits are retained; use Save Changes to retry.</p>}
       {loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 animate-pulse h-72" />
@@ -352,6 +375,18 @@ export function AdminSettingsPage() {
           )}
 
           {/* ── HOMEPAGE ── */}
+          {tab === "listing" && <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="text-xl font-black text-slate-900">Listing page sections</h2>
+            <p className="text-sm text-slate-600">Switch optional storefront sections on or off. Save Changes to publish. Core purchase, price, seller and checkout information cannot be hidden.</p>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Item specifications</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_specifications !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_specifications:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Buyer protection information</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_buyer_protection !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_buyer_protection:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Listing statistics</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_stats !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_stats:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Social sharing controls</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_sharing !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_sharing:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Quick facts</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_quick_facts !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_quick_facts:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>Detailed delivery panel</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_delivery_details !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_delivery_details:String(e.target.checked)}))}/></label>
+            <label className="flex items-center justify-between gap-4 border-b border-slate-100 py-3 text-sm font-semibold text-slate-800"><span>TrustProof tab (requires TrustProof feature enabled)</span><input type="checkbox" className="h-5 w-5 accent-orange-600" checked={settings.listing_section_trust !== "false"} onChange={e=>setSettings(prev=>({...prev,listing_section_trust:String(e.target.checked)}))}/></label>
+            <a href="/browse" target="_blank" rel="noopener noreferrer" className="inline-block rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-800">Preview storefront in a new tab</a>
+          </section>}
           {tab === "homepage" && (
             <>
               <SectionCard title="Hero Banner">
@@ -452,7 +487,7 @@ export function AdminSettingsPage() {
                 <Megaphone className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-bold">Ad placements</p>
-                  <p className="text-xs text-blue-500 mt-0.5">Toggle each slot on to make it visible. Choose <strong>Styled Banner</strong> to create a polished Bazunk promotional banner from the headline, body, link and button fields, or <strong>AdSense</strong> for Google advertising.</p>
+                  <p className="text-xs text-blue-500 mt-0.5">All native Styled Banners now use the same responsive design as the advert at the top of Browse. Choose a placement, enable it and edit its content. Google AdSense and Custom HTML are external creative formats and retain their own appearance.</p>
                 </div>
               </div>
 
@@ -532,14 +567,18 @@ export function AdminSettingsPage() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="rounded-2xl bg-gradient-to-r from-[#4A4FF3] via-[#8B4FE8] to-[#EC3CB8] p-4 text-white shadow-sm">
-                              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-[10px] font-black text-yellow-300 uppercase tracking-wider">AD · Live preview</p>
-                                  <p className="font-black text-lg mt-1">{s[`ad_${slot.key}_text_title`] || "Your headline"}</p>
-                                  <p className="text-sm text-white/85 mt-0.5">{s[`ad_${slot.key}_text_body`] || "Your supporting message appears here."}</p>
+                            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4A4FF3] via-[#8B4FE8] to-[#EC3CB8] px-4 sm:px-6 py-5 text-white shadow-lg">
+                              <div className="pointer-events-none absolute -right-10 -bottom-16 h-44 w-44 rounded-full bg-white/10" />
+                              <div className="relative flex flex-col md:flex-row md:items-center gap-4">
+                                <div className="flex flex-1 min-w-0 items-center gap-3">
+                                  <span className="rounded-md bg-yellow-300 px-2 py-1 text-[10px] font-black text-slate-900">AD</span>
+                                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10"><Megaphone className="w-6 h-6 text-white" /></span>
+                                  <div className="min-w-0">
+                                    <p className="font-black text-lg leading-tight">{s[`ad_${slot.key}_text_title`] || "Your headline"}</p>
+                                    <p className="text-sm font-semibold text-white/90 mt-1">{s[`ad_${slot.key}_text_body`] || "Your supporting message appears here."}</p>
+                                  </div>
                                 </div>
-                                <span className="rounded-xl bg-[#101C38] px-5 py-3 text-sm font-black text-center">{s[`ad_${slot.key}_text_cta`] || "Learn More"} ›</span>
+                                <span className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-[#101C38] px-5 py-3 text-sm font-black text-white">{s[`ad_${slot.key}_text_cta`] || "Learn More"} ›</span>
                               </div>
                             </div>
                             <div>
@@ -602,8 +641,8 @@ export function AdminSettingsPage() {
                 <div>
                   <p className="font-bold">Buyer Protection & Business Seller Fees</p>
                   <p className="text-xs text-blue-500 mt-0.5">
-                    Private sellers pay <strong>no listing fee and no selling commission</strong>. Buyers pay Buyer Protection only on private-seller items, once per checkout.
-                    Business / sole-trader fees include protection and support, with no extra buyer protection fee. Category overrides remain available below.
+                    Private sellers pay <strong>no listing fee and no selling commission</strong>. Buyers pay Buyer Protection on all eligible items, once per checkout.
+                    Business and sole-trader sellers pay 5% by default. Buyers also pay Buyer Protection. Category overrides remain available below.
                   </p>
                 </div>
               </div>
@@ -611,11 +650,11 @@ export function AdminSettingsPage() {
               <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-emerald-100 bg-emerald-50">
                   <h2 className="font-bold text-gray-900">Buyer Protection Fee</h2>
-                  <p className="text-xs text-gray-500 mt-0.5">Default UK rate: 5% + 70p on private-seller items only. The fixed fee applies once per checkout. Private sellers keep 100% of the item price.</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Default UK rate: 6% + £1.00 on all eligible items, including business sales. The fixed fee applies once per checkout. Private sellers keep 100% of the item price.</p>
                 </div>
                 <div className="p-6 grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[["buyer_protection_percent","Percentage","%"],["buyer_protection_fixed_gbp","UK fixed","£"],["buyer_protection_fixed_usd","US fixed","$"],["buyer_protection_fixed_eur","EU fixed","€"]].map(([key,label,unit]) => (
-                    <label key={key} className="text-xs font-bold text-gray-500">{label}<div className="flex items-center gap-2 mt-1"><span>{unit}</span><input type="number" min="0" step="0.01" value={feeRates[key] ?? (key === "buyer_protection_percent" ? "5" : key === "buyer_protection_fixed_gbp" ? "0.70" : "1.00")} onChange={e => setFeeRate(key,e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" /></div></label>
+                    <label key={key} className="text-xs font-bold text-gray-500">{label}<div className="flex items-center gap-2 mt-1"><span>{unit}</span><input type="number" min="0" step="0.01" value={feeRates[key] ?? (key === "buyer_protection_percent" ? "6" : key === "buyer_protection_fixed_gbp" ? "1.00" : "1.00")} onChange={e => setFeeRate(key,e.target.value)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm" /></div></label>
                   ))}
                 </div>
               </div>
@@ -623,19 +662,19 @@ export function AdminSettingsPage() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100">
                   <h2 className="font-bold text-gray-900">Business seller default fee</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">Default 8%, deducted from business / sole-trader sales. Includes protection and support; no additional buyer protection charge. Category overrides take precedence.</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Default 5%, deducted from business / sole-trader sales. Buyers also pay Buyer Protection at checkout. Category overrides take precedence.</p>
                 </div>
                 <div className="px-6 py-5">
                   <div className="flex items-center gap-3 max-w-xs">
                     <input
                       type="number" min="0" max="30" step="0.5"
-                      value={feeRates["fee_rate_default"] ?? "8"}
+                      value={feeRates["fee_rate_default"] ?? "5"}
                       onChange={e => setFeeRate("fee_rate_default", e.target.value)}
                       className="w-28 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     />
                     <span className="text-sm font-semibold text-gray-500">% business seller fee</span>
                     <button type="button" onClick={() => {
-                      const v = feeRates["fee_rate_default"] ?? "8";
+                      const v = feeRates["fee_rate_default"] ?? "5";
                       setFeeRates(prev => ({ ...prev, ...Object.fromEntries(FEE_CATEGORIES.map(c => [`fee_rate_${c.slug}`, v])) }));
                       setFeesSaved(false);
                     }} className="whitespace-nowrap px-4 py-2.5 rounded-xl border border-[#4A5CE8] text-[#4A5CE8] font-bold text-xs hover:bg-indigo-50">
@@ -795,6 +834,6 @@ export function AdminSettingsPage() {
           )}
         </div>
       )}
-    </AdminLayout>
+    </Shell>
   );
 }

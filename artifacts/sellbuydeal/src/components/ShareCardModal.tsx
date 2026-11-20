@@ -58,11 +58,11 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number, ma
   return lines.filter(Boolean);
 }
 
-async function drawCard(canvas: HTMLCanvasElement, listing: ShareListing, format: Format, link: string): Promise<boolean> {
+async function drawCard(canvas: HTMLCanvasElement, listing: ShareListing, format: Format, link: string, formatPrice: (amount: number) => string): Promise<boolean> {
   const { w, h } = SIZES[format];
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext("2d")!;
-  const [photo, logo] = await Promise.all([listing.image ? loadImage(listing.image) : Promise.resolve(null), loadImage("/bazunk-logo-header.png")]);
+  const [photo, logo] = await Promise.all([listing.image ? loadImage(listing.image) : Promise.resolve(null), loadImage("/bazunk-brand-orange.png")]);
 
   // Background
   const bg = ctx.createLinearGradient(0, 0, w, h);
@@ -147,7 +147,7 @@ export function ShareCardModal({ listing, onClose }: { listing: ShareListing; on
     let alive = true;
     setBusy(true);
     if (canvasRef.current) {
-      drawCard(canvasRef.current, listing, format, link).then(ok => { if (alive) { setExportable(ok); setBusy(false); } });
+      drawCard(canvasRef.current, listing, format, link, formatPrice).then(ok => { if (alive) { setExportable(ok); setBusy(false); } });
     }
     return () => { alive = false; };
   }, [listing, format, link]);

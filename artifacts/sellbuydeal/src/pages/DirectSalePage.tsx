@@ -1,3 +1,5 @@
+import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/context/AuthContext";
@@ -30,8 +32,9 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { SNAP_SELL_DRAFT_KEY } from "@/pages/SnapSellPage";
 import { Footer } from "@/components/Footer";
-import { CATEGORIES } from "@/data/categories";
+import { CATEGORIES, suggestedThirdLevel, thirdLevelSlug, loadThirdLevelTaxonomy } from "@/data/categories";
 import { useLanguage } from "@/context/LanguageContext";
 
 const CONDITIONS = [
@@ -127,9 +130,14 @@ function extractCurrencyCode(display: string): string {
 }
 
 export function DirectSalePage() {
+  const [marketplaceRegion] = useMarketplaceRegion();
+  const [, refreshThirdLevels] = useState(0);
+  useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
+
   interface BuilderOption { label: string; hex: string; qty: number; }
   interface BuilderVariant { type: "size" | "colour"; options: BuilderOption[]; newLabel: string; newHex: string; newQty: string; }
 
+  const { getToken } = useClerkAuth();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [title, setTitle] = useState("");
@@ -138,6 +146,7 @@ export function DirectSalePage() {
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
+  const [subsubcategory, setSubsubcategory] = useState("");
   const [extraCategories, setExtraCategories] = useState<{ category: string; subcategory: string }[]>([]);
   const [addingExtraCat, setAddingExtraCat] = useState(false);
   const [newExtraCatTop, setNewExtraCatTop] = useState("");
@@ -162,10 +171,64 @@ export function DirectSalePage() {
   const [productVideoCredits, setProductVideoCredits] = useState(149);
   const [published, setPublished] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [draftId, setDraftId] = useState<number | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const quickMode = location === "/sell/quick";
+  const [step, setStep] = useState(1);
+  const steps = ["Basics", "Photos", "Details", "Shipping", "Video", "Review"];
+  // The phone flow deliberately skips desktop's optional video upsell.
+  const mobileSteps = [1, 2, 3, 4, 6] as const;
+  const mobileLabels = ["Item", "Photos", "Details", "Delivery", "Publish"];
+  const mobilePosition = Math.max(0, mobileSteps.indexOf(step as typeof mobileSteps[number]));
+  function mobileContinue() {
+    const missing: string[] = [];
+    if (step === 1) {
+      if (!title.trim()) missing.push("Enter a listing title");
+      if (!price || !Number.isFinite(Number(price)) || Number(price) <= 0) missing.push("Enter a valid selling price");
+      if (!category) missing.push("Choose a category");
+      if (!description.trim()) missing.push("Describe your item");
+    }
+    if (missing.length) {
+      setValidationErrors(missing);
+      document.getElementById("mobile-direct-sale-steps")?.scrollIntoView({behavior:"smooth",block:"start"});
+      return;
+    }
+    setValidationErrors([]);
+    const next = mobileSteps[Math.min(mobileSteps.length-1,mobilePosition+1)];
+    goStep(next);
+  }
+  function mobileBack() {
+    setValidationErrors([]);
+    goStep(mobileSteps[Math.max(0,mobilePosition-1)]);
+  }
+  const goStep = (next: number) => { setStep(Math.max(1, Math.min(6, next))); window.requestAnimationFrame(() => document.getElementById("direct-sale-step-nav")?.scrollIntoView({ behavior: "smooth", block: "start" })); };
+
+  const snapDraftRef=useRef(false);
+  useEffect(()=>{
+    const raw=sessionStorage.getItem(SNAP_SELL_DRAFT_KEY);
+    if(!raw)return;
+    try{
+      const prefill=JSON.parse(raw) as {title?:string;description?:string;price?:string;condition?:string;photos?:string[];category?:string;subcategory?:string;tags?:string;specifications?:Array<{key:string;value:string}>;marketplaceRegion?:string};
+      // Prevent previously saved drafts overwriting a deliberate new Snap & Sell submission.
+      snapDraftRef.current=true;
+      setTitle(String(prefill.title||"").slice(0,150));
+      setDescription(String(prefill.description||""));
+      setPrice(String(prefill.price||""));
+      setCondition(String(prefill.condition||"brand-new"));
+      setCategory(String(prefill.category||""));
+      setSubcategory(String(prefill.subcategory||""));
+      setPhotos(Array.isArray(prefill.photos)?prefill.photos.slice(0,10):[]);
+      setTags(String(prefill.tags||""));
+      setSpecifications(Array.isArray(prefill.specifications)?prefill.specifications.slice(0,20):[]);
+      setCurrency(marketplaceRegion==="uk"?"£ GBP":"$ USD");
+      setStep(1);
+      sessionStorage.removeItem(SNAP_SELL_DRAFT_KEY);
+    }catch(err){console.error("Could not import Snap & Sell draft",err);}
+  },[]); // intentionally one-time, before asynchronous existing-draft restoration
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -188,31 +251,107 @@ export function DirectSalePage() {
       .catch(() => {});
   }, []);
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    const remaining = 10 - photos.length;
-    const toRead = files.slice(0, remaining);
-    Promise.all(
-      toRead.map(
-        (f) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => resolve(ev.target?.result as string);
-            reader.readAsDataURL(f);
-          })
-      )
-    ).then((dataUrls) => setPhotos((p) => [...p, ...dataUrls]));
+  useEffect(() => {
+    if (!user?.email || snapDraftRef.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const res = await fetch("/api/listings/mine", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (!res.ok) return;
+        const entries = await res.json();
+        const draft = Array.isArray(entries) ? entries.find((x: any) => x.status === "draft" && x.specifications && (() => { try { return JSON.parse(x.specifications).marketplace_region === marketplaceRegion; } catch { return false; } })()) : null;
+        if (!draft || cancelled) return;
+        const metadata = JSON.parse(draft.specifications);
+        const form = metadata.draftForm ?? {};
+        setDraftId(draft.id);
+        setTitle(form.title ?? draft.title ?? "");
+        setPrice(form.price ?? draft.price ?? "");
+        setCurrency(form.currency ?? (marketplaceRegion === "uk" ? "£ GBP" : "$ USD"));
+        setCategory(form.category ?? draft.category ?? "");
+        setSubcategory(form.subcategory ?? draft.subcategory ?? "");
+        setSubsubcategory(form.subsubcategory ?? "");
+        setDescription(form.description ?? draft.description ?? "");
+        setCondition(form.condition ?? draft.condition ?? "brand-new");
+        setPhotos(form.photos ?? (Array.isArray(metadata.photos) ? metadata.photos : (draft.image ? [draft.image] : [])));
+        setQuantity(form.quantity ?? "1");
+        setSku(form.sku ?? "");
+        setShipOrigin(form.shipOrigin ?? "UK");
+        setShipZone(form.shipZone ?? "domestic");
+        setCarrier(form.carrier ?? "royal-mail");
+        setShippingPrice(form.shippingPrice ?? "");
+        setHandlingCharge(form.handlingCharge ?? "");
+        setTags(form.tags ?? draft.tags ?? "");
+        setSpecifications(form.specifications ?? metadata.details ?? []);
+        setExtraCategories(form.extraCategories ?? []);
+        setPremiumVideo(form.premiumVideo ?? false);
+      } catch (error) { console.error("Draft restore failed:", error); }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.email, marketplaceRegion, getToken]);
+
+  function draftPayload() {
+    const form = { title, price, currency, category, subcategory, subsubcategory, description, condition, quantity, sku, shipOrigin, shipZone, carrier, shippingPrice, handlingCharge, tags, specifications, extraCategories, premiumVideo };
+    return { title: title.trim() || "Untitled draft", price: price || "0", currency: extractCurrencyCode(currency),
+      marketplaceRegion, category: category || "General", description, condition, image: photos[0] ?? null, photos,
+      sellerEmail: user?.email, sellerName: user?.username ?? user?.name ?? null,
+      specifications, draftForm: form, tags, status: "draft" };
+  }
+
+  const [uploadingPhotos,setUploadingPhotos] = useState(false);
+  const cameraInputRef=useRef<HTMLInputElement>(null);
+
+  // Re-encode large smartphone photos so the whole listing stays under the
+  // API's 10 MB JSON limit. Sequential processing limits mobile memory usage.
+  async function shrinkPhoto(file:File):Promise<string> {
+    if (!file.type.startsWith("image/")) throw Error("Please choose an image file.");
+    const url=URL.createObjectURL(file);
+    try {
+      const image=await new Promise<HTMLImageElement>((resolve,reject)=>{
+        const element=new Image();
+        element.onload=()=>resolve(element);
+        element.onerror=()=>reject(Error("This photo could not be opened."));
+        element.src=url;
+      });
+      const scale=Math.min(1,1400/Math.max(image.naturalWidth,image.naturalHeight));
+      const canvas=document.createElement("canvas");
+      canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+      const context=canvas.getContext("2d");
+      if(!context)throw Error("Your browser cannot prepare this photo.");
+      context.fillStyle="#ffffff";
+      context.fillRect(0,0,canvas.width,canvas.height);
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      return canvas.toDataURL("image/jpeg",0.75);
+    } finally {URL.revokeObjectURL(url);}
+  }
+
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files=Array.from(e.target.files??[]);
+    e.target.value="";
+    const toRead=files.slice(0,Math.max(0,10-photos.length));
+    if(!toRead.length)return;
+    setUploadingPhotos(true);setPublishError(null);
+    try{
+      const prepared:string[]=[];
+      for(const file of toRead) prepared.push(await shrinkPhoto(file));
+      setPhotos(previous=>[...previous,...prepared].slice(0,10));
+    }catch(err){setPublishError(err instanceof Error?err.message:"Could not add photo. Try another image.");}
+    finally{setUploadingPhotos(false);}
   }
 
   async function handlePublish(e: React.FormEvent) {
     e.preventDefault();
     const errors: string[] = [];
     if (!title.trim()) errors.push("Title is required");
-    if (!price || parseFloat(price) <= 0) errors.push("Price must be greater than 0");
+    if (!price || !Number.isFinite(Number(price)) || Number(price) <= 0) errors.push("Price must be greater than 0");
     if (!category) errors.push("Category is required");
     if (!description.trim()) errors.push("Description is required");
 
     if (errors.length > 0) {
+      // Mobile must display a useful correction screen rather than a hidden review error.
+      if (window.matchMedia("(max-width: 1023px)").matches) setStep(1);
       setValidationErrors(errors);
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -223,23 +362,29 @@ export function DirectSalePage() {
     setPublishing(true);
 
     try {
-      const res = await fetch("/api/listings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in to create a listing.");
+      const res = await fetch(draftId ? `/api/listings/${draftId}?email=${encodeURIComponent(user?.email ?? "")}` : "/api/listings", {
+        method: draftId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" , Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           title: title.trim(),
+          marketplaceRegion,
+          status: "active",
           price,
           currency: extractCurrencyCode(currency),
           category,
           subcategory: subcategory || undefined,
+          subsubcategory: subcategory ? (subsubcategory || undefined) : undefined,
           extra_categories: extraCategories.length ? extraCategories : undefined,
           description: description.trim(),
           condition,
           image: photos[0] ?? null,
+          photos,
           sellerEmail: user?.email ?? "guest",
           sellerName: user?.username ?? user?.name ?? null,
           sellerUsername: user?.username ?? null,
-          tags: tags.trim() || undefined,
+          tags: [tags.trim(), ...(ecoFriendly ? ["eco-friendly"] : [])].filter(Boolean).join(", ") || undefined,
           specifications: specifications.length > 0 ? specifications : undefined,
           premiumVideo,
           shipOrigin,
@@ -267,45 +412,121 @@ export function DirectSalePage() {
     }
   }
 
-  function handleSaveDraft() {
-    if (!title.trim() && !price && !description.trim() && !category) {
-      setValidationErrors(["Fill in at least a title or description before saving a draft"]);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    setValidationErrors([]);
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 3000);
+  async function handleSaveDraft() {
+    if (!user?.email) { setPublishError("Sign in to save your draft."); return; }
+    setSavingDraft(true);
+    setPublishError(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Sign in to save your draft.");
+      const res = await fetch(draftId ? `/api/listings/${draftId}?email=${encodeURIComponent(user.email)}` : "/api/listings", {
+        method: draftId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(draftPayload()),
+      });
+      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || "Draft save failed"); }
+      const saved = await res.json();
+      setDraftId(saved.id);
+      setDraftSaved(true);
+      setValidationErrors([]);
+    } catch (err) { setPublishError(err instanceof Error ? err.message : "Draft save failed"); }
+    finally { setSavingDraft(false); }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#07182f] flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
-        <form onSubmit={handlePublish} noValidate>
+      <div className="container mx-auto px-4 py-7 max-w-7xl">
+        <style>{`
+          .direct-sale-form > section h2, .direct-sale-form > aside h2 { color: #fff; }\n          .direct-sale-form > aside > section p, .direct-sale-form > aside > section li { color: #f0f5ff !important; opacity: 1 !important; }\n          .direct-sale-form > aside > section svg { color: #e2d5ff; opacity: 1; }\n          .direct-sale-form > aside > section a { color: #fff; }
+          .direct-sale-form > section label { color: #e8f2ff; font-weight: 650; }
+          .direct-sale-form > section p, .direct-sale-form > section small { color: #c8dbf3; }
+          .direct-sale-form > section input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+          .direct-sale-form > section select,
+          .direct-sale-form > section textarea {
+            background-color: #091c36; color: #fff; border-color: #426087;
+          }
+          .direct-sale-form > section input::placeholder,
+          .direct-sale-form > section textarea::placeholder { color: #aabed9; opacity: 1; }
+          .direct-sale-form > section select option { background: #102541; color: white; }
+          .direct-sale-form > section input:focus,
+          .direct-sale-form > section select:focus,
+          .direct-sale-form > section textarea:focus { border-color: #5aa3ff; outline-color: #5aa3ff; }
+          .direct-sale-form > section [class*="text-gray-"] { color: #d5e4f6; }
+        `}</style>
+        <form onSubmit={handlePublish} noValidate className={`direct-sale-form ${quickMode?"bazunk-quick-sell":""} grid grid-cols-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(300px,1fr)] gap-4 lg:gap-5 items-start min-w-0 pb-32 lg:pb-0`}>
 
           {/* Header card */}
-          <div className="rounded-t-2xl bg-gradient-to-r from-[#3B4FD8] to-[#1E3A8A] px-7 py-7 mb-0">
-            <h1 className="text-2xl font-bold text-white">{t("createListing")}</h1>
-            <p className="text-blue-200 text-sm mt-1">{t("fillDetails")}</p>
+          <div className="lg:col-span-2 min-w-0 rounded-2xl bg-gradient-to-r from-[#0755e8] via-[#4939dd] to-[#d634a6] px-5 py-5 sm:px-7 sm:py-7 mb-0 shadow-lg">
+            <h1 className="text-3xl font-black text-white">{quickMode ? "⚡ Quick Sell — Create Listing" : "Direct Sale"}</h1>
+            <a href="/sell/snap" className="mt-3 inline-flex items-center rounded-xl border border-white/50 bg-white/20 px-4 py-2 text-sm font-bold text-white hover:bg-white/30">📸 Snap & Sell — photo & barcode assistant</a>
+            <p className="text-white text-sm mt-1">{quickMode ? "List your item in minutes. Fast, simple and free." : "Create a detailed listing in six easy steps. No listing fees for private sellers."}</p><div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white"><span className="rounded-lg bg-black/25 px-3 py-2">✓ Free to list</span><span className="rounded-lg bg-black/25 px-3 py-2">⚡ Fast & simple</span><span className="rounded-lg bg-black/25 px-3 py-2">🛡 Buyer Protection</span></div>
           </div>
 
-          {/* Basic Information */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-5">{t("basicInformation")}</h2>
+
+
+          <aside className="hidden lg:block min-w-0 lg:col-start-2 lg:row-start-2 lg:row-span-7 space-y-3">
+            {quickMode&&<section className="bz-quick-ai rounded-2xl border border-purple-300/60 p-4 text-white shadow-xl">
+              <h2 className="flex items-center gap-2 text-lg font-black"><Zap size={25}/> Listing Assistant ✨</h2>
+              <p className="mt-1 text-sm text-white">Create a stronger listing with a clear title, photos and useful details.</p>
+              <a href="/sell/snap" className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-black text-[#36258c]"><Camera size={17}/> Open Snap & Sell assistant</a>
+            </section>}
+            {quickMode&&<section className="rounded-2xl border border-sky-400/30 bg-[#102541] p-4 text-white">
+              <h2 className="flex items-center gap-2 text-lg font-black"><CheckCircle2 size={21} className="text-amber-400"/> Listing Checklist</h2>
+              <div className="mt-3 space-y-2">{[[Boolean(title.trim()),"Add a clear title"],[Boolean(category),"Choose a category"],[Boolean(description.trim()),"Write a good description"],[photos.length>0,"Add at least 1 photo"],[Number(price)>0,"Set a price"]].map(([done,label],i)=><div key={i} className="flex items-center gap-2 text-sm"><CheckCircle2 size={18} className={done?"text-emerald-400":"text-slate-500"}/><span className="text-slate-100">{label}</span></div>)}</div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#344b71]"><div className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-300 transition-all" style={{width:`${[Boolean(title.trim()),Boolean(category),Boolean(description.trim()),photos.length>0,Number(price)>0].filter(Boolean).length*20}%`}}/></div>
+            </section>}
+            <section className="rounded-2xl border border-sky-400/25 bg-[#102541] p-4 text-white shadow-xl">
+              <h2 className="font-black text-lg flex items-center gap-2"><Eye className="w-5 h-5 text-sky-300"/> Listing Preview</h2>
+              <p className="text-xs text-sky-200 mt-1 mb-4">Updates as you enter your details</p>
+              <div className="overflow-hidden rounded-xl bg-white text-slate-900">
+                <div className="aspect-[4/3] bg-gradient-to-br from-slate-100 to-blue-100 flex items-center justify-center overflow-hidden">
+                  {photos[0]?<img src={photos[0]} alt="Listing preview" className="h-full w-full object-contain"/>:<div className="text-center text-slate-500"><Camera className="w-12 h-12 mx-auto mb-2 text-blue-500"/><p className="text-sm font-semibold">Your first photo appears here</p></div>}
+                </div>
+                <div className="p-4"><p className="font-bold text-base break-words">{title.trim()||"Your listing title will appear here"}</p><p className="font-black text-xl mt-2">{currency.split(" ")[0]}{Number(price||0).toFixed(2)}</p><div className="flex flex-wrap gap-2 mt-3 text-xs text-slate-600"><span className="bg-slate-100 rounded-lg px-2 py-1">{CONDITIONS.find(c=>c.id===condition)?.label||"Condition not set"}</span><span className="bg-slate-100 rounded-lg px-2 py-1">{category||"Category not set"}</span><span className="bg-slate-100 rounded-lg px-2 py-1">{shipOrigin||"Location not set"}</span></div></div>
+              </div>
+            </section>
+            <section className={`${quickMode?"hidden ":""}rounded-2xl border border-purple-400/60 bg-gradient-to-br from-[#35205d] to-[#44227d] p-5 text-white shadow-lg`}><h2 className="font-black text-lg flex items-center gap-2"><Video className="w-5 h-5 text-purple-200"/> Boost Your Listing</h2><p className="text-sm font-medium leading-relaxed text-white mt-2">Add a product video to help buyers see your item in action. Optional — you can add it below.</p><a href="#product-video" className="inline-flex mt-3 rounded-lg bg-purple-500 px-4 py-2 text-sm font-bold text-white hover:bg-purple-400">Go to video options ↓</a></section>
+            <section className="rounded-2xl border border-sky-400/20 bg-[#102541] p-5 text-white"><h2 className="font-black text-lg mb-3">💡 Tips for a Great Listing</h2><ul className="space-y-2 text-sm text-slate-100"><li>✓ Use clear, well-lit photos</li><li>✓ Describe any wear or defects</li><li>✓ Choose the most specific category</li><li>✓ Set an accurate shipping price</li><li>✓ Respond to buyers quickly</li></ul></section>
+          </aside>
+          {!quickMode && <nav id="direct-sale-step-nav" aria-label="Direct Sale steps" className="hidden lg:grid lg:col-span-2 lg:row-start-2 scroll-mt-24 grid-cols-6 gap-2 rounded-2xl bg-white dark:bg-[#102541] p-3 shadow-sm border border-slate-200 dark:border-blue-700/40">{steps.map((name,i)=><button type="button" key={name} onClick={()=>goStep(i+1)} aria-current={step===i+1?"step":undefined} className={`flex items-center justify-center gap-2 rounded-xl px-2 py-3 text-xs sm:text-sm font-bold transition-colors ${step===i+1?"bg-blue-600 text-white shadow-md":"bg-slate-100 text-slate-900 hover:bg-blue-100 dark:bg-[#243b61] dark:!text-white dark:hover:bg-[#34558a]"}`}><span className="rounded-full bg-white/20 px-2 py-1 text-current">{i+1}</span>{name}</button>)}</nav>}
+          {!quickMode && <div className="hidden lg:col-span-2 lg:row-start-3 lg:flex justify-between items-center gap-3 rounded-xl bg-blue-50 dark:bg-[#172e56] px-5 py-3 text-slate-900 dark:!text-white"><span className="font-bold">Step {step} of 6: {steps[step-1]} · {Math.round(step / 6 * 100)}%</span><div className="flex gap-2"><button type="button" disabled={step===1} onClick={()=>goStep(step-1)} className="rounded-lg bg-white text-slate-900 dark:bg-[#30496e] dark:!text-white px-4 py-2 font-bold disabled:opacity-50">Back</button><button type="button" disabled={step===6} onClick={()=>goStep(step+1)} className="rounded-lg bg-gradient-to-r from-blue-600 to-fuchsia-600 px-4 py-2 font-black text-white disabled:opacity-40">Next →</button></div></div>}
+          {/* Phone-only editor: short steps, clear progress and always-visible publish footer. */}
+          {!quickMode && <section id="mobile-direct-sale-steps" aria-label="Mobile listing progress"
+            className="scroll-mt-28 rounded-2xl border border-sky-500/40 bg-[#142d4f] px-4 py-4 text-white lg:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <div><p className="text-xs font-bold uppercase tracking-wider text-sky-200">Mobile Direct Sale</p>
+                <h2 className="mt-1 text-xl font-black text-white">{mobileLabels[mobilePosition]}</h2></div>
+              <span className="rounded-lg bg-[#294a73] px-3 py-2 text-sm font-black text-white">Step {mobilePosition+1} of 5</span>
+            </div>
+            <div className="mt-4 grid grid-cols-5 gap-2" aria-label="Listing progress">
+              {mobileLabels.map((name,index)=><button type="button" key={name}
+                aria-label={`Go to ${name}`} aria-current={mobilePosition===index?"step":undefined}
+                onClick={()=>{setValidationErrors([]);goStep(mobileSteps[index]);}}
+                className={`min-h-11 rounded-lg px-1 py-2 text-[11px] font-bold ${mobilePosition===index?"bg-orange-600 text-white":index<mobilePosition?"bg-emerald-800 text-white":"bg-[#284568] text-slate-100"}`}>
+                <span className="block text-sm">{index+1}</span>{name}
+              </button>)}
+            </div>
+            {validationErrors.length>0&&<div role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-950 p-3 text-sm font-bold text-white">
+              {validationErrors.map(err=><p key={err}>• {err}</p>)}
+            </div>}
+          </section>}
+                    {/* Basic Information */}
+          <section style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="bz-quick-item-details min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+            <h2 className="text-base font-bold text-white mb-5">{quickMode?"① Item Details":"Basic Information"}</h2>
 
             {/* Title */}
             <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                {t("title")} <span className="text-red-500">*</span>
+              <label className="text-sm font-medium text-slate-200 mb-1.5 block">
+                Title <span className="text-red-500">*</span>
               </label>
               <input
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g., iPhone 14 Pro Max - 256GB Space Black"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                 data-testid="input-listing-title"
               />
             </div>
@@ -313,22 +534,22 @@ export function DirectSalePage() {
             {/* Currency & Price + Category */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-1">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                  {t("currencyPrice")} <span className="text-red-500">*</span>
+                <label className="text-sm font-medium text-slate-200 mb-1.5 block">
+                  Currency & Price <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <div className="relative">
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-7 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                      className="appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-7 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                       data-testid="select-currency"
                     >
                       {CURRENCIES.map((c) => (
                         <option key={c}>{c}</option>
                       ))}
                     </select>
-                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                   </div>
                   <input
                     type="number"
@@ -338,31 +559,31 @@ export function DirectSalePage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     placeholder="0.00"
-                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] w-0"
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] w-0"
                     data-testid="input-price"
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Your preferred currency: {currency.split(" ")[0]}</p>
+                <p className="text-xs text-slate-400 mt-1">Your preferred currency: {currency.split(" ")[0]}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-slate-200 mb-1.5 block">
                   {t("category")} <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <select
                     required
                     value={category}
-                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); }}
-                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); setSubsubcategory(""); }}
+                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="select-category"
                   >
-                    <option value="">{t("selectCategory")}</option>
+                    <option value="">Select a category</option>
                     {CATEGORIES.map((cat) => (
                       <option key={cat.slug} value={cat.slug}>{cat.name}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                 </div>
                 {category && (() => {
                   const subs = CATEGORIES.find((c) => c.slug === category)?.subcategories ?? [];
@@ -371,8 +592,8 @@ export function DirectSalePage() {
                     <div className="relative mt-2">
                       <select
                         value={subcategory}
-                        onChange={(e) => setSubcategory(e.target.value)}
-                        className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                        onChange={(e) => { setSubcategory(e.target.value); setSubsubcategory(""); }}
+                        className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-900 bg-white dark:bg-[#243956] dark:text-white dark:border-[#7188aa] focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                         data-testid="select-subcategory"
                       >
                         <option value="">All subcategories</option>
@@ -380,16 +601,26 @@ export function DirectSalePage() {
                           <option key={sub.slug} value={sub.slug}>{sub.name}</option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
                     </div>
                   );
                 })()}
               </div>
 
+              {category && subcategory && suggestedThirdLevel(category, subcategory).length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">More specific category (optional)</label>
+                  <select value={subsubcategory} onChange={e => setSubsubcategory(e.target.value)} className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-white bg-white" data-testid="select-subsubcategory">
+                    <option value="">No third-level category</option>
+                    {suggestedThirdLevel(category, subcategory).map(name => <option key={name} value={thirdLevelSlug(name)}>{name}</option>)}
+                  </select>
+                </div>
+              )}
+
               {/* Extra categories */}
               {category && (
                 <div className="mt-3">
-                  <p className="text-xs font-semibold text-gray-500 mb-1.5">Also list in (optional):</p>
+                  <p className="text-xs font-semibold text-slate-300 mb-1.5">Also list in (optional):</p>
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {extraCategories.map((ec, i) => {
                       const catName = CATEGORIES.find(c => c.slug === ec.category)?.name ?? ec.category;
@@ -438,7 +669,7 @@ export function DirectSalePage() {
 
             {/* Description */}
             <div className="mt-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+              <label className="text-sm font-medium text-slate-200 mb-1.5 block">
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -447,14 +678,14 @@ export function DirectSalePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your item in detail. Include condition, features, and any defects..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] resize-none"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] resize-none"
                 data-testid="textarea-description"
               />
             </div>
           </section>
 
           {/* Eco-Friendly */}
-          <section className="bg-white px-7 py-5 border-x border-b border-gray-100">
+          <section data-quick-panel="eco" className={`min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-5 border border-sky-400/15 ${quickMode || step===1 ? "" : "hidden lg:block"}`}>
             <label
               className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors ${
                 ecoFriendly ? "border-green-400 bg-green-50" : "border-gray-200 hover:border-green-300"
@@ -470,10 +701,10 @@ export function DirectSalePage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Leaf className="w-4 h-4 text-green-500" />
-                  <span className="font-semibold text-gray-900 text-sm">Eco-Friendly Product</span>
+                  <span className="font-semibold text-white text-sm">Eco-Friendly Product</span>
                   <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">FREE</span>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-300">
                   Mark this item as eco-friendly or recyclable. Products with this badge get 25% more visibility and attract environmentally conscious buyers!
                 </p>
               </div>
@@ -481,12 +712,12 @@ export function DirectSalePage() {
           </section>
 
           {/* Product Variants */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
+          <section style={{ display: quickMode ? "none" : step === 3 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-bold text-gray-900">Product Variants</h2>
+              <h2 className="text-base font-bold text-white">Product Variants</h2>
               <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">OPTIONAL</span>
             </div>
-            <p className="text-xs text-gray-500 mb-5">Add size, colour, or storage options so buyers can choose the exact variant they want.</p>
+            <p className="text-xs text-slate-300 mb-5">Add size, colour, or storage options so buyers can choose the exact variant they want.</p>
 
             {/* Existing variant groups */}
             <div className="space-y-5">
@@ -497,12 +728,12 @@ export function DirectSalePage() {
                       {group.type === "colour"
                         ? <Palette className="w-4 h-4 text-[#4A5CE8]" />
                         : <Ruler className="w-4 h-4 text-[#4A5CE8]" />}
-                      <span className="text-sm font-semibold text-gray-900 capitalize">{group.type} options</span>
+                      <span className="text-sm font-semibold text-white capitalize">{group.type} options</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setVariantGroups((prev) => prev.filter((_, i) => i !== gi))}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      className="text-slate-400 hover:text-red-500 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -513,8 +744,8 @@ export function DirectSalePage() {
                     <div className="mb-3 border border-gray-100 rounded-xl overflow-hidden">
                       {/* Header row */}
                       <div className="grid grid-cols-[1fr_80px_28px] gap-2 px-3 py-1.5 bg-gray-50 border-b border-gray-100">
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Variant</span>
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide text-center">Qty</span>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Variant</span>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide text-center">Qty</span>
                         <span />
                       </div>
                       {group.options.map((opt, oi) => (
@@ -523,7 +754,7 @@ export function DirectSalePage() {
                             {group.type === "colour" && (
                               <span className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" style={{ backgroundColor: opt.hex || "#ccc" }} />
                             )}
-                            <span className="text-sm font-medium text-gray-700 truncate">{opt.label}</span>
+                            <span className="text-sm font-medium text-slate-200 truncate">{opt.label}</span>
                           </div>
                           <input
                             type="number"
@@ -535,7 +766,7 @@ export function DirectSalePage() {
                                 options: g.options.map((o, j) => j === oi ? { ...o, qty: Math.max(0, parseInt(e.target.value) || 0) } : o),
                               } : g)
                             )}
-                            className="w-full text-center border border-gray-200 rounded-lg px-2 py-1 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                            className="w-full text-center border border-gray-200 rounded-lg px-2 py-1 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                           />
                           <button
                             type="button"
@@ -550,7 +781,7 @@ export function DirectSalePage() {
                       ))}
                       {/* Subtotal row */}
                       <div className="grid grid-cols-[1fr_80px_28px] gap-2 items-center px-3 py-2 bg-gray-50 border-t border-gray-100">
-                        <span className="text-xs font-semibold text-gray-500">Subtotal</span>
+                        <span className="text-xs font-semibold text-slate-300">Subtotal</span>
                         <span className="text-center text-sm font-bold text-[#4A5CE8]">{group.options.reduce((s, o) => s + o.qty, 0)}</span>
                         <span />
                       </div>
@@ -590,7 +821,7 @@ export function DirectSalePage() {
                           );
                         }
                       }}
-                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     />
                     <input
                       type="number"
@@ -600,7 +831,7 @@ export function DirectSalePage() {
                         prev.map((g, i) => i === gi ? { ...g, newQty: e.target.value } : g)
                       )}
                       placeholder="Qty"
-                      className="w-16 text-center border border-gray-200 rounded-lg px-2 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                      className="w-16 text-center border border-gray-200 rounded-lg px-2 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     />
                     <button
                       type="button"
@@ -630,7 +861,7 @@ export function DirectSalePage() {
                 <button
                   type="button"
                   onClick={() => setVariantGroups((prev) => [...prev, { type: "size", options: [], newLabel: "", newHex: "", newQty: "1" }])}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-slate-300 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
                 >
                   <Ruler className="w-4 h-4" /> Add Size Variants
                 </button>
@@ -639,7 +870,7 @@ export function DirectSalePage() {
                 <button
                   type="button"
                   onClick={() => setVariantGroups((prev) => [...prev, { type: "colour", options: [], newLabel: "", newHex: "#4A5CE8", newQty: "1" }])}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-gray-500 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-sm font-semibold text-slate-300 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
                 >
                   <Palette className="w-4 h-4" /> Add Colour Variants
                 </button>
@@ -648,9 +879,9 @@ export function DirectSalePage() {
           </section>
 
           {/* Item Condition */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-4">Item Condition</h2>
-            <div className="space-y-2">
+          <section data-quick-panel="condition" style={{ display: quickMode ? "block" : step === 1 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+            <h2 className="text-base font-bold text-white mb-4">{quickMode?"③ Item Condition":"Item Condition"}</h2>
+            <div className={quickMode?"bz-quick-conditions":"space-y-2"}>
               {CONDITIONS.map((c) => {
                 const Icon = c.icon;
                 const selected = condition === c.id;
@@ -671,13 +902,13 @@ export function DirectSalePage() {
                         selected ? "bg-[#4A5CE8]" : "bg-gray-100"
                       }`}
                     >
-                      <Icon className={`w-4 h-4 ${selected ? "text-white" : "text-gray-500"}`} />
+                      <Icon className={`w-4 h-4 ${selected ? "text-white" : "text-slate-300"}`} />
                     </div>
                     <div className="flex-1">
-                      <p className={`text-sm font-semibold ${selected ? "text-[#4A5CE8]" : "text-gray-800"}`}>
+                      <p className={`text-sm font-semibold ${selected ? "text-[#4A5CE8]" : "text-slate-100"}`}>
                         {c.label}
                       </p>
-                      <p className="text-xs text-gray-400">{c.desc}</p>
+                      <p className="text-xs text-slate-400">{c.desc}</p>
                     </div>
                     {selected && (
                       <CheckCircle2 className="w-5 h-5 text-[#4A5CE8] flex-shrink-0" />
@@ -689,24 +920,25 @@ export function DirectSalePage() {
           </section>
 
           {/* Photos */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
+          <section data-quick-panel="photos" style={{ display: quickMode ? "block" : step === 2 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center gap-2 mb-4">
               <Camera className="w-4 h-4 text-[#4A5CE8]" />
-              <h2 className="text-base font-bold text-gray-900">
-                Photos ({photos.length}/10)
+              <h2 className="text-base font-bold text-white">
+                {quickMode?"② Photos":"Photos"} ({photos.length}/10)
               </h2>
             </div>
 
             {/* Preview grid */}
             {photos.length > 0 && (
-              <div className="grid grid-cols-5 gap-2 mb-4">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4">
                 {photos.map((src, i) => (
                   <div key={i} className="aspect-square rounded-lg overflow-hidden border border-gray-200 relative group">
                     <img src={src} alt="" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-lg font-bold"
+                      aria-label={`Remove photo ${i+1}`}
+                      className="absolute inset-0 bg-black/45 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xl font-black"
                     >
                       ×
                     </button>
@@ -722,15 +954,15 @@ export function DirectSalePage() {
 
             {photos.length < 10 && (
               <div
-                className="border-2 border-dashed border-gray-200 rounded-xl p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
+                className="border-2 border-dashed border-gray-200 rounded-xl p-5 sm:p-10 flex flex-col items-center text-center cursor-pointer hover:border-[#4A5CE8]/50 hover:bg-blue-50/30 transition-colors"
                 onClick={() => photoInputRef.current?.click()}
                 data-testid="dropzone-photos"
               >
                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center mb-3 shadow-md">
                   <Camera className="w-6 h-6 text-white" />
                 </div>
-                <p className="font-semibold text-gray-800 mb-1">Add Photos</p>
-                <p className="text-sm text-gray-400 mb-4">Drag & drop or click to upload</p>
+                <p className="font-semibold text-slate-100 mb-1">Add Photos</p>
+                <p className="text-sm text-slate-400 mb-4">Drag & drop or click to upload</p>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); photoInputRef.current?.click(); }}
@@ -738,8 +970,14 @@ export function DirectSalePage() {
                   data-testid="button-choose-photos"
                 >
                   <Upload className="w-4 h-4" />
-                  Choose Files
+                  {uploadingPhotos?"Preparing photos…":"Choose Files"}
                 </button>
+                <button type="button" disabled={uploadingPhotos}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-sky-300 bg-[#23466b] px-5 py-2.5 text-sm font-bold text-white lg:hidden"
+                  onClick={e=>{e.stopPropagation();cameraInputRef.current?.click();}}
+                  data-testid="button-take-photo"><Camera className="h-4 w-4"/> Take a photo</button>
+                <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+                  className="hidden" onChange={handlePhotoChange} />
                 <input
                   ref={photoInputRef}
                   type="file"
@@ -752,7 +990,7 @@ export function DirectSalePage() {
             )}
 
             <div className="mt-4 bg-blue-50 rounded-xl p-4">
-              <p className="text-sm font-semibold text-gray-800 mb-2">📸 Photo Tips</p>
+              <p className="text-sm font-semibold text-slate-100 mb-2">📸 Photo Tips</p>
               <ul className="space-y-1">
                 {[
                   "Use natural lighting for best results",
@@ -767,14 +1005,14 @@ export function DirectSalePage() {
           </section>
 
           {/* Specifications (Optional) */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
+          <section style={{ display: quickMode ? "none" : step === 3 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
             <div className="flex items-center gap-3 mb-1">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#F26B21] to-[#D97706] flex items-center justify-center flex-shrink-0">
                 <Tag className="w-3.5 h-3.5 text-white" />
               </div>
-              <h2 className="text-base font-bold text-gray-900">Specifications <span className="text-xs font-normal text-gray-400">(optional)</span></h2>
+              <h2 className="text-base font-bold text-white">Specifications <span className="text-xs font-normal text-slate-400">(optional)</span></h2>
             </div>
-            <p className="text-xs text-gray-400 mb-5">Add key product details like brand, model, colour etc. to help buyers find and compare your item.</p>
+            <p className="text-xs text-slate-400 mb-5">Add key product details like brand, model, colour etc. to help buyers find and compare your item.</p>
 
             {/* Quick-add preset keys */}
             <div className="flex flex-wrap gap-2 mb-4">
@@ -802,7 +1040,7 @@ export function DirectSalePage() {
                       value={spec.key}
                       onChange={(e) => setSpecifications((prev) => prev.map((s, j) => j === i ? { ...s, key: e.target.value } : s))}
                       placeholder="Property"
-                      className="w-32 flex-shrink-0 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
+                      className="w-32 flex-shrink-0 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
                     />
                     <span className="text-gray-300 text-sm">:</span>
                     <input
@@ -810,12 +1048,12 @@ export function DirectSalePage() {
                       value={spec.value}
                       onChange={(e) => setSpecifications((prev) => prev.map((s, j) => j === i ? { ...s, value: e.target.value } : s))}
                       placeholder="Value"
-                      className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
+                      className="flex-1 border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
                     />
                     <button
                       type="button"
                       onClick={() => setSpecifications((prev) => prev.filter((_, j) => j !== i))}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -831,7 +1069,7 @@ export function DirectSalePage() {
                 value={newSpecKey}
                 onChange={(e) => setNewSpecKey(e.target.value)}
                 placeholder="Property (e.g. Battery Life)"
-                className="w-40 flex-shrink-0 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                className="w-40 flex-shrink-0 border border-gray-200 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
               />
               <input
                 type="text"
@@ -848,7 +1086,7 @@ export function DirectSalePage() {
                   }
                 }}
                 placeholder="Value (e.g. 20 hours)"
-                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
               />
               <button
                 type="button"
@@ -867,8 +1105,8 @@ export function DirectSalePage() {
           </section>
 
           {/* Shipping & Details */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-5">Shipping & Details</h2>
+          <section style={{ display: quickMode ? "none" : step === 4 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] text-white px-5 sm:px-7 py-6 border border-sky-400/15">
+            <h2 className="text-base font-bold text-white mb-5">Shipping & Details</h2>
 
             {/* Quantity + SKU */}
             {(() => {
@@ -878,7 +1116,7 @@ export function DirectSalePage() {
               return (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-200 mb-1.5 flex items-center gap-2">
                   Quantity
                   {hasVariantQty && (
                     <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">from variants</span>
@@ -895,18 +1133,18 @@ export function DirectSalePage() {
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="input-quantity"
                   />
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">SKU (Optional)</label>
+                <label className="text-sm font-medium text-slate-200 mb-1.5 block">SKU (Optional)</label>
                 <input
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   placeholder="e.g., PROD-12345"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                   data-testid="input-sku"
                 />
               </div>
@@ -916,8 +1154,8 @@ export function DirectSalePage() {
 
             {/* Ship From Country */}
             <div className="mb-5">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Ship From</label>
-              <div className="grid grid-cols-5 gap-2 mb-3">
+              <label className="text-sm font-medium text-slate-200 mb-2 block">Ship From</label>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
                 {SHIP_ORIGINS.map((o) => {
                   const sel = shipOrigin === o.id;
                   return (
@@ -947,7 +1185,7 @@ export function DirectSalePage() {
                   value={countryOther}
                   onChange={(e) => setCountryOther(e.target.value)}
                   placeholder="Enter your country…"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] mb-3"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] mb-3"
                   data-testid="input-country-other"
                 />
               )}
@@ -955,7 +1193,7 @@ export function DirectSalePage() {
 
             {/* Shipping Zone */}
             <div className="mb-5">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Where will you ship?</label>
+              <label className="text-sm font-medium text-slate-200 mb-2 block">Where will you ship?</label>
               <div className="flex flex-wrap gap-2">
                 {(SHIP_ZONES[shipOrigin] ?? SHIP_ZONES.Other).map((z) => {
                   const sel = shipZone === z.id;
@@ -969,8 +1207,8 @@ export function DirectSalePage() {
                       }`}
                       data-testid={`button-zone-${z.id}`}
                     >
-                      <span className={`text-sm font-bold ${sel ? "text-[#F26B21]" : "text-gray-800"}`}>{z.label}</span>
-                      <span className="text-[10px] text-gray-400 leading-tight">{z.desc}</span>
+                      <span className={`text-sm font-bold ${sel ? "text-[#F26B21]" : "text-slate-100"}`}>{z.label}</span>
+                      <span className="text-[10px] text-slate-400 leading-tight">{z.desc}</span>
                     </button>
                   );
                 })}
@@ -979,7 +1217,7 @@ export function DirectSalePage() {
 
             {/* Carrier Selection */}
             <div className="mb-5">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Carrier</label>
+              <label className="text-sm font-medium text-slate-200 mb-2 block">Carrier</label>
               <div className="space-y-2">
                 {(CARRIERS[shipOrigin] ?? CARRIERS.Other).map((c) => {
                   const sel = carrier === c.id;
@@ -1000,11 +1238,11 @@ export function DirectSalePage() {
                         {c.label.split(" ").map((w) => w[0]).join("").slice(0, 3)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${sel ? "text-[#4A5CE8]" : "text-gray-800"}`}>{c.label}</p>
-                        <p className="text-xs text-gray-400 truncate">{c.desc}</p>
+                        <p className={`text-sm font-semibold ${sel ? "text-[#4A5CE8]" : "text-slate-100"}`}>{c.label}</p>
+                        <p className="text-xs text-slate-400 truncate">{c.desc}</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{c.eta}</span>
+                        <span className="text-[10px] font-bold text-slate-400 bg-gray-100 px-2 py-0.5 rounded-full">{c.eta}</span>
                         {sel && <CheckCircle2 className="w-5 h-5 text-[#4A5CE8]" />}
                       </div>
                     </button>
@@ -1016,9 +1254,9 @@ export function DirectSalePage() {
             {/* Shipping Price + Handling */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Shipping Price</label>
+                <label className="text-sm font-medium text-slate-200 mb-1.5 block">Shipping Price</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">{currency.split(" ")[0]}</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-300">{currency.split(" ")[0]}</span>
                   <input
                     type="number"
                     min="0"
@@ -1026,15 +1264,15 @@ export function DirectSalePage() {
                     value={shippingPrice}
                     onChange={(e) => setShippingPrice(e.target.value)}
                     placeholder="0.00"
-                    className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                    className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="input-shipping-price"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Handling Charge (Optional)</label>
+                <label className="text-sm font-medium text-slate-200 mb-1.5 block">Handling Charge (Optional)</label>
                 <div className="relative">
-                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">{currency.split(" ")[0]}</span>
+                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-300">{currency.split(" ")[0]}</span>
                   <input
                     type="number"
                     min="0"
@@ -1042,7 +1280,7 @@ export function DirectSalePage() {
                     value={handlingCharge}
                     onChange={(e) => setHandlingCharge(e.target.value)}
                     placeholder="0.00"
-                    className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                    className="w-full border border-gray-200 rounded-lg pl-7 pr-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                     data-testid="input-handling-charge"
                   />
                 </div>
@@ -1051,39 +1289,39 @@ export function DirectSalePage() {
 
             {/* Tags */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Tags (comma-separated)</label>
+              <label className="text-sm font-medium text-slate-200 mb-1.5 block">Tags (comma-separated)</label>
               <input
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="vintage, rare, collectible, mint condition..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                 data-testid="input-tags"
               />
-              <p className="text-xs text-gray-400 mt-1">Add relevant tags to help buyers find your item</p>
+              <p className="text-xs text-slate-400 mt-1">Add relevant tags to help buyers find your item</p>
             </div>
           </section>
 
           {/* Premium Video */}
-          <section className="bg-[#FFFBEB] px-7 py-7 border-x border-b border-yellow-100">
+          <section id="product-video" style={{ display: quickMode ? "none" : step === 5 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#201b40] px-5 sm:px-7 py-6 border border-purple-400/25">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-yellow-400 flex items-center justify-center">
                   <Video className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="font-bold text-gray-900">Premium Video</span>
+                <span className="font-bold text-white">Premium Video</span>
               </div>
               <span className="text-xs font-bold bg-[#F26B21] text-white px-3 py-1 rounded-full">{productVideoCredits} credits</span>
             </div>
-            <p className="text-sm text-gray-500 mb-5">
+            <p className="text-sm text-slate-300 mb-5">
               Add a video to showcase your item in action. Videos increase engagement by 300%!
             </p>
-            <p className="text-xs text-gray-500 mt-1">{productVideoCredits} credits are deducted only when the listing is successfully published.</p>
+            <p className="text-xs text-slate-300 mt-1">{productVideoCredits} credits are deducted only when the listing is successfully published.</p>
 
             <div className="bg-white rounded-xl border border-yellow-100 p-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-gray-900 text-sm">Product Video</p>
-                  <p className="text-xs text-gray-400">Videos get 5x more engagement</p>
+                  <p className="font-semibold text-white text-sm">Product Video</p>
+                  <p className="text-xs text-slate-400">Videos get 5x more engagement</p>
                 </div>
                 <button
                   type="button"
@@ -1109,9 +1347,9 @@ export function DirectSalePage() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#7C3AED] to-[#EC4899] flex items-center justify-center mb-4 shadow-md">
                 <Video className="w-7 h-7 text-white" />
               </div>
-              <p className="font-bold text-gray-800 text-lg mb-1">Add Product Video</p>
-              <p className="text-sm text-gray-500 mb-1">Show your item in action</p>
-              <p className="text-xs text-gray-400 mb-5">MP4, MOV, AVI • Max 100MB • Premium feature</p>
+              <p className="font-bold text-slate-100 text-lg mb-1">Add Product Video</p>
+              <p className="text-sm text-slate-300 mb-1">Show your item in action</p>
+              <p className="text-xs text-slate-400 mb-5">MP4, MOV, AVI • Max 100MB • Premium feature</p>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); if (premiumVideo) videoInputRef.current?.click(); }}
@@ -1129,7 +1367,7 @@ export function DirectSalePage() {
             </div>
 
             {/* Benefits */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { icon: Eye, label: "5x More Views", desc: "Videos dramatically increase engagement" },
                 { icon: Zap, label: "Sell 3x Faster", desc: "Videos build trust and confidence" },
@@ -1141,8 +1379,8 @@ export function DirectSalePage() {
                     <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-2">
                       <Icon className="w-4 h-4 text-green-500" />
                     </div>
-                    <p className="text-xs font-bold text-gray-800 mb-1">{b.label}</p>
-                    <p className="text-[10px] text-gray-400">{b.desc}</p>
+                    <p className="text-xs font-bold text-slate-900 mb-1">{b.label}</p>
+                    <p className="text-[10px] text-slate-400">{b.desc}</p>
                   </div>
                 );
               })}
@@ -1150,9 +1388,9 @@ export function DirectSalePage() {
           </section>
 
           {/* Ready to List */}
-          <section className="bg-white px-7 py-7 rounded-b-2xl border-x border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Ready to List?</h2>
-            <p className="text-sm text-gray-500 mb-4">Review your listing and publish when ready</p>
+          <section data-quick-panel="publish" style={{ display: quickMode || step === 6 ? "block" : "none" }} className="min-w-0 rounded-2xl bg-[#102541] px-5 sm:px-7 py-6 border border-sky-400/15">
+            <h2 className="text-lg font-bold text-white mb-1">Ready to List?</h2>
+            <p className="text-sm text-slate-300 mb-4">Review your listing and publish when ready</p>
 
             {/* Validation errors */}
             <AnimatePresence>
@@ -1196,20 +1434,20 @@ export function DirectSalePage() {
               <button
                 type="button"
                 onClick={handleSaveDraft}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-semibold text-sm hover:border-gray-400 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border-2 border-sky-300/60 bg-[#142d50] text-white font-bold text-base hover:bg-[#20436e] transition-colors"
                 data-testid="button-save-draft"
               >
                 <Save className="w-4 h-4" />
-                {draftSaved ? "Draft Saved!" : t("saveDraft")}
+                {savingDraft ? "Saving..." : draftSaved ? "Draft Saved!" : "Save as Draft"}
               </button>
               <button
                 type="submit"
                 disabled={published || publishing}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#3B4FD8] to-[#1E3A8A] text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0867ff] to-[#3558ed] text-white font-black text-base hover:from-[#2782ff] hover:to-[#536fff] transition-all shadow-lg shadow-blue-900/40 disabled:opacity-70"
                 data-testid="button-publish-listing"
               >
                 <Bell className="w-4 h-4" />
-                {published ? "Published! Redirecting…" : publishing ? "Publishing…" : t("publishListing")}
+                {published ? "Published! Redirecting…" : publishing ? "Publishing…" : "Publish Listing"}
               </button>
             </div>
 
@@ -1235,6 +1473,27 @@ export function DirectSalePage() {
               )}
             </AnimatePresence>
           </section>
+          {/* Fixed on phones: never make people scroll through the full editor to find Submit. */}
+          <div data-testid="mobile-direct-sale-actions" className="fixed inset-x-0 bottom-0 z-[70] border-t border-slate-500 bg-[#102541]/95 px-4 pt-3 text-white shadow-[0_-8px_25px_rgba(0,0,0,.4)] backdrop-blur-lg lg:hidden"
+            style={{paddingBottom:"max(12px, env(safe-area-inset-bottom))"}}>
+            <div className="mx-auto flex max-w-lg items-center gap-2">
+              {!quickMode&&mobilePosition>0&&<button type="button" onClick={mobileBack} className="min-h-12 rounded-xl border border-slate-400 px-4 text-sm font-bold text-white">Back</button>}
+              <button type="button" onClick={()=>void handleSaveDraft()} disabled={savingDraft||publishing}
+                className="min-h-12 rounded-xl border border-sky-400/50 px-3 text-xs font-bold text-slate-100 disabled:opacity-70"
+                data-testid="mobile-save-draft">{savingDraft?"Saving…":draftSaved?"Saved ✓":"Save draft"}</button>
+              {quickMode||mobilePosition===mobileSteps.length-1?
+                <button type="submit" disabled={publishing||published}
+                  data-testid="mobile-publish-listing"
+                  className="min-h-12 flex-1 rounded-xl bg-orange-600 px-3 text-base font-black text-white disabled:opacity-60">
+                  {publishing?"Publishing…":published?"Published ✓":"Publish listing"}
+                </button>:
+                <button type="button" onClick={mobileContinue} data-testid="mobile-next-listing"
+                  className="min-h-12 flex-1 rounded-xl bg-orange-600 px-3 text-base font-black text-white">
+                  {mobilePosition===mobileSteps.length-2?"Review listing →":"Continue →"}
+                </button>}
+            </div>
+            {publishError&&<p role="alert" className="mx-auto mt-2 max-w-lg text-sm font-bold text-red-200">{publishError}</p>}
+          </div>
         </form>
       </div>
 

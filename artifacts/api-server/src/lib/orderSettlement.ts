@@ -71,10 +71,28 @@ export async function releaseOrderPayout(id:string) {
     const open=(await tx.execute(sql`SELECT 1 FROM disputes WHERE order_id=${id} AND status NOT IN ('closed','resolved_no_action','resolved_refund') UNION ALL SELECT 1 FROM returns WHERE order_id=${id} AND status NOT IN ('closed','declined','refund_issued') LIMIT 1`)).rows;
     if(open.length)throw new Error("Resolve the open dispute or return before releasing payout.");
     if(reconciled.netMinor<=0)throw new Error("No seller proceeds remain to transfer.");
-    const seller=(await tx.execute(sql`SELECT stripe_account_id FROM users WHERE LOWER(email)=LOWER(${order.seller_email}) LIMIT 1`)).rows[0] as any;
+    const seller=(await tx.execute(sql`SELECT stripe_account_id,onboarding_completed FROM users WHERE LOWER(email)=LOWER(${order.seller_email}) LIMIT 1`)).rows[0] as any;
+    if(seller?.onboarding_completed!==true)throw new Error("Seller must complete all account setup steps before payouts can be released.");
+    // Re-check the seller declaration at the actual money-movement boundary,
+    // not only at wizard completion.
+    const declaration=(await tx.execute(sql`SELECT 1 FROM seller_declarations d
+      JOIN users u ON LOWER(u.email)=LOWER(d.seller_email)
+      WHERE LOWER(u.email)=LOWER(${order.seller_email})
+        AND d.declared_type=u.seller_type AND d.declaration_version='2026-10-11-v1'
+      LIMIT 1`)).rows;
+    if(!declaration.length)throw new Error("Accept the current seller declaration before payouts can be released.");
     if(!seller?.stripe_account_id)throw new Error("Seller must connect a Stripe payout account first.");
-    const account=await stripe.accounts.retrieve(seller.stripe_account_id);
-    if(account.capabilities?.transfers!=="active" || !account.payouts_enabled)throw new Error("Seller's Stripe account is not ready for transfers and payouts.");
+    // Sellers are onboarded using Accounts v2 recipient configuration. Validate
+    // the same capabilities used by the onboarding status route, rather than
+    // rejecting a v2 account based on legacy Account fields.
+    const account=await stripe.v2.core.accounts.retrieve(seller.stripe_account_id, {
+      include:["configuration.recipient","requirements"]
+    } as any,{apiVersion:"2026-09-30.endive" as any});
+    const recipient=(account as any).configuration?.recipient;
+    const transfers=recipient?.capabilities?.stripe_balance?.stripe_transfers;
+    const payouts=recipient?.capabilities?.stripe_balance?.payouts;
+    if(transfers?.status!=="active" || (payouts && payouts.status!=="active"))
+      throw new Error("Seller's Stripe recipient account is not ready for transfers and payouts.");
     const charge=session.payment_intent.latest_charge;
     if(!charge?.id)throw new Error("Payment charge is not available.");
     const transfer=await stripe.transfers.create({amount:reconciled.netMinor,currency:"gbp",destination:seller.stripe_account_id,source_transaction:charge.id,transfer_group:`bazunk-${session.id}`,metadata:{bazunk_order_id:id}},{idempotencyKey:`order-payout-${id}`});

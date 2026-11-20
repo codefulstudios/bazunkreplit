@@ -29,6 +29,7 @@ type GtExpiry = "7" | "14" | "30" | "unlimited";
 type EbaySite = "uk" | "us";
 
 interface SearchResult {
+  currency?: "GBP" | "USD";
   asin: string;
   title: string;
   price_gbp: number;
@@ -67,6 +68,7 @@ interface Specs {
   asin?: string;
   amazon_url?: string;
   amazon_price_gbp?: number;
+  source_currency?: string;
   shipping_gbp?: number;
   markup_pct?: number;
 }
@@ -77,9 +79,9 @@ function parseSpecs(raw: string | null): Specs {
 
 interface UserOption { email: string; name: string | null; }
 
-export function AdminImportsPage() {
+export function AdminImportsPage({ source = "amazon" }: { source?: "amazon" | "ebay" | "aliexpress" | "gumtree" }) {
   const { authFetch } = useAdmin();
-  const [tab, setTab] = useState<Tab>("amazon");
+  const tab: Tab = source;
 
   // ── Search state ──────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,6 +94,8 @@ export function AdminImportsPage() {
 
   // ── Selection & import state ──────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [amazonSelectionCache,setAmazonSelectionCache] = useState<Record<string,SearchResult>>({});
+  const amazonSearchRequest = useRef(0);
   const [markup, setMarkup] = useState("35");
   const [shipping, setShipping] = useState("3.99");
   const [importCategory, setImportCategory] = useState("");
@@ -127,13 +131,21 @@ export function AdminImportsPage() {
 
   // ── eBay state ────────────────────────────────────────────────
   const [ebaySite, setEbaySite]             = useState<EbaySite>("uk");
+  const [amazonSite, setAmazonSite] = useState<EbaySite>("uk");
   const [ebayQuery, setEbayQuery]           = useState("");
+  const [ebayCondition,setEbayCondition] = useState("all");
+  const [ebayShipFrom,setEbayShipFrom] = useState("GB");
+  const [ebayShipTo,setEbayShipTo] = useState("GB");
   const [ebayPage, setEbayPage]             = useState(1);
+  const [ebayProviderCount,setEbayProviderCount] = useState(0);
+  const [ebayTotalResults,setEbayTotalResults] = useState<number|null>(null);
+  const ebayRequestId = useRef(0);
   const [ebaySearching, setEbaySearching]   = useState(false);
   const [ebayResults, setEbayResults]       = useState<EbaySearchResult[]>([]);
   const [ebaySearchErr, setEbaySearchErr]   = useState<string | null>(null);
   const [ebayHasSearched, setEbayHasSearched] = useState(false);
   const [ebaySelected, setEbaySelected]     = useState<Set<string>>(new Set());
+  const [ebaySelectionCache,setEbaySelectionCache] = useState<Record<string,EbaySearchResult>>({});
   const [ebayMarkup, setEbayMarkup]         = useState("35");
   const [ebayShipping, setEbayShipping]     = useState("3.99");
   const [ebayCat, setEbayCat]               = useState("");
@@ -176,6 +188,21 @@ export function AdminImportsPage() {
   const [aliSeller, setAliSeller] = useState("bazunkdeals@gmail.com");
   const [aliModalOpen, setAliModalOpen] = useState(false);
   const [aliDone, setAliDone] = useState(0);
+  const [aliUrls, setAliUrls] = useState("");
+  const [aliQueued, setAliQueued] = useState<string[]>([]);
+  const [aliSelected, setAliSelected] = useState<Set<string>>(new Set());
+  const [aliActiveUrl, setAliActiveUrl] = useState("");
+  const [aliMarkup, setAliMarkup] = useState("30");
+  const [aliShipping, setAliShipping] = useState("0");
+  const [aliNotice, setAliNotice] = useState("");
+  const [aliQuery, setAliQuery] = useState("");
+  const [aliPage, setAliPage] = useState(1);
+  const [aliSearching, setAliSearching] = useState(false);
+  const [aliBulkImporting, setAliBulkImporting] = useState(false);
+  const [aliBulkSelected, setAliBulkSelected] = useState<Set<string>>(new Set());
+  const [aliSearchError, setAliSearchError] = useState("");
+  const [aliSearched, setAliSearched] = useState(false);
+  const [aliProducts, setAliProducts] = useState<Array<{id:string;title:string;priceUsd:number;image:string;rating:number;sales:number;url:string}>>([]);
 
   const PAGE_SIZE = 50;
 
@@ -202,7 +229,7 @@ export function AdminImportsPage() {
     setLoadingList(true);
     try {
       const params = new URLSearchParams({
-        imported: "1",
+        source: amazonSite === "uk" ? "amazon-uk" : "amazon-us",
         limit: String(PAGE_SIZE),
         offset: String(page * PAGE_SIZE),
         ...(tableSearch ? { search: tableSearch } : {}),
@@ -216,51 +243,51 @@ export function AdminImportsPage() {
     } finally {
       setLoadingList(false);
     }
-  }, [authFetch, page, tableSearch]);
+  }, [authFetch, page, tableSearch, amazonSite]);
 
-  useEffect(() => { loadListings(); }, [loadListings]);
+  useEffect(() => { if (tab === "amazon") void loadListings(); }, [loadListings, tab]);
 
   // ── Search ────────────────────────────────────────────────────
   async function handleSearch(e?: React.FormEvent) {
+    const requestId = ++amazonSearchRequest.current;
     e?.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
     setSearching(true);
     setSearchError(null);
-    setSelected(new Set());
     setImportMsg(null);
     try {
-      const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}`);
+      const r = await authFetch(`/api/admin/search-amazon?q=${encodeURIComponent(q)}&page=${searchPage}&site=${amazonSite}`);
       const d = await r.json() as { products?: SearchResult[]; error?: string };
+      if (requestId !== amazonSearchRequest.current) return;
       if (!r.ok) { setSearchError(d.error ?? "Search failed"); setSearchResults([]); }
       else { setSearchResults(d.products ?? []); setHasSearched(true); }
     } catch {
+      if (requestId !== amazonSearchRequest.current) return;
       setSearchError("Network error — check your connection");
       setSearchResults([]);
     } finally {
-      setSearching(false);
+      if (requestId === amazonSearchRequest.current) setSearching(false);
     }
   }
 
+  useEffect(() => { if (hasSearched) void handleSearch(); }, [searchPage]);
+
   function toggleSelect(asin: string) {
-    setSelected(prev => {
-      const next = new Set(prev);
-      next.has(asin) ? next.delete(asin) : next.add(asin);
-      return next;
-    });
+    const product=searchResults.find(p=>p.asin===asin);
+    setSelected(prev=>{const next=new Set(prev);if(next.has(asin))next.delete(asin);else next.add(asin);return next;});
+    setAmazonSelectionCache(prev=>{const next={...prev};if(selected.has(asin))delete next[asin];else if(product)next[asin]=product;return next;});
   }
 
   function toggleAll() {
-    if (selected.size === searchResults.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(searchResults.map(p => p.asin)));
-    }
+    const allSelected=searchResults.length>0&&searchResults.every(p=>selected.has(p.asin));
+    setSelected(prev=>{const next=new Set(prev);for(const p of searchResults){if(allSelected)next.delete(p.asin);else next.add(p.asin);}return next;});
+    setAmazonSelectionCache(prev=>{const next={...prev};for(const p of searchResults){if(allSelected)delete next[p.asin];else next[p.asin]=p;}return next;});
   }
 
   // ── Import selected ───────────────────────────────────────────
   async function handleImportSelected() {
-    const products = searchResults.filter(p => selected.has(p.asin));
+    const products = Object.values(amazonSelectionCache).filter(p=>selected.has(p.asin));
     if (!products.length) return;
     if (!importCategory) { setImportMsg({ ok: false, text: "Choose a category before importing." }); return; }
     setImporting(true);
@@ -271,6 +298,7 @@ export function AdminImportsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           products,
+          site: amazonSite,
           markup: parseFloat(markup) || 35,
           shipping: parseFloat(shipping) || 3.99,
           category: importCategory,
@@ -282,6 +310,7 @@ export function AdminImportsPage() {
       if (r.ok) {
         setImportMsg({ ok: true, text: d.message ?? `Imported ${d.imported} products` });
         setSelected(new Set());
+        setAmazonSelectionCache({});
         loadListings();
       } else {
         setImportMsg({ ok: false, text: d.error ?? "Import failed" });
@@ -377,7 +406,7 @@ export function AdminImportsPage() {
   const loadEbayListings = useCallback(async () => {
     setEbayLoadingList(true);
     try {
-      const r = await authFetch(`/api/admin/listings?source=ebay&limit=${PAGE_SIZE}&offset=${ebayListPage * PAGE_SIZE}${ebayTableSearch ? `&search=${encodeURIComponent(ebayTableSearch)}` : ""}`);
+      const r = await authFetch(`/api/admin/listings?source=ebay-${ebaySite}&limit=${PAGE_SIZE}&offset=${ebayListPage * PAGE_SIZE}${ebayTableSearch ? `&search=${encodeURIComponent(ebayTableSearch)}` : ""}`);
       if (r.ok) {
         const d = await r.json() as { listings: AmazonListing[]; total: number };
         setEbayListings(d.listings ?? []);
@@ -386,42 +415,54 @@ export function AdminImportsPage() {
     } finally {
       setEbayLoadingList(false);
     }
-  }, [authFetch, ebayListPage, ebayTableSearch]);
+  }, [authFetch, ebayListPage, ebayTableSearch, ebaySite]);
 
   useEffect(() => { if (tab === "ebay") loadEbayListings(); }, [tab, loadEbayListings]);
 
   // ── eBay search ───────────────────────────────────────────────
-  async function handleEbaySearch(e?: React.FormEvent) {
+  async function handleEbaySearch(e?: React.FormEvent, requestedPage = 1) {
     e?.preventDefault();
     const q = ebayQuery.trim();
     if (!q) return;
+    const id = ++ebayRequestId.current;
     setEbaySearching(true);
     setEbaySearchErr(null);
-    setEbaySelected(new Set());
     setEbayImportMsg(null);
+    if(requestedPage===1){setEbayPage(1);setEbayTotalResults(null);setEbayProviderCount(0);setEbaySelected(new Set());setEbaySelectionCache({});}
     try {
-      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${ebayPage}`);
-      const d = await r.json() as { products?: EbaySearchResult[]; error?: string };
-      if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); setEbayResults([]); }
-      else { setEbayResults(d.products ?? []); setEbayHasSearched(true); }
+      const r = await authFetch(`/api/admin/search-ebay?q=${encodeURIComponent(q)}&site=${ebaySite}&page=${requestedPage}&condition=${ebayCondition}&shipFrom=${ebayShipFrom}&shipTo=${ebayShipTo}`);
+      const d = await r.json() as { products?: EbaySearchResult[]; error?: string; notice?:string; total?:number; diagnostics?:{providerCount:number;locationAndCurrencyCount:number;returnedCount:number} };
+      if(id!==ebayRequestId.current)return;
+      if (!r.ok) { setEbaySearchErr(d.error ?? "Search failed"); if(requestedPage===1)setEbayResults([]); }
+      else {
+        setEbayResults(d.products ?? []); setEbayHasSearched(true);setEbayPage(requestedPage);
+        setEbayProviderCount(d.diagnostics?.providerCount??(d.products?.length??0));
+        if(requestedPage>1 && (d.diagnostics?.providerCount??d.products?.length??0)===0)setEbaySearchErr("End of provider results. Go back to the previous page.");
+        setEbayTotalResults(typeof d.total==="number"&&d.total>requestedPage*50?d.total:null);
+        if(d.notice)setEbaySearchErr(d.notice);
+      }
     } catch {
+      if(id!==ebayRequestId.current)return;
       setEbaySearchErr("Network error — check your connection");
-      setEbayResults([]);
+      if(requestedPage===1)setEbayResults([]);
     } finally {
-      setEbaySearching(false);
+      if(id===ebayRequestId.current)setEbaySearching(false);
     }
   }
 
   function toggleEbaySelect(id: string) {
-    setEbaySelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    const product=ebayResults.find(p=>p.item_id===id);
+    setEbaySelected(prev=>{const next=new Set(prev);if(next.has(id)){next.delete(id);setEbaySelectionCache(cache=>{const copy={...cache};delete copy[id];return copy;});}else{next.add(id);if(product)setEbaySelectionCache(cache=>({...cache,[id]:product}));}return next;});
   }
   function toggleAllEbay() {
-    setEbaySelected(ebaySelected.size === ebayResults.length ? new Set() : new Set(ebayResults.map(p => p.item_id)));
+    const allSelected=ebayResults.every(p=>ebaySelected.has(p.item_id));
+    setEbaySelected(prev=>{const next=new Set(prev);for(const p of ebayResults){if(allSelected)next.delete(p.item_id);else next.add(p.item_id);}return next;});
+    setEbaySelectionCache(prev=>{const next={...prev};for(const p of ebayResults){if(allSelected)delete next[p.item_id];else next[p.item_id]=p;}return next;});
   }
 
   // ── eBay import ───────────────────────────────────────────────
   async function handleEbayImport() {
-    const products = ebayResults.filter(p => ebaySelected.has(p.item_id));
+    const products = Object.values(ebaySelectionCache).filter(p=>ebaySelected.has(p.item_id));
     if (!products.length) return;
     if (!ebayCat) { setEbayImportMsg({ ok: false, text: "Choose a category before importing." }); return; }
     setEbayImporting(true);
@@ -442,6 +483,7 @@ export function AdminImportsPage() {
       if (r.ok) {
         setEbayImportMsg({ ok: true, text: d.message ?? `Imported ${d.imported} products` });
         setEbaySelected(new Set());
+        setEbaySelectionCache({});
         loadEbayListings();
       } else {
         setEbayImportMsg({ ok: false, text: d.error ?? "Import failed" });
@@ -572,28 +614,14 @@ export function AdminImportsPage() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-black text-gray-900">Imports</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Search Amazon UK or eBay, choose products, import with your markup</p>
+          <h1 className="text-xl font-black text-gray-900 dark:text-white">{source === "amazon" ? "Amazon importer" : source === "ebay" ? "eBay importer" : source === "aliexpress" ? "AliExpress importer" : "Gumtree importer"}</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Manage this source independently. Configure shared API credentials under Importers → General Settings.</p>
         </div>
       </div>
 
-      <RapidApiPanel />
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit flex-wrap">
-        {(["amazon", "ebay", "aliexpress", "gumtree"] as Tab[]).map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-              tab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {t === "amazon" ? "🛒 Amazon UK" : t === "ebay" ? "🏷️ eBay" : t === "aliexpress" ? "📦 AliExpress" : "📋 Gumtree"}
-          </button>
-        ))}
-      </div>
 
+      {tab === "amazon" && <div className="flex gap-2 mb-4"><button className={amazonSite==="uk"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("uk");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇬🇧 Amazon UK imports</button><button className={amazonSite==="us"?"font-bold underline":"opacity-70"} onClick={()=>{amazonSearchRequest.current++;setAmazonSite("us");setPage(0);setSearchPage(1);setSearchResults([]);setHasSearched(false);setSelected(new Set());setAmazonSelectionCache({});}}>🇺🇸 Amazon USA imports</button></div>}
       <AnimatePresence mode="wait">
         {tab === "amazon" && (
           <motion.div key="amazon" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
@@ -605,7 +633,7 @@ export function AdminImportsPage() {
                     <Search className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900">Search Amazon UK</p>
+                    <p className="font-bold text-gray-900">Search Amazon {amazonSite === "us" ? "USA (.com)" : "UK (.co.uk)"}</p>
                     <p className="text-xs text-gray-400">Find products, tick the ones you want, set your markup and import</p>
                   </div>
                 </div>
@@ -772,9 +800,9 @@ export function AdminImportsPage() {
 
                           {/* Prices */}
                           <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
-                            <span className="text-xs text-gray-500">Amazon: <span className="font-bold text-gray-700">£{p.price_gbp.toFixed(2)}</span></span>
+                            <span className="text-xs text-gray-500">Amazon: <span className="font-bold text-gray-700">{p.currency === "USD" || amazonSite === "us" ? "$" : "£"}{p.price_gbp.toFixed(2)}</span></span>
                             {bazunkPreview !== null && (
-                              <span className="text-xs font-black text-[#F26B21]">£{bazunkPreview.toFixed(2)}</span>
+                              <span className="text-xs font-black text-[#F26B21]">{p.currency === "USD" || amazonSite === "us" ? "$" : "£"}{bazunkPreview.toFixed(2)}</span>
                             )}
                           </div>
 
@@ -800,7 +828,7 @@ export function AdminImportsPage() {
                       </button>
                       <span className="text-xs text-gray-500">Page {searchPage}</span>
                       <button onClick={() => { setSearchPage(p => p + 1); }}
-                        disabled={searching || searchResults.length < 5}
+                        disabled={searching || searchResults.length === 0}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
@@ -816,7 +844,7 @@ export function AdminImportsPage() {
               {!hasSearched && !searching && (
                 <div className="py-10 text-center text-gray-400 text-sm">
                   <Search className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                  Search for a product above to see Amazon UK results
+                  Search for a product above to see Amazon {amazonSite === "us" ? "USA" : "UK"} results
                 </div>
               )}
             </div>
@@ -958,7 +986,7 @@ export function AdminImportsPage() {
                               {amazonPrice != null ? `£${amazonPrice.toFixed(2)}` : "—"}
                             </td>
                             <td className="px-4 py-3 font-black text-[#F26B21]">
-                              £{bazunkPrice.toFixed(2)}
+                              {amazonSite === "us" ? "$" : "£"}{bazunkPrice.toFixed(2)}
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                               {specs.markup_pct != null ? `${specs.markup_pct}% + £${specs.shipping_gbp ?? 0}` : "—"}
@@ -967,8 +995,8 @@ export function AdminImportsPage() {
                               <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{specs.asin ?? "—"}</code>
                             </td>
                             <td className="px-4 py-3">
-                              {specs.amazon_url && (
-                                <a href={specs.amazon_url} target="_blank" rel="noopener noreferrer"
+                              {(specs.amazon_url || specs.asin) && (
+                                <a href={specs.amazon_url || `https://${amazonSite==="us"?"www.amazon.com":"www.amazon.co.uk"}/dp/${encodeURIComponent(specs.asin!)}`} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-bold hover:bg-amber-100 transition-colors">
                                   Amazon <ExternalLink className="w-3 h-3" />
                                 </a>
@@ -1010,7 +1038,7 @@ export function AdminImportsPage() {
               <Globe className="w-4 h-4 text-gray-400" />
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit">
                 {(["uk", "us"] as EbaySite[]).map(s => (
-                  <button key={s} onClick={() => { setEbaySite(s); setEbayResults([]); setEbayHasSearched(false); setEbaySelected(new Set()); }}
+                  <button key={s} onClick={() => { ebayRequestId.current++;setEbaySite(s);setEbayPage(1);setEbayResults([]);setEbayHasSearched(false);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null); }}
                     className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${
                       ebaySite === s ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                     }`}>
@@ -1029,7 +1057,7 @@ export function AdminImportsPage() {
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">Search {ebaySite === "uk" ? "eBay.co.uk" : "eBay.com"}</p>
-                    <p className="text-xs text-gray-400">{ebaySite === "uk" ? "UK-located items deliverable to the UK only" : "US-located items deliverable to the USA only"} · tick items, set markup and import</p>
+                    <p className="text-xs text-gray-400">{ebaySite === "uk" ? "Search UK marketplace listings with configurable shipping filters" : "Search US marketplace listings with configurable shipping filters"} · tick items, set markup and import</p>
                   </div>
                 </div>
                 <form onSubmit={handleEbaySearch} className="flex gap-2">
@@ -1051,6 +1079,24 @@ export function AdminImportsPage() {
                     {ebaySearching ? "Searching…" : "Search"}
                   </button>
                 </form>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+                  <label className="text-xs font-semibold text-gray-600">Condition
+                    <select value={ebayCondition} onChange={e=>{setEbayCondition(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      <option value="all">All conditions</option><option value="new">New</option><option value="used">Used</option><option value="refurbished">Refurbished</option><option value="open-box">Open box</option><option value="parts">For parts / not working</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-600">Ships from
+                    <select value={ebayShipFrom} onChange={e=>{setEbayShipFrom(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      <option value="ALL">All locations</option>{[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-gray-600">Ships to
+                    <select value={ebayShipTo} onChange={e=>{setEbayShipTo(e.target.value);setEbayPage(1);setEbayHasSearched(false);setEbayResults([]);setEbaySelected(new Set());setEbaySelectionCache({});setEbayTotalResults(null);ebayRequestId.current++;}} className="block w-full mt-1 rounded-lg border border-gray-300 bg-white text-gray-900 p-2">
+                      {[["GB","United Kingdom"],["US","United States"],["DE","Germany"],["FR","France"],["IT","Italy"],["ES","Spain"],["CA","Canada"],["AU","Australia"],["IE","Ireland"]].map(([code,name])=><option key={code} value={code}>{name}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Delivery eligibility is requested from the eBay search provider; confirm shipping on the original listing before importing.</p>
                 {ebaySearchErr && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-xl">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" /> {ebaySearchErr}
@@ -1168,14 +1214,14 @@ export function AdminImportsPage() {
                   </div>
 
                   <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{ebayResults.length} results on this page</span>
+                    <span className="text-xs text-gray-400">{ebayResults.length} matching results on page {ebayPage}{ebayTotalResults!==null?` · Provider total: ${ebayTotalResults}`:""}</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setEbayPage(p => Math.max(1, p - 1))} disabled={ebayPage === 1 || ebaySearching}
+                      <button onClick={() => void handleEbaySearch(undefined, Math.max(1, ebayPage - 1))} disabled={ebayPage === 1 || ebaySearching}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         <ChevronLeft className="w-3 h-3" /> Prev
                       </button>
                       <span className="text-xs text-gray-500">Page {ebayPage}</span>
-                      <button onClick={() => setEbayPage(p => p + 1)} disabled={ebaySearching || ebayResults.length < 5}
+                      <button onClick={() => void handleEbaySearch(undefined, ebayPage + 1)} disabled={ebaySearching || ebayProviderCount === 0}
                         className="px-3 py-1 text-xs font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 transition-colors flex items-center gap-1">
                         Next <ChevronRight className="w-3 h-3" />
                       </button>
@@ -1184,6 +1230,16 @@ export function AdminImportsPage() {
                 </>
               )}
 
+              {ebayHasSearched && ebayResults.length === 0 && !ebaySearching && ebayProviderCount > 0 && (
+                <div className="px-5 py-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-slate-700">No matching listings in provider batch {ebayPage} ({ebayProviderCount} checked). You can check the next batch.</p>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => void handleEbaySearch(undefined,Math.max(1,ebayPage-1))} disabled={ebayPage===1||ebaySearching} className="border border-slate-300 rounded-lg px-3 py-2 text-sm disabled:opacity-40">Previous</button>
+                    <span className="text-sm font-semibold">Page {ebayPage}</span>
+                    <button type="button" onClick={() => void handleEbaySearch(undefined,ebayPage+1)} disabled={ebaySearching||ebayProviderCount===0} className="bg-indigo-600 text-white rounded-lg px-3 py-2 text-sm disabled:opacity-40">Next</button>
+                  </div>
+                </div>
+              )}
               {ebayHasSearched && ebayResults.length === 0 && !ebaySearching && !ebaySearchErr && (
                 <div className="py-10 text-center text-gray-400 text-sm">No results found. Try a different search.</div>
               )}
@@ -1332,8 +1388,8 @@ export function AdminImportsPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3">
-                              {specs.ebay_url && (
-                                <a href={specs.ebay_url} target="_blank" rel="noopener noreferrer"
+                              {(specs.ebay_url || specs.item_id) && (
+                                <a href={specs.ebay_url || `https://www.ebay.${specs.ebay_site==="us"?"com":"co.uk"}/itm/${encodeURIComponent(specs.item_id!)}`} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors">
                                   eBay <ExternalLink className="w-3 h-3" />
                                 </a>
@@ -1351,39 +1407,53 @@ export function AdminImportsPage() {
         )}
 
         {tab === "aliexpress" && (
-          <motion.div key="ali" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-lg mx-auto mt-8">
-              <div className="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📦</span>
-              </div>
-              <h2 className="font-black text-gray-900 text-lg mb-2 text-center">AliExpress Importer</h2>
-              <p className="text-sm text-gray-500 mb-5 text-center">
-                Paste an AliExpress product link, choose the category (same list as Direct Sale), set your markup and import it
-                into the store of the seller below. Prices re-sync automatically.
-              </p>
-              <label className="block text-xs font-semibold text-gray-600 mb-1.5">Import into this seller's store</label>
-              <select value={aliSeller} onChange={e => setAliSeller(e.target.value)}
-                className={inputCls + " w-full mb-4"}>
-                {users.length === 0
-                  ? <option value={aliSeller}>{aliSeller}</option>
-                  : users.map(u => <option key={u.email} value={u.email}>{u.name ? `${u.name} (${u.email})` : u.email}</option>)}
-              </select>
-              <button onClick={() => setAliModalOpen(true)}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#F26B21] text-white font-bold text-sm hover:bg-[#e0601d] transition-colors">
-                <Plus className="w-4 h-4" /> Import an AliExpress product
-              </button>
-              {aliDone > 0 && (
-                <p className="mt-3 text-sm text-green-600 text-center">{aliDone} product{aliDone === 1 ? "" : "s"} imported this session.</p>
-              )}
+          <motion.div key="ali" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 space-y-4">
+              <div><h2 className="font-black text-gray-900">Search AliExpress</h2><p className="text-sm text-gray-500">Find products by keyword, preview prices and choose items to import.</p></div>
+              <form className="flex flex-col sm:flex-row gap-2" onSubmit={async e=>{e.preventDefault();if(!aliQuery.trim())return;setAliSearching(true);setAliSearched(true);setAliSearchError("");setAliProducts([]);setAliPage(1);try{const response=await authFetch("/api/admin/search-aliexpress?q="+encodeURIComponent(aliQuery.trim())+"&page=1");const data=await response.json();if(!response.ok)throw new Error(data.error??"Search failed");setAliProducts(data.products??[]);setAliBulkSelected(new Set())}catch(err){setAliSearchError(err instanceof Error?err.message:"Search failed")}finally{setAliSearching(false)}}}>
+                <input aria-label="Search AliExpress products" value={aliQuery} onChange={e=>setAliQuery(e.target.value)} placeholder="e.g. wireless earbuds, garden lights…" className={inputCls+" min-w-0 flex-1"}/>
+                <button disabled={aliSearching||!aliQuery.trim()} className="rounded-xl bg-orange-500 px-5 py-2.5 font-bold text-white disabled:opacity-50">{aliSearching?"Searching…":"Search products"}</button>
+              </form>
+              {aliSearchError&&<p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{aliSearchError}</p>}
+              {aliSearched&&!aliSearching&&!aliSearchError&&aliProducts.length===0&&<p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">No usable AliExpress products were returned for this search. The Bazunk scraper responded, but could not extract complete listings. Try another keyword or use product URLs below. This is a source-extraction problem, not a successful search.</p>}
+              {aliProducts.length>0&&<>
+                <p className="text-sm text-gray-500">{aliProducts.length} results · Page {aliPage} · {aliBulkSelected.size} selected</p>
+                <div className="flex flex-wrap gap-2"><button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={()=>setAliBulkSelected(new Set(aliProducts.map(p=>p.id)))}>Select all results</button><button type="button" className="rounded-lg border px-3 py-2 text-sm" onClick={()=>setAliBulkSelected(new Set())}>Clear selection</button><button type="button" disabled={aliBulkImporting||!aliBulkSelected.size} className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50" onClick={async()=>{setAliBulkImporting(true);setAliSearchError("");try{const response=await authFetch("/api/admin/import-selected-aliexpress",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids:[...aliBulkSelected].slice(0,30),markup:Number(aliMarkup),shipping:Number(aliShipping),sellerEmail:aliSeller})});const data=await response.json();if(!response.ok)throw new Error(data.error??"Bulk import failed");setAliDone(n=>n+(data.imported??0));setAliNotice(`${data.imported??0} imported; ${(data.results??[]).filter((r:{status:string})=>r.status==="failed").length} failed. ${(data.results??[]).filter((r:{reason?:string})=>r.reason).slice(0,3).map((r:{reason:string})=>r.reason).join("; ")}`)}catch(err){setAliSearchError(err instanceof Error?err.message:"Bulk import failed")}finally{setAliBulkImporting(false)}}}>{aliBulkImporting?"Importing…":`Bulk import (${Math.min(aliBulkSelected.size,30)})`}</button></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">{aliProducts.map(p=><div key={p.id} className="min-w-0 rounded-xl border border-gray-200 p-3 flex flex-col gap-2">
+                  <div className="flex gap-3"><input type="checkbox" aria-label={`Select ${p.title}`} checked={aliBulkSelected.has(p.id)} onChange={e=>setAliBulkSelected(prev=>{const n=new Set(prev);e.target.checked?n.add(p.id):n.delete(p.id);return n})}/>{p.image?<img src={p.image} alt="" className="h-20 w-20 shrink-0 rounded-lg object-contain" loading="lazy"/>:<div className="h-20 w-20 shrink-0 rounded-lg bg-gray-100"/>}<div className="min-w-0"><p className="text-sm font-semibold text-gray-900 line-clamp-3">{p.title}</p><p className="mt-1 text-sm font-bold text-orange-600">{p.priceUsd>0?"$"+p.priceUsd.toFixed(2):"Price unavailable"}</p><p className="text-xs text-gray-500">{p.rating>0?p.rating.toFixed(1)+" ★":""} {p.sales>0?" · "+p.sales+" sold":""}</p></div></div>
+                  <div className="mt-auto flex items-center justify-between gap-2"><a href={p.url} target="_blank" rel="noreferrer" className="text-xs text-indigo-600">View source ↗</a><button type="button" onClick={()=>{setAliActiveUrl(p.url);setAliModalOpen(true)}} className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-bold text-white">Review & import</button></div>
+                </div>)}</div>
+                <button type="button" disabled={aliSearching} onClick={async()=>{setAliSearching(true);setAliSearchError("");try{const next=aliPage+1;const response=await authFetch("/api/admin/search-aliexpress?q="+encodeURIComponent(aliQuery.trim())+"&page="+next);const data=await response.json();if(!response.ok)throw new Error(data.error??"Search failed");setAliProducts(data.products??[]);setAliBulkSelected(new Set());setAliPage(next)}catch(err){setAliSearchError(err instanceof Error?err.message:"Search failed")}finally{setAliSearching(false)}}} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold">Next page</button>
+              </>}
             </div>
-            {aliModalOpen && (
-              <ImportModal
-                onClose={() => setAliModalOpen(false)}
-                onSuccess={() => setAliDone(n => n + 1)}
-                userEmail={aliSeller}
-                userName={users.find(u => u.email === aliSeller)?.name ?? ""}
-              />
-            )}
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+              <div className="border-b border-gray-100 p-4 sm:p-5 flex items-center gap-3">
+                <div className="rounded-xl bg-orange-500 p-2 text-white"><Search className="w-5 h-5"/></div>
+                <div><h2 className="font-black text-gray-900">Find AliExpress products</h2><p className="text-sm text-gray-500">Paste one or more product links to prepare an import, just like eBay and Amazon.</p></div>
+              </div>
+              <div className="p-4 sm:p-5 space-y-3">
+                <label className="block text-sm font-bold text-gray-700">Product URLs · up to 50</label>
+                <textarea rows={3} value={aliUrls} onChange={e=>setAliUrls(e.target.value)} placeholder="Paste AliExpress item links here, one per line" className={inputCls+" w-full min-h-24 break-all"} />
+                <button type="button" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-white font-bold text-sm" onClick={()=>{
+                  const links=aliUrls.split(/[\s,]+/).map(v=>v.trim()).filter(Boolean).map(v=>{try{const u=new URL(v);const host=u.hostname.toLowerCase();const id=u.pathname.match(/\/item\/(\d{10,})(?:\.html)?/i)?.[1];return u.protocol==="https:"&&(host==="aliexpress.com"||host.endsWith(".aliexpress.com"))&&id?`https://www.aliexpress.com/item/${id}.html`:null}catch{return null}}).filter((v):v is string=>Boolean(v));
+                  const unique=[...new Set(links)].slice(0,50);setAliQueued(unique);setAliSelected(new Set(unique));setAliNotice(unique.length?`${unique.length} valid product link(s) ready. Select a product to enter or review its details.`:"No valid AliExpress product URLs found. Paste an item URL ending in a product ID.");
+                }}><Search className="w-4 h-4"/>Prepare products</button>
+                {aliNotice&&<p role="status" className="text-sm text-gray-600">{aliNotice}</p>}
+              </div>
+            </div>
+            {aliQueued.length>0&&<div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+              <div className="flex flex-wrap justify-between items-center gap-3"><div><h3 className="font-black text-gray-900">Choose products</h3><p className="text-sm text-gray-500">{aliSelected.size} of {aliQueued.length} selected</p></div><div className="flex gap-2"><button type="button" className="border rounded-lg px-3 py-2 text-sm" onClick={()=>setAliSelected(new Set(aliQueued))}>Select all</button><button type="button" className="border rounded-lg px-3 py-2 text-sm" onClick={()=>setAliSelected(new Set())}>Clear</button></div></div>
+              <div className="space-y-2 max-h-80 overflow-y-auto">{aliQueued.map((url,i)=><div key={url} className="flex flex-wrap sm:flex-nowrap gap-3 items-center rounded-xl border border-gray-200 p-3 text-sm"><input aria-label={`Select product ${i+1}`} type="checkbox" checked={aliSelected.has(url)} onChange={e=>setAliSelected(prev=>{const n=new Set(prev);e.target.checked?n.add(url):n.delete(url);return n})}/><span className="min-w-0 flex-1 truncate text-gray-700">Product #{url.match(/\/(\d+)\.html/)?.[1]??i+1}</span><a href={url} target="_blank" rel="noreferrer" className="text-indigo-600" aria-label="Open AliExpress product"><ExternalLink className="w-4 h-4"/></a><button type="button" onClick={()=>{setAliActiveUrl(url);setAliModalOpen(true)}} className="rounded-lg bg-orange-50 px-3 py-2 font-bold text-orange-700 hover:bg-orange-100">Review & import</button></div>)}</div>
+            </div>}
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+              <h3 className="font-black text-gray-900">Import settings</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label className="block text-sm font-bold text-gray-700 mb-2">Destination seller</label><select value={aliSeller} onChange={e=>setAliSeller(e.target.value)} className={inputCls+" w-full"}>{users.length===0?<option value={aliSeller}>{aliSeller}</option>:users.map(u=><option key={u.email} value={u.email}>{u.name?`${u.name} (${u.email})`:u.email}</option>)}</select></div>
+              <div><label className="block text-sm font-bold text-gray-700 mb-2">Default markup (%)</label><input type="number" min="0" max="1000" step="1" value={aliMarkup} onChange={e=>setAliMarkup(e.target.value)} className={inputCls+" w-full"}/></div></div>
+              <p className="text-xs text-gray-500">AliExpress product details are not yet automatically retrieved. Each product must be reviewed before listing; the markup default is passed to the import form.</p>
+              <button onClick={()=>{setAliActiveUrl(aliQueued.find(u=>aliSelected.has(u))??"");setAliModalOpen(true)}} className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-white font-bold text-sm hover:bg-orange-600"><Plus className="w-4 h-4"/>Import a product</button>
+              {aliDone>0&&<p className="text-sm text-green-700">{aliDone} product(s) imported this session.</p>}
+            </div>
+            {aliModalOpen&&<ImportModal key={aliActiveUrl} initialUrl={aliActiveUrl} initialMarkup={aliMarkup} onClose={()=>setAliModalOpen(false)} onSuccess={()=>{setAliDone(n=>n+1);setAliSelected(prev=>{const next=new Set(prev);next.delete(aliActiveUrl);return next})}} userEmail={aliSeller} userName={users.find(u=>u.email===aliSeller)?.name??""}/>}
           </motion.div>
         )}
 

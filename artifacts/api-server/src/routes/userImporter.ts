@@ -1,3 +1,12 @@
+import { browseShopify } from "../lib/shopifyPublic.js";
+import { marketplaceDataRequest } from "../lib/data-platform-client.js";
+
+async function browseShopifyForMarketplace(url:string):ReturnType<typeof browseShopify>{
+ if(!process.env.BAZUNK_DATA_PLATFORM_INTERNAL_KEY||!process.env.BAZUNK_DATA_PLATFORM_URL)return browseShopify(url);
+ const result=await marketplaceDataRequest("/v1/shopify/import-preview",{url});
+ if(!result||typeof result!=="object"||!Array.isArray((result as {items?:unknown}).items))throw new Error("Invalid Data Platform Shopify preview");
+ return result as Awaited<ReturnType<typeof browseShopify>>;
+}
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
@@ -11,6 +20,31 @@ import { randomUUID } from "node:crypto";
 import { toGbp } from "../fxRates.js";
 import { discoverPublicEbayUrls, fetchPublicEbayItems } from "../lib/ebayPublic.js";
 const router = Router();
+
+// Keep legacy eBay destination slugs from creating new duplicate taxonomy branches.
+function canonicalEbayDestination(rawCategory: unknown, rawSubcategory: unknown) {
+  const category = String(rawCategory ?? "").trim();
+  const subcategory = String(rawSubcategory ?? "").trim();
+  if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) return null;
+  if (category === "eco-friendly") return null; // Sustainability is a filter, not a destination.
+  const aliases: Record<string, [string, string]> = {
+    "electronics:gaming-consoles": ["video-games", "consoles"],
+    "cell-phones:earphones": ["electronics", "audio"],
+    "clothing-shoes-jewelry:jewelry": ["jewellery-watches", "fashion-jewellery"],
+    "tools-home-improvement:safety-tools": ["industrial-scientific", "safety"],
+    "tools-home-improvement:electrical-tools": ["tools-home-improvement", "electrical-installation"],
+    "digital-products:software": ["digital", "software-apps"],
+    "digital-products:ebooks": ["digital", "documents-ebooks"],
+    "digital-products:music-downloads": ["digital", "audio-music"],
+    "digital-products:stock-media": ["digital", "photography"],
+    "digital-products:templates": ["digital", "graphics-design"],
+    "digital-products:online-courses": ["digital", "education-courses"],
+  };
+  const mapped = aliases[`${category}:${subcategory}`];
+  return { category: mapped?.[0] ?? (category === "digital-products" ? "digital" : category), subcategory: mapped?.[1] ?? subcategory };
+}
+
+
 
 // Bazunk-owned eBay URL importer: no RapidAPI key required.
 router.post("/user/ebay-public/preview", async (req, res) => {
@@ -30,8 +64,9 @@ router.post("/user/ebay-public/import", async (req, res) => {
     const email = await requestEmail(req); if (!email) { res.status(401).json({ error: "Sign in to import listings." }); return; }
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     if (!items.length || items.length > 200) { res.status(400).json({ error: "Choose between 1 and 200 listings." }); return; }
-    const category = String(req.body.category ?? ""), subcategory = String(req.body.subcategory ?? "");
-    if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) { res.status(400).json({ error: "Choose a Bazunk category." }); return; }
+    const destination = canonicalEbayDestination(req.body.category, req.body.subcategory);
+    if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+    const { category, subcategory } = destination;
     const markupType = req.body.markupType === "fixed" ? "fixed" : "percentage";
     const markupValue = Math.max(0, Number(req.body.markupValue ?? 0));
     const shippingMode = ["source","source_plus","fixed","free"].includes(req.body.shippingMode) ? req.body.shippingMode : "source";
@@ -68,9 +103,9 @@ router.post("/user/import-ebay-own", async (req, res) => {
     if (req.body.ownsItems !== true) { res.status(400).json({ error: "Confirm these are your own listings and inventory." }); return; }
     let items: ReturnType<typeof validateOwnEbayItems>;
     try { items = validateOwnEbayItems(req.body.products); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Invalid listings" }); return; }
-    const category = String(req.body.category ?? "");
-    const subcategory = String(req.body.subcategory ?? "");
-    if (!/^[a-z0-9-]{1,80}$/.test(category) || (subcategory && !/^[a-z0-9-]{1,80}$/.test(subcategory))) { res.status(400).json({ error: "Choose a Bazunk category." }); return; }
+    const destination = canonicalEbayDestination(req.body.category, req.body.subcategory);
+    if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+    const { category, subcategory } = destination;
     const pricedItems = await Promise.all(items.map(async item => ({ ...item, priceGbp: (await toGbp(item.price, item.currency)).toFixed(2) })));
     const result = await db.transaction(async tx => {
       // Serialise batches for this seller so retries and duplicate clicks cannot create duplicates.
@@ -155,11 +190,13 @@ router.post("/user/import-amazon", async (req, res) => {
   const products: SelectedProduct[] = req.body.products ?? [];
   const markupPct   = Math.max(0, parseFloat(String(req.body.markup   ?? 35))   || 35);
   const shippingGbp = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
-  const category    = (req.body.category    as string) || "other";
-  const subcategory = (req.body.subcategory as string) || null;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const destination = canonicalEbayDestination(req.body.category ?? "other", req.body.subcategory);
+  if (!destination) { res.status(400).json({ error: "Choose a valid Bazunk category." }); return; }
+  const { category, subcategory } = destination;
+  const ecoFriendly = req.body.ecoFriendly === true;
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)    { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)    { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length){ res.status(400).json({ error: "products array required" }); return; }
 
   // Look up seller name
@@ -198,6 +235,7 @@ router.post("/user/import-amazon", async (req, res) => {
       ? buildAmazonDescription(details, p.price_gbp)
       : [p.title, "", "Product sourced from Amazon UK.", "", `Original Amazon UK price: £${p.price_gbp.toFixed(2)}`, `View on Amazon: ${p.amazon_url}`].join("\n");
     const image = details?.image ?? p.image ?? null;
+    const shouldTagEco = ecoFriendly || category === 'eco-friendly' || /\beco[ -]?friendly\b/i.test(richTitle);
 
     await db.execute(sql`
       INSERT INTO listings (public_id, title, price, price_gbp, currency, category, subcategory,
@@ -206,7 +244,7 @@ router.post("/user/import-amazon", async (req, res) => {
         ${publicId}, ${richTitle}, ${bazunkPrice}, ${bazunkPrice}, 'GBP', ${category}, ${subcategory},
         ${description},
         'new', ${image}, ${sellerEmail}, ${sellerName},
-        ${specs}, 'active', NOW(), NOW()
+        ${specs}, ${shouldTagEco ? 'eco-friendly' : ''}, 'active', NOW(), NOW()
       )
     `);
     inserted++;
@@ -332,9 +370,9 @@ router.post("/user/import-ebay", async (req, res) => {
   const shippingAmt = Math.max(0, parseFloat(String(req.body.shipping ?? 3.99)) || 3.99);
   const category    = (req.body.category    as string) || "other";
   const subcategory = (req.body.subcategory as string) || null;
-  const sellerEmail = (req.body.sellerEmail as string)?.trim();
+  const sellerEmail = await requestEmail(req);
 
-  if (!sellerEmail)     { res.status(400).json({ error: "sellerEmail required" }); return; }
+  if (!sellerEmail)     { res.status(401).json({ error: "Sign in to import listings" }); return; }
   if (!products.length) { res.status(400).json({ error: "products array required" }); return; }
 
   const sellerRow = await db.execute(
@@ -379,7 +417,7 @@ router.post("/user/import-ebay", async (req, res) => {
       : (c || "used").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
     const specs       = JSON.stringify({
-      source, item_id: p.item_id, ebay_url: p.ebay_url,
+      source, marketplace_region: site, item_id: p.item_id, ebay_url: p.ebay_url,
       ebay_price: p.price, ebay_currency: currency, ebay_site: site,
       shipping: shippingAmt, markup_pct: markupPct,
       source_condition: originalCondition || null,
@@ -418,4 +456,78 @@ router.post("/user/import-ebay", async (req, res) => {
   res.json({ imported: inserted, message: `Imported ${inserted} product${inserted !== 1 ? "s" : ""} to your listings` });
 });
 
+
+// Shopify URL preview for signed-in Bazunk sellers. Only the URL host itself is fetched; redirects are rejected.
+router.post("/user/shopify-public/preview", async (req,res)=>{
+ const email=await requestEmail(req);if(!email){res.status(401).json({error:"Sign in to import Shopify products."});return;}
+ try{
+  res.json(await browseShopifyForMarketplace(String(req.body.url ?? "")));
+ }catch(e){res.status(422).json({error:e instanceof Error?e.message:"Could not read this Shopify storefront."});}
+});
+
+// Shopify public storefront -> Bazunk listings. Product data is normalized by Data Platform before posting here.
+router.post("/user/import-shopify-public", async (req, res) => {
+ try {
+  const email=await requestEmail(req); if(!email){res.status(401).json({error:"Sign in to import Shopify products."});return;}
+  const items=Array.isArray(req.body.items)?req.body.items:[];
+  if(!items.length||items.length>100){res.status(400).json({error:"Choose between 1 and 100 Shopify products."});return;}
+  const category=String(req.body.category??""),subcategory=String(req.body.subcategory??"");
+  const subsubcategory=String(req.body.subsubcategory??"");
+  if(subsubcategory&&(!subcategory||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subsubcategory)||subsubcategory.length>100)){res.status(400).json({error:"Invalid third-level category."});return;}
+  if(!/^[a-z0-9-]{1,80}$/.test(category)||(subcategory&&!/^[a-z0-9-]{1,80}$/.test(subcategory))){res.status(400).json({error:"Choose a Bazunk category."});return;}
+  const markupType=req.body.markupType==="fixed"?"fixed":"percentage",markupValue=Number(req.body.markupValue??0);
+  if (!Number.isFinite(markupValue) || markupValue < 0 || markupValue > 999999) { res.status(400).json({error:"Enter a valid non-negative markup."}); return; }
+  const syncEnabled=req.body.syncEnabled!==false;
+  // A Shopify store currency is not proof of its dispatch location. The seller
+  // must explicitly choose the regional marketplace before importing.
+  const marketplaceRegion=req.body.marketplaceRegion;
+  if(marketplaceRegion!=="uk"&&marketplaceRegion!=="us"){res.status(400).json({error:"Choose UK or USA / Canada marketplace for these Shopify listings."});return;}
+  // Validate source identities before opening the transaction. Source data is re-read;
+  // the cross-site handoff is a selection, never authority for prices or stock.
+  const products: Awaited<ReturnType<typeof browseShopify>>["items"] = [];
+  try {
+  for (const raw of items) {
+   const result = await browseShopifyForMarketplace(String(raw.sourceUrl ?? ""));
+   if (result.kind !== "product" || result.items[0]?.externalId !== String(raw.externalId)) { res.status(400).json({error:"Invalid Shopify product selection"}); return; }
+   products.push(result.items[0]);
+  }
+  } catch (err) { res.status(422).json({error:err instanceof Error ? err.message : "Could not verify selected Shopify products."}); return; }
+  const result = await db.transaction(async tx => {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${email}))`);
+  const user=await tx.execute(sql`SELECT name FROM users WHERE lower(email)=lower(${email}) LIMIT 1`).then(r=>r.rows[0] as any);
+  let imported=0,skipped=0;
+  for(const raw of products){
+   const sourceUrl=String(raw.sourceUrl??""),externalId=String(raw.externalId??"").slice(0,200),title=String(raw.title??"").trim().slice(0,500);
+   const sourcePrice=Number(raw.price?.amount),currency=String(raw.price?.currency??"GBP").toUpperCase();
+   if(!/^https:\/\//i.test(sourceUrl)||!externalId||!title||!Number.isFinite(sourcePrice)||sourcePrice<0){skipped++;continue;}
+   let host="";try{host=new URL(sourceUrl).hostname.toLowerCase()}catch{skipped++;continue}
+   if(!host.includes(".")||!sourceUrl.includes("/products/")){skipped++;continue}
+   const exists=await tx.execute(sql`SELECT si.id FROM supplier_imports si JOIN listings l ON l.id=si.listing_id WHERE si.supplier_source='shopify-public' AND si.supplier_url=${sourceUrl} AND lower(l.seller_email)=lower(${email}) LIMIT 1`);
+   if(exists.rows.length){skipped++;continue;}
+   const bazunkPrice=Math.round((markupType==="fixed"?sourcePrice+markupValue:sourcePrice*(1+markupValue/100))*100)/100;
+   const priceGbp=(await toGbp(bazunkPrice,currency)).toFixed(2);
+   const image=Array.isArray(raw.images)&&raw.images[0]?.url?String(raw.images[0].url):null;
+   const quantity=raw.availability==="out_of_stock"?0:1,status=quantity?"active":"inactive";
+   const specs=JSON.stringify({source:"Shopify Public",marketplace_region:marketplaceRegion,shopify_store:host,shopify_url:sourceUrl,shopify_id:externalId,source_price:sourcePrice,source_currency:currency,markup_type:markupType,markup_value:markupValue,sync_enabled:syncEnabled,variants:Array.isArray(raw.variants)?raw.variants:[]});
+   const listing=await tx.execute(sql`INSERT INTO listings(public_id,title,price,price_gbp,currency,category,subcategory,subsubcategory,description,condition,image,seller_email,seller_name,specifications,status,quantity,created_at,updated_at)
+    VALUES(${'BZK-SHP-'+randomUUID()},${title},${bazunkPrice},${priceGbp},${currency},${category},${subcategory||null},${subsubcategory||null},${String(raw.description??title).slice(0,5000)},'new',${image},${email},${user?.name||email.split("@")[0]},${specs},${status},${quantity},NOW(),NOW()) RETURNING id`).then(r=>r.rows[0] as any);
+   await tx.execute(sql`INSERT INTO supplier_imports(listing_id,supplier_source,supplier_id,supplier_url,supplier_price,supplier_currency,markup_type,markup_value,last_synced_at,sync_status,supplier_data,created_at,updated_at)
+    VALUES(${listing.id},'shopify-public',${externalId},${sourceUrl},${sourcePrice},${currency},${markupType},${markupValue},NOW(),${syncEnabled?"ok":"disabled"},${JSON.stringify({store:host,syncEnabled,variants:raw.variants})}::jsonb,NOW(),NOW())`);
+   imported++;
+  }
+  return {imported,skipped};
+  });
+  const {imported,skipped} = result;
+  res.json({imported,skipped,message:`Imported ${imported} Shopify product${imported===1?"":"s"} to Bazunk with ${syncEnabled?"automatic price/availability sync enabled":"sync disabled"}.`});
+ } catch(err){logger.error({err},"Shopify public import failed");res.status(500).json({error:"Shopify import failed. Existing imports were not duplicated."});}
+});
+
+
+function wcPrivateAddress(address:string){const a=address.toLowerCase();if(a.includes(":"))return a==="::1"||a==="::"||a.startsWith("fc")||a.startsWith("fd")||a.startsWith("fe8")||a.startsWith("fe9")||a.startsWith("fea")||a.startsWith("feb")||a.startsWith("::ffff:");const x=a.split(".").map(Number);return x.length!==4||x.some(n=>!Number.isInteger(n)||n<0||n>255)||x[0]===0||x[0]===10||x[0]===127||x[0]>=224||x[0]===169&&x[1]===254||x[0]===172&&x[1]>=16&&x[1]<=31||x[0]===192&&x[1]===168||x[0]===100&&x[1]>=64&&x[1]<=127||x[0]===198&&x[1]>=18&&x[1]<=19;}
+async function wcSafeHost(host:string){if(!host.includes(".")||host==="localhost"||host.endsWith(".local")||host.endsWith(".internal")||host.endsWith(".localhost")||host.includes("%"))throw Error("A public store hostname is required.");const dns=await import("node:dns/promises");const addresses=await dns.lookup(host,{all:true});if(!addresses.length||addresses.some(x=>wcPrivateAddress(x.address)))throw Error("Private or reserved addresses are not supported.");}
+function wcNormalize(p:any){const minor=Number(p.prices?.currency_minor_unit??2),amount=Number(p.prices?.price??0)/Math.pow(10,Math.min(6,Math.max(0,minor)));return{provider:"woocommerce",externalId:String(p.id),sourceUrl:String(p.permalink||""),title:String(p.name||"WooCommerce product"),description:String(p.description||p.short_description||"").replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim(),category:String(p.categories?.[0]?.name||""),price:{amount,currency:String(p.prices?.currency_code||"GBP")},images:(p.images||[]).map((x:any)=>({url:String(x.src||"")})).filter((x:any)=>x.url.startsWith("https://")),variants:[],availability:p.is_in_stock===false?"out_of_stock":"in_stock",stockQuantity:typeof p.stock_quantity==="number"?p.stock_quantity:null};}
+router.post("/user/woocommerce-public/preview",async(req,res)=>{const email=await requestEmail(req);if(!email){res.status(401).json({error:"Sign in to preview WooCommerce products."});return;}try{const raw=String(req.body.url||"").trim(),u=new URL(/^https?:\/\//i.test(raw)?raw:"https://"+raw);if(u.protocol!=="https:"||u.username||u.password||u.port){res.status(400).json({error:"Enter an HTTPS store URL without credentials or custom ports."});return;}await wcSafeHost(u.hostname);const path=u.pathname,productId=path.match(/\/wp-json\/wc\/store\/v1\/products\/(\d+)/)?.[1],slug=path.match(/\/product\/([^/]+)/)?.[1];const ep=new URL("https://"+u.hostname+"/wp-json/wc/store/v1/products"+(productId?"/"+productId:""));if(!productId&&slug)ep.searchParams.set("slug",slug);else if(!productId){ep.searchParams.set("per_page","50");ep.searchParams.set("page",String(Math.min(20,Math.max(1,Number(req.body.page)||1))));}const r=await fetch(ep,{redirect:"error",headers:{accept:"application/json"},signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error("WooCommerce Store API returned "+r.status);const len=Number(r.headers.get("content-length")||0);if(len>2_000_000)throw Error("Catalogue response too large");const body=await r.text();if(body.length>2_000_000)throw Error("Catalogue response too large");const j=JSON.parse(body),items=(Array.isArray(j)?j:[j]).slice(0,50).map(wcNormalize).filter((x:any)=>x.sourceUrl.startsWith("https://")&&Number.isFinite(x.price.amount));res.json({store:u.hostname,kind:productId||slug?"product":"store",items,page:Number(req.body.page)||1});}catch(e){res.status(422).json({error:e instanceof Error?e.message:"Could not load WooCommerce store."});}});
+router.post("/user/import-woocommerce-public",async(req,res)=>{try{const email=await requestEmail(req);if(!email){res.status(401).json({error:"Sign in to import WooCommerce products."});return;}const items=Array.isArray(req.body.items)?req.body.items:[];if(!items.length||items.length>50){res.status(400).json({error:"Choose 1–50 products."});return;}const category=String(req.body.category||"other"),subcategory=String(req.body.subcategory||"");const subsubcategory=String(req.body.subsubcategory||"");if(subsubcategory&&(!subcategory||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(subsubcategory)||subsubcategory.length>100)){res.status(400).json({error:"Invalid third-level category."});return;}if(!/^[a-z0-9-]{1,80}$/.test(category)||(subcategory&&!/^[a-z0-9-]{1,80}$/.test(subcategory))){res.status(400).json({error:"Invalid Bazunk category."});return;}const markup=Math.min(1000,Math.max(0,Number(req.body.markupValue)||0));let imported=0,skipped=0;const user=await db.execute(sql`SELECT name FROM users WHERE lower(email)=lower(${email}) LIMIT 1`).then(r=>r.rows[0] as any);for(const raw of items){const sourceUrl=String(raw.sourceUrl||""),externalId=String(raw.externalId||""),title=String(raw.title||"").slice(0,500),price=Number(raw.price?.amount),currency=String(raw.price?.currency||"GBP").toUpperCase();let host="";try{const u=new URL(sourceUrl);if(u.protocol!=="https:")throw Error();host=u.hostname;}catch{skipped++;continue;}if(!externalId||!title||!Number.isFinite(price)||price<0||!/^[A-Z]{3}$/.test(currency)){skipped++;continue;}const sourceKey=host+":"+externalId;const existing=await db.execute(sql`SELECT id FROM supplier_imports WHERE supplier_source='woocommerce-public' AND supplier_id=${sourceKey} AND listing_id IN (SELECT id FROM listings WHERE lower(seller_email)=lower(${email})) LIMIT 1`);if(existing.rows.length){skipped++;continue;}const amount=Math.round(price*(1+markup/100)*100)/100,gbp=(await toGbp(amount,currency)).toFixed(2),quantity=raw.availability==="out_of_stock"?0:Math.max(1,Math.min(99999,Number(raw.stockQuantity)||1));const specs=JSON.stringify({source:"WooCommerce Store API",woocommerce_store:host,woocommerce_id:externalId,source_url:sourceUrl,source_price:price,source_currency:currency,markup_pct:markup,sync_enabled:false});const row=await db.execute(sql`INSERT INTO listings(public_id,title,price,price_gbp,currency,category,subcategory,subsubcategory,description,condition,image,seller_email,seller_name,specifications,status,quantity,created_at,updated_at) VALUES(${"BZK-WOO-"+randomUUID()},${title},${amount},${gbp},${currency},${category},${subcategory||null},${subsubcategory||null},${String(raw.description||title).slice(0,5000)},'new',${raw.images?.[0]?.url||null},${email},${user?.name||email.split("@")[0]},${specs},${quantity?"active":"inactive"},${quantity},NOW(),NOW()) RETURNING id`).then(r=>r.rows[0] as any);await db.execute(sql`INSERT INTO supplier_imports(listing_id,supplier_source,supplier_id,supplier_url,supplier_price,supplier_currency,markup_type,markup_value,last_synced_at,sync_status,supplier_data,created_at,updated_at) VALUES(${row.id},'woocommerce-public',${sourceKey},${sourceUrl},${price},${currency},'percentage',${markup},NOW(),'disabled',${JSON.stringify({store:host,syncEnabled:false})}::jsonb,NOW(),NOW())`);imported++;}res.json({imported,skipped,message:`Imported ${imported} WooCommerce product(s) to Bazunk. Source sync is not enabled.`});}catch(e){logger.error({err:e},"WooCommerce import failed");res.status(500).json({error:"WooCommerce import failed."});}});
+
 export default router;
+

@@ -1,10 +1,21 @@
+import { createPortal } from "react-dom";
+import { ProductDiscovery, rememberViewedListing } from "@/components/ProductDiscovery";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
+import { ListingProductGallery } from "@/components/listing/ListingProductGallery";
+import { SellerCard } from "@/components/listing/ListingSellerCard";
+import { TrustProofBuyerPanel } from "@/components/listing/TrustProofBuyerPanel";
+import { useFeature } from "@/components/FeatureGate";
+import { useRawSettings } from "@/context/SiteSettingsContext";
+import { RelatedListingsBox } from "@/components/listing/RelatedListingsBox";
+import { ListingDetailsSection, ListingDeliverySection, ListingPurchaseSection, ListingSellerSection } from "@/components/listing/ListingSections";
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
 import { useState, useEffect, type ReactNode } from "react";
 import { useParams, Link, useLocation as useWouter } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Heart, Eye, Users, MapPin, CheckCircle2, Star, Share2,
-  ShoppingCart, Tag, MessageSquare, Shield, Truck,
-  ChevronLeft, ChevronRight, Package, Calendar, Flag, ArrowRight, Zap, TrendingUp,
+  Heart, Eye, Users, MapPin, CheckCircle2, Star, Share2, Copy, Link2, ExternalLink,
+  ShoppingCart, Tag, MessageSquare, Shield, Truck, Grid3X3,
+  ChevronLeft, ChevronRight, ChevronDown, Package, Calendar, Flag, ArrowRight, Zap, TrendingUp,
   BookOpen, Hash, Info, List, FileText, Flame, Phone, Mail, Globe2, Plane, Box, BadgeCheck,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -21,6 +32,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useSession } from "@clerk/react";
 import { SellerProfileCard } from "@/components/SellerProfileCard";
 import { useLanguage } from "@/context/LanguageContext";
+
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
 const CONDITION_COLORS: Record<string, string> = {
   "new":        "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -42,137 +55,9 @@ const CONDITION_DESC: Record<string, string> = {
   "poor":       "Significant wear, may need repair",
 };
 
-function getProductImages(image: string) {
-  return image ? [image] : [];
-}
-
-interface RelatedItem { id: number; public_id: string; title: string; price: string; image: string | null; category: string }
-
-function RelatedListingsBox({ category, excludeId }: { category: string; excludeId: number | string }) {
-  const [items, setItems] = useState<RelatedItem[]>([]);
-  useEffect(() => {
-    fetch(`/api/promotions/related?category=${encodeURIComponent(category)}&exclude=${excludeId}`)
-      .then(r => r.ok ? r.json() : [])
-      .then((data: RelatedItem[]) => {
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setItems(shuffled.slice(0, 3));
-      })
-      .catch(() => {});
-  }, [category, excludeId]);
-
-  if (items.length === 0) return null;
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 rounded-lg bg-[#F26B21]/10 flex items-center justify-center flex-shrink-0">
-          <Flame className="w-3.5 h-3.5 text-[#F26B21]" />
-        </div>
-        <h3 className="text-sm font-bold text-gray-900">Featured in this Category</h3>
-      </div>
-      <div className="space-y-3">
-        {items.map(item => (
-          <Link key={item.id} href={`/listing/${item.public_id ?? item.id}`} className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {item.image
-                ? <img src={item.image} alt={item.title} className="w-full h-full object-contain p-1" />
-                : <Package className="w-5 h-5 text-gray-300" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors">{item.title}</p>
-              <p className="text-sm font-bold text-gray-900 mt-0.5">£{Number(item.price).toFixed(2)}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-      <div className="mt-3 pt-3 border-t border-gray-100 text-center">
-        <p className="text-[10px] text-gray-400">Sponsored · <Link href="/promotions" className="hover:text-[#4A5CE8] transition-colors">Promote your listing</Link></p>
-      </div>
-    </div>
-  );
-}
-
-function FollowSellerButton({ sellerEmail }: { sellerEmail: string }) {
-  const { user } = useAuth();
-  const [, navigate] = useWouter();
-  const [following, setFollowing] = useState(false);
-  const [followers, setFollowers] = useState(0);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    const q = new URLSearchParams({ sellerEmail });
-    if (user?.email) q.set("followerEmail", user.email);
-    fetch(`/api/follows/status?${q}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d) { setFollowing(!!d.following); setFollowers(d.followers ?? 0); } })
-      .catch(() => {});
-  }, [sellerEmail, user?.email]);
-
-  if (user?.email && user.email.toLowerCase() === sellerEmail.toLowerCase()) {
-    return <p className="text-xs text-gray-400">{followers} follower{followers === 1 ? "" : "s"}</p>;
-  }
-
-  async function toggle() {
-    if (!user?.email) { navigate("/sign-in"); return; }
-    setBusy(true);
-    try {
-      const r = await fetch("/api/follows", {
-        method: following ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ followerEmail: user.email, sellerEmail }),
-      });
-      if (r.ok) { const d = await r.json(); setFollowing(!!d.following); setFollowers(d.followers ?? 0); }
-    } finally { setBusy(false); }
-  }
-
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-xs text-gray-400">{followers} follower{followers === 1 ? "" : "s"}</p>
-      <button
-        onClick={toggle}
-        disabled={busy}
-        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors disabled:opacity-50 ${
-          following ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : "bg-[#4A5CE8] text-white hover:opacity-90"
-        }`}
-      >
-        {following ? "Following" : "Follow seller"}
-      </button>
-    </div>
-  );
-}
-
-function SellerCard({ sellerName, sellerUsername, sellerEmail, location, verified }: { sellerName: string; sellerUsername?: string; sellerEmail?: string; location: string; verified: boolean }) {
-  const initial = sellerName.charAt(0).toUpperCase();
-  return (
-    <div className="bg-white rounded-2xl border border-violet-200 shadow-sm p-5 min-w-0">
-      <div className="-mx-5 -mt-5 mb-5 rounded-t-2xl bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-5 py-4 text-white">
-        <h3 className="text-sm font-bold flex items-center gap-2"><Users className="w-4 h-4" /> Meet the seller</h3>
-        <p className="mt-1 text-xs text-white/80">Profile, reviews and seller updates</p>
-      </div>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-          {initial}
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <p className="font-semibold text-gray-900 text-sm">{sellerUsername ? `@${sellerUsername}` : sellerName}</p>
-            {verified && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-          </div>
-          {sellerUsername && <p className="text-xs text-gray-400 mt-0.5">Bazunk seller</p>}
-          {!sellerUsername && <p className="text-xs text-gray-400 mt-0.5">Bazunk seller</p>}
-        </div>
-      </div>
-
-      <div className="space-y-2 mb-4 text-xs text-gray-500">
-        <div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" />{location}</div>
-        {verified && (
-          <div className="flex items-center gap-2 text-emerald-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />ID Verified Seller</div>
-        )}
-      </div>
-      {sellerEmail && <SellerProfileCard sellerEmail={sellerEmail} />}
-      {sellerEmail && <div className="mt-4 pt-4 border-t border-gray-100"><FollowSellerButton sellerEmail={sellerEmail} /></div>}
-    </div>
-  );
+function getProductImages(image: string, gallery?: string[]) {
+  return [...new Set([image, ...(gallery ?? [])].filter((src): src is string =>
+    typeof src === "string" && src.trim().length > 0))].slice(0, 12);
 }
 
 function normaliseCondition(raw: unknown): string {
@@ -187,7 +72,7 @@ function normaliseCondition(raw: unknown): string {
 }
 
 type SpecRow = { key: string; value: string };
-type ApiListingExtra = { _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
+type ApiListingExtra = { _publicUrlToken?: string | null; _gallery?: string[]; _sellerEmail?: string; _sellerName?: string; _sellerUsername?: string; _publicId?: string | null; _promotions?: string[]; _tags?: string[]; _specifications?: SpecRow[]; subcategory?: string; extra_categories?: string; shipOrigin?: string; shipOriginOther?: string; shipZone?: string; carrier?: string; shippingPrice?: number; handlingCharge?: number; quantity?: number; sku?: string; listingCurrency?: string };
 
 const TAG_COLORS = [
   "bg-[#4A5CE8]/10 text-[#4A5CE8]",
@@ -201,7 +86,12 @@ const TAG_COLORS = [
 
 function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & ApiListingExtra {
   let parsedSpecs: SpecRow[] | undefined;
-  try { parsedSpecs = l.specifications ? JSON.parse(l.specifications as string) : undefined; } catch { parsedSpecs = undefined; }
+  let gallery: string[] = [];
+  try {
+    const parsed = typeof l.specifications === "string" ? JSON.parse(l.specifications) : l.specifications;
+    parsedSpecs = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.details) ? parsed.details : [];
+    gallery = Array.isArray(parsed?.admin_gallery_images) ? parsed.admin_gallery_images.filter((p: unknown) => typeof p === "string").slice(0, 12) : Array.isArray(parsed?.photos) ? parsed.photos.filter((p: unknown) => typeof p === "string").slice(0, 10) : [];
+  } catch { parsedSpecs = []; }
   const tagsRaw = typeof l.tags === "string" && l.tags.trim() ? l.tags.split(",").map((t) => t.trim()).filter(Boolean) : undefined;
   return {
     id: l.id as number,
@@ -222,9 +112,11 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
     _sellerName: (l.sellerName as string) ?? "Seller",
     _sellerUsername: (l.sellerUsername as string) ?? undefined,
     _publicId: (l.publicId as string) ?? null,
+    _publicUrlToken: (l.publicUrlToken as string) ?? null,
     _promotions: Array.isArray(l.promotions) ? (l.promotions as string[]) : [],
     _tags: tagsRaw,
     _specifications: parsedSpecs,
+    _gallery: gallery,
     shipOrigin: (l.shipOrigin as string) ?? undefined,
     shipOriginOther: (l.shipOriginOther as string) ?? undefined,
     shipZone: (l.shipZone as string) ?? undefined,
@@ -237,17 +129,45 @@ function mapApiToProduct(l: Record<string, unknown>): typeof ALL_PRODUCTS[0] & A
   } as unknown as typeof ALL_PRODUCTS[0] & ApiListingExtra;
 }
 
+
+/** Destination eligibility preview. Never presents a flat seller rate as a live courier quote. */
+function ListingDeliveryCalculator({origin,zone,shippingPrice,formatPrice}:{origin:string;zone:string;shippingPrice?:number;formatPrice:(amount:number)=>string}) {
+  const [destination,setDestination]=useState("UK");
+  const [postcode,setPostcode]=useState("");
+  const [checked,setChecked]=useState(false);
+  const domestic=origin.toUpperCase()==="GB"?"UK":origin.toUpperCase();
+  const eligible=zone==="worldwide"||zone==="international"||(zone==="domestic"&&destination===domestic)||(zone==="europe"&&["UK","EU"].includes(destination));
+  return <section className="mb-5 rounded-xl border border-slate-300 bg-slate-50 p-4 text-slate-900 dark:border-slate-600 dark:bg-[#132742] dark:text-white" aria-label="Calculate delivery">
+    <h3 className="mb-1 flex items-center gap-2 font-bold"><Truck className="h-5 w-5 text-orange-500"/> Calculate delivery</h3>
+    <p className="mb-3 text-xs text-slate-600 dark:text-slate-300">Check seller delivery coverage and any advertised flat postage. Final delivery cost is confirmed at checkout.</p>
+    <label className="mb-2 block text-xs font-semibold">Delivery country
+      <select value={destination} onChange={e=>{setDestination(e.target.value);setChecked(false);}} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:bg-[#192f4d] dark:text-white">
+        <option value="UK">United Kingdom</option><option value="US">United States</option><option value="EU">European Union</option><option value="CA">Canada</option><option value="AU">Australia</option>
+      </select>
+    </label>
+    <label className="mb-3 block text-xs font-semibold">Postcode / ZIP code
+      <input value={postcode} onChange={e=>{setPostcode(e.target.value);setChecked(false);}} maxLength={20} placeholder="Enter your postcode" className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:bg-[#192f4d] dark:text-white"/>
+    </label>
+    <button type="button" disabled={!postcode.trim()} onClick={()=>setChecked(true)} className="w-full rounded-lg bg-orange-600 px-3 py-2.5 font-bold text-white disabled:opacity-50">Check delivery</button>
+    {checked&&<p role="status" className="mt-3 text-sm">{!zone?"Seller has not specified delivery destinations. Confirm shipping at checkout.":!eligible?"This destination is not included in the seller's stated delivery zone.":shippingPrice==null?"Destination is within the seller's stated zone. A delivery quote is required at checkout.":`Seller's advertised flat postage: ${shippingPrice===0?"Free":formatPrice(shippingPrice)}. This is not a postcode-specific courier quote; confirm the final amount at checkout.`}</p>}
+  </section>;
+}
+
 export function ListingPage() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useWouter();
   const staticProduct = ALL_PRODUCTS.find((p) => p.id === parseInt(id ?? "0"));
   const [apiProduct, setApiProduct] = useState<(typeof ALL_PRODUCTS[0] & ApiListingExtra) | null>(null);
   const [loading, setLoading] = useState(!staticProduct);
+  const trustProofEnabled=useFeature("trust_proof");
+  const listingSettings=useRawSettings();
+  const showSection=(key:string,defaultOn=true)=>listingSettings[`listing_section_${key}`] === undefined ? defaultOn : listingSettings[`listing_section_${key}`] !== "false";
+  const [informationTab,setInformationTab]=useState<"details"|"trust">("details");
 
   useEffect(() => {
     if (!staticProduct && id) {
       setLoading(true);
-      fetch(`/api/listings/${id}`)
+      fetch(`${API_BASE}/api/listings/${id}`)
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => { if (data?.id) setApiProduct(mapApiToProduct(data)); setLoading(false); })
         .catch(() => setLoading(false));
@@ -255,6 +175,14 @@ export function ListingPage() {
   }, [id, staticProduct]);
 
   const product = staticProduct ?? apiProduct;
+  // Keep numeric and importer URLs working, but show the canonical public token after loading.
+  useEffect(() => {
+    const token=apiProduct?._publicUrlToken;
+    if(token && id!==token && /^[A-Za-z0-9]{15}$/.test(token)) {
+      window.history.replaceState(window.history.state,"",`/listing/${token}`);
+    }
+  },[apiProduct?._publicUrlToken,id]);
+  useEffect(() => { if (apiProduct?.id) rememberViewedListing(Number(apiProduct.id)); }, [apiProduct?.id]);
   const { user: viewer } = useAuth();
   const { session } = useSession();
   const [startingMessage, setStartingMessage] = useState(false);
@@ -267,9 +195,9 @@ export function ListingPage() {
       const token = await session.getToken();
       const r = await fetch("/api/messages/conversations", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ listingId: apiProduct.id }) });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok) { window.alert(data.error || "Could not start conversation"); return; }
+      if (!r.ok) { toast({title:"Message unavailable",description:data.error || "Could not start conversation",variant:"destructive"}); return; }
       window.dispatchEvent(new CustomEvent("bazunk:open-message-center", { detail: { conversationId: data.id } }));
-    } catch { window.alert("Could not start conversation. Please try again."); } finally { setStartingMessage(false); }
+    } catch { toast({title:"Message unavailable",description:"Could not start conversation. Please try again.",variant:"destructive"}); } finally { setStartingMessage(false); }
   }
 
   // Count the view (and where it came from) for the seller's analytics
@@ -292,7 +220,7 @@ export function ListingPage() {
     else if (/(google|bing|duckduckgo|yahoo|ecosia|baidu)/.test(host)) source = "search";
     else if (host && host === window.location.hostname) source = "internal";
     else if (host) source = "referral";
-    fetch(`/api/listings/${apiProduct.id}/view`, {
+    fetch(`${API_BASE}/api/listings/${apiProduct.id}/view`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ source, visitor }),
@@ -311,17 +239,27 @@ export function ListingPage() {
   const [offerCustom, setOfferCustom] = useState("");
   const [offerMsg, setOfferMsg] = useState("");
   const [offerSent, setOfferSent] = useState(false);
+  const [offerSending,setOfferSending] = useState(false);
+  const [offerError,setOfferError] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
   const [copied, setCopied] = useState(false);
   const [reported, setReported] = useState(false);
+  const [shareOpen,setShareOpen]=useState(false);
+  const [reportOpen,setReportOpen]=useState(false);
+  const [reportReason,setReportReason]=useState("");
+  const [reportDetails,setReportDetails]=useState("");
+  const [reportEmail,setReportEmail]=useState("");
+  const [reportBusy,setReportBusy]=useState(false);
+  const [reportError,setReportError]=useState("");
   const [watchToast, setWatchToast] = useState<"added" | "removed" | null>(null);
 
-  if (loading) {
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "listing");
+  if (delayedLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-2 border-[#F26B21] border-t-transparent rounded-full animate-spin" />
+          <MarketplaceLoader area="listing" label="Loading listing details…" />
         </div>
         <Footer />
       </div>
@@ -337,7 +275,7 @@ export function ListingPage() {
             <Package className="w-10 h-10 text-gray-300" />
           </div>
           <h2 className="text-xl font-bold text-gray-800">Listing not found</h2>
-          <p className="text-gray-400 text-sm">This item may have been removed or sold.</p>
+          <p className="text-slate-600 text-sm">This item may have been removed or sold.</p>
           <Link href="/browse" className="px-6 py-2.5 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity">
             Browse Listings
           </Link>
@@ -347,7 +285,8 @@ export function ListingPage() {
     );
   }
 
-  const images = getProductImages(product.image);
+  const isDemoListing = ((product as typeof product & ApiListingExtra)._specifications as unknown as { demo_creator?: boolean } | undefined)?.demo_creator === true;
+  const images = getProductImages(product.image, (product as typeof product & ApiListingExtra)._gallery);
   // Resolve top-level category and optional subcategory label.
   // Handles both new data (category=top-slug, subcategory=sub-slug) and
   // old imports where a subcategory slug was mistakenly stored in the category column.
@@ -371,24 +310,34 @@ export function ListingPage() {
   function handleNextImg() { setActiveImg((i) => (i === images.length - 1 ? 0 : i + 1)); }
 
   function handleBuyNow() {
-    if (product) { addToCart(product); openCart(); }
+    if (product && !isDemoListing) { addToCart(product); openCart(); }
   }
 
-  function handleShare() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: product?.title ?? "Bazunk listing", url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }).catch(() => {});
-    }
+  const listingUrl = typeof window!=="undefined" ? window.location.origin+"/listing/"+(apiProduct?._publicUrlToken || id) : "";
+  async function copyListingUrl(){
+    try { await navigator.clipboard.writeText(listingUrl);setCopied(true);setTimeout(()=>setCopied(false),2200); } catch { setCopied(false); }
   }
-
-  function handleReport() {
-    setReported(true);
-    setTimeout(() => setReported(false), 3000);
+  function shareTo(destination:"whatsapp"|"facebook"|"x"|"email"|"native"){
+    const url=encodeURIComponent(listingUrl), title=encodeURIComponent(product?.title||"Bazunk listing");
+    if(destination==="native") { if(navigator.share) void navigator.share({title:product?.title||"Bazunk listing",url:listingUrl}).catch(()=>{}); else void copyListingUrl(); }
+    else if(destination==="email") window.location.href="mailto:?subject="+title+"&body="+url;
+    else window.open(destination==="whatsapp"?"https://wa.me/?text="+title+"%20"+url:destination==="facebook"?"https://www.facebook.com/sharer/sharer.php?u="+url:"https://twitter.com/intent/tweet?text="+title+"&url="+url,"_blank","noopener,noreferrer");
+    setShareOpen(false);
+  }
+  async function submitListingReport(e:React.FormEvent){
+    e.preventDefault();setReportError("");
+    const email=(viewer?.email||reportEmail).trim();
+    if(!email||!reportReason){setReportError("Please provide an email and select a reason.");return;}
+    setReportBusy(true);
+    try {
+      const token=await session?.getToken();
+      if(!token)throw new Error("Sign in to submit a listing report");
+      const response=await fetch(API_BASE+"/api/support/tickets",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({email,subject:"Listing report #"+(product?.id||id)+" - "+reportReason,category:"listing_report",body:"Listing: "+listingUrl+"\\nReason: "+reportReason+"\\nDetails: "+(reportDetails.trim()||"No additional details")})});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Could not submit report");
+      setReported(true);setReportOpen(false);setReportDetails("");setReportReason("");
+    }catch(error){setReportError(error instanceof Error?error.message:"Could not submit report");}
+    finally{setReportBusy(false);}
   }
 
   function handleWatchlist() {
@@ -406,17 +355,28 @@ export function ListingPage() {
   const offerPrice = offerPreset ?? (offerCustom ? parseFloat(offerCustom) : 0);
   const offerRatio = product ? offerPrice / product.price : 0;
 
-  function handleSendOffer() {
+  async function handleSendOffer() {
     if (!offerPrice || offerPrice <= 0 || !product) return;
-    makeOffer(product, offerPrice, offerMsg.trim() || undefined);
-    setOfferSent(true);
-    setTimeout(() => {
-      setOfferSent(false);
-      setOfferOpen(false);
-      setOfferPreset(null);
-      setOfferCustom("");
-      setOfferMsg("");
-    }, 3500);
+    if (!session) {navigate(`/sign-in?redirect=${encodeURIComponent(`/listing/${id}`)}`);return;}
+    if(!apiProduct?.id){setOfferError("Offers are available for live marketplace listings only");return;}
+    setOfferSending(true);setOfferError("");
+    try {
+      const token=await session.getToken();
+      if(!token)throw new Error("Please sign in to send an offer");
+      const response=await fetch("/api/offers",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({listingId:apiProduct.id,amount:offerPrice,message:offerMsg.trim()})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Offer could not be submitted");
+      makeOffer(product,offerPrice,offerMsg.trim()||undefined);
+      setOfferSent(true);
+      setTimeout(()=>{
+        setOfferSent(false);setOfferOpen(false);setOfferPreset(null);
+        setOfferCustom("");setOfferMsg("");
+      },3500);
+    }catch(e){setOfferError(e instanceof Error?e.message:"Could not send offer");}
+    finally{setOfferSending(false);}
   }
 
   function resetOfferModal() {
@@ -425,13 +385,14 @@ export function ListingPage() {
     setOfferCustom("");
     setOfferMsg("");
     setOfferSent(false);
+    setOfferError("");
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bazunk-listing-redesign min-h-screen flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="container mx-auto px-3 py-4 sm:px-5 sm:py-6 max-w-[1920px] bazunk-listing-content">
 
         {/* Back link */}
         <button
@@ -442,7 +403,7 @@ export function ListingPage() {
         </button>
 
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 flex-wrap">
+        <nav className="flex items-center gap-1.5 text-xs text-slate-600 mb-5 flex-wrap">
           <Link href="/" className="hover:text-[#4A5CE8] transition-colors">Home</Link>
           <ChevronRight className="w-3 h-3" />
           <Link href="/browse" className="hover:text-[#4A5CE8] transition-colors">Browse</Link>
@@ -485,44 +446,33 @@ export function ListingPage() {
           );
         })()}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Mobile quick actions remain available before the long listing details. */}
+        <div className="lg:hidden relative mb-3 rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-600 dark:bg-[#132742]" aria-label="Listing actions">
+          <div className="grid grid-cols-3 gap-2">
+            <button type="button" onClick={()=>{setShareOpen(open=>!open);setReportOpen(false);}} aria-expanded={shareOpen} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-slate-300 text-sm font-bold text-slate-900 dark:border-slate-500 dark:text-white"><Share2 className="h-4 w-4"/>Share</button>
+            <button type="button" onClick={handleWatchlist} aria-pressed={isWatched(product.id)} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-slate-300 text-sm font-bold text-slate-900 dark:border-slate-500 dark:text-white"><Heart className="h-4 w-4"/> {isWatched(product.id)?"Saved":"Save"}</button>
+            <button type="button" onClick={()=>{setReportOpen(true);setShareOpen(false);}} className="flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-rose-400 text-sm font-bold text-rose-800 dark:text-rose-200"><Flag className="h-4 w-4"/>Report</button>
+          </div>
+          {shareOpen && <div className="absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border border-slate-300 bg-white p-2 shadow-2xl dark:border-slate-600 dark:bg-[#132742]">
+            {([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,action])=><button key={label} type="button" onClick={()=>{action();setShareOpen(false);}} className="block min-h-11 w-full rounded-lg px-3 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}
+          </div>}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(340px,0.9fr)] gap-5 lg:gap-7 items-start">
 
           {/* Left: Image gallery + details */}
-          <div className="lg:col-span-2 space-y-5 min-w-0">
+          <div className="space-y-4 min-w-0">
 
-            {/* Image gallery */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              {/* Main image */}
-              <div className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                <motion.img
-                  key={activeImg}
-                  src={images[activeImg]}
-                  alt={product.title}
-                  className="w-full h-full object-contain p-8"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                />
-                {/* Nav arrows */}
-                {images.length > 1 && (
-                  <>
-                    <button onClick={handlePrevImg} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-prev-image">
-                      <ChevronLeft className="w-5 h-5 text-gray-700" />
-                    </button>
-                    <button onClick={handleNextImg} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:bg-white transition-colors" data-testid="button-next-image">
-                      <ChevronRight className="w-5 h-5 text-gray-700" />
-                    </button>
-                  </>
-                )}
-                {/* Badges */}
-                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            <ListingProductGallery images={images} title={product.title} active={activeImg} onSelect={setActiveImg}
+              watched={isWatched(product.id)}
+              onWatch={() => product && (isWatched(product.id) ? removeFromWatchlist(product.id) : addToWatchlist(product))}
+              badges={<><div className="flex flex-col gap-1.5">
                   <div className="flex gap-2 flex-wrap">
                     <span className={`text-xs font-bold px-2.5 py-1 rounded-full border capitalize ${CONDITION_COLORS[product.condition]}`}>
                       {product.condition}
                     </span>
                     {product.verified && (
                       <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500 text-white flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Verified
+                        <CheckCircle2 className="w-3 h-3" /> Identity verified
                       </span>
                     )}
                   </div>
@@ -570,30 +520,37 @@ export function ListingPage() {
                     );
                     return null;
                   })()}
-                </div>
-                {/* Wishlist */}
-                <button
-                  onClick={() => product && (isWatched(product.id) ? removeFromWatchlist(product.id) : addToWatchlist(product))}
-                  className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 shadow-md flex items-center justify-center hover:scale-110 transition-transform"
-                  data-testid="button-wishlist"
-                >
-                  <Heart className={`w-4 h-4 ${product && isWatched(product.id) ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
-                </button>
-              </div>
+                </div></>} />
 
-              {/* Thumbnails */}
-              <div className="flex gap-2 p-3 bg-white border-t border-gray-100">
-                {images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImg(i)}
-                    className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors flex-shrink-0 ${activeImg === i ? "border-[#4A5CE8]" : "border-gray-200 hover:border-gray-300"}`}
-                    data-testid={`button-thumbnail-${i}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-contain p-1.5 bg-gray-50" />
-                  </button>
-                ))}
+
+            <section className="bz-mockup-product-summary" aria-label="Product overview">
+              <h1 className="bz-mockup-product-title">{product.title}</h1>
+              <div className="bz-mockup-product-seller"><span className="bz-mockup-condition">{product.condition}</span><span>Sold by {(product as typeof product & ApiListingExtra)._sellerName || (product as typeof product & ApiListingExtra)._sellerUsername || "Marketplace seller"}</span>{product.verified&&<CheckCircle2 size={18} className="text-emerald-500" aria-label="Identity verified"/>}</div>
+              <div className="bz-mockup-product-price">{formatPrice(product.price + (product.variants?.reduce((sum,v)=>sum+(v.options.find(o=>o.value===selectedVariants[v.type])?.priceDelta??0),0)??0))}</div>
+              <div className="bz-mockup-product-stock"><CheckCircle2 size={20}/> {isDemoListing?"Currently unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock ("+(product as typeof product & ApiListingExtra).quantity+" available)":"Out of stock"):"Check availability with seller"}</div>
+
+              <div className="bz-visual-feature-grid" aria-label="Listing highlights">
+                <div className="bz-feature-blue"><Zap size={24}/><span><strong>Quick facts</strong><small>{category?.name || product.category}</small></span></div>
+                <div className="bz-feature-cyan"><CheckCircle2 size={24}/><span><strong>Condition</strong><small>{product.condition}</small></span></div>
+                <div className="bz-feature-purple"><Package size={24}/><span><strong>Availability</strong><small>{isDemoListing?"Unavailable":(product as typeof product & ApiListingExtra).quantity!=null?((product as typeof product & ApiListingExtra).quantity!>0?"In stock":"Out of stock"):"Ask seller"}</small></span></div>
+                <div className="bz-feature-orange"><Truck size={24}/><span><strong>Postage</strong><small>{(product as typeof product & ApiListingExtra).shippingPrice==null?"At checkout":(product as typeof product & ApiListingExtra).shippingPrice===0?"Free":formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</small></span></div>
               </div>
+              <div className="bz-visual-facts">
+                <span><Tag size={18}/><strong>Condition</strong>{product.condition}</span>
+                <span><Grid3X3 size={18}/><strong>Category</strong>{category?.name||product.category}</span>
+                <span><MapPin size={18}/><strong>Location</strong>{(product as typeof product & ApiListingExtra).location||"See delivery"}</span>
+              </div>
+              <details className="bz-visual-description"><summary><BookOpen size={18}/> About this item <ChevronDown size={16}/></summary><p>{String(product.description||"See the description and details below for more information.").replace(/<[^>]*>/g," ").slice(0,500)}</p></details>
+
+            </section>
+
+            {/* TrustProof is an optional feature-flagged tab, not a permanent large panel. */}
+            <div className="overflow-hidden rounded-xl border border-slate-300 dark:border-slate-600 bazunk-listing-tabs">
+              <div role="tablist" aria-label="Product information" className="flex border-b border-slate-300 bg-slate-50 p-1 dark:border-slate-600 dark:bg-[#132742]">
+                <button type="button" role="tab" id="listing-details-tab" aria-selected={informationTab==="details"||!trustProofEnabled||!showSection("trust")} aria-controls="listing-details-panel" onClick={()=>setInformationTab("details")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="details"||!trustProofEnabled?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Description & details</button>
+                {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&<button type="button" role="tab" id="listing-trust-tab" aria-selected={informationTab==="trust"} aria-controls="listing-trust-panel" onClick={()=>setInformationTab("trust")} className={`flex-1 rounded-lg px-3 py-3 text-sm font-bold ${informationTab==="trust"?"bg-orange-600 text-white":"text-slate-800 hover:bg-slate-200 dark:text-white dark:hover:bg-[#29466e]"}`}>Trust & verification</button>}
+              </div>
+              {trustProofEnabled&&showSection("trust")&&apiProduct?.id&&informationTab==="trust"&&<div role="tabpanel" id="listing-trust-panel" aria-labelledby="listing-trust-tab" className="p-3"><TrustProofBuyerPanel listingId={Number(apiProduct.id)} identityVerified={Boolean(product.verified)}/></div>}
             </div>
 
             {/* {t("descriptionDetails")} */}
@@ -602,7 +559,7 @@ export function ListingPage() {
               const specs = extra._specifications ?? [];
               const tags = extra._tags ?? [];
               return (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div role="tabpanel" id="listing-details-panel" aria-labelledby="listing-details-tab" hidden={informationTab==="trust"&&trustProofEnabled&&showSection("trust")&&Boolean(apiProduct?.id)}><ListingDetailsSection>
                   {/* Gradient header */}
                   <div className="bg-gradient-to-r from-[#4A5CE8] to-[#7C3AED] px-6 py-4 flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -628,6 +585,9 @@ export function ListingPage() {
                           : "No description provided."}
                       </p>
                     </div>
+
+                    {/* Promotional related listings directly beneath the description. */}
+                    <RelatedListingsBox category={product.category} excludeId={product.id} />
 
                     {/* Specifications */}
                     {specs.length > 0 && (
@@ -663,7 +623,7 @@ export function ListingPage() {
                     )}
 
                     {/* Item Details table */}
-                    <div>
+                    {showSection("specifications")&&<div>
                       <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
                         <Info className="w-4 h-4 text-violet-500" /> Item Details
                       </h3>
@@ -682,112 +642,105 @@ export function ListingPage() {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </div>}
 
                     {/* Stats row */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                    {showSection("stats",false)&&<div className="flex items-center gap-4 pt-3 border-t border-gray-100 text-xs text-slate-600">
                       <span className="flex items-center gap-1.5"><Eye className="w-3.5 h-3.5" />{product.views.toLocaleString()} views</span>
                       <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
-                      <button onClick={handleShare} className={`flex items-center gap-1.5 ml-auto transition-colors ${copied ? "text-emerald-600" : "hover:text-[#4A5CE8]"}`} data-testid="button-share">
-                        <Share2 className="w-3.5 h-3.5" /> {copied ? "Copied!" : "Share"}
-                      </button>
-                      <button onClick={handleReport} className={`flex items-center gap-1.5 transition-colors ${reported ? "text-emerald-600" : "text-red-400 hover:text-red-500"}`} data-testid="button-report">
-                        <Flag className="w-3.5 h-3.5" /> {reported ? "Reported" : "Report"}
-                      </button>
+                    </div>}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-slate-50 p-2.5 dark:border-[#3b5172] dark:bg-[#10223d]">
+                      {showSection("sharing")&&<div className="relative">
+                        <button type="button" onClick={()=>{setShareOpen(!shareOpen);setReportOpen(false);}} aria-expanded={shareOpen} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-orange-500 px-3 font-bold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#2d4264]" data-testid="button-share"><Share2 className="h-4 w-4 text-orange-600 dark:text-orange-300"/>Share listing<ChevronRight className={`h-4 w-4 transition-transform ${shareOpen?"rotate-90":""}`}/></button>
+                        {shareOpen&&<div className="absolute bottom-full left-0 z-50 mb-2 w-60 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-300 bg-white p-2 shadow-2xl dark:border-[#496286] dark:bg-[#132742]">{([["Copy link",()=>void copyListingUrl()],["WhatsApp",()=>shareTo("whatsapp")],["Facebook",()=>shareTo("facebook")],["X (Twitter)",()=>shareTo("x")],["Email",()=>shareTo("email")],["More options",()=>shareTo("native")]] as [string,()=>void][]).map(([label,fn])=><button type="button" key={label} onClick={()=>{fn();if(label==="Copy link")setShareOpen(false);}} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-slate-900 hover:bg-orange-100 dark:text-white dark:hover:bg-[#29466e]">{label}</button>)}</div>}
+                      </div>}
+                      {showSection("sharing")&&<button type="button" onClick={()=>void copyListingUrl()} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Copy className="h-4 w-4"/>{copied?"Copied!":"Copy link"}</button>}
+                      <button type="button" onClick={handleWatchlist} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 hover:bg-slate-200 dark:border-[#496286] dark:text-white dark:hover:bg-[#29466e]"><Heart className="h-4 w-4"/>Save</button>
+                      <button type="button" onClick={()=>{setReportOpen(true);setShareOpen(false);}} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-rose-400 px-3 text-sm font-bold text-rose-800 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-200 dark:hover:bg-[#3c2740]" data-testid="button-report"><Flag className="h-4 w-4"/>{reported?"Report submitted":"Report listing"}</button>
                     </div>
+                    {reportOpen&&<div className="fixed inset-x-3 top-[8vh] z-[100] max-h-[84dvh] overflow-y-auto rounded-xl border border-orange-400 bg-white p-4 shadow-2xl dark:bg-[#10223d] dark:text-white lg:static lg:inset-auto lg:max-h-none lg:shadow-lg"><h3 className="text-lg font-bold">Report this listing</h3><p className="mb-3 text-sm text-slate-600 dark:text-slate-200">Your report goes to Bazunk support for review. Reporting does not automatically remove a listing.</p><form onSubmit={e=>void submitListingReport(e)} className="space-y-3"><label className="block text-sm font-semibold">Reason<select required value={reportReason} onChange={e=>setReportReason(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"><option value="">Select a reason</option>{["Scam or fraudulent","Prohibited item","Wrong category","Counterfeit / fake item","Abusive content","Misleading description","Other"].map(x=><option key={x} value={x}>{x}</option>)}</select></label>{!viewer?.email&&<label className="block text-sm font-semibold">Your email<input required type="email" value={reportEmail} onChange={e=>setReportEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>}<label className="block text-sm font-semibold">Additional details<textarea value={reportDetails} maxLength={2000} onChange={e=>setReportDetails(e.target.value)} placeholder="Explain the issue (optional)" className="mt-1 w-full rounded-lg border border-slate-400 bg-white p-2.5 text-slate-900 dark:border-[#587096] dark:bg-[#192f4d] dark:text-white"/></label>{reportError&&<p role="alert" className="text-sm font-semibold text-red-700 dark:text-red-300">{reportError}</p>}<div className="flex gap-2"><button type="submit" disabled={reportBusy} className="rounded-lg bg-orange-600 px-4 py-2.5 font-bold text-white hover:bg-orange-700 disabled:opacity-50">{reportBusy?"Submitting…":"Submit report"}</button><button type="button" onClick={()=>setReportOpen(false)} className="rounded-lg border border-slate-400 px-4 py-2.5 font-bold text-slate-800 dark:text-white">Cancel</button></div></form></div>}
                   </div>
-                </div>
+                </ListingDetailsSection></div>
               );
             })()}
 
             {/* Shipping availability — based on the seller's Direct Sale choices */}
-            {(() => {
+            {showSection("delivery_details")&&(() => {
               const x = product as typeof product & ApiListingExtra;
               const origin = x.shipOriginOther || x.shipOrigin || product.location || "Not specified";
               const domesticNames: Record<string, string> = { UK: "United Kingdom", US: "United States", EU: "European Union", CA: "Canada", AU: "Australia", Other: x.shipOriginOther || "seller's country" };
-              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, europe: "Europe", worldwide: "Worldwide", international: "International" };
-              const destination = zoneLabels[x.shipZone || ""] || "Ask seller";
+              const zoneLabels: Record<string, string> = { domestic: domesticNames[x.shipOrigin || ""] || origin, eu: "UK & EU", "eu-only": "European Union", europe: "Europe", "north-america": "North America", asia: "Asia Pacific", worldwide: "Worldwide" };
+              const destination = zoneLabels[x.shipZone || ""] || "Seller has not specified destinations";
               const domesticOnly = x.shipZone === "domestic";
               const viewerMismatch = domesticOnly && country.name.toLowerCase() !== String(domesticNames[x.shipOrigin || ""] || origin).toLowerCase();
               return (
-                <div className="rounded-2xl overflow-hidden border border-cyan-200 shadow-sm bg-white">
+                <ListingDeliverySection>
                   <div className="bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-4 text-white">
                     <h3 className="font-black flex items-center gap-2"><Globe2 className="w-5 h-5" /> {t("deliveryLocation")}</h3>
                     <p className="text-xs text-white/85 mt-1">Check where this item is coming from before you buy</p>
                   </div>
-                  <div className="p-5 grid sm:grid-cols-2 gap-3">
-                    <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-cyan-700">{t("shipsFrom")}</p><p className="font-black text-gray-900 mt-1">{origin}</p></div>
-                    <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-indigo-700">{t("shipsTo")}</p><p className="font-black text-gray-900 mt-1">{destination}</p></div>
-                    {x.carrier && <div className="rounded-xl bg-violet-50 border border-violet-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-violet-700">Carrier</p><p className="font-bold text-gray-900 mt-1 capitalize">{x.carrier.replaceAll("-", " ")}</p></div>}
-                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4"><p className="text-[11px] uppercase tracking-wider font-bold text-emerald-700">Postage</p><p className="font-black text-gray-900 mt-1">{x.shippingPrice == null || x.shippingPrice === 0 ? "Free / included" : formatPrice(x.shippingPrice)}</p></div>
+                  <div className="p-5 grid sm:grid-cols-2 gap-4 bz-listing-shipping-grid">
+                    <div className="bz-shipping-tile bz-shipping-origin"><div className="bz-shipping-icon"><MapPin aria-hidden="true" /></div><div><p className="bz-shipping-label">{t("shipsFrom")}</p><p className="bz-shipping-value">{origin}</p></div></div>
+                    <div className="bz-shipping-tile bz-shipping-destination"><div className="bz-shipping-icon"><Globe2 aria-hidden="true" /></div><div><p className="bz-shipping-label">{t("shipsTo")}</p><p className="bz-shipping-value">{destination}</p></div></div>
+                    {x.carrier && <div className="bz-shipping-tile bz-shipping-carrier"><div className="bz-shipping-icon"><Truck aria-hidden="true" /></div><div><p className="bz-shipping-label">Carrier</p><p className="bz-shipping-value capitalize">{x.carrier.replaceAll("-", " ")}</p></div></div>}
+                    <div className="bz-shipping-tile bz-shipping-postage"><div className="bz-shipping-icon"><Package aria-hidden="true" /></div><div><p className="bz-shipping-label">Postage</p><p className="bz-shipping-value">{x.shippingPrice == null ? "Calculated at checkout" : x.shippingPrice === 0 ? "Free (seller rate)" : formatPrice(x.shippingPrice)}</p></div></div>
                   </div>
                   {viewerMismatch && <div className="mx-5 mb-5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900 font-semibold">You're browsing from {country.name}, but this seller currently ships this item only within {destination}. The price is still shown in {currency.code} for your convenience.</div>}
-                </div>
+                </ListingDeliverySection>
               );
             })()}
 
             {/* Quick facts from the listing */}
-            {(() => {
+            {showSection("quick_facts",false)&&(() => {
               const x = product as typeof product & ApiListingExtra;
               return (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4"><BadgeCheck className="w-5 h-5 text-orange-500 mb-2" /><p className="text-xs text-gray-500">{t("condition")}</p><p className="font-black text-gray-900 capitalize">{product.condition}</p></div>
-                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{x.quantity ?? 1}</p></div>
+                  <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4"><Package className="w-5 h-5 text-violet-500 mb-2" /><p className="text-xs text-gray-500">{t("available")}</p><p className="font-black text-gray-900">{isDemoListing ? 0 : (x.quantity ?? 1)}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 p-4"><Box className="w-5 h-5 text-blue-500 mb-2" /><p className="text-xs text-gray-500">SKU</p><p className="font-bold text-gray-900 truncate">{x.sku || "Not specified"}</p></div>
                   <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-4"><Plane className="w-5 h-5 text-emerald-500 mb-2" /><p className="text-xs text-gray-500">{t("listingCurrency")}</p><p className="font-black text-gray-900">{x.listingCurrency || "GBP"}</p></div>
                 </div>
               );
             })()}
 
-            {/* Trust signals */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">Buying safely</h3>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {[
-                  { icon: Shield, title: "Secure Checkout", desc: "Pay via Bazunk" },
-                  { icon: Truck,  title: "Seller Ships",    desc: "Arranged by seller"  },
-                ].map((t) => {
-                  const Icon = t.icon;
-                  return (
-                    <div key={t.title} className="flex flex-col items-center text-center gap-2 p-3 bg-gray-50 rounded-xl">
-                      <div className="w-9 h-9 rounded-full bg-[#4A5CE8]/10 flex items-center justify-center">
-                        <Icon className="w-4 h-4 text-[#4A5CE8]" />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-800">{t.title}</p>
-                      <p className="text-[10px] text-gray-400">{t.desc}</p>
-                    </div>
-                  );
-                })}
+            {/* Trust signals: colourful, high-contrast reassurance cards. */}
+            {showSection("buyer_protection")&&<section className="bz-listing-safety rounded-2xl p-5" aria-label="Buying safely">
+              <div className="flex items-center gap-3 mb-5"><span className="bz-safety-heading-icon"><Shield aria-hidden="true" /></span><div><h3 className="text-xl font-extrabold">Buying safely</h3><p className="text-sm bz-safety-subtitle">Shop confidently with Bazunk</p></div></div>
+              <div className="grid sm:grid-cols-2 gap-4 mb-5">
+                <div className="bz-safety-tile bz-safety-checkout"><span className="bz-safety-icon"><Shield aria-hidden="true"/></span><h4 className="font-extrabold text-base">Secure Checkout</h4><p className="text-sm">Pay securely through Bazunk</p></div>
+                <div className="bz-safety-tile bz-safety-shipping"><span className="bz-safety-icon"><Truck aria-hidden="true"/></span><h4 className="font-extrabold text-base">Seller Ships</h4><p className="text-sm">Delivery arranged by the seller</p></div>
               </div>
               <BuyerProtectionBadge />
-            </div>
+            </section>}
           </div>
 
           {/* Right: Price + actions + seller */}
-          <div className="space-y-5 min-w-0 self-start" data-testid="listing-purchase-panel">
+          <div className="space-y-5 min-w-0 self-start bazunk-listing-aside" data-testid="listing-purchase-panel">
 
             {/* Price card: stays in normal page flow to avoid covering seller details. */}
-            <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-5 min-w-0">
-              <div className="-mx-5 -mt-5 mb-5 rounded-t-2xl bg-gradient-to-r from-[#F26B21] to-[#EAA008] px-5 py-4 text-white">
-                <p className="text-sm font-black flex items-center gap-2"><ShoppingCart className="w-4 h-4" /> Make it yours</p>
-                <p className="mt-1 text-xs text-white/90">Buy now or agree a price with the seller</p>
-              </div>
-              <h1 className="text-base font-semibold text-gray-800 leading-snug mb-3 break-words">{product.title}</h1>
+            <ListingPurchaseSection>
+              <h2 className="bz-mockup-buy-heading"><ShoppingCart size={22} aria-hidden="true"/> Buy This Item</h2>
 
-              {(() => {
-                const priceDelta = product.variants
-                  ? product.variants.reduce((sum, v) => {
-                      const sel = v.options.find((o) => o.value === selectedVariants[v.type]);
-                      return sum + (sel?.priceDelta ?? 0);
-                    }, 0)
-                  : 0;
-                const totalPrice = product.price + priceDelta;
-                return (
-                  <div className="flex flex-wrap items-baseline gap-2 mb-5 rounded-xl bg-orange-50 border border-orange-100 px-4 py-3">
-                    <span className="text-3xl font-bold text-gray-900">{formatPrice(totalPrice)}</span>
+              {/* Buyer's essentials: price, condition, stock and delivery together. */}
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-900 space-y-2.5 bazunk-listing-essentials">
+                <div className="flex justify-between gap-3">
+                  <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><Package size={17} className="text-indigo-600"/>Availability</span>
+                  <span className="font-bold">{isDemoListing ? "Unavailable" : (product as typeof product & ApiListingExtra).quantity != null ? (product as typeof product & ApiListingExtra).quantity! > 0 ? `${(product as typeof product & ApiListingExtra).quantity} available` : "Out of stock" : "Check with seller"}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><BadgeCheck size={17} className="text-indigo-600"/>Condition</span>
+                  <span className="font-bold capitalize">{product.condition}</span>
+                </div>
+                <p className="text-xs text-slate-600">{CONDITION_DESC[product.condition] || "See description for item details."}</p>
+                <div className="border-t border-slate-200 pt-2.5">
+                  <div className="flex justify-between gap-3">
+                    <span className="font-semibold text-slate-600 inline-flex items-center gap-2"><Truck size={17} className="text-indigo-600"/>Postage</span>
+                    <span className="font-bold">{(product as typeof product & ApiListingExtra).shippingPrice == null ? "Confirm at checkout" : (product as typeof product & ApiListingExtra).shippingPrice === 0 ? "Free" : formatPrice((product as typeof product & ApiListingExtra).shippingPrice!)}</span>
                   </div>
-                );
-              })()}
+                  <p className="mt-1 text-xs text-slate-600">Ships from {(product as typeof product & ApiListingExtra).shipOriginOther || (product as typeof product & ApiListingExtra).shipOrigin || product.location}. Delivery timing depends on seller and destination.</p>
+                  <p className="mt-1 text-xs text-slate-600">Final totals are confirmed before payment.</p>
+                </div>
+              </div>
 
               {/* Variants */}
               {product.variants && product.variants.length > 0 && (
@@ -803,14 +756,17 @@ export function ListingPage() {
                 </div>
               )}
 
+              <ListingDeliveryCalculator origin={(product as typeof product & ApiListingExtra).shipOrigin || ""} zone={(product as typeof product & ApiListingExtra).shipZone || ""} shippingPrice={(product as typeof product & ApiListingExtra).shippingPrice} formatPrice={formatPrice} />
+
               {/* Buy Now */}
               <button
                 onClick={handleBuyNow}
+                disabled={isDemoListing}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all mb-2.5 shadow-sm bg-gradient-to-r from-[#F26B21] to-[#D97706] text-white hover:opacity-90"
                 data-testid="button-buy-now"
               >
                 <ShoppingCart className="w-4 h-4" />
-                {t("buyNow")}
+                {isDemoListing || ((product as typeof product & ApiListingExtra).quantity != null && (product as typeof product & ApiListingExtra).quantity! <= 0) ? "Currently unavailable" : t("buyNow")}
               </button>
 
               {/* Make an Offer */}
@@ -851,21 +807,21 @@ export function ListingPage() {
               </p>
 
               {/* Meta */}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400">
+              {showSection("stats",false)&&<div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 text-xs text-slate-600">
                 <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views} views</span>
                 <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers} watching</span>
                 <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
-              </div>
-            </div>
+              </div>}
+            </ListingPurchaseSection>
 
             {/* Seller card */}
-            <SellerCard
+            <ListingSellerSection><SellerCard
               sellerName={(product as typeof product & ApiListingExtra)._sellerName ?? product.title.split(" ")[0]}
               sellerUsername={(product as typeof product & ApiListingExtra)._sellerUsername}
               sellerEmail={(product as typeof product & ApiListingExtra)._sellerEmail}
               location={product.location}
               verified={product.verified}
-            />
+            /></ListingSellerSection>
 
             {/* Engagement contact buttons — shown when seller has engagement-boost promo */}
             {(() => {
@@ -891,11 +847,7 @@ export function ListingPage() {
               );
             })()}
 
-            {/* Related listings sidebar — randomly rotated featured listings in same category */}
-            <RelatedListingsBox
-              category={product.category}
-              excludeId={product.id}
-            />
+
           </div>
         </div>
 
@@ -918,7 +870,7 @@ export function ListingPage() {
                   >
                     <div className="aspect-square bg-gray-50 p-3 relative">
                       <img src={p.image} alt={p.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                      <span className={`absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize ${CONDITION_COLORS[p.condition]}`}>{p.condition}</span>
+                      <span className={`absolute bottom-2 left-2 text-xs font-bold px-2 py-0.5 rounded-full border capitalize ${CONDITION_COLORS[p.condition]}`}>{p.condition}</span>
                     </div>
                     <div className="p-3">
                       <p className="text-xs font-semibold text-gray-800 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors">{p.title}</p>
@@ -936,19 +888,19 @@ export function ListingPage() {
       </div>
 
       {/* Make an Offer modal */}
-      <AnimatePresence>
+      {createPortal(<AnimatePresence>
         {offerOpen && product && (
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-50"
+              className="fixed inset-0 bg-black/70 z-[200]"
               onClick={resetOfferModal}
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed z-50 inset-0 flex items-center justify-center p-4 pointer-events-none"
+              className="fixed z-[201] inset-0 flex items-center justify-center p-4 pointer-events-none"
             >
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90dvh] pointer-events-auto overflow-y-auto">
                 {/* Header */}
@@ -973,7 +925,7 @@ export function ListingPage() {
                         <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                       </motion.div>
                       <p className="font-bold text-gray-900 text-lg">Offer Sent! 🎉</p>
-                      <p className="text-sm text-gray-400 mt-1 mb-4">The seller is reviewing your offer of <span className="font-bold text-gray-700">£{offerPrice.toFixed(2)}</span>.</p>
+                      <p className="text-sm text-slate-600 mt-1 mb-4">The seller is reviewing your offer of <span className="font-bold text-gray-700">£{offerPrice.toFixed(2)}</span>.</p>
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={resetOfferModal}
@@ -1009,7 +961,7 @@ export function ListingPage() {
                               <span className={`text-xs font-bold ${active ? "text-[#4A5CE8]" : "text-gray-800"}`}>
                                 £{price.toFixed(0)}
                               </span>
-                              <span className="text-[9px] text-gray-400 mt-0.5">−{pct}%</span>
+                              <span className="text-[9px] text-slate-600 mt-0.5">−{pct}%</span>
                             </button>
                           );
                         })}
@@ -1057,7 +1009,7 @@ export function ListingPage() {
                         maxLength={200}
                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] resize-none mb-1"
                       />
-                      <p className="text-right text-[10px] text-gray-400 mb-4">{offerMsg.length}/200</p>
+                      <p className="text-right text-xs text-slate-600 mb-4">{offerMsg.length}/200</p>
 
                       <div className="flex gap-3">
                         <button onClick={resetOfferModal}
@@ -1067,13 +1019,14 @@ export function ListingPage() {
                         </button>
                         <button
                           onClick={handleSendOffer}
-                          disabled={!offerPrice || offerPrice <= 0}
+                          disabled={!offerPrice || offerPrice <= 0 || offerSending}
                           className="flex-[2] py-3 rounded-xl bg-gradient-to-r from-[#3B4FD8] to-[#4A5CE8] text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 shadow-sm"
                           data-testid="button-send-offer">
-                          {offerPrice > 0 ? `Send Offer · £${offerPrice.toFixed(2)}` : "Send Offer"}
+                          {offerSending ? "Sending offer…" : offerPrice > 0 ? `Send Offer · £${offerPrice.toFixed(2)}` : "Send Offer"}
                         </button>
                       </div>
-                      <p className="text-center text-[10px] text-gray-400 mt-3">Offer expires in 48 hours · Seller typically responds in &lt; 1 hour</p>
+                      {offerError && <p role="alert" className="text-sm font-semibold text-red-700 mt-3">{offerError}</p>}
+                      <p className="text-center text-xs text-slate-600 mt-3">Offers are sent securely to the seller. Their response time may vary.</p>
                     </>
                   )}
                 </div>
@@ -1081,8 +1034,9 @@ export function ListingPage() {
             </motion.div>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
 
+      <div className="container mx-auto max-w-[1920px] px-4"><ProductDiscovery currentId={Number(product?.id)} /></div>
       <Footer />
     </div>
   );

@@ -1,0 +1,35 @@
+name: Dark mode contrast regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/sellbuydeal/src/index.css"
+      - "artifacts/sellbuydeal/src/pages/admin/**"
+      - "artifacts/sellbuydeal/src/components/ui/**"
+      - "scripts/dark-mode-contrast.test.mjs"
+      - "scripts/storefront-contrast.test.mjs"
+      - "artifacts/sellbuydeal/src/pages/BrowsePage.tsx"
+      - "artifacts/sellbuydeal/src/components/CategorySection.tsx"
+      - "artifacts/sellbuydeal/src/components/FeaturedListings.tsx"
+      - ".github/workflows/dark-mode-contrast.yml"
+  pull_request:
+    paths:
+      - "artifacts/sellbuydeal/src/index.css"
+      - "artifacts/sellbuydeal/src/pages/admin/**"
+      - "artifacts/sellbuydeal/src/components/ui/**"
+      - "scripts/dark-mode-contrast.test.mjs"
+      - "scripts/storefront-contrast.test.mjs"
+      - "artifacts/sellbuydeal/src/pages/BrowsePage.tsx"
+      - "artifacts/sellbuydeal/src/components/CategorySection.tsx"
+      - "artifacts/sellbuydeal/src/components/FeaturedListings.tsx"
+  workflow_dispatch:
+jobs:
+  contrast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test light and dark semantic contrast
+        run: node --test scripts/dark-mode-contrast.test.mjs scripts/storefront-contrast.test.mjs

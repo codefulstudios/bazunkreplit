@@ -19,6 +19,7 @@ export const classifiedAdsTable = pgTable("classified_ads", {
   photos:       text("photos"),
   externalLink: text("external_link"),
   status:       text("status").notNull().default("active"),
+  marketplaceRegion: text("marketplace_region"),
   expiresAt:    timestamp("expires_at", { withTimezone: true }),
   postedAt:     timestamp("posted_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt:    timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

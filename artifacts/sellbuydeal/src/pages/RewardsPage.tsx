@@ -1,13 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "wouter";
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar, RotateCcw, HelpCircle, Gift, Type,
   Coins, Trophy, Crown, ChevronRight, Loader2,
   CheckCircle2, XCircle, Zap, Star, Lock,
-  CalendarCheck, Brain, Ticket, PackageOpen, Dices,
+  CalendarCheck, Brain, Ticket, PackageOpen, Dices, Volume2, VolumeX, Flame,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import { AdSlot } from "@/components/AdSlot";
+import { CompactPageHero } from "@/components/CompactPageHero";
+import { MemoryMatchGame, TreasureTapGame } from "@/components/RewardsArcadeGames";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 
@@ -29,6 +34,16 @@ interface LeaderboardEntry {
   total_credits: number;
 }
 
+let rewardsAudioContext: AudioContext | null = null;
+function unlockRewardsAudio() {
+  try {
+    const AudioCtx=window.AudioContext||(window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+    if(!AudioCtx)return;
+    rewardsAudioContext=rewardsAudioContext||(new AudioCtx());
+    if(rewardsAudioContext.state==="suspended")void rewardsAudioContext.resume();
+  } catch {/* Audio remains optional. */}
+}
+
 const ICON_MAP: Record<string, React.ElementType> = {
   calendar: CalendarCheck,
   loader: RotateCcw,
@@ -41,6 +56,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   "scratch-card": Ticket,
   "mystery-box": PackageOpen,
   "lucky-number": Dices,
+  "memory-match": Brain,
+  "treasure-tap": Gift,
 };
 
 const ICON_BG: Record<string, string> = {
@@ -50,6 +67,7 @@ const ICON_BG: Record<string, string> = {
   "scratch-card":   "bg-orange-50",
   "mystery-box":    "bg-pink-50",
   "lucky-number":   "bg-amber-50",
+  "memory-match": "bg-blue-50", "treasure-tap": "bg-orange-50",
 };
 
 const ICON_COLOR: Record<string, string> = {
@@ -59,77 +77,57 @@ const ICON_COLOR: Record<string, string> = {
   "scratch-card":   "text-orange-500",
   "mystery-box":    "text-pink-500",
   "lucky-number":   "text-amber-500",
+  "memory-match": "text-blue-600", "treasure-tap": "text-orange-600",
 };
 
 // ── Spin Wheel ────────────────────────────────────────────────────────────────
-function SpinWheelGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => Promise<void> }) {
+function SpinWheelGame({ game, onPlay, playSound }: { game: Game; onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void }) {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
-  const segments = [game.creditsMin, 10, 15, 20, 25, 30, 35, game.creditsMax];
-
+  const segments = Array.from({ length: 8 }, (_, i) => Math.round(game.creditsMin + (game.creditsMax - game.creditsMin) * i / 7));
+  const colors = ["#5546e8","#fa742e","#0cae89","#f5a623","#8749df","#f04458","#00a9c8","#df3d94"];
   async function spin() {
-    setSpinning(true);
-    const extraSpins = 5 * 360;
-    const randAngle = Math.floor(Math.random() * 360);
-    setAngle(a => a + extraSpins + randAngle);
-    setTimeout(async () => {
-      await onPlay();
-      setSpinning(false);
-    }, 2500);
+    if (spinning) return;
+    setSpinning(true); playSound("spin");
+    const tick=setInterval(()=>playSound("tick"),150);
+    setAngle(a => a + 1800 + Math.random() * 360);
+    await new Promise(r => setTimeout(r, 3400)); clearInterval(tick);
+    try { await onPlay(); } finally { setSpinning(false); }
   }
-
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="relative w-48 h-48">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10">
-          <div className="w-0 h-0 border-l-[10px] border-r-[10px] border-t-[20px] border-l-transparent border-r-transparent border-t-[#F26B21]" />
+    <div className="arcade-wheel-experience flex flex-col items-center gap-5 py-4">
+      <div className="arcade-stage-heading"><span>✨</span> LUCKY SPIN <span>✨</span></div>
+      <p className="text-center text-sm font-semibold text-blue-100">Spin the illuminated wheel and reveal your daily surprise!</p>
+      <div className="arcade-wheel-stage">
+        <div className="arcade-wheel-pointer" aria-hidden="true">🔻</div>
+        <div className="arcade-wheel-lights">
+          <motion.div className="arcade-wheel-disc" animate={{rotate:angle}} transition={{duration:3.4,ease:[0.12,0.75,0.12,1]}}
+            style={{background:`conic-gradient(from -22.5deg, ${colors.map((c,i)=>`${c} ${i*45}deg ${(i+1)*45}deg`).join(", ")})`}}>
+            {segments.map((val,i)=><div key={i} className="arcade-wheel-segment" style={{transform:`rotate(${i*45}deg)`}}>
+              <span>🪙</span><strong>{val}</strong><small>credits</small>
+            </div>)}
+          </motion.div>
+          <div className="arcade-wheel-hub">B</div>
         </div>
-        <motion.div
-          className="w-48 h-48 rounded-full relative overflow-hidden border-4 border-white shadow-xl"
-          animate={{ rotate: angle }}
-          transition={{ duration: 2.5, ease: [0.2, 0.8, 0.3, 1] }}
-        >
-          {segments.map((val, i) => {
-            const deg = 360 / segments.length;
-            const colors = ["#4A5CE8","#F26B21","#10b981","#f59e0b","#8b5cf6","#ef4444","#06b6d4","#ec4899"];
-            return (
-              <div
-                key={i}
-                className="absolute inset-0 flex items-center justify-center"
-                style={{
-                  transform: `rotate(${i * deg}deg)`,
-                  clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.tan((deg * Math.PI) / 360)}% 0%)`,
-                  background: colors[i % colors.length],
-                }}
-              >
-                <span className="absolute text-white font-black text-xs" style={{ top: "18%", left: "50%", transform: `translateX(-50%) rotate(${deg / 2}deg)` }}>
-                  {val}
-                </span>
-              </div>
-            );
-          })}
-        </motion.div>
+        <div className="arcade-wheel-base">⭐ SPIN · EARN · WIN ⭐</div>
       </div>
-      <button
-        onClick={spin}
-        disabled={spinning}
-        className="px-8 py-3 rounded-xl bg-purple-600 text-white font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-      >
-        {spinning ? <><Loader2 className="w-4 h-4 animate-spin" /> Spinning…</> : <><RotateCcw className="w-4 h-4" /> Spin!</>}
+      <button onClick={spin} disabled={spinning} className="arcade-orange-button">
+        {spinning ? "✨ Spinning…" : "🎡 SPIN NOW"}
       </button>
-      <p className="text-xs text-gray-400">Win between {game.creditsMin}–{game.creditsMax} credits</p>
+      <div className="arcade-reward-chips">{[5,10,25,50,100].map(n=><div key={n}><span>🪙</span><strong>{n}</strong><small>credits</small></div>)}</div>
+      <p className="text-xs text-blue-100 text-center">Prize values shown are illustrative. Your actual reward is determined by the server when the spin completes.</p>
     </div>
   );
 }
 
 // ── Quiz ──────────────────────────────────────────────────────────────────────
 function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => Promise<void> }) {
-  const [question, setQuestion] = useState<{ question: string; options: string[] } | null>(null);
+  const [question, setQuestion] = useState<{ question: string; options: string[]; questionNumber?: number; totalQuestions?: number; rotatesAt?: string } | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/rewards/quiz-today").then(r => r.ok ? r.json() : null).then(setQuestion).catch(() => {});
+    fetch("/api/rewards/quiz-today", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(setQuestion).catch(() => {});
   }, []);
 
   async function submit() {
@@ -142,73 +140,96 @@ function QuizGame({ game, onPlay }: { game: Game; onPlay: (answer?: unknown) => 
   if (!question) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-400" /></div>;
 
   return (
-    <div className="space-y-4">
-      <p className="font-bold text-gray-900 text-base">{question.question}</p>
+    <div className="bz-quiz-game space-y-4">
+      <motion.div initial={{opacity:0,y:-12}} animate={{opacity:1,y:0}} className="bz-quiz-question rounded-2xl border p-4"><Brain className="w-7 h-7 text-blue-600 mb-2"/><div className="flex items-center justify-between gap-3 mb-2"><span className="text-xs font-bold uppercase tracking-wide text-blue-600">Daily question {question.questionNumber ?? ""} of {question.totalQuestions ?? 100}</span><span className="text-[10px] text-slate-500">New question daily</span></div><p className="font-bold text-lg text-[#142b50]">{question.question}</p></motion.div>
       <div className="space-y-2">
         {question.options.map((opt, i) => (
-          <button
+          <motion.button
             key={i}
+            initial={{opacity:0,x:-16}} animate={{opacity:1,x:0}} transition={{delay:i*.09}} whileHover={{scale:1.015}} whileTap={{scale:.98}}
             onClick={() => setSelected(i)}
-            className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${
-              selected === i ? "border-blue-500 bg-blue-50 text-blue-900" : "border-gray-200 hover:border-gray-300 text-gray-700"
-            }`}
+            aria-pressed={selected === i} disabled={submitting} className={`bz-quiz-option w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${selected === i ? "is-selected" : ""}`}
           >
-            <span className="font-bold text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
-          </button>
+            <span className="bz-quiz-letter font-bold mr-2">{String.fromCharCode(65 + i)}.</span> {opt}
+          </motion.button>
         ))}
       </div>
       <button
         onClick={submit}
         disabled={selected === null || submitting}
-        className="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+        className="bz-quiz-submit w-full py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
       >
         {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</> : "Submit Answer"}
       </button>
-      <p className="text-xs text-gray-400 text-center">+{game.creditsMax} credits for a correct answer</p>
+      <p className="bz-quiz-help text-xs text-center">+{game.creditsMax} credits for a correct answer</p>
     </div>
   );
 }
 
 // ── Scratch Card ──────────────────────────────────────────────────────────────
-function ScratchCardGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  const [scratching, setScratching] = useState(false);
-  const [scratched, setScratched] = useState(false);
-
-  async function scratch() {
-    setScratching(true);
-    setScratched(true);
-    await new Promise(r => setTimeout(r, 800));
-    await onPlay();
-    setScratching(false);
+function ScratchCardGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music")=>void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dragging = useRef(false);
+  const last = useRef<{x:number;y:number}|null>(null);
+  const [progress,setProgress] = useState(0);
+  const [revealing,setRevealing] = useState(false);
+  const [revealed,setRevealed] = useState(false);
+  const lastScratchSound=useRef(0);
+  useEffect(() => {
+    const canvas=canvasRef.current;
+    if(!canvas) return;
+    const ctx=canvas.getContext("2d");
+    if(!ctx) return;
+    const w=320,h=190;
+    ctx.globalCompositeOperation="source-over";
+    const gradient=ctx.createLinearGradient(0,0,w,h);
+    gradient.addColorStop(0,"#d9dde7");gradient.addColorStop(.5,"#8e9aad");gradient.addColorStop(1,"#e6e9f1");
+    ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#283248";ctx.textAlign="center";ctx.font="bold 23px sans-serif";
+    ctx.fillText("✦ SCRATCH HERE ✦",w/2,86);
+    ctx.font="14px sans-serif";ctx.fillText("Swipe or drag to reveal",w/2,113);
+  },[]);
+  function scratchAt(e:React.PointerEvent<HTMLCanvasElement>) {
+    if(revealing||revealed||!dragging.current)return;
+    const canvas=canvasRef.current;const ctx=canvas?.getContext("2d");
+    if(!canvas||!ctx)return;
+    const rect=canvas.getBoundingClientRect();
+    const point={x:(e.clientX-rect.left)*canvas.width/rect.width,y:(e.clientY-rect.top)*canvas.height/rect.height};
+    if(Date.now()-lastScratchSound.current>85){lastScratchSound.current=Date.now();playSound("scratch");}
+    ctx.globalCompositeOperation="destination-out";ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=38;
+    ctx.beginPath();if(last.current){ctx.moveTo(last.current.x,last.current.y);ctx.lineTo(point.x,point.y);}else{ctx.moveTo(point.x,point.y);ctx.lineTo(point.x+.1,point.y+.1);}ctx.stroke();
+    last.current=point;
+    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+    let clear=0;for(let i=3;i<pixels.length;i+=64)if(pixels[i]<100)clear++;
+    const pct=Math.min(100,Math.round(clear/(pixels.length/64)*100));
+    setProgress(pct);
+    if(pct>=48)finish();
   }
-
-  return (
-    <div className="flex flex-col items-center gap-6">
-      <div
-        onClick={!scratched ? scratch : undefined}
-        className={`w-56 h-36 rounded-2xl flex items-center justify-center cursor-pointer transition-all select-none ${
-          scratched ? "bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200" : "bg-gradient-to-br from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 border-2 border-gray-300"
-        }`}
-      >
-        {scratching ? (
-          <Loader2 className="w-8 h-8 text-orange-400 animate-spin" />
-        ) : scratched ? (
-          <div className="text-center">
-            <Gift className="w-10 h-10 text-orange-400 mx-auto mb-1" />
-            <p className="text-sm font-bold text-orange-700">Revealed!</p>
-          </div>
-        ) : (
-          <div className="text-center pointer-events-none">
-            <p className="text-gray-500 text-2xl mb-1">🎰</p>
-            <p className="text-xs font-bold text-gray-500">Tap to scratch</p>
-          </div>
-        )}
+  async function finish(){
+    if(revealing||revealed)return;
+    dragging.current=false;setRevealing(true);playSound("reveal");
+    try { await onPlay();setRevealed(true); } finally {setRevealing(false);}
+  }
+  return <div className="arcade-scratch-experience flex flex-col items-center gap-4 py-5">
+    <h3 className="arcade-stage-heading">🎟️ SCRATCH <span>& WIN</span> ✨</h3>
+    <p className="font-semibold text-white text-center">Rub away the silver foil to reveal your surprise!</p>
+    <div className="arcade-scratch-frame">
+      <div className="arcade-scratch-marquee" aria-hidden="true">✦ ✨ ✦ ✨ ✦ ✨ ✦ ✨</div>
+      <div className="relative w-full aspect-[320/190] rounded-2xl overflow-hidden border-[5px] border-amber-300 shadow-[0_12px_30px_rgba(245,158,11,.3)] select-none" style={{background:"radial-gradient(circle at 50% 45%,#f9d959,#fa9c1e 45%,#842dda 100%)"}}>
+        <div className="absolute inset-0 flex flex-col justify-center items-center text-white gap-2">
+          <motion.div animate={{rotate:[-8,8,-8],scale:[1,1.15,1]}} transition={{duration:1.6,repeat:Infinity}}><Gift className="w-14 h-14 text-yellow-100"/></motion.div>
+          <span className="font-black text-2xl drop-shadow-lg">🎁 MYSTERY PRIZE!</span>
+          <span className="text-sm font-bold">The server reveals your actual reward</span>
+        </div>
+        {!revealed&&<canvas ref={canvasRef} width={320} height={190} aria-label="Scratch ticket coating. Drag or swipe to reveal." onPointerDown={e=>{dragging.current=true;last.current=null;e.currentTarget.setPointerCapture(e.pointerId);scratchAt(e);}} onPointerMove={scratchAt} onPointerUp={()=>{dragging.current=false;last.current=null;}} onPointerCancel={()=>{dragging.current=false;last.current=null;}} className="absolute inset-0 w-full h-full cursor-crosshair touch-none"/>}
       </div>
-      {!scratched && (
-        <p className="text-xs text-gray-400">70% chance to win 5–30 credits</p>
-      )}
+      <div className="arcade-scratch-marquee" aria-hidden="true">✦ ✨ ✦ ✨ ✦ ✨ ✦ ✨</div>
     </div>
-  );
+    <div className="w-full max-w-[420px] h-3 rounded-full bg-blue-950 overflow-hidden"><div className="h-full bg-gradient-to-r from-amber-300 to-orange-400 transition-all" style={{width:`${progress}%`}}/></div>
+    <p className="text-sm font-bold text-white">{revealing?"Checking your prize…":revealed?"Ticket revealed!":`${progress}% scratched · Reveal at 48%`}</p>
+    <button type="button" disabled={revealing||revealed} onClick={finish} className="arcade-orange-button disabled:opacity-50">🎁 Reveal my reward</button>
+    <p className="text-xs text-blue-100">One play is recorded when the server processes your reveal.</p>
+  </div>;
 }
 
 // ── Word Scramble ─────────────────────────────────────────────────────────────
@@ -236,9 +257,9 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
         <p className="text-xs text-gray-400 mb-2 uppercase tracking-widest">Category: {scramble.category}</p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {scramble.scrambled.split("").map((letter, i) => (
-            <span key={i} className="w-10 h-10 rounded-xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-lg font-black text-pink-700">
+            <motion.span key={i} initial={{opacity:0,y:-20,rotate:-15}} animate={{opacity:1,y:0,rotate:0}} transition={{delay:i*.07,type:"spring"}} className="w-10 h-10 rounded-xl bg-pink-50 border-2 border-pink-200 flex items-center justify-center text-lg font-black text-pink-700">
               {letter}
-            </span>
+            </motion.span>
           ))}
         </div>
       </div>
@@ -263,50 +284,92 @@ function WordScrambleGame({ game, onPlay }: { game: Game; onPlay: (answer?: unkn
   );
 }
 
-function MysteryBoxGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  return <div className="py-4 text-center"><p className="font-bold text-gray-900 mb-4">Pick one. You won't know the prize until it opens.</p><div className="grid grid-cols-3 gap-3">{[1,2,3].map(n => <button key={n} onClick={() => onPlay(n)} className="rounded-2xl border-2 border-pink-100 bg-pink-50 py-8 text-3xl hover:scale-105 transition-transform">🎁<span className="block text-xs mt-2 font-bold text-pink-700">Box {n}</span></button>)}</div></div>;
+function MysteryBoxGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void }) {
+  const [chosen,setChosen]=useState<number|null>(null);
+  const [busy,setBusy]=useState(false);
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);playSound("mystery-open");try{await new Promise(r=>setTimeout(r,1000));await onPlay(n);}finally{setBusy(false);}}
+  return <div className="bz-mystery-game text-center">
+    <motion.div className="bz-mystery-crown" animate={{y:[0,-7,0]}} transition={{repeat:Infinity,duration:2.4}} aria-hidden="true">✨🎁✨</motion.div>
+    <h3>Choose your mystery box!</h3><p className="bz-mystery-subtitle">Three magical boxes. Pick your favourite and reveal your reward.</p>
+    <div className="bz-mystery-grid">{[1,2,3].map((n)=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)} whileHover={!busy?{y:-7,scale:1.025}:undefined} whileTap={{scale:.96}} className={`bz-mystery-tile bz-mystery-tile-${n}`} aria-label={`Open mystery box ${n}`}>
+      <motion.span className="bz-mystery-art" aria-hidden="true" animate={chosen===n&&busy?{scale:[1,1.3,1],rotate:[0,-10,10,0]}:{y:[0,-5,0]}} transition={{duration:chosen===n&&busy?.8:2,repeat:chosen===n&&busy?0:Infinity}}>{chosen===n&&busy?"✨":"🎁"}</motion.span>
+      <strong>BOX {n}</strong><small>{chosen===n&&busy?"Opening…":"Tap to reveal"}</small>
+    </motion.button>)}</div>
+    <p className="bz-mystery-hint">{busy?"Revealing your surprise…":"✨ Every box contains a surprise — choose one!"}</p>
+  </div>;
 }
 
-function LuckyNumberGame({ onPlay }: { onPlay: (answer?: unknown) => Promise<void> }) {
-  return <div className="py-4 text-center"><p className="font-bold text-gray-900 mb-1">Choose your lucky number</p><p className="text-sm text-gray-500 mb-5">Match 1–6 for the jackpot. Miss it and you still get a small prize.</p><div className="grid grid-cols-3 gap-3">{[1,2,3,4,5,6].map(n => <button key={n} onClick={() => onPlay(n)} className="rounded-xl border border-amber-200 bg-amber-50 py-4 text-xl font-black text-amber-700 hover:bg-amber-100">{n}</button>)}</div></div>;
+function LuckyNumberGame({ onPlay, playSound }: { onPlay: (answer?: unknown) => Promise<void>; playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void }) {
+  const [chosen,setChosen]=useState<number|null>(null);
+  const [busy,setBusy]=useState(false);
+  async function choose(n:number){if(busy)return;setChosen(n);setBusy(true);playSound("number-roll");try{await new Promise(r=>setTimeout(r,850));await onPlay(n);}finally{setBusy(false);}}
+  return <div className="py-4 text-center">
+    <motion.div animate={{rotate:[-10,10,-10],y:[0,-5,0]}} transition={{repeat:Infinity,duration:2.2}}><Dices className="w-12 h-12 text-amber-500 mx-auto mb-3"/></motion.div>
+    <p className="font-black text-gray-900 text-lg mb-2">Pick your lucky number</p>
+    <p className="text-sm text-gray-600 mb-5">Choose 1–6. Match the secret number for the jackpot!</p>
+    <div className="grid grid-cols-3 gap-3">{[1,2,3,4,5,6].map(n=><motion.button key={n} type="button" disabled={busy} onClick={()=>choose(n)}
+      whileHover={!busy?{scale:1.1,rotate:4}:undefined} whileTap={!busy?{scale:.9}:undefined}
+      animate={chosen===n?{scale:[1,1.2,1],rotate:[0,12,-12,0]}:undefined} transition={{duration:.7}}
+      className={`rounded-2xl border-2 py-5 text-2xl font-black shadow-sm focus-visible:ring-4 focus-visible:ring-amber-400 ${chosen===n?"bg-amber-400 text-amber-950 border-amber-500":"border-amber-200 bg-gradient-to-br from-amber-50 to-orange-100 text-amber-800"}`}>{n}</motion.button>)}</div>
+    <p className="mt-5 text-sm font-semibold text-gray-600">{busy?"Rolling your lucky number…":"Tap a number to play"}</p>
+  </div>;
 }
 
 // ── Game Modal ────────────────────────────────────────────────────────────────
 function GameModal({
-  game, onClose, onResult,
+  game, onClose, onResult, playSound,
 }: {
   game: Game;
   onClose: () => void;
   onResult: (res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) => void;
+  playSound: (kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll")=>void;
 }) {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [result, setResult] = useState<{ won: boolean; creditsEarned: number; message: string; playsRemaining: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
+  const submitting = useRef(false);
+  const sessionPromise = useRef<Promise<string> | null>(null);
+  const lastAnswer = useRef<unknown>(undefined);
+  useEffect(() => {
+    sessionPromise.current = (async () => {
+      const token=await getToken(); if(!token) throw new Error("Sign in required");
+      const res=await fetch("/api/rewards/session/start",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({gameId:game.id})});
+      const data=await res.json();if(!res.ok)throw new Error(data.error||"Cannot start game");return String(data.sessionId);
+    })();
+    sessionPromise.current.then(()=>setSessionReady(true)).catch(e=>{setSessionReady(false);setError(e instanceof Error?e.message:"Could not start game");});
+  },[getToken,game.id]);
   const Icon = ICON_MAP[game.id] ?? ICON_MAP[game.icon] ?? Gift;
 
   const play = useCallback(async (answer?: unknown) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    lastAnswer.current = answer;
     setError(null);
     try {
-      const res = await fetch("/api/rewards/play", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user?.email, gameId: game.id, answer }),
-      });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Something went wrong"); return; }
-      setResult(data);
+      const sessionId=await sessionPromise.current;
+      if(!sessionId)throw new Error("No active game session");
+      const token=await getToken();if(!token)throw new Error("Please sign in again");
+      const headers={"Content-Type":"application/json",Authorization:`Bearer ${token}`};
+      const completed=await fetch("/api/rewards/session/complete",{method:"POST",headers,body:JSON.stringify({sessionId,answer})});
+      const completedData=await completed.json();
+      if(!completed.ok)throw new Error(completedData.error||"Unable to verify completion");
+      const claimed=await fetch("/api/rewards/session/claim",{method:"POST",headers,body:JSON.stringify({sessionId})});
+      const data=await claimed.json();
+      if(!claimed.ok)throw new Error(data.error||"Unable to claim reward");
+      setResult({...data,playsRemaining:Math.max(0,game.playsRemaining-1)});
       onResult(data);
-    } catch {
-      setError("Network error — please try again");
-    }
-  }, [user?.email, game.id, onResult]);
-
+    } catch(e) {
+      setError(e instanceof Error?e.message:"Network error — please try again");
+    } finally { submitting.current = false; }
+  }, [getToken,game.playsRemaining,onResult]);
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[300] grid place-items-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -314,11 +377,11 @@ function GameModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        role="dialog" aria-modal="true" aria-label={`${game.name} reward game`} className={`bz-reward-game-dialog bz-reward-dialog-${game.id} relative flex flex-col bg-white text-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[calc(100dvh-1.5rem)] overflow-hidden`}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`px-6 py-5 flex items-center gap-3 border-b border-gray-100`}>
+        <div className={`bz-reward-dialog-header shrink-0 px-5 py-3 flex items-center gap-3 border-b border-gray-200 bg-white`}>
           <div className={`w-10 h-10 rounded-xl ${ICON_BG[game.id]} flex items-center justify-center flex-shrink-0`}>
             <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} />
           </div>
@@ -326,81 +389,44 @@ function GameModal({
             <h2 className="font-black text-gray-900">{game.name}</h2>
             <p className="text-xs text-gray-400">{game.playsRemaining} play{game.playsRemaining !== 1 ? "s" : ""} remaining today</p>
           </div>
-          <button onClick={onClose} className="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+          <button type="button" onClick={onClose} aria-label="Close game" title="Close game" className="ml-auto shrink-0 grid h-11 w-11 place-items-center rounded-full border-2 border-slate-300 bg-slate-100 text-slate-900 text-2xl font-bold hover:bg-orange-100 hover:border-orange-400 focus-visible:outline focus-visible:outline-4 focus-visible:outline-blue-500">×</button>
         </div>
 
-        <div className="p-6">
+        <div className="bz-reward-dialog-body p-3 sm:p-4 arcade-modal-content" onPointerDown={()=>playSound("tick")}>
           <AnimatePresence mode="wait">
             {result ? (
-              <motion.div
-                key="result"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center gap-4 py-4 text-center"
-              >
-                {result.won ? (
-                  <>
-                    <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center">
-                      <CheckCircle2 className="w-9 h-9 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="text-3xl font-black text-emerald-500 mb-1">+{result.creditsEarned} credits</p>
-                      <p className="text-sm text-gray-600">{result.message}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center">
-                      <XCircle className="w-9 h-9 text-red-400" />
-                    </div>
-                    <div>
-                      <p className="text-lg font-black text-gray-900 mb-1">No credits this time</p>
-                      <p className="text-sm text-gray-600">{result.message}</p>
-                    </div>
-                  </>
-                )}
-                <p className="text-xs text-gray-400">
-                  {result.playsRemaining > 0
-                    ? `${result.playsRemaining} play${result.playsRemaining !== 1 ? "s" : ""} remaining today`
-                    : "Come back tomorrow for more!"}
-                </p>
-                <button
-                  onClick={onClose}
-                  className="px-6 py-2.5 rounded-xl bg-[#1A1D2E] text-white font-bold text-sm hover:opacity-90 transition-opacity"
-                >
-                  Done
-                </button>
+              <motion.div key="result" initial={{opacity:0,scale:.88,y:20}} animate={{opacity:1,scale:1,y:0}} transition={{type:"spring",stiffness:240,damping:20}} className={`arcade-result ${result.won?"arcade-result-win":"arcade-result-try"}`} role="status" aria-live="polite">
+                {result.won && <div className="arcade-confetti" aria-hidden="true">{Array.from({length:22},(_,i)=><span key={i} style={{left:`${(i*37)%100}%`,animationDelay:`${(i%8)*-.24}s`,backgroundColor:["#ffbd24","#fa6118","#3e9af7","#b04eea","#28cb9b"][i%5]}} />)}</div>}
+                <motion.div className="arcade-result-art" aria-hidden="true" animate={result.won?{y:[0,-8,0],rotate:[-5,5,-5]}:{y:[0,-4,0]}} transition={{duration:2,repeat:Infinity}}>
+                  {({"spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲"} as Record<string,string>)[game.id]??"🎁"}
+                  <span>{result.won?"🏆":"⭐"}</span>
+                </motion.div>
+                <h2 className="arcade-result-title">{result.won?"YOU WON! 🎉":"Nice try! ✨"}</h2>
+                {result.won?<><p className="arcade-result-amount">+{result.creditsEarned} <small>credits</small></p><p className="arcade-result-description">Your reward has been added to your Bazunk balance.</p></>:<><p className="arcade-result-no-win">No credits this round</p><p className="arcade-result-description">Every game is another chance to play and have fun.</p></>}
+                <p className="arcade-result-remaining">{result.playsRemaining>0?`${result.playsRemaining} play${result.playsRemaining===1?"":"s"} remaining today`:"All plays used today — come back tomorrow!"}</p>
+                <div className="arcade-result-actions"><button type="button" onClick={onClose} className="arcade-result-primary">Explore more games</button><Link href="/credits" onClick={onClose} className="arcade-result-secondary">View credits</Link></div>
               </motion.div>
             ) : (
               <motion.div key="game" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {error && (
-                  <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 flex items-center gap-2">
-                    <XCircle className="w-4 h-4 flex-shrink-0" />
-                    {error}
+                  <div role="alert" className="arcade-error-panel mb-4">
+                    <div className="text-4xl" aria-hidden="true">{/limit|cap|tomorrow/i.test(error)?"🕒":/expired/i.test(error)?"⏳":"🎮"}</div>
+                    <h3 className="font-black text-lg text-slate-900">{/limit|cap|tomorrow/i.test(error)?"Today's rewards are finished":/expired/i.test(error)?"Your game session expired":"Something interrupted your reward"}</h3>
+                    <p className="text-sm text-slate-700">{error}</p>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                      {!/limit|cap|expired|disabled/i.test(error)&&sessionPromise.current&&<button type="button" onClick={() => void play(lastAnswer.current)} className="arcade-result-primary">Try again</button>}
+                      <button type="button" onClick={onClose} className="bz-arcade-back-button">Back to games</button>
+                    </div>
                   </div>
                 )}
-                {game.id === "daily-checkin" && (
-                  <div className="flex flex-col items-center gap-6 py-4">
-                    <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-                      <Calendar className="w-10 h-10 text-emerald-500" />
-                    </div>
-                    <div className="text-center">
-                      <p className="font-bold text-gray-900 mb-1">Today's check-in</p>
-                      <p className="text-sm text-gray-500">Tap below to collect your daily credits.</p>
-                    </div>
-                    <button
-                      onClick={() => play()}
-                      className="px-10 py-3 rounded-xl bg-emerald-500 text-white font-black text-sm hover:opacity-90 transition-opacity flex items-center gap-2"
-                    >
-                      <Zap className="w-4 h-4" /> Collect {game.creditsMax} Credits
-                    </button>
-                  </div>
-                )}
-                {game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} />}
-                {game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
-                {game.id === "scratch-card" && <ScratchCardGame onPlay={play} />}
-                {game.id === "mystery-box" && <MysteryBoxGame onPlay={play} />}
-                {game.id === "lucky-number" && <LuckyNumberGame onPlay={play} />}
+                {!error && !sessionReady && <div role="status" className="flex items-center justify-center gap-2 py-8 text-slate-800"><Loader2 className="h-5 w-5 animate-spin"/> Preparing your game…</div>}
+                {!error && sessionReady && game.id === "spin-wheel" && <SpinWheelGame game={game} onPlay={play} playSound={playSound} />}
+                {!error && sessionReady && game.id === "daily-quiz" && <QuizGame game={game} onPlay={play} />}
+                {!error && sessionReady && game.id === "scratch-card" && <ScratchCardGame onPlay={play} playSound={playSound} />}
+                {!error && sessionReady && game.id === "mystery-box" && <MysteryBoxGame onPlay={play} playSound={playSound} />}
+                {!error && sessionReady && game.id === "lucky-number" && <LuckyNumberGame onPlay={play} playSound={playSound} />}
+                {!error && sessionReady && game.id === "memory-match" && <MemoryMatchGame onPlay={play} />}
+                {!error && sessionReady && game.id === "treasure-tap" && <TreasureTapGame onPlay={play} />}
               </motion.div>
             )}
           </AnimatePresence>
@@ -419,6 +445,11 @@ export function RewardsPage() {
   const [stats, setStats] = useState({ totalCredits: 0, todayCredits: 0 });
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(true);
+  const {getToken}=useClerkAuth();
+  const [soundEnabled,setSoundEnabled]=useState(true);
+  const [soundPolicy,setSoundPolicy]=useState({enabled:true,spinWheel:true,scratchCard:true});
+  const [streak,setStreak]=useState<{streak:number;playedToday:boolean}|null>(null);
+  const [leaderboardScope,setLeaderboardScope]=useState<"all"|"top5">("top5");
 
   const fetchGames = useCallback(async () => {
     const url = user?.email ? `/api/rewards/games?email=${encodeURIComponent(user.email)}` : "/api/rewards/games";
@@ -443,57 +474,59 @@ export function RewardsPage() {
       .finally(() => setLbLoading(false));
   }, [fetchGames, fetchStats]);
 
+  useEffect(()=>{fetch("/api/rewards/sound-settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{if(v)setSoundPolicy({enabled:v.enabled!==false,spinWheel:v.spinWheel!==false,scratchCard:v.scratchCard!==false});}).catch(()=>{});setSoundEnabled(true);try{localStorage.setItem("bazunk_rewards_sound","on")}catch{}},[]);
+  useEffect(()=>{try{localStorage.setItem("bazunk_rewards_sound",soundEnabled?"on":"off")}catch{}},[soundEnabled]);
+  useEffect(()=>{if(!user)return;let active=true;getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(active&&data)setStreak(data)}).catch(()=>{});return()=>{active=false};},[user?.email,getToken]);
+  function playGameSound(kind:"spin"|"tick"|"scratch"|"reveal"|"win"|"lose"|"parcel-music"|"mystery-open"|"number-roll"){
+    if(!soundEnabled||!soundPolicy.enabled||((kind==="spin")&&!soundPolicy.spinWheel)||((kind==="scratch"||kind==="reveal")&&!soundPolicy.scratchCard))return;
+    try{
+      const AudioCtx=window.AudioContext||(window as typeof window & {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+      if(!AudioCtx)return;
+      const ctx=rewardsAudioContext||(rewardsAudioContext=new AudioCtx());
+      if(ctx.state==="suspended"){void ctx.resume().then(()=>{if(ctx.state==="running")playGameSound(kind)}).catch(()=>{});return;}
+      const now=ctx.currentTime;
+      const tone=(freq:number,start:number,duration:number,volume:number,type:OscillatorType="sine")=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type=type;o.frequency.setValueAtTime(freq,now+start);
+        g.gain.setValueAtTime(.0001,now+start);
+        g.gain.exponentialRampToValueAtTime(volume,now+start+.008);
+        g.gain.exponentialRampToValueAtTime(.0001,now+start+duration);
+        o.connect(g).connect(ctx.destination);o.start(now+start);o.stop(now+start+duration+.015);
+      };
+      if(kind==="spin"){tone(260,0,.18,.055,"triangle");tone(390,.12,.24,.055,"triangle")}
+      else if(kind==="tick")tone(780,0,.045,.025,"square");
+      else if(kind==="scratch")tone(180+Math.random()*100,0,.06,.02,"sawtooth");
+      else if(kind==="reveal"||kind==="win")[523,659,784,1047].forEach((n,i)=>tone(n,i*.09,.22,.06));
+      else if(kind==="lose"){tone(392,0,.18,.055,"triangle");tone(330,.17,.2,.055,"triangle");tone(262,.36,.34,.06,"triangle")}
+      else if(kind==="parcel-music"){tone(659,0,.12,.035,"square");tone(784,.14,.12,.035,"square");tone(988,.28,.12,.035,"square");tone(784,.42,.12,.035,"square");tone(659,.56,.18,.035,"square")}
+      else if(kind==="mystery-open"){tone(220,0,.12,.045,"triangle");tone(330,.12,.12,.05,"triangle");tone(440,.24,.15,.055,"triangle");tone(660,.4,.3,.065,"sine")}
+      else if(kind==="number-roll"){[660,740,830,988,1175,1397].forEach((n,i)=>tone(n,i*.095,.08,.04,"square"))}
+    }catch{/* Sound is optional and never blocks game play. */}
+  }
   function handleResult(res: { won: boolean; creditsEarned: number; message: string; playsRemaining: number }) {
+    playGameSound(res.won&&res.creditsEarned>0?"win":"lose");
+    if(user)getToken().then(token=>token?fetch("/api/rewards/streak",{headers:{Authorization:`Bearer ${token}`}}):null).then(r=>r?.ok?r.json():null).then(data=>{if(data)setStreak(data)}).catch(()=>{});
     if (res.creditsEarned > 0) refreshBalance?.();
     fetchStats();
     fetchGames();
   }
 
-  const enabledGames = games.filter(g => g.enabled);
+  const enabledGames = games.filter(g => g.enabled && g.id !== "daily-checkin" && g.id !== "parcel-dash");
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col bazunk-rewards-arcade bz-rewards-clean">
       <Navbar />
 
-      {/* Hero */}
-      <div className="relative bg-[#1A1D2E] overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-16 -left-16 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#4A5CE8]/10 blur-3xl" />
-          <div className="absolute bottom-0 left-1/2 w-48 h-48 rounded-full bg-[#F26B21]/10 blur-3xl" />
-        </div>
-        <div className="relative container mx-auto max-w-5xl px-4 py-14">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#F26B21] flex items-center justify-center shadow-lg shadow-[#F26B21]/30">
-                  <Gift className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-[#F26B21] font-black text-sm uppercase tracking-widest">Daily Rewards</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white leading-tight mb-3">
-                Play games. Earn credits.
-              </h1>
-              <p className="text-white/50 text-sm max-w-md leading-relaxed">
-                Five daily mini-games — each one earns real credits you can spend on promotions and perks. New plays reset every midnight.
-              </p>
-            </div>
+      <CompactPageHero kind="rewards" eyebrow="Rewards Arcade" title="Rewards Arcade" description="Play mini-games, earn credits and unlock marketplace rewards." art="🏆" aside={user?<><strong>{stats.totalCredits} credits</strong><small>+{stats.todayCredits} earned today</small></>:undefined}>
+        <a href="#arcade-games" className="bz-hero-chip">🎮 Explore games</a>
+        <Link href="/credits" className="bz-hero-chip">🎁 My credits</Link>
+      </CompactPageHero>
 
-            {user && (
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 min-w-[200px] text-center border border-white/10 shrink-0">
-                <Coins className="w-8 h-8 text-[#F26B21] mx-auto mb-2" />
-                <p className="text-3xl font-black text-white">{stats.totalCredits}</p>
-                <p className="text-white/50 text-xs mb-2">total credits earned via games</p>
-                <div className="pt-2 border-t border-white/10">
-                  <p className="text-sm font-bold text-amber-400">+{stats.todayCredits} today</p>
-                </div>
-              </div>
-            )}
-          </div>
+      <main id="arcade-games" className="flex-1 container mx-auto max-w-7xl px-4 py-8">
+        <div className="flex flex-wrap items-center gap-3 mb-5">
+          <button type="button" onClick={()=>setSoundEnabled(v=>!v)} aria-pressed={soundEnabled} disabled={!soundPolicy.enabled} className="bz-arcade-sound-toggle rounded-xl px-4 py-2 text-sm font-bold flex items-center gap-2">{soundEnabled&&soundPolicy.enabled?<Volume2 size={17}/>:<VolumeX size={17}/>} {!soundPolicy.enabled?"Sound disabled":`Sound ${soundEnabled?"on":"off"}`}</button>
+          {streak&&<div className="rounded-xl border border-orange-200 bg-orange-50 text-orange-950 px-4 py-2 text-sm font-bold flex items-center gap-2"><Flame size={17}/> {streak.streak}-day playing streak {streak.playedToday?"· Played today":"· Play to continue"}</div>}
         </div>
-      </div>
-
-      <main className="flex-1 container mx-auto max-w-5xl px-4 py-8">
         {user && <Link href="/rewards/referrals" className="mb-6 block rounded-2xl bg-gradient-to-r from-[#F26B21] to-[#4A5CE8] text-white p-5 shadow-sm"><div className="flex items-center justify-between gap-4"><div><p className="font-black text-lg">Invite a friend — you both earn credits</p><p className="text-white/80 text-sm">Earn again when your friend makes their first purchase and starts selling.</p></div><ChevronRight className="shrink-0" /></div></Link>}
         {!user && (
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white rounded-2xl border border-[#F26B21]/20 p-5">
@@ -528,7 +561,7 @@ export function RewardsPage() {
               ) : enabledGames.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">
                   <Gift className="w-10 h-10 mx-auto mb-3 text-gray-200" />
-                  <p>No games are available right now — check back soon!</p>
+                  <p>The arcade is taking a break. More games will be available soon!</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -541,11 +574,11 @@ export function RewardsPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.07 }}
-                        className={`bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
+                        className={`arcade-game-card bz-enhanced-game-card bg-white rounded-2xl border p-5 flex flex-col transition-all ${done ? "border-gray-100 opacity-75" : "border-gray-100 hover:border-gray-200 hover:shadow-md"}`}
                       >
                         <div className="flex items-start justify-between mb-3">
-                          <div className={`w-11 h-11 rounded-xl ${ICON_BG[game.id]} flex items-center justify-center`}>
-                            <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} />
+                          <div className={`bz-reward-game-icon bz-reward-icon-${game.id} ${ICON_BG[game.id]} flex items-center justify-center`}><span className="bz-reward-icon-emoji" aria-hidden="true">{({ "spin-wheel":"🎡","scratch-card":"🎟️","memory-match":"🧩","treasure-tap":"🧰","parcel-dash":"📦" } as Record<string,string>)[game.id] || ({"daily-quiz":"🧠","mystery-box":"🎁","lucky-number":"🎲","daily-checkin":"🎉"} as Record<string,string>)[game.id] || "🎮"}</span><span className="sr-only">
+                            <Icon className={`w-5 h-5 ${ICON_COLOR[game.id]}`} /></span>
                           </div>
                           {done ? (
                             <span className="text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full flex items-center gap-1">
@@ -558,8 +591,8 @@ export function RewardsPage() {
                           )}
                         </div>
 
-                        <h3 className="font-black text-gray-900 text-sm mb-1">{game.name}</h3>
-                        <p className="text-xs text-gray-400 leading-snug flex-1 mb-4">{game.description}</p>
+                        <h3 className="font-black text-gray-900 dark:text-white text-lg mb-1">{game.name}</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-200 leading-relaxed flex-1 mb-4">{game.description}</p>
 
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-xs font-bold text-gray-600">
@@ -576,7 +609,7 @@ export function RewardsPage() {
                           </Link>
                         ) : (
                         <button
-                          onClick={() => !done && setActiveGame(game)}
+                          onClick={() => { if(!done){unlockRewardsAudio();setActiveGame(game);} }}
                           disabled={done}
                           className={`w-full py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                             done
@@ -618,6 +651,7 @@ export function RewardsPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-4 h-4 text-amber-500" />
                   <h3 className="font-black text-gray-900 text-sm">Leaderboard</h3>
+                  <button type="button" className="ml-auto text-xs text-blue-700 font-bold" onClick={()=>setLeaderboardScope(v=>v==="top5"?"all":"top5")}>{leaderboardScope==="top5"?"Show top 10":"Show top 5"}</button>
                 </div>
                 {lbLoading ? (
                   <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-amber-400" /></div>
@@ -625,7 +659,7 @@ export function RewardsPage() {
                   <p className="text-sm text-gray-400 text-center py-4">No players yet — be the first!</p>
                 ) : (
                   <div className="space-y-2">
-                    {leaderboard.map((entry, i) => {
+                    {leaderboard.slice(0,leaderboardScope==="top5"?5:10).map((entry, i) => {
                       const isMe = entry.user_email === user?.email;
                       const medals = ["🥇", "🥈", "🥉"];
                       const handle = entry.user_email.split("@")[0].slice(0, 12);
@@ -653,6 +687,8 @@ export function RewardsPage() {
                   <li className="flex gap-2"><span className="text-[#F26B21] font-bold shrink-0">4.</span> Play limits reset every midnight UTC.</li>
                 </ol>
               </div>
+              <div className="bz-rewards-ad-placement"><AdSlot slotKey="rewards_right" /></div>
+
             </div>
           </div>
         )}
@@ -660,15 +696,19 @@ export function RewardsPage() {
 
       <Footer />
 
-      <AnimatePresence>
-        {activeGame && (
-          <GameModal
-            game={activeGame}
-            onClose={() => setActiveGame(null)}
-            onResult={handleResult}
-          />
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {activeGame && (
+            <GameModal
+              game={activeGame}
+              onClose={() => setActiveGame(null)}
+              onResult={handleResult}
+              playSound={playGameSound}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

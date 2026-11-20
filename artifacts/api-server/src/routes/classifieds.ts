@@ -1,14 +1,22 @@
+import { validateClassifiedBatch } from "./classifiedImportValidation.mjs";
 import { Router } from "express";
 import { db, classifiedAdsTable } from "@workspace/db";
 import { eq, desc, and, ilike, or, sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
 router.get("/classifieds", async (req, res) => {
-  const { category, subcategory, type, limit = "60", offset = "0" } = req.query as Record<string, string>;
+  const { category, subcategory, type, region, limit = "60", offset = "0" } = req.query as Record<string, string>;
 
-  const conditions = [eq(classifiedAdsTable.status, "active")];
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+    return;
+  }
+
+  const conditions = [eq(classifiedAdsTable.status, "active"), sql`(${classifiedAdsTable.expiresAt} IS NULL OR ${classifiedAdsTable.expiresAt} > NOW())`, sql`NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || ${classifiedAdsTable.category} OR cv.key='category_visible_' || ${classifiedAdsTable.category} || '__' || COALESCE(${classifiedAdsTable.subcategory},'')))`];
+  if (region === "uk" || region === "us") conditions.push(eq(classifiedAdsTable.marketplaceRegion, region));
   if (category && category !== "all") conditions.push(eq(classifiedAdsTable.category, category));
   if (subcategory) conditions.push(eq(classifiedAdsTable.subcategory, subcategory));
   if (type && type !== "all") conditions.push(eq(classifiedAdsTable.type, type));
@@ -25,13 +33,16 @@ router.get("/classifieds", async (req, res) => {
 });
 
 router.post("/classifieds", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
   const {
     title, description, category, subcategory, type,
     price, priceLabel, negotiable, condition,
-    location, contactName, contactEmail, contactPhone,
-    urgency, photos, externalLink, expiresAt,
+    location, contactName, contactPhone,
+    urgency, photos, externalLink, expiresAt, marketplaceRegion,
   } = req.body as Record<string, unknown>;
 
+  if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
   if (!title || typeof title !== "string" || !title.trim()) {
     res.status(400).json({ error: "title is required" }); return;
   }
@@ -51,6 +62,7 @@ router.post("/classifieds", async (req, res) => {
   const [row] = await db
     .insert(classifiedAdsTable)
     .values({
+      marketplaceRegion,
       title: (title as string).trim(),
       description: (description as string).trim(),
       category: category as string,
@@ -62,7 +74,7 @@ router.post("/classifieds", async (req, res) => {
       condition: condition ? String(condition) : null,
       location: (location as string).trim(),
       contactName: (contactName as string).trim(),
-      contactEmail: contactEmail ? String(contactEmail) : null,
+      contactEmail: sellerEmail,
       contactPhone: contactPhone ? String(contactPhone) : null,
       urgency: urgency ? String(urgency) : null,
       photos: Array.isArray(photos) ? JSON.stringify(photos) : null,
@@ -74,24 +86,91 @@ router.post("/classifieds", async (req, res) => {
   res.status(201).json(row);
 });
 
+// Seller-owned classified edits. Never accept ownership, region or status from the browser.
+router.patch("/classifieds/:id", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid classified ID" }); return; }
+  const allowed = ["title", "description", "category", "subcategory", "type", "price", "priceLabel",
+    "negotiable", "condition", "location", "contactName", "contactPhone", "urgency",
+    "photos", "externalLink", "expiresAt"] as const;
+  const body = req.body;
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    res.status(400).json({ error: "Invalid update" }); return;
+  }
+  const changes: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (!Object.prototype.hasOwnProperty.call(body, key)) continue;
+    const value = body[key];
+    if (["title", "description", "category", "location", "contactName"].includes(key)) {
+      if (typeof value !== "string" || !value.trim() || value.length > 5000) {
+        res.status(400).json({ error: `Invalid ${key}` }); return;
+      }
+      changes[key] = value.trim();
+    } else if (key === "photos") {
+      if (!Array.isArray(value) || value.length > 12 || !value.every(v => typeof v === "string" && v.length <= 2048)) {
+        res.status(400).json({ error: "Invalid photos" }); return;
+      }
+      changes.photos = JSON.stringify(value);
+    } else if (key === "negotiable") {
+      if (typeof value !== "boolean") { res.status(400).json({ error: "Invalid negotiable" }); return; }
+      changes.negotiable = value;
+    } else if (key === "price") {
+      if (value !== null && (typeof value !== "string" && typeof value !== "number" || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > 99999999)) {
+        res.status(400).json({ error: "Invalid price" }); return;
+      }
+      changes.price = value === null ? null : Number(value).toFixed(2);
+    } else if (key === "expiresAt") {
+      const date = value === null ? null : new Date(String(value));
+      if (date !== null && !Number.isFinite(date.getTime())) { res.status(400).json({ error: "Invalid expiry" }); return; }
+      changes.expiresAt = date;
+    } else {
+      if (value !== null && (typeof value !== "string" || value.length > 2048)) {
+        res.status(400).json({ error: `Invalid ${key}` }); return;
+      }
+      changes[key] = value;
+    }
+  }
+  if (!Object.keys(changes).length) { res.status(400).json({ error: "No editable fields supplied" }); return; }
+  try {
+    const updated = await db.update(classifiedAdsTable).set(changes as Partial<typeof classifiedAdsTable.$inferInsert>)
+      .where(and(eq(classifiedAdsTable.id, id), eq(classifiedAdsTable.status, "active"),
+        sql`LOWER(${classifiedAdsTable.contactEmail}) = ${sellerEmail}`))
+      .returning();
+    if (!updated.length) { res.status(404).json({ error: "Active classified not found or not yours" }); return; }
+    res.json(updated[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Could not update classified" });
+  }
+});
+
 router.delete("/classifieds/:id", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
-  await db
+  const changed = await db
     .update(classifiedAdsTable)
     .set({ status: "deleted" })
-    .where(eq(classifiedAdsTable.id, id));
+    .where(and(eq(classifiedAdsTable.id, id), sql`LOWER(${classifiedAdsTable.contactEmail}) = ${sellerEmail}`))
+    .returning({ id: classifiedAdsTable.id });
+  if (!changed.length) { res.status(404).json({ error: "Classified not found or not yours" }); return; }
   res.json({ ok: true });
 });
 
 // ── Admin routes ─────────────────────────────────────────────────
 
 router.get("/admin/classifieds", requireAdmin, async (req, res) => {
-  const { limit = "50", offset = "0", search } = req.query as Record<string, string>;
+  const { limit = "50", offset = "0", search, region } = req.query as Record<string, string>;
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" }); return;
+  }
   const lim = Math.min(parseInt(limit) || 50, 200);
   const off = parseInt(offset) || 0;
 
   const conditions = [eq(classifiedAdsTable.status, "active")];
+  if (region) conditions.push(eq(classifiedAdsTable.marketplaceRegion, region));
   if (search?.trim()) {
     conditions.push(
       or(
@@ -113,14 +192,17 @@ router.get("/admin/classifieds", requireAdmin, async (req, res) => {
 
 router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) => {
   const { ads } = req.body as { ads?: unknown[] };
-  if (!Array.isArray(ads) || ads.length === 0) {
-    res.status(400).json({ error: "ads array is required" }); return;
+  const validation = validateClassifiedBatch(ads);
+  if (!validation.ok) {
+    res.status(validation.status).json({ error: validation.error, ...("invalidCount" in validation ? { invalidCount: validation.invalidCount } : {}) });
+    return;
   }
-
+  if (!Array.isArray(ads)) { res.status(400).json({ error: "ads must be an array" }); return; }
   type AdInput = Record<string, unknown>;
   const valid: typeof classifiedAdsTable.$inferInsert[] = (ads as AdInput[])
     .filter(a => a.title && a.description && a.category && a.location && a.contactName)
     .map(a => ({
+      marketplaceRegion: a.marketplaceRegion as "uk" | "us",
       title:       String(a.title).trim(),
       description: String(a.description).trim(),
       category:    String(a.category),
@@ -138,6 +220,10 @@ router.post("/admin/classifieds/batch-import", requireAdmin, async (req, res) =>
       photos:      null,
       externalLink:a.externalLink ? String(a.externalLink) : null,
     }));
+
+  if (valid.length !== ads.length) {
+    res.status(400).json({ error: "Every ad must contain title, description, category, location and contactName", invalidCount: ads.length - valid.length }); return;
+  }
 
   if (valid.length === 0) {
     res.status(400).json({ error: "No valid ads in payload (need title, description, category, location, contactName)" }); return;

@@ -1,7 +1,18 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { designSettingKey, parseDesignPalette, type DesignArea, type DesignMode } from "@/design-system/palette";
+import {installDesignPreviewBridge} from "@/design-system/previewBridge";
+
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
 
 export interface SiteSettings {
   site_name: string;
+  site_logo_url: string;
+  site_favicon_url: string;
+  hero_image_url: string;
+  seo_og_image_url: string;
+  icon_overrides: string;
+  header_search_placeholder: string;
+  home_sections_layout: string;
   site_tagline: string;
   primary_color: string;
   secondary_color: string;
@@ -37,6 +48,13 @@ export interface SiteSettingsContextValue {
 
 const DEFAULTS: SiteSettings = {
   site_name: "Bazunk",
+  site_logo_url: "",
+  site_favicon_url: "",
+  hero_image_url: "",
+  seo_og_image_url: "",
+  icon_overrides: "",
+  header_search_placeholder: "Search listings...",
+  home_sections_layout: "",
   site_tagline: "Buy and sell anything, locally.",
   primary_color: "#F26B21",
   secondary_color: "#4A5CE8",
@@ -71,25 +89,138 @@ const SiteSettingsContext = createContext<SiteSettingsContextValue>({
 });
 
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
+  useEffect(()=>installDesignPreviewBridge(),[]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULTS);
   const [rawSettings, setRawSettings] = useState<Record<string, string>>({});
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadSettings = () => {
-      fetch("/api/settings/public", { cache: "no-store" })
-        .then(r => r.ok ? r.json() : {})
-        .then((data: Record<string, string>) => {
-          setSettings({ ...DEFAULTS, ...data });
-          setRawSettings(data);
-          setSettingsLoaded(true);
-        })
-        .catch(() => setSettingsLoaded(true));
+    let disposed = false;
+    let requestId = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let controller: AbortController | undefined;
+    let failures = 0;
+
+    const loadSettings = async () => {
+      if (disposed) return;
+      const currentRequest = ++requestId;
+      if (retryTimer) clearTimeout(retryTimer);
+      controller?.abort();
+      controller = new AbortController();
+      const activeController = controller;
+      const timeout = setTimeout(() => activeController.abort(), 4500);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/settings/public`, {
+          cache: "no-store",
+          signal: activeController.signal,
+        });
+        if (!response.ok) throw new Error(`Settings HTTP ${response.status}`);
+        const data = await response.json() as Record<string, string>;
+        if (disposed || currentRequest !== requestId) return;
+        failures = 0;
+        setSettings({ ...DEFAULTS, ...data });
+        setRawSettings(data);
+      } catch {
+        if (disposed || currentRequest !== requestId) return;
+        // Retain last-known-good settings (or built-in defaults), never blank the homepage.
+        failures += 1;
+        const delay = Math.min(60000, 1500 * 2 ** Math.min(failures - 1, 5));
+        retryTimer = setTimeout(loadSettings, delay);
+      } finally {
+        clearTimeout(timeout);
+        if (!disposed && currentRequest === requestId) setSettingsLoaded(true);
+      }
     };
-    loadSettings();
-    window.addEventListener("bazunk-settings-updated", loadSettings);
-    return () => window.removeEventListener("bazunk-settings-updated", loadSettings);
+
+    void loadSettings();
+    const refreshOnFocus = () => {
+      if (document.visibilityState === "visible") void loadSettings();
+    };
+    const onUpdate = () => { void loadSettings(); };
+    window.addEventListener("bazunk-settings-updated", onUpdate);
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
+    return () => {
+      disposed = true;
+      ++requestId;
+      controller?.abort();
+      if (retryTimer) clearTimeout(retryTimer);
+      window.removeEventListener("bazunk-settings-updated", onUpdate);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
+    };
   }, []);
+
+  // A draft preview can update this iframe only. Never apply cross-origin
+  // messages or draft values to a visitor's normal browsing session.
+  useEffect(()=>{
+    if(!new URLSearchParams(window.location.search).has("bazunk-theme-preview")||window.parent===window)return;
+    const listener=(event:MessageEvent)=>{
+      if(event.origin!==window.location.origin||event.source!==window.parent||
+        event.data?.type!=="bazunk:theme-preview-settings")return;
+      const proposed=event.data?.settings;
+      if(!proposed||typeof proposed!=="object"||Array.isArray(proposed))return;
+      const keys=["site_name","site_tagline","site_logo_url","site_favicon_url","hero_image_url","seo_og_image_url","home_sections_layout","home_sections_content","visual_elements_v1","hero_title","hero_subtitle",
+        "hero_cta_primary","hero_cta_secondary","footer_about","footer_copyright",
+        "footer_facebook","footer_twitter","footer_instagram","footer_youtube",
+        "announcement_enabled","announcement_text","announcement_color",
+        "categories_title","categories_subtitle","features_title","features_subtitle",
+        "header_search_placeholder","seo_title","seo_description","icon_overrides"];
+      if(!keys.every(k=>typeof proposed[k]==="string"&&proposed[k].length<=((k==="home_sections_content"||k==="visual_elements_v1")?12000:800)))return;
+      const safe=Object.fromEntries(keys.map(k=>[k,proposed[k]]));
+      setSettings(prev=>({...prev,...safe}));
+      setRawSettings(prev=>({...prev,...safe,theme_studio_enabled:"true"}));
+      if(event.data.previewTheme==="light"||event.data.previewTheme==="dark"){
+        document.documentElement.classList.toggle("dark",event.data.previewTheme==="dark");
+        document.documentElement.style.colorScheme=event.data.previewTheme;
+      }
+    };
+    window.addEventListener("message",listener);
+    return()=>window.removeEventListener("message",listener);
+  },[]);
+
+  // Click-to-edit events are emitted ONLY inside the same-origin private
+  // Theme Studio preview iframe. Public storefront clicks stay unchanged.
+  useEffect(()=>{
+    if(!new URLSearchParams(window.location.search).has("bazunk-theme-preview")||window.parent===window)return;
+    const choose=(event:MouseEvent)=>{
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      const element=target.closest<HTMLElement>("[data-theme-element],[data-theme-edit],[data-theme-card-field],[data-theme-section]");
+      if(!element)return;
+      const field=element.dataset.themeEdit,section=element.dataset.themeSection;
+      const cardIndex=element.dataset.themeCard,cardField=element.dataset.themeCardField,elementId=element.dataset.themeElement;
+      if(!field&&!section)return;
+      event.preventDefault();event.stopPropagation();
+      element.style.outline="3px solid #2563eb";element.style.outlineOffset="3px";
+      window.parent.postMessage({type:"bazunk:theme-preview-select",field,section,cardIndex,cardField,elementId},window.location.origin);
+    };
+    const editable=(element:HTMLElement)=>Boolean(element.dataset.themeEdit||element.dataset.themeCardField&&["title","description"].includes(element.dataset.themeCardField));
+    const begin=(event:MouseEvent)=>{
+      if(event.detail!==2)return;
+      const target=event.target;
+      if(!(target instanceof Element))return;
+      const element=target.closest<HTMLElement>("[data-theme-edit],[data-theme-card-field]");
+      if(!element||!editable(element))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      element.contentEditable="plaintext-only";
+      element.focus();
+      const selection=window.getSelection(),range=document.createRange();
+      range.selectNodeContents(element);selection?.removeAllRanges();selection?.addRange(range);
+      const finish=()=>{
+        const value=(element.innerText||"").trim();
+        element.removeAttribute("contenteditable");
+        element.removeEventListener("blur",finish);
+        window.parent.postMessage({type:"bazunk:theme-preview-inline",field:element.dataset.themeEdit,section:element.dataset.themeSection,cardIndex:element.dataset.themeCard,cardField:element.dataset.themeCardField,value},window.location.origin);
+      };
+      element.addEventListener("blur",finish,{once:true});
+      element.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();element.blur()}if(e.key==="Escape"){e.preventDefault();element.removeAttribute("contenteditable");element.removeEventListener("blur",finish)}},{once:false});
+    };
+    document.addEventListener("dblclick",begin,true);
+    document.addEventListener("click",choose,true);
+    return()=>{document.removeEventListener("click",choose,true);document.removeEventListener("dblclick",begin,true)};
+  },[]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -97,6 +228,83 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
     root.style.setProperty("--brand-secondary", settings.secondary_color);
     if (settings.seo_title) document.title = settings.seo_title;
   }, [settings.primary_color, settings.secondary_color, settings.seo_title]);
+
+  // SEO metadata is edited through Design Center, but only replaces the
+  // homepage's metadata. Product/listing pages retain their own SEO.
+  useEffect(()=>{
+    if(window.location.pathname!=="/")return;
+    const ensure=(key:string,value:string,property=false)=>{
+      const attr=property?"property":"name";
+      let meta=document.head.querySelector<HTMLMetaElement>('meta['+attr+'="'+key+'"]');
+      if(!meta){meta=document.createElement("meta");meta.setAttribute(attr,key);document.head.appendChild(meta);}
+      meta.content=value;
+    };
+    document.title=settings.seo_title||DEFAULTS.seo_title;
+    ensure("description",settings.seo_description||DEFAULTS.seo_description);
+    ensure("og:title",settings.seo_title||DEFAULTS.seo_title,true);
+    ensure("og:description",settings.seo_description||DEFAULTS.seo_description,true);
+    const image=settings.seo_og_image_url;
+    if(/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(image)){
+      ensure("og:image",API_BASE+image,true);
+    }else{
+      const tag=document.head.querySelector<HTMLMetaElement>('meta[property="og:image"]');
+      if(tag?.content.startsWith(API_BASE+"/api/site-media/"))tag.remove();
+    }
+  },[settings.seo_title,settings.seo_description,settings.seo_og_image_url]);
+
+  // Theme Studio favicons are sourced from the authenticated media library
+  // after publication, or inside the private preview iframe.
+  useEffect(()=>{
+    const asset=settings.site_favicon_url;
+    const selector='link[data-bazunk-theme-favicon="true"]';
+    let icon=document.head.querySelector<HTMLLinkElement>(selector);
+    if(!asset||!/^\/api\/site-media\/[a-f0-9-]{36}$/i.test(asset)){
+      icon?.remove();return;
+    }
+    if(!icon){icon=document.createElement("link");icon.rel="icon";icon.dataset.bazunkThemeFavicon="true";document.head.appendChild(icon);}
+    icon.href=API_BASE+asset;
+    return()=>{icon?.remove()};
+  },[settings.site_favicon_url]);
+
+  useEffect(() => {
+    const apply=()=>{
+      const isAdmin=window.location.pathname.startsWith("/admin");
+      const area:DesignArea=isAdmin?"admin":window.matchMedia("(max-width: 767px)").matches?"mobile":"storefront";
+      const mode:DesignMode=document.documentElement.classList.contains("dark")?"dark":"light";
+      const source:DesignArea=area==="mobile"&&rawSettings.design_mobile_inherit_web==="true"?"storefront":area;
+      const p=parseDesignPalette(rawSettings[designSettingKey(source,mode)],source,mode);
+      const root=document.documentElement;
+      root.dataset.bzDesignArea=area;
+      root.style.setProperty("--bz-protected-page",p.background);
+      root.style.setProperty("--bz-protected-card",p.surface);
+      root.style.setProperty("--bz-protected-text",p.text);
+      root.style.setProperty("--bz-protected-secondary",p.secondaryText);
+      root.style.setProperty("--bz-protected-field",p.field);
+      root.style.setProperty("--bz-protected-button",p.action);
+      root.style.setProperty("--bz-protected-button-text",p.actionText);
+      const customized=Boolean(rawSettings[designSettingKey(source,mode)]);
+      const remap:Record<string,string>={
+        "--bz-surface-page":p.background,"--bz-surface-card":p.surface,
+        "--bz-surface-raised":p.field,"--bz-surface-field":p.field,
+        "--bz-text-primary":p.text,"--bz-text-secondary":p.secondaryText,
+        "--bz-text-muted":p.secondaryText,"--bz-action-primary":p.action,
+        "--bz-action-primary-text":p.actionText
+      };
+      for(const [key,value] of Object.entries(remap)){
+        if(customized)root.style.setProperty(key,value);
+        else root.style.removeProperty(key);
+      }
+
+    };
+    apply();
+    const observer=new MutationObserver(apply);
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
+    window.addEventListener("resize",apply);
+    window.addEventListener("popstate",apply);
+    window.addEventListener("bazunk-design-route-change",apply);
+    window.addEventListener("bazunk-settings-updated",apply);
+    return ()=>{observer.disconnect();window.removeEventListener("resize",apply);window.removeEventListener("popstate",apply);window.removeEventListener("bazunk-design-route-change",apply);window.removeEventListener("bazunk-settings-updated",apply)};
+  },[rawSettings]);
 
   return (
     <SiteSettingsContext.Provider value={{ settings, rawSettings, settingsLoaded }}>

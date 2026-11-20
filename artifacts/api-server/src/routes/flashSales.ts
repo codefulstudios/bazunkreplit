@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/adminAuth.js";
 import { randomUUID } from "crypto";
 import { storage } from "../storage.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 
 const router = Router();
 
@@ -23,29 +24,37 @@ async function syncStatuses() {
 }
 
 router.get("/flash-sales", async (req, res) => {
-  await syncStatuses();
   const { status = "active", category, sale_type, limit = "40", offset = "0" } = req.query as Record<string, string>;
   const lim = parseInt(limit);
   const off = parseInt(offset);
 
+  const region = req.query.region;
+  if (region !== undefined && region !== "uk" && region !== "us") {
+    res.status(400).json({ error: "Invalid marketplace region; use uk or us" });
+    return;
+  }
+  await syncStatuses();
+  const regionClause = region === "uk" || region === "us"
+    ? sql`marketplace_region = ${region}`
+    : sql`TRUE`;
   let rows;
   if (status === "upcoming") {
     if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND sale_type = ${sale_type} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' AND category = ${category} ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = 'upcoming' ORDER BY starts_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   } else {
     if (sale_type && sale_type !== "all" && category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (sale_type && sale_type !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND sale_type = ${sale_type} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else if (category && category !== "all") {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} AND category = ${category} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     } else {
-      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
+      rows = await db.execute(sql`SELECT * FROM flash_sales WHERE ${regionClause} AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND status = ${status} ORDER BY ends_at ASC LIMIT ${lim} OFFSET ${off}`);
     }
   }
   res.json(rows.rows);
@@ -53,8 +62,8 @@ router.get("/flash-sales", async (req, res) => {
 
 router.get("/flash-sales/my-sales", async (req, res) => {
   await syncStatuses();
-  const { email } = req.query as Record<string, string>;
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const rows = await db.execute(sql`SELECT * FROM flash_sales WHERE seller_email = ${email} ORDER BY created_at DESC LIMIT 50`);
   res.json(rows.rows);
 });
@@ -62,16 +71,20 @@ router.get("/flash-sales/my-sales", async (req, res) => {
 router.get("/flash-sales/:id", async (req, res) => {
   await syncStatuses();
   const { id } = req.params;
-  const result = await db.execute(sql`SELECT * FROM flash_sales WHERE id = ${id}`);
+  const result = await db.execute(sql`SELECT * FROM flash_sales WHERE NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND cv.key='category_visible_' || COALESCE(category,'')) AND id = ${id}`);
   if (result.rows.length === 0) { res.status(404).json({ error: "Not found" }); return; }
   res.json(result.rows[0]);
 });
 
 router.post("/flash-sales", async (req, res) => {
+  const sellerEmail = await authenticatedSellerEmail(req, res);
+  if (!sellerEmail) return;
   const body = req.body as Record<string, unknown>;
-  const { sellerEmail, sellerName, title, description, image, category, originalPrice, salePrice, startsAt, endsAt, saleType = "standard" } = body as Record<string, string>;
+  const marketplaceRegion = body.marketplaceRegion;
+  if (marketplaceRegion !== "uk" && marketplaceRegion !== "us") { res.status(400).json({ error: "Choose UK or USA / Canada marketplace" }); return; }
+  const { sellerName, title, description, image, category, originalPrice, salePrice, startsAt, endsAt, saleType = "standard" } = body as Record<string, string>;
   if (!sellerEmail || !sellerName || !title || !originalPrice || !salePrice || !startsAt || !endsAt) {
-    res.status(400).json({ error: "sellerEmail, sellerName, title, originalPrice, salePrice, startsAt, endsAt are required" });
+    res.status(400).json({ error: "sellerName, title, originalPrice, salePrice, startsAt, endsAt are required" });
     return;
   }
   const resolvedType = VALID_TYPES.includes(saleType) ? saleType : "standard";
@@ -85,11 +98,11 @@ router.post("/flash-sales", async (req, res) => {
   await db.execute(sql`
     INSERT INTO flash_sales
       (id, seller_email, seller_name, title, description, image, category,
-       original_price, sale_price, discount_percent, starts_at, ends_at, status, sale_type, created_at, updated_at)
+       original_price, sale_price, discount_percent, starts_at, ends_at, status, sale_type, marketplace_region, created_at, updated_at)
     VALUES (
       ${id}, ${sellerEmail}, ${sellerName}, ${title}, ${description ?? null},
       ${image ?? null}, ${category ?? null},
-      ${op}, ${sp}, ${discountPercent}, ${startsAt}, ${endsAt}, ${status}, ${resolvedType}, NOW(), NOW()
+      ${op}, ${sp}, ${discountPercent}, ${startsAt}, ${endsAt}, ${status}, ${resolvedType}, ${marketplaceRegion}, NOW(), NOW()
     )
   `);
   storage.completeMilestone(sellerEmail, "first-flash-sale").catch((err) => {
@@ -99,8 +112,9 @@ router.post("/flash-sales", async (req, res) => {
 });
 
 router.patch("/flash-sales/:id/cancel", async (req, res) => {
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   const { id } = req.params;
-  const { email } = req.body as Record<string, string>;
   const result = await db.execute(sql`SELECT * FROM flash_sales WHERE id = ${id}`);
   if (result.rows.length === 0) { res.status(404).json({ error: "Not found" }); return; }
   const sale = result.rows[0] as Record<string, unknown>;

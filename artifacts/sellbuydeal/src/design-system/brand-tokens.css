@@ -1,0 +1,19 @@
+/* Bazunk shared brand palette and typography — use across new site UI.
+   Semantic dark-mode colours remain in index.css. */
+:root {
+  --bz-brand-navy:#061b33;
+  --bz-brand-orange:#ff7900;
+  --bz-brand-white:#ffffff;
+  --bz-brand-canvas:#f5f7fa;
+  --bz-brand-ink:#172b4d;
+  --bz-brand-font:'Plus Jakarta Sans',ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --app-font-sans:var(--bz-brand-font);
+}
+html,body,#root{font-family:var(--bz-brand-font)}
+button,input,select,textarea{font-family:inherit}
+.bz-brand-navy{background:var(--bz-brand-navy);color:var(--bz-brand-white)}
+.bz-brand-canvas{background:var(--bz-brand-canvas);color:var(--bz-brand-ink)}
+.bz-brand-card{background:var(--bz-brand-white);color:var(--bz-brand-ink)}
+.bz-brand-primary{background:var(--bz-brand-orange);color:#111827}
+.bz-brand-primary:hover{filter:brightness(.94)}
+.bz-brand-primary:focus-visible{outline:3px solid var(--bz-brand-navy);outline-offset:2px}

@@ -1,20 +1,72 @@
+import BulkImportPage from "@/pages/BulkImportPage";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, useClerk } from "@clerk/react";
+const AdminGoLivePage = React.lazy(() => import("@/pages/admin/AdminGoLivePage").then(module => ({ default: module.AdminGoLivePage })));
+const AdminLiveCommercePage = React.lazy(() => import("@/pages/admin/AdminLiveCommercePage").then(module => ({ default: module.AdminLiveCommercePage })));
+const AdminDemoCreatorPage = React.lazy(() => import("@/pages/admin/AdminDemoCreatorPage").then(module => ({ default: module.AdminDemoCreatorPage })));
+import React, { useEffect, useRef, useState } from "react";
+import { ClerkProvider, ClerkLoaded, ClerkLoading, SignIn, SignUp, useClerk, useAuth } from "@clerk/react";
 import { shadcn } from "@clerk/themes";
 
 function ScrollToTop() {
   const [location] = useLocation();
+  const firstRoute = useRef(true);
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    // Don't restore an old scroll offset when the storefront is opened or refreshed.
+    if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    const reset = () => {
+      if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    };
+    reset();
+    const frame = window.requestAnimationFrame(reset);
+    const onPageshow = (event: PageTransitionEvent) => {
+      if (event.persisted) reset();
+    };
+    window.addEventListener("pageshow", onPageshow);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("pageshow", onPageshow);
+      if ("scrollRestoration" in window.history) window.history.scrollRestoration = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false;
+      return;
+    }
+    if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location]);
   return null;
+}
+
+function BackToTop() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const update = () => setVisible(window.scrollY > 360);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+  if (!visible) return null;
+  return (
+    <button
+      type="button"
+      aria-label="Back to top"
+      title="Back to top"
+      onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })}
+      className="fixed bottom-24 md:bottom-6 left-4 sm:left-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#F26B21] text-white shadow-lg border border-orange-300 hover:bg-[#d95512] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
+      data-testid="button-back-to-top"
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="m6 12 6-6 6 6"/><path d="M12 6v12"/></svg>
+    </button>
+  );
 }
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
+const NotFound = React.lazy(() => import("@/pages/not-found"));
 
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
@@ -22,34 +74,51 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { WatchlistProvider } from "@/context/WatchlistContext";
 import { CartDrawer } from "@/components/CartDrawer";
+import { ChatwootWidget } from "@/components/ChatwootWidget";
 import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { CategorySection } from "@/components/CategorySection";
+import { HomepageVisualElements } from "@/components/HomepageVisualElements";
+import { HomepagePromoCards } from "@/components/HomepagePromoCards";
+import { useRawSettings } from "@/context/SiteSettingsContext";
+import { parseHomeSections, type HomeSectionId } from "@/design-system/homepageSections";
 import { FeaturedListings } from "@/components/FeaturedListings";
 import { FeaturedFeatures } from "@/components/FeaturedFeatures";
 import { Footer } from "@/components/Footer";
 import { RewardsTeaser } from "@/components/RewardsTeaser";
 import { AdSlot } from "@/components/AdSlot";
 import { CategoriesPage } from "@/pages/CategoriesPage";
-import { SellPage } from "@/pages/SellPage";
-import { DirectSalePage } from "@/pages/DirectSalePage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { ImportersPage } from "@/pages/ImportersPage";
-import { ImporterWorkspacePage } from "@/pages/ImporterWorkspacePage";
+const SellPage = React.lazy(() => import("@/pages/SellPage").then(module => ({ default: module.SellPage })));
+const DirectSalePage = React.lazy(() => import("@/pages/DirectSalePage").then(module => ({ default: module.DirectSalePage })));
+const SnapSellPage = React.lazy(() => import("@/pages/SnapSellPage").then(module => ({ default: module.SnapSellPage })));
+const DealPilotPage = React.lazy(() => import("@/pages/DealPilotPage").then(module => ({ default: module.DealPilotPage })));
+const FindItPage = React.lazy(() => import("@/pages/FindItPage").then(module => ({ default: module.FindItPage })));
+const DashboardPage = React.lazy(() => import("@/pages/DashboardPage").then(module => ({ default: module.DashboardPage })));
+const MyStorePage = React.lazy(() => import("@/pages/DashboardPage").then(module => ({ default: module.MyStorePage })));
+const ImportersPage = React.lazy(() => import("@/pages/ImportersPage").then(module => ({ default: module.ImportersPage })));
+const ImporterWorkspacePage = React.lazy(() => import("@/pages/ImporterWorkspacePage").then(module => ({ default: module.ImporterWorkspacePage })));
 import { BrowsePage } from "@/pages/BrowsePage";
-import { ListingPage } from "@/pages/ListingPage";
-import { CheckoutPage } from "@/pages/CheckoutPage";
-import { BundlePage } from "@/pages/BundlePage";
-import { ClassifiedsPage } from "@/pages/ClassifiedsPage";
-import { MessagesPage } from "@/pages/MessagesPage";
-import { SellerProfilePage } from "@/pages/SellerProfilePage";
-import { CreditsPage } from "@/pages/CreditsPage";
-import { PromotionsPage } from "@/pages/PromotionsPage";
-import { SupportPage } from "@/pages/SupportPage";
-import { TermsPage } from "@/pages/TermsPage";
-import { PrivacyPage } from "@/pages/PrivacyPage";
-import { OffersPage } from "@/pages/OffersPage";
-import { LivePage, LiveHubPage } from "@/pages/LivePage";
+const ListingPage = React.lazy(() => import("@/pages/ListingPage").then(module => ({ default: module.ListingPage })));
+const TrustProofPage = React.lazy(() => import("@/pages/TrustProofPage").then(module => ({ default: module.TrustProofPage })));
+const AdminTrustProofPage = React.lazy(() => import("@/pages/admin/AdminTrustProofPage").then(module => ({ default: module.AdminTrustProofPage })));
+const CheckoutPage = React.lazy(() => import("@/pages/CheckoutPage").then(module => ({ default: module.CheckoutPage })));
+const MobileNotificationsPage = React.lazy(() => import("@/pages/MobileNotificationsPage").then(module => ({ default: module.MobileNotificationsPage })));
+import { MobileShopNav } from "@/components/MobileShopNav";
+const BundlePage = React.lazy(() => import("@/pages/BundlePage").then(module => ({ default: module.BundlePage })));
+const ClassifiedsPage = React.lazy(() => import("@/pages/ClassifiedsPage").then(module => ({ default: module.ClassifiedsPage })));
+const MessagesPage = React.lazy(() => import("@/pages/MessagesPage").then(module => ({ default: module.MessagesPage })));
+const SellerProfilePage = React.lazy(() => import("@/pages/SellerProfilePage").then(module => ({ default: module.SellerProfilePage })));
+const CreditsPage = React.lazy(() => import("@/pages/CreditsPage").then(module => ({ default: module.CreditsPage })));
+const PromotionsPage = React.lazy(() => import("@/pages/PromotionsPage").then(module => ({ default: module.PromotionsPage })));
+const SupportPage = React.lazy(() => import("@/pages/SupportPage").then(module => ({ default: module.SupportPage })));
+const TermsPage = React.lazy(() => import("@/pages/TermsPage").then(module => ({ default: module.TermsPage })));
+const OurSitesPage = React.lazy(() => import("@/pages/OurSitesPage").then(module => ({ default: module.OurSitesPage })));
+const PrivacyPage = React.lazy(() => import("@/pages/PrivacyPage").then(module => ({ default: module.PrivacyPage })));
+const CookiePolicyPage = React.lazy(() => import("@/pages/CookiePolicyPage").then(module => ({ default: module.CookiePolicyPage })));
+import { CookieConsentProvider, CookieConsentBanner, CookieMarketingScripts } from "@/components/CookieConsent";
+const OffersPage = React.lazy(() => import("@/pages/OffersPage").then(module => ({ default: module.OffersPage })));
+const LivePage = React.lazy(() => import("@/pages/LivePage").then(module => ({ default: module.LivePage })));
+const LiveHubPage = React.lazy(() => import("@/pages/LivePage").then(module => ({ default: module.LiveHubPage })));
 import { LiveNowStrip } from "@/components/LiveNowStrip";
 import { PerksStrip } from "@/components/PerksStrip";
 import { OfferProvider } from "@/context/OfferContext";
@@ -59,46 +128,65 @@ import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import { AnnouncementBanner } from "@/components/AnnouncementBanner";
 import IntroSplash from "@/components/IntroSplash";
 import { UserCurrencySync } from "@/components/UserCurrencySync";
-import { AdminLoginPage } from "@/pages/admin/AdminLoginPage";
-import { AdminDashboardPage } from "@/pages/admin/AdminDashboardPage";
-import { AdminCreditsEconomyPage } from "@/pages/admin/AdminCreditsEconomyPage";
-import { AdminUsersPage } from "@/pages/admin/AdminUsersPage";
-import { AdminAuditLogPage } from "@/pages/admin/AdminAuditLogPage";
-import { AdminSystemStatusPage } from "@/pages/admin/AdminSystemStatusPage";
-import { AdminFeatureFlagsPage } from "@/pages/admin/AdminFeatureFlagsPage";
+const AdminLoginPage = React.lazy(() => import("@/pages/admin/AdminLoginPage").then(module => ({ default: module.AdminLoginPage })));
+const AdminDesignCenterPage = React.lazy(() => import("@/pages/admin/AdminDesignCenterPage").then(module => ({ default: module.AdminDesignCenterPage })));
+const AdminWordPressDashboard = React.lazy(() => import("@/pages/admin/AdminWordPressDashboard").then(module => ({ default: module.AdminWordPressDashboard })));
+const AdminContentPage = React.lazy(() => import("@/pages/admin/AdminManagementHubs").then(module => ({ default: module.AdminContentPage })));
+const AdminAnalyticsPage = React.lazy(() => import("@/pages/admin/AdminManagementHubs").then(module => ({ default: module.AdminAnalyticsPage })));
+const AdminMarketingOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminMarketingOverviewPage })));
+const AdminSettingsOverviewPage = React.lazy(() => import("@/pages/admin/AdminOperationsHubs").then(module => ({ default: module.AdminSettingsOverviewPage })));
+const AdminImporterOverviewPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterOverviewPage })));
+const AdminCsvImporterPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminCsvImporterPage })));
+const AdminImporterSettingsPage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterSettingsPage })));
+const AdminImporterBulkUpdatePage = React.lazy(() => import("@/pages/admin/AdminImporterPages").then(module => ({ default: module.AdminImporterBulkUpdatePage })));
+const AdminCreditsEconomyPage = React.lazy(() => import("@/pages/admin/AdminCreditsEconomyPage").then(module => ({ default: module.AdminCreditsEconomyPage })));
+const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage").then(module => ({ default: module.AdminUsersPage })));
+const AdminSellerCompliancePage = React.lazy(() => import("@/pages/admin/AdminSellerCompliancePage").then(module => ({ default: module.AdminSellerCompliancePage })));
+const SellerCompliancePage = React.lazy(() => import("@/pages/SellerCompliancePage").then(module => ({ default: module.SellerCompliancePage })));
+const AdminAuditLogPage = React.lazy(() => import("@/pages/admin/AdminAuditLogPage").then(module => ({ default: module.AdminAuditLogPage })));
+const AdminSystemStatusPage = React.lazy(() => import("@/pages/admin/AdminSystemStatusPage").then(module => ({ default: module.AdminSystemStatusPage })));
+const AdminSnapSellPage = React.lazy(() => import("@/pages/admin/AdminSnapSellPage").then(module => ({ default: module.AdminSnapSellPage })));
+const AdminDealPilotPage = React.lazy(() => import("@/pages/admin/AdminDealPilotPage").then(module => ({ default: module.AdminDealPilotPage })));
+const AdminFindItPage = React.lazy(() => import("@/pages/admin/AdminFindItPage").then(module => ({ default: module.AdminFindItPage })));
+const AdminFeatureFlagsPage = React.lazy(() => import("@/pages/admin/AdminFeatureFlagsPage").then(module => ({ default: module.AdminFeatureFlagsPage })));
 import { FeatureGate, FeatureVisible } from "@/components/FeatureGate";
-import { AdminPaymentsPage } from "@/pages/admin/AdminPaymentsPage";
-import { AdminOrdersPage } from "@/pages/admin/AdminOrdersPage";
-import { AdminSettingsPage } from "@/pages/admin/AdminSettingsPage";
-import { AdminEmailsPage } from "@/pages/admin/AdminEmailsPage";
-import { AdminProductsPage } from "@/pages/admin/AdminProductsPage";
-import { AdminListingsPage } from "@/pages/admin/AdminListingsPage";
-import { AdminImportsPage } from "@/pages/admin/AdminImportsPage";
-import { AdminImporterControlPage } from "@/pages/admin/AdminImporterControlPage";
-import { AdminClassifiedsPage } from "@/pages/admin/AdminClassifiedsPage";
-import { AdminDisputesPage } from "@/pages/admin/AdminDisputesPage";
-import { AdminReturnsPage } from "@/pages/admin/AdminReturnsPage";
-import { AdminAuctionsPage } from "@/pages/admin/AdminAuctionsPage";
-import { AuctionsPage } from "@/pages/AuctionsPage";
-import { AuctionDetailPage } from "@/pages/AuctionDetailPage";
-import { CreateAuctionPage } from "@/pages/CreateAuctionPage";
-import { FlashSalesPage } from "@/pages/FlashSalesPage";
-import { FlashSaleDetailPage } from "@/pages/FlashSaleDetailPage";
-import { CreateFlashSalePage } from "@/pages/CreateFlashSalePage";
-import { AdminFlashSalesPage } from "@/pages/admin/AdminFlashSalesPage";
-import { AdminSupportPage } from "@/pages/admin/AdminSupportPage";
-import { SetupWizardPage } from "@/pages/SetupWizardPage";
-import VideoPage from "@/pages/VideoPage";
-import { RewardsPage } from "@/pages/RewardsPage";
-import { AdminRewardsPage } from "@/pages/admin/AdminRewardsPage";
-import { AdminPromotionsPage } from "@/pages/admin/AdminPromotionsPage";
-import { AdminReviewsPage } from "@/pages/admin/AdminReviewsPage";
-import { AdminVerificationPage } from "@/pages/admin/AdminVerificationPage";
-import BuyerProtectionPage from "@/pages/BuyerProtectionPage";
-import CashbackPage from "@/pages/CashbackPage";
-import { ReferralsPage } from "@/pages/ReferralsPage";
-import WelcomeNewBuyers from "@/pages/WelcomeNewBuyers";
-import { AdminReferralsPage } from "@/pages/admin/AdminReferralsPage";
+const AdminPaymentsPage = React.lazy(() => import("@/pages/admin/AdminPaymentsPage").then(module => ({ default: module.AdminPaymentsPage })));
+const AdminOrdersPage = React.lazy(() => import("@/pages/admin/AdminOrdersPage").then(module => ({ default: module.AdminOrdersPage })));
+const AdminAdvertisingPage = React.lazy(() => import("@/pages/admin/AdminAdvertisingPage").then(module => ({ default: module.AdminAdvertisingPage })));
+const AdminSettingsPage = React.lazy(() => import("@/pages/admin/AdminSettingsPage").then(module => ({ default: module.AdminSettingsPage })));
+const AdminDesignSystemPage = React.lazy(() => import("@/pages/admin/AdminDesignSystemPage").then(module => ({ default: module.AdminDesignSystemPage })));
+const AdminEmailsPage = React.lazy(() => import("@/pages/admin/AdminEmailsPage").then(module => ({ default: module.AdminEmailsPage })));
+const AdminProductsPage = React.lazy(() => import("@/pages/admin/AdminProductsPage").then(module => ({ default: module.AdminProductsPage })));
+const AdminListingsPage = React.lazy(() => import("@/pages/admin/AdminListingsPage").then(module => ({ default: module.AdminListingsPage })));
+const AdminCategoryManagerPage = React.lazy(() => import("@/pages/admin/AdminCategoryManagerPage").then(module => ({ default: module.AdminCategoryManagerPage })));
+const AdminImportsPage = React.lazy(() => import("@/pages/admin/AdminImportsPage").then(module => ({ default: module.AdminImportsPage })));
+const AdminImporterControlPage = React.lazy(() => import("@/pages/admin/AdminImporterControlPage").then(module => ({ default: module.AdminImporterControlPage })));
+const AdminCashbackPage = React.lazy(() => import("@/pages/admin/AdminCashbackPage").then(module => ({ default: module.AdminCashbackPage })));
+const AdminClassifiedsPage = React.lazy(() => import("@/pages/admin/AdminClassifiedsPage").then(module => ({ default: module.AdminClassifiedsPage })));
+const AdminDisputesPage = React.lazy(() => import("@/pages/admin/AdminDisputesPage").then(module => ({ default: module.AdminDisputesPage })));
+const AdminReturnsPage = React.lazy(() => import("@/pages/admin/AdminReturnsPage").then(module => ({ default: module.AdminReturnsPage })));
+const AdminAuctionsPage = React.lazy(() => import("@/pages/admin/AdminAuctionsPage").then(module => ({ default: module.AdminAuctionsPage })));
+const AuctionsPage = React.lazy(() => import("@/pages/AuctionsPage").then(module => ({ default: module.AuctionsPage })));
+const AuctionDetailPage = React.lazy(() => import("@/pages/AuctionDetailPage").then(module => ({ default: module.AuctionDetailPage })));
+const CreateAuctionPage = React.lazy(() => import("@/pages/CreateAuctionPage").then(module => ({ default: module.CreateAuctionPage })));
+const FlashSalesPage = React.lazy(() => import("@/pages/FlashSalesPage").then(module => ({ default: module.FlashSalesPage })));
+const FlashSaleDetailPage = React.lazy(() => import("@/pages/FlashSaleDetailPage").then(module => ({ default: module.FlashSaleDetailPage })));
+const CreateFlashSalePage = React.lazy(() => import("@/pages/CreateFlashSalePage").then(module => ({ default: module.CreateFlashSalePage })));
+const AdminFlashSalesPage = React.lazy(() => import("@/pages/admin/AdminFlashSalesPage").then(module => ({ default: module.AdminFlashSalesPage })));
+const AdminSupportPage = React.lazy(() => import("@/pages/admin/AdminSupportPage").then(module => ({ default: module.AdminSupportPage })));
+const AdminChatwootSettingsPage = React.lazy(() => import("@/pages/admin/AdminChatwootSettingsPage").then(module => ({ default: module.AdminChatwootSettingsPage })));
+const SetupWizardPage = React.lazy(() => import("@/pages/SetupWizardPage").then(module => ({ default: module.SetupWizardPage })));
+const VideoPage = React.lazy(() => import("@/pages/VideoPage"));
+const RewardsPage = React.lazy(() => import("@/pages/RewardsPage").then(module => ({ default: module.RewardsPage })));
+const AdminRewardsPage = React.lazy(() => import("@/pages/admin/AdminRewardsPage").then(module => ({ default: module.AdminRewardsPage })));
+const AdminPromotionsPage = React.lazy(() => import("@/pages/admin/AdminPromotionsPage").then(module => ({ default: module.AdminPromotionsPage })));
+const AdminReviewsPage = React.lazy(() => import("@/pages/admin/AdminReviewsPage").then(module => ({ default: module.AdminReviewsPage })));
+const AdminVerificationPage = React.lazy(() => import("@/pages/admin/AdminVerificationPage").then(module => ({ default: module.AdminVerificationPage })));
+const BuyerProtectionPage = React.lazy(() => import("@/pages/BuyerProtectionPage"));
+const CashbackPage = React.lazy(() => import("@/pages/CashbackPage"));
+const ReferralsPage = React.lazy(() => import("@/pages/ReferralsPage").then(module => ({ default: module.ReferralsPage })));
+const WelcomeNewBuyers = React.lazy(() => import("@/pages/WelcomeNewBuyers"));
+const AdminReferralsPage = React.lazy(() => import("@/pages/admin/AdminReferralsPage").then(module => ({ default: module.AdminReferralsPage })));
 
 
 // ─── Clerk setup ─────────────────────────────────────────────────────────────
@@ -111,7 +199,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
 // Only set if you front Clerk with your own proxy. Leave unset on Render.
-const clerkProxyUrl = (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined) || undefined;
+const clerkProxyUrl = window.location.hostname.endsWith(".onrender.com") ? undefined : (import.meta.env.VITE_CLERK_PROXY_URL as string | undefined) || undefined;
 
 if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
@@ -129,7 +217,7 @@ const clerkAppearance = {
   options: {
     logoPlacement: "inside" as const,
     logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/bazunk-logo.png`,
+    logoImageUrl: `${window.location.origin}${basePath}/bazunk-brand-orange.png`,
   },
   variables: {
     colorPrimary: "#F26B21",
@@ -140,7 +228,7 @@ const clerkAppearance = {
     colorInput: "#252840",
     colorInputForeground: "#ffffff",
     colorNeutral: "rgba(255,255,255,0.15)",
-    fontFamily: '"Outfit", "Inter", sans-serif',
+    fontFamily: '"Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif',
     borderRadius: "0.75rem",
   },
   elements: {
@@ -196,50 +284,140 @@ function ClerkQueryClientCacheInvalidator() {
 // ─── Sign-in / sign-up pages ─────────────────────────────────────────────────
 
 function SignInPage() {
+  const { isSignedIn } = useAuth();
+  if (isSignedIn) return <Redirect to="/dashboard" />;
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-[#0D0F1C] px-4">
-      <SignIn
-        routing="path"
-        path={`${basePath}/sign-in`}
-        signUpUrl={`${basePath}/sign-up`}
-      />
+      <div className="w-full max-w-[440px]">
+        <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white"><h1 className="text-xl font-bold">Bazunk sign in</h1><p className="mt-3 text-white/70">Connecting to secure sign in…</p><p className="mt-4 text-sm text-white/60">If this stays visible, the authentication service may be unavailable.</p></div></ClerkLoading>
+        <ClerkLoaded>
+          <div className="mb-4 text-center text-white"><h1 className="text-2xl font-bold">Sign in to Bazunk</h1><p className="mt-2 text-sm text-white/60">Secure account access</p></div>
+          <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+        </ClerkLoaded>
+      </div>
     </div>
   );
 }
 
 function SignUpPage() {
+  const { isSignedIn } = useAuth();
+  if (isSignedIn) return <Redirect to="/dashboard" />;
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-[#0D0F1C] px-4">
-      <SignUp
-        routing="path"
-        path={`${basePath}/sign-up`}
-        signInUrl={`${basePath}/sign-in`}
-      />
+      <div className="w-full max-w-[440px]">
+        <ClerkLoading><div role="status" className="rounded-xl bg-[#1A1D2E] p-8 text-center text-white">Connecting to secure sign up…</div></ClerkLoading>
+        <ClerkLoaded>
+          <div className="mb-4 text-center text-white"><h1 className="text-2xl font-bold">Create your Bazunk account</h1></div>
+          <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+        </ClerkLoaded>
+      </div>
     </div>
   );
 }
 
-// ─── Homepage ─────────────────────────────────────────────────────────────────
+// Each homepage section fails independently; a secondary API/widget error must not
+// unmount the header, search, categories, or other shopping content.
+class HomeSectionBoundary extends React.Component<
+  { children: React.ReactNode; optional?: boolean },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: Error) { console.error("Homepage section unavailable:", error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    if (this.props.optional) return null;
+    return <div role="status" className="mx-auto max-w-6xl px-5 py-6 text-sm text-slate-700 dark:text-slate-200">
+      <span>This section is temporarily unavailable.</span>{" "}
+      <button type="button" onClick={() => this.setState({ failed: false })}
+        className="font-semibold underline underline-offset-2">Try again</button>
+    </div>;
+  }
+}
+
+// ─── Homepage: validated published Design Center sections ────────────────────
 
 function Home() {
+  const [showSecondary, setShowSecondary] = useState(false);
+  useEffect(() => {
+    // Give search, navigation, categories and recent listings first paint priority.
+    const timer = window.setTimeout(() => setShowSecondary(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const settings=useRawSettings();
+  const optionalSections=parseHomeSections(settings.home_sections_layout);
+  const renderOptional=(id:HomeSectionId)=>{
+    switch(id){
+      case "promoted":return <FeaturedListings mode="promoted"/>;
+      case "live":return <FeatureVisible feature="live"><LiveNowStrip/></FeatureVisible>;
+      case "promos":return <HomepagePromoCards/>;
+      case "perks":return <PerksStrip/>;
+      case "features":return <FeaturedFeatures/>;
+      case "rewards":return <RewardsTeaser/>;
+      case "announcement":return <AnnouncementBanner/>;
+      case "ads":return <AdSlot slotKey="home_bottom"/>;
+    }
+  };
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <IntroSplash />
-      <AnnouncementBanner />
+    <div className="bz-mockup-home bz-home-refined min-h-screen bg-background flex flex-col">
       <Navbar />
-      <PerksStrip />
       <main className="flex-1">
-        <Hero />
-        <CategorySection />
-        <FeatureVisible feature="live"><LiveNowStrip /></FeatureVisible>
-        <RewardsTeaser />
-        <FeaturedListings />
-        <FeaturedFeatures />
-        <AdSlot slotKey="home_bottom" />
+        {/* Preserve the essential shopping journey above optional marketing blocks. */}
+        <HomeSectionBoundary><Hero /></HomeSectionBoundary>
+        <HomeSectionBoundary><CategorySection /></HomeSectionBoundary>
+        <HomeSectionBoundary><FeaturedListings mode="recent" /></HomeSectionBoundary>
+        {showSecondary && <HomeSectionBoundary optional><HomepageVisualElements /></HomeSectionBoundary>}
+        {showSecondary && optionalSections.filter(section=>section.enabled).map(section=>
+          <HomeSectionBoundary optional key={section.id}>
+          <div data-theme-section={section.id}>
+            {renderOptional(section.id)}
+          </div>
+          </HomeSectionBoundary>
+        )}
       </main>
       <Footer />
     </div>
   );
+}
+
+// Route-local recovery keeps a Cashback data/runtime error from blanking the entire app.
+class CashbackErrorBoundary extends React.Component<{children: React.ReactNode; admin?: boolean},{failed:boolean}> {
+  state={failed:false};
+  static getDerivedStateFromError(){return {failed:true};}
+  componentDidCatch(error: Error){console.error("Cashback page render failed:",error);}
+  render(){
+    if(!this.state.failed)return this.props.children;
+    return <div className="min-h-screen bg-white text-slate-900 dark:bg-[#101f36] dark:text-white">
+      <main className="mx-auto max-w-xl px-6 py-20 text-center" role="alert">
+        <h1 className="text-2xl font-black">Cashback could not open</h1>
+        <p className="mt-3 text-base font-semibold text-slate-700 dark:text-slate-200">Your cashback records have not been changed. Refresh the page to try again.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button type="button" onClick={()=>window.location.reload()} className="min-h-11 rounded-xl bg-orange-600 px-5 py-3 font-bold text-white">Retry Cashback</button>
+          <a href={this.props.admin?"/admin/dashboard":"/dashboard"} className="min-h-11 rounded-xl border border-slate-400 bg-white px-5 py-3 font-bold text-slate-900">Return to dashboard</a>
+        </div>
+      </main>
+    </div>;
+  }
+}
+
+class ListingErrorBoundary extends React.Component<{children: React.ReactNode}, {failed:boolean}> {
+  state = {failed:false};
+  static getDerivedStateFromError() { return {failed:true}; }
+  componentDidCatch(error: Error) { console.error("Listing page render failed:", error); }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <Navbar />
+      <main className="mx-auto max-w-xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">We couldn't display this listing</h1>
+        <p className="mt-3 text-slate-700 dark:text-slate-200">Please try again. Your cart and account are safe.</p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button onClick={()=>window.location.reload()} className="rounded-xl bg-orange-600 px-5 py-3 font-bold text-white">Retry listing</button>
+          <a href="/browse" className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-900 dark:text-white">Browse products</a>
+        </div>
+      </main>
+    </div>;
+  }
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -248,25 +426,38 @@ const queryClient = new QueryClient();
 
 function Router() {
   return (
+    <React.Suspense fallback={<div role="status" className="mx-auto max-w-5xl p-8 text-slate-700 dark:text-slate-200">Loading page…</div>}>
     <Switch>
       <Route path="/" component={Home} />
       {/* Auth — REQUIRED: use /*? wildcard verbatim for OAuth callbacks */}
-      <Route path="/sign-in/*?" component={SignInPage} />
-      <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/sign-in" component={SignInPage} />
+      <Route path="/sign-in/*" component={SignInPage} />
+      <Route path="/sign-up" component={SignUpPage} />
+      <Route path="/sign-up/*" component={SignUpPage} />
       {/* Legacy redirects */}
       <Route path="/login">{() => <Redirect to="/sign-in" />}</Route>
       <Route path="/register">{() => <Redirect to="/sign-up" />}</Route>
       <Route path="/categories" component={CategoriesPage} />
       <Route path="/sell" component={SellPage} />
+      <Route path="/sell/import" component={BulkImportPage} />
+      <Route path="/sell/snap">{() => <FeatureGate feature="snap_sell" name="Snap & Sell"><SnapSellPage /></FeatureGate>}</Route>
       <Route path="/sell/direct">{() => <FeatureGate feature="quick_sell" name="Direct Sale"><DirectSalePage /></FeatureGate>}</Route>
-      <Route path="/sell/quick">{() => <Redirect to="/sell/direct" />}</Route>
+      <Route path="/sell/quick">{() => <FeatureGate feature="quick_sell" name="Quick Sale"><DirectSalePage /></FeatureGate>}</Route>
+      <Route path="/trust-proof">{() => <FeatureGate feature="trust_proof" name="TrustProof"><TrustProofPage /></FeatureGate>}</Route>
+      <Route path="/deal-pilot">{() => <FeatureGate feature="deal_pilot" name="DealPilot"><DealPilotPage /></FeatureGate>}</Route>
+      <Route path="/find-it">{() => <FeatureGate feature="find_it" name="Find It"><FindItPage /></FeatureGate>}</Route>
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/my-store/settings">{() => <Redirect to="/dashboard?section=store-settings" />}</Route>
+      <Route path="/my-store">{() => <Redirect to="/dashboard?section=my-store" />}</Route>
       <Route path="/importers/:source">{() => <FeatureGate feature="importers" name="Importers"><ImporterWorkspacePage /></FeatureGate>}</Route>
       <Route path="/importers">{() => <FeatureGate feature="importers" name="Importers"><ImportersPage /></FeatureGate>}</Route>
-      <Route path="/browse" component={BrowsePage} />
-      <Route path="/search" component={BrowsePage} />
-      <Route path="/listing/:id" component={ListingPage} />
+      <Route path="/browse">{() => <BrowsePage />}</Route>
+      <Route path="/deals">{()=><BrowsePage collection="deals" />}</Route>
+      <Route path="/eco">{()=><BrowsePage collection="eco" />}</Route>
+      <Route path="/search">{() => <BrowsePage />}</Route>
+      <Route path="/listing/:id">{()=><ListingErrorBoundary><ListingPage /></ListingErrorBoundary>}</Route>
       <Route path="/checkout" component={CheckoutPage} />
+      <Route path="/notifications" component={MobileNotificationsPage} />
       <Route path="/bundle">{() => <FeatureGate feature="bundles" name="Bundles"><BundlePage /></FeatureGate>}</Route>
       <Route path="/classifieds">{() => <FeatureGate feature="classifieds" name="Classifieds"><ClassifiedsPage /></FeatureGate>}</Route>
       <Route path="/messages">{() => <FeatureGate feature="messaging" name="Messaging"><MessagesPage /></FeatureGate>}</Route>
@@ -277,26 +468,57 @@ function Router() {
       <Route path="/faq">{() => <Redirect to="/support" />}</Route>
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/our-sites" component={OurSitesPage} />
+      <Route path="/cookies" component={CookiePolicyPage} />
       <Route path="/offers">{() => <FeatureGate feature="offers" name="Make an Offer"><OffersPage /></FeatureGate>}</Route>
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
       <Route path="/admin" component={AdminLoginPage} />
-      <Route path="/admin/dashboard" component={AdminDashboardPage} />
+      <Route path="/admin/go-live" component={AdminGoLivePage} />
+      <Route path="/admin/live-commerce" component={AdminLiveCommercePage} />
+      <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
+      <Route path="/admin/dashboard" component={AdminWordPressDashboard} />
+      <Route path="/admin/marketing" component={AdminMarketingOverviewPage} />
+      <Route path="/admin/importer-overview" component={AdminImporterOverviewPage} />
+      <Route path="/admin/settings-overview" component={AdminSettingsOverviewPage} />
+      <Route path="/admin/content" component={AdminContentPage} />
+      <Route path="/admin/analytics" component={AdminAnalyticsPage} />
       <Route path="/admin/users" component={AdminUsersPage} />
+      <Route path="/admin/seller-compliance" component={AdminSellerCompliancePage} />
+      <Route path="/seller-compliance" component={SellerCompliancePage} />
       <Route path="/admin/audit-log" component={AdminAuditLogPage} />
       <Route path="/admin/system-status" component={AdminSystemStatusPage} />
-      <Route path="/admin/feature-flags" component={AdminFeatureFlagsPage} />
-      <Route path="/admin/products" component={AdminProductsPage} />
+      <Route path="/admin/snap-sell" component={AdminSnapSellPage} />
+      <Route path="/admin/deal-pilot" component={AdminDealPilotPage} />
+      <Route path="/admin/find-it" component={AdminFindItPage} />
+      <Route path="/admin/feature-toggles" component={AdminFeatureFlagsPage} />
+      <Route path="/admin/feature-flags">{() => { window.location.replace("/admin/feature-toggles"); return null; }}</Route>
+      <Route path="/admin/products"><Redirect to="/admin/listings" /></Route>
       <Route path="/admin/listings" component={AdminListingsPage} />
-      <Route path="/admin/imports" component={AdminImportsPage} />
+      <Route path="/admin/listings/categories"><Redirect to="/admin/categories" /></Route>
+      <Route path="/admin/categories" component={AdminCategoryManagerPage} />
+      <Route path="/admin/imports" component={AdminImporterOverviewPage} />
+      <Route path="/admin/importers/amazon">{() => <AdminImportsPage source="amazon" />}</Route>
+      <Route path="/admin/importers/ebay">{() => <AdminImportsPage source="ebay" />}</Route>
+      <Route path="/admin/importers/aliexpress">{() => <AdminImportsPage source="aliexpress" />}</Route>
+      <Route path="/admin/importers/gumtree">{() => <AdminImportsPage source="gumtree" />}</Route>
+      <Route path="/admin/importers/csv" component={AdminCsvImporterPage} />
+      <Route path="/admin/importers/settings" component={AdminImporterSettingsPage} />
+      <Route path="/admin/importers/bulk-update" component={AdminImporterBulkUpdatePage} />
       <Route path="/admin/importer-control" component={AdminImporterControlPage} />
+      <Route path="/admin/api-centre" component={AdminImporterControlPage} />
+      <Route path="/admin/cashback">{() => <CashbackErrorBoundary admin><AdminCashbackPage /></CashbackErrorBoundary>}</Route>
       <Route path="/admin/classifieds" component={AdminClassifiedsPage} />
       <Route path="/admin/payments" component={AdminPaymentsPage} />
       <Route path="/admin/orders" component={AdminOrdersPage} />
       <Route path="/admin/disputes" component={AdminDisputesPage} />
       <Route path="/admin/returns" component={AdminReturnsPage} />
       <Route path="/admin/auctions" component={AdminAuctionsPage} />
-      <Route path="/admin/settings" component={AdminSettingsPage} />
+      <Route path="/admin/design-system" component={AdminDesignCenterPage} />
+      <Route path="/admin/design-advanced" component={AdminDesignSystemPage} />
+      <Route path="/admin/theme-studio" component={AdminDesignCenterPage} />
+      <Route path="/admin/settings"><AdminSettingsPage /></Route>
+      <Route path="/admin/advertising"><AdminAdvertisingPage /></Route>
       <Route path="/admin/emails" component={AdminEmailsPage} />
       <Route path="/auctions/create">{() => <FeatureGate feature="auctions" name="Auctions"><CreateAuctionPage /></FeatureGate>}</Route>
       <Route path="/auctions/:id">{() => <FeatureGate feature="auctions" name="Auctions"><AuctionDetailPage /></FeatureGate>}</Route>
@@ -306,12 +528,14 @@ function Router() {
       <Route path="/flash-sales">{() => <FeatureGate feature="flash_sales" name="Flash Sales"><FlashSalesPage /></FeatureGate>}</Route>
       <Route path="/admin/flash-sales" component={AdminFlashSalesPage} />
       <Route path="/admin/support" component={AdminSupportPage} />
+      <Route path="/admin/chatwoot" component={AdminChatwootSettingsPage} />
       <Route path="/admin/rewards" component={AdminRewardsPage} />
       <Route path="/admin/credits-economy" component={AdminCreditsEconomyPage} />
       <Route path="/admin/referrals" component={AdminReferralsPage} />
       <Route path="/admin/promotions" component={AdminPromotionsPage} />
       <Route path="/admin/reviews" component={AdminReviewsPage} />
       <Route path="/admin/verification" component={AdminVerificationPage} />
+      <Route path="/admin/trust-proof" component={AdminTrustProofPage} />
       <Route path="/setup" component={SetupWizardPage} />
       <Route path="/videos" component={VideoPage} />
       <Route path="/video">{() => <Redirect to="/videos" />}</Route>
@@ -319,17 +543,20 @@ function Router() {
       <Route path="/rewards">{() => <FeatureGate feature="games" name="Rewards Arcade"><RewardsPage /></FeatureGate>}</Route>
       <Route path="/treasure-hunt">{() => <Redirect to="/rewards" />}</Route>
       <Route path="/buyer-protection">{() => <FeatureGate feature="buyer_protection" name="Buyer Protection"><BuyerProtectionPage /></FeatureGate>}</Route>
-      <Route path="/cashback">{() => <FeatureGate feature="cashback" name="Cashback"><CashbackPage /></FeatureGate>}</Route>
+      <Route path="/cashback">{() => <Redirect to="/dashboard?section=cashback" />}</Route>
       <Route path="/welcome-new-buyers" component={WelcomeNewBuyers} />
       <Route component={NotFound} />
     </Switch>
+    </React.Suspense>
   );
 }
 
 // ─── Inner app (inside ClerkProvider + WouterRouter) ────────────────────────
 
 function InnerApp() {
-  const [, setLocation] = useLocation();
+  const [currentPath, setLocation] = useLocation();
+  // Keep the data-heavy administration workspace full width; box only the public website.
+  const isAdminWorkspace = currentPath === "/admin" || currentPath.startsWith("/admin/");
 
   return (
     <ClerkProvider
@@ -354,8 +581,15 @@ function InnerApp() {
                 <LiveStreamProvider>
                   <OfferProvider>
                     <ScrollToTop />
-                    <Router />
+                    <BackToTop />
+                    <div className={isAdminWorkspace ? undefined : "bazunk-boxed-storefront"}>
+                      <Router />
+                    </div>
+                    <MobileShopNav />
                     <CartDrawer />
+                    <ChatwootWidget />
+                    <CookieMarketingScripts />
+                    <CookieConsentBanner />
                     <Toaster />
                   </OfferProvider>
                 </LiveStreamProvider>
@@ -371,16 +605,18 @@ function InnerApp() {
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="bazunk-theme" disableTransitionOnChange={false}>
+    <ThemeProvider attribute="class" forcedTheme="light" defaultTheme="light" enableSystem={false} storageKey="bazunk-theme" disableTransitionOnChange={false}>
     <TooltipProvider>
       <CurrencyProvider>
         <LanguageProvider>
         <SiteSettingsProvider>
+          <CookieConsentProvider>
           <AdminProvider>
             <WouterRouter base={basePath}>
               <InnerApp />
             </WouterRouter>
           </AdminProvider>
+          </CookieConsentProvider>
         </SiteSettingsProvider>
         </LanguageProvider>
       </CurrencyProvider>

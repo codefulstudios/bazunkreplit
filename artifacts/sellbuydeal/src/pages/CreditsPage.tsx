@@ -7,6 +7,7 @@ import {
   Zap, Info,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
+import "./credits-light.css";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
@@ -138,7 +139,7 @@ export function CreditsPage() {
 
   if (sessionId && loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="bazunk-account-page bz-credits-checkout min-h-screen bg-gray-50 flex flex-col">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -152,7 +153,7 @@ export function CreditsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bazunk-account-page min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
       <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl">
@@ -161,7 +162,7 @@ export function CreditsPage() {
           <ChevronLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
-        <div className="rounded-2xl bg-gradient-to-r from-[#3B4FD8] to-[#4A5CE8] px-7 py-8 mb-6 flex items-center justify-between overflow-hidden relative">
+        <div className="bz-credits-checkout-hero rounded-2xl bg-gradient-to-r from-[#3B4FD8] to-[#4A5CE8] px-7 py-8 mb-6 flex items-center justify-between overflow-hidden relative">
           <div className="relative z-10">
             <h1 className="text-2xl md:text-3xl font-black text-white mb-2">Buy Marketplace Credits</h1>
             <p className="text-blue-200 text-sm md:text-base max-w-md">
@@ -208,9 +209,9 @@ export function CreditsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-bold text-gray-900 text-lg mb-1">Choose a Credit Package</h2>
-              <p className="text-sm text-gray-400 mb-5">Larger packages include bonus credits. Prices are shown in your selected currency.</p>
+            <div className="bz-credits-checkout-card bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h2 className="font-bold text-gray-900 dark:text-white text-lg mb-1">Choose a Credit Package</h2>
+              <p className="text-sm text-gray-500 dark:text-slate-300 mb-5">Larger packages include bonus credits. Prices are shown in your selected currency.</p>
 
               <div className="space-y-3">
                 {PACKAGES.map((pkg) => {
@@ -223,7 +224,7 @@ export function CreditsPage() {
                       key={pkg.id}
                       whileTap={{ scale: 0.99 }}
                       onClick={() => { setSelectedId(pkg.id); setShowCustom(false); }}
-                      className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl border-2 text-left transition-all ${
+                      className={`bz-credits-checkout-package w-full flex items-center gap-4 px-4 py-4 rounded-xl border-2 text-left transition-all ${
                         active && pkg.popular
                           ? "border-[#F26B21] bg-orange-50/60"
                           : active
@@ -236,7 +237,7 @@ export function CreditsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="font-bold text-gray-900 text-sm">{pkg.name}</span>
+                          <span className="font-bold text-gray-900 dark:text-white text-sm">{pkg.name}</span>
                           {pkg.popular && (
                             <span className="text-[10px] font-black bg-[#F26B21] text-white px-2 py-0.5 rounded-full uppercase tracking-wide">
                               Best Value
@@ -246,7 +247,7 @@ export function CreditsPage() {
                         <p className="text-xs text-gray-400">{pkg.description}</p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-black text-gray-900 text-base">
+                        <p className="font-black text-gray-900 dark:text-white text-base">
                           {fmtCredits(pkgCredits + pkgBonus)} <span className="text-xs font-semibold text-gray-400">cr</span>
                         </p>
                         <p className="text-xs text-gray-500 font-medium">{formatPrice(pkg.price)}</p>
@@ -278,7 +279,7 @@ export function CreditsPage() {
                         type="number" min="1" value={customAmt}
                         onChange={(e) => { setCustomAmt(e.target.value); setSelectedId("custom"); }}
                         placeholder="Enter amount" autoFocus
-                        className="w-full border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-base font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
+                        className="w-full border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-base font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8]"
                       />
                     </div>
                     {customPrice > 0 && (
@@ -297,17 +298,17 @@ export function CreditsPage() {
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="font-bold text-gray-900 text-lg mb-5">What Can You Do With Credits?</h2>
+              <h2 className="font-bold text-gray-900 dark:text-white text-lg mb-5">What Can You Do With Credits?</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {FEATURES.map((f) => {
                   const Icon = f.icon;
                   return (
-                    <div key={f.title} className="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-100">
+                    <div key={f.title} className="bz-credits-checkout-feature flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-100">
                       <div className={`w-9 h-9 rounded-xl ${f.iconBg} flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-4 h-4 ${f.iconColor}`} />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{f.title}</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{f.title}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{f.description}</p>
                         <p className="text-[10px] font-bold text-[#4A5CE8] mt-1">{f.rate}</p>
                       </div>
@@ -330,13 +331,13 @@ export function CreditsPage() {
           </div>
 
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-4">
-              <h3 className="font-bold text-gray-900 text-base mb-4">Order Summary</h3>
+            <div className="bz-credits-checkout-card bz-credits-checkout-summary bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-4">
+              <h3 className="font-bold text-gray-900 dark:text-white text-base mb-4">Order Summary</h3>
 
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500">{displayName}</span>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 dark:text-white">
                     {basePrice > 0 ? formatPrice(basePrice) : "—"}
                   </span>
                 </div>
@@ -354,7 +355,7 @@ export function CreditsPage() {
                 )}
                 <div className="h-px bg-gray-100" />
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-900">Total Credits</span>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">Total Credits</span>
                   <div className="text-right">
                     <span className="text-xl font-black text-[#4A5CE8]">
                       {totalCredits > 0 ? fmtCredits(totalCredits) : "—"}

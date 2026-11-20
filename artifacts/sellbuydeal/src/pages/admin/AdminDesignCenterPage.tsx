@@ -1,0 +1,532 @@
+import {ELEMENT_KINDS,parseVisualElements,type VisualElement} from "@/design-system/visualElements";
+import {useCallback,useEffect,useRef,useState} from "react";
+import {useLocation} from "wouter";
+import {Home,PanelTop,PanelBottom,Palette,Type,Shapes,Search,Image as ImageIcon,Layers3,History,LayoutTemplate,Monitor,Smartphone,Save,Upload,ExternalLink,ArrowUp,ArrowDown,GripVertical,Eye,ChevronRight,CheckCircle2,AlertCircle,Trash2,RefreshCw,ShoppingBag} from "lucide-react";
+import {AdminLayout} from "./AdminLayout";
+import {useAdmin} from "@/context/AdminContext";
+import {parseHomeSections,parseSectionContent,OPTIONAL_HOME_SECTIONS,HOME_SECTIONS_DEFAULT_JSON,type HomeSectionEntry} from "@/design-system/homepageSections";
+import {THEME_CENTER_DEFAULTS,ICON_CHOICES,ICON_PLACEMENTS,parseIconOverrides,iconForPlacement,type DesignFields,type IconPlacement,type IconChoice} from "@/design-system/designCenterFields";
+import "./admin-design-center.css";
+
+const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
+const assetUrl=(src:string)=>src.startsWith("/api/site-media/")?API_BASE+src:src;
+type Asset={id:string;filename:string;mime:string;url:string;created_at:string};
+type Version={id:string;at:string;fields:Partial<DesignFields>};
+const TABS=[
+ {id:"overview",name:"Overview",icon:Home,description:"Manage your design"},
+ {id:"homepage",name:"Homepage",icon:Home,description:"Edit and reorder sections"},
+ {id:"visual",name:"Visual Editor",icon:Layers3,description:"Edit the real storefront with a live preview"},
+ {id:"header",name:"Header & Navigation",icon:PanelTop,description:"Search, notices and icons"},
+ {id:"footer",name:"Footer",icon:PanelBottom,description:"Text, links and social media"},
+ {id:"branding",name:"Branding & Logos",icon:Palette,description:"Logos, favicon and brand name"},
+ {id:"sitewide",name:"Sitewide Text",icon:Type,description:"Global messages and labels"},
+ {id:"icons",name:"Icons",icon:Shapes,description:"Icons by page and location"},
+ {id:"seo",name:"SEO & Meta",icon:Search,description:"Search and social previews"},
+ {id:"media",name:"Media Library",icon:ImageIcon,description:"Your uploaded images"},
+ {id:"templates",name:"Templates",icon:LayoutTemplate,description:"Advanced styling tools"},
+ {id:"history",name:"Version History",icon:History,description:"Restore earlier publications"},
+] as const;
+type Tab=(typeof TABS)[number]["id"];
+const isTab=(value:string|null):value is Tab=>TABS.some(tab=>tab.id===value);
+const routeTab=()=>{const param=new URLSearchParams(window.location.search).get("tab");return isTab(param)?param:"overview"};
+const useSections=[{id:"hero",label:"Hero Banner",subtitle:"Primary heading, call to action and artwork"},{id:"categories",label:"Featured Categories",subtitle:"Category heading and description"},{id:"recent",label:"Newest Listings",subtitle:"Real recently listed products"},...OPTIONAL_HOME_SECTIONS.map(item=>({id:item.id,label:item.label,subtitle:item.description}))];
+const imageTargets=[
+ {key:"site_logo_url",title:"Primary logo",description:"Used in the store header and footer"},
+ {key:"site_favicon_url",title:"Favicon",description:"Small browser-tab icon"},
+ {key:"hero_image_url",title:"Homepage artwork",description:"Image next to the hero text"},
+ {key:"seo_og_image_url",title:"Social sharing image",description:"Open Graph preview image"},
+] as const;
+type MediaTarget=(typeof imageTargets)[number]["key"];
+
+export function AdminDesignCenterPage(){
+ const {authFetch}=useAdmin();
+ const [,navigate]=useLocation();
+ const [tab,setTab]=useState<Tab>(routeTab);
+ const [draft,setDraft]=useState<DesignFields>({...THEME_CENTER_DEFAULTS});
+ const [published,setPublished]=useState<DesignFields>({...THEME_CENTER_DEFAULTS});
+ const [history,setHistory]=useState<Version[]>([]);
+ const [assets,setAssets]=useState<Asset[]>([]);
+ const [loading,setLoading]=useState(true);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState(""),[notice,setNotice]=useState("");
+ const [auto,setAuto]=useState("Ready");
+ const [dirty,setDirty]=useState(false);
+ const [device,setDevice]=useState<"desktop"|"tablet"|"mobile">("desktop");
+ const [visualMode,setVisualMode]=useState<"content"|"sections"|"media"|"elements"|"style"|"layout"|"layers">("content");
+ const [selectedElement,setSelectedElement]=useState<string|null>(null);
+ const [visualTheme,setVisualTheme]=useState<"light"|"dark">("light");
+ const [selectedCard,setSelectedCard]=useState<number|null>(null);
+ const [selectedField,setSelectedField]=useState<string>("");
+ const undoStack=useRef<DesignFields[]>([]),redoStack=useRef<DesignFields[]>([]);
+ const [activeBlock,setActiveBlock]=useState("hero");
+ const [mediaTarget,setMediaTarget]=useState<MediaTarget>("site_logo_url");
+ const [query,setQuery]=useState("");
+ const frame=useRef<HTMLIFrameElement>(null),file=useRef<HTMLInputElement>(null);
+ const editVersion=useRef(0);
+ const pendingSave=useRef<Promise<void>|null>(null);
+ const homeSections=parseHomeSections(draft.home_sections_layout);
+ const visualElements=parseVisualElements(draft.visual_elements_v1);
+ const sectionContent=parseSectionContent(draft.home_sections_content);
+ const icons=parseIconOverrides(draft.icon_overrides);
+ const unpublished=JSON.stringify(draft)!==JSON.stringify(published);
+ const changeTab=useCallback((next:Tab)=>{
+  setTab(next);
+  const nextUrl=new URL(window.location.href);nextUrl.searchParams.set("tab",next);
+  window.history.replaceState(window.history.state,"",nextUrl.pathname+nextUrl.search+nextUrl.hash);
+ },[]);
+ const update=(key:keyof DesignFields,value:string)=>{
+  editVersion.current++;
+  setDraft(prev=>{undoStack.current.push(prev);if(undoStack.current.length>60)undoStack.current.shift();redoStack.current=[];return {...prev,[key]:value}});setDirty(true);setAuto("Unsaved changes");setError("");
+ };
+ const undo=()=>{const prior=undoStack.current.pop();if(!prior)return;redoStack.current.push(draft);editVersion.current++;setDraft(prior);setDirty(true);setAuto("Unsaved changes")};
+ const redo=()=>{const next=redoStack.current.pop();if(!next)return;undoStack.current.push(draft);editVersion.current++;setDraft(next);setDirty(true);setAuto("Unsaved changes")};
+ const load=useCallback(async()=>{
+  setLoading(true);setError("");
+  try{
+   const [result,media]=await Promise.all([authFetch("/api/admin/theme-studio"),authFetch("/api/admin/theme-studio/media")]);
+   const theme=await result.json(),images=await media.json();
+   if(!result.ok||!media.ok)throw Error(theme.error||images.error||"Could not load Design Center");
+   setDraft({...THEME_CENTER_DEFAULTS,...theme.draft});undoStack.current=[];redoStack.current=[];
+   setPublished({...THEME_CENTER_DEFAULTS,...theme.published});
+   setHistory(Array.isArray(theme.history)?theme.history:[]);
+   setAssets(Array.isArray(images.assets)?images.assets:[]);
+   setDirty(false);setAuto("All changes saved");
+  }catch(e){setError(e instanceof Error?e.message:"Design Center unavailable")}
+  finally{setLoading(false)}
+ },[authFetch]);
+ useEffect(()=>{void load()},[load]);
+ const persist=async(manual=false)=>{
+  if(pendingSave.current)await pendingSave.current;
+  const snapshot={...draft},version=editVersion.current;
+  const operation=(async()=>{
+   const result=await authFetch("/api/admin/theme-studio/draft",{method:"PUT",body:JSON.stringify({fields:snapshot})});
+   const data=await result.json().catch(()=>({}));
+   if(!result.ok)throw Error(data.error||"Could not save draft");
+   if(version===editVersion.current){setDirty(false);setAuto("Draft saved automatically");if(manual)setNotice("Draft saved. Your website has not changed.")}
+  })();
+  pendingSave.current=operation;
+  try{await operation}finally{if(pendingSave.current===operation)pendingSave.current=null}
+ };
+ useEffect(()=>{
+  if(loading||busy||!dirty)return;
+  const timer=window.setTimeout(()=>{void persist().catch(e=>setAuto(e instanceof Error?e.message:"Autosave failed"))},1300);
+  return()=>window.clearTimeout(timer);
+ },[loading,busy,dirty,draft]);
+ const save=async()=>{setBusy(true);setError("");try{await persist(true)}catch(e){setError(e instanceof Error?e.message:"Save failed")}finally{setBusy(false)}};
+ const publish=async()=>{
+  setBusy(true);setError("");setNotice("");
+  try{
+   if(pendingSave.current)await pendingSave.current;
+   const snapshot={...draft},version=editVersion.current;
+   const response=await authFetch("/api/admin/theme-studio/publish",{method:"POST",body:JSON.stringify({fields:snapshot})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw Error(data.error||"Publishing failed");
+   setPublished(snapshot);setHistory(Array.isArray(data.history)?data.history:[]);
+   if(editVersion.current===version){setDirty(false);setAuto("Published successfully")}else setAuto("New changes remain in draft");
+   setNotice("Changes published successfully across Bazunk.");
+   window.dispatchEvent(new Event("bazunk-settings-updated"));
+  }catch(e){setError(e instanceof Error?e.message:"Could not publish design")}finally{setBusy(false)}
+ };
+ const upload=async(selected:File|null)=>{
+  if(!selected)return;
+  if(!["image/png","image/jpeg","image/webp"].includes(selected.type)||selected.size>1048576){setError("Upload a PNG, JPG or WebP smaller than 1 MB.");return}
+  setBusy(true);setError("");
+  try{
+   const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Unable to read image"));reader.readAsDataURL(selected)});
+   const response=await authFetch("/api/admin/theme-studio/media",{method:"POST",body:JSON.stringify({filename:selected.name,dataUrl})});
+   const data=await response.json();if(!response.ok)throw Error(data.error||"Upload failed");
+   setAssets(previous=>[data,...previous]);setNotice("Image uploaded to your Media Library.");
+  }catch(e){setError(e instanceof Error?e.message:"Unable to upload image")}finally{setBusy(false);if(file.current)file.current.value=""}
+ };
+ const remove=async(asset:Asset)=>{
+  if(!window.confirm("Permanently delete "+asset.filename+" from the library?"))return;
+  setBusy(true);setError("");
+  try{
+   const response=await authFetch("/api/admin/theme-studio/media/"+asset.id,{method:"DELETE"});
+   const data=await response.json().catch(()=>({}));if(!response.ok)throw Error(data.error||"Could not delete image");
+   setAssets(previous=>previous.filter(item=>item.id!==asset.id));setNotice("Unused image deleted");
+  }catch(e){setError(e instanceof Error?e.message:"Delete failed")}finally{setBusy(false)}
+ };
+ const setIcon=(placement:IconPlacement,choice:IconChoice)=>update("icon_overrides",JSON.stringify({...icons,[placement]:choice}));
+ const applyLayout=(entries:HomeSectionEntry[])=>update("home_sections_layout",JSON.stringify(entries));
+ const updateSection=(id:keyof typeof sectionContent,field:"title"|"description"|"button"|"url",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],[field]:value}}));
+ const updateCard=(id:"promos"|"perks",index:number,field:"title"|"description"|"url"|"image"|"background"|"textColor",value:string)=>update("home_sections_content",JSON.stringify({...sectionContent,[id]:{...sectionContent[id],cards:sectionContent[id].cards?.map((card,i)=>i===index?{...card,[field]:value}:card)}}));
+ const updateElements=(items:VisualElement[])=>update("visual_elements_v1",JSON.stringify(items));
+ const patchElement=(id:string,patch:Partial<VisualElement>)=>updateElements(visualElements.map(e=>e.id===id?{...e,...patch}:e));
+ const addElement=(type:VisualElement["type"])=>{const id="el-"+crypto.randomUUID();updateElements([...visualElements,{id,type,text:type==="heading"?"New heading":type==="paragraph"?"Write your paragraph":type==="button"?"View more":type==="image"?"Image description":type==="banner"?"New banner":type==="section"?"New content section":type==="promo-section"?"New promotional section":"New card",url:"",image:"",background:"",color:""}]);setSelectedElement(id);setVisualMode("elements")};
+ const patchPalette=(id:string,field:"background"|"color",value:string)=>{const element=visualElements.find(x=>x.id===id);if(element)patchElement(id,{themeColors:{...element.themeColors,[visualTheme]:{...element.themeColors?.[visualTheme],[field]:value}}})};
+ const patchStyle=(id:string,field:string,value:string|number)=>{const element=visualElements.find(x=>x.id===id);if(!element)return;if(device==="desktop"||!["fontSize","padding","width","sectionSpacing","align"].includes(field))patchElement(id,{style:{...element.style,[field]:value}});else patchElement(id,{responsive:{...element.responsive,[device]:{...element.responsive?.[device],[field]:value}}})};
+ const reorder=(from:string,to:string)=>{
+  if(from===to)return;
+  const list=[...homeSections],first=list.findIndex(x=>x.id===from),second=list.findIndex(x=>x.id===to);
+  if(first<0||second<0)return;
+  const [item]=list.splice(first,1);list.splice(second,0,item);applyLayout(list);
+ };
+ const move=(id:string,offset:number)=>{const from=homeSections.findIndex(x=>x.id===id),to=from+offset;if(to>=0&&to<homeSections.length)reorder(id,homeSections[to].id)};
+ const sendPreview=useCallback(()=>{frame.current?.contentWindow?.postMessage({type:"bazunk:theme-preview-settings",settings:draft,previewTheme:tab==="visual"?visualTheme:undefined},window.location.origin)},[draft,tab,visualTheme]);
+ useEffect(()=>{sendPreview()},[sendPreview,tab,device]);
+ useEffect(()=>{
+  const listener=(event:MessageEvent)=>{
+   if(event.origin!==window.location.origin||event.source!==frame.current?.contentWindow||!["bazunk:theme-preview-select","bazunk:theme-preview-inline"].includes(event.data?.type))return;
+   if(event.data.type==="bazunk:theme-preview-inline"&&tab==="visual"){
+    const value=String(event.data.value||"").slice(0,500);
+    const field=String(event.data.field||""),section=String(event.data.section||"");
+    const index=Number(event.data.cardIndex),cardField=String(event.data.cardField||"");
+    if(/[<>]/.test(value))return;
+    if(["hero_title","hero_subtitle","hero_cta_primary","hero_cta_secondary","categories_title","categories_subtitle"].includes(field)){
+      update(field as keyof DesignFields,value.slice(0,field==="hero_subtitle"?500:field.startsWith("hero_cta")?50:160));
+    }else if((section==="promos"||section==="perks")&&Number.isInteger(index)&&index>=0&&index<(section==="promos"?4:5)&&["title","description"].includes(cardField)){
+      updateCard(section,index,cardField as "title"|"description",value.slice(0,cardField==="title"?140:500));
+      setActiveBlock(section);setSelectedCard(index);setSelectedField(cardField);
+    }
+    return;
+   }
+   const field=String(event.data.field||""),section=String(event.data.section||"");
+   const cardIndex=event.data.cardIndex,cardField=event.data.cardField;
+   if(tab==="visual"){
+    if(event.data.elementId){setSelectedElement(String(event.data.elementId));setVisualMode("style");return}
+    if(field==="site_logo_url"){setVisualMode("media");setMediaTarget("site_logo_url")}
+    else if(section){setActiveBlock(section);setSelectedCard(cardIndex!==undefined&&cardIndex!==""&&Number.isInteger(Number(cardIndex))?Number(cardIndex):null);setSelectedField(String(cardField||""));setVisualMode("content")}
+    else if(field){setActiveBlock("hero");setSelectedField(field);setSelectedCard(null);setVisualMode("content")}
+    return;
+   }
+   if(field==="site_logo_url"){changeTab("branding");setMediaTarget("site_logo_url")}
+   else if(field==="footer_about")changeTab("footer");
+   else if(field==="header_search_placeholder")changeTab("header");
+   else if(field==="icon_overrides")changeTab("icons");
+   else if(field){changeTab("homepage");setActiveBlock("hero")}
+   else if(section){changeTab("homepage");setActiveBlock(section)}
+  };
+  window.addEventListener("message",listener);return()=>window.removeEventListener("message",listener);
+ },[changeTab,tab,draft]);
+ const input=(key:keyof DesignFields,label:string,description?:string,max=180,multiline=false)=><label key={key} className="bzdc-field">
+  <span>{label}</span>{description&&<small>{description}</small>}
+  {multiline?<textarea value={draft[key]} maxLength={max} rows={3} onChange={e=>update(key,e.target.value)}/>:<input type="text" value={draft[key]} maxLength={max} onChange={e=>update(key,e.target.value)}/>}
+  <em>{draft[key].length}/{max}</em>
+ </label>;
+ const imageControl=(key:MediaTarget,label:string)=> <div className="bzdc-image-target" key={key}>
+  <div className="bzdc-image-thumb">{draft[key]?<img src={assetUrl(draft[key])} alt={label}/>:<ImageIcon size={28}/>}</div>
+  <div className="bzdc-image-detail"><strong>{label}</strong><small>{draft[key]?"Image selected":"Using default artwork"}</small><div className="bzdc-image-buttons">
+   <button type="button" className="bzdc-mini" onClick={()=>{setMediaTarget(key);changeTab("media")}}>Choose from Media Library</button>
+   {draft[key]&&<button type="button" className="bzdc-text-button" onClick={()=>update(key,"")}>Reset</button>}
+  </div></div>
+ </div>;
+ const preview=(compact=false)=><section className={"bzdc-panel bzdc-preview "+(compact?"bzdc-preview-compact":"")}>
+  <div className="bzdc-panel-title"><div><h3>Storefront preview</h3><small>Live private draft — not published</small></div><a href="/" target="_blank" rel="noopener noreferrer">Open store <ExternalLink size={13}/></a></div>
+  <div className="bzdc-device-tabs">
+   <button type="button" aria-pressed={device==="desktop"} onClick={()=>setDevice("desktop")}><Monitor size={15}/> Desktop</button>
+   <button type="button" aria-pressed={device==="tablet"} onClick={()=>setDevice("tablet")}><Monitor size={15}/> Tablet</button>
+   <button type="button" aria-pressed={device==="mobile"} onClick={()=>setDevice("mobile")}><Smartphone size={15}/> Mobile</button>
+  </div>
+  <div className={"bzdc-frame-shell "+(device==="mobile"?"is-mobile":device==="tablet"?"is-tablet":"is-desktop")}>
+   <iframe ref={frame} key={tab+"-"+device} title={"Bazunk "+device+" private design preview"} src="/?bazunk-theme-preview=1" onLoad={sendPreview}/>
+  </div>
+ </section>;
+ const overviewCards=[
+  {tab:"homepage",title:"Homepage",description:"Edit banners, product sections and content",icon:Home},
+  {tab:"header",title:"Header & Navigation",description:"Set header wording and navigation icons",icon:PanelTop},
+  {tab:"footer",title:"Footer",description:"Edit copyright, links and social icons",icon:PanelBottom},
+  {tab:"branding",title:"Branding & Logos",description:"Choose logos, favicons and brand assets",icon:Palette},
+  {tab:"sitewide",title:"Sitewide Text",description:"Change global titles, labels and notices",icon:Type},
+  {tab:"seo",title:"SEO & Meta",description:"Edit search titles and social previews",icon:Search},
+  {tab:"media",title:"Media Library",description:"Upload and reuse your images",icon:ImageIcon},
+  {tab:"icons",title:"Icons",description:"Choose individual header and footer symbols",icon:Shapes},
+ ] as const;
+ const mediaLibrary=<section className="bzdc-panel">
+  <div className="bzdc-panel-title"><div><h3>Media Library</h3><small>PNG, JPG or WebP under 1 MB. Images are stored in Bazunk's database.</small></div>
+   <button type="button" disabled={busy} className="bzdc-btn bzdc-primary" onClick={()=>file.current?.click()}><Upload size={16}/> Upload image</button>
+  </div>
+  <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>void upload(e.target.files?.[0]||null)}/>
+  <p className="bzdc-help">Choosing an image assigns it to: <strong>{imageTargets.find(item=>item.key===mediaTarget)?.title}</strong>. The change stays in your draft until you publish.</p>
+  <div className="bzdc-library">
+   {assets.length===0?<div className="bzdc-empty"><ImageIcon/><strong>No media yet</strong><p>Upload an image to start your library.</p></div>:assets.filter(asset=>asset.filename.toLowerCase().includes(query.toLowerCase())).map(asset=><article key={asset.id} className="bzdc-asset">
+    <img src={assetUrl(asset.url)} alt={asset.filename} loading="lazy"/>
+    <strong title={asset.filename}>{asset.filename}</strong>
+    <div><button type="button" className="bzdc-mini" onClick={()=>{update(mediaTarget,asset.url);setNotice("Image assigned to "+imageTargets.find(item=>item.key===mediaTarget)?.title);changeTab(mediaTarget==="seo_og_image_url"?"seo":mediaTarget==="hero_image_url"?"homepage":"branding")}}>Use image</button>
+    <button type="button" disabled={busy} title={"Delete "+asset.filename} aria-label={"Delete "+asset.filename} onClick={()=>void remove(asset)}><Trash2 size={16}/></button></div>
+   </article>)}
+  </div>
+  {assets.length>0&&<label className="bzdc-search-assets"><Search size={15}/><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Filter uploaded images"/></label>}
+ </section>;
+ return <AdminLayout>
+  <div className="bzdc-root">
+<style>{`
+.bzve{display:grid;grid-template-columns:minmax(270px,330px) minmax(0,1fr);gap:16px;min-height:76vh;color:var(--foreground,#111827)}
+.bzve-controls,.bzve-stage{background:var(--card,#fff);border:1px solid var(--border,#cbd5e1);border-radius:12px;padding:16px;min-width:0}
+.bzve-controls{max-height:85vh;overflow:auto}.bzve-tabs,.bzve-toolbar,.bzve-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bzve-tabs button,.bzve-actions button,.bzve-item button{border:1px solid #64748b;border-radius:6px;padding:7px;background:var(--background,#fff);color:var(--foreground,#111827);font-weight:600}
+.bzve-tabs button[aria-pressed=true],.bzve-actions button[aria-pressed=true]{background:#2563eb;color:#fff}
+.bzve-fields{display:grid;gap:12px;margin-top:16px}.bzve-item{display:flex;align-items:center;gap:5px;padding:8px 0;border-bottom:1px solid #94a3b8}
+.bzve-item button:first-of-type{flex:1;text-align:left}.bzve-item input{width:18px;height:18px}.bzve-toolbar{justify-content:space-between;margin-bottom:12px}
+.bzve-viewport{margin:auto;height:70vh;max-width:100%;border:2px solid #64748b;border-radius:10px;overflow:hidden;background:white}
+.bzve-desktop{width:100%}.bzve-tablet{width:768px}.bzve-mobile{width:390px}.bzve-viewport iframe{width:100%;height:100%;border:0}
+.bzve-images{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.bzve-images img{width:100%;height:78px;object-fit:cover}.bzve-cardfields{border:1px solid #94a3b8;padding:10px;border-radius:8px}
+.bzve-fields input,.bzve-fields select{background:var(--background,#fff);color:var(--foreground,#111827);border:1px solid #64748b;padding:8px}
+@media(max-width:950px){.bzve{grid-template-columns:1fr}.bzve-controls{max-height:none}}
+`}</style>
+
+   <div className="bzdc-heading">
+    <div><span className="bzdc-breadcrumb">Bazunk Administration / Design Center {tab!=="overview"&&" / "+TABS.find(x=>x.id===tab)?.name}</span><h1>{tab==="overview"?"Design Center":TABS.find(x=>x.id===tab)?.name}</h1>
+     <p>{tab==="overview"?"Manage the appearance and wording of your Bazunk storefront from one place.":TABS.find(x=>x.id===tab)?.description}</p>
+    </div>
+    <div className="bzdc-header-actions">
+     <button type="button" className="bzdc-btn" onClick={()=>changeTab("homepage")}><Eye size={17}/> Preview</button>
+     <button type="button" className="bzdc-btn" disabled={loading||busy} onClick={()=>void save()}><Save size={17}/> Save draft</button>
+     <button type="button" className="bzdc-btn bzdc-primary" disabled={loading||busy||!unpublished} onClick={()=>void publish()}><CheckCircle2 size={17}/> {busy?"Working…":"Publish changes"}</button>
+    </div>
+   </div>
+   <div className="bzdc-workspace">
+    <nav className="bzdc-menu" aria-label="Design Center sections">
+     <div className="bzdc-menu-title"><Palette size={18}/><strong>Design Center</strong></div>
+     {TABS.map(item=><button type="button" key={item.id} aria-current={tab===item.id?"page":undefined} onClick={()=>changeTab(item.id)} className={"bzdc-menu-link "+(tab===item.id?"selected":"")}>
+      <item.icon size={18}/><span>{item.name}</span>{tab===item.id&&<ChevronRight size={14}/>}
+     </button>)}
+    </nav>
+    <main className="bzdc-content" aria-label="Design Center editor">
+     {error&&<div role="alert" className="bzdc-alert error"><AlertCircle size={17}/>{error}</div>}
+     {notice&&<div role="status" className="bzdc-alert success"><CheckCircle2 size={17}/>{notice}<button type="button" aria-label="Dismiss notice" onClick={()=>setNotice("")}>×</button></div>}
+     {loading?<div className="bzdc-panel bzdc-loading">Loading your saved design…</div>:<>
+      {tab==="overview"&&<div className="bzdc-overview-grid">
+       <div className="bzdc-stack">
+        <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h2>Manage your design</h2><small>Choose an area. Every setting has its own focused editor.</small></div></div>
+         <div className="bzdc-card-grid">{overviewCards.map(item=><button type="button" key={item.tab} className="bzdc-launch" onClick={()=>changeTab(item.tab)}><span className="bzdc-launch-icon"><item.icon size={23}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><ChevronRight size={17}/></button>)}</div>
+        </section>
+        <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Quick start</h3><small>Make your storefront your own in four simple steps.</small></div></div>
+         {([{tab:"branding",title:"1. Upload your logo",description:"Set the primary logo and favicon"},{tab:"homepage",title:"2. Customise the homepage",description:"Edit headings and section order"},{tab:"icons",title:"3. Check the website icons",description:"Choose header and footer icon designs"},{tab:"seo",title:"4. Review search results",description:"Check the homepage title and sharing preview"}] as const).map(item=><button type="button" className="bzdc-quick-step" key={item.tab} onClick={()=>changeTab(item.tab)}><span><strong>{item.title}</strong><small>{item.description}</small></span><span>Open <ChevronRight size={14}/></span></button>)}
+        </section>
+       </div>
+       <div className="bzdc-stack">{preview(true)}
+        <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Current design version</h3><small>Unpublished edits are private until you press Publish.</small></div></div>
+         <div className="bzdc-version"><span>Publication status</span><strong>{unpublished?"Draft changes":"Published"}</strong></div>
+         <div className="bzdc-version"><span>Draft status</span><strong>{auto}</strong></div>
+         <div className="bzdc-version"><span>Previous versions</span><strong>{history.length}</strong></div>
+         <button type="button" className="bzdc-btn bzdc-full" onClick={()=>changeTab("history")}>View version history <ChevronRight size={15}/></button>
+        </section>
+       </div>
+      </div>}
+      {tab==="visual"&&<div className="bzve">
+       <aside className="bzve-controls">
+        <div className="bzdc-panel-title"><div><h3>Visual Editor</h3><small>Homepage · Private draft</small></div></div>
+        <div className="bzve-tabs">
+         {(["elements","layers","style","layout","content","sections","media"] as const).map(mode=><button type="button" key={mode} aria-pressed={visualMode===mode} onClick={()=>setVisualMode(mode)}>{mode}</button>)}
+        </div>
+        {visualMode==="sections"&&<div className="bzve-items">
+         <p className="bzdc-help">Drag promotional sections to change their order. Marketplace sections remain fixed.</p>
+         {homeSections.map((item,index)=><div key={item.id} className="bzve-item" draggable
+           onDragStart={e=>e.dataTransfer.setData("text/plain",item.id)}
+           onDragOver={e=>e.preventDefault()}
+           onDrop={e=>{e.preventDefault();reorder(e.dataTransfer.getData("text/plain"),item.id)}}>
+           <GripVertical size={16}/><button type="button" onClick={()=>{setActiveBlock(item.id);setVisualMode("content")}}>{OPTIONAL_HOME_SECTIONS.find(x=>x.id===item.id)?.label}</button>
+           <input aria-label={"Visible "+item.id} type="checkbox" checked={item.enabled} onChange={e=>applyLayout(homeSections.map(x=>x.id===item.id?{...x,enabled:e.target.checked}:x))}/>
+           <button type="button" disabled={index===0} onClick={()=>move(item.id,-1)} aria-label={"Move "+item.id+" up"}><ArrowUp size={14}/></button>
+           <button type="button" disabled={index===homeSections.length-1} onClick={()=>move(item.id,1)} aria-label={"Move "+item.id+" down"}><ArrowDown size={14}/></button>
+          </div>)}
+         </div>}
+        {visualMode==="layers"&&<div className="bzve-fields"><strong>Homepage layers</strong><p className="bzdc-help">Custom layers can be selected, reordered and hidden. Core marketplace sections remain protected.</p>
+         {visualElements.map((element,index)=><div className="bzve-item" key={element.id} draggable onDragStart={e=>e.dataTransfer.setData("text/plain",element.id)} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const from=e.dataTransfer.getData("text/plain");const list=[...visualElements];const a=list.findIndex(x=>x.id===from),b=list.findIndex(x=>x.id===element.id);if(a>=0&&b>=0){const [m]=list.splice(a,1);list.splice(b,0,m);updateElements(list)}}}>
+          <button type="button" aria-pressed={selectedElement===element.id} onClick={()=>{setSelectedElement(element.id);setVisualMode("style")}}>☰ {element.type}: {element.text.slice(0,22)}</button>
+          <button type="button" onClick={()=>patchElement(element.id,{hidden:!element.hidden})} aria-label={element.hidden?"Show layer":"Hide layer"}>{element.hidden?"Show":"Hide"}</button>
+          <button type="button" disabled={index===0} onClick={()=>{const list=[...visualElements];[list[index-1],list[index]]=[list[index],list[index-1]];updateElements(list)}}>↑</button>
+          <button type="button" disabled={index===visualElements.length-1} onClick={()=>{const list=[...visualElements];[list[index+1],list[index]]=[list[index],list[index+1]];updateElements(list)}}>↓</button>
+         </div>)}
+        </div>}
+        {visualMode==="elements"&&<div className="bzve-fields">
+         <strong>Add an element or section</strong><p className="bzdc-help">Insert content and promotional sections without changing site code.</p>
+         <div className="bzve-images">{ELEMENT_KINDS.map(kind=><button key={kind} type="button" className="bzdc-mini" onClick={()=>addElement(kind)}>+ {kind}</button>)}</div>
+         <strong>Page elements ({visualElements.length}/24)</strong>
+         {visualElements.map((item,index)=><div key={item.id} className="bzve-item">
+          <button type="button" aria-pressed={selectedElement===item.id} onClick={()=>setSelectedElement(item.id)}>{item.type}: {item.text.slice(0,28)}</button>
+          <button type="button" disabled={index===0} onClick={()=>{const list=[...visualElements];[list[index-1],list[index]]=[list[index],list[index-1]];updateElements(list)}} aria-label="Move up">↑</button>
+          <button type="button" disabled={index===visualElements.length-1} onClick={()=>{const list=[...visualElements];[list[index+1],list[index]]=[list[index],list[index+1]];updateElements(list)}} aria-label="Move down">↓</button>
+          <button type="button" onClick={()=>{updateElements(visualElements.filter(x=>x.id!==item.id));setSelectedElement(null)}} aria-label="Delete element"><Trash2 size={14}/></button>
+         </div>)}
+         {visualElements.filter(e=>e.id===selectedElement).map(element=><div className="bzve-cardfields" key={element.id}>
+          <h3>Edit {element.type}</h3><p className="bzdc-help">Editing {visualTheme} colours; switch the preview theme to edit the other palette.</p>
+          <label className="bzdc-field"><span>{element.type==="image"?"Alt text":"Content"}</span><textarea rows={3} maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
+          {["button","card"].includes(element.type)&&<label className="bzdc-field"><span>Destination path</span><input value={element.url} placeholder="/browse" onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>}
+          {["image","card","banner"].includes(element.type)&&<label className="bzdc-field"><span>Media Library image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>}
+          {["image","card"].includes(element.type)&&<fieldset className="bzve-cardfields"><legend>Image editor</legend>
+           <label className="bzdc-field"><span>Replace image</span><select value={element.image} onChange={e=>patchElement(element.id,{image:e.target.value})}><option value="">No image</option>{assets.map(a=><option key={a.id} value={a.url}>{a.filename}</option>)}</select></label>
+
+           <label className="bzdc-field"><span>Image height (px)</span><input type="number" min={40} max={1000} value={element.style?.imageHeight??240} onChange={e=>patchStyle(element.id,"imageHeight",Math.max(40,Math.min(1000,Number(e.target.value)||40)))}/></label>
+           <label className="bzdc-field"><span>Crop mode</span><select value={element.style?.imageFit||"cover"} onChange={e=>patchStyle(element.id,"imageFit",e.target.value)}><option value="cover">Crop to fill</option><option value="contain">Fit entire image</option><option value="fill">Stretch</option></select></label>
+           {(["imagePositionX","imagePositionY"] as const).map((key,i)=><label className="bzdc-field" key={key}><span>{i===0?"Horizontal focal point":"Vertical focal point"} (%)</span><input type="range" min={0} max={100} value={element.style?.[key]??50} onChange={e=>patchStyle(element.id,key,Number(e.target.value))}/><small>{element.style?.[key]??50}%</small></label>)}
+          </fieldset>}
+          {element.type==="button"&&<fieldset className="bzve-cardfields"><legend>Button editor</legend>
+           <label className="bzdc-field"><span>Button label</span><input maxLength={500} value={element.text} onChange={e=>patchElement(element.id,{text:e.target.value})}/></label>
+           <label className="bzdc-field"><span>Destination (internal path)</span><input placeholder="/browse" value={element.url} onChange={e=>patchElement(element.id,{url:e.target.value})}/></label>
+           <label className="bzdc-field"><span>Appearance</span><select value={element.style?.buttonVariant||"solid"} onChange={e=>patchStyle(element.id,"buttonVariant",e.target.value)}><option value="solid">Solid</option><option value="outline">Outline</option><option value="ghost">Ghost</option></select></label>
+           {(["buttonHoverBackground","buttonHoverColor"] as const).map((key,i)=><label className="bzdc-field" key={key}><span>{i===0?"Hover background":"Hover text colour"}</span><input type="color" value={element.style?.[key]||(i===0?"#c2410c":"#ffffff")} onChange={e=>patchStyle(element.id,key,e.target.value)}/></label>)}
+          </fieldset>}
+          {(["background","color"] as const).map(field=><label key={field} className="bzdc-field"><span>{visualTheme==="light"?"Light":"Dark"} · {field==="background"?"Background":"Text colour"}</span><input type="color" value={element.themeColors?.[visualTheme]?.[field]||element[field]||(field==="background"?"#ffffff":"#17253c")} onChange={e=>patchPalette(element.id,field,e.target.value)}/><button type="button" onClick={()=>patchPalette(element.id,field,"")}>Reset</button></label>)}
+         </div>)}
+        </div>}
+        {(visualMode==="style"||visualMode==="layout")&&<div className="bzve-fields">
+         <label className="bzdc-field"><span>Selected element</span><select value={selectedElement||""} onChange={e=>setSelectedElement(e.target.value)}><option value="">Choose an element</option>{visualElements.map(e=><option key={e.id} value={e.id}>{e.type} — {e.text.slice(0,30)}</option>)}</select></label>
+         {visualElements.filter(e=>e.id===selectedElement).map(element=><div key={element.id} className="bzve-cardfields">
+          <h3>{visualMode==="style"?"Style":"Layout"} · {element.type}</h3>
+          <p className="bzdc-help">Editing {device} settings. Desktop settings are the default; tablet and mobile can override them.</p>
+          {visualMode==="style"?<>
+           <label className="bzdc-field"><span>Font family</span><select value={element.style?.fontFamily||""} onChange={e=>patchStyle(element.id,"fontFamily",e.target.value)}>{["","inherit","Arial","Georgia","Verdana","system-ui","Tahoma"].map(v=><option key={v} value={v}>{v||"Default"}</option>)}</select></label>
+           <label className="bzdc-field"><span>Font size (px)</span><input type="number" min={10} max={96} value={(device==="desktop"?element.style?.fontSize:element.responsive?.[device]?.fontSize)??24} onChange={e=>patchStyle(element.id,"fontSize",Math.max(10,Math.min(96,Number(e.target.value)||10)))}/></label>
+           <label className="bzdc-field"><span>Font weight</span><select value={element.style?.fontWeight??400} onChange={e=>patchStyle(element.id,"fontWeight",Number(e.target.value))}>{[100,300,400,500,600,700,800,900].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
+           {(["background","color"] as const).map(key=><label className="bzdc-field" key={key}><span>{key==="background"?"Background colour":"Text colour"}</span><input type="color" value={element[key]||"#17253c"} onChange={e=>patchElement(element.id,{[key]:e.target.value})}/><button type="button" onClick={()=>patchElement(element.id,{[key]:""})}>Reset</button></label>)}
+           <label className="bzdc-field"><span>Border width (px)</span><input type="number" min={0} max={12} value={element.style?.borderWidth??0} onChange={e=>patchStyle(element.id,"borderWidth",Math.max(0,Math.min(12,Number(e.target.value)||0)))}/></label>
+           <label className="bzdc-field"><span>Border radius (px)</span><input type="number" min={0} max={80} value={element.style?.borderRadius??12} onChange={e=>patchStyle(element.id,"borderRadius",Math.max(0,Math.min(80,Number(e.target.value)||0)))}/></label>
+           <label className="bzdc-field"><span>Border colour</span><input type="color" value={element.style?.borderColor||"#64748b"} onChange={e=>patchStyle(element.id,"borderColor",e.target.value)}/></label>
+           <label className="bzdc-field"><span>Shadow</span><select value={element.style?.shadow||""} onChange={e=>patchStyle(element.id,"shadow",e.target.value)}>{["","none","small","medium","large"].map(v=><option key={v} value={v}>{v||"Default"}</option>)}</select></label>
+          </>:<>
+           <label className="bzdc-field"><span>Width (%)</span><input type="number" min={10} max={100} value={(device==="desktop"?element.style?.width:element.responsive?.[device]?.width)??100} onChange={e=>patchStyle(element.id,"width",Math.max(10,Math.min(100,Number(e.target.value)||10)))}/></label>
+           <label className="bzdc-field"><span>Alignment</span><select value={(device==="desktop"?element.style?.align:element.responsive?.[device]?.align)||"left"} onChange={e=>patchStyle(element.id,"align",e.target.value)}>{["left","center","right"].map(v=><option key={v}>{v}</option>)}</select></label>
+           <label className="bzdc-field"><span>Columns</span><select value={element.style?.columns??1} onChange={e=>patchStyle(element.id,"columns",Number(e.target.value))}>{[1,2,3,4].map(n=><option key={n}>{n}</option>)}</select></label>
+           {([["padding","Padding",120],["gap","Content gap",100],["sectionSpacing","Section spacing",120]] as const).map(([key,label,max])=><label key={key} className="bzdc-field"><span>{label} (px)</span><input type="number" min={0} max={max} value={element.style?.[key]??0} onChange={e=>patchStyle(element.id,key,Math.max(0,Math.min(max,Number(e.target.value)||0)))}/></label>)}
+          </>}
+         </div>)}
+         {!selectedElement&&<p className="bzdc-help">Select a custom element in the preview or Elements tab to edit its {visualMode}.</p>}
+        </div>}
+        {visualMode==="content"&&<div className="bzve-fields">
+         <label className="bzdc-field"><span>Selected section</span><select value={activeBlock} onChange={e=>{setActiveBlock(e.target.value);setSelectedCard(null);setSelectedField("")}}>{useSections.map(x=><option value={x.id} key={x.id}>{x.label}</option>)}</select></label>
+         {selectedField&&<p className="bzdc-help">Selected element: <strong>{selectedField}</strong></p>}
+         {activeBlock==="hero"?<>{input("hero_title","Heading",undefined,160)}{input("hero_subtitle","Description",undefined,600,true)}{input("hero_cta_primary","Primary button",undefined,50)}{input("hero_cta_secondary","Secondary button",undefined,50)}{imageControl("hero_image_url","Hero image")}</>:
+         activeBlock==="categories"?<>{input("categories_title","Heading",undefined,120)}{input("categories_subtitle","Description",undefined,240,true)}</>:
+         activeBlock==="recent"?<p className="bzdc-help">Newest listings are populated from real marketplace data. They cannot be modified here.</p>:
+         (OPTIONAL_HOME_SECTIONS.some(x=>x.id===activeBlock))?<>{(["title","description","button","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={sectionContent[activeBlock as keyof typeof sectionContent][field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateSection(activeBlock as keyof typeof sectionContent,field,e.target.value)}/></label>)}
+         {(activeBlock==="promos"||activeBlock==="perks")&&sectionContent[activeBlock].cards?.map((card,index)=><div className="bzve-cardfields" key={index} style={selectedCard===index?{outline:"3px solid #2563eb",outlineOffset:2}:undefined}><strong>Card {index+1}{selectedCard===index?" · Selected in preview":""}</strong>{(["title","description","url"] as const).map(field=><label className="bzdc-field" key={field}><span>{field}</span><input value={card[field]} maxLength={field==="description"?500:field==="url"?200:140} onChange={e=>updateCard(activeBlock as "promos"|"perks",index,field,e.target.value)}/></label>)}{activeBlock==="promos"&&<><label className="bzdc-field"><span>Card image</span><select value={card.image||""} onChange={e=>updateCard("promos",index,"image",e.target.value)}><option value="">No image</option>{assets.map(asset=><option key={asset.id} value={asset.url}>{asset.filename}</option>)}</select></label>{(["background","textColor"] as const).map(key=><label className="bzdc-field" key={key}><span>{key==="background"?"Background colour":"Text colour"}</span><input type="color" value={card[key]||"#17253c"} onChange={e=>updateCard("promos",index,key,e.target.value)}/><button type="button" onClick={()=>updateCard("promos",index,key,"")}>Reset colour</button></label>)}</>}</div>)}</>:null}
+        </div>}
+        {visualMode==="media"&&<div className="bzve-fields"><label className="bzdc-field"><span>Image placement</span><select value={mediaTarget} onChange={e=>setMediaTarget(e.target.value as MediaTarget)}>{imageTargets.map(x=><option value={x.key} key={x.key}>{x.title}</option>)}</select></label>
+         <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={e=>void upload(e.target.files?.[0]||null)} ref={tab==="visual"?file:undefined}/><button type="button" className="bzdc-btn" onClick={()=>file.current?.click()}><Upload size={15}/> Upload image</button>
+         <div className="bzve-images">{assets.map(asset=><button type="button" key={asset.id} title={asset.filename} onClick={()=>update(mediaTarget,asset.url)}><img src={assetUrl(asset.url)} alt={asset.filename}/></button>)}</div>
+        </div>}
+       </aside>
+       <section className="bzve-stage">
+        <div className="bzve-toolbar"><strong>Actual Bazunk storefront</strong><div className="bzve-actions">
+         <button type="button" disabled={!undoStack.current.length} onClick={undo} title="Undo">↶ Undo</button><button type="button" disabled={!redoStack.current.length} onClick={redo} title="Redo">↷ Redo</button>
+         <button type="button" aria-pressed={visualTheme==="light"} onClick={()=>setVisualTheme("light")}>Light</button><button type="button" aria-pressed={visualTheme==="dark"} onClick={()=>setVisualTheme("dark")}>Dark</button>
+         {(["desktop","tablet","mobile"] as const).map(d=><button type="button" key={d} aria-pressed={device===d} onClick={()=>setDevice(d)}>{d}</button>)}
+        </div></div>
+        <div className={"bzve-viewport "+(device==="mobile"?"bzve-mobile":device==="tablet"?"bzve-tablet":"bzve-desktop")}>
+         <iframe ref={frame} title="Bazunk visual editing live storefront" key={"visual-"+device} src="/?bazunk-theme-preview=1" onLoad={sendPreview}/>
+        </div>
+        <p className="bzdc-help">Click an editable element to select it; double-click text to type on the preview. Changes update the private preview and are published only with Publish changes. Styling controls for light and dark themes remain in Theme Gallery & Colours.</p>
+       </section>
+      </div>}
+      {tab==="homepage"&&<div className="bzdc-builder-grid">
+       <section className="bzdc-panel">
+        <div className="bzdc-panel-title"><div><h3>Homepage sections</h3><small>Reorder optional sections, choose one to edit and set visibility.</small></div></div>
+        <div className="bzdc-section-list">
+         {useSections.map(item=>{
+          const fixed=["hero","categories","recent"].includes(item.id);
+          const optional=homeSections.find(x=>x.id===item.id);
+          const position=homeSections.findIndex(x=>x.id===item.id);
+          return <div key={item.id} className={"bzdc-section-item "+(activeBlock===item.id?"selected":"")} draggable={!fixed}
+             onDragStart={event=>event.dataTransfer.setData("text/plain",item.id)}
+             onDragOver={event=>{if(!fixed)event.preventDefault()}}
+             onDrop={event=>{event.preventDefault();reorder(event.dataTransfer.getData("text/plain"),item.id)}}>
+           {!fixed?<GripVertical size={16}/>:<ShoppingBag size={16}/>}
+           <button type="button" onClick={()=>setActiveBlock(item.id)}><strong>{item.label}</strong><small>{item.subtitle}</small></button>
+           <div className="bzdc-section-actions">{fixed?<span className="bzdc-fixed">Core</span>:<>
+            <label className="bzdc-switch" title={"Show "+item.label}><input type="checkbox" checked={optional?.enabled??true} onChange={e=>applyLayout(homeSections.map(x=>x.id===item.id?{...x,enabled:e.target.checked}:x))}/><span/></label>
+            <button type="button" aria-label={"Move "+item.label+" up"} disabled={position===0} onClick={()=>move(item.id,-1)}><ArrowUp size={14}/></button>
+            <button type="button" aria-label={"Move "+item.label+" down"} disabled={position===homeSections.length-1} onClick={()=>move(item.id,1)}><ArrowDown size={14}/></button>
+           </>}</div>
+          </div>;
+         })}
+        </div>
+        <button type="button" className="bzdc-btn bzdc-full" onClick={()=>applyLayout(parseHomeSections(HOME_SECTIONS_DEFAULT_JSON))}><RefreshCw size={15}/> Reset section order</button>
+       </section>
+       <section className="bzdc-panel bzdc-builder-editor"><div className="bzdc-panel-title"><div><h3>Edit section</h3><small>{useSections.find(x=>x.id===activeBlock)?.label}</small></div></div>
+        {activeBlock==="hero"?<div className="bzdc-fields">
+          {input("hero_title","Main heading",undefined,160)}
+          {input("hero_subtitle","Subtitle",undefined,600,true)}
+          {input("hero_cta_primary","Primary button label",undefined,50)}
+          {input("hero_cta_secondary","Secondary button label",undefined,50)}
+          {imageControl("hero_image_url","Desktop hero image")}
+         </div>:activeBlock==="categories"?<div className="bzdc-fields">{input("categories_title","Category section title",undefined,120)}{input("categories_subtitle","Supporting text",undefined,240)}<p className="bzdc-help">Category products and symbols are populated from Bazunk's real categories. Their icon styling can be edited in Icons.</p><button type="button" className="bzdc-btn" onClick={()=>changeTab("icons")}>Edit category icon appearance <ChevronRight size={15}/></button></div>
+         :activeBlock==="features"?<div className="bzdc-fields">{input("features_title","Feature section title",undefined,120)}{input("features_subtitle","Feature section introduction",undefined,240)}</div> :activeBlock==="perks"?<div className="bzdc-fields">{input("features_title","Benefits heading",undefined,120)}{input("features_subtitle","Benefits introduction",undefined,240)}<p className="bzdc-help">The individual benefit cards are currently generated by the storefront. Their text is not yet editable here. This section lets you edit the heading, introduction, ordering and visibility.</p></div>:activeBlock==="promos"?<div className="bzdc-fields"><p className="bzdc-help">Promotional cards are shortcuts to Bazunk shopping, flash sales, offers and rewards. Their visibility depends on existing feature settings; this editor currently controls the section order and visibility, not individual card text.</p><button type="button" className="bzdc-btn" onClick={()=>navigate("/admin/promotions")}>Open promotions management <ChevronRight size={15}/></button><button type="button" className="bzdc-btn" onClick={()=>navigate("/admin/feature-toggles")}>Open feature toggles <ChevronRight size={15}/></button></div>
+         :activeBlock==="announcement"?<div className="bzdc-fields">{input("announcement_text","Announcement message",undefined,220)}<label className="bzdc-check"><input type="checkbox" checked={draft.announcement_enabled==="true"} onChange={e=>update("announcement_enabled",String(e.target.checked))}/> Show announcement banner</label></div>
+         :<div className="bzdc-guidance"><Layers3 size={27}/><strong>{useSections.find(x=>x.id===activeBlock)?.label} uses live marketplace data</strong><p>Set its position and visibility in the left panel. Product content is taken from actual Bazunk listings and its existing administration screens.</p></div>}
+        <div className="bzdc-fields">
+         {(["title","description","button","url"] as const).map(field=><label key={field} className="bzdc-field"><span>{({title:"Section title",description:"Section description",button:"Action button label",url:"Action URL (internal path)"})[field]}</span>{field==="description"?<textarea rows={3} maxLength={500} value={sectionContent[activeBlock as keyof typeof sectionContent]?.[field]||""} onChange={e=>update("home_sections_content",JSON.stringify({...sectionContent,[activeBlock]:{...sectionContent[activeBlock as keyof typeof sectionContent],[field]:e.target.value}}))}/>:<input maxLength={field==="url"?200:140} value={sectionContent[activeBlock as keyof typeof sectionContent]?.[field]||""} onChange={e=>update("home_sections_content",JSON.stringify({...sectionContent,[activeBlock]:{...sectionContent[activeBlock as keyof typeof sectionContent],[field]:e.target.value}}))}/>}</label>)}
+        </div>
+        {sectionContent[activeBlock as keyof typeof sectionContent]?.cards?.map((card,index)=><div className="bzdc-fields" key={index}><h4 className="font-bold">Card {index+1}</h4>{(["title","description","url"] as const).map(field=><label key={field} className="bzdc-field"><span>{field==="url"?"Destination (internal URL)":field==="title"?"Card title":"Card description"}</span><input maxLength={field==="description"?500:field==="url"?200:140} value={card[field]} onChange={e=>{const cards=[...(sectionContent[activeBlock as keyof typeof sectionContent]?.cards||[])];cards[index]={...card,[field]:e.target.value};update("home_sections_content",JSON.stringify({...sectionContent,[activeBlock]:{...sectionContent[activeBlock as keyof typeof sectionContent],cards}}));}}/></label>)}</div>)}
+       </section>
+       {preview(true)}
+      </div>}
+      {tab==="header"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+        <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Header & Navigation</h3><small>Change what appears in your storefront header.</small></div></div>
+         <div className="bzdc-fields">{imageControl("site_logo_url","Header logo")}{input("header_search_placeholder","Search field placeholder","The hint shoppers see inside the search field",100)}<p className="bzdc-help">The search, basket and account links stay available so customers can complete purchases. Change their icons individually from the Icons page.</p><button type="button" className="bzdc-btn" onClick={()=>changeTab("icons")}>Edit header icons <ChevronRight size={15}/></button></div>
+        </section>
+        <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Announcement bar</h3><small>Show a short message above the homepage sections.</small></div></div>
+         <div className="bzdc-fields"><label className="bzdc-check"><input type="checkbox" checked={draft.announcement_enabled==="true"} onChange={e=>update("announcement_enabled",String(e.target.checked))}/> Show announcement</label>{input("announcement_text","Banner text",undefined,220)}
+          <label className="bzdc-color">Banner colour <input type="color" value={draft.announcement_color} onChange={e=>update("announcement_color",e.target.value)}/></label></div>
+        </section>
+       </div>{preview()}</div>}
+      {tab==="footer"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Footer text</h3><small>Storefront introduction and copyright.</small></div></div><div className="bzdc-fields">{input("footer_about","About Bazunk",undefined,800,true)}{input("footer_copyright","Copyright",undefined,160)}</div></section>
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Social links</h3><small>Paste public HTTPS social profile URLs; leave blank to hide.</small></div></div><div className="bzdc-fields">{input("footer_facebook","Facebook",undefined,220)}{input("footer_twitter","X / Twitter",undefined,220)}{input("footer_instagram","Instagram",undefined,220)}{input("footer_youtube","YouTube",undefined,220)}<button type="button" className="bzdc-btn" onClick={()=>changeTab("icons")}>Change social icons <ChevronRight size={15}/></button></div></section>
+       </div>{preview()}</div>}
+      {tab==="branding"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Site identity</h3><small>Update your brand name and description.</small></div></div><div className="bzdc-fields">{input("site_name","Store name",undefined,90)}{input("site_tagline","Site tagline",undefined,180)}</div></section>
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Logos & Images</h3><small>Choose uploaded assets for each location separately.</small></div></div><div className="bzdc-target-list">{imageTargets.map(target=>imageControl(target.key,target.title))}</div></section>
+      </div>{preview()}</div>}
+      {tab==="sitewide"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Global messages</h3><small>Edit wording already used across your actual website.</small></div></div><div className="bzdc-fields">
+        {input("site_tagline","Marketplace tagline",undefined,180)}{input("announcement_text","Announcement text",undefined,220)}
+        {input("header_search_placeholder","Search bar hint",undefined,100)}
+        {input("categories_title","Categories heading",undefined,120)}{input("categories_subtitle","Categories introduction",undefined,240)}
+        {input("features_title","Features heading",undefined,120)}{input("features_subtitle","Features introduction",undefined,240)}
+       </div></section>
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Buttons & page wording</h3><small>Edit real homepage and footer labels, not payment or protection policies.</small></div></div>
+        <div className="bzdc-fields">{input("hero_cta_primary","Primary button",undefined,50)}{input("hero_cta_secondary","Secondary button",undefined,50)}{input("footer_copyright","Copyright",undefined,160)}</div>
+       </section>
+      </div>{preview()}</div>}
+      {tab==="icons"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Icons by location</h3><small>Choose each header or footer icon separately. Your draft updates the preview.</small></div></div>
+        <div className="bzdc-icons-list">{ICON_PLACEMENTS.map(item=>{
+         const Icon=iconForPlacement(icons,item.key);
+         return <label key={item.key} className="bzdc-icon-row">
+          <span className="bzdc-icon-preview"><Icon size={23}/></span><span><strong>{item.label}</strong><small>{item.area} · {item.key.replaceAll("_"," ")}</small></span>
+          <select aria-label={"Icon for "+item.label} value={icons[item.key]} onChange={e=>setIcon(item.key,e.target.value as IconChoice)}>
+           {Object.keys(ICON_CHOICES).map(choice=><option key={choice} value={choice}>{choice[0].toUpperCase()+choice.slice(1)}</option>)}
+          </select>
+         </label>
+        })}</div><p className="bzdc-help">Icons keep their existing navigation actions. Footer icons display when their social URL is set.</p>
+       </section>
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Homepage category icons</h3><small>Category and promotional tile icon styling uses the existing advanced editor.</small></div></div>
+        <p className="bzdc-help">The advanced appearance editor manages category icon size, colour, badges and promotional tile icons in light and dark mode. It has its own independent Save control.</p>
+        <button type="button" className="bzdc-btn" onClick={()=>navigate("/admin/design-advanced")}>Open category icon appearance editor <ExternalLink size={15}/></button>
+       </section>
+      </div>{preview()}</div>}
+      {tab==="seo"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Homepage SEO & Metadata</h3><small>Edit the browser title, search description and social sharing image.</small></div></div><div className="bzdc-fields">
+        {input("seo_title","SEO title","Recommended: about 50–60 characters",150)}
+        {input("seo_description","SEO description","Recommended: about 140–160 characters",320,true)}
+        {imageControl("seo_og_image_url","Open Graph image")}
+       </div></section>
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Search result preview</h3><small>Illustration of the title and description search engines may display.</small></div></div>
+        <div className="bzdc-search-preview"><span>https://www.bazunk.com</span><strong>{draft.seo_title||draft.site_name}</strong><p>{draft.seo_description}</p></div>
+        <p className="bzdc-help">Search engines control the final snippet. This editor updates homepage metadata, not product-specific SEO.</p>
+       </section>
+      </div>{preview()}</div>}
+      {tab==="media"&&mediaLibrary}
+      {tab==="templates"&&<div className="bzdc-edit-grid"><div className="bzdc-stack">
+       <section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Theme & component tools</h3><small>Advanced appearance settings without cluttering everyday editing.</small></div></div>
+        <div className="bzdc-template-links"><button type="button" onClick={()=>navigate("/admin/design-advanced")}><Palette size={24}/><span><strong>Theme Gallery & Colours</strong><small>Advanced palettes, component styling and light/dark design checks</small></span><ChevronRight size={17}/></button>
+        <button type="button" onClick={()=>changeTab("branding")}><ImageIcon size={24}/><span><strong>Site branding</strong><small>Manage logos, favicons and main artwork</small></span><ChevronRight size={17}/></button>
+        <button type="button" onClick={()=>changeTab("history")}><History size={24}/><span><strong>Version history</strong><small>Restore previous published content safely as a draft</small></span><ChevronRight size={17}/></button></div>
+        <p className="bzdc-help">The advanced design editor has separate theme/component publishing controls; these are not part of the unified site-content draft.</p>
+       </section>
+       </div>{preview()}</div>}
+      {tab==="history"&&<section className="bzdc-panel"><div className="bzdc-panel-title"><div><h3>Version History</h3><small>Restore an earlier published configuration into your draft. Publication always requires approval.</small></div></div>
+       <div className="bzdc-history">{history.length===0?<div className="bzdc-empty"><History/><strong>No previous versions yet</strong><p>Each publication creates a restorable version.</p></div>:history.map(version=><div key={version.id} className="bzdc-history-row">
+        <span className="bzdc-history-icon"><History size={19}/></span>
+        <div><strong>{new Date(version.at).toLocaleString("en-GB")}</strong><small>{version.fields.site_name||"Bazunk"} · {version.fields.hero_title||"Earlier design"}</small></div>
+        <button type="button" className="bzdc-btn" onClick={()=>{editVersion.current++;setDraft({...THEME_CENTER_DEFAULTS,...version.fields});setDirty(true);setAuto("Restored into draft");setNotice("Historical design loaded as a draft. Review before publishing.");changeTab("overview")}}>Restore to draft</button>
+       </div>)}</div>
+      </section>}
+     </>}
+    </main>
+   </div>
+  </div>
+ </AdminLayout>;
+}

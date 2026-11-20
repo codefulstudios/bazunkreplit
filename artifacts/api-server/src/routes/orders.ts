@@ -1,3 +1,5 @@
+import { recordWebhookDelivery } from "../lib/webhookMonitoring.js";
+import { randomUUID as webhookReceiptId } from "node:crypto";
 import { refundOrder, releaseOrderPayout } from "../lib/orderSettlement.js";
 import { Router } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
@@ -91,8 +93,10 @@ router.post("/webhooks/shippo/tracking", async (req, res) => {
       }
       updated++;
     }
+    await recordWebhookDelivery("shippo",webhookReceiptId(),"track_updated","processed");
     res.json({ok:true,updated});
   } catch (err) {
+    await recordWebhookDelivery("shippo",webhookReceiptId(),"track_updated","failed",err instanceof Error?err.message:"Tracking failed");
     res.status(500).json({error:"Tracking update failed"});
   }
 });
@@ -106,11 +110,11 @@ router.post("/orders", requireAdmin, async (req, res) => {
   res.status(201).json({ id });
 });
 router.get("/orders", async (req,res)=>{ const email=await signedInEmail(req); if(!email){res.status(401).json({error:"Please sign in to view your orders"});return;} const rows=await db.execute(sql`SELECT o.*,(SELECT r.rating FROM reviews r WHERE r.order_id=o.id AND r.role='buyer_to_seller') AS my_review_rating FROM orders o WHERE LOWER(o.buyer_email)=LOWER(${email}) ORDER BY o.created_at DESC`);res.json(rows.rows); });
-router.get("/orders/:id", async(req,res)=>{const email=await signedInEmail(req);if(!email){res.status(401).json({error:"Please sign in"});return;}const rows=await db.execute(sql`SELECT * FROM orders WHERE id=${req.params.id} AND (LOWER(buyer_email)=LOWER(${email}) OR LOWER(COALESCE(seller_email,''))=LOWER(${email}))`);if(!rows.rows.length){res.status(404).json({error:"Order not found"});return;}res.json(rows.rows[0]);});
+router.get("/orders/:id", async(req,res)=>{const email=await signedInEmail(req);if(!email){res.status(401).json({error:"Please sign in"});return;}const rows=await db.execute(sql`SELECT * FROM orders WHERE id=${String(req.params.id)} AND (LOWER(buyer_email)=LOWER(${email}) OR LOWER(COALESCE(seller_email,''))=LOWER(${email}))`);if(!rows.rows.length){res.status(404).json({error:"Order not found"});return;}res.json(rows.rows[0]);});
 
 router.post("/orders/:id/tracking/refresh", async(req,res)=>{
   if(!shippoEnabled()){res.status(503).json({error:"Shipment tracking is not configured yet"});return;}
-  const o=(await db.execute(sql`SELECT * FROM orders WHERE id=${req.params.id}`)).rows[0] as any;
+  const o=(await db.execute(sql`SELECT * FROM orders WHERE id=${String(req.params.id)}`)).rows[0] as any;
   if(!o){res.status(404).json({error:"Order not found"});return;}
   const email=await signedInEmail(req); if(!email){res.status(401).json({error:"Please sign in"});return;}
   if(email!==String(o.buyer_email||"").toLowerCase()&&email!==String(o.seller_email||"").toLowerCase()){res.status(403).json({error:"That is not your order"});return;}
@@ -118,7 +122,11 @@ router.post("/orders/:id/tracking/refresh", async(req,res)=>{
   try{
     const track:any=await getTracking(String(o.carrier),String(o.tracking_number));
     const latest=track?.tracking_status||{}; const mapped=mapShippoStatus(latest.status);
-    const nextStatus=mapped==="delivered"?"delivered":(mapped==="shipped"&&!["delivered","out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
+    // A late carrier event must never reopen delivered orders or change cancelled/refunded orders.
+    if (["cancelled","refunded"].includes(String(o.status))) {
+      res.status(409).json({error:"Tracking cannot update a cancelled or refunded order"});return;
+    }
+    const nextStatus=String(o.status)==="delivered"?"delivered":mapped==="delivered"?"delivered":(mapped==="shipped"&&!["out_for_delivery"].includes(String(o.status))?"shipped":String(o.status));
     await db.execute(sql`UPDATE orders SET status=${nextStatus},tracking_status=${latest.status??null},
       tracking_eta=${track?.eta??null},estimated_delivery=COALESCE(${track?.eta??null},estimated_delivery),
       tracking_last_event=${latest.status_details??null},tracking_updated_at=NOW(),
@@ -128,7 +136,30 @@ router.post("/orders/:id/tracking/refresh", async(req,res)=>{
     res.json({ok:true,status:nextStatus,trackingStatus:latest.status??null,eta:track?.eta??null,lastEvent:latest.status_details??null,history:track?.tracking_history??[]});
   }catch(err:any){res.status(502).json({error:err?.message||"Could not refresh tracking"});}
 });
-router.patch("/orders/:id/status",async(req,res)=>{const {status,trackingNumber,carrier,estimatedDelivery,buyerEmail}=req.body as Record<string,string>;if(!status||!VALID_STATUSES.includes(status)){res.status(400).json({error:"Valid status required"});return;}await db.execute(sql`UPDATE orders SET status=${status},tracking_number=COALESCE(${trackingNumber??null},tracking_number),carrier=COALESCE(${carrier??null},carrier),estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),shipped_at=CASE WHEN ${status} IN ('shipped','out_for_delivery','delivered') THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,delivered_at=CASE WHEN ${status}='delivered' THEN COALESCE(delivered_at,NOW()) ELSE delivered_at END,updated_at=NOW() WHERE id=${req.params.id} AND buyer_email=${buyerEmail??""}`);res.json({ok:true});});
+// Seller-only fulfilment update. Never trust a buyerEmail supplied by the browser.
+router.patch("/orders/:id/status",async(req,res)=>{
+  const seller=await signedInEmail(req);
+  if(!seller){res.status(401).json({error:"Sign in required"});return;}
+  const {status,trackingNumber,carrier,estimatedDelivery}=req.body as Record<string,string>;
+  if(!["preparing","shipped"].includes(status)){res.status(400).json({error:"Only preparing or shipped can be set manually. Carrier tracking determines delivery."});return;}
+  const id=String(req.params.id);
+  const existing=(await db.execute(sql`SELECT id,status,tracking_number FROM orders WHERE id=${id} AND LOWER(seller_email)=LOWER(${seller})`)).rows[0] as any;
+  if(!existing){res.status(404).json({error:"Order not found"});return;}
+  if(["cancelled","refunded","delivered"].includes(String(existing.status))){res.status(409).json({error:"Completed or cancelled orders cannot be manually updated"});return;}
+  if(status==="shipped"&&(!trackingNumber||!carrier)){res.status(400).json({error:"Carrier and tracking number required to mark shipped"});return;}
+  if(trackingNumber&&(!/^[a-z0-9 -]{5,100}$/i.test(trackingNumber)||!carrier||carrier.length>100)){res.status(400).json({error:"Invalid carrier or tracking number"});return;}
+  const result=await db.execute(sql`UPDATE orders SET status=${status},
+    tracking_number=COALESCE(${trackingNumber??null},tracking_number),
+    carrier=COALESCE(${carrier??null},carrier),
+    estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),
+    shipped_at=CASE WHEN ${status}='shipped' THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,
+    updated_at=NOW()
+    WHERE id=${id} AND LOWER(seller_email)=LOWER(${seller})
+      AND status NOT IN ('cancelled','refunded','delivered')
+    RETURNING id`);
+  if(!result.rows.length){res.status(409).json({error:"Order status changed; refresh and try again"});return;}
+  res.json({ok:true});
+});
 
 router.post("/admin/orders/test-sale", requireAdmin, async(req,res)=>{
   const buyerEmail=String(req.body?.buyerEmail||"").trim().toLowerCase();
@@ -163,7 +194,7 @@ router.get("/admin/orders", requireAdmin, async (req,res)=>{
 
 router.post("/admin/orders/:id/tracking/refresh", requireAdmin, async(req,res)=>{
   if(!shippoEnabled()){res.status(503).json({error:"Shippo is not configured on the API service"});return;}
-  const o=(await db.execute(sql`SELECT * FROM orders WHERE id=${req.params.id}`)).rows[0] as any;
+  const o=(await db.execute(sql`SELECT * FROM orders WHERE id=${String(req.params.id)}`)).rows[0] as any;
   if(!o){res.status(404).json({error:"Order not found"});return;}
   if(!o.carrier||!o.tracking_number){res.status(400).json({error:"This order does not have a carrier and tracking number"});return;}
   try{
@@ -188,7 +219,7 @@ router.post("/admin/orders/:id/tracking/refresh", requireAdmin, async(req,res)=>
 });
 
 router.get("/admin/orders/:id/command", requireAdmin, async(req,res)=>{
-  await ensureEvents(); const id=req.params.id;
+  await ensureEvents(); const id=String(req.params.id);
   const o=(await db.execute(sql`SELECT * FROM orders WHERE id=${id}`)).rows[0] as any; if(!o){res.status(404).json({error:"Order not found"});return;}
   const [d,r,e]=await Promise.all([db.execute(sql`SELECT * FROM disputes WHERE order_id=${id} ORDER BY created_at DESC`),db.execute(sql`SELECT * FROM returns WHERE order_id=${id} ORDER BY created_at DESC`),db.execute(sql`SELECT * FROM order_admin_events WHERE order_id=${id} ORDER BY created_at DESC`)]);
   let payment:any={status:o.stripe_session_id?"unknown":"manual",currency:"GBP",total:null,refunded:0,refundable:0};
@@ -203,16 +234,16 @@ router.get("/admin/orders/:id/command", requireAdmin, async(req,res)=>{
   res.json({order:o,payment,disputes:d.rows,returns:r.rows,timeline});
 });
 
-router.patch("/admin/orders/:id", requireAdmin, async(req,res)=>{const {status,trackingNumber,carrier,estimatedDelivery,adminEmail}=req.body as Record<string,string>;if(!status||!VALID_STATUSES.includes(status)){res.status(400).json({error:"Valid status required"});return;}const before=(await db.execute(sql`SELECT status,tracking_number,carrier,estimated_delivery FROM orders WHERE id=${req.params.id}`)).rows[0] as any;await db.execute(sql`UPDATE orders SET status=${status},tracking_number=COALESCE(${trackingNumber??null},tracking_number),carrier=COALESCE(${carrier??null},carrier),estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),shipped_at=CASE WHEN ${status} IN ('shipped','out_for_delivery','delivered') THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,delivered_at=CASE WHEN ${status}='delivered' THEN COALESCE(delivered_at,NOW()) ELSE delivered_at END,updated_at=NOW() WHERE id=${req.params.id}`);await event(req.params.id,"admin",`Order status changed to ${status}`,[carrier,trackingNumber].filter(Boolean).join(" · ")||null,adminEmail);await recordAdminAudit({req,actor:adminEmail||"Admin",category:"orders",action:"order.update",targetType:"order",targetId:req.params.id,summary:`Admin changed order ${req.params.id} from ${before?.status??"unknown"} → ${status}`,before,after:{status,trackingNumber,carrier,estimatedDelivery}});res.json({ok:true});});
+router.patch("/admin/orders/:id", requireAdmin, async(req,res)=>{const {status,trackingNumber,carrier,estimatedDelivery,adminEmail}=req.body as Record<string,string>;if(!status||!VALID_STATUSES.includes(status)){res.status(400).json({error:"Valid status required"});return;}const before=(await db.execute(sql`SELECT status,tracking_number,carrier,estimated_delivery FROM orders WHERE id=${String(req.params.id)}`)).rows[0] as any;await db.execute(sql`UPDATE orders SET status=${status},tracking_number=COALESCE(${trackingNumber??null},tracking_number),carrier=COALESCE(${carrier??null},carrier),estimated_delivery=COALESCE(${estimatedDelivery??null},estimated_delivery),shipped_at=CASE WHEN ${status} IN ('shipped','out_for_delivery','delivered') THEN COALESCE(shipped_at,NOW()) ELSE shipped_at END,delivered_at=CASE WHEN ${status}='delivered' THEN COALESCE(delivered_at,NOW()) ELSE delivered_at END,updated_at=NOW() WHERE id=${String(req.params.id)}`);await event(String(req.params.id),"admin",`Order status changed to ${status}`,[carrier,trackingNumber].filter(Boolean).join(" · ")||null,adminEmail);await recordAdminAudit({req,actor:adminEmail||"Admin",category:"orders",action:"order.update",targetType:"order",targetId:String(req.params.id),summary:`Admin changed order ${String(req.params.id)} from ${before?.status??"unknown"} → ${status}`,before,after:{status,trackingNumber,carrier,estimatedDelivery}});res.json({ok:true});});
 
-router.post("/admin/orders/:id/cancel", requireAdmin, async(req,res)=>{const id=req.params.id;const o=(await db.execute(sql`SELECT status FROM orders WHERE id=${id}`)).rows[0] as any;if(!o){res.status(404).json({error:"Order not found"});return;}if(["delivered","refunded"].includes(String(o.status))){res.status(409).json({error:"Delivered/refunded orders cannot be cancelled here."});return;}await db.execute(sql`UPDATE orders SET status='cancelled',updated_at=NOW() WHERE id=${id}`);await event(id,"cancel","Order cancelled",String(req.body.reason||"Admin cancellation"),String(req.body.adminEmail||""));await recordAdminAudit({req,actor:String(req.body.adminEmail||"Admin"),category:"orders",action:"order.cancel",targetType:"order",targetId:id,summary:`Admin cancelled order ${id}`,before:{status:o.status},after:{status:"cancelled"},metadata:{reason:req.body.reason||"Admin cancellation"}});res.json({ok:true});});
+router.post("/admin/orders/:id/cancel", requireAdmin, async(req,res)=>{const id=String(req.params.id);const o=(await db.execute(sql`SELECT status FROM orders WHERE id=${id}`)).rows[0] as any;if(!o){res.status(404).json({error:"Order not found"});return;}if(["delivered","refunded"].includes(String(o.status))){res.status(409).json({error:"Delivered/refunded orders cannot be cancelled here."});return;}await db.execute(sql`UPDATE orders SET status='cancelled',updated_at=NOW() WHERE id=${id}`);await event(id,"cancel","Order cancelled",String(req.body.reason||"Admin cancellation"),String(req.body.adminEmail||""));await recordAdminAudit({req,actor:String(req.body.adminEmail||"Admin"),category:"orders",action:"order.cancel",targetType:"order",targetId:id,summary:`Admin cancelled order ${id}`,before:{status:o.status},after:{status:"cancelled"},metadata:{reason:req.body.reason||"Admin cancellation"}});res.json({ok:true});});
 
 router.post("/admin/orders/:id/refund",requireAdmin,async(req,res)=>{
-  try {const result=await refundOrder(String(req.params.id),req.body.amount==null?undefined:Number(req.body.amount));await event(String(req.params.id),"refund","Stripe refund issued",`GBP ${result.amount.toFixed(2)} · ${result.refundId}`);await recordAdminAudit({req,category:"orders",action:"order.refund",targetType:"order",targetId:String(req.params.id),summary:`Order refund GBP ${result.amount.toFixed(2)}`,after:result});res.json({ok:true,...result});}
+  try {const result=await refundOrder(String(String(req.params.id)),req.body.amount==null?undefined:Number(req.body.amount));await event(String(String(req.params.id)),"refund","Stripe refund issued",`GBP ${result.amount.toFixed(2)} · ${result.refundId}`);await recordAdminAudit({req,category:"orders",action:"order.refund",targetType:"order",targetId:String(String(req.params.id)),summary:`Order refund GBP ${result.amount.toFixed(2)}`,after:result});res.json({ok:true,...result});}
   catch(err:any){res.status(409).json({error:err.message||"Refund failed"});}
 });
 router.post("/admin/orders/:id/release-payout",requireAdmin,async(req,res)=>{
-  try {const result=await releaseOrderPayout(String(req.params.id));await event(String(req.params.id),"payout","Seller payout reviewed",`${result.transferId} · ${result.payoutStatus}`);await recordAdminAudit({req,category:"orders",action:"order.payout_release",targetType:"order",targetId:String(req.params.id),summary:"Admin reviewed seller payout",after:result});res.json({ok:true,...result});}
+  try {const result=await releaseOrderPayout(String(String(req.params.id)));await event(String(String(req.params.id)),"payout","Seller payout reviewed",`${result.transferId} · ${result.payoutStatus}`);await recordAdminAudit({req,category:"orders",action:"order.payout_release",targetType:"order",targetId:String(String(req.params.id)),summary:"Admin reviewed seller payout",after:result});res.json({ok:true,...result});}
   catch(err:any){res.status(409).json({error:err.message||"Payout release failed"});}
 });
 

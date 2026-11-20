@@ -1,7 +1,9 @@
 import type { Request,Response,NextFunction } from "express";
 import { featureEnabled } from "../lib/featureFlags.js";
 const rules:[RegExp,string][]=[
- [/^\/auctions(?:\/|$)/,"auctions"],[/^\/flash-sales(?:\/|$)/,"flash_sales"],[/^\/classifieds(?:\/|$)/,"classifieds"],[/^\/livekit(?:\/|$)/,"live"],
+ [/^\/trust-proof(?:\/|$)/,"trust_proof"],
+ [/^\/deal-pilot(?:\/|$)/,"deal_pilot"],[/^\/find-it(?:\/|$)/,"find_it"],
+ [/^\/auctions(?:\/|$)/,"auctions"],[/^\/flash-sales(?:\/|$)/,"flash_sales"],[/^\/classifieds(?:\/|$)/,"classifieds"],[/^\/live(?:\/|$)|^\/livekit(?:\/|$)/,"live"],
  [/^\/rewards(?:\/|$)|^\/treasure-hunt(?:\/|$)/,"games"],[/^\/referrals(?:\/|$)/,"referrals"],[/^\/promotions(?:\/|$)/,"promotions"],
  [/^\/watch(?:ers)?(?:\/|$)/,"watchers"],[/^\/messages(?:\/|$)/,"messaging"],[/^\/reviews(?:\/|$)/,"reviews"],[/^\/verification(?:\/|$)/,"verification"],
  [/^\/disputes(?:\/|$)|^\/returns(?:\/|$)/,"disputes_returns"],[/^\/user\/(?:search|import)|^\/user\/rapidapi/,"importers"]

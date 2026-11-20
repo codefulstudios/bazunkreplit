@@ -9,6 +9,7 @@ export const listingsTable = pgTable("listings", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   category: text("category").notNull(),
   subcategory: text("subcategory"),
+  subsubcategory: text("subsubcategory"),
   description: text("description").notNull(),
   condition: text("condition").notNull().default("good"),
   image: text("image"),

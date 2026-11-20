@@ -1,0 +1,28 @@
+name: Seller compliance checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile --prod=false
+      - name: TypeScript checks
+        run: pnpm run typecheck
+      - name: Build API and frontend
+        run: pnpm run build
+      - name: Compliance policy tests
+        run: |
+          pnpm --filter @workspace/api-server exec esbuild src/lib/sellerComplianceRisk.test.ts src/lib/sellerClassification.test.ts --bundle --platform=node --format=esm --outdir=/tmp/bazunk-compliance-tests
+          node --test /tmp/bazunk-compliance-tests/*.test.js

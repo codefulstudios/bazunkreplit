@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useAuth as useClerkAuth } from "@clerk/react";
-import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
+import { ACTIVE_CATEGORIES as SITE_CATEGORIES, resolveCategory } from "@/data/categories";
 
 interface SearchResult {
   asin: string;
@@ -51,6 +51,7 @@ export function UserAmazonImporterSection() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // ── Selection & import state ──────────────────────────────────
+  const [ecoFriendly, setEcoFriendly] = useState(false);
   const [selected, setSelected]           = useState<Set<string>>(new Set());
   const [markup, setMarkup]               = useState("35");
   const [shipping, setShipping]           = useState("3.99");
@@ -152,8 +153,7 @@ export function UserAmazonImporterSection() {
           products,
           markup:      parseFloat(markup)   || 35,
           shipping:    parseFloat(shipping) || 3.99,
-          category:    importCat,
-          subcategory: importSub,
+          ...resolveCategory(importCat, importSub),
           sellerEmail: user.email,
         }),
       });
@@ -269,6 +269,7 @@ export function UserAmazonImporterSection() {
                   <input type="number" min="0" step="0.01" value={shipping} onChange={e => setShipping(e.target.value)}
                     className={inputCls + " w-20 py-1.5 text-xs"} placeholder="£3.99" />
                 </div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-white"><input type="checkbox" checked={ecoFriendly} onChange={e => setEcoFriendly(e.target.checked)} className="accent-orange-600" /> Mark imported products as eco-friendly (show on Eco page)</label>
                 <button onClick={handleImport} disabled={importing || selected.size === 0 || !importCat}
                   className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:bg-[#e0601d] transition-colors disabled:opacity-50">
                   {importing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowDownToLine className="w-3.5 h-3.5" />}

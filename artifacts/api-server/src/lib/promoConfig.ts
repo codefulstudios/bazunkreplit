@@ -31,6 +31,7 @@ export const PROMO_DEFAULTS: Record<string, PromoDefault> = {
   "visibility-boost":     L(3.49, 5,  "Visibility Boost"),
   "premium-placement":    L(5.99, 10, "Premium Placement"),
   "urgent-badge":         L(1.49, 3,  "Urgent Badge"),
+  "browse-sponsored-5d": L(4.99, 5, "Sponsor Your Listing — Browse Categories (5 days)"),
   "related-listings-5d":  L(2.49, 5,  "Related Listings Spotlight (5 days)"),
   "related-listings-10d": L(4.49, 10, "Related Listings Spotlight (10 days)"),
   "newsletter-feature":   L(2.99, 7,  "Newsletter & Blog Feature"),
@@ -47,7 +48,6 @@ export const PROMO_DEFAULTS: Record<string, PromoDefault> = {
   "advanced-analytics":   L(1.99, 30, "Advanced Analytics"),
   "social-share":         L(0.99, 30, "Social Sharing Boost"),
   "reserve-auction":      { cost: 0.99, daysValid: 1, label: "Reserve Price Auction", kind: "auction", oneShot: true },
-  "auction-extension":    { cost: 0.99, daysValid: 1, label: "Auction Extensions",    kind: "auction", oneShot: true },
 
   // ── Listed, not buyable yet ──
   "auto-relist":          L(1.49, 30, "Auto-relist",        { comingSoon: true }),

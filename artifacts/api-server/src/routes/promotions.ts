@@ -6,13 +6,12 @@ import { storage } from "../storage.js";
 import { logger } from "../lib/logger.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAllPromoConfigs, getPromoConfig, PROMO_DEFAULTS } from "../lib/promoConfig.js";
 
 import { canGrantListingPromotion, validateAdminPromotion } from "../lib/adminListingPromotion.js";
 
 const router = Router();
-
-const SELLER_TOOLS = new Set(["follower-notify", "scheduled-listing", "advanced-analytics", "social-share"]);
 
 /** Public: current prices/durations/availability (what sellers see). */
 router.get("/promotions/config", async (_req, res) => {
@@ -26,9 +25,11 @@ router.get("/promotions/config", async (_req, res) => {
 });
 
 router.post("/promotions/apply", async (req, res) => {
-  const { email, type, listingId, publishAt } = req.body as { email?: string; type?: string; listingId?: number; publishAt?: string };
-  if (!email || !type) { res.status(400).json({ error: "email and type are required" }); return; }
-  if (!listingId) { res.status(400).json({ error: "listingId is required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
+  const { type, listingId, publishAt } = req.body as { type?: string; listingId?: number; publishAt?: string };
+  if (!type) { res.status(400).json({ error: "type is required" }); return; }
+  if (!Number.isSafeInteger(listingId) || !listingId || listingId < 1) { res.status(400).json({ error: "Valid listingId is required" }); return; }
 
   const config = await getPromoConfig(type);
   if (!config) { res.status(400).json({ error: "Unknown promotion type" }); return; }
@@ -37,11 +38,11 @@ router.post("/promotions/apply", async (req, res) => {
   if (config.kind === "auction") { res.status(400).json({ error: `${config.label} is added when you create an auction.` }); return; }
 
   try {
-    // Seller tools act on the listing itself, so check it exists and belongs to this seller.
+    // Every paid promotion must target a listing owned by the authenticated seller.
     let listing: { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string } | null = null;
-    if (SELLER_TOOLS.has(type)) {
+    {
       const r = await db.execute(sql`SELECT id, public_id, title, price, seller_email, seller_name, status FROM listings WHERE id = ${listingId}`);
-      listing = (r.rows[0] as typeof listing) ?? null;
+      listing = (r.rows[0] as { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string } | undefined) ?? null;
       if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
       if (String(listing.seller_email).toLowerCase() !== email.toLowerCase()) { res.status(403).json({ error: "That isn't your listing" }); return; }
     }
@@ -64,20 +65,41 @@ router.post("/promotions/apply", async (req, res) => {
       if (followers.length === 0) { res.status(400).json({ error: "You don't have any followers yet — nobody to notify." }); return; }
     }
 
-    const balance = await storage.getCredits(email);
-    if (balance < config.cost) {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + config.daysValid);
+    if (publishDate) expiresAt.setTime(publishDate.getTime() + 24 * 3600 * 1000);
+
+    // Lock and debit the balance conditionally in the SAME transaction as activation.
+    // Concurrent promotions cannot spend the same credits and failed activation rolls back the debit.
+    const applied = await db.transaction(async tx => {
+      const debit = await tx.execute(sql`
+        UPDATE users SET credits = credits - ${config.cost}
+        WHERE LOWER(email) = LOWER(${email}) AND credits >= ${config.cost}
+        RETURNING credits
+      `);
+      if (!debit.rows.length) return null;
+      await tx.insert(listingPromotionsTable).values({ listingId, type, expiresAt });
+      if (publishDate) {
+        const scheduled = await tx.execute(sql`
+          UPDATE listings SET status = 'scheduled', publish_at = ${publishDate.toISOString()}, updated_at = NOW()
+          WHERE id = ${listingId} AND LOWER(seller_email) = LOWER(${email}) AND status = 'active'
+          RETURNING id
+        `);
+        if (!scheduled.rows.length) throw new Error("Listing is no longer eligible for scheduling");
+      }
+      return Number(debit.rows[0].credits);
+    });
+    if (applied === null) {
+      const balance = await storage.getCredits(email);
       res.status(402).json({ error: "Insufficient credits", balance, required: config.cost });
       return;
     }
-
-    const newBalance = await storage.addCredits(email, -config.cost);
-    await recordCreditEconomy({ email, kind: "spent", credits: -config.cost, reason: `Promotion: ${config.label}`, referenceType: "promotion", metadata: { promotionType: type } });
-
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + config.daysValid);
-    if (publishDate) { expiresAt.setTime(publishDate.getTime() + 24 * 3600 * 1000); }
-
-    await db.insert(listingPromotionsTable).values({ listingId, type, expiresAt });
+    const newBalance = applied;
+    try {
+      await recordCreditEconomy({ email, kind: "spent", credits: -config.cost, reason: `Promotion: ${config.label}`, referenceType: "promotion", metadata: { promotionType: type, listingId } });
+    } catch (ledgerError) {
+      logger.error({ ledgerError, email, listingId }, "Promotion activated but auxiliary credit ledger logging failed");
+    }
 
     let extra: Record<string, unknown> = {};
     if (type === "scheduled-listing" && publishDate) {
@@ -118,8 +140,8 @@ router.post("/promotions/apply", async (req, res) => {
 
 /** A seller's currently active promotion tools (so they can reopen analytics, share cards, schedules). */
 router.get("/promotions/mine", async (req, res) => {
-  const email = typeof req.query.email === "string" ? req.query.email : "";
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   try {
     const rows = await db.execute(sql`
       SELECT lp.id, lp.listing_id, lp.type, lp.expires_at, l.title, l.image, l.price, l.status, l.publish_at, l.public_id
@@ -211,8 +233,9 @@ router.post("/listings/:id/view", async (req, res) => {
 
 router.get("/promotions/analytics/:listingId", async (req, res) => {
   const listingId = parseInt(req.params.listingId);
-  const email = typeof req.query.email === "string" ? req.query.email : "";
-  if (!listingId || !email) { res.status(400).json({ error: "listingId and email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
+  if (!listingId) { res.status(400).json({ error: "listingId required" }); return; }
   try {
     const l = (await db.execute(sql`SELECT id, title, seller_email, watchers, views, created_at, status FROM listings WHERE id = ${listingId}`)).rows[0] as any;
     if (!l) { res.status(404).json({ error: "Listing not found" }); return; }
@@ -262,18 +285,20 @@ router.get("/promotions/analytics/:listingId", async (req, res) => {
 
 router.get("/promotions/related", async (req, res) => {
   const category = typeof req.query.category === "string" ? req.query.category : undefined;
-  const exclude = typeof req.query.exclude === "string" ? req.query.exclude : undefined;
+  const rawExclude = typeof req.query.exclude === "string" ? Number(req.query.exclude) : null;
+  const exclude = rawExclude !== null && Number.isSafeInteger(rawExclude) && rawExclude > 0 ? rawExclude : null;
   try {
     const promoted = await db.execute(sql`
-      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category
+      SELECT DISTINCT ON (l.id) l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category, TRUE AS sponsored
       FROM listings l
       JOIN listing_promotions lp ON lp.listing_id = l.id
       WHERE lp.type IN ('related-listings-5d', 'related-listings-10d')
         AND lp.expires_at > NOW()
         AND l.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
-        ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
-      ORDER BY RANDOM()
+        ${exclude ? sql`AND l.id != ${exclude}` : sql``}
+      ORDER BY l.id DESC
       LIMIT 6
     `);
 
@@ -283,12 +308,13 @@ router.get("/promotions/related", async (req, res) => {
     }
 
     const fallback = await db.execute(sql`
-      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category
+      SELECT l.id, l.public_id, l.title, l.price, l.price_gbp, l.currency, l.image, l.category, FALSE AS sponsored
       FROM listings l
       WHERE l.status = 'active'
+        AND NOT EXISTS (SELECT 1 FROM site_settings cv WHERE cv.value='false' AND (cv.key='category_visible_' || l.category OR cv.key='category_visible_' || l.category || '__' || COALESCE(l.subcategory,'')))
         ${category ? sql`AND LOWER(l.category) = LOWER(${category})` : sql``}
-        ${exclude ? sql`AND l.id != ${parseInt(exclude)}` : sql``}
-      ORDER BY l.created_at DESC
+        ${exclude ? sql`AND l.id != ${exclude}` : sql``}
+      ORDER BY l.created_at DESC, l.id DESC
       LIMIT 6
     `);
     res.json(fallback.rows);
@@ -296,6 +322,23 @@ router.get("/promotions/related", async (req, res) => {
     logger.error({ err }, "Failed to fetch related listings");
     res.status(500).json({ error: "Failed to fetch related listings" });
   }
+});
+
+// Public sponsored carousel: only paid or admin-granted active browse sponsorships.
+router.get("/promotions/browse-sponsored", async (req,res)=>{
+  const category=typeof req.query.category==="string"?req.query.category.trim().slice(0,120):"";
+  try{
+    const rows=await db.execute(sql`
+      SELECT l.id,l.public_id,l.title,l.price,l.price_gbp,l.currency,l.image,l.category,TRUE AS sponsored
+      FROM listings l
+      WHERE l.status='active'
+        AND EXISTS (SELECT 1 FROM listing_promotions lp WHERE lp.listing_id=l.id AND lp.type='browse-sponsored-5d' AND lp.expires_at>NOW())
+        ${category?sql`AND LOWER(l.category)=LOWER(${category})`:sql``}
+      ORDER BY RANDOM() LIMIT 24
+    `);
+    res.setHeader("Cache-Control","public, max-age=30");
+    res.json(rows.rows);
+  }catch(err){logger.error({err},"Failed to load browse sponsored listings");res.status(500).json({error:"Unable to load sponsored listings"});}
 });
 
 // Admin grants use the existing listing promotion records without debiting credits.
