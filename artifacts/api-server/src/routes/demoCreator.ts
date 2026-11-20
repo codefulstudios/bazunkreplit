@@ -263,8 +263,19 @@ router.get("/admin/demo-creator/images/options", async (req,res) => {
     finally{clearTimeout(timeout);}
     if(!response.ok){res.status(502).json({error:"Pixabay search unavailable"});return;}
     const data=await response.json() as {hits?:Array<{id:number;largeImageURL?:string;webformatURL?:string;pageURL?:string;user?:string;tags?:string}>};
-    const photos=(data.hits||[]).filter(p=>p.largeImageURL&&p.pageURL&&matchesProductPhoto(title,p.tags||"")).slice(0,12)
-      .map(p=>({id:p.id,image:p.largeImageURL,preview:p.webformatURL||p.largeImageURL,sourceUrl:p.pageURL,photographer:p.user||"Pixabay contributor",tags:p.tags}));
+    let hits=(data.hits||[]).filter(p=>p.largeImageURL&&p.pageURL&&matchesProductPhoto(title,p.tags||""));
+    // Product titles often contain brand, size and condition terms that Pixabay cannot match.
+    // Retry with the last two meaningful words instead of returning an unusable empty picker.
+    if(!hits.length){
+      const words=title.split(/[^a-z0-9]+/i).filter(w=>w.length>2&&!/^(new|used|excellent|premium|large|small|black|white|blue|red|with|for|the)$/i.test(w));
+      const fallback=words.slice(-2).join(" ");
+      if(fallback&&fallback.toLowerCase()!==title.toLowerCase()){
+        const retryParams=new URLSearchParams({key,q:fallback,image_type:"photo",per_page:"50",safesearch:"true"});
+        const retry=await fetch(`https://pixabay.com/api/?${retryParams}`,{signal:AbortSignal.timeout(6500)});
+        if(retry.ok){const retryData=await retry.json() as typeof data;hits=(retryData.hits||[]).filter(p=>p.largeImageURL&&p.pageURL&&matchesProductPhoto(fallback,p.tags||""));}
+      }
+    }
+    const photos=hits.slice(0,12).map(p=>({id:p.id,image:p.largeImageURL,preview:p.webformatURL||p.largeImageURL,sourceUrl:p.pageURL,photographer:p.user||"Pixabay contributor",tags:p.tags}));
     res.json({photos});
   }catch{res.status(502).json({error:"Unable to search Pixabay"});}
 });
