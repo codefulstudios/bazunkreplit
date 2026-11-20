@@ -52,3 +52,11 @@ test("fee pricing appears in legal and sitewide explanations",()=>{
    assert.match(read(p),/6% of their combined eligible item price plus £1\.00/);
  }
 });
+
+test("Phase 5 wishlists are authenticated, deduplicated and removable",()=>{
+ const discovery=read(root+"routes/discovery.ts");
+ assert.match(discovery,/authenticatedSellerEmail\(req,res\)/);
+ assert.match(discovery,/PRIMARY KEY \(user_email,listing_id\)/);
+ assert.match(discovery,/ON CONFLICT\(user_email,listing_id\) DO NOTHING/);
+ assert.match(discovery,/router\.delete\("\/discovery\/wishlist\/:listingId"/);
+});
