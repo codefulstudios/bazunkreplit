@@ -4197,3 +4197,25 @@ html,body,#root{font-family:var(--app-font-sans)!important}
 .bz-studio-features{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;margin:12px 0}.bz-studio-feature{display:flex;align-items:flex-start;gap:10px;padding:15px 10px;min-height:90px;border:1px solid #436383;border-radius:13px;background:linear-gradient(145deg,#102b46,#07192e);color:white}.bz-studio-feature.primary{background:linear-gradient(125deg,#ff8c00,#ff5100);border-color:#ff9b44}.bz-studio-feature b{display:block;font-size:13px}.bz-studio-feature small{display:block;color:#d3e1f0;font-size:11px;line-height:1.4;margin-top:5px}.bz-studio-feature.primary small{color:white}
 .bz-studio-bottom{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px}.bz-studio-panel{padding:16px;scroll-margin-top:110px}.bz-studio-panel h2{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:850;margin-bottom:13px;color:white}.bz-studio-schedule,.bz-studio-money{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #294d6f;background:#0b1d33;border-radius:10px;margin-bottom:8px}.bz-studio-schedule b,.bz-studio-money b{display:block;font-size:13px}.bz-studio-schedule small,.bz-studio-money small{display:block;color:#c5d4e4;font-size:11px;margin-top:3px}.bz-studio-money{justify-content:space-between;color:white}.bz-studio-money svg{color:#ff7900}.bz-studio-input{width:100%;background:#07192e;border:1px solid #436383;color:white;padding:10px;border-radius:8px}.bz-studio-platforms{display:grid;grid-template-columns:1fr 1fr;gap:9px}.bz-studio-platforms a{padding:12px 8px;text-align:center;background:#091e35;border:1px solid #42617c;border-radius:9px;font-size:13px;font-weight:800;color:white}
 @media(max-width:1250px){.bz-studio-main{grid-template-columns:200px minmax(0,1fr) minmax(200px,.8fr)}.bz-studio-chat{grid-column:2 / -1;min-height:160px}.bz-studio-features{grid-template-columns:repeat(4,1fr)}}@media(max-width:800px){.bz-studio-main{grid-template-columns:1fr 1fr}.bz-studio-side{grid-column:1 / -1}.bz-studio-preview{grid-column:1 / -1}.bz-studio-chat{grid-column:auto}.bz-studio-bottom{grid-template-columns:1fr}.bz-studio-features{grid-template-columns:repeat(2,1fr)}}@media(max-width:500px){.bz-studio-main{grid-template-columns:1fr}.bz-studio-shop,.bz-studio-chat{grid-column:1}.bz-studio-numbers{width:100%}.bz-studio-numbers span{padding:10px;flex:1;font-size:11px}.bz-studio-features{grid-template-columns:1fr 1fr}.bz-studio-feature{padding:10px}.bz-studio-preview{min-height:300px}}
+
+
+/* Category drawer is always the public storefront LIGHT design, even inside dashboard/dark ancestors. */
+.bz-category-drawer-root .bz-category-drawer{background:#fff!important;color:#27354b!important;border-color:#d5dff2!important;color-scheme:light;}
+.bz-category-drawer-root .bz-category-drawer-header{background:linear-gradient(110deg,#fff,#f7f7ff)!important;color:#12203b!important;border-bottom-color:#e6edf6!important;}
+.bz-category-drawer-root .bz-category-drawer-heading,.bz-category-drawer-root .bz-category-drawer-title{color:#12203b!important;}
+.bz-category-drawer-root .bz-category-drawer-header button{color:#16233e!important;background:transparent!important;}
+.bz-category-drawer-root .bz-category-drawer-header button:hover{background:#edf4ff!important;}
+.bz-category-drawer-root .bz-category-drawer-scroll{background:#fff!important;color:#27354b!important;}
+.bz-category-drawer-root .bz-category-drawer-search{background:#fff!important;border-color:#a8b9da!important;color:#526783!important;}
+.bz-category-drawer-root .bz-category-drawer-search input{background:transparent!important;color:#15253c!important;-webkit-text-fill-color:#15253c!important;}
+.bz-category-drawer-root .bz-category-drawer-search input::placeholder{color:#71839e!important;-webkit-text-fill-color:#71839e!important;opacity:1!important;}
+.bz-category-drawer-root .bz-category-drawer-row{background:#fff!important;color:#28384e!important;border-bottom:1px solid #eef1f6!important;}
+.bz-category-drawer-root .bz-category-drawer-row:first-of-type{background:#fff0df!important;}
+.bz-category-drawer-root .bz-category-drawer-row:hover,.bz-category-drawer-root .bz-category-drawer-row:focus-visible{background:#edf5ff!important;color:#173d68!important;}
+.bz-category-drawer-root .bz-category-row-title,.bz-category-drawer-root .bz-category-drawer-row>svg{color:#28384e!important;}
+.bz-category-drawer-root .bz-category-drawer-row .bz-category-row-title>svg{color:inherit;}
+.bz-category-drawer-root .bz-category-drawer-breadcrumb{background:#f0f3f8!important;color:#465775!important;}
+.bz-category-drawer-root .bz-category-drawer-view-all{background:#fff!important;color:#1454a5!important;border-color:#e4eaf3!important;}
+.bz-category-drawer-root .bz-category-drawer-view-all:hover{background:#edf5ff!important;}
+.bz-category-drawer-root .bz-category-drawer-bottom{background:#f7f9ff!important;color:#335d98!important;border-top:1px solid #dce4f2!important;}
+.bz-category-drawer-root .bz-category-drawer-bottom a{color:#24579d!important;}
