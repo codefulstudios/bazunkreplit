@@ -134,7 +134,7 @@ router.patch("/classifieds/:id", async (req, res) => {
   }
   if (!Object.keys(changes).length) { res.status(400).json({ error: "No editable fields supplied" }); return; }
   try {
-    const updated = await db.update(classifiedAdsTable).set(changes)
+    const updated = await db.update(classifiedAdsTable).set(changes as Partial<typeof classifiedAdsTable.$inferInsert>)
       .where(and(eq(classifiedAdsTable.id, id), eq(classifiedAdsTable.status, "active"),
         sql`LOWER(${classifiedAdsTable.contactEmail}) = ${sellerEmail}`))
       .returning();
