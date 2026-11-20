@@ -478,6 +478,8 @@ router.post("/stripe/apply-credits", async (req, res) => {
 
     const alreadyApplied = await storage.hasCreditTransaction(sessionId);
     if (alreadyApplied) {
+      const existing = (await db.select({ email: creditTransactionsTable.email }).from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId)))[0];
+      if (!existing || existing.email.toLowerCase() !== String(email).toLowerCase()) { res.status(403).json({ error: "Session does not belong to this account" }); return; }
       const balance = await storage.getCredits(email);
       res.json({ success: true, alreadyApplied: true, balance }); return;
     }
