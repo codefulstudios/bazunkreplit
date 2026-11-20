@@ -5877,7 +5877,7 @@ export function DashboardPage() {
                 <div className="bz-store-page-content"><MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} /></div>
               </section>
             )}
-            {activeSection === "cashback" && <CashbackPage embedded />}
+            {activeSection === "cashback" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cashback"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Gift size={16}/> BAZUNK FINANCE</span><h2>Cashback that adds up</h2><p>Every purchase could bring a little something back.</p><div className="bz-finance-fun-chips"><span><Coins size={15}/>Earn rewards</span><span><Star size={15}/>More value</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Gift size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><CashbackPage embedded /></div>}
             {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
@@ -6071,7 +6071,7 @@ export function DashboardPage() {
   </section>
 )}
             {activeSection === "credits" && <CreditsSection user={user} />}
-            {activeSection === "promotions" && (
+            {activeSection === "promotions" && (<div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-promotions"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Megaphone size={16}/> BAZUNK FINANCE</span><h2>Make your listings shine</h2><p>Discover colourful ways to get noticed and reach more buyers.</p><div className="bz-finance-fun-chips"><span><TrendingUp size={15}/>Boost visibility</span><span><Zap size={15}/>Stand out</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Megaphone size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -6114,7 +6114,7 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-            )}
+            </div>)}
             {activeSection === "profile" && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5" style={{ minHeight: 400 }}>
                 {/* Header */}
@@ -6264,8 +6264,8 @@ export function DashboardPage() {
             {activeSection === "security" && <SecuritySection />}
             {activeSection === "verification" && <VerificationSection userEmail={user?.email ?? ""} />}
             {activeSection === "addresses" && <AddressesSection />}
-            {activeSection === "seller-payouts" && <PaymentSection defaultTab="payouts" />}
-            {activeSection === "payment-cards" && <PaymentSection defaultTab="cards" />}
+            {activeSection === "seller-payouts" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-payouts"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Banknote size={16}/> BAZUNK FINANCE</span><h2>Your money, in motion</h2><p>Follow earnings from sale to payout with a clearer view of every stage.</p><div className="bz-finance-fun-chips"><span><CheckCircle size={15}/>Eligible funds</span><span><Clock size={15}/>Pending payouts</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Banknote size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="payouts" /></div>}
+            {activeSection === "payment-cards" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cards"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><CreditCard size={16}/> BAZUNK FINANCE</span><h2>Payments made simple</h2><p>Manage secure payment methods in one colourful place.</p><div className="bz-finance-fun-chips"><span><ShieldCheck size={15}/>Secure checkout</span><span><Plus size={15}/>Add a card</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><CreditCard size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="cards" /></div>}
             {activeSection === "auto-accept" && <AutoAcceptSection />}
             {activeSection === "offers" && <OffersSection />}
             {activeSection === "go-live" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-live-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><Radio size={15}/> BAZUNK CREATOR STUDIO</span><h2>Lights on. <span>Let's go live!</span></h2><p>Set up your stream, showcase products and turn your audience into shoppers.</p><div className="bz-seller-vivid-chips"><span><Video size={15}/> Live video</span><span><ShoppingBag size={15}/> Shoppable streams</span><span><Zap size={15}/> Instant deals</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><Video size={64}/><span className="bz-seller-art-live"><span className="bz-seller-live-dot"/> LIVE</span></div><div className="bz-seller-art-bubble"><ShoppingBag size={25}/></div><div className="bz-seller-art-spark"><Zap size={25}/></div></div></div><GoLiveSection /></div>}
