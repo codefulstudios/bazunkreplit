@@ -13,8 +13,6 @@ import { canGrantListingPromotion, validateAdminPromotion } from "../lib/adminLi
 
 const router = Router();
 
-const SELLER_TOOLS = new Set(["follower-notify", "scheduled-listing", "advanced-analytics", "social-share"]);
-
 /** Public: current prices/durations/availability (what sellers see). */
 router.get("/promotions/config", async (_req, res) => {
   res.setHeader("Cache-Control", "no-store");
