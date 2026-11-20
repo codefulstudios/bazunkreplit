@@ -26,6 +26,8 @@ export function CartDrawer() {
   const [protectionOpen, setProtectionOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const protectionOpenRef = useRef(false);
+  protectionOpenRef.current = protectionOpen;
   const [quote, setQuote] = useState<{ buyerProtectionFee: number; delivery: number; total: number } | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [quoteError, setQuoteError] = useState(false);
@@ -44,11 +46,11 @@ export function CartDrawer() {
 
   useEffect(() => {
     if (!isOpen) return;
-    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!returnFocusRef.current) returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
-      if (protectionOpen) return;
+      if (protectionOpenRef.current) return;
       if (event.key === "Escape") { event.preventDefault(); closeCart(); return; }
       if (event.key !== "Tab") return;
       const focusable = Array.from(drawerRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
@@ -59,8 +61,8 @@ export function CartDrawer() {
     };
     const focusFrame = requestAnimationFrame(() => drawerRef.current?.querySelector<HTMLElement>('[data-testid="button-close-cart"]')?.focus());
     document.addEventListener("keydown", onKeyDown);
-    return () => { cancelAnimationFrame(focusFrame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); returnFocusRef.current?.focus(); };
-  }, [isOpen, closeCart, protectionOpen]);
+    return () => { cancelAnimationFrame(focusFrame); document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", onKeyDown); returnFocusRef.current?.focus(); returnFocusRef.current = null; };
+  }, [isOpen, closeCart]);
 
   function goToCheckout() {
     closeCart();
