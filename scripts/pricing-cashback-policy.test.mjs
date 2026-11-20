@@ -43,11 +43,12 @@ test("one-time migration updates stored settings, not any earned ledger entries"
 });
 test("fee pricing appears in legal and sitewide explanations",()=>{
  assert.match(terms,/6% of their combined eligible item price plus £1\.00/);
- assert.match(cart,/6% \+ £1 by default/);
+ assert.match(cart,/quote\.buyerProtectionFee/);
+ assert.match(cart,/final amount is confirmed at checkout/);
  assert.match(protection,/useRawSettings/);
  assert.match(admin,/buyer_protection_percent: "6"/);
  assert.match(admin,/buyer_protection_fixed_gbp: "1\.00"/);
  for(const p of ["BAZUNK-TERMS-UK.md","BAZUNK-TERMS-EU.md","BAZUNK-TERMS-USA.md"]){
-   assert.match(read(p),/6% of their combined item price plus £1\.00/);
+   assert.match(read(p),/6% of their combined eligible item price plus £1\.00/);
  }
 });
