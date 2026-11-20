@@ -99,8 +99,7 @@ export function AdminListingsPage() {
   const [selectedIds,setSelectedIds]=useState<string[]>([]);
   const [bulkPromoOpen,setBulkPromoOpen]=useState(false);
   const [bulkPromoOptions,setBulkPromoOptions]=useState<{type:string;label:string;daysValid:number}[]>([]);
-  const [bulkPromoType,setBulkPromoType]=useState("");
-  const [bulkPromoDays,setBulkPromoDays]=useState("7");
+  const [bulkPromoSelected,setBulkPromoSelected]=useState<Record<string,number>>({});
   const [bulkPromoBusy,setBulkPromoBusy]=useState(false);
   const [bulkPromoMessage,setBulkPromoMessage]=useState("");
   async function openBulkPromotions(){
@@ -108,29 +107,34 @@ export function AdminListingsPage() {
     if (!selectedIds.length) setSelectedIds(listings.map(l=>String(l.id)));
     setBulkPromoOpen(true);setBulkPromoBusy(true);setBulkPromoMessage("");
     try{
-      const res=await authFetch(`/api/admin/listings/${selectedIds[0]}/promotions`);
+      const res=await authFetch(`/api/admin/listings/${selectedIds[0]||listings[0].id}/promotions`);
       const data=await res.json().catch(()=>({}));
       if(!res.ok||!Array.isArray(data.options))throw Error(data.error||"Cannot load promotion options");
-      setBulkPromoOptions(data.options);setBulkPromoType(data.options[0]?.type||"");setBulkPromoDays(String(data.options[0]?.daysValid||7));
+      setBulkPromoOptions(data.options);setBulkPromoSelected(data.options.length?{[data.options[0].type]:data.options[0].daysValid}:{});
     }catch(e){setBulkPromoMessage(e instanceof Error?e.message:"Cannot load promotions");}
     finally{setBulkPromoBusy(false);}
   }
   async function applyBulkPromotions(){
-    const days=Number(bulkPromoDays),ids=[...selectedIds];
-    if(!bulkPromoOptions.some(o=>o.type===bulkPromoType)||!Number.isInteger(days)||days<1||days>365){setBulkPromoMessage("Choose a valid promotion and 1–365 days.");return;}
-    if(!window.confirm(`Apply ${bulkPromoType} for ${days} days to ${ids.length} selected listings? No seller credits are charged. Existing promotions of this type will have their expiry reset.`))return;
+    const ids=[...selectedIds],promotions=bulkPromoOptions.filter(o=>bulkPromoSelected[o.type]!==undefined).map(o=>({type:o.type,days:bulkPromoSelected[o.type]}));
+    if(!ids.length||!promotions.length){setBulkPromoMessage("Select listings and at least one promotion.");return;}
+    if(promotions.some(p=>!Number.isInteger(p.days)||p.days<1||p.days>365)){setBulkPromoMessage("Each selected promotion needs 1–365 whole days.");return;}
+    const total=ids.length*promotions.length;
+    if(!window.confirm(`Apply ${promotions.length} promotion types to ${ids.length} listings (${total} grants)? No seller credits charged. Existing promotions of matching types will have their expiry reset.`))return;
     setBulkPromoBusy(true);setBulkPromoMessage("");
     let ok=0;const failed:string[]=[];
+    const failedIds=new Set<string>();
     for(const id of ids){
-      try{
-        const res=await authFetch(`/api/admin/listings/${encodeURIComponent(id)}/promotions`,{method:"POST",body:JSON.stringify({type:bulkPromoType,days})});
-        const data=await res.json().catch(()=>({}));
-        if(!res.ok||data.ok!==true)throw Error(data.error||`HTTP ${res.status}`);
-        ok++;
-      }catch(e){failed.push(`${id}: ${e instanceof Error?e.message:"Network error"}`);}
+      for(const promo of promotions){
+        try{
+          const res=await authFetch(`/api/admin/listings/${encodeURIComponent(id)}/promotions`,{method:"POST",body:JSON.stringify(promo)});
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok||data.ok!==true)throw Error(data.error||`HTTP ${res.status}`);
+          ok++;
+        }catch(e){failedIds.add(id);failed.push(`${id}/${promo.type}: ${e instanceof Error?e.message:"Network error"}`);}
+      }
     }
-    setBulkPromoMessage(`Applied to ${ok}/${ids.length} listings. ${failed.length?`Failed: ${failed.slice(0,10).join("; ")}`:"All promotions saved."}`);
-    setSelectedIds(failed.map(x=>x.split(":")[0]));
+    setBulkPromoMessage(`Applied ${ok}/${total} promotion grants across ${ids.length} listings. ${failed.length?`Failures: ${failed.slice(0,10).join("; ")}`:"All promotions saved."}`);
+    setSelectedIds([...failedIds]);
     setBulkPromoBusy(false);
   }
   const visibleIds=listings.map(l=>String(l.id));
@@ -351,11 +355,14 @@ export function AdminListingsPage() {
       {bulkPromoOpen&&<div className="mb-4 rounded-xl border-2 border-orange-400 bg-white p-4 text-gray-900">
         <div className="mb-3 flex items-center justify-between"><h3 className="font-bold">Bulk listing promotions · {selectedIds.length} selected</h3><button type="button" onClick={()=>setBulkPromoOpen(false)} disabled={bulkPromoBusy} className="text-sm font-bold text-blue-700">Close</button></div>
         <p className="mb-3 text-sm">Admin-sponsored promotions: no seller credits charged. Only selected listings on the current page are affected. Promotions do not publish inactive listings.</p>
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm font-bold">Promotion type<select value={bulkPromoType} onChange={e=>{setBulkPromoType(e.target.value);setBulkPromoDays(String(bulkPromoOptions.find(o=>o.type===e.target.value)?.daysValid||7));}} className="mt-1 block rounded-lg border border-gray-400 bg-white p-2 text-gray-900">{bulkPromoOptions.map(o=><option key={o.type} value={o.type}>{o.label}</option>)}</select></label>
-          <label className="text-sm font-bold">Duration (days)<input type="number" min="1" max="365" step="1" value={bulkPromoDays} onChange={e=>setBulkPromoDays(e.target.value)} className="mt-1 block w-28 rounded-lg border border-gray-400 bg-white p-2 text-gray-900"/></label>
-          <button type="button" disabled={bulkPromoBusy||!bulkPromoType} onClick={()=>void applyBulkPromotions()} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkPromoBusy?"Working…":"Apply promotions"}</button>
+        <div className="mb-3 flex items-center gap-3"><button type="button" onClick={()=>setBulkPromoSelected(Object.fromEntries(bulkPromoOptions.map(o=>[o.type,o.daysValid])))} disabled={bulkPromoBusy} className="rounded-lg border border-blue-600 px-3 py-2 text-xs font-bold text-blue-700">Select all promotions</button><button type="button" onClick={()=>setBulkPromoSelected({})} disabled={bulkPromoBusy} className="rounded-lg border border-gray-400 px-3 py-2 text-xs font-bold text-gray-700">Clear promotions</button></div>
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {bulkPromoOptions.map(option=><div key={option.type} className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-gray-900">
+            <label className="flex items-center gap-2 text-sm font-bold"><input type="checkbox" disabled={bulkPromoBusy} checked={bulkPromoSelected[option.type]!==undefined} onChange={e=>setBulkPromoSelected(prev=>{const next={...prev};if(e.target.checked)next[option.type]=option.daysValid;else delete next[option.type];return next;})}/>{option.label}</label>
+            {bulkPromoSelected[option.type]!==undefined&&<label className="mt-2 block text-xs font-semibold">Duration (days)<input aria-label={`${option.label} duration in days`} type="number" min="1" max="365" step="1" disabled={bulkPromoBusy} value={bulkPromoSelected[option.type]} onChange={e=>setBulkPromoSelected(prev=>({...prev,[option.type]:Number(e.target.value)}))} className="mt-1 block w-28 rounded-lg border border-gray-400 bg-white p-2 text-gray-900"/></label>}
+          </div>)}
         </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3"><span className="text-sm font-semibold">{Object.keys(bulkPromoSelected).length} promotion types × {selectedIds.length} listings = {Object.keys(bulkPromoSelected).length*selectedIds.length} grants</span><button type="button" disabled={bulkPromoBusy||!Object.keys(bulkPromoSelected).length} onClick={()=>void applyBulkPromotions()} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkPromoBusy?"Applying…":"Apply selected promotions"}</button></div>
         {bulkPromoMessage&&<p role="status" className="mt-3 text-sm font-semibold">{bulkPromoMessage}</p>}
       </div>}
       {selectedIds.length>0 && <div className="mb-3"><button type="button" onClick={()=>beginCategoryEdit()} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white">Change category for {selectedIds.length} selected</button></div>}
