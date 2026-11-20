@@ -1,5 +1,6 @@
 import BulkImportPage from "@/pages/BulkImportPage";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
+const AdminGoLivePage = React.lazy(() => import("@/pages/admin/AdminGoLivePage").then(module => ({ default: module.AdminGoLivePage })));
 const AdminLiveCommercePage = React.lazy(() => import("@/pages/admin/AdminLiveCommercePage").then(module => ({ default: module.AdminLiveCommercePage })));
 const AdminDemoCreatorPage = React.lazy(() => import("@/pages/admin/AdminDemoCreatorPage").then(module => ({ default: module.AdminDemoCreatorPage })));
 import React, { useEffect, useRef, useState } from "react";
@@ -473,6 +474,7 @@ function Router() {
       <Route path="/live">{() => <FeatureGate feature="live" name="Live selling"><LiveHubPage /></FeatureGate>}</Route>
       <Route path="/live/:id">{() => <FeatureGate feature="live" name="Live selling"><LivePage /></FeatureGate>}</Route>
       <Route path="/admin" component={AdminLoginPage} />
+      <Route path="/admin/go-live" component={AdminGoLivePage} />
       <Route path="/admin/live-commerce" component={AdminLiveCommercePage} />
       <Route path="/admin/demo-creator" component={AdminDemoCreatorPage} />
       <Route path="/admin/dashboard" component={AdminWordPressDashboard} />
