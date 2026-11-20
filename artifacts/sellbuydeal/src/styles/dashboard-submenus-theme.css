@@ -804,3 +804,44 @@ body:has(#bz-dashboard-main) .bz-glass-v8-layout .bz-glass-sidebar-signout{color
 #bz-dashboard-main.bz-support-light .bz-support-credits-page a:not([class*="bg-"]){color:#0968b8!important;}
 #bz-dashboard-main.bz-support-light .bz-support-credits-page :is(button,a):focus-visible{outline:3px solid #ff9b34!important;outline-offset:2px;}
 @media(max-width:700px){#bz-dashboard-main.bz-support-light .bz-support-credits-hero{padding:19px 17px;min-height:175px;}#bz-dashboard-main.bz-support-light .bz-support-hero-art{flex-basis:85px;height:100px;}#bz-dashboard-main.bz-support-light .bz-support-hero-main{width:76px;height:76px;border-radius:18px;}#bz-dashboard-main.bz-support-light .bz-support-hero-main svg{width:39px;height:39px;}#bz-dashboard-main.bz-support-light .bz-support-hero-float-one,#bz-dashboard-main.bz-support-light .bz-support-hero-float-two{width:29px;height:29px;}#bz-dashboard-main.bz-support-light .bz-support-hero-float-one svg,#bz-dashboard-main.bz-support-light .bz-support-hero-float-two svg{width:17px;height:17px;}}
+
+
+/* Universal Credits-inspired dashboard design system: all subpages except Overview/Credits. */
+#bz-dashboard-main.bazunk-dashboard-subpage{--bz-ink:#173654;--bz-line:#cbdff2;--bz-pale:#f0f8ff;color:var(--bz-ink)!important;background:#f5faff!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage>.h-full{display:flex;flex-direction:column;gap:12px;min-width:0;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-banner{position:relative;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:166px;overflow:hidden;border-radius:18px;padding:22px 27px;border:2px solid #9bdbff;box-shadow:0 8px 24px #12528b20;background:linear-gradient(110deg,#05b8e8,#0879ef 51%,#6b46ef 100%)!important;color:#fff!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-store{background:linear-gradient(110deg,#079ddc,#086fe9 50%,#f98c20 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-buying{background:linear-gradient(110deg,#0caee2,#157bf4 55%,#d650c8 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-selling{background:linear-gradient(110deg,#05b5e3,#0876ee 52%,#f98b20 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-finance{background:linear-gradient(110deg,#02b7d5,#1478f1 53%,#7b46f3 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-account{background:linear-gradient(110deg,#05b4dc,#0c75ed 55%,#10b9a2 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-support{background:linear-gradient(110deg,#06a8e2,#1875f0 55%,#e95aaf 100%)!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-copy{position:relative;z-index:1;min-width:0;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-kicker{display:inline-flex;align-items:center;gap:7px;background:#ffffff38;border-radius:100px;padding:5px 10px;font-size:10px;font-weight:900;letter-spacing:1px;color:#fff!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-banner h1{display:flex;align-items:center;gap:12px;margin:10px 0 6px;font-size:clamp(23px,2.8vw,35px);line-height:1.13;letter-spacing:-.5px;font-weight:900;color:#fff!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-banner p{font-size:12px;line-height:1.5;color:#fff!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-pills span{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#fff;border-radius:9px;color:#15527c!important;font-size:11px;font-weight:800;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-pills svg{color:#e7780c!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-illustration{position:relative;flex:0 0 145px;height:125px;display:grid;place-items:center;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-main{display:grid;place-items:center;width:104px;height:104px;border-radius:24px;background:linear-gradient(145deg,#fff,#d8eeff);color:#0873cf!important;transform:rotate(-10deg);box-shadow:0 12px 22px #073f793c;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-coin,#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-spark{position:absolute;width:39px;height:39px;border-radius:12px;display:grid;place-items:center;box-shadow:0 5px 14px #17447035;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-coin{top:0;right:0;background:#ffe49d;color:#a15d0b!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-spark{bottom:0;left:0;background:#c5ffe5;color:#07845f!important;}
+/* Compact spacing and coloured borders. Scope to non-hero content; preserve functional button colours. */
+#bz-dashboard-main.bazunk-dashboard-subpage>.h-full> :not(.bz-unified-page-banner){min-width:0;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.rounded-2xl,.rounded-xl)[class*="border"]{border-color:#b9d8f2!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(section,article)[class*="bg-[#0"],#bz-dashboard-main.bazunk-dashboard-subpage :is(section,article)[class*="bg-[#1"],#bz-dashboard-main.bazunk-dashboard-subpage :is(section,article).bg-slate-900{background:#fff!important;color:#173654!important;border:1px solid #c4dff4!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.bg-white,.bg-slate-50,.bg-gray-50){color:#173654!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.bg-white,.bg-slate-50,.bg-gray-50) :is(.text-white,.text-gray-100,.text-slate-100){color:#173654!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(input:not([type=checkbox]):not([type=radio]),textarea,select){background:#fff!important;color:#173654!important;-webkit-text-fill-color:#173654!important;border:1px solid #a9cbea!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(input,textarea)::placeholder{color:#7188a2!important;-webkit-text-fill-color:#7188a2!important;opacity:1!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(button,a):focus-visible{outline:3px solid #f99c2b!important;outline-offset:2px;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.space-y-8)>:not([hidden])~:not([hidden]){margin-top:18px!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.space-y-6)>:not([hidden])~:not([hidden]){margin-top:14px!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.p-8){padding:20px!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage :is(.p-6){padding:18px!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-account-credits-hero-slot,#bz-dashboard-main.bazunk-dashboard-subpage .bz-support-credits-hero{display:none!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-support-credits-page{padding-top:0!important;}
+#bz-dashboard-main.bazunk-dashboard-subpage .bz-seller-vivid-hero,#bz-dashboard-main.bazunk-dashboard-subpage .bz-finance-fun-hero{min-height:145px!important;}
+@media(max-width:720px){#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-banner{padding:17px;min-height:148px;}#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-illustration{flex-basis:85px;height:90px;}#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-main{width:74px;height:74px;border-radius:17px;}#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-main svg{width:37px;height:37px;}#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-coin,#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-spark{width:27px;height:27px;}#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-coin svg,#bz-dashboard-main.bazunk-dashboard-subpage .bz-unified-page-art-spark svg{width:16px;height:16px;}}
