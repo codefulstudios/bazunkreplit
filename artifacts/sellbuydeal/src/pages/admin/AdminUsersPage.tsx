@@ -44,6 +44,11 @@ export function AdminUsersPage() {
   const [accountFilter,setAccountFilter]=useState<"all"|"active"|"suspended">("all");
   const [sellerFilter,setSellerFilter]=useState<"all"|"private"|"business">("all");
   const [selectedUserIds,setSelectedUserIds]=useState<string[]>([]);
+  const [bulkAction,setBulkAction]=useState("credit");
+  const [bulkAmount,setBulkAmount]=useState("");
+  const [bulkReason,setBulkReason]=useState("");
+  const [bulkBusy,setBulkBusy]=useState(false);
+  const [bulkResult,setBulkResult]=useState("");
   const visibleUsers=users.filter(u=>(accountFilter==="all"||(accountFilter==="suspended"?u.banned:!u.banned))
     &&(sellerFilter==="all"||(sellerFilter==="private"?(!u.seller_type||u.seller_type==="private"):(u.seller_type==="business"||u.seller_type==="sole_trader"))));
   const visibleUserIds=visibleUsers.map(u=>u.email);
@@ -222,6 +227,30 @@ export function AdminUsersPage() {
     } finally { setSyncing(false); }
   }
 
+  async function runBulkAction() {
+    const emails=selectedUserIds.filter(email=>visibleUsers.some(u=>u.email===email));
+    if (!emails.length) {setBulkResult("Select customers first.");return;}
+    const credits=Number(bulkAmount);
+    if (bulkAction==="credit" && (!Number.isInteger(credits)||credits<=0||credits>100000)) {setBulkResult("Enter 1–100,000 whole credits.");return;}
+    if (bulkAction==="credit" && !bulkReason.trim()) {setBulkResult("A reason is required for bulk credit changes.");return;}
+    const description=bulkAction==="credit"?`ADD ${credits} credits to each of ${emails.length} customers (${credits*emails.length} credits total)`:bulkAction==="suspend"?"SUSPEND":"REACTIVATE";
+    if (!window.confirm(`${description} for ${emails.length} selected customers? This changes live customer accounts.`)) return;
+    setBulkBusy(true);setBulkResult("");
+    let succeeded=0;const failed:string[]=[];
+    for (const email of emails) {
+      try {
+        const path=bulkAction==="credit"?`/api/admin/users/${encodeURIComponent(email)}/credits`:`/api/admin/users/${encodeURIComponent(email)}/ban`;
+        const response=await authFetch(path,{method:"PATCH",body:JSON.stringify(bulkAction==="credit"?{amount:credits/100,reason:bulkReason.trim()}:{banned:bulkAction==="suspend"})});
+        if (!response.ok) {const data=await response.json().catch(()=>({}));throw new Error(data.error||`HTTP ${response.status}`);}
+        succeeded++;
+      } catch(err) {failed.push(`${email}: ${err instanceof Error?err.message:"Network error"}`);}
+    }
+    setBulkResult(`Completed ${succeeded}/${emails.length}. ${failed.length?`Failed: ${failed.slice(0,8).join("; ")}`:"All changes saved."}`);
+    setSelectedUserIds(failed.map(x=>x.split(":")[0]));
+    setBulkBusy(false);
+    await load();
+  }
+
   async function createDemoSellers() {
     if (!window.confirm("Create 20 admin-managed demo seller profiles? These are fictional sellers without logins or verification.")) return;
     setDemoBusy(true);setDemoMessage("");
@@ -361,6 +390,21 @@ export function AdminUsersPage() {
           </select>
         </label>
         <span className="text-sm font-semibold text-slate-600 dark:text-slate-200">{visibleUsers.length} shown (up to 200 loaded)</span>
+      </div>
+      <div className="mb-3 rounded-xl border-2 border-orange-300 bg-white p-3 text-gray-900">
+        <div className="flex flex-wrap items-center gap-2">
+          <strong className="text-sm">{selectedUserIds.length} selected</strong>
+          <select aria-label="Bulk action" value={bulkAction} onChange={e=>setBulkAction(e.target.value)} className="rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900">
+            <option value="credit">Add credits</option><option value="suspend">Suspend accounts</option><option value="reactivate">Reactivate accounts</option>
+          </select>
+          {bulkAction==="credit"&&<>
+            <input aria-label="Credits per customer" type="number" min="1" max="100000" step="1" placeholder="Credits per customer" value={bulkAmount} onChange={e=>setBulkAmount(e.target.value)} className="w-40 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
+            <input aria-label="Bulk credit reason" placeholder="Reason (required)" value={bulkReason} onChange={e=>setBulkReason(e.target.value)} className="min-w-40 flex-1 rounded-lg border border-gray-400 bg-white px-3 py-2 text-sm text-gray-900"/>
+          </>}
+          <button type="button" disabled={bulkBusy||!selectedUserIds.length} onClick={runBulkAction} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">{bulkBusy?"Applying…":"Apply to selected"}</button>
+        </div>
+        <p className="mt-2 text-xs text-gray-600">Selection applies to visible customers on this page. Changes are audited per account; failures are reported individually.</p>
+        {bulkResult&&<p role="status" className="mt-2 text-sm font-semibold text-gray-900">{bulkResult}</p>}
       </div>
       <div className="mb-3"><AdminBulkSelection selected={selectedUserIds} rows={visibleUsers.map(u=>({id:u.email,cells:[u.name??"",u.seller_type??"private",u.banned?"suspended":"active",u.credits,u.created_at]}))}
         columns={["Name","Seller type","Account status","Credits","Joined"]} filename="bazunk-selected-users" onClear={()=>setSelectedUserIds([])}/></div>
