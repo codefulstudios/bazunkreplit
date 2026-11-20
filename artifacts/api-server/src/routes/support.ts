@@ -2,6 +2,7 @@ import { Router } from "express";
 import { sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { logger } from "../lib/logger.js";
 import { sendWelcomeMessage } from "../lib/systemMessages.js";
 
@@ -11,8 +12,10 @@ const router = Router();
 
 router.post("/support/tickets", async (req, res) => {
   try {
-    const { email, subject, category, body } = req.body;
-    if (!email || !subject || !body) {
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
+    const { subject, category, body } = req.body;
+    if (!subject || !body) {
       res.status(400).json({ error: "email, subject, and body are required" }); return;
     }
 
@@ -39,8 +42,8 @@ router.post("/support/tickets", async (req, res) => {
 
 router.get("/support/tickets", async (req, res) => {
   try {
-    const email = req.query.email as string;
-    if (!email) { res.status(400).json({ error: "email required" }); return; }
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
 
     const tickets = await db.execute(
       sql`SELECT t.id, t.subject, t.category, t.status, t.priority, t.created_at, t.updated_at,
@@ -91,8 +94,10 @@ router.get("/support/tickets/:id", async (req, res) => {
 router.post("/support/tickets/:id/reply", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { email, body } = req.body;
-    if (!email || !body) { res.status(400).json({ error: "email and body required" }); return; }
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
+    const { body } = req.body;
+    if (!body) { res.status(400).json({ error: "body required" }); return; }
 
     const [ticket] = await db.execute(
       sql`SELECT id, status FROM support_tickets WHERE id = ${id} AND email = ${email}`
@@ -171,13 +176,19 @@ router.get("/support/inbox", async (req, res) => {
 router.post("/support/tickets/:id/read", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { email } = req.body;
-    if (!email || !Number.isInteger(id)) { res.status(400).json({ error: "email and ticket id required" }); return; }
-    await db.execute(
+    const email = await authenticatedSellerEmail(req, res);
+    if (!email) return;
+    if (!Number.isInteger(id)) { res.status(400).json({ error: "Valid ticket id required" }); return; }
+    const updated = await db.execute(
       sql`UPDATE support_ticket_messages SET read_by_user = TRUE
           WHERE ticket_id = ${id}
-            AND EXISTS (SELECT 1 FROM support_tickets WHERE id = ${id} AND email = ${email})`
+            AND EXISTS (SELECT 1 FROM support_tickets WHERE id = ${id} AND email = ${email})
+          RETURNING id`
     );
+    if (!updated.rows.length) {
+      const own = await db.execute(sql`SELECT id FROM support_tickets WHERE id = ${id} AND email = ${email}`);
+      if (!own.rows.length) { res.status(404).json({ error: "Ticket not found" }); return; }
+    }
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, "Failed to mark ticket read");
