@@ -145,6 +145,13 @@ export async function fulfillSpecialCheckout(sessionId:string) {
       ${Number(m.sellerFeeMinor??0)/100},${Number(m.sellerNetMinor??0)/100},${Number(m.deliveryMinor??0)/100},
       ${Number(m.totalMinor)/100},${m.feePolicy??"special-v1"},NOW(),NOW())
       ON CONFLICT(stripe_session_id,line_no) DO NOTHING`);
+    // A paid flash-sale checkout must remove the item from active sale discovery.
+    // Auction checkout already requires status='ended'; retain that status so
+    // auction history and winner information remain available.
+    if (m.kind === "flash") {
+      await tx.execute(sql`UPDATE flash_sales SET status='ended',updated_at=NOW()
+        WHERE id=${m.saleId} AND status='active'`);
+    }
     if(m.kind==="find_it"){
       const found=(await tx.execute(sql`UPDATE marketplace_find_requests SET status='purchased',updated_at=NOW()
         WHERE selected_offer_id=${m.saleId} AND status='accepted' RETURNING classified_id`)).rows[0] as any;
