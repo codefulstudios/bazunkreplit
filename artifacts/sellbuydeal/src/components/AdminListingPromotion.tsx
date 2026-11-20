@@ -1,7 +1,6 @@
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import { Megaphone, Loader2 } from "lucide-react";
 import { useAdmin } from "@/context/AdminContext";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
@@ -11,6 +10,7 @@ type Active = { id: number; type: string; expires_at: string };
 export function AdminListingPromotion({ listingId, title, status }: { listingId: string | number; title: string; status: string }) {
   const { authFetch } = useAdmin();
   const selectId = useId();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<Option[]>([]);
   const [active, setActive] = useState<Active[]>([]);
@@ -22,6 +22,12 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
   const [success, setSuccess] = useState("");
   const [retry, setRetry] = useState(0);
 
+  useEffect(() => {
+    const dialog=dialogRef.current;
+    if(!dialog)return;
+    if(open&&!dialog.open)dialog.showModal();
+    else if(!open&&dialog.open)dialog.close();
+  },[open]);
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
@@ -58,10 +64,9 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
 
   return <>
     <button type="button" onClick={() => setOpen(true)} title={`Promote ${title}`} aria-label={`Promote ${title}`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 px-2 h-7 text-xs font-semibold"><Megaphone className="w-3.5 h-3.5" /> Promote</button>
-    <Dialog open={open} onOpenChange={value => { if (!busy) setOpen(value); }}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto">
-        <DialogTitle className="pr-6">Promote listing</DialogTitle>
-        <DialogDescription>{title}</DialogDescription>
+    <dialog ref={dialogRef} onClose={()=>setOpen(false)} onCancel={e=>{if(busy)e.preventDefault();}} className="fixed inset-0 m-auto w-[min(94vw,34rem)] max-h-[90dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl backdrop:bg-slate-950/65">
+        <div className="flex items-start justify-between gap-3"><h2 className="text-xl font-bold">Promote listing</h2><button type="button" onClick={()=>setOpen(false)} disabled={busy} aria-label="Close promotion dialog" className="rounded-lg border border-slate-300 px-3 py-1 text-sm font-bold">Close</button></div>
+        <p className="mt-1 mb-3 text-sm text-slate-600">{title}</p>
         <p className="text-sm rounded-xl bg-purple-50 p-3 text-purple-800">Admin promotion · No seller credits charged. Duration starts immediately. Applying the same type again resets its expiry; other promotions stay active.</p>
         {status !== "active" && status !== "approved" && <p className="text-sm text-amber-800 bg-amber-50 p-3 rounded-xl">This listing is {status}. Promotion does not publish it or change its status, and its duration still starts now.</p>}
         {loading ? <p className="flex gap-2 text-sm"><Loader2 className="w-4 h-4 animate-spin" /> Loading promotions…</p> : <>
@@ -83,7 +88,6 @@ export function AdminListingPromotion({ listingId, title, status }: { listingId:
         {error && <div role="alert" className="text-sm text-red-700">{error}{!options.length && !loading && <button type="button" onClick={() => setRetry(v => v + 1)} className="ml-2 underline">Retry</button>}</div>}
         {success && <p role="status" className="text-sm text-emerald-700">{success}</p>}
         <p className="text-xs text-gray-500">Cancel promotions through Admin → Promotions. One-off tools and unavailable features are excluded.</p>
-      </DialogContent>
-    </Dialog>
+    </dialog>
   </>;
 }
