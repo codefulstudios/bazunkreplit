@@ -6,7 +6,8 @@ import { quoteCart, saveFeeSnapshot, QuoteError } from "../lib/checkoutQuote.js"
 import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { sql } from "drizzle-orm";
-import { db } from "@workspace/db";
+import { db, usersTable, creditTransactionsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { storage } from "../storage.js";
 import { getUncachableStripeClient, getStripePublishableKey } from "../stripeClient.js";
 import { convertAmount, smallestUnit } from "../fxRates.js";
@@ -498,9 +499,32 @@ router.post("/stripe/apply-credits", async (req, res) => {
     }
 
     await storage.upsertUser(email);
-    await storage.recordCreditTransaction(sessionId, email, totalCredits);
-    const balance = await storage.addCredits(email, totalCredits);
-    await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    // Claim the Stripe session and credit the account in ONE database transaction.
+    // A duplicate callback cannot increment the balance a second time.
+    const applied = await db.transaction(async tx => {
+      const [claim] = await tx.insert(creditTransactionsTable)
+        .values({ id: sessionId, email, creditsAdded: totalCredits.toString() })
+        .onConflictDoNothing().returning({ id: creditTransactionsTable.id });
+      if (!claim) {
+        const [existing] = await tx.select({ email: creditTransactionsTable.email })
+          .from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId));
+        if (!existing || existing.email.toLowerCase() !== email.toLowerCase()) throw new Error("Session already belongs to another account");
+        const [account] = await tx.select({ credits: usersTable.credits }).from(usersTable).where(eq(usersTable.email, email));
+        return { balance: Number(account?.credits ?? 0), newlyApplied: false };
+      }
+      const [account] = await tx.update(usersTable)
+        .set({ credits: sql`${usersTable.credits} + ${totalCredits}` })
+        .where(eq(usersTable.email, email)).returning({ credits: usersTable.credits });
+      if (!account) throw new Error("Credit recipient account missing");
+      return { balance: Number(account.credits), newlyApplied: true };
+    });
+    const balance = applied.balance;
+    if (!applied.newlyApplied) { res.json({ success: true, alreadyApplied: true, balance }); return; }
+    try {
+      await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    } catch (ledgerError) {
+      logger.error({ ledgerError, sessionId }, "Credit granted but auxiliary economy log failed");
+    }
 
     void sendCreditsConfirmation({ email, creditsAdded: totalCredits, newBalance: balance });
     void sendSystemMessage(email, {
