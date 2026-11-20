@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { randomUUID } from "node:crypto";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
@@ -96,6 +97,36 @@ async function applyAction(id:number,email:string,action:Action,edit:Record<stri
   });
 }
 
+async function ensureBulkAudit() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS seller_listing_bulk_audit (
+      id text PRIMARY KEY,
+      batch_id text NOT NULL,
+      seller_email text NOT NULL,
+      listing_id integer NOT NULL,
+      action text NOT NULL,
+      result text NOT NULL CHECK (result IN ('success','failure')),
+      detail text,
+      created_at timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await db.execute(sql`CREATE INDEX IF NOT EXISTS seller_listing_bulk_audit_seller_idx ON seller_listing_bulk_audit (seller_email,created_at DESC)`);
+}
+
+router.get("/listings/seller-tools/history",async(req,res)=>{
+  try {
+    const email=await authenticatedSellerEmail(req,res);if(!email)return;
+    await ensureBulkAudit();
+    const result=await db.execute(sql`
+      SELECT batch_id,listing_id,action,result,detail,created_at
+      FROM seller_listing_bulk_audit WHERE seller_email=${email}
+      ORDER BY created_at DESC LIMIT 200
+    `);
+    res.setHeader("Cache-Control","no-store");
+    res.json(result.rows);
+  }catch(e){console.error("Seller bulk audit history failed",e);res.status(500).json({error:"Could not load bulk action history"});}
+});
+
 router.post("/listings/seller-tools",async(req,res)=>{
   try{
     const email=await authenticatedSellerEmail(req,res);if(!email)return;
@@ -106,13 +137,20 @@ router.post("/listings/seller-tools",async(req,res)=>{
       res.status(400).json({error:"Select 1 to 50 unique listing IDs"});return;
     }
     if(edit!==undefined && (typeof edit!=="object"||edit===null||Array.isArray(edit))) {res.status(400).json({error:"Invalid edit data"});return;}
+    await ensureBulkAudit();
+    const batchId=randomUUID();
     const updated:unknown[]=[];const failures:{id:number;error:string}[]=[];
     for(const id of ids as number[]){
+      let result:"success"|"failure"="success";let detail:string|null=null;
       try{updated.push(await applyAction(id,email,action,edit??{}));}
-      catch(e){failures.push({id,error:e instanceof Error?e.message:"Unknown update error"});}
+      catch(e){result="failure";detail=e instanceof Error?e.message:"Unknown update error";failures.push({id,error:detail});}
+      try { await db.execute(sql`INSERT INTO seller_listing_bulk_audit(id,batch_id,seller_email,listing_id,action,result,detail)
+        VALUES(${randomUUID()},${batchId},${email},${id},${action},${result},${detail})`); }
+      catch(auditError){console.error("Seller bulk audit write failed",auditError);}
+
     }
     res.setHeader("Cache-Control","no-store");
-    res.status(updated.length?200:409).json({action,updated,failures});
+    res.status(updated.length?200:409).json({batchId,action,updated,failures});
   }catch(e){console.error("Seller listing tools failed",e);res.status(500).json({error:"Could not complete listing action"});}
 });
 export default router;
