@@ -43,7 +43,7 @@ test("Admin listing promotion uses a native top-layer modal with readable colour
 
 test("Phase 3 search suggestions use region-safe server results and keyboard-accessible controls",()=>{
  const nav=read("components/Navbar.tsx");
- const api=readFileSync("artifacts/api-server/src/routes/listings.ts","utf8");
+ const api=fs.readFileSync("artifacts/api-server/src/routes/listings.ts","utf8");
  assert.match(nav,/\/api\/listings\/search-suggestions\?region=/);
  assert.match(nav,/searchSuggestions\.map\(/);
  assert.match(nav,/focus-visible:outline/);
