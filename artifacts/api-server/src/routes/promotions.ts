@@ -6,6 +6,7 @@ import { storage } from "../storage.js";
 import { logger } from "../lib/logger.js";
 import { sendSystemMessage } from "../lib/systemMessages.js";
 import { requireAdmin } from "../middlewares/adminAuth.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAllPromoConfigs, getPromoConfig, PROMO_DEFAULTS } from "../lib/promoConfig.js";
 
 import { canGrantListingPromotion, validateAdminPromotion } from "../lib/adminListingPromotion.js";
@@ -26,9 +27,11 @@ router.get("/promotions/config", async (_req, res) => {
 });
 
 router.post("/promotions/apply", async (req, res) => {
-  const { email, type, listingId, publishAt } = req.body as { email?: string; type?: string; listingId?: number; publishAt?: string };
-  if (!email || !type) { res.status(400).json({ error: "email and type are required" }); return; }
-  if (!listingId) { res.status(400).json({ error: "listingId is required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
+  const { type, listingId, publishAt } = req.body as { type?: string; listingId?: number; publishAt?: string };
+  if (!type) { res.status(400).json({ error: "type is required" }); return; }
+  if (!Number.isSafeInteger(listingId) || !listingId || listingId < 1) { res.status(400).json({ error: "Valid listingId is required" }); return; }
 
   const config = await getPromoConfig(type);
   if (!config) { res.status(400).json({ error: "Unknown promotion type" }); return; }
@@ -37,9 +40,9 @@ router.post("/promotions/apply", async (req, res) => {
   if (config.kind === "auction") { res.status(400).json({ error: `${config.label} is added when you create an auction.` }); return; }
 
   try {
-    // Seller tools act on the listing itself, so check it exists and belongs to this seller.
+    // Every paid promotion must target a listing owned by the authenticated seller.
     let listing: { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string } | null = null;
-    if (SELLER_TOOLS.has(type)) {
+    {
       const r = await db.execute(sql`SELECT id, public_id, title, price, seller_email, seller_name, status FROM listings WHERE id = ${listingId}`);
       listing = (r.rows[0] as { id: number; public_id: string | null; title: string; price: string; seller_email: string; seller_name: string | null; status: string } | undefined) ?? null;
       if (!listing) { res.status(404).json({ error: "Listing not found" }); return; }
@@ -118,8 +121,8 @@ router.post("/promotions/apply", async (req, res) => {
 
 /** A seller's currently active promotion tools (so they can reopen analytics, share cards, schedules). */
 router.get("/promotions/mine", async (req, res) => {
-  const email = typeof req.query.email === "string" ? req.query.email : "";
-  if (!email) { res.status(400).json({ error: "email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
   try {
     const rows = await db.execute(sql`
       SELECT lp.id, lp.listing_id, lp.type, lp.expires_at, l.title, l.image, l.price, l.status, l.publish_at, l.public_id
@@ -211,8 +214,9 @@ router.post("/listings/:id/view", async (req, res) => {
 
 router.get("/promotions/analytics/:listingId", async (req, res) => {
   const listingId = parseInt(req.params.listingId);
-  const email = typeof req.query.email === "string" ? req.query.email : "";
-  if (!listingId || !email) { res.status(400).json({ error: "listingId and email required" }); return; }
+  const email = await authenticatedSellerEmail(req, res);
+  if (!email) return;
+  if (!listingId) { res.status(400).json({ error: "listingId required" }); return; }
   try {
     const l = (await db.execute(sql`SELECT id, title, seller_email, watchers, views, created_at, status FROM listings WHERE id = ${listingId}`)).rows[0] as any;
     if (!l) { res.status(404).json({ error: "Listing not found" }); return; }
