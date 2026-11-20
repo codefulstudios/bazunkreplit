@@ -76,7 +76,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       // USD is the default for new visitors regardless of browser locale.
       return "USD";
     } catch {
-      return "USD";
+      return "GBP";
     }
   });
 
@@ -86,8 +86,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   function setCountry(code: string) {
     if (!MARKET_COUNTRIES.some(c => c.code === code)) return;
     setCountryCode(code);
+    setCurrencyCode(countryToCurrency(code));
     try { localStorage.setItem(COUNTRY_KEY, code); } catch {}
-    setCurrency(countryToCurrency(code));
+    try { localStorage.setItem(STORAGE_KEY, countryToCurrency(code)); } catch {}
   }
 
   function setCurrency(code: CurrencyCode) {
