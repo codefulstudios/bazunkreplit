@@ -5862,6 +5862,28 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
+            {activeSection !== "overview" && activeSection !== "credits" && (() => {
+              const group = SIDEBAR_CATEGORIES.find(category => category.items.some(item => item.id === activeSection));
+              const entry = group?.items.find(item => item.id === activeSection);
+              if (!group || !entry) return null;
+              const SectionIcon = entry.icon;
+              const GroupIcon = group.icon;
+              return (
+                <header className={`bz-unified-page-banner bz-unified-page-${group.id}`}>
+                  <div className="bz-unified-page-copy">
+                    <div className="bz-unified-page-kicker"><GroupIcon size={15} /> BAZUNK / {group.label.toUpperCase()}</div>
+                    <h1><SectionIcon size={29} strokeWidth={2.5} /> {entry.label}</h1>
+                    <p>Your {entry.label.toLowerCase()} workspace — manage everything in one place.</p>
+                    <div className="bz-unified-page-pills"><span><ShieldCheck size={15}/> Your dashboard</span><span><Zap size={15}/> Quick access</span></div>
+                  </div>
+                  <div className="bz-unified-page-illustration" aria-hidden="true">
+                    <div className="bz-unified-page-art-main"><SectionIcon size={58} strokeWidth={1.8}/></div>
+                    <span className="bz-unified-page-art-coin"><Star size={22}/></span>
+                    <span className="bz-unified-page-art-spark"><Zap size={20}/></span>
+                  </div>
+                </header>
+              );
+            })()}
             {(activeSection === "my-store" || activeSection === "store-settings") && (
               <section className="bazunk-dashboard-store bz-store-light-theme">
                 <div className="bz-store-page-heading flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-white border border-[#dce7f5] p-5">
