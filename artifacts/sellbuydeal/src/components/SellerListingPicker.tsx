@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Package, ChevronDown, ChevronUp, Check, Plus, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/context/AuthContext";
+import { useAuth as useClerkAuth } from "@clerk/react";
 
 export interface SellerListing {
   id: number;
@@ -37,29 +38,47 @@ type Props = SingleProps | MultiProps;
 
 export function SellerListingPicker(props: Props) {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [listings, setListings] = useState<SellerListing[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email) { setListings([]); return; }
+    const controller = new AbortController();
     setLoading(true);
-    fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`)
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: Array<{ id: number; title: string; price: string; condition?: string; category?: string; image?: string | null; description?: string }>) => {
-        setListings(data.map((l) => ({
-          id: l.id,
-          title: l.title,
-          price: parseFloat(l.price),
-          condition: l.condition,
-          category: l.category,
-          image: l.image ?? undefined,
-          description: l.description,
+    setLoadError(null);
+    (async () => {
+      try {
+        const token = await getToken();
+        if (!token) throw new Error("Please sign in again to access your listings.");
+        const response = await fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(response.status === 401 || response.status === 403
+          ? "Your seller session has expired. Please sign in again."
+          : "Unable to load your listings. Please try again.");
+        const data = await response.json();
+        const rows = Array.isArray(data) ? data : Array.isArray(data?.listings) ? data.listings : null;
+        if (!rows) throw new Error("Unexpected listings response. Please refresh and try again.");
+        if (!controller.signal.aborted) setListings(rows.map((l: { id: number; title: string; price: string | number; condition?: string; category?: string; image?: string | null; description?: string }) => ({
+          id: l.id, title: l.title, price: Number(l.price) || 0,
+          condition: l.condition, category: l.category, image: l.image ?? undefined, description: l.description,
         })));
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [user?.email]);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setListings([]);
+          setLoadError(error instanceof Error ? error.message : "Unable to load your listings.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [user?.email, getToken]);
 
   const isMulti = props.multiSelect === true;
 
@@ -92,6 +111,14 @@ export function SellerListingPicker(props: Props) {
         <p className="text-sm text-gray-400">Loading your listings…</p>
       </div>
     );
+  }
+
+  if (loadError) {
+    return <div role="alert" className="rounded-2xl bg-amber-50 border border-amber-300 px-5 py-4 text-amber-950">
+      <p className="font-semibold text-sm">Could not load your existing listings</p>
+      <p className="text-sm mt-1">{loadError}</p>
+      <Link href="/dashboard?section=my-listings" className="mt-2 inline-block text-sm font-bold underline">View My Listings</Link>
+    </div>;
   }
 
   if (listings.length === 0) {

@@ -1,11 +1,15 @@
-import { useState, useMemo, useEffect } from "react";
+import { BrowseSponsoredListings } from "@/components/BrowseSponsoredListings";
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
+import { useAuth as useClerkAuth } from "@clerk/react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSearch, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
+  Search, Bell, SlidersHorizontal, X, Heart, Eye, CheckCircle2,
   Grid3X3, List, ChevronDown, ChevronUp, ArrowUpDown, Users,
-  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag,
+  MapPin, Star, ImageOff, Truck, Globe, Gavel, Zap, ShoppingBag, ShieldCheck, Tag, ArrowRight,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -38,6 +42,7 @@ interface ApiListing {
   promotions?: string[];
   publicId?: string | null;
   public_id?: string | null;
+  marketplaceRegion?: string | null;
   shipOrigin?: string | null;
   shipOriginOther?: string | null;
   shipZone?: string | null;
@@ -63,7 +68,7 @@ function mapApiListing(l: ApiListing): typeof ALL_PRODUCTS[0] & { subcategory?: 
     views: l.views ?? 0,
     watchers: l.watchers ?? 0,
     verified: false,
-    location: l.shipOriginOther || l.shipOrigin || "UK",
+    location: l.shipOriginOther || l.shipOrigin || (l.marketplaceRegion === "us" ? "USA" : l.marketplaceRegion === "uk" ? "UK" : "Location not specified"),
     listed: l.created_at ?? new Date().toISOString(),
     seller: { name: l.seller_name ?? "Seller", verified: false, rating: 4.5, reviews: 0 },
     description: "",
@@ -122,10 +127,10 @@ function PromoBadge({ promotions }: { promotions: string[] }) {
   const key = ["spotlight", "featured", "flash"].find((k) => promotions.includes(k));
   if (!key) return null;
   const { label, cls } = PROMO_BADGE[key];
-  return <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
+  return <span className={`text-xs font-black px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
 }
 
-function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_PRODUCTS[0]; view: "grid" | "list"; promotions?: string[] }) {
+function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_PRODUCTS[0] & { seller?: { name?: string } }; view: "grid" | "list"; promotions?: string[] }) {
   const [wishlisted, setWishlisted] = useState(false);
   const { formatPrice } = useCurrency();
 
@@ -135,24 +140,21 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
 
   if (view === "list") {
     return (
-      <motion.div
-        layout
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+      <div
+        className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex gap-4 p-4 group border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
         data-testid={`card-product-${product.id}`}
       >
-        <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden relative">
+        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-xl border border-slate-200 dark:border-slate-700 bg-[#f5f7fa] dark:bg-[#18253a] flex-shrink-0 overflow-hidden relative">
           {product.image
-            ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
             : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-8 h-8 text-gray-300" /></div>
           }
           <button
-            onClick={() => setWishlisted(!wishlisted)}
-            className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+            aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-1.5 right-1.5 w-9 h-9 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
             data-testid={`button-wishlist-${product.id}`}
           >
-            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+            <Heart className={`w-3.5 h-3.5 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
           </button>
         </div>
         <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -160,36 +162,34 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
               {hasPromo && <PromoBadge promotions={promotions} />}
             </div>
-            <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-[#4A5CE8] transition-colors text-sm">{product.title}</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 text-base transition-colors">{product.title}</h3>
+            <p className="mt-1 truncate text-xs font-semibold text-slate-700 dark:text-slate-200">Sold by {product.seller?.name || "Marketplace seller"}</p>
             <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
-              <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+              <span className="flex items-center gap-0.5 text-sm text-slate-700 dark:text-slate-200"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
             </div>
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
+            <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
               <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{product.views}</span>
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{product.watchers}</span>
-              {product.verified && <span className="flex items-center gap-1 text-emerald-600 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>}
+              {product.verified && <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-medium"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>}
             </div>
           </div>
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-gray-100"}`}
+    <div
+      className={`bz-product-card bz-browse-product bg-white dark:bg-slate-900 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group cursor-pointer flex flex-col border ${isSpotlight ? "border-[#F26B21] ring-2 ring-[#F26B21]/20" : isFeatured ? "border-amber-300 ring-2 ring-amber-100" : "border-slate-200 dark:border-slate-700"}`}
       data-testid={`card-product-${product.id}`}
     >
-      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+      <div className="bz-browse-product-image relative aspect-[5/4] bg-[#f5f7fa] dark:bg-[#18253a] border-b border-slate-200 dark:border-slate-700 overflow-hidden">
         {product.image
-          ? <img src={product.image} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          ? <img src={product.image} alt={product.title} loading="lazy" decoding="async" className="w-full h-full object-contain p-2 transition-opacity duration-200" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           : <div className="w-full h-full flex items-center justify-center"><ImageOff className="w-12 h-12 text-gray-300" /></div>
         }
         {hasPromo && (
@@ -198,37 +198,54 @@ function ProductCard({ product, view, promotions = [] }: { product: typeof ALL_P
           </div>
         )}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+          onClick={(event) => { event.preventDefault(); event.stopPropagation(); setWishlisted(!wishlisted); }}
+          aria-label={wishlisted ? "Remove from favourites" : "Add to favourites"} title={wishlisted ? "Remove from favourites" : "Add to favourites"} aria-pressed={wishlisted} className="absolute z-20 top-2.5 right-2.5 w-10 h-10 rounded-full border-2 border-white bg-orange-600 text-white flex items-center justify-center shadow-lg hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-colors"
           data-testid={`button-wishlist-${product.id}`}
         >
-          <Heart className={`w-4 h-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-white text-white" : "fill-none text-white"}`} />
         </button>
         <div className="absolute bottom-2.5 left-2.5">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
+          <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${CONDITION_COLORS[product.condition]}`}>{product.condition}</span>
         </div>
       </div>
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-[#4A5CE8] transition-colors mb-auto">{product.title}</h3>
+      <div className="bz-browse-product-details p-2.5 sm:p-3 flex flex-col flex-1">
+        <h3 className="bz-browse-product-title text-sm font-bold text-slate-900 line-clamp-2 min-h-[2.5rem] transition-colors mb-auto">{product.title}</h3>
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-lg font-bold text-gray-900">{formatPrice(product.price)}</span>
-            <span className="flex items-center gap-1 text-xs text-gray-400"><Eye className="w-3 h-3" />{product.views}</span>
+            <span className="bz-browse-price text-xl font-extrabold tracking-tight text-orange-600">{formatPrice(product.price)}</span>
+            <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><Eye className="w-3.5 h-3.5" />{product.views}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1 text-xs text-gray-400"><MapPin className="w-3 h-3" />{product.location}</span>
+            <span className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-200"><MapPin className="w-3.5 h-3.5" />{product.location}</span>
             {product.verified && (
-              <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
+              <span className="flex items-center gap-1 text-sm font-semibold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" />Verified</span>
             )}
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-export function BrowsePage() {
-  const [marketRegion] = useMarketplaceRegion();
+const browseCache = new Map<string, { items: ApiListing[]; time: number }>();
+const BROWSE_CACHE_TTL = 45_000;
+const BROWSE_CACHE_MAX = 30;
+function getCachedBrowse(key: string) {
+  const cached = browseCache.get(key);
+  if (!cached || Date.now() - cached.time > BROWSE_CACHE_TTL) {
+    if (cached) browseCache.delete(key);
+    return null;
+  }
+  return cached.items;
+}
+function cacheBrowse(key: string, items: ApiListing[]) {
+  if (browseCache.size >= BROWSE_CACHE_MAX) browseCache.delete(browseCache.keys().next().value!);
+  browseCache.set(key, { items, time: Date.now() });
+}
+
+export function BrowsePage({collection}:{collection?:"deals"|"eco"} = {}) {
+  const [marketRegion, setMarketRegion] = useMarketplaceRegion();
+  const { getToken } = useClerkAuth();
   const [, refreshThirdLevels] = useState(0);
   useEffect(() => { let active = true; loadThirdLevelTaxonomy().then(() => { if (active) refreshThirdLevels(n => n + 1); }); return () => { active = false; }; }, []);
 
@@ -241,30 +258,63 @@ export function BrowsePage() {
   const urlCategory = params.get("category") ?? "";
   const urlSub = params.get("sub") ?? "";
   const urlSubsub = params.get("subsub") ?? "";
+  const urlList=(name:string)=>params.get(name)?.split(",").filter(Boolean)??[];
 
   const [query, setQuery] = useState(urlQuery);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlCategory ? [urlCategory] : []);
-  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlSub ? [urlSub] : []);
-  const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlSubsub ? [urlSubsub] : []);
-  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState(urlQuery);
+  useEffect(() => { const timer = window.setTimeout(() => setDebouncedQuery(query), 350); return () => window.clearTimeout(timer); }, [query]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(urlList("categories").length ? urlList("categories") : urlCategory ? [urlCategory] : []);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>(urlList("subcategories").length ? urlList("subcategories") : urlSub ? [urlSub] : []);
+  const [selectedThirdLevels, setSelectedThirdLevels] = useState<string[]>(urlList("thirdLevels").length ? urlList("thirdLevels") : urlSubsub ? [urlSubsub] : []);
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(urlList("conditions"));
+  const [minPrice, setMinPrice] = useState(params.get("minPrice")??"");
+  const [maxPrice, setMaxPrice] = useState(params.get("maxPrice")??"");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<SortKey>((params.get("sort") as SortKey)||"newest");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [listingTypes, setListingTypes] = useState<string[]>([]);
-  const [shipFrom, setShipFrom] = useState<string[]>([]);
-  const [shipTo, setShipTo] = useState<string[]>([]);
-  const [freeShipping, setFreeShipping] = useState(false);
+  const [shipFrom, setShipFrom] = useState<string[]>(urlList("shipFrom"));
+  const [shipTo, setShipTo] = useState<string[]>(urlList("shipTo"));
+  const [freeShipping, setFreeShipping] = useState(params.get("freeShipping")==="true");
   const [minRating, setMinRating] = useState<number | null>(null);
-  const [listedWithin, setListedWithin] = useState("any");
+  const [listedWithin, setListedWithin] = useState(params.get("listedWithin")||"any");
   const [apiListings, setApiListings] = useState<(typeof ALL_PRODUCTS[0] & { subcategory?: string; promotions: string[] })[]>([]);
   const [hasMoreListings, setHasMoreListings] = useState(true);
+  const [currentPage,setCurrentPage] = useState(1);
+  const [highestPage,setHighestPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const moreController = useRef<AbortController | null>(null);
+  const scopeRef = useRef("");
   const [loadingListings, setLoadingListings] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loadingListings, "browse");
   const [listingError, setListingError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
+  const [saveOpen,setSaveOpen] = useState(false);
+  const [saveName,setSaveName] = useState("");
+  const [saveAlert,setSaveAlert] = useState(true);
+  const [savingSearch,setSavingSearch] = useState(false);
+  const [saveFeedback,setSaveFeedback] = useState("");
+  const [saveSuccess,setSaveSuccess] = useState(false);
+  async function saveCurrentSearch() {
+    setSavingSearch(true);setSaveFeedback("");setSaveSuccess(false);
+    try{
+      const token=await getToken();
+      if(!token)throw new Error("Sign in to save searches and receive alerts.");
+      const name=saveName.trim()||query.trim()||"My saved search";
+      const filters=Object.fromEntries(browseScope.entries());
+      const response=await fetch("/api/saved-searches",{
+        method:"POST",headers:{"Authorization":`Bearer ${token}`,"Content-Type":"application/json"},
+        body:JSON.stringify({name,filters,alertEnabled:saveAlert})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||"Could not save search");
+      setSaveSuccess(true);setSaveOpen(false);setSaveName("");
+      setSaveFeedback("Saved to your dashboard. Alerts will appear when newly listed items match.");
+    }catch(err){setSaveFeedback(err instanceof Error?err.message:"Could not save search");}
+    finally{setSavingSearch(false);}
+  }
+
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [countsLoaded, setCountsLoaded] = useState(false);
@@ -279,10 +329,24 @@ export function BrowsePage() {
   const browseSubsub = browseSub && selectedThirdLevels.length === 1 ? selectedThirdLevels[0] : "";
   const browseScope = new URLSearchParams();
   browseScope.set("region", marketRegion);
+  if(collection)browseScope.set("collection",collection);
   if (browseCategory) browseScope.set("category", browseCategory);
   if (browseSub) browseScope.set("sub", browseSub);
   if (browseSubsub) browseScope.set("subsub", browseSubsub);
+  if (debouncedQuery.trim()) browseScope.set("q", debouncedQuery.trim());
+  if (selectedCategories.length) browseScope.set("categories", selectedCategories.join(","));
+  if (selectedSubcategories.length) browseScope.set("subcategories", selectedSubcategories.join(","));
+  if (selectedThirdLevels.length) browseScope.set("thirdLevels", selectedThirdLevels.join(","));
+  if (selectedConditions.length) browseScope.set("conditions", selectedConditions.join(","));
+  if (minPrice) browseScope.set("minPrice", minPrice);
+  if (maxPrice) browseScope.set("maxPrice", maxPrice);
+  browseScope.set("sort", sort);
+  if (shipFrom.length) browseScope.set("shipFrom", shipFrom.join(","));
+  if (shipTo.length) browseScope.set("shipTo", shipTo.join(","));
+  if (freeShipping) browseScope.set("freeShipping", "true");
+  if (listedWithin !== "any") browseScope.set("listedWithin", listedWithin);
   const browseScopeQuery = browseScope.toString();
+  useEffect(()=>{setCurrentPage(1);setHighestPage(1);},[browseScopeQuery]);
 
 
   useEffect(() => {
@@ -309,46 +373,75 @@ export function BrowsePage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    moreController.current?.abort();
+    scopeRef.current = browseScopeQuery;
+    setLoadingMore(false);
+    setMoreError(null);
+    setListingError(null);
+    const offset = (currentPage-1)*LISTING_BATCH;
+    const key = `listings:${LISTING_BATCH}:${offset}:${browseScopeQuery}`;
+    const cached = loadAttempt === 0 ? getCachedBrowse(key) : null;
+    if (cached) {
+      setApiListings(cached.map(mapApiListing));
+      setHasMoreListings(cached.length === LISTING_BATCH);
+      setLoadingListings(false);
+      return () => controller.abort();
+    }
     setLoadingListings(true);
     setApiListings([]);
     setHasMoreListings(true);
-    setListingError(null);
-    setMoreError(null);
-    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=0${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${offset}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`Listings API returned HTTP ${r.status}`);
         const data: ApiListing[] = await r.json();
         if (!Array.isArray(data)) throw new Error("Invalid listings response");
         if (controller.signal.aborted) return;
+        cacheBrowse(key, data);
         setApiListings(data.map(mapApiListing));
         setHasMoreListings(data.length === LISTING_BATCH);
       })
       .catch((error) => {
         if (!controller.signal.aborted) setListingError(error instanceof Error ? error.message : "We couldn’t load listings. Please try again.");
+        else if (controller.signal.reason !== undefined && controller.signal.reason !== "scope-change") {
+          // Timeout: offer a retry rather than leave the loading skeleton forever.
+          setListingError("Listings are taking too long to respond. Please try again.");
+        }
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoadingListings(false);
+        clearTimeout(timeout);
+        if (scopeRef.current === browseScopeQuery) setLoadingListings(false);
       });
-    return () => controller.abort();
-  }, [loadAttempt, browseScopeQuery]);
+    return () => { clearTimeout(timeout); controller.abort("scope-change"); };
+  }, [loadAttempt, browseScopeQuery, currentPage]);
 
-  async function loadMoreListings() {
-    if (loadingMore || loadingListings || !hasMoreListings) return;
-    setLoadingMore(true);
+  useEffect(() => () => moreController.current?.abort(), []);
+
+  function goToPage(page:number) {
+    if(page<1||loadingListings||page===currentPage)return;
+    if(page>highestPage && !hasMoreListings)return;
+    setHighestPage(n=>Math.max(n,page));
+    setCurrentPage(page);
     setMoreError(null);
-    try {
-      const r = await fetch(`${API_BASE}/api/listings?limit=${LISTING_BATCH}&offset=${apiListings.length}${browseScopeQuery ? `&${browseScopeQuery}` : ""}`);
-      if (!r.ok) throw new Error("Could not load more listings");
-      const data: ApiListing[] = await r.json();
-      if (!Array.isArray(data)) throw new Error("Invalid listings response");
-      setApiListings((current) => [...current, ...data.map(mapApiListing)]);
-      setHasMoreListings(data.length === LISTING_BATCH);
-    } catch {
-      setMoreError("We couldn’t load more listings. Your current results are still available. Please try again.");
-    } finally {
-      setLoadingMore(false);
-    }
+    window.scrollTo({top:Math.max(0,(document.querySelector(".bz-browse-results")?.getBoundingClientRect().top||0)+window.scrollY-90),behavior:"smooth"});
   }
+
+  useEffect(() => {
+    const url = new URLSearchParams(rawSearch);
+    const r=url.get("region");
+    if(r==="uk"||r==="us")setMarketRegion(r);
+    setSelectedCategories(url.get("categories")?.split(",").filter(Boolean)??(url.get("category")?[url.get("category")!]:[]));
+    setSelectedSubcategories(url.get("subcategories")?.split(",").filter(Boolean)??(url.get("sub")?[url.get("sub")!]:[]));
+    setSelectedThirdLevels(url.get("thirdLevels")?.split(",").filter(Boolean)??(url.get("subsub")?[url.get("subsub")!]:[]));
+    setSelectedConditions(url.get("conditions")?.split(",").filter(Boolean)??[]);
+    setMinPrice(url.get("minPrice")||"");setMaxPrice(url.get("maxPrice")||"");
+    setShipFrom(url.get("shipFrom")?.split(",").filter(Boolean)??[]);
+    setShipTo(url.get("shipTo")?.split(",").filter(Boolean)??[]);
+    setFreeShipping(url.get("freeShipping")==="true");
+    setListedWithin(url.get("listedWithin")||"any");
+    const sorting=url.get("sort");
+    if(sorting&&["newest","price-asc","price-desc","price-lowest","views"].includes(sorting))setSort(sorting as SortKey);
+  },[rawSearch]);
 
   // Keep query in sync with URL
   useEffect(() => {
@@ -367,69 +460,11 @@ export function BrowsePage() {
   const filtered = useMemo(() => {
     let result = [...allListings];
 
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      result = result.filter((p) => p.title.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-    }
-    function parseExtras(p: unknown): { category: string; subcategory: string }[] {
-      try {
-        const raw = (p as Record<string, string | undefined>).extra_categories;
-        return raw ? JSON.parse(raw) : [];
-      } catch { return []; }
-    }
-    const matchesCategory = (category: string) => selectedCategories.includes(category)
-      || (["digital", "digital-products"].includes(category) && selectedCategories.some((selected) => ["digital", "digital-products"].includes(selected)));
-    const matchesSubcategory = (subcategory: string) => selectedSubcategories.includes(subcategory)
-      || (["software", "software-apps"].includes(subcategory) && selectedSubcategories.some((selected) => ["software", "software-apps"].includes(selected)));
-    if (selectedCategories.length > 0) {
-      result = result.filter((p) => matchesCategory(p.category) || parseExtras(p).some((e) => matchesCategory(e.category)));
-    }
-    if (selectedSubcategories.length > 0) {
-      result = result.filter((p) => (p.subcategory && matchesSubcategory(p.subcategory)) || parseExtras(p).some((e) => matchesSubcategory(e.subcategory)));
-    }
-    if (selectedThirdLevels.length > 0) {
-      result = result.filter(p => selectedThirdLevels.includes((p as unknown as { subsubcategory?: string }).subsubcategory ?? ""));
-    }
-    if (selectedConditions.length > 0) {
-      result = result.filter((p) => selectedConditions.includes(p.condition));
-    }
-    if (minPrice !== "") {
-      result = result.filter((p) => p.price >= parseFloat(minPrice));
-    }
-    if (maxPrice !== "") {
-      result = result.filter((p) => p.price <= parseFloat(maxPrice));
-    }
     if (verifiedOnly) {
       result = result.filter((p) => p.verified);
     }
-    if (shipFrom.length > 0) {
-      result = result.filter((p) => {
-        const sf = (p as unknown as unknown as Record<string, unknown>).shipOrigin as string | undefined;
-        return sf == null || shipFrom.includes(sf);
-      });
-    }
-    if (shipTo.length > 0) {
-      result = result.filter((p) => {
-        const st = (p as unknown as Record<string, unknown>).shipZone as string | undefined;
-        return st == null || shipTo.some((z) => st.includes(z));
-      });
-    }
-    if (freeShipping) {
-      result = result.filter((p) => {
-        const sp = (p as unknown as Record<string, unknown>).shippingPrice;
-        return sp == null || sp === "0" || sp === 0;
-      });
-    }
     if (minRating !== null) {
       result = result.filter((p) => ((p as unknown as Record<string, unknown>).rating as number ?? 0) >= minRating);
-    }
-    if (listedWithin !== "any") {
-      const cutoffs: Record<string, number> = {
-        today: 1, week: 7, month: 30,
-      };
-      const days = cutoffs[listedWithin] ?? 9999;
-      const cutoff = Date.now() - days * 86400000;
-      result = result.filter((p) => new Date(p.listed).getTime() >= cutoff);
     }
 
     switch (sort) {
@@ -512,7 +547,7 @@ export function BrowsePage() {
     (minRating !== null ? 1 : 0) +
     (listedWithin !== "any" ? 1 : 0);
 
-  const pageTitle = urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
+  const pageTitle = collection === "deals" ? "Promoted Deals" : collection === "eco" ? "Eco Marketplace" : urlQuery ? `Results for "${urlQuery}"` : selectedCategories.length === 1 ? `Browse ${CATEGORIES.find(c => c.slug === selectedCategories[0])?.name ?? selectedCategories[0]}` : "Browse All Listings";
 
   const SORT_OPTIONS: { key: SortKey; label: string }[] = [
     { key: "newest",    label: "Newest First" },
@@ -580,7 +615,7 @@ export function BrowsePage() {
                             />
                             <span className="text-xs text-gray-600 group-hover:text-[#4A5CE8] transition-colors">{sub.name}</span>
                           </div>
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{subCount}</span>
+                          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{subCount}</span>
                         </label>
                         {selectedSubcategories.includes(sub.slug) && suggestedThirdLevel(cat.slug, sub.slug).length > 0 && (
                           <div className="ml-5 space-y-1 border-l border-orange-200 pl-2">
@@ -628,6 +663,19 @@ export function BrowsePage() {
       </FilterSection>
 
       <FilterSection title="Price Range">
+        <div className="space-y-2 mb-3">
+          <label className="block text-xs font-semibold text-slate-700">Minimum price: £{minPrice || "0"}</label>
+          <input aria-label="Minimum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, Number(minPrice) || 0)}
+            onChange={e => { const next = Number(e.target.value); setMinPrice(String(Math.min(next, Number(maxPrice) || 5000))); }}
+            className="w-full accent-orange-600" />
+          <label className="block text-xs font-semibold text-slate-700">Maximum price: £{maxPrice || "5000+"}</label>
+          <input aria-label="Maximum price slider" type="range" min="0" max="5000" step="5"
+            value={Math.min(5000, maxPrice === "" ? 5000 : Number(maxPrice))}
+            onChange={e => setMaxPrice(String(Math.max(Number(minPrice) || 0, Number(e.target.value))))}
+            className="w-full accent-blue-600" />
+          <p className="text-xs text-slate-500">Use the fields below for prices above £5,000.</p>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">£</span>
@@ -803,39 +851,37 @@ export function BrowsePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="bz-browse-page min-h-screen bg-[#f2f7fc] flex flex-col">
       <Navbar />
 
       {/* Search header */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-5">
+      <div className="bz-browse-filter-feedback bg-transparent">
+        <div className="container mx-auto max-w-[1440px] px-4 py-0">
           <div className="flex items-center gap-3">
-            <div className="relative flex-1 max-w-xl">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] bg-gray-50"
-                data-testid="input-browse-search"
-              />
-              {query && (
-                <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
             <button
               onClick={() => setShowMobileFilters(true)}
+              aria-label="Open listing filters"
+              aria-expanded={showMobileFilters}
               className="md:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:border-[#4A5CE8] transition-colors"
               data-testid="button-mobile-filters"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters {activeFilterCount > 0 && <span className="w-5 h-5 rounded-full bg-[#4A5CE8] text-white text-[10px] font-bold flex items-center justify-center">{activeFilterCount}</span>}
+              Filters {activeFilterCount > 0 && <span className="w-5 h-5 rounded-full bg-[#4A5CE8] text-white text-xs font-bold flex items-center justify-center">{activeFilterCount}</span>}
             </button>
           </div>
 
+          {saveOpen && <form onSubmit={e=>{e.preventDefault();void saveCurrentSearch();}} className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border-2 border-orange-300 bg-orange-50 p-4 text-slate-950">
+            <label className="min-w-[190px] flex-1 text-sm font-bold">Search name
+              <input maxLength={80} required value={saveName} onChange={e=>setSaveName(e.target.value)} placeholder={query||"e.g. Vintage games"} className="mt-1 w-full rounded-lg border border-slate-400 bg-white px-3 py-2 font-semibold text-slate-950"/>
+            </label>
+            <label className="flex items-center gap-2 pb-2 text-sm font-bold">
+              <input type="checkbox" checked={saveAlert} onChange={e=>setSaveAlert(e.target.checked)}/> Alert on new matching listings
+            </label>
+            <button type="submit" disabled={savingSearch} className="rounded-lg bg-orange-600 px-4 py-2.5 font-black text-white disabled:opacity-50">{savingSearch?"Saving…":"Save"}</button>
+          </form>}
+          {saveFeedback && <div role="status" className={`mb-3 rounded-lg border p-3 text-sm font-semibold ${saveSuccess?"border-green-300 bg-green-50 text-green-900":"border-red-300 bg-red-50 text-red-900"}`}>
+            {saveFeedback}{saveSuccess && <Link href="/dashboard?section=saved-searches" className="ml-2 font-black underline">View saved searches</Link>}
+          </div>}
           {/* Active filter chips */}
           {activeFilterCount > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
@@ -844,7 +890,7 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/10 text-[#4A5CE8] text-xs font-semibold px-3 py-1 rounded-full">
                     {cat?.name ?? slug}
-                    <button onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove category filter" onClick={() => toggleCategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
@@ -857,31 +903,31 @@ export function BrowsePage() {
                 return (
                   <span key={slug} className="flex items-center gap-1.5 bg-[#4A5CE8]/5 text-[#4A5CE8] text-xs font-medium px-3 py-1 rounded-full border border-[#4A5CE8]/20">
                     ↳ {label}
-                    <button onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove subcategory filter" onClick={() => toggleSubcategory(slug)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {selectedConditions.map((c) => (
                 <span key={c} className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full capitalize">
-                  {c}<button onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
+                  {c}<button type="button" aria-label="Remove condition filter" onClick={() => toggleCondition(c)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {(minPrice || maxPrice) && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   £{minPrice || "0"} – £{maxPrice || "∞"}
-                  <button onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove price filter" onClick={() => { setMinPrice(""); setMaxPrice(""); }}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {verifiedOnly && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-600 text-xs font-semibold px-3 py-1 rounded-full">
                   <CheckCircle2 className="w-3 h-3" /> Verified Only
-                  <button onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove verified-only filter" onClick={() => setVerifiedOnly(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {shipFrom.map((f) => (
                 <span key={f} className="flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">
                   From: {f}
-                  <button onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove ships-from filter" onClick={() => toggleArr(shipFrom, setShipFrom, f)}><X className="w-3 h-3" /></button>
                 </span>
               ))}
               {shipTo.map((t) => {
@@ -889,26 +935,26 @@ export function BrowsePage() {
                 return (
                   <span key={t} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
                     <Globe className="w-3 h-3" /> {label}
-                    <button onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
+                    <button type="button" aria-label="Remove ships-to filter" onClick={() => toggleArr(shipTo, setShipTo, t)}><X className="w-3 h-3" /></button>
                   </span>
                 );
               })}
               {freeShipping && (
                 <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Truck className="w-3 h-3" /> Free Shipping
-                  <button onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove free-shipping filter" onClick={() => setFreeShipping(false)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {minRating !== null && (
                 <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full">
                   <Star className="w-3 h-3 fill-current" /> {minRating}+ stars
-                  <button onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove rating filter" onClick={() => setMinRating(null)}><X className="w-3 h-3" /></button>
                 </span>
               )}
               {listedWithin !== "any" && (
                 <span className="flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full">
                   {{ today: "Today", week: "Last 7 days", month: "Last 30 days" }[listedWithin]}
-                  <button onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
+                  <button type="button" aria-label="Remove date filter" onClick={() => setListedWithin("any")}><X className="w-3 h-3" /></button>
                 </span>
               )}
             </div>
@@ -916,40 +962,55 @@ export function BrowsePage() {
         </div>
       </div>
 
+      <div className="bz-browse-hero-shell">
+        <section className={`bz-browse-hero ${collection==="eco"?"bz-eco-hero":collection==="deals"?"bz-deals-hero":""}`} aria-label={collection==="eco"?"Eco Marketplace":collection==="deals"?"Deals on Bazunk":"Shop on Bazunk"}>
+          <div className="bz-browse-hero-copy"><h1>{collection==="eco"?"Shop sustainably":collection==="deals"?"Discover great deals":<>Shop on <span>Bazunk</span></>}</h1><p>{collection==="eco"?"Explore items sellers have marked eco-friendly or recyclable. Reuse, resell and give great products another life.":collection==="deals"?"Discover listings with active promotions, featured placements and seller boosts.":"Browse thousands of unique items from independent sellers."}</p></div>
+          <div className="bz-browse-hero-bags" aria-hidden="true"><div className="bz-browse-bag bz-browse-bag-blue"><ShoppingBag /></div><div className="bz-browse-bag bz-browse-bag-orange"><ShoppingBag /><strong>B</strong></div></div>
+          <div className="bz-browse-hero-points"><span><ShieldCheck/> Buyer Protected</span><span><Zap/> {collection==="eco"?"Reuse & Resell":"Great Deals"}</span><span><Tag/> {collection==="deals"?"Promoted Listings":"Make an Offer"}</span></div>
+        </section>
+      </div>
       <AdSlot slotKey="browse_top" />
 
-      <div className="container mx-auto px-4 py-6 flex gap-6 flex-1">
+      <div className="bz-browse-content container mx-auto max-w-[1440px] px-3 sm:px-5 lg:px-6 py-4 sm:py-6 flex gap-4 lg:gap-5 flex-1 pb-24 md:pb-8">
 
         {/* Desktop sidebar */}
-        <aside className="hidden md:block w-56 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:sticky md:top-24 md:max-h-[calc(100dvh-7rem)] md:overflow-y-auto overscroll-contain [scrollbar-width:thin] dark:bg-[#132543] dark:border-slate-700">
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#4A5CE8]" /> Filters
-              </h2>
-              {activeFilterCount > 0 && (
-                <span className="text-[10px] font-bold bg-[#4A5CE8] text-white px-1.5 py-0.5 rounded-full">{activeFilterCount}</span>
-              )}
-            </div>
-            {filterPanel}
+        <aside className="bz-browse-sidebar hidden md:block w-56 lg:w-60 flex-shrink-0">
+          <div className="bz-browse-filter-card md:sticky md:top-4">
+            <div className="bz-browse-filter-heading"><h2><SlidersHorizontal size={21}/> Filters {activeFilterCount > 0 && <span className="bz-filter-count">{activeFilterCount}</span>}</h2><button type="button" onClick={clearAll}>Clear all</button></div>
+            <div className="bz-browse-filter-body">{filterPanel}</div>
           </div>
+          <Link href={collection==="deals"?"/eco":collection==="eco"?"/deals":"/flash-sales"} className="bz-browse-flash-card"><span className="bz-browse-flash-icon"><Zap size={25}/></span><strong>{collection==="deals"?"Eco Marketplace":collection==="eco"?"Promoted Deals":"Flash Sales"}</strong><span>{collection==="deals"?"Discover eco-friendly and recyclable finds.":collection==="eco"?"Explore featured and promoted listings.":"Limited-time deals with extra savings."}</span><span className="bz-browse-flash-action">{collection==="deals"?"Shop Eco":collection==="eco"?"Explore Deals":"Shop Flash Sales"} <ArrowRight size={16}/></span><Zap className="bz-browse-flash-watermark" aria-hidden="true"/></Link>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">
+        <main className="bz-browse-results flex-1 min-w-0">
+          {/* Thumb-friendly sorting without an extra modal. Desktop keeps the detailed selector. */}
+          <div className="mb-3 flex gap-2 overflow-x-auto pb-2 sm:hidden" aria-label="Quick sorting" data-testid="mobile-browse-sort">
+            {([
+              ["newest","Newest"],["price-asc","Lowest £"],["price-desc","Highest £"],["views","Popular"]
+            ] as const).map(([value,label])=><button key={value} type="button"
+              onClick={()=>setSort(value)} aria-pressed={sort===value}
+              className={`min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold ${sort===value?"border-indigo-600 bg-indigo-600 text-white":"border-slate-300 bg-white text-slate-900 dark:border-slate-500 dark:bg-[#1b3151] dark:text-white"}`}>
+              {label}
+            </button>)}
+          </div>
           {/* Top bar */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div>
-              <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
-              <p className="text-sm text-gray-400">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `${filtered.length} listing${filtered.length !== 1 ? "s" : ""} found`}</p>
+              <h1 className="bz-browse-results-title text-xl font-extrabold text-[#0b2243]">{pageTitle}</h1>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{loadingListings ? "Loading listings…" : listingError ? "Listings unavailable" : `Page ${currentPage} · ${filtered.length} listing${filtered.length !== 1 ? "s" : ""} shown`}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
+              <button type="button" onClick={()=>{setSaveOpen(v=>!v);setSaveFeedback("");setSaveSuccess(false);}}
+                className="bz-browse-save inline-flex items-center gap-2 rounded-xl border border-[#cbd9e9] bg-white px-3 py-2 font-bold text-sm text-[#0b2243] hover:border-orange-500" data-testid="button-save-search">
+                <Bell className="h-4 w-4"/> Save search
+              </button>
               {/* Sort */}
-              <div className="relative">
+              <div className="relative hidden sm:block">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="appearance-none border border-gray-200 rounded-xl pl-3 pr-8 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30 focus:border-[#4A5CE8] cursor-pointer"
+                  className="bz-browse-sort min-h-11 appearance-none border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 cursor-pointer dark:border-slate-500 dark:bg-[#172b49] dark:text-white"
                   data-testid="select-sort"
                 >
                   {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
@@ -961,14 +1022,16 @@ export function BrowsePage() {
               <div className="flex border border-gray-200 rounded-xl overflow-hidden">
                 <button
                   onClick={() => setView("grid")}
-                  className={`p-2 ${view === "grid" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  aria-label="Grid view" aria-pressed={view==="grid"}
+                  className={`p-2 ${view === "grid" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-grid"
                 >
                   <Grid3X3 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setView("list")}
-                  className={`p-2 ${view === "list" ? "bg-[#4A5CE8] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
+                  aria-label="List view" aria-pressed={view==="list"}
+                  className={`p-2 ${view === "list" ? "bg-[#087bc6] text-white" : "bg-white text-gray-500 hover:bg-gray-50"} transition-colors`}
                   data-testid="button-view-list"
                 >
                   <List className="w-4 h-4" />
@@ -978,15 +1041,8 @@ export function BrowsePage() {
           </div>
 
           {/* Results */}
-          {loadingListings ? (
-            <div role="status" aria-live="polite" className="bg-white rounded-2xl border border-blue-100 py-20 px-6 flex flex-col items-center text-center overflow-hidden">
-              <div className="relative mb-6 rounded-full bg-gradient-to-br from-blue-50 to-orange-50 p-8">
-                <div aria-hidden="true" className="absolute inset-0 rounded-full border-4 border-blue-100 border-t-[#F26B21] animate-spin motion-reduce:animate-none" />
-                <img src="/bazunk-logo-header.png" alt="Bazunk" className="relative w-40 h-auto object-contain animate-pulse motion-reduce:animate-none" />
-              </div>
-              <p className="font-bold text-gray-900">Finding your next great deal…</p>
-              <p className="mt-2 text-sm text-gray-500">Loading Bazunk listings</p>
-            </div>
+          {delayedLoading ? (
+            <div role="status" aria-label="Loading listings" className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">{Array.from({ length: 8 }, (_, i) => <div key={i} className="animate-pulse rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"><div className="aspect-square rounded-lg bg-slate-200 dark:bg-slate-700" /><div className="mt-3 h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-2 h-4 w-1/3 rounded bg-slate-200 dark:bg-slate-700" /></div>)}</div>
           ) : listingError ? (
             <div role="alert" className="bg-white rounded-2xl border border-orange-100 py-16 px-6 text-center">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Listings couldn’t load</h3>
@@ -999,7 +1055,7 @@ export function BrowsePage() {
                 <Search className="w-8 h-8 text-gray-300" />
               </div>
               <h3 className="text-lg font-bold text-gray-800 mb-2">No listings found</h3>
-              <p className="text-sm text-gray-400 mb-6">Try adjusting your search or filters</p>
+              <p className="text-sm text-gray-400 mb-6">{collection==="eco"?"No eco-labelled listings yet. Sellers can mark new products as eco-friendly when listing.":collection==="deals"?"No actively promoted listings match these filters right now.":"Try adjusting your search or filters"}</p>
               <button
                 onClick={clearAll}
                 className="px-6 py-2.5 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -1009,7 +1065,7 @@ export function BrowsePage() {
             </div>
           ) : (
             <div className={view === "grid"
-              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              ? "grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4"
               : "flex flex-col gap-3"
             }>
               {filtered.map((product) => (
@@ -1019,18 +1075,15 @@ export function BrowsePage() {
               ))}
             </div>
           )}
-          {moreError && <p role="alert" className="mt-6 text-center text-sm text-red-600">{moreError}</p>}
-          {!loadingListings && !listingError && hasMoreListings && (
-            <div className="flex justify-center mt-8">
-              <button
-                onClick={loadMoreListings}
-                disabled={loadingMore}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:border-[#4A5CE8] hover:text-[#4A5CE8] disabled:opacity-50 transition-colors"
-              >
-                {loadingMore ? "Loading…" : moreError ? "Try loading more again" : "Load more listings"}
-              </button>
-            </div>
+          {!loadingListings && !listingError && collection===undefined && <BrowseSponsoredListings category={selectedCategories.length===1?selectedCategories[0]:undefined} />}
+          {!loadingListings && !listingError && (currentPage>1 || hasMoreListings) && (
+            <nav className="bz-browse-pagination" aria-label="Listing pages">
+              <button type="button" disabled={currentPage===1} onClick={()=>goToPage(currentPage-1)} aria-label="Previous page">‹ <span>Previous</span></button>
+              {Array.from({length:Math.max(highestPage,currentPage+(hasMoreListings?1:0))},(_,i)=>i+1).filter(n=>n===1||n===highestPage||Math.abs(n-currentPage)<=2||n===currentPage+1&&hasMoreListings).map(n=><button type="button" key={n} aria-current={n===currentPage?"page":undefined} className={n===currentPage?"active":""} onClick={()=>goToPage(n)}>{n}</button>)}
+              <button type="button" disabled={!hasMoreListings} onClick={()=>goToPage(currentPage+1)} aria-label="Next page"><span>Next</span> ›</button>
+            </nav>
           )}
+
         </main>
       </div>
 
@@ -1042,7 +1095,7 @@ export function BrowsePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/40 z-40 md:hidden"
+              className="fixed inset-0 bg-black/60 z-[90] md:hidden" aria-hidden="true"
               onClick={() => setShowMobileFilters(false)}
             />
             <motion.div
@@ -1050,16 +1103,17 @@ export function BrowsePage() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 overflow-y-auto overscroll-contain shadow-2xl md:hidden"
+              role="dialog" aria-modal="true" aria-label="Filter marketplace listings" className="fixed left-0 top-0 bottom-0 w-[min(360px,90vw)] bg-white dark:bg-[#101e33] z-[100] flex flex-col shadow-2xl md:hidden"
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-                <h2 className="font-bold text-gray-900">{t("filters")}</h2>
-                <button onClick={() => setShowMobileFilters(false)} className="text-gray-400 hover:text-gray-600">
+                <h2 className="font-bold text-slate-900 dark:text-white">{t("filters")} ({activeFilterCount})</h2>
+                <button aria-label="Close filters" onClick={() => setShowMobileFilters(false)} className="rounded-lg p-2 text-slate-700 dark:text-slate-200">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="px-5 pb-6">{filterPanel}</div>
-              <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-3">
+              <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6">{filterPanel}</div>
+              <div className="shrink-0 bg-white dark:bg-[#101e33] border-t border-slate-200 dark:border-slate-700 px-5 py-3">
+                {activeFilterCount > 0 && <button type="button" onClick={clearAll} className="mb-2 w-full py-2 text-sm font-bold text-slate-800 dark:text-white underline">Reset all filters</button>}
                 <button
                   onClick={() => setShowMobileFilters(false)}
                   className="w-full py-3 rounded-xl bg-[#4A5CE8] text-white font-semibold text-sm hover:opacity-90 transition-opacity"

@@ -1,0 +1,338 @@
+/* Bazunk WordPress-style admin: final operational workspace polish.
+ * Scoped to the authenticated admin shell. Legacy marketplace controls remain
+ * operational; this layer standardises appearance rather than replacing APIs. */
+.bazunk-admin-wordpress {
+  --wp-form-height:40px;
+  --wp-focus:#2563eb;
+  --wp-tool-bg:var(--wp-surface);
+  --wp-tool-ink:var(--wp-ink);
+  --wp-tool-hover:#edf4ff;
+}
+.dark .bazunk-admin-wordpress {
+  --wp-focus:#93c5fd;
+  --wp-tool-hover:#243a59;
+}
+.bazunk-admin-wordpress main :is(button,a,input,textarea,select,[role="button"]):focus-visible {
+  outline:3px solid var(--wp-focus)!important;
+  outline-offset:2px!important;
+}
+.bazunk-admin-wordpress main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),select,textarea){
+  min-height:var(--wp-form-height);
+  border-radius:8px;
+}
+.bazunk-admin-wordpress main :is(input,textarea)::placeholder {
+  color:var(--wp-muted)!important;
+  opacity:1!important;
+}
+.bazunk-admin-wordpress main button:disabled {
+  cursor:not-allowed;
+  opacity:.65;
+}
+.bazunk-admin-wordpress main :is(table,[role="table"]){
+  max-width:100%;
+  border-collapse:collapse;
+}
+.bazunk-admin-wordpress main table th{
+  text-align:left;
+  font-size:12px;
+  font-weight:700;
+}
+.bazunk-admin-wordpress .wp-operations-home {
+  width:100%;max-width:1460px;margin-inline:auto;
+}
+.bazunk-admin-wordpress .wp-operations-intro{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:16px;padding:19px 21px;border:1px solid var(--wp-border);
+  border-radius:10px;background:var(--wp-surface);color:var(--wp-ink);
+}
+.bazunk-admin-wordpress .wp-operations-intro strong{font-size:15px;font-weight:800}
+.bazunk-admin-wordpress .wp-operations-intro p{color:var(--wp-muted);line-height:1.55}
+.bazunk-admin-wordpress .wp-operations-search{
+  display:flex;align-items:center;gap:9px;flex:0 1 380px;min-width:min(100%,230px);
+  border:1px solid var(--wp-border);border-radius:8px;
+  background:var(--wp-surface);padding:0 12px;color:var(--wp-muted);
+}
+.bazunk-admin-wordpress .wp-operations-search:focus-within {
+  border-color:var(--wp-focus);box-shadow:0 0 0 2px color-mix(in srgb,var(--wp-focus) 18%,transparent);
+}
+.bazunk-admin-wordpress .wp-operations-search input{
+  width:100%;min-width:0;min-height:42px;border:0!important;box-shadow:none!important;
+  outline:0!important;background:transparent!important;color:var(--wp-ink)!important;
+  font-size:13px;font-weight:600;
+}
+.bazunk-admin-wordpress .wp-operations-search input::placeholder{color:var(--wp-muted)!important}
+.bazunk-admin-wordpress .wp-operations-count{font-size:12px;color:var(--wp-muted);font-weight:600}
+.bazunk-admin-wordpress .wp-operations-tools{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,295px),1fr));gap:12px;
+}
+.bazunk-admin-wordpress .wp-operations-tool{
+  display:flex;align-items:center;gap:12px;min-width:0;
+  padding:16px 14px;text-align:left;min-height:94px;
+  border:1px solid var(--wp-border);border-radius:9px;background:var(--wp-tool-bg);
+  color:var(--wp-tool-ink);transition:background-color .15s,border-color .15s;
+}
+.bazunk-admin-wordpress .wp-operations-tool:hover{
+  border-color:#7fa9e9;background:var(--wp-tool-hover);
+}
+.bazunk-admin-wordpress .wp-operations-tool strong{
+  display:block;color:var(--wp-ink);font-size:14px;font-weight:750;
+}
+.bazunk-admin-wordpress .wp-operations-tool small{
+  display:block;margin-top:4px;color:var(--wp-muted);
+  font-size:12px;font-weight:550;line-height:1.45;
+}
+.bazunk-admin-wordpress .wp-operations-icon{
+  display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;
+  border-radius:10px;background:#e9f2ff;color:#1459d8;
+}
+.dark .bazunk-admin-wordpress .wp-operations-icon{
+  background:#243e67;color:#c4dcff;
+}
+.bazunk-admin-wordpress .wp-operations-arrow{flex-shrink:0;color:var(--wp-muted)}
+.bazunk-admin-wordpress .wp-operations-collapse{font-size:12px;white-space:nowrap}
+.bazunk-admin-wordpress .wp-report-meta{font-size:12px;color:var(--wp-muted);font-weight:600}
+@media(max-width:767px){
+  .bazunk-admin-wordpress .wp-operations-intro{padding:15px;align-items:stretch}
+  .bazunk-admin-wordpress .wp-operations-search{flex:1 1 100%}
+  .bazunk-admin-wordpress .wp-operations-tools{grid-template-columns:1fr}
+  .bazunk-admin-wordpress main table :is(th,td){padding:9px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .bazunk-admin-wordpress .wp-operations-tool{transition:none}
+}
+
+
+/* Fix legacy active-label overrides: selected admin links must use dark text
+   on pale light-mode backgrounds, including nested spans and SVG icons. */
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"],
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#eaf2ff!important;color:#1255c6!important;opacity:1!important;
+ text-shadow:none!important;
+}
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"] :is(span,svg),
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active :is(span,svg),
+.bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"] :is(span,svg){
+ color:#1255c6!important;opacity:1!important;fill:none;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"],
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active,
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"]{
+ background:#213e6b!important;color:#f8fafc!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-link[aria-current="page"] :is(span,svg),
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-active :is(span,svg),
+.dark .bazunk-admin.bazunk-admin-wordpress aside .admin-nav-link.wp-nav-child[aria-current="page"] :is(span,svg){
+ color:#f8fafc!important;opacity:1!important;
+}
+/* Two-line Customers overview: keep all data and controls in the page width. */
+.bazunk-admin-wordpress .admin-users-compact{width:100%;min-width:0;overflow:hidden}
+.bazunk-admin-wordpress .admin-users-compact-table{
+ width:100%;min-width:0;max-width:100%;table-layout:fixed;
+ border-collapse:collapse;color:var(--wp-ink);
+}
+.bazunk-admin-wordpress .admin-users-compact-table th{
+ padding:12px 9px;background:var(--wp-soft);
+ color:var(--wp-ink)!important;font-size:11px;letter-spacing:.02em;
+ border-bottom:1px solid var(--wp-border);
+}
+.bazunk-admin-wordpress .admin-users-compact-table td{
+ padding:10px 9px!important;overflow-wrap:anywhere;
+ border-bottom:1px solid var(--wp-border);
+ color:var(--wp-ink);vertical-align:middle;
+}
+.bazunk-admin-wordpress .admin-users-compact-row:hover{background:var(--wp-soft)}
+.bazunk-admin-wordpress .admin-users-suspended{background:#fff5f5}
+.dark .bazunk-admin-wordpress .admin-users-suspended{background:#3b2330}
+.bazunk-admin-wordpress .admin-users-main{
+ color:var(--wp-ink)!important;line-height:1.5;
+}
+.bazunk-admin-wordpress .admin-users-muted{
+ color:#52647a!important;line-height:1.45;
+}
+.dark .bazunk-admin-wordpress .admin-users-muted{
+ color:#cbd8eb!important;
+}
+.bazunk-admin-wordpress .admin-users-status-active{color:#047857}
+.bazunk-admin-wordpress .admin-users-status-suspended{color:#b91c1c}
+.dark .bazunk-admin-wordpress .admin-users-status-active{color:#86efac}
+.dark .bazunk-admin-wordpress .admin-users-status-suspended{color:#fda4af}
+.bazunk-admin-wordpress .admin-users-actions{overflow-wrap:normal!important}
+.bazunk-admin-wordpress .admin-users-action{
+ display:inline-flex;align-items:center;justify-content:center;gap:4px;
+ border:1px solid var(--wp-border);border-radius:7px;background:var(--wp-surface);
+ color:var(--wp-ink)!important;padding:7px 9px;min-height:33px;
+ font-size:11px;font-weight:700;white-space:nowrap;
+}
+.bazunk-admin-wordpress .admin-users-action:hover{
+ background:var(--wp-soft);border-color:#93b4e9
+}
+.bazunk-admin-wordpress .admin-users-action-primary{
+ border-color:#1769ff;background:#1769ff;color:#fff!important;
+}
+.bazunk-admin-wordpress .admin-users-action-primary:hover{
+ background:#155ccc;color:#fff!important;
+}
+.bazunk-admin-wordpress .admin-users-positive{color:#047857!important}
+.bazunk-admin-wordpress .admin-users-danger{color:#b91c1c!important}
+.bazunk-admin-wordpress .admin-users-details-row{background:var(--wp-soft)}
+.bazunk-admin-wordpress .admin-users-details-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;
+}
+.bazunk-admin-wordpress .admin-users-detail-input{
+ min-height:36px!important;border:1px solid #94a3b8!important;
+ border-radius:7px!important;padding:7px 10px;
+ background:var(--wp-surface)!important;color:var(--wp-ink)!important;
+ font-size:12px;
+}
+@media(max-width:1130px){
+ .bazunk-admin-wordpress .admin-users-compact-table :is(td,th){
+  padding:8px 6px!important;
+ }
+ .bazunk-admin-wordpress .admin-users-action{padding:6px 7px}
+}
+@media(max-width:800px){
+ .bazunk-admin-wordpress .admin-users-compact-table colgroup,
+ .bazunk-admin-wordpress .admin-users-compact-table thead{display:none}
+ .bazunk-admin-wordpress .admin-users-compact-table,
+ .bazunk-admin-wordpress .admin-users-compact-table tbody{display:block}
+ .bazunk-admin-wordpress .admin-users-compact-row{
+  display:grid;grid-template-columns:32px minmax(0,1fr);align-items:start;
+  border-bottom:2px solid var(--wp-border);padding:10px 6px;
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row td{
+  display:block;border:0!important;padding:5px 8px!important;
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-select{
+  grid-row:1/5;grid-column:1
+ }
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-customer,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-activity,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-account,
+ .bazunk-admin-wordpress .admin-users-compact-row .admin-users-actions{
+  grid-column:2
+ }
+ .bazunk-admin-wordpress .admin-users-details-row{
+  display:block;border-bottom:2px solid var(--wp-border)
+ }
+ .bazunk-admin-wordpress .admin-users-details-row td{display:block;width:100%}
+ .bazunk-admin-wordpress .admin-users-details-grid{grid-template-columns:1fr;gap:16px}
+ .bazunk-admin-wordpress .admin-users-compact-table tr:not(.admin-users-compact-row):not(.admin-users-details-row){
+  display:block
+ }
+ .bazunk-admin-wordpress .admin-users-compact-table tr:not(.admin-users-compact-row):not(.admin-users-details-row) td{
+  display:block;width:100%!important
+ }
+}
+
+
+/* Admin theme contrast contract — applied last, without changing storefront or
+   semantic coloured buttons, alerts, charts, or user-authored Design Center previews. */
+.bazunk-admin.bazunk-admin-wordpress{
+  --admin-readable-ink:#182b45;
+  --admin-readable-muted:#475569;
+  --admin-readable-panel:#ffffff;
+  --admin-readable-field:#ffffff;
+  --admin-readable-border:#94a3b8;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress{
+  --admin-readable-ink:#f1f6ff;
+  --admin-readable-muted:#cbd8e9;
+  --admin-readable-panel:#18283e;
+  --admin-readable-field:#203550;
+  --admin-readable-border:#7184a1;
+}
+/* Neutral controls have one foreground/background contract across all routes. */
+.bazunk-admin.bazunk-admin-wordpress main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),textarea,select,[role="combobox"]){
+  background-color:var(--admin-readable-field)!important;
+  color:var(--admin-readable-ink)!important;
+  border-color:var(--admin-readable-border)!important;
+  opacity:1;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,textarea)::placeholder{
+  color:var(--admin-readable-muted)!important;
+  opacity:1!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(select option,select optgroup){
+  color:var(--admin-readable-ink)!important;
+  background:var(--admin-readable-field)!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,[role="combobox"]):disabled{
+  opacity:.7!important;
+}
+/* Unstyled neutral button/chip classes must not inherit inverted foregrounds.
+   Keep bright primary/semantic actions intact by restricting to neutral utilities. */
+.bazunk-admin.bazunk-admin-wordpress main :is(button,a,[role="button"]):is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100):not([class*="dark:bg-"]):not([class*="!bg-"]){
+  background-color:var(--admin-readable-panel)!important;
+  color:var(--admin-readable-ink)!important;
+  border-color:var(--admin-readable-border);
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100):not([class*="dark:bg-"]):not([class*="!bg-"]):not(button):not(a):not([role="button"]){
+  background-color:var(--admin-readable-panel)!important;
+}
+/* Secondary copy rendered on generic dark panels should remain readable. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(.text-slate-400,.text-slate-500,.text-slate-600,.text-slate-700,.text-gray-400,.text-gray-500,.text-gray-600,.text-gray-700):not([class*="dark:text-"]):not([class*="!text-"]){
+  color:var(--admin-readable-muted)!important;
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(th,[role="columnheader"]){
+  opacity:1;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(th,[role="columnheader"]):not([class*="dark:text-"]):not([class*="!text-"]){
+  color:var(--admin-readable-ink);
+}
+.bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,button,a,[role="combobox"]):focus-visible{
+  outline:3px solid #2563eb!important;
+  outline-offset:2px;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(input,select,textarea,button,a,[role="combobox"]):focus-visible{
+  outline-color:#93c5fd!important;
+}
+
+/* Dark admin: never combine pale blue/white utility panels with white text.
+   Convert pale tinted panels to genuinely dark surfaces, including nested text. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ .bg-blue-50,.bg-blue-100,.bg-blue-200,.bg-blue-300,
+ .bg-sky-50,.bg-sky-100,.bg-sky-200,.bg-sky-300,
+ .bg-cyan-50,.bg-cyan-100,.bg-cyan-200,.bg-cyan-300,
+ .bg-indigo-50,.bg-indigo-100,.bg-indigo-200,
+ .bg-slate-50,.bg-slate-100,.bg-slate-200,
+ .bg-gray-50,.bg-gray-100,.bg-gray-200,
+ .bg-white
+):not([class*="dark:bg-"]):not([class*="dark:!bg-"]){
+ background-color:#192c47!important;
+ color:#f1f6ff!important;
+ border-color:#526b8c!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ .bg-blue-50,.bg-blue-100,.bg-blue-200,.bg-blue-300,
+ .bg-sky-50,.bg-sky-100,.bg-sky-200,.bg-sky-300,
+ .bg-cyan-50,.bg-cyan-100,.bg-cyan-200,.bg-cyan-300,
+ .bg-indigo-50,.bg-indigo-100,.bg-indigo-200
+):not([class*="dark:bg-"]):not([class*="dark:!bg-"]) :is(
+ .text-white,.text-blue-50,.text-blue-100,.text-sky-100,.text-slate-100,
+ .text-blue-500,.text-blue-600,.text-blue-700,.text-slate-500,.text-slate-600
+){
+ color:#eef5ff!important;
+ -webkit-text-fill-color:#eef5ff!important;
+}
+/* When a component intentionally retains a WHITE surface in dark mode,
+   its text must switch to dark ink — including common nested headings and labels. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ [class*="dark:bg-white"],[class*="dark:!bg-white"],
+ [class*="dark:bg-blue-50"],[class*="dark:bg-blue-100"],
+ [class*="dark:bg-sky-50"],[class*="dark:bg-sky-100"]
+):not(input):not(select):not(textarea){
+ color:#172943!important;
+}
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(
+ [class*="dark:bg-white"],[class*="dark:!bg-white"],
+ [class*="dark:bg-blue-50"],[class*="dark:bg-blue-100"],
+ [class*="dark:bg-sky-50"],[class*="dark:bg-sky-100"]
+) :is(h1,h2,h3,h4,p,label,span,strong,small):not([class*="bg-"]){
+ color:#172943!important;
+ -webkit-text-fill-color:#172943!important;
+}
+/* White and pale-blue native selection menus always use dark text. */
+.dark .bazunk-admin.bazunk-admin-wordpress main :is(option,optgroup){
+ background:#203550!important;color:#f1f6ff!important;
+}

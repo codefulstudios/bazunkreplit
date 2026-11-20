@@ -128,11 +128,28 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
+    name: "Computing",
+    slug: "computing",
+    icon: "Laptop",
+    subcategories: [
+      { name: "Laptops", slug: "laptops" },
+      { name: "Tablets & E-Readers", slug: "tablets" },
+      { name: "Desktop Computers", slug: "desktops" },
+      { name: "Computer Components", slug: "components" },
+      { name: "Monitors & Displays", slug: "monitors" },
+      { name: "Storage & Memory", slug: "storage-memory" },
+      { name: "Computer Peripherals", slug: "peripherals" },
+      { name: "Networking & Wi-Fi", slug: "networking" },
+      { name: "Printers & Scanners", slug: "printers-scanners" },
+      { name: "Computer Accessories", slug: "computer-accessories" },
+      { name: "Servers & Workstations", slug: "servers-workstations" },
+    ],
+  },
+  {
     name: "Electronics",
     slug: "electronics",
     icon: "Monitor",
     subcategories: [
-      { name: "Computers & Laptops", slug: "computers" },
       { name: "TVs & Home Theater", slug: "tvs" },
       { name: "Audio & Headphones", slug: "audio" },
       { name: "Cameras & Photography", slug: "cameras" },
@@ -294,7 +311,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    name: "Video Games",
+    name: "Gaming",
     slug: "video-games",
     icon: "Gamepad",
     subcategories: [
@@ -304,19 +321,7 @@ export const CATEGORIES: Category[] = [
       { name: "Nintendo", slug: "nintendo" },
       { name: "PC Gaming", slug: "pc-gaming" },
       { name: "VR Gaming", slug: "vr-gaming" },
-    ],
-  },
-  {
-    name: "Digital Products (Legacy)",
-    slug: "digital-products",
-    icon: "Download",
-    subcategories: [
-      { name: "Software & Apps", slug: "software" },
-      { name: "eBooks", slug: "ebooks" },
-      { name: "Music Downloads", slug: "music-downloads" },
-      { name: "Stock Photos & Videos", slug: "stock-media" },
-      { name: "Templates & Themes", slug: "templates" },
-      { name: "Online Courses", slug: "online-courses" },
+      { name: "Gaming Furniture", slug: "gaming-furniture" },
     ],
   },
   {
@@ -401,8 +406,42 @@ export const ACTIVE_CATEGORIES = CATEGORIES.filter(c => !["digital-products", "e
   )),
 }));
 
+/** Load display-only category settings before the storefront mounts. Permanent slugs never change. */
+export async function loadCategoryPresentation(signal?: AbortSignal):Promise<void>{
+ try{
+  const response=await fetch("/api/taxonomy/category-overrides", { signal });
+  if(!response.ok)return;
+  const data=await response.json();
+  if(!Array.isArray(data.overrides))return;
+  const overrides=new Map<string,{name:string;visible:boolean;sort_order:number}>();
+  for(const o of data.overrides){
+   if(typeof o.category_slug==="string"&&typeof o.subcategory_slug==="string"&&typeof o.name==="string")
+    overrides.set(o.category_slug+":"+o.subcategory_slug,o);
+  }
+  for(const c of CATEGORIES){
+   const o=overrides.get(c.slug+":");if(o)c.name=o.name;
+   for(const sub of c.subcategories){const setting=overrides.get(c.slug+":"+sub.slug);if(setting)sub.name=setting.name;}
+   c.subcategories.sort((a,b)=>(overrides.get(c.slug+":"+a.slug)?.sort_order??9999)-(overrides.get(c.slug+":"+b.slug)?.sort_order??9999));
+  }
+  CATEGORIES.sort((a,b)=>(overrides.get(a.slug+":")?.sort_order??9999)-(overrides.get(b.slug+":")?.sort_order??9999));
+  for(const c of ACTIVE_CATEGORIES){
+   const o=overrides.get(c.slug+":");
+   if(o){c.name=o.name;}
+   for(const sub of c.subcategories){const setting=overrides.get(c.slug+":"+sub.slug);if(setting)sub.name=setting.name;}
+   c.subcategories.sort((a,b)=>(overrides.get(c.slug+":"+a.slug)?.sort_order??9999)-(overrides.get(c.slug+":"+b.slug)?.sort_order??9999));
+  }
+  ACTIVE_CATEGORIES.sort((a,b)=>(overrides.get(a.slug+":")?.sort_order??9999)-(overrides.get(b.slug+":")?.sort_order??9999));
+  for(let i=ACTIVE_CATEGORIES.length-1;i>=0;i--){if(overrides.get(ACTIVE_CATEGORIES[i].slug+":")?.visible===false)ACTIVE_CATEGORIES.splice(i,1);}
+  for(const c of ACTIVE_CATEGORIES){for(let i=c.subcategories.length-1;i>=0;i--){if(overrides.get(c.slug+":"+c.subcategories[i].slug)?.visible===false)c.subcategories.splice(i,1);}}
+ }catch{/* Use built-in taxonomy if the API is unavailable. */}
+}
+
 /** Suggested third-level taxonomy. Suggestions are editorial only until listing and search APIs support a third slug. */
 export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; suggestions: string[]}> = {
+  "computing": {
+    "subcategory": "laptops",
+    "suggestions": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"]
+  },
   "appliances": {
     "subcategory": "refrigerators",
     "suggestions": [
@@ -604,6 +643,793 @@ export const THIRD_LEVEL_SUGGESTIONS: Record<string, {subcategory: string; sugge
     ]
   }
 };
+// Editorial suggestion library. Applies to every current subcategory; never automatically publishes taxonomy.
+const THIRD_LEVEL_BY_SUBCATEGORY: Record<string,string[]> = {
+ tires:["Car Tyres","Motorcycle Tyres","Alloy Wheels","Steel Wheels","Wheel Accessories"],
+ vacuums:["Cordless Vacuums","Upright Vacuums","Cylinder Vacuums","Robot Vacuums","Wet & Dry Vacuums","Parts & Accessories"],
+ "smart-home":["Smart Plugs","Smart Sensors","Smart Lighting","Home Security","Smart Hubs"],
+ cameras:["Digital Cameras","Security Cameras","Dash Cams","Drones","Action Cameras","Camera Accessories"],
+ computers:["Laptops","Desktop PCs","Monitors","Computer Components","Computer Accessories"],
+ "car-parts":["Interior Accessories","Exterior & Body Parts","Engine Parts","Brakes","Car Lighting"],
+ "mens-clothing":["Jackets & Coats","Shirts","T-Shirts","Jumpers","Jeans & Trousers","Underwear","Activewear"],
+ cookware:["Pots & Pans","Cookware Sets","Bakeware","Cooking Utensils"],
+ furniture:["Office & Gaming Chairs","Sofas","Tables","Cabinets & Storage","Beds"],
+ beading:["Gemstone Beads","Glass Beads","Jewellery Findings","Beading Kits"],
+ storage:["Kitchen Storage","Bathroom Storage","Shelving","Storage Boxes"],
+ audio:["In-Ear Headphones","Over-Ear Headphones","Speakers","Soundbars","Hi-Fi Equipment"],
+ consoles:["PlayStation Consoles","Xbox Consoles","Nintendo Consoles","Retro Consoles","Console Accessories"],
+ "adult-wellness":["Condoms & Protection","Intimate Care","Wellness Accessories"],
+ "adult-toys":["Adult Accessories"],
+ refrigerators:["Fridges","Freezers","Fridge Freezers","Mini Fridges"],
+ "air-conditioners":["Portable Air Conditioners","Fans","Air Purifiers","Parts & Accessories"],
+ smartphones:["Apple iPhone","Samsung Galaxy","Google Pixel","Xiaomi","Other Android Phones"],
+ "phone-cases":["iPhone Cases","Samsung Cases","Other Phone Cases"],
+ chargers:["Wall Chargers","Charging Cables","Wireless Chargers","Power Banks"],
+ "washing-machines":["Washing Machines","Tumble Dryers","Washer Dryers","Accessories"],
+ microwaves:["Microwave Ovens","Combination Ovens","Accessories"],
+ skincare:["Cleansers","Moisturisers","Sunscreen","Serums"],
+ fragrances:["Men's Fragrances","Women's Fragrances","Unisex Fragrances","Gift Sets"],
+ fiction:["Crime & Thriller","Romance","Fantasy","Science Fiction","Historical Fiction"],
+ cds:["Albums","Singles","Compilations","Box Sets"],
+ bedding:["Duvets","Pillows","Sheets","Bed Linen Sets"],
+ dogs:["Dog Food","Leads & Collars","Dog Beds","Dog Toys","Grooming"],
+ fitness:["Weights","Cardio Equipment","Resistance Bands","Yoga Equipment"],
+ "power-tools":["Drills","Saws","Sanders","Grinders","Batteries"],
+ playstation:["PS5 Games","PS4 Games","Controllers","PlayStation Accessories"],
+ xbox:["Xbox Games","Controllers","Xbox Accessories"],
+ nintendo:["Switch Games","Nintendo Consoles","Controllers","Accessories"],
+ "software-apps":["Desktop Software","Mobile Apps","Plugins","Utilities"],
+ watches:["Analogue Watches","Digital Watches","Luxury Watches","Watch Accessories"],
+ "adult-clothing":["Lingerie","Costumes","Specialist Clothing"],
+ "adult-media":["Calendars","Collectible Print Media"],
+};
+const EXPANDED_THIRD_LEVEL: Record<string,string[]> = {
+ "gaming-furniture": ["Gaming Chairs","Gaming Desks","Racing Simulator Cockpits","Gaming Chair Accessories","Gaming Desk Accessories"],
+ "tablets": ["iPads","Android Tablets","Windows Tablets","Kids Tablets","Drawing Tablets","E-Readers","Tablet Cases & Covers","Tablet Keyboards & Styluses","Tablet Chargers & Docks"],
+ "laptops": ["Windows Laptops","MacBooks","Chromebooks","Gaming Laptops","2-in-1 Laptops","Laptop Parts"],
+ "desktops": ["Desktop PCs","All-in-One PCs","Gaming Desktops","Mini PCs","Barebone PCs"],
+ "components": ["Processors (CPUs)","Graphics Cards (GPUs)","Motherboards","Power Supplies","PC Cases","Cooling & Fans"],
+ "monitors": ["Gaming Monitors","4K Monitors","Ultrawide Monitors","Portable Monitors","Monitor Arms"],
+ "storage-memory": ["SSD Drives","Hard Drives","External Storage","USB Flash Drives","RAM Memory","Memory Cards"],
+ "peripherals": ["Keyboards","Mice & Trackballs","Webcams","Headsets","Speakers","Docking Stations"],
+ "networking": ["Routers","Mesh Wi-Fi","Network Switches","Wi-Fi Adapters","Network Cables","Modems"],
+ "printers-scanners": ["Inkjet Printers","Laser Printers","3D Printers","Document Scanners","Printer Ink & Toner"],
+ "computer-accessories": ["Laptop Chargers","Laptop Bags & Sleeves","USB Hubs","Cables & Adapters","Stands & Cooling Pads","Screen Protectors"],
+ "servers-workstations": ["Rack Servers","Tower Servers","Workstations","Network Attached Storage (NAS)","Server Components"],
+ "painting": [
+  "Acrylic Paints",
+  "Watercolours",
+  "Oil Paints",
+  "Brushes",
+  "Canvases",
+  "Drawing Sets"
+ ],
+ "knitting": [
+  "Yarn",
+  "Knitting Needles",
+  "Crochet Hooks",
+  "Patterns",
+  "Kits"
+ ],
+ "sewing": [
+  "Sewing Machines",
+  "Fabric",
+  "Thread",
+  "Quilting Kits",
+  "Sewing Accessories"
+ ],
+ "scrapbooking": [
+  "Albums",
+  "Stickers",
+  "Paper",
+  "Stamping",
+  "Cutting Tools"
+ ],
+ "printmaking": [
+  "Printing Ink",
+  "Blocks",
+  "Screens",
+  "Brayers",
+  "Printing Tools"
+ ],
+ "car-electronics": [
+  "Dash Cameras",
+  "Car Audio",
+  "Satellite Navigation",
+  "Parking Sensors",
+  "Car Chargers"
+ ],
+ "motorcycles": [
+  "Motorcycles",
+  "Scooters",
+  "Protective Gear",
+  "Motorcycle Parts"
+ ],
+ "auto-tools": [
+  "Diagnostic Tools",
+  "Jacks",
+  "Mechanics Tool Sets",
+  "Tyre Tools"
+ ],
+ "car-care": [
+  "Cleaning Products",
+  "Polishing Products",
+  "Interior Care",
+  "Pressure Washers"
+ ],
+ "baby-clothing": [
+  "Bodysuits",
+  "Baby Sleepwear",
+  "Baby Outfits",
+  "Baby Shoes",
+  "Baby Accessories"
+ ],
+ "feeding": [
+  "Bottles",
+  "Sterilisers",
+  "High Chairs",
+  "Breastfeeding Supplies",
+  "Feeding Accessories"
+ ],
+ "nursery": [
+  "Cots",
+  "Cribs",
+  "Changing Tables",
+  "Nursery Storage",
+  "Mattresses"
+ ],
+ "strollers": [
+  "Pushchairs",
+  "Travel Systems",
+  "Prams",
+  "Baby Carriers",
+  "Travel Accessories"
+ ],
+ "car-seats": [
+  "Infant Car Seats",
+  "Toddler Car Seats",
+  "Booster Seats",
+  "Car Seat Accessories"
+ ],
+ "baby-toys": [
+  "Soft Toys",
+  "Rattles",
+  "Activity Mats",
+  "Developmental Toys"
+ ],
+ "haircare": [
+  "Shampoos",
+  "Conditioners",
+  "Styling Products",
+  "Hair Tools",
+  "Hair Treatments"
+ ],
+ "makeup": [
+  "Face Makeup",
+  "Eye Makeup",
+  "Lip Makeup",
+  "Makeup Brushes",
+  "Makeup Sets"
+ ],
+ "mens-grooming": [
+  "Shaving",
+  "Beard Care",
+  "Grooming Kits",
+  "Clippers"
+ ],
+ "oral-care": [
+  "Toothbrushes",
+  "Toothpaste",
+  "Floss & Interdental",
+  "Whitening",
+  "Mouthwash"
+ ],
+ "non-fiction": [
+  "Biography",
+  "History",
+  "Business",
+  "Self Help",
+  "Science",
+  "Travel"
+ ],
+ "childrens-books": [
+  "Picture Books",
+  "Early Readers",
+  "Young Adult",
+  "Activity Books"
+ ],
+ "textbooks": [
+  "School Textbooks",
+  "University Textbooks",
+  "Language Learning",
+  "Revision Guides"
+ ],
+ "comics": [
+  "Superhero Comics",
+  "Manga",
+  "Graphic Novels",
+  "Comic Collections"
+ ],
+ "rare-books": [
+  "First Editions",
+  "Signed Books",
+  "Antiquarian Books",
+  "Collectible Sets"
+ ],
+ "cassettes": [
+  "Cassette Albums",
+  "Cassette Singles",
+  "Cassette Box Sets"
+ ],
+ "music-box-sets": [
+  "CD Box Sets",
+  "Vinyl Box Sets",
+  "Collector Editions"
+ ],
+ "other-music-formats": [
+  "MiniDiscs",
+  "8-Track Tapes",
+  "Music Accessories"
+ ],
+ "vinyl": [
+  "LP Albums",
+  "7 Inch Singles",
+  "12 Inch Singles",
+  "Picture Discs",
+  "Collectors Vinyl"
+ ],
+ "screen-protectors": [
+  "Tempered Glass",
+  "Privacy Protectors",
+  "Film Protectors"
+ ],
+ "smartwatches": [
+  "Apple Watch",
+  "Samsung Watch",
+  "Fitness Watches",
+  "Accessories"
+ ],
+ "womens-clothing": [
+  "Dresses",
+  "Tops",
+  "Jackets & Coats",
+  "Jeans & Trousers",
+  "Knitwear",
+  "Underwear"
+ ],
+ "kids-clothing": [
+  "Boys Clothing",
+  "Girls Clothing",
+  "Coats",
+  "School Uniform",
+  "Footwear"
+ ],
+ "shoes": [
+  "Trainers",
+  "Boots",
+  "Formal Shoes",
+  "Sandals",
+  "Slippers"
+ ],
+ "bags": [
+  "Handbags",
+  "Backpacks",
+  "Wallets",
+  "Belts",
+  "Travel Bags"
+ ],
+ "tvs": [
+  "Smart TVs",
+  "4K TVs",
+  "Projectors",
+  "TV Mounts",
+  "Streaming Devices"
+ ],
+ "solar": [
+  "Solar Panels",
+  "Solar Batteries",
+  "Solar Chargers",
+  "Renewable Accessories"
+ ],
+ "organic-food": [
+  "Organic Pantry",
+  "Organic Snacks",
+  "Natural Beverages"
+ ],
+ "reusable": [
+  "Reusable Bags",
+  "Reusable Bottles",
+  "Food Storage",
+  "Zero Waste Accessories"
+ ],
+ "natural-cleaning": [
+  "Laundry Products",
+  "Surface Cleaners",
+  "Dishwashing"
+ ],
+ "sustainable-fashion": [
+  "Second-Hand Clothing",
+  "Sustainable Accessories"
+ ],
+ "green-tech": [
+  "Smart Energy Devices",
+  "Energy Monitors",
+  "Eco Gadgets"
+ ],
+ "vitamins": [
+  "Multivitamins",
+  "Single Vitamins",
+  "Minerals",
+  "Nutrition Supplements"
+ ],
+ "medical": [
+  "First Aid Kits",
+  "Bandages",
+  "Dressings",
+  "Medical Equipment"
+ ],
+ "cleaning": [
+  "Laundry",
+  "Surface Cleaning",
+  "Bathroom Cleaning",
+  "Dishwashing"
+ ],
+ "air-fresheners": [
+  "Room Sprays",
+  "Diffusers",
+  "Air Freshener Refills"
+ ],
+ "pest-control": [
+  "Insect Control",
+  "Rodent Control",
+  "Traps",
+  "Repellents"
+ ],
+ "home-decor": [
+  "Wall Art",
+  "Mirrors",
+  "Vases",
+  "Clocks",
+  "Decorative Objects"
+ ],
+ "lighting": [
+  "Ceiling Lights",
+  "Table Lamps",
+  "Floor Lamps",
+  "LED Lighting"
+ ],
+ "lab-equipment": [
+  "Microscopes",
+  "Measuring Equipment",
+  "Glassware",
+  "Lab Accessories"
+ ],
+ "safety": [
+  "Gloves",
+  "Eye Protection",
+  "Respiratory Protection",
+  "Workwear"
+ ],
+ "electrical": [
+  "Connectors",
+  "Switches",
+  "Sensors",
+  "Cables",
+  "Components"
+ ],
+ "hydraulics": [
+  "Hydraulic Pumps",
+  "Cylinders",
+  "Pneumatic Parts",
+  "Fittings"
+ ],
+ "janitorial": [
+  "Cleaning Machines",
+  "Cleaning Supplies",
+  "Facility Equipment"
+ ],
+ "blu-ray": [
+  "Blu-ray Films",
+  "Blu-ray TV Box Sets",
+  "Special Editions"
+ ],
+ "dvd": [
+  "DVD Films",
+  "TV Series",
+  "Box Sets",
+  "Special Editions"
+ ],
+ "4k-uhd": [
+  "4K Films",
+  "4K Box Sets",
+  "Collector Editions"
+ ],
+ "tv-series": [
+  "Drama Series",
+  "Comedy Series",
+  "Documentaries",
+  "Complete Collections"
+ ],
+ "foreign-films": [
+  "World Cinema",
+  "Arthouse",
+  "Cult Films"
+ ],
+ "guitars": [
+  "Electric Guitars",
+  "Acoustic Guitars",
+  "Bass Guitars",
+  "Guitar Amplifiers"
+ ],
+ "pianos": [
+  "Digital Pianos",
+  "Acoustic Pianos",
+  "Keyboards",
+  "Synthesizers"
+ ],
+ "drums": [
+  "Drum Kits",
+  "Cymbals",
+  "Electronic Drums",
+  "Percussion"
+ ],
+ "wind": [
+  "Woodwind",
+  "Brass",
+  "Flutes",
+  "Saxophones"
+ ],
+ "dj-equipment": [
+  "DJ Controllers",
+  "Mixers",
+  "Audio Interfaces",
+  "Studio Monitors"
+ ],
+ "instrument-accessories": [
+  "Strings",
+  "Cases",
+  "Stands",
+  "Cables",
+  "Replacement Parts"
+ ],
+ "printers": [
+  "Inkjet Printers",
+  "Laser Printers",
+  "Scanners",
+  "All-in-One Printers",
+  "Ink & Toner"
+ ],
+ "desk-accessories": [
+  "Desk Organisers",
+  "Desk Lamps",
+  "Keyboard Trays"
+ ],
+ "filing": [
+  "Filing Cabinets",
+  "Folders",
+  "Document Storage"
+ ],
+ "pens": [
+  "Ballpoint Pens",
+  "Gel Pens",
+  "Fountain Pens",
+  "Markers"
+ ],
+ "paper": [
+  "Copy Paper",
+  "Notebooks",
+  "Sticky Notes",
+  "Stationery Sets"
+ ],
+ "calendars": [
+  "Wall Calendars",
+  "Desk Calendars",
+  "Diaries",
+  "Planners"
+ ],
+ "outdoor-furniture": [
+  "Garden Tables",
+  "Garden Chairs",
+  "Outdoor Sofas",
+  "Sun Loungers"
+ ],
+ "grills": [
+  "Charcoal Barbecues",
+  "Gas Barbecues",
+  "Portable Barbecues",
+  "Accessories"
+ ],
+ "gardening-tools": [
+  "Lawnmowers",
+  "Trimmers",
+  "Hand Tools",
+  "Watering Equipment"
+ ],
+ "plants": [
+  "Indoor Plants",
+  "Garden Plants",
+  "Flower Seeds",
+  "Vegetable Seeds"
+ ],
+ "outdoor-decor": [
+  "Planters",
+  "Garden Ornaments",
+  "Outdoor Lighting"
+ ],
+ "cats": [
+  "Cat Food",
+  "Litter & Trays",
+  "Cat Beds",
+  "Toys",
+  "Scratching Posts"
+ ],
+ "birds": [
+  "Bird Food",
+  "Cages",
+  "Perches",
+  "Bird Toys"
+ ],
+ "fish": [
+  "Aquariums",
+  "Filters",
+  "Fish Food",
+  "Aquatic Decor"
+ ],
+ "small-animals": [
+  "Cages",
+  "Bedding",
+  "Food",
+  "Toys"
+ ],
+ "reptiles": [
+  "Terrariums",
+  "Heating",
+  "Reptile Food",
+  "Habitat Decor"
+ ],
+ "cycling": [
+  "Bicycles",
+  "Helmets",
+  "Bike Parts",
+  "Cycling Accessories"
+ ],
+ "camping": [
+  "Tents",
+  "Sleeping Bags",
+  "Backpacks",
+  "Camping Cooking"
+ ],
+ "water-sports": [
+  "Swimming",
+  "Surfing",
+  "Paddleboarding",
+  "Boating Equipment"
+ ],
+ "team-sports": [
+  "Football",
+  "Basketball",
+  "Cricket",
+  "Rugby",
+  "Training Gear"
+ ],
+ "winter-sports": [
+  "Skiing",
+  "Snowboarding",
+  "Ice Skating",
+  "Accessories"
+ ],
+ "hand-tools": [
+  "Spanners",
+  "Screwdrivers",
+  "Pliers",
+  "Tool Sets"
+ ],
+ "electrical-installation": [
+  "Cables",
+  "Sockets",
+  "Switches",
+  "Circuit Protection"
+ ],
+ "electrical-tools": [
+  "Electrical Testers",
+  "Installation Tools",
+  "Lighting Accessories"
+ ],
+ "plumbing": [
+  "Pipes",
+  "Fittings",
+  "Taps",
+  "Plumbing Tools"
+ ],
+ "paint": [
+  "Paints",
+  "Brushes",
+  "Rollers",
+  "Decorating Supplies"
+ ],
+ "safety-tools": [
+  "Protective Gloves",
+  "Safety Goggles",
+  "Dust Masks"
+ ],
+ "action-figures": [
+  "Collectible Figures",
+  "Playsets",
+  "Figure Accessories"
+ ],
+ "board-games": [
+  "Board Games",
+  "Card Games",
+  "Jigsaw Puzzles",
+  "Strategy Games"
+ ],
+ "dolls": [
+  "Fashion Dolls",
+  "Baby Dolls",
+  "Dollhouses",
+  "Doll Accessories"
+ ],
+ "outdoor-toys": [
+  "Ride-On Toys",
+  "Outdoor Games",
+  "Water Toys"
+ ],
+ "stem": [
+  "Science Kits",
+  "Robotics",
+  "Learning Toys",
+  "Coding Toys"
+ ],
+ "building-sets": [
+  "Construction Bricks",
+  "Model Kits",
+  "Magnetic Tiles"
+ ],
+ "pc-gaming": [
+  "PC Games",
+  "Gaming Keyboards",
+  "Gaming Mice",
+  "Controllers"
+ ],
+ "vr-gaming": [
+  "VR Headsets",
+  "VR Games",
+  "VR Accessories"
+ ],
+ "documents-ebooks": [
+  "Ebooks",
+  "Guides",
+  "Templates",
+  "Digital Documents"
+ ],
+ "graphics-design": [
+  "Design Templates",
+  "Fonts",
+  "Icons",
+  "Digital Artwork"
+ ],
+ "photography": [
+  "Stock Photos",
+  "Photo Presets",
+  "Photography Tools"
+ ],
+ "video": [
+  "Stock Footage",
+  "Video Templates",
+  "Editing Presets"
+ ],
+ "audio-music": [
+  "Music Tracks",
+  "Sound Effects",
+  "Audio Templates"
+ ],
+ "games-gaming": [
+  "Digital Games",
+  "Game Assets",
+  "Gaming Tools"
+ ],
+ "education-courses": [
+  "Online Courses",
+  "Workbooks",
+  "Learning Materials"
+ ],
+ "business-marketing": [
+  "Marketing Templates",
+  "Business Plans",
+  "Social Media Assets"
+ ],
+ "ai-automation": [
+  "AI Prompts",
+  "Automation Templates",
+  "AI Workflows"
+ ],
+ "3d-cad": [
+  "3D Models",
+  "CAD Templates",
+  "3D Printing Files"
+ ],
+ "websites-online-assets": [
+  "Website Templates",
+  "Domain Assets",
+  "Site Components"
+ ],
+ "virtual-goods": [
+  "Virtual Collectibles",
+  "Digital Items",
+  "Game Virtual Goods"
+ ],
+ "other-digital": [
+  "Mixed Digital Bundles",
+  "Other Downloads"
+ ],
+ "fine-jewellery": [
+  "Gold Jewellery",
+  "Silver Jewellery",
+  "Precious Gem Jewellery"
+ ],
+ "fashion-jewellery": [
+  "Costume Jewellery",
+  "Statement Pieces",
+  "Jewellery Sets"
+ ],
+ "rings": [
+  "Engagement Rings",
+  "Wedding Bands",
+  "Fashion Rings"
+ ],
+ "necklaces": [
+  "Chains",
+  "Pendants",
+  "Necklace Sets"
+ ],
+ "bracelets-earrings": [
+  "Bracelets",
+  "Stud Earrings",
+  "Drop Earrings"
+ ],
+ "watch-parts": [
+  "Watch Straps",
+  "Watch Batteries",
+  "Watch Tools"
+ ],
+ "gemstones": [
+  "Loose Gemstones",
+  "Gemstone Beads",
+  "Specimens"
+ ],
+ "adult-collectibles": [
+  "Collectible Memorabilia",
+  "Vintage Collectibles"
+ ],
+ "adult-accessories": [
+  "Novelty Accessories",
+  "Specialist Accessories"
+ ],
+ "adult-digital": [
+  "Restricted Digital Collectibles"
+ ],
+ "adult-services": [
+  "Other Restricted Services"
+ ],
+ "adult-vintage-collectors": [
+  "Vintage Media",
+  "Collectors Prints"
+ ],
+ "other-adult": [
+  "Other Adult Collectibles"
+ ]
+};
+export function thirdLevelProposals(categorySlug:string,subcategorySlug:string,subcategoryName:string):string[]{
+ const expanded=EXPANDED_THIRD_LEVEL[subcategorySlug];
+ if(expanded)return expanded;
+ const specific=THIRD_LEVEL_BY_SUBCATEGORY[subcategorySlug];
+ if(specific)return specific;
+ const curated=THIRD_LEVEL_SUGGESTIONS[categorySlug];
+ if(curated?.subcategory===subcategorySlug)return curated.suggestions;
+ const base=subcategoryName.replace(/\s*\(Legacy\)/g,"").trim();
+ // A conservative fallback for niche areas: meaningful options can be reviewed/renamed by admin.
+ return [base+" - Main Products",base+" - Accessories",base+" - Parts & Supplies"];
+}
 type ThirdLevelEntry = { category: string; subcategory: string; slug: string; name: string; visible: boolean; sort_order: number };
 let taxonomyOverrides: ThirdLevelEntry[] = [];
 let taxonomyLoaded = false;
@@ -621,7 +1447,7 @@ export function suggestedThirdLevel(categorySlug: string, subcategorySlug: strin
   if (!taxonomyLoaded) return original;
   const overrides = taxonomyOverrides.filter(e => e.category === categorySlug && e.subcategory === subcategorySlug);
   const saved = overrides.filter(e => e.visible).sort((a,b) => a.sort_order-b.sort_order).map(e => e.name);
-  return [...saved, ...original.filter(name => !overrides.some(e => e.slug === thirdLevelSlug(name)))];
+  return saved; // A saved hidden category must never leak through static fallback suggestions.
 }
 
 export function thirdLevelSlug(name: string): string {

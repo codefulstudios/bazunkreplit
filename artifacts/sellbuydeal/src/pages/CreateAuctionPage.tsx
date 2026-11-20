@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/AdSlot";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -20,6 +21,14 @@ import {
   Zap,
   Plus,
   ChevronDown,
+  Layers3,
+  FileText,
+  Coins,
+  ShieldCheck,
+  UsersRound,
+  Truck,
+  MapPin,
+  PlayCircle,
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -27,11 +36,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useMarketplaceRegion } from "@/hooks/useMarketplaceRegion";
 import { SellerListingPicker, type SellerListing } from "@/components/SellerListingPicker";
+import { CATEGORIES as MARKET_CATEGORIES } from "@/data/categories";
 
-const CATEGORIES = [
-  "Electronics", "Fashion", "Gaming", "Books",
-  "Collectibles", "Home", "Sports", "Art", "Music", "Toys", "Digital", "Adult", "Other",
-];
+const CATEGORIES = MARKET_CATEGORIES.map(c => c.name);
 
 const CONDITIONS = [
   { id: "new",       label: "Brand New",  desc: "Sealed / never used",          icon: Tag       },
@@ -62,18 +69,21 @@ export function CreateAuctionPage() {
 
   // Optional paid add-ons (prices set by the admin)
   const [promoCfg, setPromoCfg] = useState<Record<string, { cost: number; enabled: boolean }> | null>(null);
-  const [extendEnabled, setExtendEnabled] = useState(false);
   useEffect(() => {
     fetch("/api/promotions/config").then(r => (r.ok ? r.json() : null)).then(setPromoCfg).catch(() => {});
   }, []);
   const reserveCfg = promoCfg?.["reserve-auction"];
-  const extendCfg = promoCfg?.["auction-extension"];
   const reserveFeeCr = reserveCfg ? Math.round(reserveCfg.cost * 100) : 0;
-  const extendFeeCr = extendCfg ? Math.round(extendCfg.cost * 100) : 0;
 
   const [title, setTitle]               = useState("");
   const [description, setDescription]   = useState("");
   const [category, setCategory]         = useState("");
+  const [subcategory, setSubcategory] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
+  const [extrasOpen, setExtrasOpen] = useState(false);
+  const [shippingMode, setShippingMode] = useState<"ship" | "collection">("ship");
+  const selectedCategory = MARKET_CATEGORIES.find(c => c.name === category);
+  const availableSubcategories = selectedCategory?.subcategories ?? [];
   const [condition, setCondition]       = useState("good");
   const [tags, setTags]                 = useState("");
   const [startingBid, setStartingBid]   = useState("");
@@ -102,7 +112,7 @@ export function CreateAuctionPage() {
     setDescription(listing.description ?? "");
     if (listing.image) setPhotos([listing.image]);
     const matchCat = CATEGORIES.find((c) => c.toLowerCase() === (listing.category ?? "").toLowerCase()) ?? "";
-    if (matchCat) setCategory(matchCat);
+    if (matchCat) { setCategory(matchCat); setSubcategory(""); }
     const matchCond = CONDITIONS.find((c) => c.id === (listing.condition ?? "").toLowerCase().replace(" ", "-"));
     if (matchCond) setCondition(matchCond.id);
     if (listing.price) setStartingBid(String((listing.price * 0.5).toFixed(2)));
@@ -154,6 +164,7 @@ export function CreateAuctionPage() {
     const increment = parseFloat(bidIncrement);
     if (isNaN(increment) || increment <= 0) errors.push("Bid increment must be greater than 0");
     if (!category) errors.push("Category is required");
+    if (availableSubcategories.length && !subcategory) errors.push("Subcategory is required");
     if (errors.length > 0) {
       setValidationErrors(errors);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -177,13 +188,13 @@ export function CreateAuctionPage() {
           description: description.trim() || null,
           images: photos,
           category,
+          subcategory,
           condition,
           sellerEmail: user.email,
           sellerName: user.username ?? user.name,
           sellerUsername: user.username,
           startingBid: toGBP(startBid),
           reservePrice: reservePrice ? toGBP(parseFloat(reservePrice)) : null,
-          extendEnabled,
           bidIncrement: toGBP(increment),
           endTime,
           tags: tags.trim() || null,
@@ -205,7 +216,7 @@ export function CreateAuctionPage() {
   }
 
   if (success) return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#f6f7fc] flex flex-col">
       <Navbar />
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <motion.div
@@ -213,11 +224,11 @@ export function CreateAuctionPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-white rounded-3xl border border-gray-100 p-10 text-center max-w-md w-full shadow-sm"
         >
-          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Auction Live!</h2>
-          <p className="text-gray-500 text-sm mb-6">Your item is now open for bids. Good luck!</p>
+          <h2 className="text-2xl font-black text-slate-950 mb-2">Auction Live!</h2>
+          <p className="text-slate-700 text-sm mb-6">Your item is now open for bids. Good luck!</p>
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setLocation(`/auctions/${success}`)}
@@ -227,7 +238,7 @@ export function CreateAuctionPage() {
             </button>
             <button
               onClick={() => setLocation("/auctions")}
-              className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+              className="w-full py-3 rounded-xl border border-slate-300 text-slate-900 font-semibold hover:bg-gray-50 transition-colors"
             >
               Browse All Auctions
             </button>
@@ -239,42 +250,144 @@ export function CreateAuctionPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#f1f5f9] flex flex-col">
       <Navbar />
 
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-6 py-4">
         <Link
           href="/auctions"
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#4A5CE8] mb-6 w-fit transition-colors"
+          className="flex items-center gap-1.5 text-sm text-slate-700 hover:text-[#4A5CE8] mb-3 w-fit transition-colors"
         >
           <ChevronLeft className="w-4 h-4" /> Back to Auctions
         </Link>
 
-        <form onSubmit={submit} noValidate>
+        <form onSubmit={submit} noValidate className="auction-create-form auction-create-shell">
 
-          {/* Header card */}
-          <div className="rounded-t-2xl bg-gradient-to-r from-[#F26B21] to-[#e05a10] px-7 py-7 mb-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                <Gavel className="w-5 h-5 text-white" />
+          <div className="auction-create-layout min-w-0">
+          {/* Colourful, accessible auction hero */}
+          <div className="auction-create-header rounded-2xl overflow-hidden border border-violet-200 bg-gradient-to-r from-[#eee9ff] via-[#f7f5ff] to-[#fff0df] px-5 sm:px-7 py-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-5">
+              <div className="flex items-center gap-4">
+                <div className="auction-hero-gavel w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-600 to-orange-500 flex items-center justify-center shadow-lg"><Gavel className="w-12 h-12 !text-white" /></div>
+                <div><h1 className="auction-create-header-title text-3xl sm:text-4xl font-black tracking-tight text-[#101c38]">List an Auction</h1><p className="auction-create-header-subtitle text-[#334155] text-sm mt-1">Create your auction in minutes and reach more buyers on Bazunk.</p></div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Start an Auction</h1>
-                <p className="text-orange-100 text-sm mt-0.5">Add photos, set your price — go live instantly</p>
+              <div className="flex flex-wrap gap-4 sm:gap-6 text-[#101c38] text-xs font-bold">
+                <span className="flex flex-col items-center gap-1"><Zap className="w-6 h-6 text-orange-600"/>No listing fees</span>
+                <span className="flex flex-col items-center gap-1"><ShieldCheck className="w-6 h-6 text-orange-600"/>Secure &amp; trusted</span>
+                <span className="flex flex-col items-center gap-1"><UsersRound className="w-6 h-6 text-orange-600"/>Bigger audience</span>
               </div>
             </div>
           </div>
 
+          <div className="auction-create-fields min-w-0">
           {/* Import from existing listing */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-4">Import from a Listing <span className="text-gray-400 font-normal text-sm">(optional)</span></h2>
-            <SellerListingPicker onSelect={handleListingSelect} selectedId={selectedListingId} />
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <button type="button" onClick={() => setImportOpen(v => !v)} className="w-full flex items-center justify-between text-sm font-bold text-slate-800"><span>Import from an existing listing <span className="font-normal text-slate-600">(optional)</span></span><ChevronDown className={`w-4 h-4 transition-transform ${importOpen ? "rotate-180" : ""}`} /></button>
+            {importOpen && <div className="mt-3"><SellerListingPicker onSelect={handleListingSelect} selectedId={selectedListingId} /></div>}
+          </section>
+
+          {/* Item Details */}
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Layers3 className="w-5 h-5 text-orange-600" /> Item Details</h2>
+
+            <div className="mb-4">
+              <label className="text-sm font-medium text-slate-900 mb-1.5 block">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); setValidationErrors([]); }}
+                placeholder="e.g. Vintage Sony Walkman — excellent condition"
+                maxLength={120}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="text-sm font-medium text-slate-900 mb-1.5 block">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the item — any defects, accessories included, history…"
+                rows={4}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21] resize-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-medium text-slate-900 mb-1.5 block">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={category}
+                    onChange={(e) => { setCategory(e.target.value); setSubcategory(""); setValidationErrors([]); }}
+                    className="w-full appearance-none border border-slate-300 rounded-lg px-3 py-2.5 pr-8 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                  >
+                    <option value="">Select category</option>
+                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-900 mb-1.5 block">Subcategory {availableSubcategories.length > 0 && <span className="text-red-500">*</span>}</label>
+                <select value={subcategory} onChange={e => { setSubcategory(e.target.value); setValidationErrors([]); }} disabled={!availableSubcategories.length} className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 bg-white disabled:bg-slate-100 focus:border-orange-500">
+                  <option value="">Select subcategory</option>
+                  {availableSubcategories.map(sub => <option key={sub.slug} value={sub.name}>{sub.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-900 mb-1.5 block">Tags</label>
+                <input
+                  value={tags}
+                  onChange={(e) => setTags(e.target.value)}
+                  placeholder="vintage, sony, walkman, 80s"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                />
+              </div>
+            </div>
+
+            {/* Condition cards */}
+            <div>
+              <label className="text-sm font-medium text-slate-900 mb-2 block">Condition</label>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                {CONDITIONS.map((c) => {
+                  const Icon = c.icon;
+                  const active = condition === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCondition(c.id)}
+                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border text-center transition-all ${
+                        active
+                          ? "border-[#F26B21] bg-[#F26B21]/5"
+                          : "border-slate-300 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className={`mt-0.5 flex-shrink-0 ${active ? "text-[#F26B21]" : "text-slate-600"}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`text-xs font-bold leading-tight ${active ? "text-[#F26B21]" : "text-slate-900"}`}>
+                          {c.label}
+                        </p>
+                        <p className="sr-only">{c.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </section>
 
           {/* Photos */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-1">Photos</h2>
-            <p className="text-xs text-gray-400 mb-4">Upload up to 10 photos. First photo is the cover.</p>
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <h2 className="text-base font-black text-slate-950 mb-1 flex items-center gap-2"><Camera className="w-5 h-5 text-violet-600" /> Add Photos</h2>
+            <p className="text-xs text-slate-600 mb-4">Upload up to 10 photos. First photo is the cover.</p>
 
             <input
               ref={photoInputRef}
@@ -285,13 +398,13 @@ export function CreateAuctionPage() {
               onChange={handlePhotoChange}
             />
 
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
+            <div className={`grid grid-cols-4 sm:grid-cols-6 gap-2 mb-2 ${photos.length === 0 ? "hidden" : ""}`}>
               {photos.map((src, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group"
+                  className="relative aspect-square rounded-xl overflow-hidden border border-slate-300 group"
                 >
                   <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                   {i === 0 && (
@@ -313,7 +426,7 @@ export function CreateAuctionPage() {
                 <button
                   type="button"
                   onClick={() => photoInputRef.current?.click()}
-                  className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                  className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-slate-600 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
                 >
                   <Camera className="w-5 h-5" />
                   <span className="text-[10px] font-medium">Add</span>
@@ -325,19 +438,21 @@ export function CreateAuctionPage() {
               <button
                 type="button"
                 onClick={() => photoInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-gray-200 rounded-xl py-8 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                className="auction-photo-drop w-full border-2 border-dashed border-orange-300 bg-gradient-to-r from-orange-50 via-white to-violet-50 rounded-xl py-8 flex flex-col items-center gap-2 text-slate-800 hover:border-[#F26B21] transition-colors"
               >
-                <Upload className="w-6 h-6" />
-                <span className="text-sm font-medium">Click to upload photos</span>
+                <Upload className="w-11 h-11 text-orange-600" />
+                <span className="text-sm font-medium">Drag photos here or click to browse</span>
                 <span className="text-xs">JPG, PNG, WEBP — max 10 photos</span>
               </button>
             )}
           </section>
 
           {/* Video */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-1">Video <span className="text-gray-400 font-normal text-sm">(optional)</span></h2>
-            <p className="text-xs text-gray-400 mb-4">A short clip helps bidders trust the item is as described.</p>
+          <details className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <summary className="cursor-pointer text-sm font-bold text-slate-900 flex items-center gap-2"><PlayCircle className="w-5 h-5 text-violet-600" /> Add a Video (optional)</summary>
+          <section className="pt-3">
+            <h2 className="text-base font-bold text-slate-950 mb-1">Video <span className="text-slate-600 font-normal text-sm">(optional)</span></h2>
+            <p className="text-xs text-slate-600 mb-4">A short clip helps bidders trust the item is as described.</p>
 
             <input
               ref={videoInputRef}
@@ -354,7 +469,7 @@ export function CreateAuctionPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="relative rounded-xl overflow-hidden border border-gray-200"
+                  className="relative rounded-xl overflow-hidden border border-slate-300"
                 >
                   <video src={videoSrc} controls className="w-full max-h-52 object-cover bg-black" />
                   <button
@@ -373,7 +488,7 @@ export function CreateAuctionPage() {
                   exit={{ opacity: 0 }}
                   type="button"
                   onClick={() => videoInputRef.current?.click()}
-                  className="w-full border-2 border-dashed border-gray-200 rounded-xl py-7 flex flex-col items-center gap-2 text-gray-400 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
+                  className="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 flex flex-col items-center gap-2 text-slate-600 hover:border-[#F26B21] hover:text-[#F26B21] transition-colors"
                 >
                   <Video className="w-6 h-6" />
                   <span className="text-sm font-medium">Click to upload a video</span>
@@ -381,106 +496,15 @@ export function CreateAuctionPage() {
                 </motion.button>
               )}
             </AnimatePresence>
-          </section>
-
-          {/* Item Details */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-5">Item Details</h2>
-
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                value={title}
-                onChange={(e) => { setTitle(e.target.value); setValidationErrors([]); }}
-                placeholder="e.g. Vintage Sony Walkman — excellent condition"
-                maxLength={120}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">Description</label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe the item — any defects, accessories included, history…"
-                rows={4}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21] resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={category}
-                    onChange={(e) => { setCategory(e.target.value); setValidationErrors([]); }}
-                    className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 pr-8 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-                  >
-                    <option value="">Select category</option>
-                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">Tags</label>
-                <input
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder="vintage, sony, walkman, 80s"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
-                />
-              </div>
-            </div>
-
-            {/* Condition cards */}
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Condition</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {CONDITIONS.map((c) => {
-                  const Icon = c.icon;
-                  const active = condition === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCondition(c.id)}
-                      className={`flex items-start gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
-                        active
-                          ? "border-[#F26B21] bg-[#F26B21]/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className={`mt-0.5 flex-shrink-0 ${active ? "text-[#F26B21]" : "text-gray-400"}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className={`text-xs font-bold leading-tight ${active ? "text-[#F26B21]" : "text-gray-700"}`}>
-                          {c.label}
-                        </p>
-                        <p className="text-[10px] text-gray-400 leading-tight mt-0.5">{c.desc}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
+          </section></details>
 
           {/* Auction Settings */}
-          <section className="bg-white px-7 py-7 border-x border-b border-gray-100">
-            <h2 className="text-base font-bold text-gray-900 mb-5">Auction Settings</h2>
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Coins className="w-5 h-5 text-orange-600" /> Auction Settings</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-slate-900 mb-1.5 block">
                   Starting Bid ({currency.symbol}) <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -490,11 +514,11 @@ export function CreateAuctionPage() {
                   value={startingBid}
                   onChange={(e) => { setStartingBid(e.target.value); setValidationErrors([]); }}
                   placeholder="1.00"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                <label className="text-sm font-medium text-slate-900 mb-1.5 block">
                   Bid Increment ({currency.symbol})
                 </label>
                 <input
@@ -504,16 +528,16 @@ export function CreateAuctionPage() {
                   value={bidIncrement}
                   onChange={(e) => { setBidIncrement(e.target.value); setValidationErrors([]); }}
                   placeholder="1.00"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
                 />
               </div>
             </div>
 
             {(!reserveCfg || reserveCfg.enabled) && (
-            <div className="mb-5">
-              <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            <div className="mb-3">
+              <label className="text-sm font-medium text-slate-900 mb-1.5 block">
                 Reserve Price ({currency.symbol}){" "}
-                <span className="text-gray-400 font-normal text-xs">— optional, hidden from bidders{reserveFeeCr > 0 && ` · ${reserveFeeCr} credits if used`}</span>
+                <span className="text-slate-600 font-normal text-xs">— optional, hidden from bidders{reserveFeeCr > 0 && ` · ${reserveFeeCr} credits if used`}</span>
               </label>
               <input
                 type="number"
@@ -522,29 +546,17 @@ export function CreateAuctionPage() {
                 value={reservePrice}
                 onChange={(e) => setReservePrice(e.target.value)}
                 placeholder="Leave blank for no reserve"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#F26B21]/30 focus:border-[#F26B21]"
               />
-              <p className="text-[11px] text-gray-400 mt-1">If bidding doesn't reach your reserve, the item doesn't sell.</p>
+              <p className="text-[11px] text-slate-600 mt-1">If bidding doesn't reach your reserve, the item doesn't sell.</p>
             </div>
             )}
 
-            {(!extendCfg || extendCfg.enabled) && (
-            <label className="mb-5 flex items-start gap-3 rounded-xl border border-gray-200 p-3 cursor-pointer hover:bg-gray-50">
-              <input type="checkbox" checked={extendEnabled} onChange={e => setExtendEnabled(e.target.checked)} className="mt-1" />
-              <span>
-                <span className="block text-sm font-medium text-gray-700">
-                  Auction Extensions{extendFeeCr > 0 && <span className="text-gray-400 font-normal text-xs"> · {extendFeeCr} credits</span>}
-                </span>
-                <span className="block text-xs text-gray-400">A bid in the final 2 minutes extends the auction by 2 minutes, so last-second bids can't snipe it.</span>
-              </span>
-            </label>
-            )}
-
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5 block">
+              <label className="text-sm font-medium text-slate-900 mb-2 flex items-center gap-1.5 block">
                 <Clock className="w-3.5 h-3.5" /> Duration
               </label>
-              <div className="grid grid-cols-4 gap-2 mb-2">
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 mb-2">
                 {DURATIONS.map((d) => (
                   <button
                     key={d.hours}
@@ -553,14 +565,14 @@ export function CreateAuctionPage() {
                     className={`py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
                       durationHours === d.hours
                         ? "bg-[#F26B21] text-white border-[#F26B21]"
-                        : "border-gray-200 text-gray-600 hover:border-[#F26B21] hover:text-[#F26B21]"
+                        : "border-slate-300 text-slate-700 hover:border-[#F26B21] hover:text-[#F26B21]"
                     }`}
                   >
                     {d.label}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 flex items-center gap-1">
+              <p className="text-xs text-slate-600 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Ends:{" "}
                 {new Date(Date.now() + durationHours * 3600000).toLocaleString("en-GB", {
@@ -571,10 +583,19 @@ export function CreateAuctionPage() {
             </div>
           </section>
 
+          {/* Shipping choice: visual preference only; no unimplemented backend promise */}
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-4 border border-slate-300 shadow-sm">
+            <h2 className="text-base font-black text-slate-950 mb-3 flex items-center gap-2"><Truck className="w-5 h-5 text-orange-600" /> Delivery preference</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" aria-pressed={shippingMode === "ship"} onClick={() => setShippingMode("ship")} className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm ${shippingMode === "ship" ? "border-orange-500 bg-orange-50 text-slate-950" : "border-slate-300 bg-white text-slate-800"}`}><Truck className="w-5 h-5 text-orange-600" /> I will ship this item</button>
+              <button type="button" aria-pressed={shippingMode === "collection"} onClick={() => setShippingMode("collection")} className={`flex items-center gap-3 p-3 rounded-xl border-2 font-bold text-sm ${shippingMode === "collection" ? "border-orange-500 bg-orange-50 text-slate-950" : "border-slate-300 bg-white text-slate-800"}`}><MapPin className="w-5 h-5 text-violet-600" /> Collection only</button>
+            </div>
+            <p className="text-xs text-slate-600 mt-2">Arrange delivery or collection with the buyer after the auction.</p>
+          </section>
           {/* Ready to list */}
-          <section className="bg-white px-7 py-7 rounded-b-2xl border-x border-b border-gray-100">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Ready to List?</h2>
-            <p className="text-sm text-gray-500 mb-4">Your auction goes live the moment you submit.</p>
+          <section className="bg-white rounded-xl px-4 sm:px-5 py-3 border border-slate-300 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-950 mb-1">Ready to List?</h2>
+            <p className="text-sm text-slate-700 mb-4">Your auction goes live the moment you submit.</p>
 
             <AnimatePresence>
               {validationErrors.length > 0 && (
@@ -616,17 +637,17 @@ export function CreateAuctionPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#F26B21] to-[#e05a10] text-white font-bold text-sm hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r from-[#ff9900] to-[#fa5100] text-white font-black text-lg hover:opacity-90 transition-opacity shadow-md disabled:opacity-70"
               data-testid="button-submit-auction"
             >
               {submitting
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating auction…</>
-                : <><Gavel className="w-4 h-4" /> Start Auction</>
+                : <><Gavel className="w-4 h-4" /> List Auction</>
               }
             </button>
 
             {/* Trust badges */}
-            <div className="grid grid-cols-3 gap-3 mt-5">
+            <div className="grid grid-cols-3 gap-2 mt-3">
               {[
                 { icon: CheckCircle2, label: "Buyer Protected", desc: "All bids are covered" },
                 { icon: Clock, label: "Auto Close", desc: "Timer ends it fairly" },
@@ -638,14 +659,30 @@ export function CreateAuctionPage() {
                     <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-1.5">
                       <Icon className="w-4 h-4 text-[#F26B21]" />
                     </div>
-                    <p className="text-[10px] font-bold text-gray-800">{b.label}</p>
-                    <p className="text-[9px] text-gray-400 mt-0.5">{b.desc}</p>
+                    <p className="text-[10px] font-bold text-slate-900">{b.label}</p>
+                    <p className="text-[9px] text-slate-600 mt-0.5">{b.desc}</p>
                   </div>
                 );
               })}
             </div>
           </section>
-
+          </div>
+          </div>
+          <aside className="auction-create-ad" aria-label="Auction listing vertical advertisement">
+            <div className="auction-create-ad-inner">
+              <span className="auction-create-ad-label">Advertisement</span>
+              <div data-ad-placement="create-auction-vertical" data-ad-width="176" data-ad-height="740" className="auction-create-ad-panel">
+                <div className="auction-create-ad-placeholder" aria-hidden="true">
+                  <div className="auction-create-ad-brand">Bazu<span>nk</span></div>
+                  <div className="auction-create-ad-heading">Live<br/><strong>Auctions</strong></div>
+                  <div className="auction-create-ad-art"><Gavel size={88} strokeWidth={1.6}/><span className="auction-create-ad-spark">✦</span></div>
+                  <div className="auction-create-ad-benefits"><span>✓ Real-time bidding</span><span>✓ Exciting discoveries</span><span>✓ More exposure</span></div>
+                  <span className="auction-create-ad-cta">Go Live on Bazunk ›</span>
+                </div>
+                <div className="auction-create-ad-creative"><AdSlot slotKey="create_auction" /></div>
+              </div>
+            </div>
+          </aside>
         </form>
       </div>
 

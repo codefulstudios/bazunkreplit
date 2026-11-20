@@ -1,0 +1,397 @@
+/* Modern Blue admin foundation, scoped to the admin shell.
+   Keep light/dark surfaces consistent without overriding storefront styles. */
+.bazunk-admin{--admin-blue:#1769ff;--admin-blue-hover:#0b55df;--admin-ink:#0f172a;--admin-line:#e2e8f0;font-family:var(--app-font-sans)}
+.bazunk-admin .admin-dashboard{max-width:1680px;margin-inline:auto}
+.bazunk-admin .admin-dashboard .admin-kpi{background:#fff;color:var(--admin-ink);border:1px solid var(--admin-line);box-shadow:0 2px 10px rgb(15 23 42 / 4%)}
+.bazunk-admin .admin-dashboard .admin-kpi-icon{background:#eaf2ff;color:#1769ff}
+.bazunk-admin .admin-dashboard .admin-kpi:focus-within{outline:2px solid #1769ff;outline-offset:2px}
+.bazunk-admin button:focus-visible,.bazunk-admin a:focus-visible,.bazunk-admin select:focus-visible,.bazunk-admin input:focus-visible{outline:2px solid #1769ff;outline-offset:2px}
+.bazunk-admin .admin-nav-link[aria-current="page"]{background:#1769ff;color:#fff}
+.bazunk-admin .admin-charts>div,.bazunk-admin .admin-payments{box-shadow:0 2px 12px rgb(15 23 42 / 4%)}
+.dark .bazunk-admin{--admin-ink:#f8fafc;--admin-line:#263854}
+.dark .bazunk-admin .admin-dashboard .admin-kpi{background:#111f35;color:#f8fafc;border-color:#263854;box-shadow:none}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-icon{background:#1e3b61;color:#93c5fd}
+@media(max-width:639px){.bazunk-admin .admin-dashboard{padding-bottom:20px}.bazunk-admin .admin-dashboard .admin-kpi{min-height:116px}}
+
+/* Design Center admin component settings (scoped, both colour modes). */
+.bazunk-admin{font-size:var(--bz-admin-font-size,14px)}
+.bazunk-admin .admin-dashboard h1{font-size:var(--bz-admin-heading-size,30px)}
+.bazunk-admin .admin-dashboard .admin-kpi,.bazunk-admin .admin-charts>div,.bazunk-admin .admin-payments{border-radius:var(--bz-admin-radius,12px);box-shadow:var(--bz-admin-card-shadow,0 2px 10px rgb(15 23 42 / 4%))}
+.bazunk-admin[data-admin-button="pill"] button:not(.admin-nav-link){border-radius:999px}
+.bazunk-admin[data-admin-button="square"] button:not(.admin-nav-link){border-radius:0}
+.bazunk-admin[data-admin-header="transparent"] .admin-topbar{background:transparent;backdrop-filter:blur(16px)}
+.bazunk-admin[data-admin-sticky="false"] .admin-topbar{position:relative}
+.bazunk-admin[data-admin-sidebar="bordered"] aside{border-right:2px solid #1769ff}
+.bazunk-admin[data-admin-density="compact"] .admin-dashboard{row-gap:12px}
+.bazunk-admin[data-admin-density="spacious"] .admin-dashboard{row-gap:32px}
+.dark .bazunk-admin .admin-dashboard .admin-kpi{box-shadow:var(--bz-admin-card-shadow,none)}
+
+
+/* Unified admin submenu presentation. Scope every rule to the admin main region;
+   destructive/semantic actions keep their distinct warning and success colours. */
+.bazunk-admin main{
+  --bz-admin-control-radius:var(--bz-admin-radius,12px);
+  --bz-admin-card-bg:#ffffff;
+  --bz-admin-card-border:#d9e2ee;
+  --bz-admin-field-bg:#ffffff;
+  --bz-admin-field-text:#0f172a;
+  --bz-admin-muted:#475569;
+  --bz-admin-ring:#1769ff;
+}
+.dark .bazunk-admin main{
+  --bz-admin-card-bg:#111f35;
+  --bz-admin-card-border:#30445f;
+  --bz-admin-field-bg:#182b49;
+  --bz-admin-field-text:#f8fafc;
+  --bz-admin-muted:#cbd5e1;
+  --bz-admin-ring:#8bb8ff;
+}
+.bazunk-admin main :is(.rounded-2xl,.rounded-xl).bg-white,
+ .bazunk-admin main .admin-kpi{
+  border-radius:var(--bz-admin-radius,12px);
+}
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),select,textarea){
+  color:var(--bz-admin-field-text);
+  background-color:var(--bz-admin-field-bg);
+  border:1px solid var(--bz-admin-card-border);
+  border-radius:min(var(--bz-admin-radius,12px),12px);
+  min-height:38px;
+}
+.bazunk-admin main :is(input,textarea)::placeholder{color:var(--bz-admin-muted);opacity:1}
+.bazunk-admin main :is(input,select,textarea,button,a):focus-visible{
+  outline:3px solid var(--bz-admin-ring);outline-offset:2px;
+}
+.bazunk-admin main :is(input[type="checkbox"],input[type="radio"]){accent-color:#1769ff;min-width:16px;min-height:16px}
+.bazunk-admin main :is(button,[role="button"]){font-weight:650}
+.bazunk-admin main :is(button.bg-blue-600,button.bg-blue-700,a.bg-blue-600,a.bg-blue-700){
+  background:#1769ff;color:white;
+}
+.bazunk-admin main :is(button.bg-blue-600,button.bg-blue-700,a.bg-blue-600,a.bg-blue-700):not(:disabled):hover{background:#0b55df}
+.bazunk-admin main :is(button,select,input,textarea):disabled{cursor:not-allowed;opacity:.65}
+.bazunk-admin main :is(table){width:100%}
+.bazunk-admin main :is(th){color:#334155;background:#edf3fb}
+.dark .bazunk-admin main th{background:#20334f;color:#f1f5f9}
+.bazunk-admin main :is(td){color:#1e293b}
+.dark .bazunk-admin main td{color:#e2e8f0}
+.bazunk-admin main :is(tbody tr){border-bottom:1px solid var(--bz-admin-card-border)}
+.bazunk-admin main :is(tbody tr:hover){background:rgb(23 105 255 / 5%)}
+.dark .bazunk-admin main :is(tbody tr:hover){background:rgb(59 130 246 / 10%)}
+.bazunk-admin main :is(.bg-white.rounded-xl,.bg-white.rounded-2xl){box-shadow:var(--bz-admin-card-shadow,0 2px 10px rgb(15 23 42 / 4%))}
+.bazunk-admin main :is(.bg-white.rounded-xl,.bg-white.rounded-2xl):not(.border-0){border-color:var(--bz-admin-card-border)}
+.bazunk-admin[data-admin-density="compact"] main :is(th,td){padding-top:.5rem;padding-bottom:.5rem}
+.bazunk-admin[data-admin-density="spacious"] main :is(th,td){padding-top:1rem;padding-bottom:1rem}
+.bazunk-admin main :is(h1){font-size:clamp(24px,var(--bz-admin-heading-size,30px),40px);font-weight:800}
+.bazunk-admin main :is(h2){font-weight:750}
+@media(prefers-reduced-motion:reduce){.bazunk-admin main button{transition:none!important;transform:none!important}}
+
+
+/* Universal management controls. This layer intentionally follows legacy admin-theme.css
+   to prevent legacy high-specificity colour rules from hiding the actual controls. */
+.bazunk-admin main :is(input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],input[type="date"],input[type="datetime-local"],input[type="url"],input[type="tel"],select,textarea,[role="combobox"]){
+  background:#fff;color:#17243e;border:1px solid #aabbd1;
+  border-radius:min(var(--bz-admin-radius,12px),12px);
+  opacity:1;min-height:40px;color-scheme:light;
+}
+.dark .bazunk-admin main :is(input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],input[type="date"],input[type="datetime-local"],input[type="url"],input[type="tel"],select,textarea,[role="combobox"]){
+  background:#182b49;color:#f8fafc;border-color:#7188a8;
+  color-scheme:dark;
+}
+.bazunk-admin main :is(select option,select optgroup){background:#fff;color:#17243e}
+.dark .bazunk-admin main :is(select option,select optgroup){background:#182b49;color:#fff}
+.bazunk-admin main :is(input,textarea)::placeholder{color:#52647c;opacity:1}
+.dark .bazunk-admin main :is(input,textarea)::placeholder{color:#d5dfec;opacity:1}
+.bazunk-admin main :is(input[type="checkbox"],input[type="radio"]){accent-color:#1769ff;opacity:1}
+.bazunk-admin main :is(button,a,[role="button"]).bg-blue-600,
+.bazunk-admin main :is(button,a,[role="button"]).bg-blue-700{background:#1769ff;color:#fff}
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-blue-600,
+.dark .bazunk-admin main :is(button,a,[role="button"]).bg-blue-700{background:#1769ff;color:#fff}
+.bazunk-admin main :is(button,a,[role="button"]):focus-visible,
+.bazunk-admin main :is(input,select,textarea,[role="combobox"]):focus-visible{outline:3px solid #1769ff;outline-offset:2px}
+.dark .bazunk-admin main :is(button,a,[role="button"]):focus-visible,
+.dark .bazunk-admin main :is(input,select,textarea,[role="combobox"]):focus-visible{outline-color:#93c5fd}
+.bazunk-admin main :is(button,a,[role="button"]).text-white:not(:disabled){opacity:1}
+.bazunk-admin main :is(button,a,[role="button"]):disabled{opacity:.6;cursor:not-allowed}
+.bazunk-admin main :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500):not(button):not(a):not([role="button"]){color:#52647c}
+.dark .bazunk-admin main :is(.text-slate-400,.text-slate-500,.text-gray-400,.text-gray-500):not(button):not(a):not([role="button"]){color:#cbd5e1}
+
+/* Modern Blue mockup sidebar: consistent proportions and visual hierarchy. */
+.bazunk-admin aside{border-right:1px solid #dbe4f1;background:#fff;color:#172b4d;min-width:0}
+.dark .bazunk-admin aside{border-right-color:#263955;background:#0a1830;color:#f8fafc}
+.bazunk-admin .admin-sidebar-brand{min-height:108px}
+.bazunk-admin .admin-sidebar-nav{scrollbar-width:thin;scrollbar-color:#c4d3e7 transparent;overscroll-behavior:contain}
+.dark .bazunk-admin .admin-sidebar-nav{scrollbar-color:#38506f transparent}
+.bazunk-admin .admin-nav-group-trigger{min-height:36px;color:#48617f}
+.dark .bazunk-admin .admin-nav-group-trigger{color:#d8e4f6}
+.bazunk-admin .admin-nav-group-trigger:hover{background:#edf4ff}
+.dark .bazunk-admin .admin-nav-group-trigger:hover{background:#1a3152}
+.bazunk-admin .admin-nav-link{position:relative;color:#243954;line-height:1.25}
+.dark .bazunk-admin .admin-nav-link{color:#d9e4f7}
+.bazunk-admin .admin-nav-link:hover:not([aria-current="page"]){background:#edf4ff;color:#1459df}
+.dark .bazunk-admin .admin-nav-link:hover:not([aria-current="page"]){background:#1a3152;color:#fff}
+.bazunk-admin .admin-nav-link[aria-current="page"]{background:#1769ff!important;color:#fff!important;box-shadow:0 3px 9px rgb(23 105 255 / 17%)}
+.bazunk-admin .admin-nav-link[aria-current="page"] svg{color:#fff!important}
+.bazunk-admin .admin-sidebar-search input{min-width:0}
+.bazunk-admin .admin-sidebar-signout-label{font-weight:700}
+.bazunk-admin .admin-sidebar-collapse:focus-visible{outline:3px solid #1769ff;outline-offset:2px}
+@media(min-width:1024px){
+ .bazunk-admin[data-sidebar-collapsed="true"] aside{width:76px!important}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand{min-height:88px;padding-left:10px;padding-right:10px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand>img{width:46px;height:36px;object-fit:contain}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-brand>div,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-search,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-label,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-count,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-chevron,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-pages,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-identity-label,
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-signout-label{display:none}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-collapse{right:-12px;top:52px;z-index:3;background:#fff}
+ .dark .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-collapse{background:#152b47}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-nav{padding-left:8px;padding-right:8px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-trigger{justify-content:center;padding:12px 6px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-nav-group-trigger svg{height:19px;width:19px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sidebar-identity{justify-content:center;margin-left:8px;margin-right:8px;padding:8px}
+ .bazunk-admin[data-sidebar-collapsed="true"] .admin-sign-out{justify-content:center}
+}
+@media(max-width:1023px){
+ .bazunk-admin aside{width:min(304px,85vw);box-shadow:0 16px 46px rgb(15 23 42 / 25%)}
+ .bazunk-admin .admin-sidebar-brand{min-height:100px}
+ .bazunk-admin .admin-sidebar-nav{padding-bottom:20px}
+}
+
+
+/* Dashboard KPI cards: Modern Blue approved mockup proportions */
+.bazunk-admin .admin-kpi-grid{align-items:stretch}
+.bazunk-admin .admin-kpi-grid .admin-kpi{
+  height:156px;min-height:156px;padding:20px;border-radius:14px;
+  background:#fff;border:1px solid #dce5f1;
+  box-shadow:0 3px 14px rgb(18 48 89 / 5%);
+}
+.bazunk-admin .admin-kpi-grid .admin-kpi-icon{border-radius:12px;box-shadow:none;background:#eaf2ff;color:#1769ff}
+.bazunk-admin .admin-kpi-grid .admin-kpi-label{font-weight:650;letter-spacing:0}
+.bazunk-admin .admin-kpi-grid .admin-kpi-value{font-size:clamp(24px,2.1vw,31px);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bazunk-admin .admin-kpi-grid .admin-kpi-sub{color:#52647c}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi{background:#111f35;border-color:#2e425e;box-shadow:none}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi-icon{background:#1d3a5f;color:#9ac4ff}
+.dark .bazunk-admin .admin-kpi-grid .admin-kpi-sub{color:#cbd5e1}
+@media(max-width:639px){
+ .bazunk-admin .admin-kpi-grid .admin-kpi{height:146px;min-height:146px;padding:16px}
+ .bazunk-admin .admin-kpi-grid .admin-kpi-value{font-size:26px}
+}
+
+/* Equal-height dashboard analytics cards, anchored to the approved Modern Blue grid. */
+.bazunk-admin .admin-charts{align-items:stretch}
+.bazunk-admin .admin-charts .admin-chart-card{min-height:375px;border-radius:14px;box-shadow:0 3px 14px rgb(18 48 89 / 5%)}
+.bazunk-admin .admin-charts{--bz-chart-grid:#dce5f1;--bz-chart-tick:#52647c;--bz-chart-tooltip:#ffffff;--bz-chart-tooltip-text:#0f172a;--bz-chart-hover:#edf4ff}
+.dark .bazunk-admin .admin-charts{--bz-chart-grid:#314863;--bz-chart-tick:#cbd5e1;--bz-chart-tooltip:#172942;--bz-chart-tooltip-text:#f8fafc;--bz-chart-hover:#1d385a}
+.dark .bazunk-admin .admin-charts .admin-chart-card{box-shadow:none}
+@media(max-width:639px){.bazunk-admin .admin-charts .admin-chart-card{padding:16px;min-height:355px}.bazunk-admin .admin-charts .admin-chart-plot{height:250px}}
+
+
+/* Screenshot-parity correction: override legacy coloured admin dashboard cards. */
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{
+ background:#fff!important;background-image:none!important;border:1px solid #e0e7f1!important;
+ box-shadow:0 3px 12px rgba(26,47,86,.06)!important;color:#0f172a!important;
+ min-height:142px;height:142px!important;padding:20px!important;
+}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{
+ background:#14253e!important;background-image:none!important;border-color:#304563!important;
+ color:#f8fafc!important;box-shadow:none!important;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#eaf2ff!important;color:#1769ff!important}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#213d63!important;color:#a5c8ff!important}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{font-size:30px!important;color:inherit!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] > div > div > div,
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid > div{
+ background:#fff!important;background-image:none!important;color:#0f172a!important;
+ border-color:#e0e7f1!important;border-width:1px!important;box-shadow:0 2px 10px rgb(15 23 42 / 5%)!important;
+}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid > div{
+ background:#14253e!important;color:#f8fafc!important;border-color:#304563!important;
+}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid > div > button:first-child{color:inherit!important;background:transparent!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid > div > button:last-child{background:#f1f6ff!important;color:#1459df!important}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid > div > button:last-child{background:#1b3454!important;color:#b8d3ff!important}
+.bazunk-admin .admin-dashboard .admin-charts .admin-chart-card{
+ background:#fff!important;background-image:none!important;border:1px solid #e0e7f1!important;color:#0f172a!important;
+}
+.dark .bazunk-admin .admin-dashboard .admin-charts .admin-chart-card{background:#14253e!important;border-color:#304563!important;color:#f8fafc!important}
+.bazunk-admin .admin-dashboard .admin-secondary-metrics summary:focus-visible{outline:3px solid #1769ff;outline-offset:4px}
+
+/* Support panels match the restrained mockup instead of solid promotional blue. */
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div{
+ background:#fff!important;background-image:none!important;
+ border:1px solid #e0e7f1!important;box-shadow:0 3px 12px rgb(26 47 86 / 6%)!important;
+ color:#0f172a!important;
+}
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div{
+ background:#14253e!important;border-color:#304563!important;color:#f8fafc!important;box-shadow:none!important;
+}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div h2{color:inherit!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#f1f6ff!important}
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div .bg-blue-50{background:#1b3454!important}
+
+
+/* Matte admin design pass — no sheen, glowing widgets or saturated panels.
+   Dashboard-only overrides, preserving semantic alerts and primary actions. */
+.bazunk-admin .admin-dashboard{
+ --matte-card:#fff;--matte-border:#e1e7ef;--matte-muted:#526178;
+ --matte-soft:#f4f7fb;
+}
+.dark .bazunk-admin .admin-dashboard{
+ --matte-card:#15243b;--matte-border:#34435b;--matte-muted:#c5d1e2;
+ --matte-soft:#1b2d47;
+}
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics),
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div,
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div{
+ background:var(--matte-card)!important;background-image:none!important;
+ border:1px solid var(--matte-border)!important;
+ color:inherit!important;box-shadow:none!important;
+ border-radius:12px!important;filter:none!important;backdrop-filter:none!important;
+}
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics)::before,
+.bazunk-admin .admin-dashboard :is(.admin-kpi,.admin-chart-card,.admin-payments,.admin-secondary-metrics)::after{box-shadow:none!important}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{background:var(--matte-card)!important;border-color:var(--matte-border)!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{background:var(--matte-card)!important;border-color:var(--matte-border)!important}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#eaf1fc!important;color:#2059bf!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{background:#253d5c!important;color:#a9c8ff!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels>div,
+.dark .bazunk-admin .admin-dashboard .admin-dashboard-panels>div{background:var(--matte-card)!important;box-shadow:none!important;border-color:var(--matte-border)!important}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels :is(.bg-blue-50,[class~="dark:bg-blue-500/10"]){
+ background:var(--matte-soft)!important;
+}
+.bazunk-admin .admin-dashboard .admin-dashboard-panels button:not(:hover){box-shadow:none!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div,
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-required"] .grid>div{
+ background:var(--matte-card)!important;box-shadow:none!important;border-color:var(--matte-border)!important;
+}
+.bazunk-admin .admin-dashboard .admin-chart-card{background:var(--matte-card)!important;border-color:var(--matte-border)!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard .admin-chart-card{background:var(--matte-card)!important}
+.bazunk-admin .admin-dashboard .admin-operations button{background:var(--matte-card)!important;box-shadow:none!important;border:1px solid var(--matte-border)!important;border-radius:10px!important}
+.bazunk-admin .admin-dashboard .admin-operations button:hover{background:var(--matte-soft)!important}
+.bazunk-admin .admin-dashboard .admin-payments{background:var(--matte-card)!important}
+.bazunk-admin .admin-dashboard .admin-payments th{background:var(--matte-soft)!important}
+.bazunk-admin .admin-dashboard .admin-secondary-metrics{background:var(--matte-card)!important}
+
+
+/* Dashboard and sidebar layout proportions: restrained Modern Blue. */
+@media(min-width:1024px){
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) aside{width:var(--bz-admin-sidebar-width,260px);min-width:240px;max-width:320px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-sidebar-nav{padding:18px 12px 22px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-group{margin-bottom:8px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-group-trigger{min-height:42px;padding:11px 12px}
+ .bazunk-admin:not([data-sidebar-collapsed="true"]) .admin-nav-link{min-height:42px;padding:10px 12px}
+}
+.bazunk-admin .admin-dashboard-proportions{width:100%;max-width:1580px;margin-inline:auto}
+.bazunk-admin .admin-dashboard-proportions .admin-kpi-grid{gap:18px;grid-auto-rows:1fr}
+.bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi{min-height:152px;height:152px!important;padding:22px!important}
+.bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels{align-items:stretch;gap:20px}
+.bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{min-width:0;min-height:230px;padding:24px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts{gap:20px}
+.bazunk-admin .admin-dashboard-proportions .admin-chart-card{min-width:0;padding:24px}
+@media(max-width:1199px){
+ .bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{min-height:0}
+}
+@media(max-width:639px){
+ .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid{gap:12px}
+ .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi{height:144px!important;min-height:144px;padding:16px!important}
+ .bazunk-admin .admin-dashboard-proportions .admin-dashboard-panels>div{padding:18px}
+ .bazunk-admin .admin-dashboard-proportions .admin-chart-card{padding:16px}
+}
+
+/* Compact actionable queue replaces legacy tall cards without four separate surfaces. */
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"]{background:#fff!important;border:1px solid #e1e7ef!important;box-shadow:none!important}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"]{background:#15243b!important;border-color:#34435b!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] .grid>div{background:transparent!important;box-shadow:none!important;border:0!important;border-radius:0!important}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button{background:transparent!important;box-shadow:none!important;padding:0}
+.bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#1459df!important}
+.dark .bazunk-admin .admin-dashboard [data-testid="admin-action-compact-panel"] button:hover{color:#bfdbfe!important}
+
+/* Consistent KPI hierarchy: matte, readable, and visually balanced. */
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{
+  min-height:166px!important;height:166px!important;padding:22px!important;
+  border-radius:14px!important;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-icon{
+  width:48px!important;height:48px!important;border-radius:12px!important;
+  box-shadow:none!important;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{
+  font-size:clamp(29px,2.5vw,36px)!important;line-height:1.13!important;
+  letter-spacing:-.035em;
+}
+.bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-sub{
+  font-size:13px!important;line-height:1.45!important;margin-top:7px!important;
+}
+@media(max-width:639px){
+  .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi{min-height:152px!important;height:152px!important;padding:17px!important}
+  .bazunk-admin .admin-dashboard .admin-kpi-grid .admin-kpi-value{font-size:29px!important}
+}
+
+/* Cohesive dashboard final pass: calm contrast, measured rhythm and reduced chrome. */
+.bazunk-admin .admin-dashboard-proportions{--bz-chart-grid:#dbe4ed;--bz-chart-tick:#526279;--bz-chart-tooltip:#fff;--bz-chart-tooltip-text:#172238;--bz-chart-hover:#eef3f9}
+.bazunk-admin .admin-dashboard-proportions>header{margin-bottom:2px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts{gap:18px}
+.bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card{min-height:340px;padding:22px!important;box-shadow:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-chart-plot{height:240px!important}
+.bazunk-admin .admin-dashboard-proportions .admin-system-links button{box-shadow:none!important;background-image:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-payments{box-shadow:none!important;background-image:none!important}
+.bazunk-admin .admin-dashboard-proportions .admin-payments tbody tr:hover{background:#f6f8fb}
+.dark .bazunk-admin .admin-dashboard-proportions{
+ --matte-card:#202c3d;--matte-border:#3c4d64;--matte-soft:#26354a;
+ --bz-chart-grid:#3e526a;--bz-chart-tick:#d0dbea;--bz-chart-tooltip:#202c3d;--bz-chart-tooltip-text:#f5f7fa;--bz-chart-hover:#34475c;
+}
+.dark .bazunk-admin .admin-dashboard-proportions .admin-kpi-grid .admin-kpi,
+.dark .bazunk-admin .admin-dashboard-proportions .admin-dashboard-management .grid>div,
+.dark .bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card,
+.dark .bazunk-admin .admin-dashboard-proportions [data-testid="admin-action-compact-panel"],
+.dark .bazunk-admin .admin-dashboard-proportions .admin-payments{background:#202c3d!important;border-color:#3c4d64!important}
+.dark .bazunk-admin .admin-dashboard-proportions .admin-payments tbody tr:hover{background:#29394e}
+@media(max-width:639px){.bazunk-admin .admin-dashboard-proportions .admin-charts .admin-chart-card{min-height:325px;padding:16px!important}.bazunk-admin .admin-dashboard-proportions .admin-chart-plot{height:232px!important}}
+
+/* Final shared admin input/button contrast guards for both themes. */
+.bazunk-admin aside .admin-sidebar-search label{background:#f0f4f9!important;border-color:#cbd5e1!important;color:#334155!important}
+.dark .bazunk-admin aside .admin-sidebar-search label{background:#1c304b!important;border-color:#465d7b!important;color:#e9f1ff!important}
+.bazunk-admin aside .admin-sidebar-search label>svg{color:#45617c!important}
+.dark .bazunk-admin aside .admin-sidebar-search label>svg{color:#d4e2f5!important}
+.bazunk-admin aside .admin-sidebar-footer button{color:#243954!important;opacity:1!important}
+.dark .bazunk-admin aside .admin-sidebar-footer button{color:#e9f1ff!important}
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){color:#172a46;opacity:1}
+.bazunk-admin main :is(input,textarea)::placeholder{color:#596a80;opacity:1}
+.dark .bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){color:#f5f9ff!important}
+.dark .bazunk-admin main :is(input,textarea)::placeholder{color:#c3d3e9!important;opacity:1}
+
+
+/* Phase 2: semantic admin component contract across every submenu.
+   Scoped to the admin shell; intentional filled buttons keep their own text. */
+.bazunk-admin{
+ --bz-control-border:#94a3b8;
+ --bz-control-bg:#ffffff;
+ --bz-control-text:#172b49;
+ --bz-control-placeholder:#52647a;
+ --bz-control-focus:#1769ff;
+}
+.dark .bazunk-admin{
+ --bz-control-border:#64748b;
+ --bz-control-bg:#1d3048;
+ --bz-control-text:#f8fafc;
+ --bz-control-placeholder:#cbd5e1;
+ --bz-control-focus:#93c5fd;
+}
+.bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){
+ background-color:var(--bz-control-bg);
+ color:var(--bz-control-text);
+ border-color:var(--bz-control-border);
+ color-scheme:light;
+}
+.dark .bazunk-admin main :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){color-scheme:dark}
+.bazunk-admin main :is(input,textarea)::placeholder{color:var(--bz-control-placeholder);opacity:1}
+.bazunk-admin main :is(button,a,input,textarea,select):focus-visible{
+ outline:3px solid var(--bz-control-focus);
+ outline-offset:2px;
+}
+.bazunk-admin main select option{background:var(--bz-control-bg);color:var(--bz-control-text)}
+.bazunk-admin main button:not(:disabled){cursor:pointer}
+.bazunk-admin main button:disabled{cursor:not-allowed;opacity:.65}
+.bazunk-admin main :is(button[role="switch"],input[type="checkbox"],input[type="radio"]){accent-color:#1769ff}

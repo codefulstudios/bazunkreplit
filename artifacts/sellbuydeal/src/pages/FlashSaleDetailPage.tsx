@@ -1,3 +1,4 @@
+import { useAuth as useClerkAuth } from "@clerk/react";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link, useLocation } from "wouter";
 import {
@@ -135,6 +136,20 @@ export function FlashSaleDetailPage() {
   const [, setLocation] = useLocation();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
+  const [checkoutBusy,setCheckoutBusy] = useState(false);
+  const [checkoutError,setCheckoutError] = useState<string | null>(null);
+  async function buySale() {
+    if(!user){setCheckoutError("Sign in to purchase this deal");return;}
+    setCheckoutBusy(true);setCheckoutError(null);
+    try {
+      const token=await getToken();
+      const response=await fetch("/api/stripe/special-checkout",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},body:JSON.stringify({kind:"flash",id})});
+      const data=await response.json();
+      if(!response.ok || !data.url)throw new Error(data.error||"Checkout unavailable");
+      window.location.assign(data.url);
+    }catch(error){setCheckoutError(error instanceof Error?error.message:"Checkout unavailable");setCheckoutBusy(false);}
+  }
   const [sale, setSale] = useState<FlashSale | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -285,17 +300,12 @@ export function FlashSaleDetailPage() {
                 </div>
               </div>
 
-              {isActive && !isOwnSale && !messageSent && (
-                <button onClick={() => setMessageSent(true)}
-                  className={`w-full py-3 rounded-xl text-white font-black hover:opacity-90 transition-opacity flex items-center justify-center gap-2 ${isLightning ? "bg-red-600" : "bg-[#F26B21]"}`}>
-                  <Zap className="w-4 h-4 fill-white" /> Grab This Deal
-                </button>
-              )}
-              {messageSent && (
-                <div className="flex flex-col items-center gap-2 py-3">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                  <p className="font-bold text-gray-800">Interest registered!</p>
-                  <p className="text-xs text-gray-400 text-center">The seller will be in touch. Check your messages.</p>
+              {isActive && !isOwnSale && (
+                <div className="space-y-2">
+                  <button type="button" disabled={checkoutBusy} onClick={buySale} className="w-full py-3 rounded-xl bg-[#F26B21] text-white font-black disabled:opacity-50">
+                    {checkoutBusy ? "Opening secure checkout…" : "Buy now securely"}
+                  </button>
+                  {checkoutError && <p role="alert" className="text-sm font-semibold text-red-700">{checkoutError}</p>}
                 </div>
               )}
               {isUpcoming && (

@@ -1,0 +1,143 @@
+/* Single source for protected component colours. Feature CSS must use these tokens. */
+:root {
+ --bz-protected-page:#f8fafc;--bz-protected-card:#ffffff;--bz-protected-text:#111827;
+ --bz-protected-secondary:#374151;--bz-protected-field:#f1f5f9;
+ --bz-protected-button:#fb923c;--bz-protected-button-text:#111827;
+}
+.bz-protected-panel {background:var(--bz-protected-card);color:var(--bz-protected-text)}
+.bz-protected-description {color:var(--bz-protected-secondary)}
+.bz-protected-field, .bz-protected-field :is(option, input, select, textarea) {background:var(--bz-protected-field);color:var(--bz-protected-text)}
+.bz-protected-action {background:var(--bz-protected-button);color:var(--bz-protected-button-text)}
+.bz-protected-page {background:var(--bz-protected-page);color:var(--bz-protected-text)}
+/* Admin remains visually isolated from storefront utilities. */
+[data-bz-design-area="admin"] .bz-protected-panel {background:var(--bz-protected-card);color:var(--bz-protected-text)}
+@media (prefers-reduced-motion:reduce) {.bz-protected-action {transition:none}}
+
+/* Per-section overrides are opt-in and cannot leak to other Bazunk pages. */
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero {
+ background:var(--dp-bg) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero :is(h1,p,span) {
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-hero button {
+ background:var(--dp-action) !important;
+ color:var(--dp-action-text) !important;
+ border-color:transparent !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission {
+ background:var(--dp-surface) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(h2,p,label) {
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(input:not([type="checkbox"]),textarea,select) {
+ background:var(--dp-field) !important;
+ color:var(--dp-text) !important;
+}
+[data-testid="deal-pilot-panel"][data-design-custom="true"] .bz-dp-mission :is(input,textarea)::placeholder {
+ color:var(--dp-subtext) !important;
+ opacity:1;
+}
+
+/* Opt-in homepage sections: no global wildcard selectors or cross-page leakage. */
+.bz-design-home-hero[data-design-home-hero="true"] {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-hero[data-design-home-hero="true"] :is(h1,p,.bz-hero-summary,.bz-hero-kicker) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-hero[data-design-home-hero="true"] a[href="/browse"].min-h-12 {
+ background:var(--bz-section-accent) !important;color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-tile {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-tile p {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-icon {
+ background:var(--bz-section-accent) !important;color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-categories[data-design-home-categories="true"] .bz-design-category-icon svg {
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] .bz-design-spotlight-link {
+ color:var(--bz-section-accent-text) !important;background:var(--bz-section-accent) !important;
+ padding:0.65rem 1rem;border-radius:0.65rem;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card {
+ background:var(--bz-section-bg) !important;color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card :is(h2,h3,p,span) {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card svg {
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-card svg:first-child {
+ background:var(--bz-section-accent) !important;
+}
+
+/* Correct the observed spotlight empty state even with no custom design saved. */
+.bz-design-spotlight:not([data-design-spotlight="true"]) {
+ background:#ffffff !important;color:#111827 !important;
+}
+.bz-design-spotlight:not([data-design-spotlight="true"]) :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:#111827 !important;
+}
+.dark .bz-design-spotlight:not([data-design-spotlight="true"]) {
+ background:#17243a !important;color:#ffffff !important;
+}
+.dark .bz-design-spotlight:not([data-design-spotlight="true"]) :is(.bz-design-spotlight-heading,.bz-design-spotlight-copy) {
+ color:#ffffff !important;
+}
+
+.bz-design-home-hero[data-design-home-hero="true"] h1 span {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-spotlight[data-design-spotlight="true"] > svg {
+ color:var(--bz-section-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-icon {
+ background:var(--bz-section-accent) !important;
+ color:var(--bz-section-accent-text) !important;
+}
+.bz-design-home-promos[data-design-home-promos="true"] .bz-design-promo-icon svg {
+ color:var(--bz-section-accent-text) !important;
+ background:none !important;
+}
+
+/* Only opted-in icon groups are affected. No global icon CSS. */
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-tile {
+ background:var(--bz-icon-tile) !important;color:var(--bz-icon-text) !important;
+ border-color:var(--bz-icon-border) !important;gap:var(--bz-icon-gap) !important;
+}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-tile p {color:var(--bz-icon-text) !important}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-icon {
+ width:var(--bz-icon-badge-size) !important;height:var(--bz-icon-badge-size) !important;
+ background:var(--bz-icon-badge) !important;border-color:var(--bz-icon-badge-border) !important;
+ border-radius:var(--bz-icon-radius) !important;
+}
+.bz-design-home-categories[data-design-icons="true"] .bz-design-category-icon svg {
+ width:var(--bz-icon-size) !important;height:var(--bz-icon-size) !important;color:var(--bz-icon-color) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-card {
+ background:var(--bz-icon-tile) !important;color:var(--bz-icon-text) !important;border-color:var(--bz-icon-border) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-card :is(h2,h3,p,span) {color:var(--bz-icon-text) !important}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-icon {
+ width:var(--bz-icon-badge-size) !important;height:var(--bz-icon-badge-size) !important;
+ background:var(--bz-icon-badge) !important;border:1px solid var(--bz-icon-badge-border) !important;border-radius:var(--bz-icon-radius) !important;
+}
+.bz-design-home-promos[data-design-icons="true"] .bz-design-promo-icon svg {
+ width:var(--bz-icon-size) !important;height:var(--bz-icon-size) !important;color:var(--bz-icon-color) !important;background:none !important;
+}

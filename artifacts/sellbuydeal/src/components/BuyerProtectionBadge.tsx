@@ -29,7 +29,7 @@ export function BuyerProtectionBadge({ compact = false }: { compact?: boolean })
         }`}
       >
         <Shield className={compact ? "w-3.5 h-3.5" : "w-4 h-4"} />
-        Buyer Protected
+        Buyer Protection
         {!compact && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
       </button>
 
@@ -45,8 +45,8 @@ export function BuyerProtectionBadge({ compact = false }: { compact?: boolean })
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <h2 className="text-lg font-black mt-1">Bazunk Buyer Protection</h2>
-              <p className="text-emerald-100 text-sm mt-1">Every purchase is protected. Shop with complete confidence.</p>
+              <h2 className="text-lg font-bold mt-1">Bazunk Buyer Protection</h2>
+              <p className="text-emerald-100 text-sm mt-1">Buyer Protection applies to eligible purchases under the programme terms.</p>
             </div>
 
             <div className="p-5">
@@ -57,7 +57,7 @@ export function BuyerProtectionBadge({ compact = false }: { compact?: boolean })
                     <item.icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${item.color}`} />
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{item.title}</p>
-                      <p className="text-xs text-gray-400">{item.desc}</p>
+                      <p className="text-xs text-slate-600">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -68,20 +68,20 @@ export function BuyerProtectionBadge({ compact = false }: { compact?: boolean })
                 <div className="grid sm:grid-cols-2 gap-x-5 gap-y-3">
                   {STEPS.map((step, i) => (
                     <div key={step.label} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center text-[10px] font-black flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                         {i + 1}
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900">{step.label}</p>
-                        <p className="text-xs text-gray-400">{step.desc}</p>
+                        <p className="text-xs text-slate-600">{step.desc}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <p className="text-[11px] text-gray-400 text-center">
-                Disputes must be opened within <strong>30 days</strong> of purchase. Applies to all paid orders on Bazunk.
+              <p className="text-sm text-slate-600 text-center">
+                Disputes must be opened within <strong>30 days</strong> of purchase. Eligibility and exclusions apply; review the full Buyer Protection terms.
               </p>
 
               <button

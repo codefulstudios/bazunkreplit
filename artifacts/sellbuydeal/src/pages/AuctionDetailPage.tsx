@@ -15,8 +15,8 @@ type Auction = {
   id: string; title: string; description: string | null; images: string[];
   category: string | null; condition: string; seller_name: string; seller_email: string;
   starting_bid: string; current_bid: string | null; bid_count: number;
-  bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; extend_enabled?: boolean; end_time: string;
-  marketplace_region?: "uk" | "us"; status: string; winner_name: string | null; winner_email: string | null;
+  bid_increment: string; has_reserve: boolean; reserve_met: boolean | null; end_time: string;
+  status: string; winner_name: string | null; winner_email: string | null;
   winner_bid: string | null; created_at: string; bids: Bid[];
 };
 
@@ -75,6 +75,23 @@ export function AuctionDetailPage() {
   const { formatPrice, currency } = useCurrency();
   const { user } = useAuth();
   const { getToken } = useClerkAuth();
+  const [checkoutBusy,setCheckoutBusy] = useState(false);
+  const [checkoutError,setCheckoutError] = useState<string | null>(null);
+  async function payWinningBid() {
+    setCheckoutBusy(true);setCheckoutError(null);
+    try {
+      const token=await getToken();
+      if(!token)throw new Error("Please sign in to pay");
+      const response=await fetch("/api/stripe/special-checkout",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({kind:"auction",id})
+      });
+      const data=await response.json();
+      if(!response.ok||!data.url)throw new Error(data.error||"Payment unavailable");
+      window.location.assign(data.url);
+    }catch(error){setCheckoutError(error instanceof Error?error.message:"Payment unavailable");setCheckoutBusy(false);}
+  }
+
   const [auction, setAuction] = useState<Auction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -271,6 +288,16 @@ export function AuctionDetailPage() {
                 <div>
                   <p className="font-bold text-amber-800">Auction Ended — Winner: {auction.winner_name}</p>
                   <p className="text-sm text-amber-600">Winning bid: {formatPrice(parseFloat(auction.winner_bid!))}</p>
+                  {user && !isOwnAuction && (
+                    <div className="mt-3 space-y-2">
+                      <button type="button" disabled={checkoutBusy} onClick={payWinningBid}
+                        className="rounded-xl bg-[#F26B21] px-4 py-2.5 text-sm font-black text-white disabled:opacity-50">
+                        {checkoutBusy ? "Opening Stripe…" : "Pay winning bid"}
+                      </button>
+                      <p className="text-xs text-amber-800">Only the verified winning account can complete payment.</p>
+                      {checkoutError && <p role="alert" className="text-xs font-bold text-red-700">{checkoutError}</p>}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -395,9 +422,6 @@ export function AuctionDetailPage() {
                     {auction.reserve_met ? "Reserve met" : auction.bid_count > 0 ? "Not met yet" : "Hidden"}
                   </span>
                 </div>
-              )}
-              {auction.extend_enabled && (
-                <div className="flex justify-between"><span>Auto-extend</span><span className="font-semibold text-gray-700">Late bids add time</span></div>
               )}
               <div className="flex justify-between"><span>Listed</span><span className="font-semibold text-gray-700">{new Date(auction.created_at).toLocaleDateString("en-GB")}</span></div>
               <div className="flex justify-between"><span>Ends</span><span className="font-semibold text-gray-700">{new Date(auction.end_time).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>

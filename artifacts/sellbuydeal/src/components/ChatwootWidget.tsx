@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useRawSettings, useSettingsLoaded } from "@/context/SiteSettingsContext";
 import { useFeature } from "@/components/FeatureGate";
+import { getCookieChoices, openCookieSettings, useCookieConsent } from "@/components/CookieConsent";
 
 declare global {
   interface Window {
@@ -34,6 +35,7 @@ function pageGroup(path: string): string {
 }
 
 export function openChatwootSupport() {
+  if (!getCookieChoices().functional) { openCookieSettings(); return; }
   if (document.documentElement.classList.contains("bazunk-chatwoot-disabled")) return;
   if (window.$chatwoot) window.$chatwoot.toggle("open");
   else window.addEventListener("chatwoot:ready", () => {
@@ -45,13 +47,14 @@ export function openChatwootSupport() {
 export function ChatwootWidget() {
   const identifiedUser = useRef<string | null>(null);
   const enabled = useFeature("chatwoot_support");
+  const { choices } = useCookieConsent();
   const { getToken, isSignedIn, userId } = useClerkAuth();
   const loaded = useSettingsLoaded();
   const settings = useRawSettings();
   const [path] = useLocation();
   const { countryCode } = useCurrency();
   const pages = (settings.chatwoot_pages ?? "home,browse,listing,checkout,dashboard,support,other").split(",");
-  const allowed = enabled && loaded && (settings.chatwoot_hide_admin !== "true" || !path.startsWith("/admin")) && pages.includes(pageGroup(path));
+  const allowed = enabled && loaded && choices.functional && (settings.chatwoot_hide_admin !== "true" || !path.startsWith("/admin")) && pages.includes(pageGroup(path));
   const position = settings.chatwoot_position === "left" ? "left" : "right";
   const title = (settings.chatwoot_launcher_title || "Chat with support").slice(0, 60);
   const color = /^#[0-9a-fA-F]{6}$/.test(settings.chatwoot_brand_color || "") ? settings.chatwoot_brand_color : "#F26B21";
@@ -109,21 +112,27 @@ export function ChatwootWidget() {
         if (cancelled || !data.identifier_hash) return;
         const apply = () => {
           if (cancelled || !window.$chatwoot?.setUser) return;
-          if (identifiedUser.current !== data.identifier) {
-            identifiedUser.current = data.identifier;
-            if (window.$chatwoot.reset) {
-              window.addEventListener("chatwoot:ready", () => {
-                if (!cancelled) window.$chatwoot?.setUser?.(data.identifier, {
-                  name: data.name, email: data.email, identifier_hash: data.identifier_hash,
-                });
-              }, { once: true });
-              window.$chatwoot.reset();
-              return;
-            }
+          const previous = identifiedUser.current;
+          const details = {
+            name: String(data.name||"").slice(0,120),
+            email: String(data.email||""),
+            identifier_hash: String(data.identifier_hash||""),
+          };
+          // A new session is anonymous. Set it directly rather than reset()
+          // and wait for a second "ready" event that may never be emitted.
+          if (previous && previous !== data.identifier && window.$chatwoot.reset) {
+            identifiedUser.current = null;
+            window.$chatwoot.reset();
+            const reIdentify = () => {
+              if (cancelled) return;
+              window.$chatwoot?.setUser?.(data.identifier, details);
+              identifiedUser.current = data.identifier;
+            };
+            window.addEventListener("chatwoot:ready",reIdentify,{once:true});
+            return;
           }
-          window.$chatwoot.setUser(data.identifier, {
-            name: data.name, email: data.email, identifier_hash: data.identifier_hash,
-          });
+          window.$chatwoot.setUser(data.identifier,details);
+          identifiedUser.current = data.identifier;
         };
         if (window.$chatwoot?.setUser) apply();
         else window.addEventListener("chatwoot:ready", apply, { once: true });

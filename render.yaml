@@ -15,6 +15,16 @@ services:
     buildCommand: corepack enable && pnpm install --no-frozen-lockfile --prod=false && pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
     healthCheckPath: /api/healthz
+    buildFilter:
+      paths:
+        - artifacts/api-server/**
+        - lib/**
+        - scripts/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - tsconfig*.json
+      ignoredPaths: []
     envVars:
       - key: NODE_VERSION
         value: 22
@@ -60,6 +70,15 @@ services:
     runtime: static
     buildCommand: corepack enable && pnpm install --no-frozen-lockfile --prod=false && pnpm --filter @workspace/sellbuydeal run build
     staticPublishPath: artifacts/sellbuydeal/dist
+    buildFilter:
+      paths:
+        - artifacts/sellbuydeal/**
+        - lib/**
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
+        - tsconfig*.json
+      ignoredPaths: []
     envVars:
       - key: NODE_VERSION
         value: 22

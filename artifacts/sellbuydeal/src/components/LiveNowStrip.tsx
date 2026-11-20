@@ -24,7 +24,7 @@ export function LiveNowStrip() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
           </span>
-          <h2 className="font-black text-gray-900 text-lg tracking-tight">Live Now</h2>
+          <h2 className="font-black text-gray-900 dark:text-white text-lg tracking-tight">Live Now</h2>
           <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{liveSessions.length} streaming</span>
         </div>
 
@@ -57,8 +57,8 @@ export function LiveNowStrip() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="font-bold text-gray-900 text-sm truncate">{session.sellerName}</p>
-                          <p className="text-xs text-gray-500 truncate mt-0.5">{session.title}</p>
+                          <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{session.sellerName}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-300 truncate mt-0.5">{session.title}</p>
                         </div>
                       </div>
 
@@ -67,10 +67,10 @@ export function LiveNowStrip() {
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white ${meta.bg}`}>
                             {meta.label}
                           </span>
-                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                          <span className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-slate-300">
                             <Users className="w-3 h-3" />{session.viewerCount.toLocaleString()}
                           </span>
-                          <span className="text-[10px] text-gray-400">{timeOnAir(session.startedAt)}</span>
+                          <span className="text-[10px] text-gray-500 dark:text-slate-300">{timeOnAir(session.startedAt)}</span>
                         </div>
                         <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-[#F26B21] transition-colors" />
                       </div>

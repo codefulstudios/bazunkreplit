@@ -40,7 +40,7 @@ export function AdminSupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("open");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => new URLSearchParams(window.location.search).get("search") || "");
   const [loading, setLoading] = useState(true);
 
   const [selected, setSelected] = useState<Ticket | null>(null);

@@ -19,16 +19,25 @@ const GAME_ICONS: Record<string, string> = {
   "daily-quiz":     "❓",
   "scratch-card":   "🎁",
   "word-scramble":  "🔤",
+  "memory-match": "🧩",
+  "treasure-tap": "🧰",
 };
 
+type Overview={summary?:{plays:number;players:number;credits:number};games:{game_id:string;plays:number;credits:number}[];sessions:{id:string;game_id:string;user_label:string;status:string;issued_at:string;expires_at:string;prize_credits:number}[];expiredInRecent:number;flaggedAccounts:number};
 export function AdminRewardsPage() {
   const { authFetch } = useAdmin();
   const [games, setGames] = useState<Game[]>([]);
+  const [overview,setOverview]=useState<Overview|null>(null);
+  const [monitorError,setMonitorError]=useState("");
+  const [sessionFilter,setSessionFilter]=useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, Partial<Game>>>({});
+  const [sound,setSound]=useState({enabled:true,spinWheel:true,scratchCard:true});
+  const [soundSaving,setSoundSaving]=useState(false);
+  const [soundMessage,setSoundMessage]=useState("");
 
   useEffect(() => {
     authFetch(`/api/admin/rewards/games?_t=${Date.now()}`)
@@ -38,15 +47,19 @@ export function AdminRewardsPage() {
       })
       .then((rows: Game[]) => {
         if (!rows) return;
-        setGames(rows);
+        const availableRows = rows.filter(g => g.id !== "parcel-dash");
+        setGames(availableRows);
         const initial: Record<string, Partial<Game>> = {};
-        rows.forEach(g => { initial[g.id] = { enabled: g.enabled, credits_min: g.credits_min, credits_max: g.credits_max, daily_plays_per_user: g.daily_plays_per_user }; });
+        availableRows.forEach(g => { initial[g.id] = { enabled: g.enabled, credits_min: g.credits_min, credits_max: g.credits_max, daily_plays_per_user: g.daily_plays_per_user }; });
         setEdits(initial);
       })
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, [authFetch]);
 
+  async function saveSound(){setSoundSaving(true);setSoundMessage("");try{const response=await authFetch("/api/admin/rewards/sound-settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(sound)});const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not save sound settings");setSoundMessage("Sound settings saved");}catch(error){setSoundMessage(error instanceof Error?error.message:"Could not save sound settings");}finally{setSoundSaving(false);}}
+  useEffect(()=>{authFetch("/api/admin/rewards/sound-settings").then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||"Could not load sound settings");setSound({enabled:d.enabled!==false,spinWheel:d.spinWheel!==false,scratchCard:d.scratchCard!==false});}).catch(e=>setSoundMessage(e.message||"Could not load sound settings"));},[authFetch]);
+  useEffect(()=>{authFetch("/api/admin/rewards/overview").then(async r=>{if(!r.ok)throw new Error("Monitoring unavailable");return r.json()}).then(setOverview).catch(e=>setMonitorError(e.message));},[authFetch]);
   function update(id: string, field: string, value: unknown) {
     setEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
   }
@@ -75,17 +88,26 @@ export function AdminRewardsPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-4xl">
+      <div className="p-4 sm:p-6 max-w-7xl admin-arcade-manager">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-9 h-9 rounded-xl bg-[#F26B21]/10 flex items-center justify-center">
             <Gift className="w-5 h-5 text-[#F26B21]" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900">Rewards Games</h1>
-            <p className="text-sm text-gray-500">Toggle games on/off and control credit rewards per game.</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900">Rewards <span className="text-orange-600">Arcade Manager</span> 🎮</h1>
+            <p className="text-sm text-gray-500">Manage game availability, earning rules and daily limits for Bazunk Rewards Arcade.</p>
           </div>
         </div>
 
+        <section className="rounded-2xl border border-violet-200 bg-violet-50 p-5 mb-6 text-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-black">🔊 Arcade sound effects</h2><p className="text-sm text-slate-600">Control the sound effects available to visitors. Visitors can still mute sound individually.</p></div><button type="button" onClick={()=>void saveSound()} disabled={soundSaving} className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{soundSaving?"Saving…":"Save sound settings"}</button></div>
+          <div className="mt-4 grid sm:grid-cols-3 gap-3">
+            {([{key:"enabled",label:"Enable all arcade sounds"},{key:"spinWheel",label:"Spin wheel sounds"},{key:"scratchCard",label:"Scratch card sounds"}] as const).map(item=><label key={item.key} className="flex items-center gap-3 rounded-xl bg-white border border-violet-100 p-3 font-semibold text-sm"><input type="checkbox" checked={sound[item.key]} onChange={e=>setSound(v=>({...v,[item.key]:e.target.checked}))} className="h-5 w-5 accent-violet-600"/>{item.label}</label>)}
+          </div>
+          {soundMessage&&<p role="status" className="mt-3 text-sm font-semibold">{soundMessage}</p>}
+        </section>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"><div className="rounded-2xl p-4 bg-blue-50 border border-blue-200 text-blue-900"><div className="text-sm font-semibold">🎮 Installed Games</div><div className="text-3xl font-black">{games.length}</div></div><div className="rounded-2xl p-4 bg-green-50 border border-green-200 text-green-900"><div className="text-sm font-semibold">🟢 Enabled</div><div className="text-3xl font-black">{games.filter(g => (edits[g.id]?.enabled ?? g.enabled)).length}</div></div><div className="rounded-2xl p-4 bg-orange-50 border border-orange-200 text-orange-900"><div className="text-sm font-semibold">🎁 Daily play capacity / user</div><div className="text-3xl font-black">{games.filter(g => edits[g.id]?.enabled ?? g.enabled).reduce((n,g)=>n+(edits[g.id]?.daily_plays_per_user ?? g.daily_plays_per_user),0)}</div></div></div>
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-7 h-7 animate-spin text-gray-300" />
@@ -96,7 +118,7 @@ export function AdminRewardsPage() {
             <br /><span className="text-xs text-red-500">Try logging out and back in to the admin panel.</span>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {games.map(game => {
               const edit = edits[game.id] ?? {};
               const isEnabled = edit.enabled ?? game.enabled;
@@ -107,7 +129,7 @@ export function AdminRewardsPage() {
                 <div key={game.id} className={`bg-white rounded-2xl border p-5 transition-all ${isEnabled ? "border-gray-200" : "border-gray-100 opacity-70"}`}>
                   <div className="flex items-start gap-4">
                     {/* Icon + name */}
-                    <div className="text-2xl w-10 text-center pt-0.5 flex-shrink-0">{GAME_ICONS[game.id] ?? "🎮"}</div>
+                    <div className="text-3xl w-14 h-14 bg-gradient-to-br from-amber-50 via-orange-100 to-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">{GAME_ICONS[game.id] ?? "🎮"}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-1 flex-wrap">
                         <h3 className="font-black text-gray-900">{game.name}</h3>
@@ -188,10 +210,31 @@ export function AdminRewardsPage() {
           </div>
         )}
 
+        <section className="mt-8 space-y-4" aria-label="Rewards operations monitoring">
+          <h2 className="text-xl font-black">Arcade analytics & session monitoring</h2>
+          {monitorError && <p role="alert" className="text-red-700 bg-red-50 p-3 rounded-xl">{monitorError}</p>}
+          {overview && <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3">
+              {([["Plays today",overview.summary?.plays??0],["Players today",overview.summary?.players??0],["Credits awarded today",overview.summary?.credits??0],["Recent expired sessions",overview.expiredInRecent],["High activity accounts · 24h",overview.flaggedAccounts]] as [string,number][]).map(([name,value])=><div key={name} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4"><p className="text-xs text-slate-600 dark:text-slate-300">{name}</p><strong className="text-2xl text-slate-900 dark:text-white">{value}</strong></div>)}
+            </div>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
+                <h3 className="font-black mb-3">Game activity · last 7 days</h3>
+                {overview.games.length===0?<p className="text-sm">No game activity yet.</p>:overview.games.filter(g=>g.game_id!=="parcel-dash").map(g=><div key={g.game_id} className="flex justify-between py-2 border-b border-slate-200 dark:border-slate-600 text-sm"><span>{g.game_id}</span><span>{g.plays} plays · {g.credits} credits</span></div>)}
+              </div>
+              <div className="rounded-xl bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-600">
+                <div className="flex flex-wrap justify-between gap-3 mb-3"><h3 className="font-black">Recent reward sessions</h3><select aria-label="Filter session status" className="border rounded-lg px-2 py-1 bg-white text-slate-900" value={sessionFilter} onChange={e=>setSessionFilter(e.target.value)}>{["all","started","completed","claimed","expired"].map(v=><option key={v} value={v}>{v}</option>)}</select></div>
+                <div className="max-h-80 overflow-auto space-y-2">
+                  {overview.sessions.filter(v=>v.game_id!=="parcel-dash").filter(v=>sessionFilter==="all"||v.status===sessionFilter||(sessionFilter==="expired"&&v.status==="started"&&new Date(v.expires_at)<new Date())).map(v=><div key={v.id} className="rounded-lg border border-slate-200 dark:border-slate-600 p-2 text-xs flex justify-between gap-2"><span><strong>{v.game_id}</strong> · {v.user_label}<span className="block text-slate-500 dark:text-slate-300">{new Date(v.issued_at).toLocaleString()}</span></span><span className="font-bold">{v.status==="started"&&new Date(v.expires_at)<new Date()?"expired":v.status}</span></div>)}
+                </div>
+              </div>
+            </div>
+          </>}
+        </section>
         <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-4">
           <p className="text-xs text-blue-700 font-semibold mb-1">💡 Credit notes</p>
           <ul className="text-xs text-blue-600 space-y-1">
-            <li>• For flat games (Check-In, Quiz, Word Scramble) only <strong>Max Credits</strong> is used.</li>
+            <li>• For fixed-payout games (Check-In, Quiz and the new arcade games), the configured fixed value is used; currently this is the minimum for the three new games. For other games, <strong>Max Credits</strong> is used.</li>
             <li>• For random games (Spin, Scratch Card) a value between Min and Max is awarded.</li>
             <li>• Credits awarded here add directly to the user's main credit balance.</li>
             <li>• 100 credits = £1.00 in account balance.</li>

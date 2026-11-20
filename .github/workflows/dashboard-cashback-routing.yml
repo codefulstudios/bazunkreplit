@@ -1,0 +1,32 @@
+name: Dashboard navigation route regression
+on:
+  pull_request:
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/DashboardPage.tsx'
+      - 'scripts/dashboard-cashback-routing.test.mjs'
+      - '.github/workflows/dashboard-cashback-routing.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/DashboardPage.tsx'
+      - 'scripts/dashboard-cashback-routing.test.mjs'
+      - '.github/workflows/dashboard-cashback-routing.yml'
+jobs:
+  dashboard-navigation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify desktop/mobile routing
+        run: node --test scripts/dashboard-cashback-routing.test.mjs
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm install --frozen-lockfile
+      - name: Typecheck dashboard
+        run: pnpm --filter @workspace/sellbuydeal run typecheck
+      - name: Build frontend
+        run: pnpm --filter @workspace/sellbuydeal run build

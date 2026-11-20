@@ -1,3 +1,6 @@
+import { toast } from "@/hooks/use-toast";
+import { useMarketplaceLoadingDelay } from "@/components/useMarketplaceLoadingDelay";
+import { MarketplaceLoader } from "@/components/MarketplaceLoader";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { Calendar, CheckCircle2, Clock, Flag, Package, Repeat2, ShieldCheck, ShoppingBag, Star, Trophy } from "lucide-react";
@@ -43,6 +46,7 @@ export function SellerProfilePage() {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const delayedLoading = useMarketplaceLoadingDelay(loading, "seller");
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState<number | null>(null);
 
@@ -79,7 +83,7 @@ export function SellerProfilePage() {
     try {
       const data = await authPost(`/api/reviews/${review.id}/reply`, { reply });
       setReviews(prev => prev.map(r => r.id === review.id ? { ...r, seller_reply: data.reply, seller_replied_at: data.repliedAt } : r));
-    } catch (e) { window.alert(e instanceof Error ? e.message : "Couldn't save reply"); }
+    } catch (e) { toast({title:"Reply not saved",description:e instanceof Error ? e.message : "Could not save reply",variant:"destructive"}); }
     finally { setActionBusy(null); }
   }
 
@@ -89,8 +93,8 @@ export function SellerProfilePage() {
     const normalised = reason.trim().toLowerCase().replace(/\s+/g, "_");
     const details = window.prompt("Add details for Bazunk moderation (optional):") ?? "";
     setActionBusy(review.id);
-    try { await authPost(`/api/reviews/${review.id}/report`, { reason: normalised, details }); window.alert("Thanks. Bazunk moderation has received your report."); }
-    catch (e) { window.alert(e instanceof Error ? e.message : "Couldn't report review"); }
+    try { await authPost(`/api/reviews/${review.id}/report`, { reason: normalised, details }); toast({title:"Report submitted",description:"Bazunk moderation has received your report."}); }
+    catch (e) { toast({title:"Report not submitted",description:e instanceof Error ? e.message : "Could not report review",variant:"destructive"}); }
     finally { setActionBusy(null); }
   }
 
@@ -98,9 +102,9 @@ export function SellerProfilePage() {
     <Navbar />
     <main className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {loading && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center text-gray-400">Loading seller profile…</div>}
-        {!loading && error && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center"><h1 className="font-black text-xl text-gray-900">Seller profile unavailable</h1><p className="text-sm text-gray-500 mt-2">{error}</p></div>}
-        {!loading && rep && <>
+        {delayedLoading && <MarketplaceLoader area="seller" label="Loading seller profile…" />}
+        {!delayedLoading && error && <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center"><h1 className="font-black text-xl text-gray-900">Seller profile unavailable</h1><p className="text-sm text-gray-500 mt-2">{error}</p></div>}
+        {!delayedLoading && rep && <>
           <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-6">
             <div className="flex flex-col md:flex-row md:items-start gap-6">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] text-white text-3xl font-black flex items-center justify-center flex-shrink-0">{rep.profile.name.charAt(0).toUpperCase()}</div>

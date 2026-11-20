@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Activity, AlertTriangle, CheckCircle2, Clock3, Package, RefreshCw, Server, XCircle } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
+import { AdminImporterMonitoring } from "@/components/admin/AdminImporterMonitoring";
 import { useAdmin } from "@/context/AdminContext";
 
 type SourceKey = "amazon" | "ebay" | "aliexpress";
@@ -62,6 +63,7 @@ export function AdminImporterControlPage() {
     </nav>
     <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-black text-gray-900">{apiCentreOnly?"API settings & usage":"Listings & Imports"}</h1><p className="text-sm text-gray-500 mt-1">{apiCentreOnly?"RapidAPI plans, usage and request budgets.":"Health, sync status and source-product problems across Amazon, eBay and AliExpress."}</p></div><div className="flex gap-2"><button onClick={syncAll} disabled={syncAllBusy||syncing!==null} className="px-4 py-2 rounded-xl bg-emerald-700 text-white font-bold text-sm flex items-center gap-2 disabled:opacity-50"><RefreshCw className={`w-4 h-4 ${syncAllBusy?"animate-spin":""}`}/>{syncAllBusy?"Syncing all…":"Sync All Current Listings"}</button><button onClick={testApis} disabled={testing} className="px-4 py-2 rounded-xl border bg-white font-bold text-sm flex items-center gap-2"><Activity className="w-4 h-4"/>{testing?'Testing…':'Test API Health'}</button><button onClick={load} className="px-4 py-2 rounded-xl bg-gray-900 text-white font-bold text-sm flex items-center gap-2"><RefreshCw className="w-4 h-4"/>Refresh</button></div></div>
     {msg&&<div className="rounded-xl border bg-white p-3 text-sm font-medium">{msg}</div>}
+    {!apiCentreOnly&&<AdminImporterMonitoring />}
     {!data&&loading?<div className="p-10 text-center text-gray-500">Loading importer status…</div>:data&&<>
       <div className="bg-white border rounded-2xl p-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-black text-lg">API Centre · eBay RapidAPI {usage?.plan==="pro"?"Pro":"Free"}</h2><button onClick={()=>setEditingApi(!editingApi)} className="px-3 py-1.5 rounded-lg border text-sm font-semibold">{editingApi?"Cancel":"Edit Bazunk API settings"}</button></div>

@@ -1,11 +1,24 @@
+import "./BazunkLiveStudio.css";
+import { CashbackPage } from "@/pages/CashbackPage";
+import { SellerAnalyticsPanel } from "@/components/SellerAnalyticsPanel";
+import { SellerTrustInsights } from "@/components/SellerTrustInsights";
+import { SellerPricingInsightsPanel } from "@/components/SellerPricingInsightsPanel";
+import { SellerListingBulkToolbar, type SellerToolAction } from "@/components/SellerListingBulkToolbar";
+import { SavedSearchesSection } from "@/components/dashboard/SavedSearchesSection";
+import { DealPilotPanel } from "@/components/DealPilotPanel";
+import { WatchAlertsManager } from "@/components/dashboard/WatchAlertsManager";
+import { useDashboardActivity, type DashboardActivity } from "@/hooks/useDashboardActivity";
+import "./../styles/dashboard-submenus-theme.css";
+import "./../styles/dashboard-overview-redesign.css";
+import "./../styles/credits-dashboard-redesign.css";
 import { useState, useEffect, useRef } from "react";
-import { useAuth as useClerkAuth } from "@clerk/react";
+import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk } from "@clerk/react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LayoutDashboard, Bell, ShoppingBag, BarChart2, Heart, Search, MessageSquare,
+  LayoutDashboard, Bell, ShoppingBag, BarChart2, BarChart3, Video, Heart, Search, MessageSquare,
   ArrowUp, Home as HomeIcon, Crown,
-  Coins, Megaphone, User, Shield, ShieldCheck, MapPin, CreditCard, Banknote, Zap, Store,
+  Coins, Megaphone, User, Shield, ShieldCheck, Lock, MapPin, CreditCard, Banknote, Zap, Store,
   Tag, Eye, Plus, TrendingUp, Trophy, Gift, ChevronRight, LogOut,
   ShoppingCart, Trash2, TrendingDown, Bell as BellIcon, BellOff, ExternalLink,
   ArrowRight, CheckCheck, Check, CheckCircle, CheckCircle2, Flame, Star,
@@ -13,7 +26,7 @@ import {
   Globe, Edit, Pencil, Users, Package, Menu, X, Radio, Link2,
   RotateCcw, Truck, Clock, PackageCheck, XCircle, ChevronDown, Gavel, Handshake,
   MoreVertical, PauseCircle, Image as ImageIcon,
-  LifeBuoy, Send, Inbox, AlertCircle, Percent, RefreshCw, ArrowDownToLine,
+  LifeBuoy, Send, Inbox, AlertCircle, Percent, RefreshCw, ArrowDownToLine, Camera,
 } from "lucide-react";
 import { useCurrency, countryToCurrency } from "@/context/CurrencyContext";
 import { COUNTRY_STORAGE_KEY } from "@/components/CountrySetupModal";
@@ -22,7 +35,6 @@ import { useRawSettings } from "@/context/SiteSettingsContext";
 import { isFeatureEnabled } from "@/components/FeatureGate";
 import { useWatchlist, getCurrentPrice } from "@/context/WatchlistContext";
 import { useCart } from "@/context/CartContext";
-import { MOCK_CONVERSATIONS } from "@/data/messages";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useLiveStream } from "@/context/LiveStreamContext";
@@ -35,6 +47,7 @@ import { DashboardSetupProgress } from "@/components/DashboardSetupProgress";
 import { StoreToolkit } from "@/components/StoreToolkit";
 import { SellerSales } from "@/components/SellerSales";
 import { SellerShipping } from "@/components/SellerShipping";
+import { SellerBundleSettings } from "@/components/SellerBundleSettings";
 import { ReviewModal } from "@/components/ReviewModal";
 import { CATEGORIES as SITE_CATEGORIES } from "@/data/categories";
 
@@ -46,6 +59,13 @@ type SidebarSubItem = { id: string; label: string; icon: React.ElementType; icon
 type SidebarCategory = {
   id: string; label: string; icon: React.ElementType;
   gradient: string; bg: string; items: SidebarSubItem[];
+};
+
+// Dashboard rail entries that are full pages, not inline dashboard sections.
+// Both desktop flyout and mobile accordion MUST use the same navigation.
+const DASHBOARD_PAGE_ROUTES: Record<string, string> = {
+  "open-importers": "/importers",
+  importers: "/importers",
 };
 
 const SIDEBAR_CATEGORIES: SidebarCategory[] = [
@@ -70,6 +90,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
       { id: "offers",         label: "My Offers",     icon: Handshake,   iconBg: "bg-emerald-600"    },
       { id: "watchlist",      label: "Watchlist",     icon: Heart,       iconBg: "bg-amber-500"      },
       { id: "saved-searches", label: "Saved Searches",icon: Search,      iconBg: "bg-sky-500"        },
+      { id: "deal-pilot", label: "DealPilot", icon: Search, iconBg: "bg-violet-600" },
     ],
   },
   {
@@ -78,6 +99,7 @@ const SIDEBAR_CATEGORIES: SidebarCategory[] = [
     items: [
       { id: "my-listings",   label: "My Listings",   icon: Package,   iconBg: "bg-[#F26B21]" },
       { id: "sales",         label: "Sales",         icon: BarChart2, iconBg: "bg-[#F26B21]" },
+      { id: "seller-analytics", label: "Analytics", icon: TrendingUp, iconBg: "bg-orange-600" },
       { id: "shipping-centre", label: "Shipping", icon: Truck, iconBg: "bg-[#4A5CE8]" },
       { id: "my-auctions",   label: "My Auctions",   icon: Gavel,     iconBg: "bg-[#F26B21]" },
       { id: "my-flash-sales",label: "Flash Sales",   icon: Zap,       iconBg: "bg-[#F26B21]" },
@@ -201,12 +223,11 @@ const MOCK_ORDERS: MockOrder[] = MOCK_ORDERS_DATA;
 
 const MOCK_SALES: { id: string; title: string; price: number; date: string; status: string; statusColor: string; buyer: string; image: string; fee: number }[] = [];
 
-const MOCK_SAVED_SEARCHES: { id: number; query: string; filters: string; count: number; lastRun: string; alert: boolean }[] = [];
 
 function BuyerProtectionDashSection() {
   const [, setLocation] = useLocation();
   return (
-    <div className="flex-1 p-6 max-w-3xl space-y-6">
+    <div className="bz-protection-bright flex-1 p-5 space-y-4">
       <div>
         <h2 className="text-2xl font-black text-gray-900">Buyer Protection</h2>
         <p className="text-gray-500 text-sm mt-1">Every purchase on Bazunk is fully covered.</p>
@@ -347,14 +368,16 @@ function OffersSection() {
 }
 
 type ExtraCat = { category: string; subcategory: string };
-type StoredListing = { id: number; publicId?: string | null; title: string; price: number; views: number; watchers: number; image: string; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; sellerEmail?: string; specifications?: string };
+type StoredListing = { id: number; publicId?: string | null; title: string; price: number; views: number; watchers: number; image: string; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; sellerEmail?: string; specifications?: string; createdAt?: string };
 
-async function fetchMyListings(email: string): Promise<StoredListing[]> {
+async function fetchMyListings(email: string, getToken: () => Promise<string | null>): Promise<StoredListing[]> {
   if (!email) return [];
   try {
-    const res = await fetch(`/api/listings/mine?email=${encodeURIComponent(email)}`);
+    const token = await getToken();
+    if (!token) return [];
+    const res = await fetch(`/api/listings/mine?email=${encodeURIComponent(email)}`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
     if (!res.ok) return [];
-    const data: Array<{ id: number; publicId?: string | null; title: string; price: string; views: number; watchers: number; image: string | null; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; seller_email?: string; sellerEmail?: string; specifications?: string }> = await res.json();
+    const data: Array<{ id: number; publicId?: string | null; title: string; price: string; views: number; watchers: number; image: string | null; status: string; description?: string; condition?: string; category?: string; subcategory?: string; extraCategories?: string; seller_email?: string; sellerEmail?: string; specifications?: string; createdAt?: string }> = await res.json();
     return data.map((l) => ({
       id: l.id,
       publicId: l.publicId ?? null,
@@ -371,6 +394,7 @@ async function fetchMyListings(email: string): Promise<StoredListing[]> {
       extraCategories: l.extraCategories ?? "",
       sellerEmail: l.seller_email ?? l.sellerEmail,
       specifications: l.specifications ?? "",
+      createdAt: l.createdAt,
     }));
   } catch { return []; }
 }
@@ -385,12 +409,16 @@ function findCategoryTop(val: string): string {
   return parent?.slug ?? SITE_CATEGORIES[0]?.slug ?? "";
 }
 
-function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
+function ListingActions({ listing, userEmail, onUpdated, onDeleted, onCreated }: {
   listing: StoredListing;
   userEmail: string;
   onUpdated: (updated: StoredListing) => void;
   onDeleted: (id: number) => void;
+  onCreated?: () => void;
 }) {
+  const { getToken } = useClerkAuth();
+  const [listingError, setListingError] = useState("");
+  const [listingSuccess, setListingSuccess] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [reviseOpen, setReviseOpen] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -431,41 +459,81 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
     setNewExtraCatTop("");
     setNewExtraCatSub("");
     setMenuOpen(false);
+    setListingError("");
     setReviseOpen(true);
   }
 
+  async function updateListing(body: Record<string,unknown>) {
+    const token = await getToken();
+    if (!token) throw new Error("Please sign in again to edit this listing");
+    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || data.message || "Could not update listing");
+    return data;
+  }
+
   async function handleSave() {
-    setSaving(true);
+    setSaving(true); setListingError("");
     try {
-      const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: draft.title, price: draft.price, description: draft.description, condition: draft.condition, category: draft.categoryTop, subcategory: draft.category, image: draft.image, extra_categories: draft.extraCategories }),
+      const u = await updateListing({ title: draft.title, price: draft.price,
+        description: draft.description, condition: draft.condition,
+        category: draft.categoryTop, subcategory: draft.category,
+        image: draft.image, extra_categories: draft.extraCategories });
+      onUpdated({ ...listing, title: u.title, price: parseFloat(u.price), description: u.description,
+        condition: u.condition, category: u.category, subcategory: u.subcategory,
+        extraCategories: u.extraCategories, image: u.image ?? "" });
+      setReviseOpen(false);
+    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not save changes"); }
+    finally { setSaving(false); }
+  }
+
+  async function handleSellerAction(action: SellerToolAction) {
+    setMenuOpen(false);setListingError("");setListingSuccess("");
+    try {
+      if(["duplicate","relist"].includes(action) &&
+        !window.confirm(action==="duplicate" ? "Create an editable draft copy of this listing?" : "Create a new live listing from this item? The original will remain unchanged."))return;
+      const token=await getToken();
+      if(!token)throw new Error("Sign in again to manage your listings");
+      const res=await fetch("/api/listings/seller-tools",{
+        method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},
+        body:JSON.stringify({action,ids:[listing.id]})
       });
-      if (res.ok) {
-        const u = await res.json();
-        onUpdated({ ...listing, title: u.title, price: parseFloat(u.price), description: u.description, condition: u.condition, category: u.category, image: u.image ?? "" });
-        setReviseOpen(false);
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok || !Array.isArray(data.updated) || !data.updated.length){
+        throw new Error(data.failures?.[0]?.error||data.error||"Could not update listing");
       }
-    } finally { setSaving(false); }
+      if(action==="duplicate"||action==="relist"){
+        if(onCreated)onCreated();else window.location.reload();
+      }else{
+        onUpdated({...listing,status:data.updated[0].status??listing.status});
+        setListingSuccess(action==="renew"?"Listing renewed and moved to newest results":action==="pause"?"Listing paused":"Listing activated");
+      }
+    }catch(err){setListingError(err instanceof Error?err.message:"Listing action failed");}
   }
 
   async function handleSuspend() {
-    setMenuOpen(false);
-    const newStatus = listing.status === "active" ? "suspended" : "active";
-    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) { const u = await res.json(); onUpdated({ ...listing, status: u.status }); }
+    return handleSellerAction(listing.status==="active"?"pause":"resume");
   }
 
   async function handleDelete() {
     setMenuOpen(false);
     if (!confirm("Delete this listing? This cannot be undone.")) return;
-    const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, { method: "DELETE" });
-    if (res.ok) onDeleted(listing.id);
+    setListingError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again to delete listings");
+      const res = await fetch(`/api/listings/${listing.id}?email=${encodeURIComponent(userEmail)}`, {
+        method: "DELETE", headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Could not delete listing");
+      }
+      onDeleted(listing.id);
+    } catch (err) { setListingError(err instanceof Error ? err.message : "Could not delete listing"); }
   }
 
   async function handlePromote(type: string) {
@@ -496,6 +564,8 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
 
   return (
     <>
+      {listingSuccess && !reviseOpen && <p role="status" className="max-w-xs rounded-lg border border-emerald-300 bg-emerald-50 p-2 text-xs font-semibold text-emerald-800">{listingSuccess}</p>}
+      {listingError && !reviseOpen && <div role="alert" className="max-w-xs rounded-lg border border-red-300 bg-red-50 p-2 text-xs font-semibold text-red-800">{listingError}</div>}
       <div ref={menuRef} className="relative flex-shrink-0">
         <button
           onClick={() => setMenuOpen((o) => !o)}
@@ -516,13 +586,23 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
               <button onClick={openRevise} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <Pencil className="w-3.5 h-3.5 text-[#4A5CE8]" /> Revise Listing
               </button>
+              {listing.status === "active" && <Link href={`/trust-proof?listing=${listing.id}`} onClick={() => setMenuOpen(false)} className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-indigo-700 hover:bg-indigo-50"><ShieldCheck className="h-4 w-4"/> TrustProof evidence</Link>}
               <button onClick={() => { setMenuOpen(false); setPromoteOpen(true); }} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                 <TrendingUp className="w-3.5 h-3.5 text-[#F26B21]" /> Promote Listing
               </button>
-              <button onClick={handleSuspend} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                <PauseCircle className="w-3.5 h-3.5 text-amber-500" />
-                {listing.status === "active" ? "Suspend Listing" : "Re-activate"}
+              {listing.status !== "sold" && <button onClick={handleSuspend} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50 transition-colors">
+                <PauseCircle className="w-3.5 h-3.5 text-amber-600" />
+                {listing.status === "active" ? "Pause listing" : listing.status === "draft" ? "Publish draft" : "Resume listing"}
+              </button>}
+              {listing.status === "active" && <button onClick={() => void handleSellerAction("renew")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <RefreshCw className="w-3.5 h-3.5 text-blue-600"/> Renew listing
+              </button>}
+              <button onClick={() => void handleSellerAction("duplicate")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <Copy className="w-3.5 h-3.5 text-blue-600"/> Duplicate as draft
               </button>
+              {["sold","inactive","suspended"].includes(listing.status) && <button onClick={() => void handleSellerAction("relist")} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-gray-800 hover:bg-gray-50">
+                <RotateCcw className="w-3.5 h-3.5 text-orange-600"/> Relist as new
+              </button>}
               <div className="h-px bg-gray-100 mx-3 my-1" />
               <button onClick={handleDelete} className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
                 <Trash2 className="w-3.5 h-3.5" /> Delete Listing
@@ -555,6 +635,7 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
                 </button>
               </div>
 
+              {listingError && <div role="alert" className="mx-6 mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">{listingError}</div>}
               {/* Scrollable body */}
               <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
                 {/* Photo */}
@@ -819,28 +900,44 @@ function ListingActions({ listing, userEmail, onUpdated, onDeleted }: {
 
 // ── My Listings Section ───────────────────────────────────────────────────────
 function MyListingsSection({ userEmail }: { userEmail: string }) {
+  const { getToken } = useClerkAuth();
   const [listings, setListings] = useState<StoredListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deletingBatch, setDeletingBatch] = useState(false);
+  const [bulkDeleteError,setBulkDeleteError] = useState("");
+  async function reloadListings(){
+    const data=await fetchMyListings(userEmail,getToken);
+    setListings(data);
+  }
 
   useEffect(() => {
     setLoading(true);
-    fetchMyListings(userEmail).then((data) => { setListings(data); setLoading(false); });
-  }, [userEmail]);
+    fetchMyListings(userEmail, getToken).then((data) => { setListings(data); setLoading(false); });
+  }, [userEmail, getToken]);
 
   async function deleteSelected() {
-    if (!selectedIds.size || !confirm(`Delete ${selectedIds.size} selected listing${selectedIds.size === 1 ? "" : "s"}? This cannot be undone.`)) return;
-    setDeletingBatch(true);
-    const deleted: number[] = [];
-    for (const id of selectedIds) {
-      const res = await fetch(`/api/listings/${id}?email=${encodeURIComponent(userEmail)}`, { method: "DELETE" });
-      if (res.ok) deleted.push(id);
-    }
-    setListings(prev => prev.filter(l => !deleted.includes(l.id)));
-    setSelectedIds(prev => new Set([...prev].filter(id => !deleted.includes(id))));
-    setDeletingBatch(false);
-    if (deleted.length !== selectedIds.size) alert(`${deleted.length} deleted; ${selectedIds.size - deleted.length} could not be deleted.`);
+    if (!selectedIds.size || !window.confirm(`Delete ${selectedIds.size} selected listing(s)? This cannot be undone.`))return;
+    setDeletingBatch(true);setBulkDeleteError("");
+    const deleted:number[]=[];const errors:string[]=[];
+    try {
+      const token=await getToken();
+      if(!token)throw new Error("Sign in again before deleting listings");
+      for(const id of selectedIds){
+        try{
+          const res=await fetch(`/api/listings/${id}?email=${encodeURIComponent(userEmail)}`,{
+            method:"DELETE",headers:{Authorization:`Bearer ${token}`}
+          });
+          const data=await res.json().catch(()=>({}));
+          if(!res.ok)throw new Error(data.error||"Could not delete");
+          deleted.push(id);
+        }catch(e){errors.push(`#${id}: ${e instanceof Error?e.message:"Delete failed"}`);}
+      }
+      await reloadListings();
+      setSelectedIds(prev=>new Set([...prev].filter(id=>!deleted.includes(id))));
+      if(errors.length)setBulkDeleteError(errors.slice(0,3).join("; "));
+    }catch(e){setBulkDeleteError(e instanceof Error?e.message:"Bulk delete failed");}
+    finally{setDeletingBatch(false);}
   }
 
   return (
@@ -851,13 +948,24 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
           <p className="text-xs text-gray-400 mt-0.5">{listings.length} listing{listings.length !== 1 ? "s" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
-          {selectedIds.size > 0 && <button onClick={deleteSelected} disabled={deletingBatch} className="px-3 py-2 rounded-xl bg-red-50 text-red-600 text-sm font-semibold disabled:opacity-50">{deletingBatch ? "Deleting…" : `Delete selected (${selectedIds.size})`}</button>}
+          {selectedIds.size > 0 && <button onClick={deleteSelected} disabled={deletingBatch} className="px-3 py-2 rounded-xl border border-red-300 bg-red-50 text-red-700 text-sm font-bold disabled:opacity-50">{deletingBatch ? "Deleting…" : `Delete (${selectedIds.size})`}</button>}
+          <Link href="/sell/snap" className="flex items-center gap-1.5 rounded-xl bg-violet-700 px-3 py-2 text-sm font-bold text-white hover:bg-violet-800">📸 Snap & Sell</Link>
           <Link href="/sell/direct" className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#F26B21] px-4 py-2 rounded-xl hover:opacity-90 transition-opacity">
           <Plus className="w-4 h-4" /> New Listing
           </Link>
         </div>
       </div>
 
+      {listings.length > 0 && <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+        <label className="mb-3 flex w-max items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+          <input type="checkbox" aria-label="Select all listings" className="h-4 w-4"
+            checked={listings.length>0 && listings.every(l=>selectedIds.has(l.id))}
+            onChange={e=>setSelectedIds(e.target.checked?new Set(listings.map(l=>l.id)):new Set())}/>
+          Select all ({listings.length})
+        </label>
+        <SellerListingBulkToolbar selectedIds={[...selectedIds]} onFinished={reloadListings} onClear={()=>setSelectedIds(new Set())}/>
+        {bulkDeleteError && <p role="alert" className="mt-2 rounded-lg bg-red-50 p-2 text-sm font-semibold text-red-800">{bulkDeleteError}</p>}
+      </div>}
       {loading ? (
         <div className="flex-1 flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#F26B21] border-t-transparent rounded-full animate-spin" />
@@ -920,6 +1028,7 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
                   userEmail={userEmail}
                   onUpdated={(updated) => setListings((prev) => prev.map((l) => l.id === updated.id ? updated : l))}
                   onDeleted={(id) => setListings((prev) => prev.filter((l) => l.id !== id))}
+                  onCreated={() => {void reloadListings();}}
                 />
               </div>
             </div>
@@ -930,16 +1039,39 @@ function MyListingsSection({ userEmail }: { userEmail: string }) {
   );
 }
 
-function OverviewContent({ user, onNavigate }: { user: { name: string; email: string; username: string; balance: number }; onNavigate: (section: string) => void }) {
+function OverviewContent({ user, onNavigate, recentEvents, activityLoading, activityError }: { user: { name: string; email: string; username: string; balance: number }; onNavigate: (section: string) => void; recentEvents: DashboardActivity[]; activityLoading: boolean; activityError: string }) {
   const initial = user.name.charAt(0).toUpperCase();
   const [myListings, setMyListings] = useState<StoredListing[]>([]);
+  const [overviewOrders,setOverviewOrders] = useState<{bought:number;sold:number}>({bought:0,sold:0});
   const { getToken } = useClerkAuth();
   const [referral, setReferral] = useState<any>(null);
   const [referralCopied, setReferralCopied] = useState(false);
 
   useEffect(() => {
-    fetchMyListings(user.email).then(setMyListings);
-  }, [user.email]);
+    fetchMyListings(user.email, getToken).then(setMyListings);
+  }, [user.email, getToken]);
+  useEffect(() => {
+    let cancelled=false;
+    async function loadOrders(){
+      try {
+        const token=await getToken();
+        if(!token)return;
+        const headers={Authorization:`Bearer ${token}`};
+        const responses=await Promise.all([
+          fetch("/api/orders",{headers,cache:"no-store"}),
+          fetch("/api/orders/seller",{headers,cache:"no-store"})
+        ]);
+        if(!responses.every(r=>r.ok))throw new Error("Orders unavailable");
+        const [bought,sold]=await Promise.all(responses.map(r=>r.json()));
+        if(!cancelled)setOverviewOrders({
+          bought:Array.isArray(bought)?bought.filter((o:any)=>o.status!=="cancelled").length:0,
+          sold:Array.isArray(sold)?sold.filter((o:any)=>!["cancelled","refunded"].includes(o.status)).length:0
+        });
+      }catch(e){console.warn("Could not load dashboard order totals",e);}
+    }
+    void loadOrders();
+    return()=>{cancelled=true;};
+  },[user.email,getToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -957,6 +1089,13 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   }, [getToken]);
 
   const referralLink = referral?.code ? `${window.location.origin}/rewards/referrals?ref=${referral.code}` : '';
+  const recentListingEvents = myListings.filter(l=>l.createdAt).slice(0,12).map(l=>({
+    id:`listing:${l.id}`, type:"listing" as const, title:"Listing created",
+    desc:l.title, time:l.createdAt!, unread:false,
+    href:l.status==="active" ? `/listing/${l.publicId||l.id}` : "/dashboard?section=my-listings"
+  }));
+  const recentActivity = [...recentEvents, ...recentListingEvents]
+    .sort((a,b)=>new Date(b.time).getTime()-new Date(a.time).getTime()).slice(0,12);
   const copyReferralLink = async () => {
     if (!referralLink) return;
     await navigator.clipboard.writeText(referralLink);
@@ -965,50 +1104,36 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
   };
 
   return (
-    <div className="flex-1 p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">My Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Manage your account, orders, and marketplace activity</p>
+    <div className="bazunk-overview-v2 flex-1 p-4 sm:p-6 space-y-6">
+      <div className="bz-arcade-heading">
+        <div className="bz-arcade-title">
+          <h1>My Dashboard</h1>
+          <p>Welcome back, <strong>{user.name?.split(" ")[0] || user.username || "Seller"}</strong> 👋</p>
         </div>
-        <div className="hidden lg:flex items-center gap-2">
-          <a href="https://data.bazunk.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#4A5CE8]/10 hover:bg-[#4A5CE8]/20 transition-colors text-[#4A5CE8] border border-[#4A5CE8]/20 text-sm font-semibold" title="Open Bazunk Data Platform">
-            <ExternalLink className="w-4 h-4" /> Bazunk Data Platform
-          </a>
-          <Link href="/cashback" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 text-sm font-semibold"><Gift className="w-4 h-4" /> Cashback</Link>
-          <Link href="/rewards" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F26B21]/10 hover:bg-[#F26B21]/20 transition-colors text-[#F26B21] border border-[#F26B21]/20 text-sm font-semibold">
-            <Gift className="w-4 h-4" /> Rewards
-          </Link>
-          <Link href="/promotions" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7C3AED]/10 hover:bg-[#7C3AED]/20 transition-colors text-[#7C3AED] border border-[#7C3AED]/20 text-sm font-semibold">
-            <Megaphone className="w-4 h-4" /> Promotions
-          </Link>
-          <Link href="/credits" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#F59E0B] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm" data-testid="button-buy-credits">
-            <Coins className="w-4 h-4" /> Buy Credits
-          </Link>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold">
-            <Tag className="w-4 h-4" /> £{user.balance.toFixed(2)}
-          </div>
+        <div className="bz-arcade-actions">
+          <Link href="/sell/direct" className="bz-arcade-action bz-arcade-blue"><Plus size={19}/> List an Item</Link>
+          <button type="button" onClick={() => onNavigate("go-live")} className="bz-arcade-action bz-arcade-red"><Radio size={19}/> Go Live</button>
+          <button type="button" onClick={() => onNavigate("my-auctions")} className="bz-arcade-action bz-arcade-orange"><Gavel size={19}/> Start an Auction</button>
+          <button type="button" onClick={() => onNavigate("my-flash-sales")} className="bz-arcade-action bz-arcade-light"><Zap size={19}/> Flash Deals</button>
         </div>
       </div>
-
       {/* Stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="overview-stat-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {/* User card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4 flex flex-col items-center gap-2 text-center">
           <div className="w-12 h-12 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-lg">
             {initial}
           </div>
           <div>
             <p className="font-semibold text-gray-900 text-sm">{user.username}</p>
-            <p className="text-xs text-gray-400 truncate max-w-[120px]">{user.email}</p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-200">Seller account</p>
           </div>
         </div>
 
         {/* My Orders */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="overview-stat-tile bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">My Orders</p>
-          <p className="text-2xl font-bold text-gray-900">0</p>
+          <p className="text-2xl font-bold text-gray-900">{overviewOrders.bought}</p>
           <p className="text-xs text-gray-400 mt-1">As buyer</p>
           <div className="mt-2 flex justify-end">
             <div className="w-9 h-9 rounded-lg bg-[#4A5CE8] flex items-center justify-center shadow-sm">
@@ -1018,7 +1143,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
 
         {/* Credit Balance — highlighted */}
-        <div className="bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
+        <div className="overview-stat-tile overview-credit-tile bg-gradient-to-br from-[#3B4FD8] to-[#1E3A8A] rounded-2xl p-4 text-white">
           <p className="text-xs text-blue-200 mb-1">Credit Balance</p>
           <p className="text-2xl font-bold">£{user.balance.toFixed(2)}</p>
           <p className="text-xs text-blue-300 mt-1">Ready to use</p>
@@ -1044,7 +1169,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         {/* Sales */}
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
           <p className="text-xs text-gray-400 mb-1">Sales</p>
-          <p className="text-2xl font-bold text-gray-900">0</p>
+          <p className="text-2xl font-bold text-gray-900">{overviewOrders.sold}</p>
           <p className="text-xs text-gray-400 mt-1">As seller</p>
           <div className="mt-2 flex justify-end">
             <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center shadow-sm">
@@ -1053,6 +1178,48 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
           </div>
         </div>
       </div>
+
+
+      <div className="overview-showcase-grid">
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><BarChart2 className="w-6 h-6"/></div><div><h2>Sales Performance</h2><p>Track sales, orders and views from your account.</p></div><button type="button" onClick={() => onNavigate("analytics")} className="overview-view-all">View Analytics <ArrowRight className="w-4 h-4"/></button></div>
+          <div className="overview-analytics-chips">
+            <div><Coins className="w-5 h-5"/><strong>£{user.balance.toFixed(2)}</strong><span>Available Credits</span></div>
+            <div><ShoppingBag className="w-5 h-5"/><strong>{myListings.length}</strong><span>My Listings</span></div>
+            <div><Eye className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.views)||0),0).toLocaleString()}</strong><span>Listing Views</span></div>
+            <div><Heart className="w-5 h-5"/><strong>{myListings.reduce((n,l)=>n+(Number(l.watchers)||0),0).toLocaleString()}</strong><span>Watchers</span></div>
+          </div>
+          <div className="overview-performance-visual">
+            <p>Visit Analytics for real sales and time-series charts.</p>
+            <div className="overview-visual-bars" aria-hidden="true"><i style={{height:"24%"}}/><i style={{height:"35%"}}/><i style={{height:"30%"}}/><i style={{height:"40%"}}/><i style={{height:"37%"}}/><i style={{height:"55%"}}/><i style={{height:"48%"}}/><i style={{height:"60%"}}/><i style={{height:"52%"}}/><i style={{height:"66%"}}/><i style={{height:"64%"}}/><i style={{height:"73%"}}/><i style={{height:"70%"}}/><i style={{height:"84%"}}/><i style={{height:"79%"}}/><i style={{height:"95%"}}/></div>
+          </div>
+        </section>
+        <section className="overview-showcase-panel">
+          <div className="overview-showcase-head"><div className="overview-chart-icon"><Zap className="w-6 h-6"/></div><div><h2>Quick Actions</h2><p>Everything you need to manage your store.</p></div></div>
+          <div className="overview-new-actions">
+            <Link href="/sell/direct" className="overview-new-action action-turquoise"><Tag className="w-6 h-6"/><span><b>List an Item</b><small>Create a new listing</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button type="button" onClick={()=>onNavigate("my-store")} className="overview-new-action action-blue"><Store className="w-6 h-6"/><span><b>Manage Store</b><small>Storefront and settings</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("my-auctions")} className="overview-new-action action-orange"><Gavel className="w-6 h-6"/><span><b>Start an Auction</b><small>Manage your auctions</small></span><ChevronRight className="w-4 h-4"/></button>
+            <button type="button" onClick={()=>onNavigate("seller-analytics")} className="overview-new-action action-blue"><BarChart2 className="w-6 h-6"/><span><b>Analytics</b><small>Track selling performance</small></span><ChevronRight className="w-4 h-4"/></button>
+            <Link href="/sell/snap" className="overview-new-action action-pink"><Camera className="w-6 h-6"/><span><b>Snap & Sell</b><small>Photo / barcode assistant</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <Link href="/importers" className="overview-new-action action-blue"><ArrowDownToLine className="w-6 h-6"/><span><b>Import Listing</b><small>Bring in your products</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <Link href="/live" className="overview-new-action action-pink"><Radio className="w-6 h-6"/><span><b>Go Live</b><small>Showcase your items</small></span><ChevronRight className="w-4 h-4"/></Link>
+            <button onClick={()=>onNavigate("orders")} className="overview-new-action action-orange"><Package className="w-6 h-6"/><span><b>Manage Orders</b><small>View and fulfil orders</small></span><ChevronRight className="w-4 h-4"/></button>
+          </div>
+          <button onClick={()=>onNavigate("promotions")} className="overview-new-promo"><Crown className="w-9 h-9"/><span><b>Boost Your Listings</b><small>Use Promotions to reach more buyers.</small></span><Megaphone className="w-9 h-9"/></button>
+        </section>
+      </div>
+
+      <section className="bz-arcade-todo overview-section-card" aria-label="To Do">
+        <div className="bz-arcade-todo-header"><h2><Check size={22}/> To Do</h2><span>Marketplace checklist</span></div>
+        <div className="bz-arcade-todo-items">
+          {myListings.length === 0 && <button type="button" onClick={()=>onNavigate("my-listings")}><Package size={18}/><span>Create your first listing</span><ChevronRight size={17}/></button>}
+          {myListings.some(l=>l.status==="draft") && <button type="button" onClick={()=>onNavigate("my-listings")}><Tag size={18}/><span>Review draft listings</span><ChevronRight size={17}/></button>}
+          {overviewOrders.sold > 0 && <button type="button" onClick={()=>onNavigate("sales")}><ShoppingBag size={18}/><span>Review seller orders and fulfilment</span><ChevronRight size={17}/></button>}
+          <button type="button" onClick={()=>onNavigate("offers")}><Handshake size={18}/><span>Check offers</span><ChevronRight size={17}/></button>
+          <button type="button" onClick={()=>onNavigate("my-auctions")}><Gavel size={18}/><span>Review your auctions</span><ChevronRight size={17}/></button>
+        </div>
+      </section>
 
       {/* Referral rewards — deliberately prominent on the dashboard */}
       <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-[#F26B21] via-[#E85D2A] to-[#4A5CE8] text-white shadow-sm">
@@ -1090,7 +1257,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
       </div>
 
       {/* Recent Listings */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
+      <div className="overview-section-card bg-white rounded-2xl border border-gray-100 p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-gray-900">Recent Listings</h2>
           <button className="text-xs text-[#4A5CE8] font-semibold hover:underline" onClick={() => onNavigate("my-listings")} data-testid="link-manage-all">Manage All</button>
@@ -1105,7 +1272,7 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
           </div>
         ) : (
           <div className="space-y-1">
-            {myListings.map((listing) => (
+            {myListings.slice(0,3).map((listing) => (
               <div key={listing.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 rounded-xl px-1 -mx-1 transition-colors group">
                 <Link href={`/listing/${listing.publicId ?? listing.id}`} className="w-12 h-12 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 block">
                   {listing.image
@@ -1146,46 +1313,6 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <h2 className="font-bold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Link
-            href="/sell/direct"
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-create-listing"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#F59E0B] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Plus className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Create Listing</p>
-            <p className="text-xs text-gray-400 mt-0.5">Sell an item quickly</p>
-          </Link>
-          <button
-            onClick={() => onNavigate("credits")}
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-earn-credits"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#3B4FD8] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Earn Credits</p>
-            <p className="text-xs text-gray-400 mt-0.5">Complete milestones</p>
-          </button>
-          <Link
-            href="/promotions"
-            className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-[#4A5CE8]/40 hover:bg-blue-50/30 transition-colors group"
-            data-testid="link-quick-action-promote-items"
-          >
-            <div className="w-11 h-11 rounded-full bg-[#7C3AED] flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-              <Megaphone className="w-5 h-5 text-white" />
-            </div>
-            <p className="text-sm font-bold text-gray-800">Promote Items</p>
-            <p className="text-xs text-gray-400 mt-0.5">Increase visibility</p>
-          </Link>
-        </div>
-      </div>
-
       {/* Earn Real Rewards */}
       <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
         <div className="flex items-center gap-3 mb-3">
@@ -1220,29 +1347,60 @@ function OverviewContent({ user, onNavigate }: { user: { name: string; email: st
         </button>
       </div>
 
+      <div className="overview-below-grid">
+        <section className="overview-section-card bg-white rounded-2xl p-5">
+          <div className="overview-showcase-head"><MessageSquare className="w-6 h-6 text-blue-500"/><div><h2>Recent Messages</h2><p>Latest conversations from your buyers.</p></div><Link href="/messages" className="overview-view-all">View All <ArrowRight className="w-4 h-4"/></Link></div>
+          {recentEvents.some(e=>e.type==="message") ? (
+            <div className="space-y-2" aria-live="polite">
+              {recentEvents.filter(e=>e.type==="message").slice(0,3).map(e=>(
+                <Link key={e.id} href={e.href} className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950 dark:hover:bg-blue-900">
+                  <MessageSquare className="h-5 w-5 shrink-0 text-blue-700 dark:text-blue-200"/>
+                  <div className="min-w-0"><p className="font-bold text-slate-950 dark:text-white">{e.title}{e.unread?" · New":""}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-2">{e.desc}</p></div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="overview-placeholder-panel">
+              <MessageSquare className="w-9 h-9 text-blue-500"/>
+              <h3>No recent conversations</h3>
+              <p>Messages from buyers and sellers will appear here.</p>
+              <Link href="/messages" className="overview-message-open">Open Inbox <ArrowRight className="w-4 h-4"/></Link>
+            </div>
+          )}
+        </section>
+        <section className="overview-section-card bg-white rounded-2xl p-5">
+          <div className="overview-showcase-head"><CheckCircle2 className="w-6 h-6 text-emerald-500"/><div><h2>Seller Setup Progress</h2><p>Complete the steps to get the most from Bazunk.</p></div></div>
+          <DashboardSetupProgress fallbackName={user.name || user.username || ""}/>
+        </section>
+      </div>
       {/* Recent Activity */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">
         <h2 className="font-bold text-gray-900 mb-4">Recent Activity</h2>
-        {RECENT_ACTIVITY.length === 0 ? (
-          <div className="py-8 text-center text-gray-400">
-            <BarChart2 className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-            <p className="text-sm font-medium">No activity yet</p>
-            <p className="text-xs mt-1">Actions like listing items and purchases will appear here</p>
+        {activityError && <p role="alert" className="mb-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{activityError}</p>}
+        {activityLoading && <p className="text-sm font-semibold text-slate-600">Loading your activity…</p>}
+        {!activityLoading && recentActivity.length === 0 ? (
+          <div className="py-8 text-center text-slate-600">
+            <BarChart2 className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+            <p className="text-sm font-semibold">No marketplace activity yet</p>
+            <p className="text-xs mt-1">Orders, sales, offers, bids and messages will appear here.</p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {RECENT_ACTIVITY.map((activity) => (
-              <div key={activity.id} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
-                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <Plus className="w-3.5 h-3.5 text-orange-500" />
+          <div className="space-y-1" aria-live="polite">
+            {recentActivity.slice(0, 8).map((activity) => {
+              const Icon = activity.type === "sale" ? ShoppingBag : activity.type === "offer" ? Handshake : activity.type === "bid" ? Gavel : activity.type === "message" ? MessageSquare : activity.type === "listing" ? Store : ShoppingCart;
+              return <Link key={activity.id} href={activity.href} className="flex items-center gap-3 rounded-lg px-2 py-3 border-b border-slate-200 dark:border-slate-700 last:border-0 hover:bg-blue-50 dark:hover:bg-blue-900/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-400">
+                <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-orange-700 dark:text-orange-200" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">New Listing Created</p>
-                  <p className="text-xs text-gray-400 line-clamp-1">{activity.title} — £{activity.price.toFixed(2)}</p>
+                  <p className="text-sm font-bold text-slate-950 dark:text-white">{activity.title}{activity.unread ? " · New" : ""}</p>
+                  <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-2">{activity.desc}</p>
                 </div>
-                <span className="text-xs text-gray-400 flex-shrink-0">{activity.date}</span>
-              </div>
-            ))}
+                <time dateTime={activity.time} className="text-xs text-slate-600 dark:text-slate-300 flex-shrink-0">{activity.time ? new Date(activity.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : ""}</time>
+              </Link>;
+            })}
+            {recentActivity.length > 8 && <button type="button" onClick={() => onNavigate("notifications")} className="mt-2 text-sm font-bold text-blue-700 dark:text-blue-200">View all activity →</button>}
           </div>
         )}
       </div>
@@ -1408,13 +1566,13 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
   }
 
   return (
-    <div className="space-y-4 text-white">
+    <div className="bazunk-credit-shell bazunk-rewards-v2 space-y-6">
       {/* Hero banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-[#5062f7] bg-gradient-to-r from-[#354ee1] via-[#4456e7] to-[#4455e4] p-5 text-white shadow-[0_12px_40px_rgba(37,40,166,.3)] sm:p-6">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-fuchsia-400/35 blur-3xl"/>
-        <div className="relative z-10 flex flex-wrap items-start justify-between gap-4 mb-5">
+      <div className="credits-hero credits-hero-v2 relative overflow-hidden rounded-2xl border border-cyan-300 bg-gradient-to-r from-cyan-500 via-blue-600 to-fuchsia-600 p-5 text-white shadow-[0_12px_40px_rgba(37,40,166,.3)] sm:p-6">
+        <div className="credits-wallet-art" aria-hidden="true"><span className="credits-art-sparkle credits-art-sparkle-a">✦</span><span className="credits-art-coin credits-art-coin-a">B</span><span className="credits-art-coin credits-art-coin-b">B</span><span className="credits-art-wallet">▣</span><span className="credits-art-coin credits-art-coin-c">B</span><span className="credits-art-sparkle credits-art-sparkle-b">✧</span></div><div aria-hidden="true" className="pointer-events-none absolute -right-10 -top-16 h-64 w-64 rounded-full bg-fuchsia-400/35 blur-3xl"/>
+        <div className="credits-hero-main relative z-10 flex flex-wrap items-start justify-between gap-4 mb-5">
           <div>
-            <h2 className="text-xl font-black sm:text-2xl">Marketplace Credits</h2>
+            <h2 className="text-2xl font-black sm:text-3xl drop-shadow-sm">⚡ Marketplace Credits</h2>
             <p className="text-white text-sm font-semibold mt-1"></p><p className="text-blue-100 text-xs mt-1">100 credits = {formatPrice(1)} · earn up to 150/week free</p>
           </div>
           <div className="text-right">
@@ -1436,7 +1594,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
             </div>
           </div>
         </div>
-        <div className="relative z-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="credits-summary-grid relative z-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "Promo Credits", value: `${Math.round(user.balance * 100)}`, sub: "spend on any promotion", icon: Tag },
             { label: "Promos Available", value: `${Math.floor(user.balance * 100 / 99)}`, sub: "from 99 credits each", icon: TrendingUp },
@@ -1445,7 +1603,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           ].map((stat) => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="rounded-xl border border-white/10 bg-white/10 p-3">
+              <div key={stat.label} className="credits-summary-card rounded-xl border border-white/10 bg-white/10 p-3">
                 <div className="flex items-center gap-1.5 text-white text-xs font-bold mb-2">
                   <Icon className="w-3.5 h-3.5" /> {stat.label}
                 </div>
@@ -1458,24 +1616,24 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
       </div>
 
       {/* What Can Credits Do */}
-      <div className="rounded-2xl border border-[#164752] bg-[#092d39] p-5">
+      <div className="credits-features credits-feature-section rounded-2xl border border-cyan-200 dark:border-cyan-700 bg-white dark:bg-[#092d39] p-5 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
             <Coins className="w-3.5 h-3.5 text-white" />
           </div>
-          <h3 className="text-base font-bold text-white">What Can Credits Do?</h3>
+          <h3 className="text-xl font-black text-slate-950 dark:text-white">What Can Credits Do?</h3>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="credits-feature-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {CREDIT_FEATURES.map((f) => {
             const Icon = f.icon;
             return (
-              <div key={f.title} className={`rounded-xl border border-[#24314d] bg-[#101d35] p-4`}>
-                <div className={`w-9 h-9 rounded-xl ${f.iconBg} flex items-center justify-center mb-3`}>
-                  <Icon className={`w-4 h-4 ${f.iconColor}`} />
+              <div key={f.title} className="credits-feature-card credits-feature-illustrated rounded-2xl border border-indigo-200 dark:border-cyan-500/60 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-[#292060] dark:via-[#101d35] dark:to-[#08264a] p-4 shadow-sm hover:shadow-xl transition-shadow">
+                <div className={`w-16 h-16 rounded-2xl ${f.iconBg} flex items-center justify-center mb-3 shadow-md`}>
+                  <Icon className={`w-9 h-9 ${f.iconColor}`} />
                 </div>
-                <p className="text-base font-black text-white mb-1">{f.title}</p>
-                <p className="text-xs font-medium text-white mb-3 leading-relaxed">{f.desc}</p>
-                <p className="text-[11px] font-bold text-cyan-300">{f.detail}</p>
+                <p className="text-base font-black text-slate-950 dark:text-white mb-1">{f.title}</p>
+                <p className="text-xs font-semibold text-slate-800 dark:text-white mb-3 leading-relaxed">{f.desc}</p>
+                <p className="text-[11px] font-extrabold text-blue-700 dark:text-cyan-200">{f.detail}</p>
               </div>
             );
           })}
@@ -1483,8 +1641,8 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
       </div>
 
       {/* Tabs */}
-      <div className="overflow-hidden rounded-2xl border border-[#1c2944] bg-[#101b32] shadow-xl">
-        <div className="flex border-b border-[#2469a3] bg-[#04172f]">
+      <div className="credits-rewards-panel overflow-hidden rounded-2xl border border-[#1c2944] bg-[#101b32] shadow-xl">
+        <div className="credits-tab-bar flex border-b border-[#2469a3] bg-[#04172f]">
           {[
             { id: "rewards", label: "Earn Rewards", icon: Trophy },
             { id: "progress", label: "Your Progress", icon: TrendingUp },
@@ -1496,7 +1654,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
               <button
                 key={tab.id}
                 onClick={() => setCreditsTab(tab.id as typeof creditsTab)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-colors ${
+                className={`credits-tab-button flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-bold transition-colors ${
                   active
                     ? "text-indigo-200 border-b-2 border-[#5965ee] bg-[#182440]"
                     : "text-slate-300 hover:text-white hover:bg-[#182440]"
@@ -1508,11 +1666,11 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           })}
         </div>
 
-        <div className="p-5">
+        <div className="credits-reward-content p-5">
           {creditsTab === "rewards" && (
             <div>
               {/* Weekly cap notice */}
-              <div className="flex items-start gap-3 rounded-xl border border-blue-400 bg-gradient-to-r from-[#0759dc] to-[#0747b4] px-4 py-4 mb-4">
+              <div className="credits-weekly-banner relative flex items-start gap-3 rounded-xl border border-blue-400 bg-gradient-to-r from-[#0759dc] to-[#0747b4] px-4 py-4 mb-4">
                 <Info className="w-4 h-4 text-blue-300 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-black text-white">Weekly earning cap: 150 credits</p>
@@ -1521,7 +1679,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
               </div>
 
               {/* One-time welcome milestones */}
-              <div className="flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#d02a8e] to-[#8429ce] px-4 py-4 mb-3">
+              <div className="credits-starter-banner relative flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#d02a8e] to-[#8429ce] px-4 py-4 mb-3">
                 <Gift className="w-4 h-4 text-pink-300 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-white">One-Time Starter Credits</p>
@@ -1529,7 +1687,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                 </div>
               </div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-black text-white">👑 One-Time Rewards</h3><span className="rounded-full bg-[#113d64] px-3 py-1 text-xs font-bold text-emerald-300">{oneTimeMilestones.filter(m => m.completed).length}/{oneTimeMilestones.length} completed</span></div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6">
+              <div className="credits-onetime-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-7">
                 {displayMilestones.filter(m => m.oneTime).map((m) => {
                   const RewardIcon = m.rewardIcon;
                   const pct = Math.round((m.progress / m.total) * 100);
@@ -1539,7 +1697,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                   return (
                     <div
                       key={m.id}
-                      className={`rounded-xl border p-4 ${
+                      className={`credits-milestone-card credits-onetime-card rounded-xl border p-4 ${
                         m.completed && !isClaimed
                           ? "border-amber-400 bg-[#29233c]"
                           : isClaimed
@@ -1553,7 +1711,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-white">{m.name}</p>
+                            <p className="text-sm font-bold text-slate-950 dark:text-white">{m.name}</p>
                             <span className="text-[9px] font-black bg-pink-100 text-pink-800 px-1.5 py-0.5 rounded-full uppercase">One-time</span>
                             {(m.completed || isClaimed) && (
                               <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
@@ -1561,12 +1719,12 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-sky-100 mt-0.5">{m.task}</p>
+                          <p className="text-xs text-slate-800 dark:text-sky-100 mt-0.5">{m.task}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 bg-[#e9f4ff] rounded-lg px-3 py-2 border border-[#a7d4ff] mb-3">
+                      <div className="credits-reward-token flex items-center gap-1.5 bg-[#e9f4ff] rounded-lg px-3 py-2 border border-[#a7d4ff] mb-3">
                         <RewardIcon className={`w-3.5 h-3.5 ${m.iconColor} flex-shrink-0`} />
-                        <span className="text-xs text-white flex-1">{m.reward}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex-1">{m.reward}</span>
                         {/^\d[\d,]* credits$/.test(m.reward) && (
                           <span className={`text-xs font-black ${m.iconColor}`}>+{m.reward.split(" ")[0]}</span>
                         )}
@@ -1589,14 +1747,14 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
               </div>
 
               {/* Monthly challenges */}
-              <div className="flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#b21b85] to-[#6b25bd] px-4 py-4 mb-3">
+              <div className="credits-monthly-header relative flex items-start gap-3 rounded-xl border border-[#ef3caa] bg-gradient-to-r from-[#b21b85] to-[#6b25bd] px-4 py-4 mb-3">
                 <Flame className="w-4 h-4 text-[#F26B21] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-bold text-white">Monthly Challenges</p>
                   <p className="text-xs text-slate-200 mt-0.5">Complete milestones to earn credits, fee waivers, boosts, and discounts!</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              <div className="credits-monthly-grid grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 {displayMilestones.filter(m => !m.oneTime).map((m) => {
                   const RewardIcon = m.rewardIcon;
                   const pct = Math.round((m.progress / m.total) * 100);
@@ -1606,7 +1764,7 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                   return (
                     <div
                       key={m.id}
-                      className={`rounded-xl border-2 p-4 ${
+                      className={`credits-milestone-card credits-monthly-card rounded-xl border-2 p-4 ${
                         m.completed && !isClaimed
                           ? "border-amber-400 bg-[#312746]"
                           : isClaimed
@@ -1620,18 +1778,18 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-bold text-white">{m.name}</p>
+                            <p className="text-sm font-bold text-slate-950 dark:text-white">{m.name}</p>
                             {(m.completed || isClaimed) && (
                               <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                                 <CheckCircle2 className="w-3 h-3 text-white" />
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-slate-200 mt-0.5">{m.task}</p>
+                          <p className="text-xs text-slate-800 dark:text-slate-100 mt-0.5">{m.task}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs text-white mb-1.5">
+                      <div className="flex items-center justify-between text-xs text-slate-900 dark:text-white mb-1.5">
                         <span>Progress</span>
                         <span className="font-bold">{m.progress}/{m.total}</span>
                       </div>
@@ -1644,9 +1802,9 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
                         />
                       </div>
 
-                      <div className="flex items-center gap-1.5 bg-[#142e53] rounded-lg px-3 py-2 border border-[#28528a] mb-3">
+                      <div className="credits-reward-token flex items-center gap-1.5 bg-[#142e53] rounded-lg px-3 py-2 border border-[#28528a] mb-3">
                         <RewardIcon className={`w-3.5 h-3.5 ${m.iconColor} flex-shrink-0`} />
-                        <span className="text-xs text-white flex-1">{m.reward}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex-1">{m.reward}</span>
                         {/^\d[\d,]* credits$/.test(m.reward) && (
                           <span className={`text-xs font-black ${m.iconColor}`}>
                             +{m.reward.split(" ")[0]}
@@ -1720,10 +1878,10 @@ function CreditsSection({ user }: { user: { name: string; email: string; usernam
           {creditsTab === "history" && (
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-bold text-white">Recent Transactions</p>
+                <p className="text-sm font-bold text-slate-950 dark:text-white">Recent Transactions</p>
                 <span className="text-xs text-[#4A5CE8] font-semibold">All time</span>
               </div>
-              <div className="py-10 text-center text-slate-300">
+              <div className="py-10 text-center text-slate-800 dark:text-slate-200">
                 <Coins className="w-8 h-8 mx-auto mb-2 opacity-30" />
                 <p className="text-sm font-medium">No transactions yet</p>
                 <p className="text-xs mt-1">Credit purchases and rewards will appear here</p>
@@ -1748,9 +1906,13 @@ const COUNTRIES = [
 
 function AddressesSection() {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const addrKey = user?.email ? `sbd_addresses_v1_${user.email}` : null;
-  const [addrLoadedKey, setAddrLoadedKey] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<{ id: number; label: string; name: string; line1: string; line2: string; city: string; postcode: string; country: string; default: boolean }[]>([]);
+  type Addr={ id:number; label:string; name:string; line1:string; line2:string; city:string; postcode:string; country:string; default:boolean };
+  const [addresses, setAddresses] = useState<Addr[]>([]);
+  const [loadingAddresses,setLoadingAddresses] = useState(true);
+  const [savingAddress,setSavingAddress] = useState(false);
+  const [syncError,setSyncError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newAddr, setNewAddr] = useState(EMPTY_ADDR);
   const [addrError, setAddrError] = useState("");
@@ -1758,53 +1920,72 @@ function AddressesSection() {
   const [editAddr, setEditAddr] = useState(EMPTY_ADDR);
   const [editError, setEditError] = useState("");
 
-  useEffect(() => {
-    if (!addrKey) { setAddresses([]); setAddrLoadedKey(null); return; }
-    try { const s = localStorage.getItem(addrKey); setAddresses(s ? JSON.parse(s) : []); } catch { setAddresses([]); }
-    setAddrLoadedKey(addrKey);
-  }, [addrKey]);
-  useEffect(() => {
-    if (!addrLoadedKey) return;
-    localStorage.setItem(addrLoadedKey, JSON.stringify(addresses));
-  }, [addresses, addrLoadedKey]);
-
-  function removeAddress(id: number) {
-    setAddresses((prev) => {
-      const remaining = prev.filter((a) => a.id !== id);
-      if (remaining.length > 0 && !remaining.some((a) => a.default)) remaining[0] = { ...remaining[0], default: true };
-      return remaining;
+  async function request(method:string,path:string,body?:unknown):Promise<Addr[]>{
+    const token=await getToken();
+    if(!token)throw new Error("Sign in to manage saved addresses");
+    const r=await fetch("/api/account/addresses"+path,{
+      method,headers:{"Authorization":`Bearer ${token}`,...(body===undefined?{}:{"Content-Type":"application/json"})},
+      ...(body===undefined?{}:{body:JSON.stringify(body)}),cache:"no-store"
     });
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||"Address update failed");
+    if(!Array.isArray(data))throw new Error("Invalid server response");
+    return data as Addr[];
   }
-  function setDefault(id: number) {
-    setAddresses((prev) => prev.map((a) => ({ ...a, default: a.id === id })));
+  useEffect(()=>{
+    if(!addrKey){setAddresses([]);setLoadingAddresses(false);return;}
+    let cancelled=false;
+    setLoadingAddresses(true);setSyncError("");
+    (async()=>{
+      try{
+        let rows=await request("GET","");
+        // One-time import from this browser's older local-only address book. Never overwrite server data.
+        if(rows.length===0){
+          const local=localStorage.getItem(addrKey);
+          const legacy=local ? JSON.parse(local) : [];
+          if(Array.isArray(legacy)&&legacy.length){
+            for(const address of legacy.slice(0,25)){
+              if(!address||typeof address!=="object")continue;
+              const payload={label:String(address.label||""),name:String(address.name||""),line1:String(address.line1||""),
+                line2:String(address.line2||""),city:String(address.city||""),postcode:String(address.postcode||""),country:String(address.country||"")};
+              if(!payload.label||!payload.name||!payload.line1||!payload.city||!payload.postcode||!payload.country)continue;
+              rows=await request("POST","",payload);
+            }
+            if(rows.length)localStorage.removeItem(addrKey);
+          }
+        }
+        if(!cancelled)setAddresses(rows);
+      }catch(e){if(!cancelled)setSyncError(e instanceof Error?e.message:"Could not synchronise addresses");}
+      finally{if(!cancelled)setLoadingAddresses(false);}
+    })();
+    return()=>{cancelled=true};
+  },[addrKey,getToken]);
+  async function updateServer(method:string,path:string,body?:unknown){
+    setSavingAddress(true);setSyncError("");
+    try{
+      const result=await request(method,path,body);
+      setAddresses(result);return true;
+    }catch(e){setSyncError(e instanceof Error?e.message:"Could not save address");return false;}
+    finally{setSavingAddress(false);}
   }
-  function handleSaveAddress() {
-    if (!newAddr.label.trim() || !newAddr.name.trim() || !newAddr.line1.trim() || !newAddr.city.trim() || !newAddr.postcode.trim() || !newAddr.country.trim()) {
-      setAddrError("Please fill in all required fields.");
-      return;
+  async function removeAddress(id:number){await updateServer("DELETE",`/${id}`);}
+  async function setDefault(id:number){await updateServer("PATCH",`/${id}`,{makeDefault:true});}
+  async function handleSaveAddress(){
+    if(!newAddr.label.trim()||!newAddr.name.trim()||!newAddr.line1.trim()||!newAddr.city.trim()||!newAddr.postcode.trim()||!newAddr.country.trim()){
+      setAddrError("Please fill in all required fields.");return;
     }
-    setAddresses((prev) => [
-      ...prev,
-      { id: Date.now(), ...newAddr, default: prev.length === 0 },
-    ]);
-    setNewAddr(EMPTY_ADDR);
-    setAddrError("");
-    setShowAdd(false);
+    if(await updateServer("POST","",newAddr)){setNewAddr(EMPTY_ADDR);setAddrError("");setShowAdd(false);}
   }
-  function startEdit(addr: typeof addresses[0]) {
+  function startEdit(addr:Addr){
     setEditId(addr.id);
-    setEditAddr({ label: addr.label, name: addr.name, line1: addr.line1, line2: addr.line2, city: addr.city, postcode: addr.postcode, country: addr.country });
-    setEditError("");
-    setShowAdd(false);
+    setEditAddr({label:addr.label,name:addr.name,line1:addr.line1,line2:addr.line2,city:addr.city,postcode:addr.postcode,country:addr.country});
+    setEditError("");setShowAdd(false);
   }
-  function handleUpdateAddress() {
-    if (!editAddr.label.trim() || !editAddr.name.trim() || !editAddr.line1.trim() || !editAddr.city.trim() || !editAddr.postcode.trim() || !editAddr.country.trim()) {
-      setEditError("Please fill in all required fields.");
-      return;
+  async function handleUpdateAddress(){
+    if(!editAddr.label.trim()||!editAddr.name.trim()||!editAddr.line1.trim()||!editAddr.city.trim()||!editAddr.postcode.trim()||!editAddr.country.trim()){
+      setEditError("Please fill in all required fields.");return;
     }
-    setAddresses((prev) => prev.map((a) => a.id === editId ? { ...a, ...editAddr } : a));
-    setEditId(null);
-    setEditError("");
+    if(await updateServer("PATCH",`/${editId}`,editAddr)){setEditId(null);setEditError("");}
   }
 
   return (
@@ -1812,7 +1993,7 @@ function AddressesSection() {
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900">Addresses</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{addresses.length} saved address{addresses.length !== 1 ? "es" : ""}</p>
+          <p className="text-xs text-slate-600 mt-0.5">Securely synced to your Bazunk account · {addresses.length} saved address{addresses.length !== 1 ? "es" : ""}</p>
         </div>
         <button
           onClick={() => { setShowAdd(true); setAddrError(""); setNewAddr(EMPTY_ADDR); }}
@@ -1823,6 +2004,9 @@ function AddressesSection() {
       </div>
 
       <div className="p-5 space-y-3">
+        {loadingAddresses && <p role="status" className="text-sm font-semibold text-slate-700">Synchronising saved addresses…</p>}
+        {syncError && <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm font-semibold text-red-800">{syncError}</p>}
+        {!loadingAddresses && addresses.length===0 && <p className="text-sm text-slate-600">No addresses saved to your account yet.</p>}
         {addresses.map((addr) => (
           <div key={addr.id} className={`rounded-xl border-2 ${addr.default ? "border-[#4A5CE8]/30 bg-blue-50/30" : "border-gray-100"}`}>
             {editId === addr.id ? (
@@ -1845,7 +2029,7 @@ function AddressesSection() {
                 </div>
                 {editError && <p className="mt-2 text-xs text-red-500 font-medium">{editError}</p>}
                 <div className="flex gap-2 mt-3">
-                  <button onClick={handleUpdateAddress} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
+                  <button disabled={savingAddress} onClick={handleUpdateAddress} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
                   <button onClick={() => setEditId(null)} className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
                 </div>
               </div>
@@ -1906,7 +2090,7 @@ function AddressesSection() {
             {addrError && <p className="mt-2 text-xs text-red-500 font-medium">{addrError}</p>}
             <div className="flex gap-2 mt-3">
               <button
-                onClick={handleSaveAddress}
+                disabled={savingAddress} onClick={handleSaveAddress}
                 className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90 transition-opacity"
                 data-testid="button-save-address"
               >
@@ -2109,6 +2293,7 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
 
   return (
     <div className="space-y-4 p-5">
+      <SellerAnalyticsPanel financeOnly />
       {/* Connect status card */}
       <div className={`rounded-2xl border-2 p-5 ${status?.chargesEnabled ? "border-emerald-200 bg-emerald-50/40" : "border-gray-100 bg-gray-50/40"}`}>
         <div className="flex items-start gap-4">
@@ -2123,7 +2308,7 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
               {status?.chargesEnabled
-                ? "You'll receive net payouts automatically after each sale."
+                ? "Your Stripe account is connected. Seller transfers require delivery confirmation and payout release."
                 : "Link your bank via Stripe Express to receive payouts. Free to set up — takes ~5 minutes."}
             </p>
           </div>
@@ -2232,71 +2417,46 @@ function SellerPayoutsPanel({ user }: { user: { email: string; name?: string } }
 function PaymentSection({ defaultTab = "payouts" }: { defaultTab?: "payouts" | "cards" }) {
   const { user } = useAuth();
   const [payTab, setPayTab] = useState<"payouts" | "cards">(defaultTab);
-  const cardsKey = user?.email ? `sbd_cards_v1_${user.email}` : null;
-  const [cardsLoadedKey, setCardsLoadedKey] = useState<string | null>(null);
-  const [cards, setCards] = useState<{ id: number; brand: string; last4: string; expiry: string; name: string; default: boolean }[]>([]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newCard, setNewCard] = useState(EMPTY_CARD);
+  const { getToken } = useClerkAuth();
+  const [cards, setCards] = useState<{ id: string; brand: string; last4: string; expiry: string; name: string; default: boolean }[]>([]);
   const [cardError, setCardError] = useState("");
-  const [editCardId, setEditCardId] = useState<number | null>(null);
-  const [editCard, setEditCard] = useState(EMPTY_CARD);
-  const [editCardError, setEditCardError] = useState("");
-
-  useEffect(() => {
-    if (!cardsKey) { setCards([]); setCardsLoadedKey(null); return; }
-    try { const s = localStorage.getItem(cardsKey); setCards(s ? JSON.parse(s) : []); } catch { setCards([]); }
-    setCardsLoadedKey(cardsKey);
-  }, [cardsKey]);
-  useEffect(() => {
-    if (!cardsLoadedKey) return;
-    localStorage.setItem(cardsLoadedKey, JSON.stringify(cards));
-  }, [cards, cardsLoadedKey]);
-
-  const brandColor: Record<string, string> = {
-    Visa: "bg-blue-600",
-    Mastercard: "bg-red-500",
-  };
-
-  function removeCard(id: number) {
-    setCards((prev) => {
-      const remaining = prev.filter((c) => c.id !== id);
-      if (remaining.length > 0 && !remaining.some((c) => c.default)) {
-        remaining[0] = { ...remaining[0], default: true };
-      }
-      return remaining;
+  const [cardBusy, setCardBusy] = useState(false);
+  async function cardRequest(path: string, method = "GET") {
+    const token = await getToken();
+    if (!token) throw new Error("Sign in to manage payment cards");
+    const response = await fetch("/api/stripe/payment-methods" + path, {
+      method, headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
     });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Payment method request failed");
+    return data;
   }
-
-  function handleSaveCard() {
-    const digits = newCard.cardNumber.replace(/\s/g, "");
-    if (!newCard.holderName.trim()) { setCardError("Cardholder name is required."); return; }
-    if (digits.length < 13 || digits.length > 19) { setCardError("Enter a valid card number."); return; }
-    if (!/^\d{2}\/\d{2}$/.test(newCard.expiry.trim())) { setCardError("Enter expiry as MM/YY."); return; }
-    if (!newCard.cvv.trim()) { setCardError("CVV is required."); return; }
-
-    const brand = digits.startsWith("4") ? "Visa" : digits.startsWith("5") ? "Mastercard" : "Card";
-    setCards((prev) => [
-      ...prev,
-      { id: Date.now(), brand, last4: digits.slice(-4), expiry: newCard.expiry.trim(), name: newCard.holderName.trim(), default: prev.length === 0 },
-    ]);
-    setNewCard(EMPTY_CARD);
-    setCardError("");
-    setShowAdd(false);
+  async function refreshCards() {
+    try { setCards(await cardRequest("")); setCardError(""); }
+    catch (e) { setCardError(e instanceof Error ? e.message : "Could not load cards"); }
   }
-
-  function startEditCard(card: typeof cards[0]) {
-    setEditCardId(card.id);
-    setEditCard({ holderName: card.name, cardNumber: `•••• •••• •••• ${card.last4}`, expiry: card.expiry, cvv: "" });
-    setEditCardError("");
-    setShowAdd(false);
+  useEffect(() => {
+    if (payTab === "cards" && user?.email) void refreshCards();
+  }, [payTab, user?.email]);
+  async function addCard() {
+    setCardBusy(true);
+    try {
+      const result = await cardRequest("/setup", "POST");
+      if (!result.url) throw new Error("Stripe did not return a secure setup page");
+      window.location.assign(result.url);
+    } catch(e) { setCardError(e instanceof Error ? e.message : "Could not start card setup"); setCardBusy(false); }
   }
-
-  function handleUpdateCard() {
-    if (!editCard.holderName.trim()) { setEditCardError("Cardholder name is required."); return; }
-    if (!/^\d{2}\/\d{2}$/.test(editCard.expiry.trim())) { setEditCardError("Enter expiry as MM/YY."); return; }
-    setCards((prev) => prev.map((c) => c.id === editCardId ? { ...c, name: editCard.holderName.trim(), expiry: editCard.expiry.trim() } : c));
-    setEditCardId(null);
-    setEditCardError("");
+  async function removeCard(id: string) {
+    setCardBusy(true);
+    try { await cardRequest("/" + encodeURIComponent(id), "DELETE"); await refreshCards(); }
+    catch(e) {setCardError(e instanceof Error ? e.message : "Could not remove card");}
+    finally {setCardBusy(false);}
+  }
+  async function setDefaultCard(id: string) {
+    setCardBusy(true);
+    try { await cardRequest("/" + encodeURIComponent(id) + "/default", "POST"); await refreshCards(); }
+    catch(e) {setCardError(e instanceof Error ? e.message : "Could not update default card");}
+    finally {setCardBusy(false);}
   }
 
   return (
@@ -2322,118 +2482,33 @@ function PaymentSection({ defaultTab = "payouts" }: { defaultTab?: "payouts" | "
       )}
 
       {payTab === "cards" && (
-      <div>
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-semibold text-gray-700">{cards.length} card{cards.length !== 1 ? "s" : ""} saved</p>
-        </div>
-        <button
-          onClick={() => { setShowAdd((v) => !v); setCardError(""); setNewCard(EMPTY_CARD); }}
-          className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline"
-        >
-          <Plus className="w-3.5 h-3.5" /> Add Card
-        </button>
-      </div>
-
-      <div className="p-5 space-y-3">
-        {cards.map((card) => (
-          <div key={card.id} className={`rounded-xl border-2 ${card.default ? "border-[#4A5CE8]/30 bg-blue-50/30" : "border-gray-100"}`}>
-            {editCardId === card.id ? (
-              <div className="p-4">
-                <p className="text-sm font-bold text-gray-900 mb-3">Edit Card</p>
-                <div className="space-y-3">
-                  <input placeholder="Cardholder name" value={editCard.holderName}
-                    onChange={(e) => setEditCard((p) => ({ ...p, holderName: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white" />
-                  <input placeholder="MM / YY" value={editCard.expiry} maxLength={5}
-                    onChange={(e) => setEditCard((p) => ({ ...p, expiry: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white" />
-                </div>
-                {editCardError && <p className="mt-2 text-xs text-red-500 font-medium">{editCardError}</p>}
-                <div className="flex gap-2 mt-3">
-                  <button onClick={handleUpdateCard} className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90">Save Changes</button>
-                  <button onClick={() => setEditCardId(null)} className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 flex items-center gap-4">
-                <div className={`w-12 h-8 rounded-lg ${brandColor[card.brand] ?? "bg-gray-500"} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-white text-[10px] font-black">{card.brand.toUpperCase()}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-gray-900">•••• •••• •••• {card.last4}</p>
-                    {card.default && <span className="text-[10px] font-bold bg-[#4A5CE8] text-white px-2 py-0.5 rounded-full">Default</span>}
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{card.name} · Expires {card.expiry}</p>
-                </div>
-                <button onClick={() => startEditCard(card)} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-                <button onClick={() => removeCard(card.id)} className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-400 transition-colors" data-testid={`button-remove-card-${card.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
-              </div>
-            )}
-          </div>
-        ))}
-
-        {showAdd && (
-          <div className="rounded-xl border-2 border-dashed border-[#4A5CE8]/30 p-5 bg-blue-50/20">
-            <p className="text-sm font-bold text-gray-900 mb-3">New Card</p>
-            <div className="space-y-3">
-              <input
-                placeholder="Cardholder name"
-                value={newCard.holderName}
-                onChange={(e) => setNewCard((p) => ({ ...p, holderName: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-              />
-              <input
-                placeholder="Card number"
-                value={newCard.cardNumber}
-                onChange={(e) => setNewCard((p) => ({ ...p, cardNumber: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                maxLength={19}
-              />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  placeholder="MM / YY"
-                  value={newCard.expiry}
-                  onChange={(e) => setNewCard((p) => ({ ...p, expiry: e.target.value }))}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                  maxLength={5}
-                />
-                <input
-                  placeholder="CVV"
-                  value={newCard.cvv}
-                  onChange={(e) => setNewCard((p) => ({ ...p, cvv: e.target.value }))}
-                  className="px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-[#4A5CE8] bg-white"
-                  maxLength={4}
-                />
-              </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-gray-900">{cards.length} saved card{cards.length === 1 ? "" : "s"}</p>
+              <p className="text-xs text-gray-600">Payment methods are managed securely by Stripe, not stored in this browser.</p>
             </div>
-            {cardError && <p className="mt-2 text-xs text-red-500 font-medium">{cardError}</p>}
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleSaveCard}
-                className="flex-1 py-2 rounded-lg bg-[#4A5CE8] text-white text-sm font-bold hover:opacity-90 transition-opacity"
-                data-testid="button-save-card"
-              >
-                Save Card
-              </button>
-              <button
-                onClick={() => { setShowAdd(false); setCardError(""); setNewCard(EMPTY_CARD); }}
-                className="py-2 px-4 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            <button type="button" disabled={cardBusy} onClick={addCard}
+              className="rounded-lg bg-[#4A5CE8] px-4 py-2 text-white font-semibold text-sm disabled:opacity-50">Add Card via Stripe</button>
           </div>
-        )}
-
-        <div className="flex items-center gap-2 text-xs text-gray-400 mt-2">
-          <Shield className="w-3.5 h-3.5 text-emerald-500" />
-          Payments are encrypted and processed securely. We never store full card details.
+          {cardError && <p role="alert" className="text-red-700 font-semibold text-sm">{cardError}</p>}
+          {cards.map(card => (
+            <div key={card.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-200 p-4">
+              <CreditCard className="h-6 w-6 text-[#4A5CE8]" />
+              <div className="flex-1 min-w-[150px]">
+                <p className="text-sm font-bold text-gray-900">{card.brand?.toUpperCase()} •••• {card.last4} {card.default ? "— Default" : ""}</p>
+                <p className="text-xs text-gray-600">{card.name || "Payment card"} · Expires {card.expiry}</p>
+              </div>
+              {!card.default && <button disabled={cardBusy} onClick={() => setDefaultCard(card.id)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold text-gray-900">Set default</button>}
+              <button disabled={cardBusy} onClick={() => removeCard(card.id)}
+                className="rounded-lg border border-red-300 px-3 py-2 text-xs font-bold text-red-700">Remove</button>
+            </div>
+          ))}
+          <p className="text-xs text-gray-600">Card details are entered only on Stripe's secure checkout page. Existing browser-only cards are not imported.</p>
         </div>
-      </div>
-    </div>
-    )}
+      )}
+
   </div>
   );
 }
@@ -2620,6 +2695,7 @@ const LOGO_COLORS = [
 
 function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (section: string) => void; settingsPage?: boolean }) {
   const { user } = useAuth();
+  const { getToken } = useClerkAuth();
   const [ratingText, setRatingText] = useState("New");
   useEffect(() => {
     if (!user?.email) return;
@@ -2633,7 +2709,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
       .catch(() => {});
   }, [user?.email]);
   const [myListings, setMyListings] = useState<StoredListing[]>([]);
-  useEffect(() => { fetchMyListings(user?.email ?? '').then(setMyListings); }, [user?.email]);
+  useEffect(() => { fetchMyListings(user?.email ?? '', getToken).then(setMyListings); }, [user?.email, getToken]);
 
   const storeKey = user?.email ? `sbd_my_store_${user.email}` : null;
   const [storeLoadedKey, setStoreLoadedKey] = useState<string | null>(null);
@@ -2764,9 +2840,9 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── SETUP ─── */
   if (view === "setup") {
     return (
-      <div className="space-y-5 p-4 sm:p-6">
+      <div className="bz-store-setup space-y-5 p-4 sm:p-6">
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(120deg,#6d28d9,#4338ca 55%,#ec4899)" }}>
+        <div className="px-6 sm:px-8 py-9 text-white relative overflow-hidden" style={{ background: "linear-gradient(115deg,#0c75db,#0953aa 58%,#f5821b)" }}>
           <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full bg-white/5" />
           <div className="absolute right-16 bottom-0 w-28 h-28 rounded-full bg-white/5" />
           <div className="relative">
@@ -2827,9 +2903,9 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
           </button>
         <p className="text-xs text-muted-foreground mt-3">Your branding and store details save in this browser. Your public seller profile and listings are managed separately.</p>
         </div>
-        <aside className="rounded-2xl border border-border bg-background overflow-hidden self-start">
+        <aside className="bazunk-store-preview rounded-2xl border border-[#42648b] bg-[#102746] overflow-hidden self-start">
           <div className="p-6" style={{background: setupCover}}><span className="text-xs font-bold !text-white/80 uppercase tracking-widest">Live brand preview</span><div className="w-14 h-14 rounded-2xl bg-black/20 mt-5 flex items-center justify-center !text-white text-2xl font-black">{storeName.trim().charAt(0).toUpperCase() || "B"}</div><h3 className="text-2xl font-black !text-white mt-4 break-words">{storeName.trim() || "Your store starts here"}</h3><p className="text-sm !text-white/80 mt-1">{storeCategory}</p></div>
-          <div className="p-5"><p className="text-sm text-foreground break-words">{storeDesc || "Tell buyers what makes your collection special."}</p><div className="mt-5 space-y-3">{[{label:"Add your store name",done:!!storeName.trim()},{label:"Describe what you sell",done:!!storeDesc.trim()},{label:"Choose your category",done:!!storeCategory}].map(step => <div key={step.label} className="flex items-center gap-2 text-xs text-muted-foreground"><CheckCircle2 className={`w-4 h-4 ${step.done ? "text-emerald-500" : "text-muted-foreground"}`}/>{step.label}</div>)}</div><p className="text-xs text-muted-foreground mt-5 leading-relaxed">After setup, customise your cover, contact details, social links and policies.</p></div>
+          <div className="p-5 !bg-[#102746] !text-white"><p className="text-sm !text-white break-words">{storeDesc || "Tell buyers what makes your collection special."}</p><div className="mt-5 space-y-3">{[{label:"Add your store name",done:!!storeName.trim()},{label:"Describe what you sell",done:!!storeDesc.trim()},{label:"Choose your category",done:!!storeCategory}].map(step => <div key={step.label} className="flex items-center gap-2 text-xs !text-slate-200"><CheckCircle2 className={`w-4 h-4 ${step.done ? "text-emerald-500" : "text-muted-foreground"}`}/>{step.label}</div>)}</div><p className="text-xs !text-slate-200 mt-5 leading-relaxed">After setup, customise your cover, contact details, social links and policies.</p></div>
         </aside>
         </div>
       </div>
@@ -2841,7 +2917,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
   /* ─── EDIT ─── */
   if (view === "edit") {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      <div className="bz-store-edit bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <button onClick={() => setView("overview")} className="flex items-center gap-1.5 text-sm text-[#4A5CE8] font-semibold mb-1 hover:underline">
@@ -3035,7 +3111,7 @@ function MyStoreSection({ onNavigate, settingsPage = false }: { onNavigate: (sec
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-5">Store Settings</h3>
                 <p className="text-sm text-muted-foreground mb-4">Manage your selling preferences through the connected account tools.</p>
-                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-violet-400"><Icon className="w-5 h-5 text-violet-500"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
+                <div className="grid sm:grid-cols-2 gap-3 mb-7">{[{label:"Offer acceptance",section:"auto-accept",icon:Handshake},{label:"Notifications & profile",section:"profile",icon:Bell},{label:"Pause individual listings",section:"my-listings",icon:PauseCircle},{label:"Payout settings",section:"seller-payouts",icon:Banknote}].map(({label,section,icon:Icon}) => <button key={section} onClick={() => onNavigate(section)} className="flex items-center gap-3 p-4 rounded-xl border border-border bg-background text-foreground text-sm font-semibold hover:border-blue-400"><Icon className="w-5 h-5 text-blue-600"/>{label}<ArrowRight className="w-4 h-4 ml-auto"/></button>)}</div>
 
                 {/* Danger Zone */}
                 <div>
@@ -4277,6 +4353,9 @@ function GoLiveSection() {
   const { getToken } = useClerkAuth();
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [error, setError] = useState("");
+  const [startingLive, setStartingLive] = useState(false);
+  const [endingLive, setEndingLive] = useState(false);
+  const [endError, setEndError] = useState("");
   const [, navigate] = useLocation();
   const [featureSettings, setFeatureSettings] = useState<Record<number, { discount?: number; stock?: string }>>({});
   const [myListings, setMyListings] = useState<GoLiveListing[]>([]);
@@ -4285,15 +4364,22 @@ function GoLiveSection() {
   useEffect(() => {
     if (!user?.email) return;
     setListingsLoading(true);
-    fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`)
-      .then((r) => r.json())
+    getToken().then(token => {
+      if (!token) throw new Error("Please sign in to load your listings");
+      return fetch(`/api/listings/mine?email=${encodeURIComponent(user.email)}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
+      });
+    }).then((r) => {
+      if (!r.ok) throw new Error("Could not load your listings");
+      return r.json();
+    })
       .then((data) => {
         const items: GoLiveListing[] = Array.isArray(data) ? data : (data.listings ?? []);
         setMyListings(items);
       })
       .catch(() => {})
       .finally(() => setListingsLoading(false));
-  }, [user?.email]);
+  }, [user?.email, getToken]);
 
   function toggleProduct(id: number) {
     setSelectedIds((prev) =>
@@ -4301,7 +4387,8 @@ function GoLiveSection() {
     );
   }
 
-  function handleGoLive() {
+  async function handleGoLive() {
+    if (startingLive) return;
     if (!title.trim()) { setError("Please add a session title."); return; }
     if (platform === "youtube") {
       if (!streamUrl.trim()) { setError("Paste the YouTube watch/live URL buyers will see."); return; }
@@ -4314,7 +4401,9 @@ function GoLiveSection() {
     const name = user?.name ?? user?.email ?? "Seller";
     const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const broadcastRoom = platform === "youtube" ? `bazunk-youtube-${Date.now()}` : undefined;
-    const session = goLive({
+    setStartingLive(true);
+    try {
+    const session = await goLive({
       sellerId: user?.email ?? "me",
       sellerName: name,
       sellerInitials: initials,
@@ -4328,21 +4417,42 @@ function GoLiveSection() {
     // YouTube sellers stay in the Bazunk control room. Their browser camera/mic
     // publishes to LiveKit, which relays the encoded stream to YouTube.
     if (platform !== "youtube") navigate(`/live/${session.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the live stream. Please try again.");
+    } finally {
+      setStartingLive(false);
+    }
   }
 
   async function handleEndLive() {
-    if (!mySession) return;
-    if (mySession.platform === "youtube" && mySession.broadcastRoom) {
-      try {
-        const token = await getToken();
-        await fetch("/api/livekit/youtube/stop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          body: JSON.stringify({ roomName: mySession.broadcastRoom }),
-        });
-      } catch {}
+    if (!mySession || endingLive) return;
+    setEndError("");
+    setEndingLive(true);
+    try {
+      // First end the authoritative public session; preserve the controls if this fails.
+      await endSession(mySession.id);
+      if (mySession.platform === "youtube" && mySession.broadcastRoom) {
+        try {
+          const token = await getToken();
+          if (!token) throw new Error("Sign-in expired.");
+          const response = await fetch("/api/livekit/youtube/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ roomName: mySession.broadcastRoom }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => null);
+            throw new Error(data?.error || "YouTube relay could not be stopped.");
+          }
+        } catch (err) {
+          setEndError("Bazunk stream ended, but the YouTube relay could not be confirmed stopped. Check YouTube Studio and stop it there if necessary. " + (err instanceof Error ? err.message : ""));
+        }
+      }
+    } catch (err) {
+      setEndError(err instanceof Error ? err.message : "Could not end the stream. Please retry.");
+    } finally {
+      setEndingLive(false);
     }
-    endSession(mySession.id);
   }
 
   if (mySession) {
@@ -4364,7 +4474,7 @@ function GoLiveSection() {
     return (
       <div className="space-y-4">
         {/* Status bar */}
-        <div className="bg-gradient-to-r from-red-600 via-red-500 to-[#F26B21] rounded-2xl p-5 text-white">
+        <div className="bz-studio-control-header rounded-2xl p-5 text-white">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3">
               <span className="relative flex h-4 w-4 flex-shrink-0">
@@ -4390,9 +4500,9 @@ function GoLiveSection() {
                   <Link2 className="w-3.5 h-3.5" /> My Stream
                 </a>
               )}
-              <button onClick={() => { void handleEndLive(); }}
+              <button disabled={endingLive} aria-busy={endingLive} onClick={() => { void handleEndLive(); }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-black/25 text-white font-bold text-xs hover:bg-black/35 transition-colors">
-                <X className="w-3.5 h-3.5" /> End
+                <X className="w-3.5 h-3.5" /> {endingLive ? "Ending…" : "End Broadcast"}
               </button>
             </div>
           </div>
@@ -4403,7 +4513,7 @@ function GoLiveSection() {
           </p>
         </div>
 
-        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
+        {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#172f49] p-4 text-white text-sm"><p>{endError}</p><button type="button" disabled={endingLive} onClick={() => void handleEndLive()} className="mt-2 rounded-lg bg-[#008fff] px-4 py-2 font-bold">Retry ending broadcast</button></div>}\n        {/* Bazunk browser broadcaster: YouTube uses LiveKit Egress as the encoder/relay. */}
         {mySession.platform === "youtube" && mySession.broadcastRoom && (
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -4622,12 +4732,13 @@ function GoLiveSection() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6" style={{ minHeight: 400 }}>
+    <div className="bz-studio-control bz-studio-setup rounded-2xl p-6" style={{ minHeight: 400 }}>
       <div className="mb-6">
-        <h2 className="font-black text-gray-900 text-lg">Go Live</h2>
+        <h2 className="font-black text-white text-2xl">Creator Studio <span className="text-[#ff7900]">/ Go Live</span></h2>
         <p className="text-sm text-gray-400 mt-1">Stream on your favourite platform and sell directly on Bazunk.</p>
       </div>
 
+      {endError && <div role="alert" className="rounded-xl border border-orange-400 bg-[#173650] p-3 text-white text-sm mb-4">{endError}</div>}
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2.5 mb-4">
           <AlertTriangle className="w-4 h-4 flex-shrink-0" /> {error}
@@ -4747,9 +4858,11 @@ function GoLiveSection() {
 
       <button
         onClick={handleGoLive}
-        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-red-500 to-[#F26B21] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
+        disabled={startingLive}
+        aria-busy={startingLive}
+        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#008fff] to-[#0065d9] text-white font-black text-base hover:opacity-90 transition-opacity shadow-sm"
       >
-        <Radio className="w-5 h-5" /> Go Live Now
+        <Radio className="w-5 h-5" /> {startingLive ? "Registering your live stream…" : "Go Live Now"}
       </button>
       <p className="text-[10px] text-gray-400 text-center mt-3">
         You'll be taken to your live page where buyers can browse and purchase while watching your stream.
@@ -5215,7 +5328,7 @@ function SupportTicketsSection({ user }: { user: { email: string; name?: string 
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
+    <div className="bz-tickets-bright bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col" style={{ minHeight: 400 }}>
       <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="font-bold text-gray-900 flex items-center gap-2">
@@ -5566,11 +5679,27 @@ function VerificationSection({ userEmail }: { userEmail: string }) {
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
+  const { user: clerkProfileUser } = useClerkUser();
+  const { openUserProfile } = useClerk();
+  const { getToken: getProfileToken } = useClerkAuth();
+  const [profileSaveError, setProfileSaveError] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [photoSaving, setPhotoSaving] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const uploadProfilePhoto = async (file?: File) => {
+    if (!file || !clerkProfileUser) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) { setPhotoError("Choose an image smaller than 5 MB."); return; }
+    setPhotoError(""); setPhotoSaving(true);
+    try { await clerkProfileUser.setProfileImage({ file }); await clerkProfileUser.reload(); }
+    catch { setPhotoError("Could not update your profile photo. Please try again."); }
+    finally { setPhotoSaving(false); if (photoInputRef.current) photoInputRef.current.value = ""; }
+  };
   const rawSettings = useRawSettings();
   const liveEnabled = isFeatureEnabled(rawSettings, "live");
   const dashboardFeatureForItem: Record<string,string> = {
-    "my-bids":"auctions", "offers":"offers", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
-    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits",
+    "my-bids":"auctions", "offers":"offers", "deal-pilot":"deal_pilot", "my-auctions":"auctions", "my-flash-sales":"flash_sales",
+    "auto-accept":"offers", "go-live":"live", "open-importers":"importers", "credits":"credits", "cashback":"cashback",
     "promotions":"promotions", "verification":"verification", "buyer-protection":"buyer_protection",
     "disputes":"disputes_returns", "returns":"disputes_returns"
   };
@@ -5585,22 +5714,48 @@ export function DashboardPage() {
     let s = params.get("section");
     if (s === "payment") s = "seller-payouts"; // legacy redirect
     const allIds = SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items.map(i => i.id) : [c.id]);
-    return s && allIds.includes(s) ? s : "overview";
+    // Importers are a standalone route; cashback is rendered within this dashboard.
+    return s && allIds.includes(s) && !DASHBOARD_PAGE_ROUTES[s] ? s : "overview";
   });
+  useEffect(() => {
+    // Redirect legacy standalone importer dashboard links.
+    const section=new URLSearchParams(window.location.search).get("section");
+    const destination=section?DASHBOARD_PAGE_ROUTES[section]:undefined;
+    if(destination) setLocation(destination);
+  }, [setLocation]);
   const dashboardContentRef = useRef<HTMLElement>(null);
   const [sectionNavigation, setSectionNavigation] = useState(0);
   const setActiveSection = (id: string) => {
+    const destination=DASHBOARD_PAGE_ROUTES[id];
+    if(destination){
+      setSidebarOpen(false);
+      setTileMenuOpen(false);
+      setActiveCategory(null);
+      setMobileExpandedCat(null);
+      setLocation(destination);
+      return;
+    }
+    // Switch dashboard sections in-place; a full page reload can lose the
+    // authenticated SPA state and display an empty destination.
+    const target = id === "overview" ? "/dashboard" : `/dashboard?section=${encodeURIComponent(id)}`;
+    // Dashboard subpages are panels of this mounted component, not separate
+    // router pages. Keep the URL bookmarkable without remounting the dashboard.
     setActiveSectionRaw(id);
+    window.history.replaceState(window.history.state, "", target);
+    setTileMenuOpen(false);
+    setTileCategory(null);
     setSidebarOpen(false);
-    setActiveCategory(null);
+    const parent = SIDEBAR_CATEGORIES.find(c => c.items.some(item => item.id === id));
+    setActiveCategory(parent?.id ?? null);
+    setMobileExpandedCat(parent?.id ?? null);
     setSectionNavigation(value => value + 1);
-    setMobileExpandedCat(
-      SIDEBAR_CATEGORIES.find(c => c.items.some(i => i.id === id))?.id ?? null
-    );
+    requestAnimationFrame(() => dashboardContentRef.current?.focus());
   };
   const [myStoreOpen, setMyStoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [tileMenuOpen, setTileMenuOpen] = useState(false);
+  const [tileCategory, setTileCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(() => { const section = new URLSearchParams(window.location.search).get("section"); return SIDEBAR_CATEGORIES.find(c => c.items.some(i=>i.id===section))?.id ?? null; });
   const [flyoutY, setFlyoutY] = useState(0);
   const [mobileExpandedCat, setMobileExpandedCat] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -5631,8 +5786,15 @@ export function DashboardPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-  const [savedSearches, setSavedSearches] = useState(MOCK_SAVED_SEARCHES);
-  const [notifs, setNotifs] = useState(MOCK_NOTIFICATIONS);
+  const { notifications: activity, loading: activityLoading, error: activityError, markRead } = useDashboardActivity(user?.email);
+  const [notificationFilter,setNotificationFilter] = useState<"all"|"order"|"sale"|"offer"|"bid"|"message"|"search">("all");
+  const notifs = activity.map(n=>({
+    ...n,
+    icon: n.type === "sale" ? ShoppingBag : n.type === "offer" ? Handshake : n.type === "bid" ? Gavel : n.type === "message" ? MessageSquare : n.type === "search" ? Search : ShoppingCart,
+    iconBg: n.type === "sale" ? "bg-orange-100" : n.type === "offer" ? "bg-purple-100" : n.type === "bid" ? "bg-amber-100" : n.type === "message" ? "bg-emerald-100" : n.type === "search" ? "bg-sky-100" : "bg-blue-100",
+    iconColor: n.type === "sale" ? "text-orange-700" : n.type === "offer" ? "text-purple-700" : n.type === "bid" ? "text-amber-700" : n.type === "message" ? "text-emerald-700" : n.type === "search" ? "text-sky-700" : "text-blue-700",
+    time: n.time ? new Date(n.time).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "Recently"
+  })).filter(n=>notificationFilter==="all"||notificationFilter===n.type);
   const [profileEdit, setProfileEdit] = useState(false);
   const [profileForm, setProfileForm] = useState(() => {
     try {
@@ -5687,283 +5849,20 @@ export function DashboardPage() {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
 
-      {/* Mobile sticky sub-header */}
-      <div className="lg:hidden relative z-20 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
-        <button
-          onClick={() => {
-            setSidebarOpen(true);
-            const activeCat = SIDEBAR_CATEGORIES.find(c =>
-              c.id === activeSection || c.items.some(i => i.id === activeSection)
-            );
-            if (activeCat) setMobileExpandedCat(activeCat.id);
-          }}
-          className="flex items-center gap-2 text-gray-700 font-semibold text-sm"
-        >
-          <Menu className="w-5 h-5 text-gray-500" />
-          <span>{SIDEBAR_CATEGORIES.flatMap(c => c.items.length ? c.items : [{ id: c.id, label: c.label }]).find(s => s.id === activeSection)?.label ?? "Dashboard"}</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <Link href="/credits" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F59E0B] text-white text-xs font-semibold">
-            <Coins className="w-3.5 h-3.5" /> Credits
-          </Link>
-          <div className="w-8 h-8 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {initial}
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <div className="flex-1 flex container mx-auto px-4 py-6 gap-5 max-w-6xl">
-
-        {/* Sidebar — fixed drawer on mobile, static on desktop */}
-        <aside className={`
-          fixed lg:static inset-y-0 left-0 z-[70] lg:z-40
-          w-72 max-w-[100vw] lg:w-24 flex-shrink-0
-          flex flex-col
-          bg-gray-100 lg:bg-transparent
-          transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}>
-          {/* Scrollable inner container */}
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-3 pt-4 pb-8 px-4 lg:px-0 lg:pt-0 lg:pb-0 lg:overflow-visible">
-
-            {/* Mobile close row */}
-            <div className="lg:hidden flex items-center justify-between pb-1 flex-shrink-0">
-              <span className="font-bold text-gray-900 text-sm">My Dashboard</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-gray-700 p-1">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* User card */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center text-center flex-shrink-0">
-              <div className="w-14 h-14 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white font-bold text-2xl mb-3">
-                {initial}
-              </div>
-              <p className="font-bold text-gray-900">{user.username}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
-            </div>
-
-            {/* Nav menu — icon rail + flyout (desktop only hint) */}
-            <div className="hidden lg:flex items-center justify-end px-1 -mb-1">
-              <div className="group relative">
-                <span className="w-4 h-4 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center cursor-default select-none">?</span>
-                <div className="absolute right-0 top-5 z-50 hidden group-hover:block w-52 bg-gray-900 text-white text-[11px] leading-snug rounded-xl px-3 py-2 shadow-lg pointer-events-none">
-                  Click a menu icon to open options · click anywhere to close
-                </div>
-              </div>
-            </div>
-
-            {/* ── Mobile nav: accordion list (no flyout) ── */}
-            <nav className="lg:hidden bg-white rounded-2xl border border-gray-100 overflow-hidden flex-shrink-0">
-              {visibleSidebarCategories.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = cat.items.length === 0
-                  ? activeSection === cat.id
-                  : cat.items.some(i => i.id === activeSection);
-                const isExpanded = mobileExpandedCat === cat.id;
-
-                if (cat.items.length === 0) {
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => { setActiveSection(cat.id); setSidebarOpen(false); setMobileExpandedCat(null); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left border-b border-gray-100 transition-colors ${isActive ? "bg-[#3B4FD8]/8" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && <ChevronRight className="w-4 h-4 text-[#3B4FD8]" />}
-                    </button>
-                  );
-                }
-
-                return (
-                  <div key={cat.id} className="border-b border-gray-100 last:border-0">
-                    <button
-                      onClick={() => setMobileExpandedCat(isExpanded ? null : cat.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors ${isActive ? "bg-[#3B4FD8]/5" : "hover:bg-gray-50"}`}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cat.gradient}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                      <span className={`flex-1 text-sm font-semibold ${isActive ? "text-[#3B4FD8]" : "text-gray-800"}`}>{cat.label}</span>
-                      {isActive && !isExpanded && <span className="w-2 h-2 rounded-full bg-[#3B4FD8] mr-1 flex-shrink-0" />}
-                      <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />
-                    </button>
-                    {isExpanded && (
-                      <div className="bg-gray-50/80 border-t border-gray-100">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "cashback") { setLocation("/cashback"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                if (item.id === "open-importers") { setLocation("/importers"); setSidebarOpen(false); setMobileExpandedCat(null); return; }
-                                setActiveSection(item.id);
-                                setSidebarOpen(false);
-                                setMobileExpandedCat(null);
-                              }}
-                              className={`w-full flex items-center gap-3 pl-6 pr-4 py-3 text-left border-b border-gray-100 last:border-0 transition-colors ${isItemActive ? "bg-white" : "hover:bg-white/60"}`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className={`flex-1 text-sm ${isItemActive ? "font-semibold text-[#3B4FD8]" : "text-gray-600"}`}>{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 text-[#3B4FD8] flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {/* Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-red-50 transition-colors border-t border-gray-100"
-                data-testid="button-logout"
-              >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50">
-                  <LogOut className="w-4 h-4 text-red-400" />
-                </div>
-                <span className="text-sm font-semibold text-red-500">Sign Out</span>
-              </button>
-            </nav>
-
-            {/* ── Desktop nav: icon rail + flyout ── */}
-            <nav
-              className="hidden lg:block bg-white rounded-2xl border border-gray-100 overflow-visible flex-shrink-0 relative"
-              ref={categoryMenuRef}
-            >
-              {/* Icon rail */}
-              <div className="flex flex-col py-2">
-                {visibleSidebarCategories.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = cat.items.length === 0
-                    ? activeSection === cat.id
-                    : cat.items.some(i => i.id === activeSection);
-                  const isOpen = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={(e) => {
-                        if (cat.items.length === 0) {
-                          setActiveSection(cat.id);
-                          setActiveCategory(null);
-                          setSidebarOpen(false);
-                        } else {
-                          const y = (e.currentTarget as HTMLElement).offsetTop;
-                          setFlyoutY(y);
-                          setActiveCategory(isOpen ? null : cat.id);
-                        }
-                      }}
-                      className="group relative flex flex-col items-center gap-1 px-2 py-2.5 w-full transition-all"
-                      title={cat.label}
-                      data-testid={`cat-${cat.id}`}
-                    >
-                      {(isActive || isOpen) && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[#3B4FD8] rounded-r-full" />
-                      )}
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all shadow-sm bg-gradient-to-br ${cat.gradient} ${
-                        isActive || isOpen ? "scale-110 shadow-md ring-2 ring-offset-1 ring-white" : "opacity-80 group-hover:opacity-100 group-hover:scale-105"
-                      }`}>
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <span className={`text-[9px] font-bold tracking-wide leading-tight ${
-                        isActive || isOpen ? "text-gray-900" : "text-gray-400 group-hover:text-gray-600"
-                      }`}>{cat.label}</span>
-                    </button>
-                  );
-                })}
-                {/* Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="group flex flex-col items-center gap-1 px-2 py-2.5 w-full border-t border-gray-100 mt-1 transition-all"
-                  title="Sign Out"
-                  data-testid="button-logout"
-                >
-                  <div className="w-11 h-11 rounded-xl bg-red-50 group-hover:bg-red-500 flex items-center justify-center transition-all">
-                    <LogOut className="w-5 h-5 text-red-400 group-hover:text-white transition-colors" />
-                  </div>
-                  <span className="text-[9px] font-bold text-gray-400 group-hover:text-red-400 tracking-wide transition-colors">Sign Out</span>
-                </button>
-              </div>
-
-              {/* Flyout panel */}
-              <AnimatePresence>
-                {activeCategory && (() => {
-                  const cat = SIDEBAR_CATEGORIES.find(c => c.id === activeCategory);
-                  if (!cat || cat.items.length === 0) return null;
-                  return (
-                    <motion.div
-                      key={activeCategory}
-                      initial={{ opacity: 0, x: -8, scale: 0.97 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
-                      exit={{ opacity: 0, x: -8, scale: 0.97 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-full ml-2 w-52 bg-white rounded-2xl border border-gray-100 shadow-xl z-50 overflow-hidden"
-                      style={{ top: flyoutY }}
-                    >
-                      <div className={`px-4 py-3 bg-gradient-to-r ${cat.gradient} flex items-center gap-2`}>
-                        <cat.icon className="w-4 h-4 text-white/80" />
-                        <span className="text-sm font-bold text-white">{cat.label}</span>
-                      </div>
-                      <div className="py-1.5">
-                        {cat.items.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isItemActive = activeSection === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              onClick={() => {
-                                if (item.id === "my-store" || item.id === "store-settings") { setLocation(item.id === "store-settings" ? "/my-store#popular-items" : "/my-store"); setActiveCategory(null); setSidebarOpen(false); return; }
-                                setActiveSection(item.id);
-                                setActiveCategory(null);
-                                setSidebarOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left ${
-                                isItemActive
-                                  ? "bg-[#3B4FD8]/8 text-[#3B4FD8] font-semibold"
-                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                              }`}
-                              data-testid={`sidebar-${item.id}`}
-                            >
-                              <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm ${item.iconBg}`}>
-                                <ItemIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                              <span className="flex-1">{item.label}</span>
-                              {isItemActive && <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
-            </nav>
-
-          </div>
+      {/* Permanent glassmorphism sidebar: no pop-up navigation. */}
+      <div className="bz-glass-v8-layout flex-1">
+        <aside className="bz-glass-sidebar" aria-label="Dashboard navigation">
+          <div className="bz-glass-sidebar-heading"><span>BAZUNK / YOUR SPACE</span><h2>Dashboard</h2><p>Manage your marketplace</p></div>
+          <nav className="bz-glass-sidebar-nav">
+            {visibleSidebarCategories.map(cat=>{const Icon=cat.icon;const expanded=activeCategory===cat.id;const active=cat.id===activeSection||cat.items.some(item=>item.id===activeSection);return <div className="bz-glass-sidebar-group" key={cat.id}>
+              <button type="button" className={`bz-glass-sidebar-category ${active?"is-active":""}`} aria-expanded={cat.items.length?expanded:undefined} onClick={()=>cat.items.length?setActiveCategory(expanded?null:cat.id):setActiveSection(cat.id)}><Icon size={18}/><span>{cat.label}</span>{cat.items.length>0&&<ChevronDown size={16} className={expanded?"bz-glass-rotated":""}/>}</button>
+              {expanded&&cat.items.length>0&&<div className="bz-glass-sidebar-subpages">{cat.items.map(item=>{const ItemIcon=item.icon;return <button key={item.id} type="button" className={`bz-glass-sidebar-subpage ${activeSection===item.id?"is-active":""}`} onClick={()=>setActiveSection(item.id)}><ItemIcon size={15}/><span>{item.label}</span></button>})}</div>}
+            </div>})}
+          </nav>
+          <button type="button" className="bz-glass-sidebar-signout" onClick={handleLogout}><LogOut size={17}/> Sign Out</button>
         </aside>
-
         {/* Main content */}
-        <main ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" className="flex-1 min-w-0 focus:outline-none">
+        <main id="bz-dashboard-main" ref={dashboardContentRef} tabIndex={-1} data-testid="dashboard-content" data-active-dashboard-section={activeSection} className={`flex-1 min-w-0 focus:outline-none bazunk-dashboard-theme ${["orders","my-bids","offers","watchlist","saved-searches","deal-pilot"].includes(activeSection) ? "bz-buying-light" : ""} ${["my-listings","sales","seller-analytics","shipping-centre","my-auctions","my-flash-sales","auto-accept","go-live"].includes(activeSection) ? "bz-selling-light" : ""} ${["cashback","credits","seller-payouts","payment-cards","promotions"].includes(activeSection) ? "bz-finance-light" : ""} ${["profile","security","verification","addresses"].includes(activeSection) ? "bz-account-light" : ""} ${["buyer-protection","disputes","returns","support-tickets"].includes(activeSection) ? "bz-support-light" : ""} ${activeSection === "overview" || activeSection === "credits" ? "bazunk-dashboard-featured" : "bazunk-dashboard-subpage"}`}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 10 }}
@@ -5971,7 +5870,45 @@ export function DashboardPage() {
             transition={{ duration: 0.18 }}
             className="h-full"
           >
-            {activeSection === "overview" && <><DashboardSetupProgress fallbackName={user.name || user.username || ""}/><OverviewContent user={user} onNavigate={setActiveSection} /></>}
+            {activeSection !== "overview" && activeSection !== "credits" && (() => {
+              const group = SIDEBAR_CATEGORIES.find(category => category.items.some(item => item.id === activeSection));
+              const entry = group?.items.find(item => item.id === activeSection);
+              if (!group || !entry) return null;
+              const SectionIcon = entry.icon;
+              const GroupIcon = group.icon;
+              return (
+                <header className={`bz-unified-page-banner bz-unified-page-${group.id}`}>
+                  <div className="bz-unified-page-copy">
+                    <div className="bz-unified-page-kicker"><GroupIcon size={15} /> BAZUNK / {group.label.toUpperCase()}</div>
+                    <h1><SectionIcon size={29} strokeWidth={2.5} /> {entry.label}</h1>
+                    <p>Your {entry.label.toLowerCase()} workspace — manage everything in one place.</p>
+                    <div className="bz-unified-page-pills"><span><ShieldCheck size={15}/> Your dashboard</span><span><Zap size={15}/> Quick access</span></div>
+                  </div>
+                  <div className="bz-unified-page-illustration" aria-hidden="true">
+                    <div className="bz-unified-page-art-main"><SectionIcon size={58} strokeWidth={1.8}/></div>
+                    <span className="bz-unified-page-art-coin"><Star size={22}/></span>
+                    <span className="bz-unified-page-art-spark"><Zap size={20}/></span>
+                  </div>
+                </header>
+              );
+            })()}
+            {(activeSection === "my-store" || activeSection === "store-settings") && (
+              <section className="bazunk-dashboard-store bz-store-light-theme">
+                <div className="bz-store-page-heading flex flex-wrap items-center justify-between gap-3 mb-4 rounded-2xl bg-white border border-[#dce7f5] p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500 text-white"><Store size={26} /></span>
+                    <div><h1 className="text-xl font-black !text-[#142d50]">{activeSection === "store-settings" ? "Store Settings" : "My Store"}</h1><p className="text-sm !text-[#536b87]">Manage your storefront, branding and selling preferences.</p></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setActiveSection("my-store")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "my-store" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>My Store</button>
+                    <button type="button" onClick={() => setActiveSection("store-settings")} className={`px-4 py-2 font-bold rounded-lg ${activeSection === "store-settings" ? "bg-orange-500 text-white" : "bg-[#1e4268] text-white"}`}>Settings</button>
+                  </div>
+                </div>
+                <div className="bz-store-page-content"><MyStoreSection key={activeSection} settingsPage={activeSection === "store-settings"} onNavigate={setActiveSection} /></div>
+              </section>
+            )}
+            {activeSection === "cashback" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cashback"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Gift size={16}/> BAZUNK FINANCE</span><h2>Cashback that adds up</h2><p>Every purchase could bring a little something back.</p><div className="bz-finance-fun-chips"><span><Coins size={15}/>Earn rewards</span><span><Star size={15}/>More value</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Gift size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><CashbackPage embedded /></div>}
+            {activeSection === "overview" && <OverviewContent user={user} onNavigate={setActiveSection} recentEvents={activity} activityLoading={activityLoading} activityError={activityError} />}
             {activeSection === "notifications" && (
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -5981,7 +5918,7 @@ export function DashboardPage() {
                   </div>
                   {notifs.some(n => n.unread) && (
                     <button
-                      onClick={() => setNotifs(prev => prev.map(n => ({ ...n, unread: false })))}
+                      onClick={() => markRead(activity.map(n => n.id))}
                       className="text-xs text-[#4A5CE8] font-semibold hover:underline"
                       data-testid="button-mark-all-read"
                     >
@@ -5989,13 +5926,20 @@ export function DashboardPage() {
                     </button>
                   )}
                 </div>
+                <div className="flex flex-wrap gap-2 px-5 py-3" role="group" aria-label="Filter notification types">
+                  {(["all","order","sale","offer","bid","message","search"] as const).map(k=>
+                    <button key={k} type="button" aria-pressed={notificationFilter===k} onClick={()=>setNotificationFilter(k)}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-bold capitalize ${notificationFilter===k?"bg-blue-700 text-white border-blue-700":"bg-white text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-white dark:border-slate-500"}`}>{k==="all"?"All activity":k+"s"}</button>)}
+                </div>
+                {activityError && <p role="alert" className="px-5 py-3 font-semibold text-red-700">{activityError}</p>}
+                {activityLoading && <p className="px-5 py-3 text-sm text-slate-600">Loading marketplace activity…</p>}
                 {notifs.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-16 text-center px-6">
                     <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4">
                       <Bell className="w-8 h-8 text-gray-200" />
                     </div>
                     <p className="font-semibold text-gray-700 mb-1">No notifications</p>
-                    <p className="text-sm text-gray-400">We'll notify you about price drops, messages, and order updates</p>
+                    <p className="text-sm text-gray-400">Order, sale, offer, bid and message activity will appear here when it occurs.</p>
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-50">
@@ -6005,7 +5949,7 @@ export function DashboardPage() {
                         <div
                           key={n.id}
                           className={`flex items-start gap-3 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer ${n.unread ? "bg-blue-50/30" : ""}`}
-                          onClick={() => setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, unread: false } : x))}
+                          onClick={async () => { await markRead([n.id]); if(n.href) window.location.assign(n.href); }}
                         >
                           <div className={`w-9 h-9 rounded-full ${n.iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
                             <Icon className={`w-4 h-4 ${n.iconColor}`} />
@@ -6026,9 +5970,12 @@ export function DashboardPage() {
               </div>
             )}
             {activeSection === "orders" && <OrdersSection />}
-            {activeSection === "sales" && <SellerSales />}
-            {activeSection === "shipping-centre" && <SellerShipping />}
+            {activeSection === "sales" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-sales-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><BarChart3 size={15}/> SELLER COMMAND CENTRE</span><h2>Your sales, <span>in full colour.</span></h2><p>Follow your orders, spot new opportunities and celebrate every sale.</p><div className="bz-seller-vivid-chips"><span><ShoppingBag size={15}/> Orders</span><span><TrendingUp size={15}/> Performance</span><span><Coins size={15}/> Earnings</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><BarChart3 size={66}/><span className="bz-seller-art-live">GROW</span></div><div className="bz-seller-art-bubble"><Coins size={25}/></div><div className="bz-seller-art-spark"><TrendingUp size={25}/></div></div></div><SellerSales /></div>}
+            {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerPricingInsightsPanel /></div>}
+            {activeSection === "shipping-centre" && <div className="space-y-6 p-4 sm:p-6"><SellerBundleSettings /><SellerShipping /></div>}
+            {activeSection === "seller-analytics" && <div className="space-y-5 p-4 sm:p-6"><SellerAnalyticsPanel /><SellerTrustInsights /><SellerPricingInsightsPanel /></div>}
             {activeSection === "watchlist" && (
+              <>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -6120,7 +6067,7 @@ export function DashboardPage() {
                             </div>
                             {hasDrop && item.alertEnabled && (
                               <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-0.5">
-                                <BellIcon className="w-3 h-3" /> Price drop alert sent
+                                <BellIcon className="w-3 h-3" /> Price-drop alerts enabled
                               </span>
                             )}
                           </div>
@@ -6134,138 +6081,26 @@ export function DashboardPage() {
                   <div className="p-5 border-t border-gray-100 bg-gray-50/50">
                     <p className="text-xs text-gray-400 flex items-center gap-1.5">
                       <BellIcon className="w-3.5 h-3.5 text-amber-500" />
-                      Price alerts are active for {watchlistItems.filter(i => i.alertEnabled).length} item{watchlistItems.filter(i => i.alertEnabled).length !== 1 ? "s" : ""}. We'll notify you when prices drop.
+                      Price alerts are active for {watchlistItems.filter(i => i.alertEnabled).length} item{watchlistItems.filter(i => i.alertEnabled).length !== 1 ? "s" : ""}. Persistent price-drop and restock preferences can be managed below.
                     </p>
                   </div>
                 )}
               </div>
+              <WatchAlertsManager />
+              </>
             )}
-            {activeSection === "saved-searches" && (
-              <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-gray-900">Saved Searches</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">{savedSearches.length} saved · {savedSearches.filter(s => s.alert).length} with alerts</p>
-                  </div>
-                  <Link href="/browse" className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                    <Plus className="w-3.5 h-3.5" /> New Search
-                  </Link>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {savedSearches.length === 0 ? (
-                    <div className="py-14 text-center text-gray-400">
-                      <Search className="w-8 h-8 mx-auto mb-2 text-gray-200" />
-                      <p className="text-sm font-medium">No saved searches</p>
-                      <Link href="/browse" className="mt-3 inline-flex items-center gap-1 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                        <Plus className="w-3 h-3" /> Start a search
-                      </Link>
-                    </div>
-                  ) : savedSearches.map((s) => (
-                    <div key={s.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
-                      <div className="w-9 h-9 rounded-xl bg-[#4A5CE8]/10 flex items-center justify-center flex-shrink-0">
-                        <Search className="w-4 h-4 text-[#4A5CE8]" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900">{s.query}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{s.filters}</p>
-                        <p className="text-[10px] text-gray-400 mt-0.5">Last run {s.lastRun} · <span className="font-semibold text-[#4A5CE8]">{s.count} results</span></p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s.alert ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-400"}`}>
-                          {s.alert ? "🔔 Alert on" : "Alert off"}
-                        </span>
-                        <Link href="/browse" className="p-1.5 rounded-lg border border-gray-200 text-gray-400 hover:text-[#4A5CE8] hover:border-[#4A5CE8] transition-colors" title="Run search">
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                        <button
-                          onClick={() => setSavedSearches(prev => prev.filter(x => x.id !== s.id))}
-                          className="p-1.5 rounded-lg border border-gray-200 text-gray-300 hover:text-red-400 hover:border-red-200 transition-colors"
-                          title="Delete saved search"
-                          data-testid={`button-delete-saved-search-${s.id}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeSection === "saved-searches" && <SavedSearchesSection />}
+            {activeSection === "deal-pilot" && <DealPilotPanel />}
             {activeSection === "messages" && (
-              <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-gray-900">Messages</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {MOCK_CONVERSATIONS.reduce((s, c) => s + c.unread, 0)} unread · {MOCK_CONVERSATIONS.length} conversations
-                    </p>
-                  </div>
-                  <Link href="/messages" className="flex items-center gap-1.5 text-xs text-[#4A5CE8] font-semibold hover:underline">
-                    Open Inbox <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {MOCK_CONVERSATIONS.map((convo) => {
-                    const last = convo.messages[convo.messages.length - 1];
-                    const initials = convo.with.avatar;
-                    const avatarColors: Record<string, string> = {
-                      MD: "bg-blue-500", SM: "bg-emerald-500", PK: "bg-purple-500",
-                      JT: "bg-amber-500", TA: "bg-[#4A5CE8]",
-                    };
-                    const color = avatarColors[initials] ?? "bg-gray-400";
-                    return (
-                      <Link
-                        key={convo.id}
-                        href="/messages"
-                        className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="relative flex-shrink-0">
-                          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center text-white text-sm font-bold`}>
-                            {initials}
-                          </div>
-                          {convo.unread > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#F26B21] text-white text-[9px] font-bold flex items-center justify-center">
-                              {convo.unread}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <p className={`text-sm ${convo.unread > 0 ? "font-bold text-gray-900" : "font-semibold text-gray-700"}`}>
-                              {convo.with.name}
-                            </p>
-                            <span className="text-[10px] text-gray-400 flex-shrink-0 ml-2">
-                              {new Date(last.timestamp).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#F26B21] font-medium truncate mb-0.5">{convo.listingTitle}</p>
-                          <p className={`text-xs truncate ${convo.unread > 0 ? "text-gray-700 font-medium" : "text-gray-400"}`}>
-                            {last.senderId === "me" ? "You: " : ""}{last.text}
-                          </p>
-                        </div>
-                        {last.senderId === "me" && (
-                          <div className="flex-shrink-0">
-                            {last.read
-                              ? <CheckCheck className="w-3.5 h-3.5 text-[#4A5CE8]" />
-                              : <Check className="w-3.5 h-3.5 text-gray-400" />}
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-                <div className="p-4 border-t border-gray-100">
-                  <Link
-                    href="/messages"
-                    className="w-full py-2.5 rounded-xl bg-[#4A5CE8] text-white font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                  >
-                    <MessageSquare className="w-4 h-4" /> Open Full Inbox
-                  </Link>
-                </div>
-              </div>
-            )}
+  <section className="rounded-2xl border border-blue-300 bg-white p-6 text-center dark:border-blue-700 dark:bg-[#111f36]">
+    <MessageSquare className="mx-auto h-10 w-10 text-indigo-500" />
+    <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-white">Messages</h2>
+    <p className="mt-2 text-sm text-slate-700 dark:text-slate-200">Your messages are available in the Bazunk message centre.</p>
+    <Link href="/messages" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white">Open Inbox <ArrowRight className="h-4 w-4" /></Link>
+  </section>
+)}
             {activeSection === "credits" && <CreditsSection user={user} />}
-            {activeSection === "promotions" && (
+            {activeSection === "promotions" && (<div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-promotions"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Megaphone size={16}/> BAZUNK FINANCE</span><h2>Make your listings shine</h2><p>Discover colourful ways to get noticed and reach more buyers.</p><div className="bz-finance-fun-chips"><span><TrendingUp size={15}/>Boost visibility</span><span><Zap size={15}/>Stand out</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Megaphone size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div>
               <div className="bg-white rounded-2xl border border-gray-100 flex flex-col" style={{ minHeight: 400 }}>
                 <div className="p-5 border-b border-gray-100 flex items-center justify-between">
                   <div>
@@ -6308,7 +6143,8 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-            )}
+            </div>)}
+            {activeSection === "profile" && (<div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-profile"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><User size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Make it yours</h2><p>Your profile, preferences and personal details — all in one place.</p><div className="bz-account-hero-chips"><span><User size={15}/>Personal details</span><span><ShieldCheck size={15}/>Your account</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><User size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>)}
             {activeSection === "profile" && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5" style={{ minHeight: 400 }}>
                 {/* Header */}
@@ -6343,31 +6179,41 @@ export function DashboardPage() {
                       </button>
                       <button
                         onClick={async () => {
+                          if (profileSaving) return;
+                          setProfileSaveError("");
                           const updated = { ...profileForm };
-                          setSavedProfile(updated);
-                          // Always use the actual Clerk email (not the form email) for DB cascade
                           const clerkEmail = user?.email || "";
-                          const displayName = updated.name.trim() || savedProfile.name;
-                          if (clerkEmail) {
-                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username: updated.username })); } catch {}
-                            if (displayName || updated.username) {
-                              try {
-                                await fetch("/api/listings/seller-name", {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ email: clerkEmail, name: displayName || undefined, username: updated.username || undefined }),
-                                });
-                              } catch {}
-                            }
-                          }
-                          setProfileEdit(false);
-                          setProfileSaved(true);
-                          setTimeout(() => setProfileSaved(false), 3000);
+                          const displayName = updated.name.trim();
+                          const username = updated.username.trim().replace(/^@/, "");
+                          if (!clerkEmail || !displayName) { setProfileSaveError("Enter your name before saving."); return; }
+                          if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) { setProfileSaveError("Username must be 3–30 characters: letters, numbers, dots, underscores or hyphens."); return; }
+                          setProfileSaving(true);
+                          try {
+                            const token = await getProfileToken();
+                            if (!token) throw new Error("Your session has expired. Sign in again to update your profile.");
+                            const response = await fetch("/api/listings/seller-name", {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                              body: JSON.stringify({ name: displayName, username }),
+                            });
+                            const data = await response.json().catch(() => ({}));
+                            if (!response.ok) throw new Error(data.error || "Could not save your profile. Please try again.");
+                            try { localStorage.setItem(`sbd_profile_v1_${clerkEmail}`, JSON.stringify({ name: displayName, username })); } catch {}
+                            setSavedProfile({ name: displayName, email: clerkEmail, username });
+                            setProfileForm({ name: displayName, email: clerkEmail, username });
+                            window.dispatchEvent(new CustomEvent("bazunk-profile-updated", { detail: { name: displayName, username } }));
+                            setProfileEdit(false);
+                            setProfileSaved(true);
+                            setTimeout(() => setProfileSaved(false), 3000);
+                          } catch (error) {
+                            setProfileSaveError(error instanceof Error ? error.message : "Could not save your profile.");
+                          } finally { setProfileSaving(false); }
                         }}
                         className="px-4 py-2 rounded-xl bg-[#4A5CE8] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                        disabled={profileSaving}
                         data-testid="button-save-profile"
                       >
-                        <Check className="w-3.5 h-3.5" /> Save Changes
+                        <Check className="w-3.5 h-3.5" /> {profileSaving ? "Saving…" : "Save Changes"}
                       </button>
                     </div>
                   )}
@@ -6376,12 +6222,13 @@ export function DashboardPage() {
                 {/* Avatar row */}
                 <div className="flex items-center gap-4 mb-6">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
-                      {(profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-[#3B4FD8] flex items-center justify-center text-white text-2xl font-bold">
+                      {clerkProfileUser?.imageUrl ? <img src={clerkProfileUser.imageUrl} alt="Your profile photo" className="h-full w-full object-cover" /> : (profileEdit ? profileForm.name : savedProfile.name).charAt(0).toUpperCase()}
                     </div>
+                    <input ref={photoInputRef} type="file" accept="image/*" className="hidden" aria-label="Choose profile photo" onChange={e => void uploadProfilePhoto(e.target.files?.[0])} />
                     {profileEdit && (
-                      <button className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] transition-colors">
-                        <Pencil className="w-3 h-3" />
+                      <button type="button" disabled={photoSaving} onClick={() => photoInputRef.current?.click()} aria-label="Change profile photo" title="Change profile photo" className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#4A5CE8] text-white flex items-center justify-center border-2 border-white hover:bg-[#3A4CC8] disabled:opacity-50 transition-colors">
+                        <Camera className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -6391,6 +6238,8 @@ export function DashboardPage() {
                   </div>
                 </div>
 
+                {photoError && <p role="alert" className="mb-3 text-sm text-red-700">{photoError}</p>}
+                {profileSaveError && <p role="alert" className="mb-3 text-sm font-semibold text-red-300">{profileSaveError}</p>}
                 {/* Fields */}
                 <div className="space-y-4">
                   {/* Full Name */}
@@ -6413,10 +6262,9 @@ export function DashboardPage() {
                   {/* Email — always read-only; managed by your sign-in provider */}
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email Address</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{savedProfile.email}</div>
-                    {profileEdit && (
-                      <p className="text-xs text-gray-400 mt-1">Email is managed by your sign-in account and cannot be changed here.</p>
-                    )}
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-900 font-medium">{user?.email || clerkProfileUser?.primaryEmailAddress?.emailAddress || savedProfile.email}</div>
+                    <p className="text-xs text-slate-300 mt-2">To change your email address, open your sign-in account settings and select Email addresses.</p>
+                    <button type="button" onClick={() => openUserProfile()} className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-blue-400 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700/30"><ExternalLink className="h-3.5 w-3.5" /> Manage sign-in email</button>
                   </div>
 
                   {/* Username */}
@@ -6439,31 +6287,29 @@ export function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Member since — always read-only */}
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">Member Since</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 text-sm text-gray-400 font-medium">January 2024</div>
-                  </div>
                 </div>
 
               </div>
             )}
+            {activeSection === "security" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-security"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><Shield size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Stay safe. Stay in control.</h2><p>Manage account security and protect your Bazunk experience.</p><div className="bz-account-hero-chips"><span><ShieldCheck size={15}/>Protection</span><span><Lock size={15}/>Security</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><Shield size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "security" && <SecuritySection />}
+            {activeSection === "verification" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-verification"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><ShieldCheck size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Get verified. Stand out.</h2><p>Build confidence and manage your identity verification.</p><div className="bz-account-hero-chips"><span><Star size={15}/>Build trust</span><span><Shield size={15}/>Verification</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><ShieldCheck size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "verification" && <VerificationSection userEmail={user?.email ?? ""} />}
+            {activeSection === "addresses" && <div className="bz-account-credits-hero-slot"><div className="bz-account-credits-hero bz-account-hero-addresses"><div className="bz-account-hero-copy"><span className="bz-account-hero-eyebrow"><MapPin size={16}/> BAZUNK / YOUR ACCOUNT</span><h2>Your places, sorted.</h2><p>Keep delivery and contact addresses organised for smoother shopping.</p><div className="bz-account-hero-chips"><span><MapPin size={15}/>Addresses</span><span><ShoppingBag size={15}/>Easy checkout</span></div></div><div className="bz-account-hero-art" aria-hidden="true"><div className="bz-account-hero-main"><MapPin size={64}/></div><span className="bz-account-hero-orbit-one"><ShieldCheck size={24}/></span><span className="bz-account-hero-orbit-two"><Star size={24}/></span></div></div></div>}
             {activeSection === "addresses" && <AddressesSection />}
-            {activeSection === "seller-payouts" && <PaymentSection defaultTab="payouts" />}
-            {activeSection === "payment-cards" && <PaymentSection defaultTab="cards" />}
+            {activeSection === "seller-payouts" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-payouts"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><Banknote size={16}/> BAZUNK FINANCE</span><h2>Your money, in motion</h2><p>Follow earnings from sale to payout with a clearer view of every stage.</p><div className="bz-finance-fun-chips"><span><CheckCircle size={15}/>Eligible funds</span><span><Clock size={15}/>Pending payouts</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><Banknote size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="payouts" /></div>}
+            {activeSection === "payment-cards" && <div className="bz-finance-fun-page"><div className="bz-finance-fun-hero bz-finance-fun-cards"><div className="bz-finance-fun-copy"><span className="bz-finance-fun-kicker"><CreditCard size={16}/> BAZUNK FINANCE</span><h2>Payments made simple</h2><p>Manage secure payment methods in one colourful place.</p><div className="bz-finance-fun-chips"><span><ShieldCheck size={15}/>Secure checkout</span><span><Plus size={15}/>Add a card</span></div></div><div className="bz-finance-fun-art" aria-hidden="true"><div className="bz-finance-fun-orbit"><CreditCard size={66}/></div><div className="bz-finance-fun-coin"><Coins size={27}/></div><div className="bz-finance-fun-star"><Star size={24}/></div></div></div><PaymentSection defaultTab="cards" /></div>}
             {activeSection === "auto-accept" && <AutoAcceptSection />}
             {activeSection === "offers" && <OffersSection />}
-            {activeSection === "go-live" && <GoLiveSection />}
-            {activeSection === "buyer-protection" && <BuyerProtectionDashSection />}
-            {activeSection === "disputes" && <DisputesSection />}
-            {activeSection === "returns" && <ReturnsSection />}
+            {activeSection === "go-live" && <div className="bz-seller-vivid-page"><div className="bz-seller-vivid-hero bz-seller-live-hero"><div className="bz-seller-vivid-copy"><span className="bz-seller-vivid-eyebrow"><Radio size={15}/> BAZUNK CREATOR STUDIO</span><h2>Lights on. <span>Let's go live!</span></h2><p>Set up your stream, showcase products and turn your audience into shoppers.</p><div className="bz-seller-vivid-chips"><span><Video size={15}/> Live video</span><span><ShoppingBag size={15}/> Shoppable streams</span><span><Zap size={15}/> Instant deals</span></div></div><div className="bz-seller-vivid-art" aria-hidden="true"><div className="bz-seller-art-orbit"><Video size={64}/><span className="bz-seller-art-live"><span className="bz-seller-live-dot"/> LIVE</span></div><div className="bz-seller-art-bubble"><ShoppingBag size={25}/></div><div className="bz-seller-art-spark"><Zap size={25}/></div></div></div><div className="bz-live-feature-grid"><div className="bz-live-feature-card bz-live-feature-blue"><span className="bz-live-feature-icon"><Video size={23}/></span><strong>01 · Connect</strong><p>Choose YouTube or Twitch</p></div><div className="bz-live-feature-card bz-live-feature-orange"><span className="bz-live-feature-icon"><Radio size={23}/></span><strong>02 · Create</strong><p>Give your broadcast a title</p></div><div className="bz-live-feature-card bz-live-feature-green"><span className="bz-live-feature-icon"><ShoppingBag size={23}/></span><strong>03 · Showcase</strong><p>Feature your products live</p></div><div className="bz-live-feature-card bz-live-feature-pink"><span className="bz-live-feature-icon"><Zap size={23}/></span><strong>04 · Go Live</strong><p>Start your shopping stream</p></div></div><GoLiveSection /></div>}
+            {activeSection === "buyer-protection" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-protection"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><ShieldCheck size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Shop with confidence</h2><p>Understand the protections available when buying on Bazunk.</p><div className="bz-support-hero-chips"><span><Shield size={15}/>Buyer protection</span><span><CheckCircle size={15}/>Peace of mind</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><ShieldCheck size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><BuyerProtectionDashSection /></div>}
+            {activeSection === "disputes" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-disputes"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><Handshake size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Let's sort it out</h2><p>Review disputes and follow the steps towards a resolution.</p><div className="bz-support-hero-chips"><span><MessageSquare size={15}/>Communicate</span><span><ShieldCheck size={15}/>Resolve issues</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><Handshake size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><DisputesSection /></div>}
+            {activeSection === "returns" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-returns"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><RotateCcw size={16}/> BAZUNK / HELP & SUPPORT</span><h2>Returns made clearer</h2><p>Track return requests and see what happens next.</p><div className="bz-support-hero-chips"><span><Package size={15}/>Return items</span><span><CheckCircle size={15}/>Track progress</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><RotateCcw size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><ReturnsSection /></div>}
             {activeSection === "my-listings" && <MyListingsSection userEmail={user.email} />}
             {activeSection === "my-auctions" && <MyAuctionsSection />}
             {activeSection === "my-bids" && <MyBidsSection />}
             {activeSection === "my-flash-sales" && <MyFlashSalesSection />}
-            {activeSection === "support-tickets" && <SupportTicketsSection user={user} />}
+            {activeSection === "support-tickets" && <div className="bz-support-credits-page"><div className="bz-support-credits-hero bz-support-hero-tickets"><div className="bz-support-hero-copy"><span className="bz-support-hero-eyebrow"><LifeBuoy size={16}/> BAZUNK / HELP & SUPPORT</span><h2>We're here to help</h2><p>Keep your support conversations and requests in one place.</p><div className="bz-support-hero-chips"><span><MessageSquare size={15}/>Get help</span><span><Clock size={15}/>Track requests</span></div></div><div className="bz-support-hero-art" aria-hidden="true"><div className="bz-support-hero-main"><LifeBuoy size={64}/></div><span className="bz-support-hero-float-one"><ShieldCheck size={24}/></span><span className="bz-support-hero-float-two"><Star size={24}/></span></div></div><SupportTicketsSection user={user} /></div>}
           </motion.div>
         </main>
       </div>
@@ -6478,7 +6324,8 @@ export function MyStorePage({ settingsPage = false }: { settingsPage?: boolean }
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [listings, setListings] = useState<StoredListing[]>([]);
-  useEffect(() => { fetchMyListings(user?.email ?? "").then(setListings); }, [user?.email]);
+  const { getToken } = useClerkAuth();
+  useEffect(() => { fetchMyListings(user?.email ?? "", getToken).then(setListings); }, [user?.email, getToken]);
   const activeListings = listings.filter(l => l.status === "active" || l.status === "published");
   return <div className="min-h-screen bg-[#f3f4f6] dark:bg-[#080d20]">
     <Navbar />

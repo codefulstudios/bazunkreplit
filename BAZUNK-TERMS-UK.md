@@ -50,7 +50,7 @@ Bazunk facilitates transactions between buyers and sellers. The sale contract is
 
 ## 6. Selling fees and Buyer Protection charges
 
-Private sellers pay no Bazunk listing fee or selling commission and receive the item price before any applicable refund or adjustment. Buyers pay Buyer Protection on personal-seller items: by default, 5% of their combined item price plus £0.70 once per checkout in GBP. In a mixed basket, the percentage applies only to personal-seller items and the fixed fee is charged once if such items are present. Business and sole-trader sellers pay a selling fee of 8% by default, including protection and support. Disclosed category rates may differ. Business-seller items carry no additional Buyer Protection charge for the buyer. Optional promotions and other paid tools are separate. Current applicable rates, delivery charges and the final amount are shown before payment; the cart amount may exclude Buyer Protection until checkout. Fees may change for future transactions with appropriate disclosure.
+Private sellers pay no Bazunk listing fee or selling commission and receive the item price before any applicable refund or adjustment. Buyers pay Buyer Protection on all eligible items from personal, business or sole-trader sellers: by default, 6% of their combined eligible item price plus £1.00 once per checkout in GBP. In a mixed basket, the percentage applies to all eligible items and the fixed fee is charged once. Business and sole-trader sellers pay a selling fee of 5% by default. Disclosed category rates may differ. Business-seller items carry the same applicable Buyer Protection charge as personal-seller items. Optional promotions and other paid tools are separate. Current applicable rates, delivery charges and the final amount are shown before payment; the cart amount may exclude Buyer Protection until checkout. Fees may change for future transactions with appropriate disclosure.
 
 ## 7. Bazunk Credits: permitted uses and restrictions
 
@@ -74,7 +74,7 @@ Buyer Protection supports eligible purchases completed through Bazunk checkout, 
 
 ## 12. Seller Protection and support
 
-Seller protection provides dispute support and evidence-based review, including for business transactions where support is included in the selling fee. Sellers must accurately describe items, retain dispatch and delivery evidence, use Bazunk checkout for protected transactions and respond to reasonable support requests. We may request further evidence before resolving a claim or releasing a payout. Protection does not guarantee reimbursement for every loss, fraud claim or chargeback and does not remove seller obligations or buyer rights.
+Seller protection provides dispute support and evidence-based review, including for business transactions where buyers also pay the applicable Buyer Protection charge. Sellers must accurately describe items, retain dispatch and delivery evidence, use Bazunk checkout for protected transactions and respond to reasonable support requests. We may request further evidence before resolving a claim or releasing a payout. Protection does not guarantee reimbursement for every loss, fraud claim or chargeback and does not remove seller obligations or buyer rights.
 
 ## 13. Delivery, returns and refunds
 

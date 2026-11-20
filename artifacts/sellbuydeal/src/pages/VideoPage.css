@@ -1,0 +1,50 @@
+/* Promotional Videos — Bazunk approved navy / orange / white visual system */
+.bz-video-page{font-family:var(--bz-brand-font,'Plus Jakarta Sans',sans-serif);background:#f5f7fa;color:#172b4d}
+.bz-video-hero{background:linear-gradient(115deg,#061b33 0%,#0b243b 72%,#061b33 100%);color:#fff;overflow:hidden}
+.bz-video-hero-inner{max-width:1280px;margin:auto;padding:44px 32px 48px;min-height:220px;display:flex;align-items:center;justify-content:space-between;gap:24px;position:relative}
+.bz-video-eyebrow{display:inline-flex;align-items:center;gap:12px;color:#ff7900;font-size:17px;font-weight:800}
+.bz-video-eyebrow-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#ff7900;color:#fff}
+.bz-video-hero h1{font-size:clamp(30px,4vw,49px);font-weight:800;letter-spacing:-.045em;line-height:1.13;margin:14px 0 10px;color:#fff}
+.bz-video-hero p{font-size:clamp(15px,1.5vw,19px);color:#f0f4fb;line-height:1.6}
+.bz-video-hero-art{position:relative;flex:0 0 245px;display:grid;place-items:center;transform:rotate(-10deg);color:#f4f6ff;filter:drop-shadow(0 20px 35px #ff79005c)}
+.bz-video-hero-art>span{position:absolute;display:grid;place-items:center;color:#fff;background:#ff7900;border-radius:20px;padding:12px;box-shadow:0 0 38px #ff7900a0;transform:rotate(10deg)}
+.bz-video-main{max-width:1280px;width:100%;margin:0 auto;flex:1;padding:24px 32px 64px}
+.bz-video-filters{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:32px}
+.bz-video-filters button{padding:11px 19px;border:1px solid #dbe3ed;background:#edf2f8;color:#14253a;font-size:14px;font-weight:700;border-radius:14px;transition:background .2s,border-color .2s}
+.bz-video-filters button:hover{background:#dfe8f3}
+.bz-video-filters button.active{background:#ff7900;color:#fff;border-color:#ff7900}
+.bz-video-filters button:focus-visible,.bz-video-thumb:focus-visible,.bz-video-close:focus-visible,.bz-video-dialog button:focus-visible{outline:3px solid #ff7900;outline-offset:3px}
+.bz-video-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 22px}
+.bz-video-card{background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 8px 24px #061b3312;border:1px solid #e8edf3;min-width:0;transition:transform .2s,box-shadow .2s}
+.bz-video-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px #061b3324}
+.bz-video-thumb{display:block;width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;background:#061b33;color:#fff}
+.bz-video-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .25s}
+.bz-video-thumb:hover img{transform:scale(1.04)}
+.bz-video-thumb:after{content:"";position:absolute;inset:0;background:#061b3322}
+.bz-video-play{position:absolute;z-index:1;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;display:grid;place-items:center;border:3px solid #fff;border-radius:50%;background:#0009;color:#fff;box-shadow:0 4px 14px #0005}
+.bz-video-duration{position:absolute;z-index:1;right:10px;bottom:10px;display:flex;gap:5px;align-items:center;background:#071624e8;color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:5px 7px}
+.bz-video-card-body{padding:14px 17px 18px}
+.bz-video-card-body h2{font-size:17px;line-height:1.35;font-weight:800;letter-spacing:-.02em;color:#0c1c31;margin:0}
+.bz-video-card-body p{font-size:13px;line-height:1.55;color:#293a51;margin:5px 0 10px}
+.bz-video-category{display:inline-block;border-radius:30px;background:#e6edf8;color:#13263c;font-weight:700;font-size:11px;padding:5px 12px}
+.bz-video-empty{text-align:center;background:#fff;border:1px solid #e3eaf3;border-radius:18px;padding:54px 20px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.bz-video-empty h2{font-size:22px;font-weight:800;color:#061b33}.bz-video-empty p{color:#41526b}
+.bz-video-empty button{background:#ff7900;color:#fff;border-radius:12px;padding:10px 18px;font-weight:800}
+.bz-video-overlay{position:fixed;z-index:99999;inset:0;display:flex;align-items:center;justify-content:center;background:#020a15c9;backdrop-filter:blur(5px);padding:18px}
+.bz-video-dialog{background:#101b29;color:#fff;width:min(100%,880px);max-height:calc(100dvh - 36px);overflow:auto;border:2px solid #e7eef7;border-radius:22px;padding:22px 24px 18px;box-shadow:0 25px 90px #0009}
+.bz-video-dialog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:16px}
+.bz-video-dialog-kicker{display:inline-flex;align-items:center;gap:6px;color:#ffab64;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+.bz-video-dialog-header h2{font-size:22px;font-weight:800;letter-spacing:-.025em;color:#fff;line-height:1.35}
+.bz-video-close{display:grid;place-items:center;flex-shrink:0;width:38px;height:38px;color:#fff;background:transparent;border-radius:9px}
+.bz-video-close:hover{background:#ffffff25}
+.bz-video-player-wrap{position:relative;aspect-ratio:16/9;background:#000;border-radius:13px;overflow:hidden}
+.bz-video-player-wrap video{display:block;width:100%;height:100%;object-fit:contain;background:#000}
+.bz-video-center-play{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);display:grid;place-items:center;border:2px solid #fff;border-radius:50%;width:68px;height:68px;color:#fff;background:#061b33c9;box-shadow:0 3px 18px #0008}
+.bz-video-center-play:hover{background:#ff7900}
+.bz-video-dialog-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;color:#dce6f3;font-size:12px}
+.bz-video-dialog-footer span{display:flex;align-items:center;gap:8px}
+.bz-video-dialog-footer button{background:#ff7900;color:#fff;font-weight:800;border-radius:10px;padding:9px 14px;white-space:nowrap}
+.bz-video-error{background:#6e1a1a;color:#fff;padding:10px 12px;border-radius:8px;margin-top:10px}
+@media(max-width:900px){.bz-video-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bz-video-hero-art{flex-basis:170px}}
+@media(max-width:600px){.bz-video-hero-inner{padding:32px 18px}.bz-video-hero-art{display:none}.bz-video-main{padding:20px 16px 40px}.bz-video-grid{grid-template-columns:1fr;gap:18px}.bz-video-filters{gap:8px;margin-bottom:22px}.bz-video-filters button{padding:9px 12px;font-size:12px}.bz-video-dialog{padding:15px 12px 12px;border-radius:15px}.bz-video-dialog-header h2{font-size:18px}.bz-video-dialog-footer{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.bz-video-page *{transition:none!important}}

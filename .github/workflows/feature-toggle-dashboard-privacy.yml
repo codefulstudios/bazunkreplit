@@ -1,0 +1,37 @@
+name: Feature toggle and dashboard privacy regression
+on:
+  pull_request:
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminFeatureFlagsPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/DashboardPage.tsx'
+      - 'artifacts/api-server/src/routes/adminFeatureControls.ts'
+      - 'scripts/feature-toggle-dashboard-privacy.test.mjs'
+      - '.github/workflows/feature-toggle-dashboard-privacy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'artifacts/sellbuydeal/src/pages/admin/AdminFeatureFlagsPage.tsx'
+      - 'artifacts/sellbuydeal/src/pages/DashboardPage.tsx'
+      - 'scripts/feature-toggle-dashboard-privacy.test.mjs'
+      - '.github/workflows/feature-toggle-dashboard-privacy.yml'
+  workflow_dispatch:
+jobs:
+  toggle-and-sidebar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify toggle persistence and private sidebar contracts
+        run: node --test scripts/feature-toggle-dashboard-privacy.test.mjs
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck dashboard and admin
+        run: pnpm --filter @workspace/sellbuydeal run typecheck
+      - name: Build Bazunk frontend
+        run: pnpm --filter @workspace/sellbuydeal run build

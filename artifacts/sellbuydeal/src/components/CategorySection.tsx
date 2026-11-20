@@ -1,45 +1,80 @@
+import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
 import { Link } from "wouter";
+import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { motion } from "framer-motion";
-import { ArrowRight, Smartphone, Shirt, Gamepad2, Armchair, Dumbbell, BookOpen, Gem, CarFront, ToyBrick, HeartPulse, Watch, BriefcaseBusiness } from "lucide-react";
+import { ArrowRight, Tag, LayoutGrid } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+import { ACTIVE_CATEGORIES } from "@/data/categories";
 
-const categories = [
-  {name:"Electronics",slug:"electronics",icon:Smartphone,emoji:"📱",gradient:"from-blue-600 to-sky-500"},
-  {name:"Fashion",slug:"fashion",icon:Shirt,emoji:"🧥",gradient:"from-pink-600 to-fuchsia-500"},
-  {name:"Gaming",slug:"gaming",icon:Gamepad2,emoji:"🎮",gradient:"from-violet-700 to-indigo-500"},
-  {name:"Home & Garden",slug:"home",icon:Armchair,emoji:"🪴",gradient:"from-teal-600 to-emerald-500"},
-  {name:"Sports",slug:"sports",icon:Dumbbell,emoji:"👟",gradient:"from-emerald-600 to-green-500"},
-  {name:"Books",slug:"books",icon:BookOpen,emoji:"📚",gradient:"from-amber-600 to-yellow-500"},
-  {name:"Collectibles",slug:"collectibles",icon:Gem,emoji:"🧸",gradient:"from-orange-600 to-rose-500"},
-  {name:"Automotive",slug:"automotive",icon:CarFront,emoji:"🚙",gradient:"from-slate-600 to-blue-600"},
-  {name:"Toys & Hobbies",slug:"toys-games",icon:ToyBrick,emoji:"🧩",gradient:"from-orange-500 to-amber-400"},
-  {name:"Health & Beauty",slug:"health-household",icon:HeartPulse,emoji:"💄",gradient:"from-pink-600 to-red-400"},
-  {name:"Jewellery & Watches",slug:"jewellery-watches",icon:Watch,emoji:"⌚",gradient:"from-amber-600 to-orange-400"},
-  {name:"Business & Office",slug:"office-products",icon:BriefcaseBusiness,emoji:"📦",gradient:"from-slate-600 to-cyan-600"},
-];
-const bento = [
-  {title:"Time for an upgrade?",subtitle:"Electronics · Gaming · Cameras · Tablets",emoji:"💻",gradient:"from-blue-700 to-indigo-500",href:"/browse?category=electronics"},
-  {title:"Fresh style, better prices",subtitle:"Trainers · Denim · Accessories · Outerwear",emoji:"👟",gradient:"from-orange-600 to-amber-500",href:"/browse?category=fashion"},
-  {title:"Home & Garden",subtitle:"Furniture · Lighting · Garden Tools · Décor",emoji:"🛋️",gradient:"from-teal-700 to-emerald-500",href:"/browse?category=home"},
-];
+// Keep category identity tied to the canonical taxonomy slugs. Icons are Lucide
+// components already bundled with Bazunk; the Tag fallback covers future entries.
+const CATEGORY_LABELS: Record<string,string> = {
+  "clothing-shoes-jewelry":"Fashion",
+  "video-games":"Gaming",
+  "home-kitchen":"Home & Garden",
+  "sports-outdoors":"Sports",
+  "arts-crafts-sewing":"Arts & Crafts",
+  "health-household":"Health & Beauty",
+  "beauty-personal-care":"Beauty & Care",
+  "office-products":"Business & Office",
+  "toys-games":"Toys & Hobbies",
+};
+const CATEGORY_ICON_OVERRIDES: Record<string,string> = {
+  electronics:"Headphones",
+  "clothing-shoes-jewelry":"Shirt",
+  "video-games":"Gamepad2",
+  "home-kitchen":"House",
+  "sports-outdoors":"Trophy",
+  "arts-crafts-sewing":"Palette",
+  automotive:"CarFront",
+  "health-household":"HeartPulse",
+  "beauty-personal-care":"Watch",
+  books:"BookOpen",
+  "toys-games":"ToyBrick",
+  "office-products":"BriefcaseBusiness",
+};
+const CATEGORY_IMAGES: Record<string,string> = {
+  electronics:"https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=400&q=80",
+  "clothing-shoes-jewelry":"https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=80",
+  "video-games":"https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=400&q=80",
+  "home-kitchen":"https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=400&q=80",
+  "sports-outdoors":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80",
+  "arts-crafts-sewing":"https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80",
+  automotive:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=400&q=80",
+  "health-household":"https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80",
+  "beauty-personal-care":"https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80",
+  books:"https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=400&q=80",
+  "toys-games":"https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=80",
+  "office-products":"https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=400&q=80",
+};
+const themes = ["from-blue-500 to-blue-700","from-pink-500 to-rose-700","from-sky-500 to-blue-800","from-emerald-400 to-teal-700","from-amber-300 to-orange-600","from-rose-400 to-rose-700","from-pink-400 to-rose-700","from-sky-400 to-blue-700","from-cyan-400 to-teal-700"];
 export function CategorySection() {
- return <section className="bg-[#08182e] text-white py-10 border-y border-sky-400/10">
-  <div className="max-w-6xl mx-auto px-4">
-   <div className="flex justify-between items-center gap-3 mb-5"><h2 className="text-2xl font-black">Shop by Category</h2><Link href="/categories" className="inline-flex items-center justify-center gap-2 text-sm font-extrabold text-slate-950 bg-[#FFD21F] border-2 border-[#FFE77A] rounded-xl px-5 py-3 shadow-[0_5px_20px_rgba(255,210,31,0.35)] hover:bg-[#FFE66A] hover:scale-[1.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-all">View All Categories →</Link></div>
-   <div className="flex gap-2.5 overflow-x-auto pb-4 mb-7 [scrollbar-width:thin]">
-    {categories.map(({name,slug,icon:Icon,emoji,gradient},i)=><motion.div key={slug} initial={{opacity:0,y:12}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(i*.035,.3)}} className="shrink-0">
-      <Link href={`/browse?category=${slug}`} className="group flex w-[104px] h-[124px] flex-col items-center justify-between rounded-xl border border-sky-300/15 bg-[#132743] hover:border-sky-400/70 hover:-translate-y-1 transition-all overflow-hidden pb-3">
-       <div className={`w-full h-[84px] flex items-center justify-center bg-gradient-to-br ${gradient} relative`}><span aria-hidden="true" className="text-5xl drop-shadow-xl group-hover:scale-110 transition-transform">{emoji}</span><Icon className="absolute bottom-1 left-2 w-4 h-4 text-white/80"/></div>
-       <span className="text-[11px] text-center font-bold leading-tight px-1">{name}</span>
-      </Link>
-     </motion.div>)}
-   </div>
-   <div className="grid md:grid-cols-3 gap-4">
-    {bento.map(({title,subtitle,emoji,gradient,href})=><Link key={title} href={href} className={`group relative min-h-[155px] overflow-hidden rounded-2xl p-5 flex flex-col justify-between bg-gradient-to-br ${gradient} hover:brightness-110 transition-all`}>
-      <div className="relative z-10 max-w-[75%]"><h3 className="font-black text-lg">{title}</h3><p className="mt-2 text-xs text-white/85 leading-relaxed">{subtitle}</p></div>
-      <span className="relative z-10 font-bold text-xs">Shop Now <ArrowRight className="inline w-3 h-3"/></span>
-      <span aria-hidden="true" className="absolute right-3 bottom-1 text-[92px] leading-none drop-shadow-2xl group-hover:scale-110 transition-transform">{emoji}</span>
-     </Link>)}
-   </div>
-  </div>
- </section>;
+  const settings = useSiteSettings();
+  const { isActive, ready } = usePublicCategoryVisibility();
+  const categories = ACTIVE_CATEGORIES.filter(category => isActive(category.slug)).map(category => ({
+    ...category,
+    label: CATEGORY_LABELS[category.slug] || category.name,
+    iconName: CATEGORY_ICON_OVERRIDES[category.slug] || category.icon,
+    image: CATEGORY_IMAGES[category.slug],
+  }));
+  return <section className="bz-home-category-section bz-vibrant-categories bg-white dark:bg-slate-950 py-10 md:py-12 border-y border-slate-200 dark:border-slate-800">
+    <div className="max-w-6xl mx-auto px-4">
+      <div className="flex justify-between items-center gap-3 mb-6"><h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white">{settings.categories_title || "Categories"}</h2><Link href="/categories" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700 dark:text-blue-200 hover:underline">View all categories <ArrowRight className="w-4 h-4"/></Link></div>
+      {!ready ? <div className="min-h-24" aria-label="Loading categories" /> : <div className="bz-home-category-grid grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-5">
+        {categories.map((category,index) => {
+          const Icon = ((LucideIcons as any)[category.iconName] || Tag) as React.ElementType;
+          return <motion.div key={category.slug} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true}} transition={{delay:Math.min(index*.025,.2)}}>
+            <Link href={"/browse?category="+encodeURIComponent(category.slug)} aria-label={"Shop "+category.label} className={"bz-category-card bz-pastel-category bz-vibrant-tile bz-vibrant-"+(index%9)+" group flex h-full min-h-[166px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"}>
+              <span className="bz-pastel-icon flex h-[76px] w-[76px] items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-110"><Icon aria-hidden="true" className="h-10 w-10" strokeWidth={2.1}/></span>
+              <span className="bz-vibrant-tile-footer"><span className="bz-category-label">{category.label}</span><span className="bz-vibrant-arrow" aria-hidden="true"><ArrowRight className="h-5 w-5"/></span></span>
+            </Link>
+          </motion.div>;
+        })}
+        <Link href="/categories" aria-label="Explore more categories" className="bz-category-card bz-pastel-category bz-vibrant-tile bz-vibrant-more group flex h-full min-h-[166px] flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
+          <span className="bz-pastel-icon flex h-[76px] w-[76px] items-center justify-center rounded-[22px] transition-transform duration-200 group-hover:scale-110"><LayoutGrid aria-hidden="true" className="h-10 w-10" strokeWidth={2.1}/></span>
+          <span className="bz-vibrant-tile-footer"><span className="bz-category-label">More Categories</span><span className="bz-vibrant-arrow" aria-hidden="true"><ArrowRight className="h-5 w-5"/></span></span>
+        </Link>
+      </div>}
+    </div>
+  </section>;
 }

@@ -1,0 +1,4 @@
+import {useFocusEffect} from 'expo-router';
+import {useCallback,useState} from 'react';
+import {getJson} from './api';
+export function usePublicData<T>(path:string,parse:(x:unknown)=>T){const [data,setData]=useState<T|null>(null);const [error,setError]=useState('');const [loading,setLoading]=useState(true);const [retry,setRetry]=useState(0);useFocusEffect(useCallback(()=>{const c=new AbortController();setData(null);setError('');setLoading(true);void getJson(`${path}${path.includes('?')?'&':'?'}refresh=${retry}`,c.signal).then(x=>{const result=parse(x);if(!c.signal.aborted)setData(result)}).catch(e=>{if(!c.signal.aborted)setError(e instanceof Error?e.message:'Could not load data.')}).finally(()=>{if(!c.signal.aborted)setLoading(false)});return()=>c.abort()},[path,parse,retry]));return{data,error,loading,reload:()=>setRetry(n=>n+1)}}

@@ -1,4 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { HeaderMegaModals } from "./HeaderMegaModals";
+import { BuyerProtectionModal } from "./BuyerProtectionModal";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { usePublicCategoryVisibility } from "@/hooks/usePublicCategoryVisibility";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
+import { useTheme } from "next-themes";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -6,7 +12,7 @@ import {
   Heart, ShoppingCart, Tag, ChevronDown, LogOut,
   LayoutDashboard, Menu, Home, Grid3X3, List, Newspaper, MessageSquare,
   Gavel, Zap, Gift, Package, Radio, Handshake, Info,
-  Trophy, MoreHorizontal, Film, Flame, ArrowDownToLine, ShieldCheck, Database,
+  Trophy, MoreHorizontal, Film, Flame, ArrowDownToLine, ShieldCheck, Database, Truck, Leaf, Store, Sparkles,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +23,8 @@ import { useCurrency, CURRENCIES, MARKET_COUNTRIES, type CurrencyCode } from "@/
 import { useLanguage } from "@/context/LanguageContext";
 import { useMarketplaceRegion, MARKETPLACE_REGION_STORAGE_KEY } from "@/hooks/useMarketplaceRegion";
 import { MessageCenterOverlay } from "./MessageCenterOverlay";
-import { ThemeToggle } from "./ThemeToggle";
 import { useRawSettings } from "@/context/SiteSettingsContext";
+import {parseIconOverrides,iconForPlacement} from "@/design-system/designCenterFields";
 import { featureForHref, isFeatureEnabled } from "@/components/FeatureGate";
 
 const API_BASE=(import.meta.env.VITE_API_URL||import.meta.env.VITE_API_BASE_URL||"https://bazunk-api.onrender.com").replace(/\/$/,"");
@@ -30,6 +36,24 @@ const SELL_OPTIONS: Array<{
   icon: React.FC<{ className?: string }>; href: string;
   color: string; bg: string; badge?: string;
 }> = [
+  {
+    id: "selling-guide",
+    label: "Selling Overview",
+    desc: "Explore every way to sell on Bazunk",
+    icon: Tag,
+    href: "/sell",
+    color: "text-[#4A5CE8]",
+    bg: "bg-blue-50",
+  },
+  {
+    id: "import-listings",
+    label: "Import Listings",
+    desc: "Bring products from other marketplaces",
+    icon: ArrowDownToLine,
+    href: "/importers",
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
   {
     id: "quick",
     label: "Quick Sale",
@@ -78,26 +102,31 @@ const SELL_OPTIONS: Array<{
 ];
 
 const MORE_NAV = [
+  { href: "/deal-pilot",       label: "DealPilot", icon: Search, color: "text-orange-600", bg: "bg-orange-50" },
+  { href: "/find-it", label: "Find It – buyer requests", icon: Handshake, color: "text-orange-700", bg: "bg-orange-50" },
+  { href: "/rewards",          label: "Rewards", icon: Trophy, color: "text-amber-700", bg: "bg-amber-50" },
+  { href: "/live",             label: "Live Shopping", icon: Radio, color: "text-red-600", bg: "bg-red-50" },
   { href: "/auctions",          label: "Auctions",         icon: Gavel,           color: "text-amber-600",   bg: "bg-amber-50" },
   { href: "/flash-sales",       label: "Flash Sales",      icon: Flame,           color: "text-red-500",     bg: "bg-red-50" },
   { href: "/classifieds",       label: "Classifieds",      icon: Newspaper,       color: "text-purple-600",  bg: "bg-purple-50" },
   { href: "/buyer-protection",  label: "Buyer Protection", icon: ShieldCheck,     color: "text-emerald-600", bg: "bg-emerald-50" },
   { href: "/support",           label: "Support",          icon: HelpCircle,      color: "text-sky-600",     bg: "bg-sky-50" },
-  { href: "/importers",         label: "Importers",        icon: ArrowDownToLine, color: "text-[#4A5CE8]",   bg: "bg-blue-50" },
-  { href: "/videos",            label: "Bazunk Promo Videos", icon: Film,          color: "text-blue-600",    bg: "bg-blue-50" },
+  { href: "/videos",            label: "Promotional Videos", icon: Film,          color: "text-blue-600",    bg: "bg-blue-50" },
   { href: "https://data.bazunk.com", label: "Bazunk Data Platform", icon: Database, color: "text-indigo-600", bg: "bg-indigo-50", external: true },
 ];
 
 const MOBILE_NAV_LINKS = [
+  { href: "/",            label: "Home",        icon: Home },
+  { href: "/browse",      label: "Shop",        icon: Grid3X3 },
+  { href: "/deal-pilot", label: "DealPilot", icon: Search },
+  { href: "/find-it", label: "Find It", icon: Handshake },
+  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/rewards", label: "Daily Rewards", icon: Gift },
   { href: "/dashboard?section=credits", label: "Credits & Milestones", icon: Trophy },
   { href: "/promotions", label: "Promotions", icon: Zap },
-  { href: "/",            label: "Home",        icon: Home },
-  { href: "/browse",      label: "Browse",      icon: Grid3X3 },
   { href: "/auctions",    label: "Auctions",    icon: Gavel },
   { href: "/flash-sales", label: "Flash Sales", icon: Zap },
   { href: "/live",        label: "Live",        icon: Radio,  live: true },
-  { href: "/categories",  label: "Categories",  icon: List },
   { href: "/classifieds", label: "Classifieds", icon: Newspaper },
   { href: "/sell/direct",  label: "Direct Sale",  icon: Tag },
   { href: "/bundle",      label: "Bundle Deal", icon: Package },
@@ -107,7 +136,7 @@ const MOBILE_NAV_LINKS = [
   { href: "/buyer-protection", label: "Buyer Protection", icon: ShieldCheck },
   { href: "/importers",        label: "Importers",        icon: ArrowDownToLine },
   { href: "/support",          label: "Support",          icon: HelpCircle },
-  { href: "/videos",           label: "Bazunk Promo Videos", icon: Film },
+  { href: "/videos",           label: "Promotional Videos", icon: Film },
 ];
 
 export function Navbar() {
@@ -117,14 +146,24 @@ export function Navbar() {
   const { t } = useLanguage();
   const changeCountry = (code: string) => { setCountry(code); };
   const featureSettings = useRawSettings();
+  const { resolvedTheme } = useTheme();
+  const defaultLogo = "/bazunk-brand-dark.png";
+  // The dark PNG is 1061×600 but its visible pixels occupy only the top ~257px.
+  // Fit the artwork inside a light-logo aspect ratio frame instead of transforming
+  // the image (which previously overlapped navigation and still looked too small).
+  const useDefaultDarkLogo = !featureSettings.site_logo_url?.startsWith("/api/site-media/");
+  const studioIcons=parseIconOverrides(featureSettings.icon_overrides);
+  const HomeHeaderIcon=iconForPlacement(studioIcons,"header_home");
+  const SearchHeaderIcon=iconForPlacement(studioIcons,"header_search");
+  const CartHeaderIcon=iconForPlacement(studioIcons,"header_cart");
+  const AccountHeaderIcon=iconForPlacement(studioIcons,"header_account");
   const visibleHref = (href:string) => { const f=featureForHref(href); return !f || isFeatureEnabled(featureSettings,f); };
-  const [hiddenCategories,setHiddenCategories]=useState<string[]>([]);
-  useEffect(()=>{fetch(`${API_BASE}/api/settings/category-visibility`,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(d=>setHiddenCategories(Array.isArray(d.hidden)?d.hidden:[])).catch(()=>{});},[]);
+  const {isActive:categoryIsActive}=usePublicCategoryVisibility();
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [liveSearchResults, setLiveSearchResults] = useState<any[]>([]);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [marketRegion, changeMarketRegion] = useMarketplaceRegion();
   const [regionPromptOpen, setRegionPromptOpen] = useState(() => {
     try { return !window.localStorage.getItem(MARKETPLACE_REGION_STORAGE_KEY); } catch { return false; }
@@ -141,13 +180,22 @@ export function Navbar() {
   };
   const [sellOpen, setSellOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [protectionOpen,setProtectionOpen] = useState(false);
   const [rewardsPopover, setRewardsPopover] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categoryDrawerOpen,setCategoryDrawerOpen] = useState(false);
   const [messageCenterOpen, setMessageCenterOpen] = useState(false);
+  useEffect(() => { const openInbox = () => setMessageCenterOpen(true); window.addEventListener("bazunk-open-inbox", openInbox); return () => window.removeEventListener("bazunk-open-inbox", openInbox); }, []);
   const [location, setLocation] = useLocation();
   const searchRef = useRef<HTMLDivElement>(null);
+  const [searchPopupRect,setSearchPopupRect] = useState({top:0,left:0,width:500});
+  useLayoutEffect(()=>{
+    if(!searchOpen)return;
+    const reposition=()=>{const r=searchRef.current?.getBoundingClientRect();if(r)setSearchPopupRect({top:r.bottom+10,left:Math.max(12,r.left),width:Math.min(r.width,window.innerWidth-24)});};
+    reposition();window.addEventListener("resize",reposition);window.addEventListener("scroll",reposition,true);
+    return()=>{window.removeEventListener("resize",reposition);window.removeEventListener("scroll",reposition,true);};
+  },[searchOpen]);
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const currencyRef = useRef<HTMLDivElement>(null);
   const sellRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
   const rewardsRef = useRef<HTMLDivElement>(null);
@@ -158,17 +206,17 @@ export function Navbar() {
     : [];
   const matchedCategories = trimmed
     ? ACTIVE_CATEGORIES.filter(
-        (c) => !hiddenCategories.includes(c.slug) && c.name.toLowerCase().includes(trimmed) ||
-          c.subcategories.some((s) => !hiddenCategories.includes(c.slug+"__"+s.slug) && s.name.toLowerCase().includes(trimmed))
+        (c) => categoryIsActive(c.slug) && (c.name.toLowerCase().includes(trimmed) ||
+          c.subcategories.some((s) => categoryIsActive(c.slug,s.slug) && s.name.toLowerCase().includes(trimmed)))
       ).slice(0, 3)
     : [];
-  const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0;
+  const hasResults = liveSearchResults.length > 0 || matchedProducts.length > 0 || matchedCategories.length > 0 || searchSuggestions.length > 0;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
+      if ((e.target as Element)?.closest?.(".bz-mega-panel")) return;
+      if (searchRef.current && !searchRef.current.contains(e.target as Node) && !(e.target as Element)?.closest?.(".bz-search-popover")) setSearchOpen(false);
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false);
-      if (currencyRef.current && !currencyRef.current.contains(e.target as Node)) setCurrencyOpen(false);
       if (sellRef.current && !sellRef.current.contains(e.target as Node)) setSellOpen(false);
       if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
       if (rewardsRef.current && !rewardsRef.current.contains(e.target as Node)) setRewardsPopover(false);
@@ -182,7 +230,7 @@ export function Navbar() {
     if (q.length < 2) { setLiveSearchResults([]); return; }
     const timer = window.setTimeout(async () => {
       try {
-        const r = await fetch(`${API_BASE}/api/listings?limit=60&offset=0&region=${marketRegion}`);
+        const r = await fetch(`${API_BASE}/api/listings?limit=5&offset=0&region=${marketRegion}&q=${encodeURIComponent(q)}`);
         if (!r.ok) return;
         const rows = await r.json();
         const needle = q.toLowerCase();
@@ -192,6 +240,21 @@ export function Navbar() {
       } catch { setLiveSearchResults([]); }
     }, 180);
     return () => window.clearTimeout(timer);
+  }, [query, marketRegion]);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setSearchSuggestions([]); return; }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/listings/search-suggestions?region=${marketRegion}&q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Suggestions unavailable");
+        const data = await response.json();
+        if (!controller.signal.aborted) setSearchSuggestions(Array.isArray(data.suggestions) ? data.suggestions.filter((x: unknown): x is string => typeof x === "string").slice(0, 8) : []);
+      } catch { if (!controller.signal.aborted) setSearchSuggestions([]); }
+    }, 220);
+    return () => { window.clearTimeout(timer); controller.abort(); };
   }, [query, marketRegion]);
 
   useEffect(() => {
@@ -230,10 +293,14 @@ export function Navbar() {
 
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
-  const primaryLinks = [
-    { href: "/browse", label: t("browse") },
-    { href: "/categories", label: t("categories") },
-    { href: "/live", label: t("live"), live: true },
+  const primaryLinks: Array<{ href: string; label: string; live?: boolean }> = [
+    { href: "/", label: "Home" },
+    { href: "/browse", label: "Shop" },
+    { href: "/auctions", label: "Auctions" },
+    { href: "/flash-sales", label: "Flash Sales" },
+    { href: "/live", label: "Live", live: true },
+    { href: "/deals", label: "Deals" },
+    { href: "/eco", label: "Eco" },
   ].filter(x => visibleHref(x.href));
 
   return (
@@ -248,20 +315,20 @@ export function Navbar() {
               className="w-full max-w-lg rounded-3xl border border-white/20 bg-white p-6 sm:p-9 shadow-2xl text-center">
               <motion.div initial={{ rotate: -10, scale: 0.8 }} animate={{ rotate: 0, scale: 1 }} transition={{ delay: 0.15, type: "spring" }}
                 className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-4xl">🌍</motion.div>
-              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-black text-slate-900">Welcome to Bazunk!</h2>
-              <p className="mt-2 text-sm sm:text-base text-slate-600">Choose your marketplace to discover local listings. You can switch anytime at the top of the page.</p>
+              <h2 id="marketplace-welcome-title" className="text-2xl sm:text-3xl font-bold text-slate-900">Welcome to Bazunk!</h2>
+              <p className="mt-2 text-sm sm:text-base text-slate-600">Choose which listings to browse. Your account works in both markets, and you can switch anytime.</p>
               <div className="mt-7 grid grid-cols-2 gap-3">
                 {(["uk", "us"] as const).map(region => (
                   <motion.button key={region} type="button" whileHover={{ y: -5, scale: 1.03 }} whileTap={{ scale: 0.96 }}
                     onClick={() => selectMarket(region)}
                     className="rounded-2xl border-2 border-slate-200 bg-slate-50 px-3 py-6 text-slate-900 transition-colors hover:border-orange-500 hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">
                     <span className="block text-5xl">{region === "uk" ? "🇬🇧" : "🇺🇸"}</span>
-                    <span className="mt-3 block font-black">{region === "uk" ? "United Kingdom" : "USA / Canada"}</span>
+                    <span className="mt-3 block font-bold">{region === "uk" ? "United Kingdom" : "United States"}</span>
                     <span className="mt-1 block text-sm font-semibold text-slate-500">{region === "uk" ? "GBP · £" : "USD · $"}</span>
                   </motion.button>
                 ))}
               </div>
-              <p className="mt-5 text-xs text-slate-500">One Bazunk account works in both marketplaces.</p>
+              <p className="mt-5 text-xs text-slate-500">Currency changes the displayed price. International shipping depends on the seller and the listing.</p>
             </motion.div>
           </motion.div>
         )}
@@ -273,15 +340,15 @@ export function Navbar() {
             transition={{ duration: 0.4 }} className="pointer-events-none fixed inset-0 z-[190] flex items-center justify-center bg-gradient-to-br from-fuchsia-600/80 via-indigo-600/80 to-orange-500/80 backdrop-blur-md">
             <motion.div initial={{ y: 16 }} animate={{ y: 0 }} className="relative overflow-hidden rounded-[2rem] border-4 border-white/80 bg-gradient-to-br from-white via-amber-50 to-pink-100 px-12 py-10 text-center shadow-[0_25px_90px_rgba(0,0,0,.35)]">
               <motion.div aria-hidden="true" className="absolute inset-0 opacity-40" style={{background:"radial-gradient(circle at 15% 20%,#facc15 0,transparent 35%),radial-gradient(circle at 85% 80%,#f472b6 0,transparent 35%)"}} animate={{rotate:[0,8,-8,0],scale:[1,1.15,1]}} transition={{duration:2.3}} />\n              <motion.div className="relative text-7xl drop-shadow-xl" initial={{scale:.2,rotate:-35,y:70}} animate={{scale:[.2,1.35,1],rotate:[-35,12,-8,0],y:[70,-18,0]}} transition={{duration:1.5,ease:"easeOut"}}>{marketRegion === "uk" ? "🇬🇧" : "🇺🇸"}</motion.div>\n              <motion.div aria-hidden="true" className="relative text-2xl mt-1" initial={{opacity:0,scale:.5}} animate={{opacity:[0,1,1],scale:[.5,1.25,1]}} transition={{delay:.45,duration:1.3}}>✨ 🎉 ✨</motion.div>
-              <div className="relative mt-3 text-2xl font-black text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA / Canada Marketplace"}</div>
+              <div className="relative mt-3 text-2xl font-bold text-slate-900">{marketRegion === "uk" ? "UK Marketplace" : "USA Marketplace"}</div>
               <div className="relative mt-2 text-base font-bold text-indigo-700">{marketRegion === "uk" ? "Prices in GBP" : "Prices in USD"}</div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      <nav className="sticky top-0 z-50 w-full bg-white shadow-sm">
-        <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex justify-center items-center gap-2" aria-label="Marketplace region">
-          <span className="text-xs font-semibold text-gray-600">Shop in:</span>
+      <nav data-bz-site-header className="bz-mockup-header relative z-50 w-full bg-white shadow-sm">
+        <div className="bz-mockup-topbar border-b border-gray-100 bg-gray-50 px-4 py-1.5 flex items-center gap-2" aria-label="Marketplace region">
+          <span className="text-xs font-semibold text-gray-600">Marketplace:</span>
           <div className="relative inline-flex rounded-full border border-gray-200 bg-white p-1 shadow-sm">
             <motion.div layout initial={false} transition={{ type: "spring", stiffness: 420, damping: 30 }}
               className="absolute top-1 bottom-1 rounded-full bg-[#F26B21] shadow-sm"
@@ -290,37 +357,48 @@ export function Navbar() {
               <button key={region} type="button" aria-pressed={marketRegion === region}
                 onClick={() => selectMarket(region)}
                 className={`relative z-10 rounded-full px-3 py-1.5 text-xs font-bold transition-colors duration-200 ${marketRegion === region ? "text-white" : "text-gray-700 hover:text-[#F26B21]"}`}>
-                <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "GBP" : "USD"}</span></span>
+                <span className="inline-flex items-center gap-1.5"><img src={region === "uk" ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/us.png"} alt={region === "uk" ? "United Kingdom flag" : "United States flag"} width={24} height={16} className="h-4 w-6 rounded-[2px] object-cover shadow-sm" /><span>{region === "uk" ? "UK" : "USA"}</span></span>
               </button>
             ))}
           </div>
+          <div className="bz-mockup-top-links">
+            <Link href="/support">Help</Link>
+            <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(false);setProtectionOpen(true)}} aria-haspopup="dialog" aria-expanded={protectionOpen}><ShieldCheck size={17}/> Buyer Protection</button>
+            <Link href="/dashboard?section=watchlist"><Heart size={18} className="text-sky-400"/> Watchlist</Link>
+            <button type="button" onClick={() => {setSellOpen(false);setMoreOpen(v=>!v)}} aria-haspopup="dialog" aria-expanded={moreOpen} data-testid="button-more-nav" className="bz-mockup-top-more"><Grid3X3 size={17}/> More <ChevronDown size={14} className={moreOpen?"rotate-180":""}/></button>
+             <button type="button" onClick={() => {setMoreOpen(false);setSellOpen(true)}} className="bz-mockup-top-sell"><Store size={17}/> Sell on Bazunk</button>
+          </div>
         </div>
-        <div className="container mx-auto px-4 h-16 md:h-24 flex items-center justify-between gap-3">
+        <div className="mx-auto w-full max-w-[1920px] px-4 lg:px-7 h-16 md:h-20 flex items-center gap-3 lg:gap-4 bz-mockup-mainbar">
 
           {/* Theme + Logo */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <ThemeToggle className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center transition-colors flex-shrink-0" />
+          <div className="bz-header-brand flex items-center gap-2 flex-shrink-0">
             <Link href="/" className="flex items-center flex-shrink-0" data-testid="link-logo">
-              <img src="/bazunk-logo-header.png" alt="Bazunk" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />
+              {useDefaultDarkLogo ? <span data-theme-edit="site_logo_url" className="relative block h-7 aspect-[1142/289] shrink-0 overflow-hidden sm:h-9 md:h-12 xl:h-14"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} decoding="async" className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} data-theme-edit="site_logo_url" decoding="async" className="h-7 sm:h-9 md:h-12 xl:h-14 w-auto object-contain" />}
             </Link>
             <Link
               href="/"
               aria-label="Home"
               title="Home"
-              data-testid="link-home-icon"
-              className="hidden md:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
+              data-testid="link-home-icon" data-theme-edit="icon_overrides"
+              className="hidden 2xl:flex w-8 h-8 items-center justify-center rounded-full text-gray-500 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/10 transition-colors flex-shrink-0"
             >
-              <Home className="w-4 h-4" />
+              <HomeHeaderIcon className="w-4 h-4" />
             </Link>
           </div>
 
+          {/* Desktop category trigger stays visible beside the main navigation. */}
+          <button type="button" className="bz-mockup-categories hidden xl:flex" aria-haspopup="dialog" aria-expanded={categoryDrawerOpen} onClick={()=>setCategoryDrawerOpen(v=>!v)}><Menu className="h-5 w-5"/> Categories <ChevronDown className="h-4 w-4"/></button>
+
           {/* Desktop nav */}
-          <div className="hidden xl:flex items-center gap-1 text-[13px] font-medium flex-shrink-0 mr-1">
+          <div className="bz-header-primary-nav hidden xl:flex items-center gap-1 text-sm font-medium flex-shrink-0">
 
             {/* Primary links */}
             {primaryLinks.map(({ href, label, live }) => {
               const active = location === href && !(href === "/" && location !== "/");
-              return (
+              return href === "/categories" ? (
+                <button type="button" key={href} onClick={()=>setCategoryDrawerOpen(true)} aria-haspopup="dialog" aria-expanded={categoryDrawerOpen} className="px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap flex items-center gap-1 text-gray-700 hover:text-orange-600 hover:bg-orange-50 dark:text-white dark:hover:bg-slate-700">Categories <ChevronRight className="h-3.5 w-3.5 rotate-90"/></button>
+              ) : (
                 <Link
                   key={href}
                   href={href}
@@ -338,142 +416,46 @@ export function Navbar() {
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                     </span>
                   )}
+                  {href === "/" ? <Home className="bz-nav-link-icon text-white"/> : href === "/browse" ? <ShoppingCart className="bz-nav-link-icon text-sky-300"/> : href === "/auctions" ? <Gavel className="bz-nav-link-icon text-orange-400"/> : href === "/flash-sales" ? <Zap className="bz-nav-link-icon text-yellow-300"/> : href === "/live" ? <Radio className="bz-nav-link-icon text-pink-400"/> : href === "/deals" ? <Tag className="bz-nav-link-icon text-rose-400"/> : href === "/eco" ? <Leaf className="bz-nav-link-icon text-green-400"/> : null}
                   {label}
                 </Link>
               );
             })}
 
-            {/* Rewards — highlighted, guest-visible */}
-            <div ref={rewardsRef} className="relative">
-              <button
-                onClick={handleRewardsClick}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap text-amber-700 font-semibold bg-gradient-to-r from-amber-100 to-orange-100 hover:from-amber-200 hover:to-orange-200"
-                data-testid="link-rewards"
-              >
-                <Trophy className="w-3 h-3 text-amber-500" />
-                {t("rewards")}
-              </button>
-              <AnimatePresence>
-                {rewardsPopover && !user && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                  >
-                    <div className="px-5 pt-5 pb-4 text-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-3">
-                        <Trophy className="w-6 h-6 text-amber-500" />
-                      </div>
-                      <p className="font-bold text-gray-900 text-sm">Earn Rewards on Bazunk</p>
-                      <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
-                        Complete milestones, earn credits & badges. Free to join — your rewards build up from your first listing.
-                      </p>
-                    </div>
-                    <div className="px-5 pb-5 flex flex-col gap-2">
-                      <Link
-                        href="/sign-up"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors"
-                      >
-                        <Gift className="w-4 h-4" /> Join Free & Start Earning
-                      </Link>
-                      <Link
-                        href="/sign-in"
-                        onClick={() => setRewardsPopover(false)}
-                        className="flex items-center justify-center gap-2 w-full py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors"
-                      >
-                        Already have an account? Sign in
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* More dropdown */}
-            <div ref={moreRef} className="relative">
-              <button
-                onClick={() => setMoreOpen((v) => !v)}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full transition-colors whitespace-nowrap ${
-                  moreOpen ? "text-[#4A5CE8] bg-[#4A5CE8]/10" : "text-gray-600 hover:text-[#4A5CE8] hover:bg-[#4A5CE8]/5"
-                }`}
-                data-testid="button-more-nav"
-              >
-                More
-                <ChevronDown className={`w-3 h-3 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
-              </button>
-              <AnimatePresence>
-                {moreOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute left-0 top-[calc(100%+8px)] w-60 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 py-1.5"
-                  >
-                    {MORE_NAV.filter(x => x.external || visibleHref(x.href)).map(({ href, label, icon: Icon, color, bg, external }) => {
-                      const active = !external && location === href;
-                      const itemClass = `flex items-center gap-3 px-3 py-2 text-sm transition-colors ${active ? "text-[#4A5CE8] font-semibold bg-[#4A5CE8]/5" : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"}`;
-                      const content = <><span className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}><Icon className={`w-4 h-4 ${color}`} /></span>{label}</>;
-                      if (external) return <a key={href} href={href} target="_blank" rel="noopener noreferrer" onClick={() => setMoreOpen(false)} className={itemClass}>{content}</a>;
-                      return (
-                        <Link
-                          key={href}
-                          href={href}
-                          onClick={() => setMoreOpen(false)}
-                          className={`flex items-center gap-3 px-3 py-2 text-sm transition-colors ${
-                            active
-                              ? "text-[#4A5CE8] font-semibold bg-[#4A5CE8]/5"
-                              : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-                          }`}
-                        >
-                          <span className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className={`w-4 h-4 ${color}`} />
-                          </span>
-                          {label}
-                        </Link>
-                      );
-                    })}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
+            
           </div>
 
-          {/* Right section */}
-          <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-
+          {/* Search occupies its own full-width slot beside navigation. */}
+          <div className="bz-header-search-slot">
             {/* Desktop search */}
-            <div ref={searchRef} className="relative w-[190px] 2xl:w-[240px] flex-none hidden lg:block ml-1">
+            <div ref={searchRef} className="relative hidden lg:block w-full min-w-0">
               <form onSubmit={handleSubmit}>
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <SearchHeaderIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                 <Input
                   type="search"
                   value={query}
                   onChange={(e) => { setQuery(e.target.value); setSearchOpen(true); }}
                   onFocus={() => query.trim() && setSearchOpen(true)}
-                  placeholder="Search listings..."
-                  className="w-full pl-10 pr-9 rounded-full bg-gray-100 border border-transparent focus-visible:border-[#4A5CE8]/30 focus-visible:ring-2 focus-visible:ring-[#4A5CE8]/20 h-10 text-sm"
-                  data-testid="input-search"
+                  placeholder={featureSettings.header_search_placeholder||"Search listings..."}
+                  className="w-full min-w-0 pl-10 pr-9 rounded-full bg-gray-100 border border-gray-200 focus-visible:border-[#F26B21]/50 focus-visible:ring-2 focus-visible:ring-[#F26B21]/20 h-11 text-sm"
+                  data-testid="input-search" data-theme-edit="header_search_placeholder"
                 />
                 {query && (
-                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => { setQuery(""); setSearchOpen(false); }} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-600">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </form>
-              {searchOpen && query.trim() && (
-                <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              {searchOpen && query.trim() && createPortal(
+                <div role="region" aria-label="Search suggestions" className="bz-search-popover" style={{top:searchPopupRect.top,left:searchPopupRect.left,width:searchPopupRect.width}}><div className="bz-search-popover-head"><span className="bz-search-popover-icon"><Search size={18}/></span><div><strong>Search Bazunk</strong><small>Find products, deals and categories</small></div><button type="button" aria-label="Close suggestions" onClick={()=>setSearchOpen(false)}><X size={17}/></button></div><div className="bz-search-popover-scroll">
+                  {searchSuggestions.length > 0 && <div className="border-b border-slate-200 px-3 py-2"><p className="text-xs font-bold text-slate-600 mb-1">Suggested searches</p>{searchSuggestions.map(suggestion => <button key={suggestion} type="button" onClick={() => { setQuery(suggestion); setSearchOpen(false); setLocation(`/browse?q=${encodeURIComponent(suggestion)}`); }} className="block w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-500">{suggestion}</button>)}</div>}
                   {!hasResults ? (
-                    <div className="px-4 py-6 text-center text-sm text-gray-400">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
+                    <div className="px-4 py-6 text-center text-sm text-gray-600">No results for "<span className="font-medium text-gray-600">{query}</span>"</div>
                   ) : (
                     <>
                       {liveSearchResults.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Bazunk listings</p>
                           {liveSearchResults.map((product:any) => (
                             <Link key={product.id} href={`/listing/${product.publicId || product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group">
@@ -491,7 +473,7 @@ export function Navbar() {
                       )}
                       {matchedProducts.length > 0 && (
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Products</p>
                           {matchedProducts.map((product) => (
                             <Link key={product.id} href={`/listing/${product.id}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-product-${product.id}`}>
@@ -502,8 +484,8 @@ export function Navbar() {
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{product.title}</p>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-xs font-bold text-green-600">{formatPrice(product.price)}</span>
-                                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
-                                  <span className="flex items-center gap-0.5 text-[10px] text-gray-400"><Eye className="w-2.5 h-2.5" />{product.views}</span>
+                                  <Badge variant="secondary" className="text-xs px-1.5 py-0 h-4 capitalize">{product.condition}</Badge>
+                                  <span className="flex items-center gap-0.5 text-xs text-gray-600"><Eye className="w-2.5 h-2.5" />{product.views}</span>
                                 </div>
                               </div>
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
@@ -513,16 +495,16 @@ export function Navbar() {
                       )}
                       {matchedCategories.length > 0 && (
                         <div className={matchedProducts.length > 0 ? "border-t border-gray-100" : ""}>
-                          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
+                          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider px-4 pt-3 pb-1">Categories</p>
                           {matchedCategories.map((cat) => (
                             <Link key={cat.slug} href={`/browse?category=${encodeURIComponent(cat.slug)}`} onClick={() => setSearchOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group" data-testid={`link-search-category-${cat.slug}`}>
-                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#4A5CE8] to-[#7C3AED] flex items-center justify-center flex-shrink-0">
+                              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0983cf] to-[#063d82] flex items-center justify-center flex-shrink-0">
                                 <span className="text-white text-xs font-bold">{cat.name.charAt(0)}</span>
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-800 line-clamp-1 group-hover:text-[#4A5CE8] transition-colors">{cat.name}</p>
-                                <p className="text-[10px] text-gray-400">{cat.subcategories.length} subcategories</p>
+                                <p className="text-xs text-gray-600">{cat.subcategories.length} subcategories</p>
                               </div>
                               <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#4A5CE8] transition-colors" />
                             </Link>
@@ -530,26 +512,30 @@ export function Navbar() {
                         </div>
                       )}
                       <div className="border-t border-gray-100 px-4 py-2.5">
-                        <button onClick={handleSubmit as never} className="w-full text-center text-sm text-[#4A5CE8] font-medium hover:underline py-1">
+                        <button type="button" onClick={() => {setLocation(`/browse?q=${encodeURIComponent(query.trim())}`);setSearchOpen(false);}} className="bz-search-see-all">
                           See all results for "{query}"
                         </button>
                       </div>
                     </>
                   )}
-                </div>
+                  </div>
+                </div>, document.body
               )}
             </div>
+
+
+          </div>
+
+          {/* Right section */}
+          <div className="bz-header-actions flex flex-1 min-w-0 items-center gap-2 justify-end">
 
             {/* Logged OUT actions */}
             {!user && (
               <>
-                <Link href="/sell" className="hidden 2xl:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#F26B21]/40 text-[#F26B21] text-sm font-semibold hover:bg-[#F26B21]/5 transition-colors whitespace-nowrap" data-testid="link-sell-info">
-                  <Tag className="w-3.5 h-3.5" /> Start Selling
-                </Link>
-                <Link href="/sign-in" className="hidden md:flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
+                <Link href="/sign-in" className="hidden md:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full border border-[#4A5CE8]/30 text-sm font-semibold text-[#4A5CE8] hover:bg-[#4A5CE8]/5 hover:border-[#4A5CE8] transition-colors whitespace-nowrap" data-testid="link-sign-in">
                   Sign In
                 </Link>
-                <Link href="/sign-up" className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
+                <Link href="/sign-up" className="hidden sm:flex shrink-0 items-center gap-1.5 px-3 py-2 rounded-full bg-[#F26B21] text-white text-sm font-semibold hover:bg-[#D97706] transition-colors shadow-sm whitespace-nowrap" data-testid="link-register">
                   Join Free
                 </Link>
               </>
@@ -558,78 +544,6 @@ export function Navbar() {
             {/* Logged IN actions */}
             {user && (
               <>
-                {/* Sell dropdown */}
-                <div ref={sellRef} className="relative hidden md:block flex-shrink-0">
-                  <button
-                    onClick={() => setSellOpen(!sellOpen)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#F26B21] text-white text-sm font-bold hover:bg-[#D97706] transition-colors shadow-sm"
-                    data-testid="button-sell-dropdown"
-                  >
-                    <Tag className="w-3.5 h-3.5" />
-                    Sell
-                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sellOpen ? "rotate-180" : ""}`} />
-                  </button>
-                  <AnimatePresence>
-                    {sellOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
-                      >
-                        <div className="px-4 pt-3 pb-2">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">How do you want to sell?</p>
-                        </div>
-                        {SELL_OPTIONS.filter(x => visibleHref(x.href)).map((opt) => {
-                          const Icon = opt.icon;
-                          return (
-                            <Link
-                              key={opt.id}
-                              href={opt.href}
-                              onClick={() => setSellOpen(false)}
-                              className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                              data-testid={`sell-option-${opt.id}`}
-                            >
-                              <div className={`w-9 h-9 rounded-xl ${opt.bg} flex items-center justify-center flex-shrink-0`}>
-                                <Icon className={`w-4 h-4 ${opt.color}`} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold text-gray-900 group-hover:text-[#F26B21] transition-colors">{opt.label}</span>
-                                  {opt.badge && (
-                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-500 text-white leading-none tracking-wide animate-pulse">
-                                      {opt.badge}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-gray-400 mt-0.5">{opt.desc}</p>
-                              </div>
-                              <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#F26B21] transition-colors flex-shrink-0" />
-                            </Link>
-                          );
-                        })}
-                        <div className="border-t border-gray-100 mx-4" />
-                        <Link
-                          href="/sell"
-                          onClick={() => setSellOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 text-xs text-[#F26B21] font-semibold hover:underline"
-                        >
-                          <Info className="w-3.5 h-3.5" /> View seller fees & all options →
-                        </Link>
-                        <div className="border-t border-gray-100 mx-4" />
-                        <Link
-                          href="/dashboard"
-                          onClick={() => setSellOpen(false)}
-                          className="flex items-center gap-2 px-4 py-2.5 pb-3 text-xs text-[#4A5CE8] font-semibold hover:underline"
-                        >
-                          <LayoutDashboard className="w-3.5 h-3.5" /> Manage your listings →
-                        </Link>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
                 {/* Messages */}
                 <button
                   onClick={() => setMessageCenterOpen(true)}
@@ -643,11 +557,11 @@ export function Navbar() {
                 <button
                   onClick={openCart}
                   className="hidden md:flex w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 items-center justify-center text-gray-600 transition-colors relative"
-                  data-testid="button-cart"
+                  data-testid="button-cart" data-theme-edit="icon_overrides"
                 >
-                  <ShoppingCart className="w-4 h-4" />
+                  <CartHeaderIcon className="w-4 h-4" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F26B21] text-white text-xs font-bold flex items-center justify-center leading-none">
                       {itemCount > 9 ? "9+" : itemCount}
                     </span>
                   )}
@@ -658,12 +572,12 @@ export function Navbar() {
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                    data-testid="button-user-menu"
+                    data-testid="button-user-menu" data-theme-edit="icon_overrides"
                   >
                     <div className="w-7 h-7 rounded-full bg-[#3B4FD8] flex items-center justify-center text-white text-xs font-bold">
                       {initial}
                     </div>
-                    <span className="hidden md:block text-sm font-semibold text-gray-800 max-w-[80px] truncate">{user.username}</span>
+                    <AccountHeaderIcon className="hidden md:block h-4 w-4 text-slate-600" aria-hidden="true"/><span className="hidden md:block text-sm font-semibold text-gray-800 max-w-[80px] truncate">{user.username}</span>
                     <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
                   </button>
                   <AnimatePresence>
@@ -677,19 +591,19 @@ export function Navbar() {
                       >
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                          <p className="text-xs text-gray-600 truncate">{user.email}</p>
                         </div>
                         <Link href="/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <LayoutDashboard className="w-4 h-4 text-gray-400" /> My Dashboard
+                          <LayoutDashboard className="w-5 h-5 text-slate-700" /> My Dashboard
                         </Link>
                         <Link href="/offers" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Handshake className="w-4 h-4 text-gray-400" /> My Offers
+                          <Handshake className="w-4 h-4 text-gray-600" /> My Offers
                         </Link>
                         <button onClick={() => { setUserMenuOpen(false); setMessageCenterOpen(true); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <MessageSquare className="w-4 h-4 text-gray-400" /> Messages
+                          <MessageSquare className="w-4 h-4 text-gray-600" /> Messages
                         </button>
                         <Link href="/sell/direct" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          <Tag className="w-4 h-4 text-gray-400" /> Create Listing
+                          <Tag className="w-4 h-4 text-gray-600" /> Create Listing
                         </Link>
                         <div className="border-t border-gray-100">
                           <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors" data-testid="button-logout">
@@ -707,7 +621,7 @@ export function Navbar() {
             <button
               onClick={() => setMobileOpen(true)}
               className="xl:hidden flex items-center justify-center w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0"
-              aria-label="Open menu"
+              aria-label="Open menu" aria-expanded={mobileOpen} aria-controls="bazunk-mobile-menu"
               data-testid="button-mobile-menu"
             >
               <Menu className="w-5 h-5 text-gray-700" />
@@ -718,33 +632,20 @@ export function Navbar() {
           <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder={t("search")} aria-label="Search listings" className="min-w-0 flex-1 rounded-xl bg-gray-100 px-3 py-2 text-base text-gray-800" />
           <button type="submit" aria-label="Search" className="w-11 shrink-0 rounded-xl bg-[#4A5CE8] text-white flex items-center justify-center"><Search className="w-5 h-5" /></button>
         </form>
+        <div className="bz-mockup-benefits" aria-label="Marketplace benefits">
+          <span><Truck className="text-blue-600"/> <strong>Free delivery</strong><small>On selected items</small></span>
+          <span><ShieldCheck className="text-cyan-600"/> <strong>Buyer protection</strong><small>Shop with confidence</small></span>
+          <span><CheckCircle2 className="text-orange-500"/> <strong>Verified sellers</strong><small>Look for verification</small></span>
+          <span><Leaf className="text-green-600"/> <strong>Eco marketplace</strong><small>Reuse and resell</small></span>
+          <span><Gift className="text-amber-500"/> <strong>Earn credits</strong><small>List, boost &amp; save</small></span>
+          <span><Gift className="text-pink-500"/> <strong>Daily deals</strong><small>New offers every day</small></span>
+        </div>
         {/* Brand colour accent */}
         <div className="h-[3px] w-full bg-gradient-to-r from-[#1E6FE8] via-[#4A5CE8] to-[#F5B301]" />
       </nav>
 
-      {/* Floating country + currency selector */}
-      {isFeatureEnabled(featureSettings, "currency_selector") && <div ref={currencyRef} className="fixed right-4 bottom-4 z-40 hidden md:block">
-        <button onClick={() => setCurrencyOpen(!currencyOpen)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-gray-200 text-sm font-semibold text-gray-700 bg-white shadow-lg hover:border-[#4A5CE8] hover:text-[#4A5CE8] transition-colors">
-          <span>{country.flag}</span><span>{country.name}</span><span className="text-gray-400">·</span><span>{currency.code} {currency.symbol}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform ${currencyOpen ? "rotate-180" : ""}`} />
-        </button>
-        {currencyOpen && (
-          <div className="absolute right-0 bottom-[calc(100%+8px)] w-72 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 p-3">
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("country")}</label>
-            <select value={country.code} onChange={e => changeCountry(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 mb-3">
-              {MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}
-            </select>
-            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{t("currency")}</label>
-            <select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)}
-              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800">
-              {(Object.values(CURRENCIES) as typeof CURRENCIES[CurrencyCode][]).map(c => <option key={c.code} value={c.code}>{c.flag} {c.name} ({c.symbol})</option>)}
-            </select>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-600">Choose your shopping country and preferred currency.</p>
-          </div>
-        )}
-      </div>}
+      <BuyerProtectionModal open={protectionOpen} onClose={() => setProtectionOpen(false)} />
+      <HeaderMegaModals kind={sellOpen ? "sell" : moreOpen ? "more" : null} onClose={() => {setSellOpen(false);setMoreOpen(false)}} />
 
       {/* Mobile menu drawer */}
       <AnimatePresence>
@@ -761,16 +662,17 @@ export function Navbar() {
             />
             <motion.div
               key="drawer"
+              id="bazunk-mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile navigation"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
-              className="fixed top-0 right-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 flex flex-col xl:hidden shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-80 max-w-[100vw] bg-white z-50 flex flex-col xl:hidden shadow-2xl text-slate-900"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <Link href="/" onClick={() => setMobileOpen(false)} className="flex items-center">
-                   <img src="/bazunk-logo-header.png" alt="Bazunk" className="h-7 w-auto max-w-[200px] object-contain" />
+                   {useDefaultDarkLogo ? <span className="relative block h-7 aspect-[1142/289] max-w-[200px] shrink-0 overflow-hidden"><img src={defaultLogo} alt={featureSettings.site_name||"Bazunk"} className="absolute left-0 top-0 h-[230%] w-[113%] max-w-none" /></span> : <img src={featureSettings.site_logo_url?.startsWith("/api/site-media/") ? API_BASE + featureSettings.site_logo_url : defaultLogo} alt={featureSettings.site_name||"Bazunk"} className="h-7 w-auto max-w-[200px] object-contain" />}
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
@@ -784,17 +686,19 @@ export function Navbar() {
               {/* Search */}
               <div className="px-5 py-3 border-b border-gray-100">
                 <form onSubmit={handleSubmit} className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <SearchHeaderIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
                   <input
                     type="search"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search listings..."
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-gray-100 border-transparent text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
+                    placeholder={featureSettings.header_search_placeholder||"Search listings..."}
+                    className="w-full pl-9 pr-4 py-3 rounded-xl bg-slate-100 border border-slate-300 text-base text-slate-900 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-[#4A5CE8]/30"
                     data-testid="input-search-mobile"
                   />
                 </form>
               </div>
+
+              <button type="button" onClick={()=>{setMobileOpen(false);setCategoryDrawerOpen(true);}} className="mx-5 my-3 flex min-h-12 items-center justify-between rounded-xl bg-orange-50 px-4 font-bold text-slate-900 border border-orange-200" aria-haspopup="dialog"><span className="flex items-center gap-2"><Grid3X3 className="h-5 w-5 text-orange-600"/> Shop by category</span><ChevronRight className="h-5 w-5"/></button>
 
               {/* User info (logged in) */}
               {user && (
@@ -804,7 +708,7 @@ export function Navbar() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 text-sm">{user.name}</p>
-                    <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
+                    <p className="text-xs text-gray-600 truncate max-w-[180px]">{user.email}</p>
                   </div>
                 </div>
               )}
@@ -815,12 +719,12 @@ export function Navbar() {
                   <Trophy className="w-5 h-5 text-amber-500 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-amber-800">Earn Rewards</p>
-                    <p className="text-[11px] text-amber-600">Credits, badges & perks</p>
+                    <p className="text-xs text-amber-600">Credits, badges & perks</p>
                   </div>
                   <Link
                     href="/sign-up"
                     onClick={() => setMobileOpen(false)}
-                    className="text-[11px] font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    className="text-xs font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                   >
                     Join Free
                   </Link>
@@ -829,10 +733,6 @@ export function Navbar() {
 
               {/* Nav links */}
               <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain py-2">
-                <ThemeToggle
-                  withLabel
-                  className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
-                />
                 {/* Rewards link (logged in) */}
                 {user && (
                   <button
@@ -849,10 +749,10 @@ export function Navbar() {
                   <button
                     key={href}
                     onClick={() => navTo(href)}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#4A5CE8] transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-5 py-3.5 text-base font-medium text-slate-900 hover:bg-orange-50 hover:text-orange-800 transition-colors text-left"
                     data-testid={`mobile-link-${label.toLowerCase().replace(/\s/g, "-")}`}
                   >
-                    <Icon className="w-4 h-4 text-gray-400" />
+                    <Icon className="w-4 h-4 text-gray-600" />
                     {label}
                     {live && (
                       <span className="relative flex h-2 w-2 ml-1">
@@ -860,13 +760,12 @@ export function Navbar() {
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                       </span>
                     )}
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 ml-auto" />
+                    <ChevronRight className="w-4 h-4 text-slate-500 ml-auto" />
                   </button>
                 ))}
               </nav>
 
               <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between gap-3 shrink-0">
-                <ThemeToggle className="flex w-10 h-10 rounded-xl bg-gray-100 items-center justify-center" />
                 <div className="flex flex-col gap-1 text-xs text-gray-600"><label>{t("country")}<select value={country.code} onChange={e => changeCountry(e.target.value)} className="ml-2 bg-gray-100 rounded-lg p-2 text-base">{MARKET_COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.flag} {c.name}</option>)}</select></label><label>{t("currency")}<select value={currency.code} onChange={e => setCurrency(e.target.value as CurrencyCode)} className="ml-2 bg-gray-100 rounded-lg p-2 text-base">{Object.values(CURRENCIES).map(c => <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>)}</select></label></div>
               </div>
               {/* Bottom auth actions */}
@@ -907,6 +806,7 @@ export function Navbar() {
       </AnimatePresence>
 
       <MessageCenterOverlay open={messageCenterOpen} onClose={() => setMessageCenterOpen(false)} />
+          <CategoryDrawer open={categoryDrawerOpen} onClose={()=>setCategoryDrawerOpen(false)} />
     </>
   );
 }

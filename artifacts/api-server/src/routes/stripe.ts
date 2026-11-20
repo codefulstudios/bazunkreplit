@@ -1,10 +1,13 @@
+import { startSpecialCheckout, fulfillSpecialCheckout } from "../lib/specialCheckout.js";
+import { authenticatedSellerEmail } from "../lib/authenticatedSeller.js";
 import { getAuth, clerkClient } from "@clerk/express";
 import { percentage, minor } from "../lib/marketplaceFees.js";
 import { quoteCart, saveFeeSnapshot, QuoteError } from "../lib/checkoutQuote.js";
 import { isBanned } from "../lib/banned.js";
 import { Router } from "express";
 import { sql } from "drizzle-orm";
-import { db } from "@workspace/db";
+import { db, usersTable, creditTransactionsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { storage } from "../storage.js";
 import { getUncachableStripeClient, getStripePublishableKey } from "../stripeClient.js";
 import { convertAmount, smallestUnit } from "../fxRates.js";
@@ -37,6 +40,74 @@ function resolveOrigin(req: import("express").Request): string {
     "https://bazunk-web.onrender.com"
   );
 }
+
+async function customerForAccount(email: string) {
+  const stripe = await getUncachableStripeClient();
+  const user = await storage.getUser(email);
+  let customerId = user?.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({ email });
+    await storage.setStripeCustomerId(email, customer.id);
+    customerId = customer.id;
+  }
+  return { stripe, customerId };
+}
+
+router.get("/stripe/payment-methods", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const { stripe, customerId } = await customerForAccount(email);
+    const [methods, customer] = await Promise.all([
+      stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 100 }),
+      stripe.customers.retrieve(customerId),
+    ]);
+    const defaultId = !customer.deleted && typeof customer.invoice_settings?.default_payment_method === "string"
+      ? customer.invoice_settings.default_payment_method : null;
+    res.setHeader("Cache-Control", "no-store");
+    res.json(methods.data.map(m => ({ id: m.id, brand: m.card?.brand, last4: m.card?.last4,
+      expiry: `${m.card?.exp_month}/${m.card?.exp_year}`, name: m.billing_details.name, default: m.id === defaultId })));
+  } catch(e) { logger.error({err:e}, "Payment method list failed"); res.status(500).json({error:"Could not retrieve payment methods"}); }
+});
+
+router.post("/stripe/payment-methods/setup", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const { stripe, customerId } = await customerForAccount(email);
+    const origin = new URL(resolveOrigin(req));
+    if (!["https://bazunk.com", "https://www.bazunk.com", "http://localhost:5173"].includes(origin.origin)) {
+      res.status(400).json({error:"Unrecognised return origin"}); return;
+    }
+    const session = await stripe.checkout.sessions.create({
+      mode: "setup", customer: customerId,
+      payment_method_types: ["card"],
+      success_url: `${origin.origin}/dashboard?tab=payment-cards&card_setup=success`,
+      cancel_url: `${origin.origin}/dashboard?tab=payment-cards&card_setup=cancelled`,
+    });
+    res.json({url:session.url});
+  } catch(e) { logger.error({err:e}, "Card setup failed"); res.status(500).json({error:"Could not start secure card setup"}); }
+});
+
+router.delete("/stripe/payment-methods/:id", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const {stripe, customerId} = await customerForAccount(email);
+    const method = await stripe.paymentMethods.retrieve(req.params.id);
+    if (method.customer !== customerId) {res.status(404).json({error:"Card not found"});return;}
+    await stripe.paymentMethods.detach(method.id);
+    res.json({success:true});
+  } catch(e) {logger.error({err:e},"Card removal failed");res.status(500).json({error:"Could not remove card"});}
+});
+
+router.post("/stripe/payment-methods/:id/default", async (req, res) => {
+  try {
+    const email = await authenticatedSellerEmail(req, res); if (!email) return;
+    const {stripe, customerId} = await customerForAccount(email);
+    const method = await stripe.paymentMethods.retrieve(req.params.id);
+    if (method.customer !== customerId) {res.status(404).json({error:"Card not found"});return;}
+    await stripe.customers.update(customerId,{invoice_settings:{default_payment_method:method.id}});
+    res.json({success:true});
+  } catch(e) {logger.error({err:e},"Default card update failed");res.status(500).json({error:"Could not update default card"});}
+});
 
 router.get("/stripe/publishable-key", async (_req, res) => {
   try {
@@ -164,7 +235,7 @@ router.post("/stripe/seller-fee-estimate",async(req,res)=>{
     const sellerType=String(row?.seller_type??"private");
     const settings=(await db.execute(sql`SELECT key,value FROM site_settings WHERE key LIKE 'fee_rate_%'`)).rows as any[];
     const fees=Object.fromEntries(settings.map(r=>[r.key,r.value]));
-    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,8));
+    const rate=sellerType==="private"?0:percentage(fees[`fee_rate_${String(req.body.category??"").toLowerCase()}`],percentage(fees.fee_rate_default,5));
     const amount=minor(req.body.amount??0),fee=Math.round(amount*rate/100);
     res.json({sellerType,rate,sellerFee:fee/100,sellerNet:(amount-fee)/100,currency:"GBP"});
   }catch(err){res.status(400).json({error:"Could not calculate seller fees."});}
@@ -174,71 +245,24 @@ router.post("/stripe/quote-cart", async (req,res) => {
   try {
     const quote=await quoteCart(req.body.items);
     res.setHeader("Cache-Control","no-store");
-    res.json({currency:quote.currency,subtotal:quote.subtotalMinor/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
+    res.json({currency:quote.currency,subtotal:(quote.subtotalMinor+(quote.bundleDiscountMinor??0))/100,privateSubtotal:quote.privateSubtotalMinor/100,buyerProtectionFee:quote.buyerProtectionMinor/100,delivery:quote.deliveryMinor/100,bundleDiscount: (quote.bundleDiscountMinor??0)/100,bundleBreakdown:quote.bundleBreakdown??[],total:quote.totalMinor/100,protectionPercent:quote.protectionPercent,fixedProtection:quote.fixedMinor/100,items:[...new Map(quote.units.map(u=>[u.id,{id:u.id,title:u.title,price:u.priceMinor/100,sellerType:u.sellerType}])).values()]});
   } catch(err) { res.status(err instanceof QuoteError ? err.status : 500).json({error:err instanceof QuoteError ? err.message : "Could not calculate checkout fees."}); }
 });
 
-
-/** Auction payment is available exclusively to the verified winning bidder. */
-router.post("/stripe/checkout-auction", async (req, res) => {
+router.post("/stripe/special-checkout", async(req,res)=>{
   try {
-    const auth = getAuth(req);
-    if (!auth.isAuthenticated || !auth.userId) { res.status(401).json({error:"Sign in as the auction winner to pay."}); return; }
-    const account = await clerkClient.users.getUser(auth.userId);
-    const email = account.primaryEmailAddress?.emailAddress?.toLowerCase();
-    if (!email) { res.status(403).json({error:"Verified email required."}); return; }
-    const auctionId = String(req.body?.auctionId ?? "");
-    if (!/^AUC-[A-Z0-9-]{8,}$/.test(auctionId)) { res.status(400).json({error:"Invalid auction."}); return; }
-    const row = (await db.execute(sql`SELECT * FROM auctions WHERE id = ${auctionId}`)).rows[0] as Record<string,unknown> | undefined;
-    if (!row || row.status !== "ended" || !row.winner_bid || String(row.winner_email ?? "").toLowerCase() !== email) {
-      res.status(403).json({error:"Only the confirmed winner of an ended auction can pay."}); return;
+    const email=await authenticatedSellerEmail(req,res);if(!email)return;
+    const kind=req.body?.kind, id=req.body?.id;
+    if((kind!=="auction"&&kind!=="flash"&&kind!=="find_it")||typeof id!=="string"||!id.trim()||id.length>100) {
+      res.status(400).json({error:"Invalid sale reference"});return;
     }
-    const existing = (await db.execute(sql`SELECT id FROM orders WHERE notes = ${"auction:" + auctionId} LIMIT 1`)).rows;
-    if (existing.length) { res.status(409).json({error:"This auction already has a paid order."}); return; }
-    // Auction amounts are stored and settled in GBP in both regions. Never silently relabel GBP as USD.
-    const priceMinor = Math.round(Number(row.winner_bid) * 100);
-    if (!Number.isSafeInteger(priceMinor) || priceMinor <= 0) { res.status(409).json({error:"Invalid stored winning bid."}); return; }
-    const seller = String(row.seller_email ?? "");
-    const sellerTypeRow = (await db.execute(sql`SELECT seller_type FROM users WHERE LOWER(email)=LOWER(${seller}) LIMIT 1`)).rows[0] as Record<string,unknown> | undefined;
-    const sellerType = String(sellerTypeRow?.seller_type ?? "private").toLowerCase();
-    const feeRows = (await db.execute(sql`SELECT key,value FROM site_settings WHERE key IN ('buyer_protection_percent','buyer_protection_fixed_gbp','fee_rate_default')`)).rows as Array<Record<string,unknown>>;
-    const fees = Object.fromEntries(feeRows.map(f=>[String(f.key),Number(f.value)]));
-    const protectionMinor = sellerType === "private" ? Math.max(0,Math.round(priceMinor * (fees.buyer_protection_percent ?? 5) / 100) + Math.round((fees.buyer_protection_fixed_gbp ?? .7)*100)) : 0;
-    const sellerFeeMinor = sellerType === "private" ? 0 : Math.max(0,Math.round(priceMinor * (fees.fee_rate_default ?? 8) / 100));
-    const totalMinor = priceMinor + protectionMinor;
-    const stripe = await getUncachableStripeClient();
-    const session = await stripe.checkout.sessions.create({
-      mode:"payment", client_reference_id:email,
-      line_items:[
-        {price_data:{currency:"gbp",unit_amount:priceMinor,product_data:{name:String(row.title)}},quantity:1},
-        ...(protectionMinor ? [{price_data:{currency:"gbp",unit_amount:protectionMinor,product_data:{name:"Buyer Protection"}},quantity:1}] : [])
-      ],
-      metadata:{type:"auction",auctionId,email,priceMinor:String(priceMinor),protectionMinor:String(protectionMinor),sellerFeeMinor:String(sellerFeeMinor),sellerType,totalMinor:String(totalMinor)},
-      success_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:`${resolveOrigin(req)}/auctions/${encodeURIComponent(auctionId)}?payment=cancelled`,
-    }, { idempotencyKey: `auction-checkout-${auctionId}-${priceMinor}-${protectionMinor}-${sellerFeeMinor}` });
-    res.json({url:session.url});
-  } catch(err) { logger.error({err},"Auction checkout failed"); res.status(500).json({error:"Unable to start auction checkout."}); }
-});
-
-router.post("/stripe/confirm-auction-payment", async (req,res) => {
-  try {
-    const auth=getAuth(req);
-    if (!auth.isAuthenticated || !auth.userId) {res.status(401).json({error:"Sign in to confirm your payment."});return;}
-    const account=await clerkClient.users.getUser(auth.userId);
-    const email=account.primaryEmailAddress?.emailAddress?.toLowerCase();
-    if (!email) {res.status(403).json({error:"Verified email required."});return;}
-    const sessionId=String(req.body?.sessionId ?? "");
-    if (!/^cs_(test_|live_)/.test(sessionId)) {res.status(400).json({error:"Invalid payment session."});return;}
-    const stripe=await getUncachableStripeClient();
-    const session=await stripe.checkout.sessions.retrieve(sessionId);
-    if (session.metadata?.type !== "auction" || String(session.client_reference_id??"").toLowerCase() !== email) {
-      res.status(403).json({error:"This is not your auction payment."});return;
+    const origin=new URL(resolveOrigin(req)).origin;
+    if(!["https://bazunk.com","https://www.bazunk.com","https://bazunk-web.onrender.com","http://localhost:5173"].includes(origin)){
+      res.status(400).json({error:"Unrecognised checkout origin"});return;
     }
-    const result=await fulfillAuctionSession(sessionId);
-    if(result==="not_paid"){res.status(409).json({error:"Payment has not completed."});return;}
-    res.json({ok:true,status:result});
-  } catch(err){logger.error({err},"Failed to confirm auction payment");res.status(500).json({error:"Could not confirm auction payment."});}
+    const result=await startSpecialCheckout(kind,id,email,origin);
+    res.json(result);
+  }catch(err){logger.error({err},"Special sale checkout failed");res.status(409).json({error:err instanceof Error?err.message:"Checkout unavailable"});}
 });
 
 router.post("/stripe/checkout-cart", async (req, res) => {
@@ -250,14 +274,47 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     // Credits and demo promo codes were never discounted by Stripe. Do not charge
     // a full cash price while also subtracting credits from the buyer's balance.
     if(Number(body.creditsApplied??0)>0 || body.promoCode) throw new QuoteError("Marketplace credits and promotion codes are not supported for this checkout.");
+    const shipping=body.shippingAddress as Record<string,unknown>|undefined;
+    const shippingName=String(shipping?.name??"").trim();
+    const shippingLine1=String(shipping?.line1??"").trim();
+    const shippingCity=String(shipping?.city??"").trim();
+    const shippingPostcode=String(shipping?.postcode??"").trim();
+    const shippingCountry=String(shipping?.country??"").trim().toUpperCase();
+    if(!shippingName || !shippingLine1 || !shippingCity || !shippingPostcode || !/^[A-Z]{2}$/.test(shippingCountry) || [shippingName,shippingLine1,shippingCity,shippingPostcode].some(v=>v.length>200))
+      throw new QuoteError("Enter a valid full delivery address before payment.");
+    // Check destination against each seller's stated zone. Missing shipping rules
+    // cannot be interpreted as free or worldwide shipping.
+    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 100 ||
+        !body.items.every((item: unknown) => item !== null && typeof item === "object" &&
+          Number.isSafeInteger(Number((item as {id?: unknown}).id)) && Number((item as {id?: unknown}).id) > 0 &&
+          Number.isSafeInteger(Number((item as {quantity?: unknown}).quantity)) && Number((item as {quantity?: unknown}).quantity) > 0 &&
+          Number((item as {quantity?: unknown}).quantity) <= 100)) {
+      throw new QuoteError("Your basket contains invalid items or quantities.", 400);
+    }
+    const cartIds=(body.items as Array<{id:number}>).map(x=>Number(x.id));
+    const shippingRows=(await db.execute(sql`SELECT id,ship_origin,ship_zone FROM listings WHERE id IN (${sql.join(cartIds.map(id=>sql`${id}`),sql`, `)})`)).rows as Array<Record<string,unknown>>;
+    if(shippingRows.length!==new Set(cartIds).size)throw new QuoteError("A listing is no longer available.",409);
+    for(const row of shippingRows){
+      const zone=String(row.ship_zone??"").toLowerCase(), origin=String(row.ship_origin??"").toUpperCase();
+      const country=shippingCountry==="GB"?"UK":shippingCountry;
+      const domestic=origin==="GB"?"UK":origin;
+      const european=["GB","IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"].includes(shippingCountry);
+      if(!zone || (zone==="domestic"&&country!==domestic) || (zone==="eu"&&!(european&&(origin==="UK"||origin==="GB"||shippingCountry!=="GB"))) || (zone==="eu-only"&&!european) || (zone==="europe"&&!([...["GB","NO","CH","IS","LI"],...["IE","FR","DE","ES","IT","NL","BE","PT","AT","DK","SE","FI","PL","CZ","GR","RO","HU","SK","SI","HR","BG","EE","LV","LT","LU","MT","CY"]].includes(shippingCountry))) || (zone==="north-america"&&!["US","CA","MX"].includes(shippingCountry)) || (zone==="asia"&&!["CN","JP","KR","SG","MY","TH","VN","PH","ID","AU","NZ"].includes(shippingCountry)) || !["domestic","eu","eu-only","europe","north-america","asia","worldwide"].includes(zone))
+        throw new QuoteError("One or more sellers have not enabled delivery to this destination. Please update your basket or delivery address.",409);
+    }
     const quote=await quoteCart(body.items);
     if(body.expectedTotal==null || Math.round(Number(body.expectedTotal)*100)!==quote.totalMinor)
       throw new QuoteError("Your cart price or fees changed. Refresh the fee breakdown before paying.",409);
     await storage.upsertUser(email,name);
     const snapshotId=await saveFeeSnapshot(quote);
-    const grouped=new Map<number,{title:string;priceMinor:number;quantity:number}>();
+    // Discounts can leave different per-unit prices for the same listing.
+    // Group by listing AND final discounted unit price to match the frozen quote.
+    const grouped=new Map<string,{title:string;priceMinor:number;quantity:number}>();
     for(const unit of quote.units) {
-      const prev=grouped.get(unit.id);if(prev) prev.quantity++;else grouped.set(unit.id,{title:unit.title,priceMinor:unit.priceMinor,quantity:1});
+      const key=unit.id+":"+unit.priceMinor;
+      const prev=grouped.get(key);
+      if(prev)prev.quantity++;
+      else grouped.set(key,{title:unit.title,priceMinor:unit.priceMinor,quantity:1});
     }
     const lineItems=[...grouped.values()].map(item=>({price_data:{currency:"gbp",unit_amount:item.priceMinor,product_data:{name:item.title}},quantity:item.quantity}));
     if(quote.buyerProtectionMinor) lineItems.push({price_data:{currency:"gbp",unit_amount:quote.buyerProtectionMinor,product_data:{name:"Buyer Protection — personal seller items"}},quantity:1});
@@ -266,7 +323,21 @@ router.post("/stripe/checkout-cart", async (req, res) => {
     let user=await storage.getUser(email);let stripeCustomerId=user?.stripeCustomerId;
     if(!stripeCustomerId) {const customer=await stripe.customers.create({email,name});await storage.setStripeCustomerId(email,customer.id);stripeCustomerId=customer.id;}
     const origin=resolveOrigin(req);
-    const session=await stripe.checkout.sessions.create({customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment",metadata:{email,type:"cart",feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`});
+    const sessionParams = {customer:stripeCustomerId,client_reference_id:email,line_items:lineItems,mode:"payment" as const,metadata:{email,type:"cart",shippingName,shippingLine1,shippingLine2:String(shipping?.line2??"").slice(0,200),shippingCity,shippingRegion:String(shipping?.region??"").slice(0,200),shippingPostcode,shippingCountry,shippingPhone:String(shipping?.phone??"").slice(0,100),feeQuoteId:snapshotId,feePolicy:quote.policy,chargeCurrency:"GBP",creditsApplied:"0",buyerProtectionFee:(quote.buyerProtectionMinor/100).toFixed(2),buyerProtectionPercent:String(quote.protectionPercent)},success_url:`${origin}/checkout?session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/checkout`};
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (error) {
+      // A customer saved under a previous Stripe sandbox or payment mode
+      // does not exist under the current API key. Recover only this specific
+      // Stripe error; never mask other checkout failures.
+      const err = error as { code?: string; param?: string; message?: string };
+      if (err.code !== "resource_missing" || err.param !== "customer") throw error;
+      logger.warn({ email, oldCustomerId: stripeCustomerId }, "Saved Stripe customer not available in current Stripe environment; creating replacement");
+      const replacement = await stripe.customers.create({ email, name });
+      await storage.setStripeCustomerId(email, replacement.id);
+      session = await stripe.checkout.sessions.create({ ...sessionParams, customer: replacement.id });
+    }
     res.json({url:session.url});
   } catch(err) {
     logger.error({err},"Failed to create cart checkout session");
@@ -285,16 +356,37 @@ router.post("/stripe/confirm-cart-payment", async (req, res) => {
     if (!email && !sessionId) { res.status(400).json({ error: "email required" }); return; }
 
     if (sessionId) {
+      const stripe = await getUncachableStripeClient();
+      const paidSession = await stripe.checkout.sessions.retrieve(sessionId);
+      if (paidSession.metadata?.type === "special_sale") {
+        if (paidSession.client_reference_id?.toLowerCase() !== String(email ?? "").toLowerCase()) {
+          res.status(403).json({error:"Email mismatch"});return;
+        }
+        if (paidSession.payment_status !== "paid") {res.status(400).json({error:"Payment not completed"});return;}
+        await fulfillSpecialCheckout(sessionId);
+        res.json({success:true});return;
+      }
       const result = await fulfillCartSession(sessionId, email);
       if (result.status === "not_paid") { res.status(400).json({ error: "Payment not completed" }); return; }
       if (result.status === "email_mismatch") { res.status(403).json({ error: "Email mismatch" }); return; }
+      // A verified paid session closes matching abandoned-checkout candidates.
+      // Recovery tracking is optional and must not make fulfilment fail.
+      try {
+        {
+          const registry=(await db.execute(sql`SELECT to_regclass('public.checkout_recovery') AS name`)).rows[0]?.name;
+          if(registry) await db.execute(sql`UPDATE checkout_recovery SET status='completed',updated_at=NOW()
+           WHERE LOWER(buyer_email)=LOWER(${paidSession.customer_email || paidSession.customer_details?.email || paidSession.client_reference_id || email})
+           AND status='open'`);
+        }
+      } catch(err) { logger.warn({err},"Could not close checkout recovery record"); }
+
     } else { res.status(400).json({error:"A paid checkout session is required."}); return; }
 
 
     res.json({ success: true });
   } catch (err) {
     logger.error({ err }, "Failed to confirm cart payment");
-    res.status(500).json({ error: "Failed to confirm payment", message: String(err) });
+    res.status(500).json({ error: "Payment verification is temporarily unavailable. Your payment may have succeeded; check your order history before trying again." });
   }
 });
 
@@ -394,6 +486,8 @@ router.post("/stripe/apply-credits", async (req, res) => {
 
     const alreadyApplied = await storage.hasCreditTransaction(sessionId);
     if (alreadyApplied) {
+      const existing = (await db.select({ email: creditTransactionsTable.email }).from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId)))[0];
+      if (!existing || existing.email.toLowerCase() !== String(email).toLowerCase()) { res.status(403).json({ error: "Session does not belong to this account" }); return; }
       const balance = await storage.getCredits(email);
       res.json({ success: true, alreadyApplied: true, balance }); return;
     }
@@ -401,8 +495,11 @@ router.post("/stripe/apply-credits", async (req, res) => {
     const stripe = await getUncachableStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (session.payment_status !== "paid") {
-      res.status(400).json({ error: "Payment not completed" }); return;
+    if (session.payment_status !== "paid" || session.mode !== "payment" || session.currency !== "gbp" || !session.amount_total || session.amount_total <= 0) {
+      res.status(400).json({ error: "Valid paid GBP credit checkout required" }); return;
+    }
+    if (session.metadata?.basePrice && Math.round(Number(session.metadata.basePrice) * 100) !== session.amount_total) {
+      res.status(400).json({ error: "Credit checkout amount mismatch" }); return;
     }
 
     if (session.client_reference_id !== email) {
@@ -415,9 +512,32 @@ router.post("/stripe/apply-credits", async (req, res) => {
     }
 
     await storage.upsertUser(email);
-    await storage.recordCreditTransaction(sessionId, email, totalCredits);
-    const balance = await storage.addCredits(email, totalCredits);
-    await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    // Claim the Stripe session and credit the account in ONE database transaction.
+    // A duplicate callback cannot increment the balance a second time.
+    const applied = await db.transaction(async tx => {
+      const [claim] = await tx.insert(creditTransactionsTable)
+        .values({ id: sessionId, email, creditsAdded: totalCredits.toString() })
+        .onConflictDoNothing().returning({ id: creditTransactionsTable.id });
+      if (!claim) {
+        const [existing] = await tx.select({ email: creditTransactionsTable.email })
+          .from(creditTransactionsTable).where(eq(creditTransactionsTable.id, sessionId));
+        if (!existing || existing.email.toLowerCase() !== email.toLowerCase()) throw new Error("Session already belongs to another account");
+        const [account] = await tx.select({ credits: usersTable.credits }).from(usersTable).where(eq(usersTable.email, email));
+        return { balance: Number(account?.credits ?? 0), newlyApplied: false };
+      }
+      const [account] = await tx.update(usersTable)
+        .set({ credits: sql`${usersTable.credits} + ${totalCredits}` })
+        .where(eq(usersTable.email, email)).returning({ credits: usersTable.credits });
+      if (!account) throw new Error("Credit recipient account missing");
+      return { balance: Number(account.credits), newlyApplied: true };
+    });
+    const balance = applied.balance;
+    if (!applied.newlyApplied) { res.json({ success: true, alreadyApplied: true, balance }); return; }
+    try {
+      await recordCreditEconomy({ email, kind: "purchased", credits: totalCredits, cashAmount: (session.amount_total ?? 0) / 100, currency: session.currency?.toUpperCase() ?? "GBP", reason: session.metadata?.packageName || "Credit purchase", referenceType: "stripe_checkout", referenceId: session.id, metadata: { bonusCredits: Number(session.metadata?.bonusCredits || 0), paymentStatus: session.payment_status } });
+    } catch (ledgerError) {
+      logger.error({ ledgerError, sessionId }, "Credit granted but auxiliary economy log failed");
+    }
 
     void sendCreditsConfirmation({ email, creditsAdded: totalCredits, newBalance: balance });
     void sendSystemMessage(email, {

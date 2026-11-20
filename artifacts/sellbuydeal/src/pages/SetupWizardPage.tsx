@@ -72,7 +72,7 @@ export function SetupWizardPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex mb-2">
-            <img src="/bazunk-logo.png" alt="Bazunk" className="h-12 w-auto object-contain rounded-lg bg-white px-3 py-1.5" />
+            <img src="/bazunk-brand-dark.png" alt="Bazunk" className="h-12 w-auto object-contain rounded-lg bg-white px-3 py-1.5" />
           </div>
           <p className="text-gray-400 text-sm">Installation Wizard</p>
         </div>
