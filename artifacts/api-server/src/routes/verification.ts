@@ -156,17 +156,17 @@ export async function handleDiditWebhook(req: Request, res: Response): Promise<v
     return;
   }
 
-  const duplicate = await db.execute(sql`SELECT 1 FROM verification_webhook_logs WHERE event_id=${event_id} LIMIT 1`);
-  if (duplicate.rows.length) { res.json({ received: true, duplicate: true }); return; }
-
   const ourStatus: VerificationStatus = DIDIT_STATUS_MAP[status] ?? "pending";
-  await db.execute(sql`
+  // Atomic event claim: concurrent webhook deliveries must not process the same event twice.
+  const claimed = await db.execute(sql`
     INSERT INTO verification_webhook_logs
       (event_id, session_id, vendor_data, event_type, status, raw_payload, created_at)
     VALUES (${event_id}, ${session_id}, ${vendor_data ?? null}, ${webhook_type ?? "webhook"},
             ${ourStatus}, ${JSON.stringify(payload)}::jsonb, NOW())
     ON CONFLICT (event_id) DO NOTHING
+    RETURNING event_id
   `);
+  if (!claimed.rows.length) { res.json({ received: true, duplicate: true }); return; }
 
   if (status === "Approved") {
     await db.execute(sql`
