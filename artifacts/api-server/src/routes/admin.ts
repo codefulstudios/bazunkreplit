@@ -727,20 +727,25 @@ router.patch("/admin/users/:email/credits", async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);
     const { amount, reason } = req.body;
-    if (typeof amount !== "number") { res.status(400).json({ error: "amount required" }); return; }
-
-    const [beforeUser] = await db.execute(sql`SELECT email, credits FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
+    if (typeof amount !== "number" || !Number.isFinite(amount) || amount === 0 || Math.abs(amount) > 100000 || Math.round(amount * 100) !== amount * 100) {
+      res.status(400).json({ error: "Enter a finite, nonzero credit adjustment of at most 100,000 with up to two decimal places" }); return;
+    }
+    const auditReason = typeof reason === "string" ? reason.trim().slice(0,500) : "";
+    if (auditReason.length < 8) { res.status(400).json({ error: "A reason of at least eight characters is required" }); return; }
+    const [beforeUser] = await db.execute(sql`SELECT email, credits FROM users WHERE LOWER(email) = LOWER(${email})`).then(r => r.rows as any[]);
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
     const [updated] = await db.execute(
-      sql`UPDATE users SET credits = GREATEST(0, credits + ${amount}) WHERE email = ${email} RETURNING email, credits`
+      sql`UPDATE users SET credits = credits + ${amount}
+      WHERE LOWER(email) = LOWER(${email}) AND credits + ${amount} >= 0 RETURNING email, credits`
     ).then(r => r.rows as any[]);
+    if (!updated) { res.status(409).json({ error: "Adjustment would make the credit balance negative, or account changed" }); return; }
 
-    if (!updated) { res.status(404).json({ error: "User not found" }); return; }
-
-    await recordCreditEconomy({ email, kind: "admin_adjustment", credits: amount, reason: reason || "Manual admin adjustment", referenceType: "admin_adjustment" });
-    logger.info({ email, amount, reason }, "Admin adjusted credits");
+    try { await recordCreditEconomy({ email, kind: "admin_adjustment", credits: amount, reason: auditReason, referenceType: "admin_adjustment" }); }
+    catch (ledgerError) { logger.error({ ledgerError, email }, "Admin adjustment succeeded but economy logging failed"); }
+    logger.info({ email, amount, reason: auditReason }, "Admin adjusted credits");
     await recordAdminAudit({ req, category: "credits", action: "credits.adjust", targetType: "user", targetId: email,
-      summary: `Admin ${amount >= 0 ? "credited" : "debited"} ${email} ${Math.abs(amount)} credits${reason ? ` — ${reason}` : ""}`,
-      before: { credits: Number(beforeUser?.credits ?? 0) }, after: { credits: Number(updated.credits), adjustment: amount }, metadata: { reason: reason ?? null } });
+      summary: `Admin ${amount >= 0 ? "credited" : "debited"} ${email} ${Math.abs(amount)} credits${auditReason ? ` — ${auditReason}` : ""}`,
+      before: { credits: Number(beforeUser?.credits ?? 0) }, after: { credits: Number(updated.credits), adjustment: amount }, metadata: { reason: auditReason } });
     res.json({ email: updated.email, newBalance: parseFloat(updated.credits) });
   } catch (err) {
     logger.error({ err }, "Failed to adjust credits");
@@ -782,7 +787,10 @@ router.delete("/admin/users/:email", async (req, res) => {
   try {
     const email = decodeURIComponent(req.params.email);
     const [beforeUser] = await db.execute(sql`SELECT email, name, seller_type, credits, banned FROM users WHERE email = ${email}`).then(r => r.rows as any[]);
-    await db.execute(sql`DELETE FROM users WHERE email = ${email}`);
+    if (!beforeUser) { res.status(404).json({ error: "User not found" }); return; }
+    if (Number(beforeUser.credits) > 0) { res.status(409).json({ error: "Account has a credit balance. Resolve the balance before deletion." }); return; }
+    const deleted = await db.execute(sql`DELETE FROM users WHERE email = ${email} AND credits <= 0 RETURNING email`);
+    if (!deleted.rows.length) { res.status(409).json({ error: "Account balance changed; refresh before deletion" }); return; }
     logger.info({ email }, "Admin deleted user");
     await recordAdminAudit({ req, category: "users", action: "user.delete", targetType: "user", targetId: email, summary: `Admin deleted user ${email}`, before: beforeUser });
     res.json({ success: true });
